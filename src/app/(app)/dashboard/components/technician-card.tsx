@@ -1,0 +1,76 @@
+
+"use client";
+
+import React from 'react';
+import Image from 'next/image';
+import { User, MapPin, Briefcase, Phone, Mail, Circle } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import type { Technician, Job } from '@/types';
+import { cn } from '@/lib/utils';
+
+interface TechnicianCardProps {
+  technician: Technician;
+  jobs: Job[];
+}
+
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs }) => {
+  const currentJob = jobs.find(job => job.id === technician.currentJobId);
+
+  return (
+    <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
+      <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
+        <Avatar className="h-12 w-12 border">
+          <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
+          <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <CardTitle className="text-lg font-headline">{technician.name}</CardTitle>
+          <CardDescription className="flex items-center gap-1 text-sm">
+            <Circle className={cn("h-2.5 w-2.5 fill-current", technician.isAvailable ? "text-green-500" : "text-red-500")} />
+            {technician.isAvailable ? 'Available' : 'Unavailable'}
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="flex-grow space-y-2 text-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          <span>{technician.location.address || `Lat: ${technician.location.latitude.toFixed(2)}, Lon: ${technician.location.longitude.toFixed(2)}`}</span>
+        </div>
+        {technician.phone && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Phone className="h-4 w-4" />
+            <span>{technician.phone}</span>
+          </div>
+        )}
+        {technician.email && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Mail className="h-4 w-4" />
+            <span>{technician.email}</span>
+          </div>
+        )}
+        <div className="pt-1">
+          <p className="font-medium text-xs text-foreground mb-1">Skills:</p>
+          <div className="flex flex-wrap gap-1">
+            {technician.skills.map(skill => (
+              <Badge key={skill} variant="secondary">{skill}</Badge>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter className="text-xs text-muted-foreground border-t pt-3">
+        {currentJob ? (
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-primary" />
+            <span>On Job: {currentJob.title}</span>
+          </div>
+        ) : (
+          <span>{technician.isAvailable ? 'Awaiting assignment' : 'Currently idle'}</span>
+        )}
+      </CardFooter>
+    </Card>
+  );
+};
+
+export default TechnicianCard;

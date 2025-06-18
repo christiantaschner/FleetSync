@@ -1,6 +1,8 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore"; // Added Firestore import
+
 // import { getAnalytics, isSupported } from "firebase/analytics"; // Optional: if you need Analytics
 
 const firebaseConfig = {
@@ -15,6 +17,7 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let auth;
+let db; // Added db variable
 
 if (firebaseConfig.apiKey && firebaseConfig.projectId) { // Basic check for config presence
   if (!getApps().length) {
@@ -23,10 +26,11 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) { // Basic check for conf
     app = getApp();
   }
   auth = getAuth(app);
+  db = getFirestore(app); // Initialize Firestore
 } else {
   console.warn("Firebase configuration is missing. Please check your .env file.");
   // Fallback or throw error, depending on how critical Firebase is at init
-  // For now, we'll let 'app' and 'auth' be undefined and handle it in components using it
+  // For now, we'll let 'app', 'auth', and 'db' be undefined and handle it in components using it
 }
 
 
@@ -40,4 +44,4 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) { // Basic check for conf
 //   });
 // }
 
-export { app, auth /* , analytics */ };
+export { app, auth, db /* , analytics */ };

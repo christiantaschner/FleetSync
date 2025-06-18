@@ -3,19 +3,20 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   PieChart,
   Smartphone,
   Users,
-  ClipboardList,
-  RouteIcon,
   Settings,
-  ShipWheel
+  LogOut,
+  Loader2,
+  ShipWheel,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 import {
   SidebarProvider,
   Sidebar,
@@ -48,6 +49,32 @@ const navItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, logout } = useAuth();
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    // This state should ideally be brief due to the redirect effect.
+    // You could also return null or a minimal loading state here.
+    return null; 
+  }
+
+  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : "U";
+  const userDisplayName = user.email || "User";
+
 
   return (
     <SidebarProvider defaultOpen>
@@ -86,28 +113,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
                 <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
-                  <AvatarImage src="https://placehold.co/100x100.png" alt="User Avatar" />
-                  <AvatarFallback>JD</AvatarFallback>
+                  {/* Placeholder for user avatar if available */}
+                  {/* <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt="User Avatar" /> */}
+                  <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium">John Doe</span>
-                  <span className="text-xs text-muted-foreground">Dispatcher</span>
+                  <span className="text-sm font-medium truncate max-w-[120px]">{userDisplayName}</span>
+                  {/* <span className="text-xs text-muted-foreground">Dispatcher</span> */}
                 </div>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <Users className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

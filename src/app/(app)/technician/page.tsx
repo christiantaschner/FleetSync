@@ -2,71 +2,72 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { Job, Technician } from '@/types';
+import type { Job, Technician, JobPriority } from '@/types'; // Added JobPriority
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2 } from 'lucide-react'; // Added Loader2
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { db, auth } from '@/lib/firebase'; // Import Firestore instance and auth
-import { collection, query, where, getDocs, onSnapshot, doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
-import { useAuth } from '@/contexts/auth-context'; // Using Auth context to get user
-
-// Simulate a logged-in technician based on Firebase Auth user
-// This page will show jobs for the currently logged-in Firebase user,
-// assuming their Firebase UID matches a technician ID in your Firestore 'technicians' collection.
-// For this demo, we'll still use a MOCK_LOGGED_IN_TECHNICIAN_ID if no auth user or mapping,
-// but ideally, this should be driven by the authenticated user.
-
-const MOCK_LOGGED_IN_TECHNICIAN_ID = 'tech_001'; // Fallback if no auth user / mapping
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function TechnicianJobsPage() {
   const { user: firebaseUser, loading: authLoading } = useAuth();
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return; // Wait for auth state to resolve
 
-    // Determine technician ID: use Firebase UID if available, else fallback
-    // In a real app, you might have a mapping from Firebase UID to your technician ID,
-    // or your technician documents in Firestore might be keyed by Firebase UID.
-    // For simplicity, we'll try to fetch technician by Firebase UID if it matches one of the mock IDs.
-    // Otherwise, we use the fallback.
-    let currentTechnicianId = MOCK_LOGGED_IN_TECHNICIAN_ID; 
-    // This logic needs to be adapted if your technician IDs are Firebase UIDs or mapped differently.
-    // For now, we'll assume MOCK_LOGGED_IN_TECHNICIAN_ID is the one we're interested in.
-
-
-    if (!db) {
-        setIsLoading(false);
-        return;
+    if (!firebaseUser) {
+      setIsLoading(false);
+      // Should be redirected by layout if not logged in, but good to handle
+      setError("User not authenticated."); 
+      return;
     }
 
+    if (!db) {
+      setIsLoading(false);
+      setError("Database service not available.");
+      return;
+    }
+    
+    const currentTechnicianId = firebaseUser.uid;
+    setIsLoading(true);
+    setError(null);
+
     // Fetch Technician details
-    const fetchTechnicianDetails = async (techId: string) => {
-        const techDocRef = doc(db, "technicians", techId);
+    const fetchTechnicianDetails = async () => {
+      const techDocRef = doc(db, "technicians", currentTechnicianId);
+      try {
         const techDocSnap = await getDoc(techDocRef);
         if (techDocSnap.exists()) {
-            setTechnician({ id: techDocSnap.id, ...techDocSnap.data() } as Technician);
+          setTechnician({ id: techDocSnap.id, ...techDocSnap.data() } as Technician);
         } else {
-            console.warn(`Technician with ID ${techId} not found in Firestore.`);
-            // Fallback or handle error - for now, try with mock tech if needed
-            // setTechnician(mockTechnicians.find(t => t.id === techId) || null);
+          console.warn(`Technician document with ID ${currentTechnicianId} (Firebase UID) not found in Firestore.`);
+          setError(`No technician profile found for your account. Please contact an administrator.`);
+          setTechnician(null);
         }
+      } catch (e) {
+        console.error("Error fetching technician details:", e);
+        setError("Could not load technician profile.");
+        setTechnician(null);
+      }
     };
     
-    fetchTechnicianDetails(currentTechnicianId); // Fetch details for the determined technician ID
+    fetchTechnicianDetails();
 
-    // Subscribe to jobs assigned to this technician
+    // Subscribe to jobs assigned to this technician (based on UID)
     const jobsQuery = query(
       collection(db, "jobs"),
       where("assignedTechnicianId", "==", currentTechnicianId),
       where("status", "not-in", ["Completed", "Cancelled"])
     );
 
-    const unsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
+    const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsForTech = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       
       jobsForTech.sort((a, b) => {
@@ -77,13 +78,16 @@ export default function TechnicianJobsPage() {
         return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
       });
       setAssignedJobs(jobsForTech);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching assigned jobs: ", error);
+      setIsLoading(false); // Set loading to false after jobs are fetched (or tech details fail)
+    }, (err) => {
+      console.error("Error fetching assigned jobs: ", err);
+      setError("Could not load assigned jobs.");
       setIsLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup subscription
+    return () => {
+      unsubscribeJobs();
+    };
 
   }, [firebaseUser, authLoading]);
 
@@ -92,18 +96,28 @@ export default function TechnicianJobsPage() {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Loading technician data...</p>
+        <p className="mt-4 text-muted-foreground">Loading your jobs...</p>
       </div>
     );
   }
   
-  if (!technician) {
+  if (error && !technician) { // If there was an error and no technician profile was found
+     return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
+        <UserX className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold">Access Denied or Profile Issue</h2>
+        <p className="text-muted-foreground mt-2">{error}</p>
+      </div>
+    );
+  }
+  
+  if (!technician) { // Fallback if somehow technician is null after loading without specific error
      return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold">Technician Not Found</h2>
+        <h2 className="text-xl font-semibold">Technician Profile Not Available</h2>
         <p className="text-muted-foreground mt-2">
-          Could not load technician data. Ensure a technician document exists in Firestore with ID: {MOCK_LOGGED_IN_TECHNICIAN_ID} (or logged in user's ID if configured).
+          Could not load your technician profile.
         </p>
       </div>
     );
@@ -115,7 +129,7 @@ export default function TechnicianJobsPage() {
       <Card className="mb-6 shadow-lg">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={technician.avatarUrl || `https://placehold.co/100x100.png?text=${technician.name[0]}`} alt={technician.name} data-ai-hint="person portrait" />
+            <AvatarImage src={technician.avatarUrl || `https://placehold.co/100x100.png?text=${technician.name[0]}`} alt={technician.name} data-ai-hint="person portrait"/>
             <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
           </Avatar>
           <div>
@@ -129,7 +143,9 @@ export default function TechnicianJobsPage() {
         <ListChecks className="text-primary" /> My Active Jobs ({assignedJobs.length})
       </h2>
 
-      {assignedJobs.length === 0 ? (
+      {error && <p className="text-destructive mb-4">{error}</p>}
+
+      {assignedJobs.length === 0 && !isLoading ? ( // Check isLoading here to avoid showing "no jobs" while loading
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">You have no active jobs assigned.</p>
@@ -180,3 +196,4 @@ export default function TechnicianJobsPage() {
     </div>
   );
 }
+

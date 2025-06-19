@@ -14,17 +14,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
-import AddEditJobDialog from './AddEditJobDialog'; // Import the new dialog
+import AddEditJobDialog from './AddEditJobDialog';
 
 interface JobListItemProps {
   job: Job;
   technicians: Technician[];
-  onEditJob: (job: Job) => void; // Callback for opening edit dialog
-  onAssignWithAI: (job: Job) => void; // Callback for AI assignment
-  onJobUpdated: (job: Job) => void; // Callback after job is updated by AddEditJobDialog
+  onAssignWithAI: (job: Job) => void; 
+  onJobUpdated: (job: Job) => void; 
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onEditJob, onAssignWithAI, onJobUpdated }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWithAI, onJobUpdated }) => {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -40,7 +39,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onEditJob, 
       case 'En Route': return <Zap className="text-orange-500" />;
       case 'In Progress': return <Clock className="text-indigo-500" />;
       case 'Completed': return <CheckCircle className="text-green-500" />;
-      case 'Cancelled': return <AlertTriangle className="text-red-500" />; // Or a specific cancel icon
+      case 'Cancelled': return <AlertTriangle className="text-red-500" />; 
       default: return <Briefcase />;
     }
   };

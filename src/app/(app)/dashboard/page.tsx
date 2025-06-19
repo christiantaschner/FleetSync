@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Job, Technician } from '@/types';
-import AddEditJobDialog from './components/AddEditJobDialog'; // Changed import
+import AddEditJobDialog from './components/AddEditJobDialog';
 import OptimizeRouteDialog from './components/optimize-route-dialog';
-import JobListItem from './components/job-list-item';
+import JobListItem from './components/JobListItem'; // Corrected import name
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
 import { db } from '@/lib/firebase';
@@ -63,7 +63,13 @@ export default function DashboardPage() {
         newJobs[existingJobIndex] = updatedJob;
         return newJobs;
       } else {
-        return [updatedJob, ...prevJobs]; // Add new job to the beginning
+        // Ensure new job is added to the beginning and all fields are present for Job type
+        const jobWithTimestamps : Job = {
+            ...updatedJob,
+            createdAt: updatedJob.createdAt || new Date().toISOString(), // Ensure createdAt exists
+            updatedAt: updatedJob.updatedAt || new Date().toISOString(), // Ensure updatedAt exists
+        };
+        return [jobWithTimestamps, ...prevJobs];
       }
     });
   };
@@ -81,7 +87,7 @@ export default function DashboardPage() {
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
     : { lat: 39.8283, lng: -98.5795 };
 
-  if (isLoading && jobs.length === 0) { // Show loader only if jobs aren't loaded yet
+  if (isLoading && jobs.length === 0) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -107,7 +113,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Hidden SmartJobAllocationDialog, triggered programmatically */}
       {selectedJobForAIAssign && (
         <SmartJobAllocationDialog
           isOpen={isAIAssignDialogOpen}
@@ -115,14 +120,11 @@ export default function DashboardPage() {
           jobToAssign={selectedJobForAIAssign}
           technicians={technicians}
           onJobAssigned={(assignedJob, updatedTechnician) => {
-            // Update job in local state
             setJobs(prevJobs => prevJobs.map(j => j.id === assignedJob.id ? assignedJob : j));
-            // Update technician in local state
             setTechnicians(prevTechs => prevTechs.map(t => t.id === updatedTechnician.id ? updatedTechnician : t));
-            setSelectedJobForAIAssign(null); // Clear selected job
+            setSelectedJobForAIAssign(null); 
           }}
         >
-          {/* This children prop is not rendered as dialog is controlled by isOpen */}
           <></> 
         </SmartJobAllocationDialog>
       )}
@@ -185,7 +187,7 @@ export default function DashboardPage() {
                 jobs={jobs} 
                 apiKey={googleMapsApiKey}
                 defaultCenter={defaultMapCenter}
-                defaultZoom={4} // Adjusted default zoom for broader view
+                defaultZoom={4} 
               />
             </CardContent>
           </Card>
@@ -202,7 +204,6 @@ export default function DashboardPage() {
                   key={job.id} 
                   job={job} 
                   technicians={technicians} 
-                  onEditJob={() => { /* Placeholder, dialog will be triggered from JobListItem */}}
                   onAssignWithAI={openAIAssignDialog}
                   onJobUpdated={handleJobAddedOrUpdated}
                 />

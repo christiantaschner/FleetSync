@@ -34,7 +34,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, technicians, apiKey, defaultCen
   const activeJobs = jobs.filter(job => job.status !== 'Completed' && job.status !== 'Cancelled');
 
   return (
-    <APIProvider apiKey={apiKey}>
+    <APIProvider apiKey={apiKey} libraries={['places']}>
       <div style={{ height: '450px', width: '100%' }} className="rounded-md overflow-hidden border">
         <Map 
             defaultCenter={defaultCenter} 
@@ -79,3 +79,4 @@ const MapView: React.FC<MapViewProps> = ({ jobs, technicians, apiKey, defaultCen
 };
 
 export default MapView;
+

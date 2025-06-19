@@ -12,6 +12,7 @@ const AllocateJobActionInputSchema = z.object({
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string(),
+      technicianName: z.string(), // Added technicianName
       isAvailable: z.boolean(),
       skills: z.array(z.string()),
       location: z.object({

@@ -56,6 +56,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ chi
 
     const availableAITechnicians: AITechnician[] = technicians.map(t => ({
       technicianId: t.id,
+      technicianName: t.name, // Added technician name
       isAvailable: t.isAvailable,
       skills: t.skills as string[],
       location: {

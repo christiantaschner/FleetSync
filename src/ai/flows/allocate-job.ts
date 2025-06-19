@@ -17,6 +17,7 @@ const AllocateJobInputSchema = z.object({
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
+      technicianName: z.string().describe('The name of the technician.'),
       isAvailable: z.boolean().describe('Whether the technician is currently available.'),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
       location: z
@@ -54,11 +55,12 @@ const prompt = ai.definePrompt({
 
   Technician Availability:
   {{#each technicianAvailability}}
-  - Technician ID: {{{technicianId}}}, Available: {{{isAvailable}}}, Skills: {{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}, Location: (Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}})
+  - Technician ID: {{{technicianId}}}, Name: {{{technicianName}}}, Available: {{{isAvailable}}}, Skills: {{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}, Location: (Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}})
   {{/each}}
 
   Suggest the most suitable technician ID and explain your reasoning.
-  Ensure that the outputted technician ID exists in the technicianAvailability array.
+  In your reasoning, refer to technicians by their name (e.g., "Technician Alice Smith is available...") instead of their ID.
+  Ensure that the outputted suggestedTechnicianId exists in the technicianAvailability array.
   `,
 });
 

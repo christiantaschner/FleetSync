@@ -90,3 +90,8 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Added for Google Maps Autocomplete z-index issue with dialogs */
+.pac-container {
+  z-index: 9999 !important;
+}

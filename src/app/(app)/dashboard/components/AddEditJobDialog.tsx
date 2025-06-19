@@ -39,8 +39,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
-  const [latitude, setLatitude] = useState(34.0522); // Default LA or 0
-  const [longitude, setLongitude] = useState(-118.2437); // Default LA or 0
+  const [latitude, setLatitude] = useState(34.0522); 
+  const [longitude, setLongitude] = useState(-118.2437);
 
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -62,59 +62,69 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       setPriority('Medium');
       setCustomerName('');
       setCustomerPhone('');
-      setLocationAddress('');
-      setLatitude(34.0522); // Default LA
-      setLongitude(-118.2437); // Default LA
+      setLocationAddress(''); // Ensure this is reset
+      setLatitude(34.0522); 
+      setLongitude(-118.2437);
     }
-  }, [job, isOpen]); // Re-populate/reset form when job or isOpen changes
+  }, [job, isOpen]);
 
 
   useEffect(() => {
+    let currentAutocomplete: google.maps.places.Autocomplete | null = null;
+    let placeChangedListener: google.maps.MapsEventListener | null = null;
+
     if (isOpen && addressInputRef.current && window.google && window.google.maps && window.google.maps.places) {
+      // Clear any existing autocomplete instance from the ref to avoid conflicts
       if (autocompleteRef.current) {
         google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        autocompleteRef.current = null;
       }
-      const newAutocomplete = new window.google.maps.places.Autocomplete(
+      
+      currentAutocomplete = new window.google.maps.places.Autocomplete(
         addressInputRef.current,
         { types: ['address'], fields: ['formatted_address', 'geometry.location'] }
       );
-      autocompleteRef.current = newAutocomplete;
+      autocompleteRef.current = currentAutocomplete; // Store the new instance in the ref
 
-      const placeChangedListener = newAutocomplete.addListener('place_changed', () => {
-        const place = newAutocomplete.getPlace();
-        if (place.geometry && place.geometry.location && place.formatted_address) {
+      placeChangedListener = currentAutocomplete.addListener('place_changed', () => {
+        const place = currentAutocomplete?.getPlace(); // Use the local variable currentAutocomplete
+        if (place && place.geometry && place.geometry.location && place.formatted_address) {
           setLocationAddress(place.formatted_address);
+          // The input's value is controlled by its `defaultValue` and `onChange` updating `locationAddress`
+          // So setting state `locationAddress` should re-render the input with the new value.
           setLatitude(place.geometry.location.lat());
           setLongitude(place.geometry.location.lng());
         } else {
-          console.warn("Autocomplete place not found or missing geometry.");
-          // User might be typing an address not in Google's DB or making a typo.
-          // We keep their typed address, but lat/lng might not be set or might be stale.
-          // For this version, we don't clear lat/lng, allowing submission with potentially old coords if user doesn't select.
+          console.warn("Autocomplete: Place not found or missing geometry.");
         }
       });
-
-      // Store the listener to remove it in cleanup
-      const cleanupRef = autocompleteRef.current;
-      const cleanupInputRef = addressInputRef.current;
-
-      return () => {
-        if (cleanupRef) {
-          google.maps.event.clearInstanceListeners(cleanupRef);
-        }
-        // Remove PAC container if it exists
-        const pacContainers = document.getElementsByClassName('pac-container');
-        for (let i = 0; i < pacContainers.length; i++) {
-          pacContainers[i].remove();
-        }
-        // Clear any listeners directly on the input that Autocomplete might have added
-        if (cleanupInputRef) {
-             google.maps.event.clearInstanceListeners(cleanupInputRef);
-        }
-        autocompleteRef.current = null; 
-      };
+    } else if (isOpen && (!window.google || !window.google.maps || !window.google.maps.places)) {
+        console.warn("Google Maps Places API not available when dialog opened. Autocomplete not initialized.");
     }
-  }, [isOpen]); // Rerun if dialog opens/closes
+
+    return () => {
+      // Cleanup when the dialog closes or before the effect re-runs
+      if (currentAutocomplete && placeChangedListener) {
+        google.maps.event.removeListener(placeChangedListener);
+      }
+      if (currentAutocomplete) {
+        google.maps.event.clearInstanceListeners(currentAutocomplete); // Clear all listeners on this specific instance
+      }
+      
+      // It's important to remove .pac-container elements that Google Maps might leave behind
+      const pacContainers = document.getElementsByClassName('pac-container');
+      for (let i = pacContainers.length - 1; i >= 0; i--) {
+        pacContainers[i].remove();
+      }
+
+      // If the instance in the ref is the one we created in this effect run, nullify the ref.
+      // This helps ensure that if the effect re-runs (e.g. isOpen changes rapidly),
+      // we don't try to clean up an instance that another effect run is using.
+      if (autocompleteRef.current === currentAutocomplete) {
+        autocompleteRef.current = null;
+      }
+    };
+  }, [isOpen]); // Only re-run when isOpen changes
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,14 +133,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Location Address.", variant: "destructive" });
       return;
     }
-    // Check if lat/lng are reasonable (not 0,0 or default if address is filled)
-    // For now, we allow submission; in a real app, more robust validation might be needed if an address is typed but not geocoded.
     if (locationAddress.trim() && (latitude === 0 && longitude === 0)) {
-        // This might happen if user types an address and doesn't select a suggestion and defaults were 0,0
-        // Or if the default LA coords are used with a custom address - this is less of an issue.
         console.warn("Submitting job with potentially default/invalid coordinates for the address: ", locationAddress);
     }
-
 
     setIsLoading(true);
 
@@ -150,12 +155,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 
     try {
       let finalJob: Job;
-      if (job) { // Editing existing job
+      if (job) {
         const jobDocRef = doc(db, "jobs", job.id);
         await updateDoc(jobDocRef, jobData);
         finalJob = { ...job, ...jobData, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJob.title}" has been updated.` });
-      } else { // Adding new job
+      } else {
         const newJobPayload = {
           ...jobData,
           status: 'Pending' as JobStatus,
@@ -230,12 +235,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
             <Input 
               id="jobLocationAddress" 
               ref={addressInputRef}
-              defaultValue={locationAddress} // Use defaultValue with ref-controlled Autocomplete
+              value={locationAddress} // Changed from defaultValue to value for better control with Autocomplete
               onChange={(e) => {
                   setLocationAddress(e.target.value);
-                  // If user types manually, current lat/lng might become stale.
-                  // For this version, we don't explicitly clear lat/lng here,
-                  // relying on user to pick from autocomplete for accurate coords.
               }}
               placeholder="Start typing address for suggestions..." 
               required

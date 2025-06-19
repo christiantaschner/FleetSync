@@ -1,62 +1,66 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
-import type { Technician, Job, AITechnician } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import type { Technician, Job, AITechnician, JobPriority } from '@/types';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
-import { db } from '@/lib/firebase'; // Import Firestore instance
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore'; // Import Firestore functions
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 interface SmartJobAllocationDialogProps {
-  children: React.ReactNode;
+  children?: React.ReactNode; // Trigger element, now optional as it can be controlled programmatically
+  jobToAssign: Job | null; // The job to assign
   technicians: Technician[];
-  setJobs: React.Dispatch<React.SetStateAction<Job[]>>; // To optimistically update UI
-  setTechnicians: React.Dispatch<React.SetStateAction<Technician[]>>; // To optimistically update UI
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  onJobAssigned: (job: Job, technician: Technician) => void;
 }
 
-const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ children, technicians, setJobs, setTechnicians }) => {
+const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ 
+    children, 
+    jobToAssign, 
+    technicians,
+    isOpen,
+    setIsOpen,
+    onJobAssigned
+}) => {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isLoadingAssign, setIsLoadingAssign] = useState(false);
-  const [jobDescription, setJobDescription] = useState('');
-  const [jobPriority, setJobPriority] = useState<'High' | 'Medium' | 'Low'>('Medium');
   const [suggestedTechnician, setSuggestedTechnician] = useState<AllocateJobOutput | null>(null);
-  const [jobTitle, setJobTitle] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [jobLocation, setJobLocation] = useState('');
+
+  // Reset suggestion when dialog is opened or jobToAssign changes
+  useEffect(() => {
+    if (isOpen) {
+      setSuggestedTechnician(null); 
+    }
+  }, [isOpen, jobToAssign]);
 
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!jobDescription.trim()) {
-      toast({ title: "Error", description: "Job description cannot be empty.", variant: "destructive" });
+  const handleGetAISuggestion = async () => {
+    if (!jobToAssign) {
+      toast({ title: "Error", description: "No job selected for assignment.", variant: "destructive" });
       return;
     }
-    setIsLoading(true);
+    setIsLoadingAI(true);
     setSuggestedTechnician(null);
 
     const availableAITechnicians: AITechnician[] = technicians.map(t => ({
       technicianId: t.id,
-      technicianName: t.name, // Added technician name
+      technicianName: t.name,
       isAvailable: t.isAvailable,
       skills: t.skills as string[],
       location: {
@@ -66,13 +70,13 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ chi
     }));
     
     const input: AllocateJobActionInput = {
-      jobDescription,
-      jobPriority,
+      jobDescription: jobToAssign.description,
+      jobPriority: jobToAssign.priority,
       technicianAvailability: availableAITechnicians,
     };
 
     const result = await allocateJobAction(input);
-    setIsLoading(false);
+    setIsLoadingAI(false);
 
     if (result.error) {
       toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
@@ -83,73 +87,52 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ chi
     }
   };
 
-  const handleAssignJob = async () => {
-    if (!suggestedTechnician || !db) return;
-    if (!jobTitle.trim() || !jobLocation.trim()) {
-         toast({ title: "Missing Information", description: "Please provide a Job Title and Location.", variant: "destructive" });
-        return;
-    }
+  const handleConfirmAssignJob = async () => {
+    if (!suggestedTechnician || !db || !jobToAssign) return;
 
     setIsLoadingAssign(true);
 
     try {
-      const newJobData = {
-        title: jobTitle || "New AI Assigned Job",
-        description: jobDescription,
-        priority: jobPriority,
-        status: 'Assigned' as Job['status'],
+      // Update existing job in Firestore
+      const jobDocRef = doc(db, "jobs", jobToAssign.id);
+      await updateDoc(jobDocRef, {
         assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
-        location: { latitude: 34.0522, longitude: -118.2437, address: jobLocation }, // TODO: Geocode address or allow lat/lon input
-        customerName: customerName || "N/A",
-        customerPhone: customerPhone || "N/A",
-        createdAt: new Date().toISOString(), // Or serverTimestamp() for Firestore native time
-        updatedAt: new Date().toISOString(),
-        notes: '',
-        photos: [],
-      };
-
-      // Add job to Firestore
-      const jobRef = await addDoc(collection(db, "jobs"), {
-        ...newJobData,
-        createdAt: serverTimestamp(), // Use server timestamp for creation
-        updatedAt: serverTimestamp(), // Use server timestamp for update
+        status: 'Assigned' as Job['status'],
+        updatedAt: serverTimestamp(),
       });
       
-      const newJobWithId: Job = { ...newJobData, id: jobRef.id, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-
+      const updatedJob: Job = { 
+        ...jobToAssign, 
+        assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
+        status: 'Assigned',
+        updatedAt: new Date().toISOString() 
+      };
 
       // Update technician in Firestore
       const techDocRef = doc(db, "technicians", suggestedTechnician.suggestedTechnicianId);
       await updateDoc(techDocRef, {
         isAvailable: false,
-        currentJobId: jobRef.id,
+        currentJobId: jobToAssign.id,
       });
-
-      // Optimistically update local state
-      setJobs(prevJobs => [newJobWithId, ...prevJobs]);
-      setTechnicians(prevTechs => 
-        prevTechs.map(t => 
-          t.id === suggestedTechnician.suggestedTechnicianId 
-            ? { ...t, isAvailable: false, currentJobId: jobRef.id } 
-            : t
-        )
-      );
       
-      const assignedTech = technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId);
-      toast({ title: "Job Assigned to Firestore", description: `Job "${newJobWithId.title}" assigned to ${assignedTech?.name || suggestedTechnician.suggestedTechnicianId}.`});
+      const assignedTechDetails = technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId);
+      if (!assignedTechDetails) throw new Error("Assigned technician details not found locally.");
+
+      const updatedTechnician: Technician = {
+        ...assignedTechDetails,
+        isAvailable: false,
+        currentJobId: jobToAssign.id,
+      };
+      
+      onJobAssigned(updatedJob, updatedTechnician);
+      
+      toast({ title: "Job Assigned", description: `Job "${updatedJob.title}" assigned to ${assignedTechDetails?.name}.`});
       
       setIsOpen(false);
-      // Reset form fields
-      setJobDescription('');
-      setJobPriority('Medium');
-      setJobTitle('');
-      setCustomerName('');
-      setCustomerPhone('');
-      setJobLocation('');
       setSuggestedTechnician(null);
 
     } catch (error) {
-      console.error("Error assigning job to Firestore: ", error);
+      console.error("Error assigning job via AI Dialog: ", error);
       toast({ title: "Firestore Error", description: "Could not assign job. Check console.", variant: "destructive" });
     } finally {
       setIsLoadingAssign(false);
@@ -160,56 +143,41 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ chi
     <Dialog open={isOpen} onOpenChange={(open) => {
         setIsOpen(open);
         if (!open) {
-            setSuggestedTechnician(null); // Reset suggestion when dialog closes
+            setSuggestedTechnician(null);
         }
     }}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {/* DialogTrigger is now handled by parent component */}
+      {/* <DialogTrigger asChild>{children}</DialogTrigger> */} 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Smart Job Allocation (AI)</DialogTitle>
-          <DialogDescription>
-            Let AI suggest the best technician for a new job based on availability, skills, and location. Fill in job details first.
-          </DialogDescription>
+          <DialogTitle className="font-headline">AI Job Assignment</DialogTitle>
+          {jobToAssign && (
+            <DialogDescription>
+              Review job details and get an AI suggestion for assigning: <strong>{jobToAssign.title}</strong> (Priority: {jobToAssign.priority}).
+            </DialogDescription>
+          )}
         </DialogHeader>
-        {/* Form for Job Details */}
-        <div className="space-y-3 py-1">
-            <div>
-                <Label htmlFor="jobTitleDialog">Job Title *</Label>
-                <Input id="jobTitleDialog" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+        
+        {jobToAssign && (
+            <div className="space-y-3 py-1 my-2 p-3 bg-muted/50 rounded-md border">
+                <div>
+                    <Label className="text-xs text-muted-foreground">Job Title</Label>
+                    <p className="font-semibold">{jobToAssign.title}</p>
+                </div>
+                 <div>
+                    <Label className="text-xs text-muted-foreground">Description</Label>
+                    <p className="text-sm line-clamp-3">{jobToAssign.description}</p>
+                </div>
+                <div>
+                    <Label className="text-xs text-muted-foreground">Priority</Label>
+                    <p className="text-sm">{jobToAssign.priority}</p>
+                </div>
             </div>
-            <div>
-                <Label htmlFor="jobDescriptionDialog">Job Description *</Label>
-                <Textarea id="jobDescriptionDialog" value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} placeholder="Describe the job requirements..." required />
-            </div>
-            <div>
-                <Label htmlFor="jobPriorityDialog">Job Priority *</Label>
-                <Select value={jobPriority} onValueChange={(value: 'High' | 'Medium' | 'Low') => setJobPriority(value)}>
-                <SelectTrigger id="jobPriorityDialog">
-                    <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <Label htmlFor="customerNameDialog">Customer Name</Label>
-                <Input id="customerNameDialog" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g., John Doe" />
-            </div>
-            <div>
-                <Label htmlFor="customerPhoneDialog">Customer Phone</Label>
-                <Input id="customerPhoneDialog" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
-            </div>
-            <div>
-                <Label htmlFor="jobLocationDialog">Job Location (Address) *</Label>
-                <Input id="jobLocationDialog" value={jobLocation} onChange={(e) => setJobLocation(e.target.value)} placeholder="e.g., 123 Main St, Anytown, USA" required/>
-            </div>
-        </div>
+        )}
 
-        <Button onClick={handleSubmit} disabled={isLoading || !jobTitle || !jobDescription || !jobLocation} className="w-full mt-2">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+
+        <Button onClick={handleGetAISuggestion} disabled={isLoadingAI || !jobToAssign} className="w-full mt-2">
+            {isLoadingAI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Get AI Suggestion
         </Button>
         
@@ -218,9 +186,9 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ chi
             <h3 className="text-lg font-semibold font-headline">AI Suggestion:</h3>
             <p><strong>Technician:</strong> {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || suggestedTechnician.suggestedTechnicianId}</p>
             <p><strong>Reasoning:</strong> {suggestedTechnician.reasoning}</p>
-            <Button onClick={handleAssignJob} className="w-full mt-3" variant="default" disabled={isLoadingAssign}>
+            <Button onClick={handleConfirmAssignJob} className="w-full mt-3" variant="default" disabled={isLoadingAssign}>
               {isLoadingAssign ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Assign Job to {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || suggestedTechnician.suggestedTechnicianId}
+              Assign Job to {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || 'Suggested Tech'}
             </Button>
           </div>
         )}
@@ -235,3 +203,4 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ chi
 };
 
 export default SmartJobAllocationDialog;
+

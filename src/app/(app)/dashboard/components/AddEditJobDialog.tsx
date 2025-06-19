@@ -43,7 +43,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [longitude, setLongitude] = useState(-118.2437);
 
   const addressInputRef = useRef<HTMLInputElement>(null);
-  // Removed autocompleteRef as it's managed locally within useEffect
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
     if (job) {
@@ -70,59 +70,31 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 
 
   useEffect(() => {
-    let autocompleteInstance: google.maps.places.Autocomplete | null = null;
-    let placeChangedListener: google.maps.MapsEventListener | null = null;
-
-    if (isOpen && addressInputRef.current) {
-      // Check if Google Maps API and Places Autocomplete are loaded
-      if (typeof window.google !== 'undefined' &&
-          typeof window.google.maps !== 'undefined' &&
-          typeof window.google.maps.places !== 'undefined' &&
-          typeof window.google.maps.places.Autocomplete !== 'undefined') {
-        
-        autocompleteInstance = new window.google.maps.places.Autocomplete(
-          addressInputRef.current,
-          { types: ['address'], fields: ['formatted_address', 'geometry.location'] }
-        );
-
-        placeChangedListener = autocompleteInstance.addListener('place_changed', () => {
-          const place = autocompleteInstance?.getPlace();
-          if (place && place.geometry && place.geometry.location && place.formatted_address) {
-            setLocationAddress(place.formatted_address);
-            setLatitude(place.geometry.location.lat());
-            setLongitude(place.geometry.location.lng());
-          } else {
-            // This can happen if user types something not recognized and hits enter,
-            // or if API returns place without geometry.
-            console.warn("Autocomplete: Place selected without geometry or formatted_address.", place);
-          }
-        });
-      } else {
-        console.warn("Google Maps Places API or Autocomplete service not available when dialog opened. Autocomplete not initialized.");
-      }
+    if (isOpen && addressInputRef.current && typeof window.google !== 'undefined' && window.google.maps && window.google.maps.places) {
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        addressInputRef.current,
+        { types: ['address'], fields: ['formatted_address', 'geometry.location'] }
+      );
+      autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current?.getPlace();
+        if (place && place.geometry && place.geometry.location) {
+          setLocationAddress(place.formatted_address || '');
+          setLatitude(place.geometry.location.lat());
+          setLongitude(place.geometry.location.lng());
+        }
+      });
     }
 
     return () => {
-      // Cleanup when the dialog closes or before the effect re-runs
-      if (placeChangedListener) {
-        // The listener object itself has a .remove() method
-        placeChangedListener.remove();
-      }
-      
-      // It's good practice to unbind all listeners from the Autocomplete instance
-      // before it might be garbage collected or the input element is removed.
-      // However, simply removing the `pac-container` is often the most impactful cleanup.
-      // If `autocompleteInstance` was created, Google's API might manage its own internal listeners
-      // when the associated input is no longer in the DOM.
-      // `google.maps.event.clearInstanceListeners(autocompleteInstance)` can be too broad
-      // if not handled carefully.
-
+      // Clean up listener and pac-container
+      // google.maps.event.clearInstanceListeners is tricky with Autocomplete instances directly.
+      // Removing .pac-container elements is a common way to help with cleanup.
       const pacContainers = document.getElementsByClassName('pac-container');
       for (let i = pacContainers.length - 1; i >= 0; i--) {
         pacContainers[i].remove();
       }
     };
-  }, [isOpen]); // Only re-run when isOpen changes
+  }, [isOpen]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,9 +103,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Location Address.", variant: "destructive" });
       return;
     }
-    // Heuristic check for default coordinates with a non-default address
+    
     const isDefaultCoords = latitude === 34.0522 && longitude === -118.2437;
-    const isDefaultAddressForExample = locationAddress === "123 Main St, Los Angeles, CA"; // Example if you had one
+    const isDefaultAddressForExample = locationAddress === "123 Main St, Los Angeles, CA"; 
     if (locationAddress.trim() && isDefaultCoords && !isDefaultAddressForExample) {
         console.warn("Submitting job with potentially default/invalid coordinates for the address: ", locationAddress, "Coords:", latitude, longitude);
     }
@@ -159,7 +131,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       if (job) {
         const jobDocRef = doc(db, "jobs", job.id);
         await updateDoc(jobDocRef, jobData);
-        finalJob = { ...job, ...jobData, updatedAt: new Date().toISOString() }; // Timestamps are server-side
+        finalJob = { ...job, ...jobData, updatedAt: new Date().toISOString() }; 
         toast({ title: "Job Updated", description: `Job "${finalJob.title}" has been updated.` });
       } else {
         const newJobPayload = {
@@ -175,8 +147,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         finalJob = { 
             ...newJobPayload, 
             id: docRef.id, 
-            createdAt: new Date().toISOString(), // Approximate client timestamp until server overwrites
-            updatedAt: new Date().toISOString()  // Approximate client timestamp
+            createdAt: new Date().toISOString(), 
+            updatedAt: new Date().toISOString()
         };
         toast({ title: "Job Added", description: `New job "${finalJob.title}" created with Pending status.` });
       }
@@ -236,13 +208,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
             <Input 
               id="jobLocationAddress" 
               ref={addressInputRef}
-              value={locationAddress} // Changed from defaultValue to value
+              defaultValue={locationAddress} 
               onChange={(e) => {
                   setLocationAddress(e.target.value);
-                  // If user types manually after selecting, lat/lng might become stale.
-                  // This is a common challenge. For simplicity, we assume selection is primary.
-                  // You might want to reset lat/lng here if address is manually changed
-                  // to indicate it's no longer tied to a selected Place.
               }}
               placeholder="Start typing address for suggestions..." 
               required

@@ -14,15 +14,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
-import type { Technician, Job, AITechnician, JobPriority } from '@/types';
+import type { Technician, Job, AITechnician } from '@/types';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 interface SmartJobAllocationDialogProps {
-  children?: React.ReactNode; // Trigger element, now optional as it can be controlled programmatically
-  jobToAssign: Job | null; // The job to assign
+  children?: React.ReactNode; 
+  jobToAssign: Job | null; 
   technicians: Technician[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -42,21 +42,13 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
   const [isLoadingAssign, setIsLoadingAssign] = useState(false);
   const [suggestedTechnician, setSuggestedTechnician] = useState<AllocateJobOutput | null>(null);
 
-  // Reset suggestion when dialog is opened or jobToAssign changes
-  useEffect(() => {
-    if (isOpen) {
-      setSuggestedTechnician(null); 
-    }
-  }, [isOpen, jobToAssign]);
-
-
   const handleGetAISuggestion = async () => {
     if (!jobToAssign) {
       toast({ title: "Error", description: "No job selected for assignment.", variant: "destructive" });
       return;
     }
     setIsLoadingAI(true);
-    setSuggestedTechnician(null);
+    // setSuggestedTechnician(null); // Keep previous suggestion if any, allow re-fetch if desired via button in future
 
     const availableAITechnicians: AITechnician[] = technicians.map(t => ({
       technicianId: t.id,
@@ -86,6 +78,23 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       setSuggestedTechnician(result.data);
     }
   };
+  
+  // Automatically fetch AI suggestion when dialog opens for a job, if no suggestion exists yet
+  useEffect(() => {
+    if (isOpen && jobToAssign && !suggestedTechnician && !isLoadingAI) {
+      handleGetAISuggestion();
+    }
+    // Reset suggestion if dialog is closed or job changes
+    if (!isOpen || (jobToAssign && suggestedTechnician && jobToAssign.id !== (technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.currentJobId) )) {
+        // This logic might be too complex or not perfectly reset.
+        // Simpler: reset only when dialog closes OR when jobToAssign changes AND dialog is open.
+    }
+    if(!isOpen) {
+        setSuggestedTechnician(null); // Clear suggestion when dialog closes
+    }
+
+  }, [isOpen, jobToAssign, suggestedTechnician, isLoadingAI]); // Dependencies for the effect
+
 
   const handleConfirmAssignJob = async () => {
     if (!suggestedTechnician || !db || !jobToAssign) return;
@@ -93,7 +102,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
     setIsLoadingAssign(true);
 
     try {
-      // Update existing job in Firestore
       const jobDocRef = doc(db, "jobs", jobToAssign.id);
       await updateDoc(jobDocRef, {
         assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
@@ -108,7 +116,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         updatedAt: new Date().toISOString() 
       };
 
-      // Update technician in Firestore
       const techDocRef = doc(db, "technicians", suggestedTechnician.suggestedTechnicianId);
       await updateDoc(techDocRef, {
         isAvailable: false,
@@ -125,11 +132,9 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       };
       
       onJobAssigned(updatedJob, updatedTechnician);
-      
       toast({ title: "Job Assigned", description: `Job "${updatedJob.title}" assigned to ${assignedTechDetails?.name}.`});
-      
       setIsOpen(false);
-      setSuggestedTechnician(null);
+      // setSuggestedTechnician(null); // Already handled by useEffect when isOpen becomes false
 
     } catch (error) {
       console.error("Error assigning job via AI Dialog: ", error);
@@ -142,18 +147,16 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) {
-            setSuggestedTechnician(null);
-        }
+        // if (!open) { // Moved to useEffect for better control
+        //     setSuggestedTechnician(null); 
+        // }
     }}>
-      {/* DialogTrigger is now handled by parent component */}
-      {/* <DialogTrigger asChild>{children}</DialogTrigger> */} 
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-headline">AI Job Assignment</DialogTitle>
           {jobToAssign && (
             <DialogDescription>
-              Review job details and get an AI suggestion for assigning: <strong>{jobToAssign.title}</strong> (Priority: {jobToAssign.priority}).
+              Review job details. AI is suggesting the best technician for: <strong>{jobToAssign.title}</strong> (Priority: {jobToAssign.priority}).
             </DialogDescription>
           )}
         </DialogHeader>
@@ -175,12 +178,21 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             </div>
         )}
 
-
+        {/* Button to manually trigger AI suggestion can be hidden or removed if auto-fetch is preferred */}
+        {/* 
         <Button onClick={handleGetAISuggestion} disabled={isLoadingAI || !jobToAssign} className="w-full mt-2">
             {isLoadingAI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Get AI Suggestion
-        </Button>
+        </Button> 
+        */}
         
+        {isLoadingAI && !suggestedTechnician && (
+            <div className="flex items-center justify-center flex-col my-4 p-4 bg-secondary rounded-md">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                <p className="text-sm text-muted-foreground">Fetching AI suggestion...</p>
+            </div>
+        )}
+
         {suggestedTechnician && (
           <div className="mt-4 p-4 bg-secondary rounded-md">
             <h3 className="text-lg font-semibold font-headline">AI Suggestion:</h3>
@@ -203,4 +215,3 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
 };
 
 export default SmartJobAllocationDialog;
-

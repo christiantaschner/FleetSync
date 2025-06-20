@@ -1,15 +1,15 @@
 
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus } from 'lucide-react'; // Added UserPlus
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon } from 'lucide-react'; // Added UserPlus, MapIcon
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Job, Technician, JobStatus, JobPriority } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
-// import OptimizeRouteDialog from './components/optimize-route-dialog'; // Removed, button is replaced
-import SelectPendingJobDialog from './components/SelectPendingJobDialog'; // New Dialog
+import OptimizeRouteDialog from './components/optimize-route-dialog'; // Import OptimizeRouteDialog
+import SelectPendingJobDialog from './components/SelectPendingJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
@@ -19,7 +19,7 @@ import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { Label } from '@/components/ui/label';
-import AddEditTechnicianDialog from './components/AddEditTechnicianDialog'; // Import AddEditTechnicianDialog
+import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
   
   const [isSelectPendingJobDialogOpen, setIsSelectPendingJobDialogOpen] = useState(false);
+  const [isOptimizeRouteDialogOpen, setIsOptimizeRouteDialogOpen] = useState(false); // State for OptimizeRouteDialog
 
 
   const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
@@ -54,17 +55,16 @@ export default function DashboardPage() {
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       setJobs(jobsData);
-      // Keep isLoading true until technicians are also fetched or fail
     }, (error) => {
       console.error("Error fetching jobs: ", error);
       setIsLoading(false);
     });
 
-    const techniciansQuery = query(collection(db, "technicians"), orderBy("name", "asc")); // Order by name
+    const techniciansQuery = query(collection(db, "technicians"), orderBy("name", "asc"));
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
       setTechnicians(techniciansData);
-      setIsLoading(false); // Set loading to false after both are attempted
+      setIsLoading(false);
     }, (error) => {
       console.error("Error fetching technicians: ", error);
       setIsLoading(false);
@@ -109,7 +109,6 @@ export default function DashboardPage() {
         newTechs[existingTechIndex] = updatedTechnician;
         return newTechs;
       } else {
-         // Ensure timestamps if not already present (though AddEditTechnicianDialog should handle this from Firestore response)
         return [updatedTechnician, ...prevTechs];
       }
     });
@@ -144,6 +143,7 @@ export default function DashboardPage() {
 
   const activeJobs = jobs.filter(job => job.status === 'Assigned' || job.status === 'In Progress' || job.status === 'En Route');
   const pendingJobs = jobs.filter(job => job.status === 'Pending');
+  const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
@@ -178,7 +178,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline">Dispatcher Dashboard</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
             <AddEditJobDialog technicians={technicians} onJobAddedOrUpdated={handleJobAddedOrUpdated}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
@@ -191,6 +191,11 @@ export default function DashboardPage() {
             >
               <UserPlus className="mr-2 h-4 w-4" /> AI Assign Task
             </Button>
+            <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+              <Button variant="outline" disabled={busyTechnicians.length === 0}>
+                <MapIcon className="mr-2 h-4 w-4" /> Manual AI Re-Optimization
+              </Button>
+            </OptimizeRouteDialog>
           </div>
         </div>
 
@@ -213,7 +218,6 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
-            {/* Empty Fragment because DialogTrigger is inside SmartJobAllocationDialog or controlled externally */}
             <></> 
           </SmartJobAllocationDialog>
         )}
@@ -259,7 +263,6 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Next Up Technicians</CardTitle>
-               {/* <UserClock className="h-4 w-4 text-muted-foreground" /> Icon removed due to build error */}
             </CardHeader>
             <CardContent>
                <div className="text-2xl font-bold">-</div>
@@ -331,7 +334,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {isLoading && jobs.length === 0 && technicians.length === 0 ? ( // Check all data sources for initial load
+                {isLoading && jobs.length === 0 && technicians.length === 0 ? ( 
                   <div className="flex justify-center items-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
@@ -388,3 +391,5 @@ export default function DashboardPage() {
     </APIProvider>
   );
 }
+
+    

@@ -14,7 +14,7 @@ interface RoadmapItemProps {
   description: string;
   icon: React.ElementType;
   status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision';
-  developerBrief?: DeveloperBrief; // Not displayed, for internal notes
+  developerBrief?: DeveloperBrief;
 }
 
 interface DeveloperBrief {
@@ -57,38 +57,48 @@ const roadmapFeatures = {
         coreFunctionality: [
           "Continuously monitor job statuses, technician locations, and new job arrivals.",
           "Trigger re-optimization based on events: new urgent job, job completion (early/late), technician becomes unavailable, significant traffic changes (future).",
-          "AI considers job priority, skills required, technician's current load, travel time, ETAs, and crucially, any pre-committed customer appointment windows (`Job.scheduledTime`)."
+          "AI considers job priority, skills required, technician's current load, travel time, ETAs, and crucially, any pre-committed customer appointment windows (`Job.scheduledTime`).",
+          "Handle technician unavailability (e.g., sickness): System to unassign their active jobs and trigger re-allocation/re-optimization for these jobs across the remaining available and qualified workforce.",
+          "Process new high-priority emergency jobs by finding the best-suited technician, potentially interrupting their current task, and re-optimizing schedules for them and any cascaded impacts on other technicians or jobs.",
+          "Allow dispatchers to manually trigger a full re-evaluation for a region or specific group of technicians if a major unforeseen event occurs (e.g., widespread traffic incident not yet in system)."
         ],
         dataModels: [
-          "Relies heavily on real-time Job and Technician data (location, status, skills, currentJobId, estimatedDuration, scheduledTime).",
-          "Potentially a temporary 'optimization_queue' for pending re-optimization requests if system is under load."
+          "Relies heavily on real-time Job and Technician data (location, status, skills, currentJobId, estimatedDuration, scheduledTime, isAvailable).",
+          "May need a temporary 'optimization_queue' for pending re-optimization requests if system is under load.",
+          "Technician model may need a temporary 'outOfServiceReason' field if dispatcher marks them as sick."
         ],
         aiComponents: [
-          "Main Genkit flow: `dynamicReoptimizerFlow`.",
+          "Main Genkit flow: `dynamicReoptimizerFlow` (or similar name).",
           "Gemini model for complex multi-constraint scheduling and routing.",
-          "Input: Current state of all relevant jobs & technicians, event trigger.",
-          "Output: Updated job sequences for affected technicians, revised ETAs."
+          "Input: Current state of all relevant jobs & technicians, event trigger (e.g., 'technician_unavailable', 'new_emergency_job', 'manual_request').",
+          "Output: Updated job sequences for affected technicians, revised ETAs, notifications of changes."
         ],
         uiUx: [
-          "Dispatcher dashboard: Map updates in real-time, notifications for significant changes.",
-          "Technician mobile app: Receives updated route/job sequence with notifications."
+          "Dispatcher dashboard: Map updates in real-time, notifications for significant changes or conflicts requiring manual review.",
+          "Interface for dispatcher to mark a technician as unavailable (e.g., sick for the day), which automatically triggers unassignment and re-allocation of their jobs.",
+          "Clear visualization of AI-suggested changes before dispatcher confirms (for major re-optimizations, minor ones might be automatic).",
+          "Technician mobile app: Receives updated route/job sequence with clear notifications and reasons for changes if significant."
         ],
         integrationPoints: [
-          "Extends/integrates with `optimizeRoutesFlow` and `allocateJobFlow` concepts.",
-          "Job status updates from technician app are critical triggers.",
-          "Traffic API (future) for real-time data."
+          "Extends/integrates with `optimizeRoutesFlow` and `allocateJobFlow` concepts but operates at a more global and continuous level.",
+          "Job status updates and availability changes from technician app are critical triggers.",
+          "Traffic API (future) for real-time data.",
+          "Links to `AddEditTechnicianDialog` for marking technicians unavailable.",
+          "Links to `AddEditJobDialog` for flagging new jobs as emergencies."
         ],
         technicalChallenges: [
-          "Handling high frequency of events and ensuring rapid re-optimization.",
-          "Minimizing disruption to technicians already en route.",
-          "Algorithm complexity for balancing multiple competing factors (priority, travel time, technician load, fixed appointments)."
+          "Handling high frequency of events and ensuring rapid re-optimization without overwhelming the system or the user.",
+          "Minimizing disruption to technicians already en route unless absolutely necessary (e.g., for a higher priority emergency).",
+          "Algorithm complexity for balancing multiple competing factors (priority, travel time, technician load, fixed appointments, skills).",
+          "Ensuring dispatcher override capabilities and clear communication of AI-driven changes."
         ],
         successMetrics: [
           "Reduced average travel time per job.",
           "Increased number of jobs completed per technician per day.",
           "Faster response times for emergency jobs.",
           "Reduced idle time for technicians.",
-          "Adherence to customer-scheduled appointment times."
+          "High adherence to customer-scheduled appointment times.",
+          "Reduction in dispatcher stress due to automated handling of common disruptions."
         ]
       }
     },
@@ -567,11 +577,6 @@ const roadmapFeatures = {
           "Genkit flow for `suggestPartsForJobFlow` (Input: job description, equipment type/history. Output: list of suggested parts).",
           "`allocateJobPrompt` could be enhanced to consider parts availability as a factor if van stock data is reliable."
         ],
-        uiUx: [
-          "Mobile App: Van stock management interface (search parts, update quantities). View required/suggested parts for current job.",
-          "Dispatcher Dashboard: View overall parts list. Potentially view technician van stocks (read-only). Add required parts during job creation.",
-          "Alerts if a critical part is missing from van stock for an assigned job."
-        ],
         integrationPoints: [
           "Data from 'AI-Assisted Digital Protocols' (parts used) can help refine AI parts suggestions and track actual consumption.",
           "CRM/Equipment History: informs parts suggestions (e.g., common parts for specific models).",
@@ -944,3 +949,4 @@ export default function RoadmapPage() {
   );
 }
 
+    

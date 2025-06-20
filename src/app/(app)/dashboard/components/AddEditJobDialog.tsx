@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,10 +28,11 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-        'input-id'?: string; 
+        'input-id'?: string;
         placeholder?: string;
-        value?: string; 
-        types?: string; 
+        value?: string; // Web component's own value prop
+        types?: string;
+        // We will not use 'ref' directly on this for this diagnostic step
       }, HTMLElement>;
     }
   }
@@ -54,11 +55,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
-  // For this diagnostic, these are primarily for form submission,
-  // hoping the gmp-place-autocomplete-element populates them if it becomes interactive.
+  // React state for location - for diagnostic, we will not directly bind this to the web component's value prop
   const [locationAddress, setLocationAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+
+  // Ref for the web component, primarily to attach event listeners if needed later
+  const placeAutocompleteRef = useRef<HTMLElement | null>(null);
 
 
   useEffect(() => {
@@ -69,11 +72,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        // For this diagnostic, we're not programmatically setting the gmp-place-autocomplete-element's value.
-        // We just initialize React's state for these.
-        setLocationAddress(job.location.address || '');
+        // For diagnostic, do not programmatically set the web component's value initially from React state
+        // We want to see if it's interactive on its own
+        setLocationAddress(job.location.address || ''); // Keep React state updated
         setLatitude(job.location.latitude);
         setLongitude(job.location.longitude);
+
       } else {
         // Reset for new job
         setTitle('');
@@ -89,20 +93,56 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   }, [job, isOpen]);
 
 
+  // Diagnostic: Attach event listener after component mounts, if the element is found
+  useEffect(() => {
+    const autocompleteElement = document.getElementById('gmp-address-input-element-diagnostic') as HTMLElement & { value?: string; place?: any; };
+    
+    if (autocompleteElement) {
+        placeAutocompleteRef.current = autocompleteElement; // Assign to ref if needed for other logic
+        
+        const handlePlaceChange = (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const place = customEvent.detail?.place; // Access place from event.detail
+            if (place && place.adrFormatAddress && place.location) {
+                setLocationAddress(place.adrFormatAddress || '');
+                setLatitude(place.location.lat() as number);
+                setLongitude(place.location.lng() as number);
+            }
+        };
+
+        const handleInputChange = (event: Event) => {
+            const target = event.target as HTMLInputElement;
+            setLocationAddress(target.value); // Keep React state in sync
+            // If user types after selecting, clear coordinates
+            setLatitude(null);
+            setLongitude(null);
+        };
+
+        autocompleteElement.addEventListener('gmp-placechange', handlePlaceChange);
+        // Note: 'input' event might not fire on all web components as expected.
+        // If issues persist, consider if gmp-place-autocomplete-element has a specific event for value changes.
+        // For now, assuming it behaves like a standard input or fires 'gmp-placechange' for user input too (needs verification).
+        autocompleteElement.addEventListener('input', handleInputChange); 
+
+
+        return () => {
+            autocompleteElement.removeEventListener('gmp-placechange', handlePlaceChange);
+            autocompleteElement.removeEventListener('input', handleInputChange);
+        };
+    }
+  }, [isOpen]); // Re-run if dialog opens/closes to re-attach if element is re-created
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
       return;
     }
-    // In this diagnostic mode, locationAddress, latitude, longitude would need to be populated
-    // by manually adding event listeners if the field becomes interactive and we add that logic back.
-    // For now, this part of the submission logic is incomplete until interactivity is confirmed.
+    
+    // For diagnostic, we'll rely on React's state which should have been updated by event listeners
     if (!locationAddress.trim() && (latitude === null || longitude === null)) {
-        // Temporarily relax this validation if field is not interactive.
-        // toast({ title: "Location Missing", description: "Please enter and select a job location (if field becomes active).", variant: "destructive"});
-        // return;
-        console.warn("Submitting without location as field might not be interactive.");
+        // Relax this validation for now if field is not interactive
+        console.warn("Submitting possibly without location data if input field is not working.");
     }
 
     setIsLoading(true);
@@ -114,7 +154,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        // Use React's state, which might be empty/null if the gmp-element is not working
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0,
         address: locationAddress 
@@ -158,6 +197,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       setIsLoading(false);
     }
   };
+  
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -201,21 +241,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           </div>
           <div>
             <Label htmlFor="location-input-for-gmp-label">Job Location (Address) *</Label>
-            {/* Extremely simplified gmp-place-autocomplete-element for diagnostic purposes */}
-            {/* The `input-id` here is a prop for the web component, not the DOM ID of this element itself. */}
-            {/* It's for an internal input the web component might use, or for accessibility. */}
+            {/* For diagnostic: Using the web component with minimal React interaction */}
             <gmp-place-autocomplete-element
-                id="gmp-address-input-element-diagnostic" // Standard HTML id for the custom element itself
-                input-id="location-input-internal" // Prop for the web component's internal input if it uses one
+                id="gmp-address-input-element-diagnostic"
+                input-id="location-input-internal-diagnostic" // Unique internal ID for this diagnostic version
                 placeholder="Start typing address..."
-                types="address" // Restrict to addresses
-                // NO value prop, NO ref, NO key prop for this diagnostic
-                // NO event listeners attached via React for this diagnostic
+                types="address"
+                // NO value prop from React state for this diagnostic step
+                // NO ref prop for this diagnostic step
+                // NO key prop for this diagnostic step
                 className={cn(
                     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 )}
              />
-            <p className="text-xs text-muted-foreground mt-1">Enter address for suggestions.</p>
+            <p className="text-xs text-muted-foreground mt-1">Enter address for suggestions. If field is not clickable, check environment errors.</p>
           </div>
 
           <Button type="submit" disabled={isLoading} className="w-full">
@@ -234,4 +273,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 };
 
 export default AddEditJobDialog;
+    
     

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays // Added CalendarDays
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog // Added Cog for Skill Library Mgt
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -153,6 +153,84 @@ const roadmapFeatures = {
           "Improved dispatcher confidence and control over AI-assisted planning.",
           "Better overall schedule coherence and optimization.",
           "High adoption rate of the visual scheduling interface."
+        ]
+      }
+    },
+    {
+      title: "Dynamic Skill Library Management",
+      description: "Allows dispatchers to define and manage a central library of technician skills (e.g., specific certifications, equipment expertise). This list populates selection options when editing technicians and is used by AI for smarter job allocation. Ensures consistent skill terminology and makes skill-based assignment more robust.",
+      icon: Cog, 
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Dispatcher UI (e.g., a new dialog or settings page) to add, edit, and delete skills in a master list.",
+          "Each skill to have a name and optionally a description or category.",
+          "The 'Add/Edit Technician' dialog will use this dynamic list to populate skill selection checkboxes (instead of a hardcoded list).",
+          "Store the master skill list in Firestore."
+        ],
+        dataModels: [
+          "New Firestore collection: `skillsLibrary` (documents with fields like `skillName: string`, `description?: string`, `category?: string`, `createdAt`, `updatedAt`).",
+          "Technician documents (`technicians.skills`) will store an array of skill names (or skill IDs if preferred for stricter linking) selected from this library."
+        ],
+        aiComponents: [
+          "AI job allocation flows (`allocateJobFlow`) will receive the technician's skills. Ensuring these skills originate from a standardized library improves matching accuracy if jobs also specify skills from this library."
+        ],
+        uiUx: [
+          "A dedicated interface for managing the skill library (e.g., table view with add/edit/delete actions).",
+          "`AddEditTechnicianDialog`: Skill checkboxes populated dynamically from `skillsLibrary`."
+        ],
+        integrationPoints: [
+          "Directly enhances `AddEditTechnicianDialog`.",
+          "Provides foundational data for 'Smart Skill Matching' (HVAC specific, but concept is general).",
+          "Technician profiles and job requirements would refer to skills from this library."
+        ],
+        technicalChallenges: [
+          "Ensuring data integrity if skill names are edited/deleted and technicians already have those skills assigned (consider soft deletes or update references).",
+          "User experience for managing a potentially long list of skills."
+        ],
+        successMetrics: [
+          "Increased consistency in skill assignment.",
+          "Easier for dispatchers to manage and update available skills.",
+          "Improved accuracy of AI skill matching for job allocation.",
+          "Reduced errors from typos or inconsistent skill naming."
+        ]
+      }
+    },
+     {
+      title: "Technician Profile Viewing & Change Suggestions",
+      description: "Enable technicians to view their own detailed profiles (including skills, certifications, contact info) via the mobile app. Implement a system for them to suggest changes or additions (e.g., new skill acquired), which dispatchers can review and approve. Improves data accuracy and empowers technicians.",
+      icon: User, 
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Technician Mobile App: A new 'My Profile' section displaying all their data stored in the `technicians` collection.",
+          "Interface for technicians to submit change requests (e.g., 'Add skill: Advanced Heat Pump Diagnostics', 'Update phone number').",
+          "Dispatcher Dashboard: A notification system or dedicated area to review and approve/reject these suggestions.",
+          "Approved suggestions update the technician's Firestore document."
+        ],
+        dataModels: [
+          "Potentially a new Firestore collection: `profileChangeRequests` (fields: `requestId`, `technicianId`, `requestedChanges: object`, `status: 'pending' | 'approved' | 'rejected'`, `requestDate`, `reviewDate?`, `reviewerId?`).",
+          "Updates to the `technicians` collection upon approval."
+        ],
+        aiComponents: ["N/A for this feature directly, but accurate technician profiles benefit AI allocation."],
+        uiUx: [
+          "Mobile App: Clear, read-only display of profile data. Simple form for submitting change suggestions.",
+          "Dispatcher Dashboard: List of pending suggestions with diffs or clear indication of requested changes. Approve/Reject buttons."
+        ],
+        integrationPoints: [
+          "Relies on Firebase Authentication for identifying the technician.",
+          "Updates `technicians` data used by all other parts of the system."
+        ],
+        technicalChallenges: [
+          "Designing a secure and auditable approval workflow.",
+          "Handling concurrent edits if a dispatcher modifies a profile while a suggestion is pending.",
+          "User experience for both technicians submitting suggestions and dispatchers reviewing them."
+        ],
+        successMetrics: [
+          "More accurate and up-to-date technician profiles.",
+          "Increased technician engagement and ownership of their data.",
+          "Reduced administrative burden on dispatchers for routine profile updates.",
+          "Improved data quality feeding into AI systems."
         ]
       }
     },
@@ -582,7 +660,7 @@ const roadmapFeatures = {
         dataModels: [
           "`Technician` type: add `certifications: string[]` or `hvacSkills: { skillName: string, level?: string, expiryDate?: Date }[]` for more structured data.",
           "`Job` type: add `requiredSkills: string[]` or `requiredCertifications: string[]`.",
-          "Potentially a master list `SkillOrCertification` collection for standardized entries."
+          "Potentially a master list `SkillOrCertification` collection for standardized entries (integrates with Dynamic Skill Library Management)."
         ],
         aiComponents: [
           "`allocateJobPrompt` in `allocate-job.ts` needs to be updated to receive and prioritize these skills/certifications.",
@@ -590,15 +668,16 @@ const roadmapFeatures = {
         ],
         uiUx: [
           "Dispatcher Dashboard: Display skills/certs prominently on technician cards/views. Allow filtering technicians by skills/certs.",
-          "Job Creation: Easy way to select/input required skills for a job.",
+          "Job Creation: Easy way to select/input required skills for a job (from skill library).",
           "Technician Mobile App: Display their own skills/certs."
         ],
         integrationPoints: [
           "Core to `allocateJobAction` and the underlying AI flow.",
-          "Could influence FTFR analytics (e.g., do jobs with correctly skilled techs have higher FTFR?)."
+          "Could influence FTFR analytics (e.g., do jobs with correctly skilled techs have higher FTFR?).",
+          "Uses the 'Dynamic Skill Library Management' feature."
         ],
         technicalChallenges: [
-          "Defining a comprehensive yet manageable list of relevant HVAC/SHK skills and certifications for the German/European market.",
+          "Defining a comprehensive yet manageable list of relevant HVAC/SHK skills and certifications for the German/European market (can be managed via Skill Library).",
           "Ensuring dispatchers accurately input required skills for jobs."
         ],
         successMetrics: [
@@ -1002,6 +1081,4 @@ export default function RoadmapPage() {
     </div>
   );
 }
-    
-
     

@@ -87,7 +87,7 @@ export default function DashboardPage() {
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
-    : { lat: 39.8283, lng: -98.5795 };
+    : { lat: 39.8283, lng: -98.5795 }; // Default to center of US if no technicians
 
   if (isLoading && jobs.length === 0 && !googleMapsApiKey) { 
     return (
@@ -144,6 +144,7 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
+            {/* Empty fragment because children are required but this dialog is controlled by state */}
             <></> 
           </SmartJobAllocationDialog>
         )}

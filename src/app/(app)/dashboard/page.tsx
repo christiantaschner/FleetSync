@@ -22,6 +22,8 @@ import { Label } from '@/components/ui/label';
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
+const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -35,7 +37,7 @@ export default function DashboardPage() {
   const [isSelectPendingJobDialogOpen, setIsSelectPendingJobDialogOpen] = useState(false);
 
 
-  const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES>(ALL_STATUSES);
+  const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
   const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -108,7 +110,15 @@ export default function DashboardPage() {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
-      const statusMatch = statusFilter === ALL_STATUSES || job.status === statusFilter;
+      let statusMatch = false;
+      if (statusFilter === ALL_STATUSES) {
+        statusMatch = true;
+      } else if (statusFilter === UNCOMPLETED_JOBS_FILTER) {
+        statusMatch = UNCOMPLETED_STATUSES_LIST.includes(job.status);
+      } else {
+        statusMatch = job.status === statusFilter;
+      }
+      
       const priorityMatch = priorityFilter === ALL_PRIORITIES || job.priority === priorityFilter;
       return statusMatch && priorityMatch;
     });
@@ -280,11 +290,15 @@ export default function DashboardPage() {
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <div className="flex-1 sm:flex-initial">
                             <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
-                            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES)}>
+                            <Select 
+                                value={statusFilter} 
+                                onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
+                            >
                                 <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
                                     <SelectValue placeholder="Filter by Status" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
                                     <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
                                     {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                 </SelectContent>
@@ -351,4 +365,6 @@ export default function DashboardPage() {
     </APIProvider>
   );
 }
+    
+
     

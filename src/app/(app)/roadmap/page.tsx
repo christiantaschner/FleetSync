@@ -119,7 +119,7 @@ const roadmapFeatures = {
     },
     {
       title: "Intelligent Parts & Van Stock Management (HVAC/SHK)",
-      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage). Technicians get better visibility into needed parts for jobs and potentially their van stock, minimizing repeat visits and reducing their frustration from missing components for HVAC/SHK tasks.",
+      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage). Technicians get better visibility into needed parts for jobs and their van stock, minimizing repeat visits and reducing their frustration from missing components for HVAC/SHK tasks.",
       icon: Truck,
       status: "Planned"
     },
@@ -130,8 +130,8 @@ const roadmapFeatures = {
       status: "Planned"
     },
     {
-      title: "Digital On-Site Protocols & Checklists (HVAC/SHK)",
-      description: "Provide customizable digital forms for technicians to complete on-site (e.g., for maintenance, gas inspections, complex repairs). This streamlines their data entry, reduces manual paperwork, and ensures all necessary information, measurements, and photos are captured consistently, addressing a key technician pain point of cumbersome paperwork.",
+      title: "AI-Assisted Digital Protocols & Documentation (HVAC/SHK)",
+      description: "Provide customizable digital forms and protocols. AI will assist with documentation through features like voice-to-text for notes, automatic extraction of key information from speech or text, and smart suggestions for common entries. This drastically reduces manual data entry for service reports, maintenance logs, and checklists (e.g., for gas inspections, complex repairs), ensuring consistent and accurate information capture while minimizing the technician's time spent on cumbersome paperwork.",
       icon: FileText,
       status: "Planned"
     },
@@ -143,13 +143,13 @@ const roadmapFeatures = {
     },
     {
       title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
-      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries (e.g., 'What does error E47 mean?'), AI-guided diagnostics based on symptoms, and contextual information suggestions based on the job type. This empowers technicians to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls, directly addressing a major technician pain point.",
+      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries (e.g., 'What does error E47 mean?'), AI-guided diagnostics based on symptoms, and contextual information suggestions based on the job type. This empowers technicians to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls, directly addressing a major technician pain point of difficult on-site problem-solving.",
       icon: BookOpen,
       status: "Planned"
     },
     {
       title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration from lack of information.",
+      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration from lack of information about the customer or equipment.",
       icon: ClipboardList,
       status: "Consideration"
     },

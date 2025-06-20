@@ -23,6 +23,28 @@ import type { Job, JobPriority, JobStatus } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// TypeScript declaration for the Google Maps Place Autocomplete web component
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
+        value?: string;
+        placeholder?: string;
+        id?: string;
+        name?: string;
+        // Add other specific props if known and needed
+      }, HTMLElement>;
+    }
+  }
+}
+
+interface PlaceAutocompleteElement extends HTMLElement {
+  value: string | null;
+  getPlace: () => Promise<google.maps.places.PlaceResult | null>;
+  // Add other properties or methods if needed based on the web component's API
+}
+
+
 interface AddEditJobDialogProps {
   children: React.ReactNode;
   job?: Job;
@@ -41,9 +63,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerPhone, setCustomerPhone] = useState('');
   
   const [locationAddress, setLocationAddress] = useState('');
-  // Latitude and Longitude will not be auto-filled with a standard input
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+
+  const placeAutocompleteRef = useRef<PlaceAutocompleteElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -56,6 +79,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setLocationAddress(job.location.address || '');
         setLatitude(job.location.latitude);
         setLongitude(job.location.longitude);
+        // Programmatically set value for gmp-place-autocomplete-element if editing
+        if (placeAutocompleteRef.current) {
+          placeAutocompleteRef.current.value = job.location.address || '';
+        }
       } else {
         // Reset for new job
         setTitle('');
@@ -66,9 +93,58 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setLocationAddress('');
         setLatitude(null);
         setLongitude(null);
+        if (placeAutocompleteRef.current) {
+          placeAutocompleteRef.current.value = '';
+        }
       }
     }
   }, [job, isOpen]);
+
+  useEffect(() => {
+    const autocompleteElement = placeAutocompleteRef.current;
+    if (!autocompleteElement || !isOpen) return;
+
+    const handlePlaceSelect = async (event: Event) => {
+      // The event for gmp-place-autocomplete-element might be 'gmp-placeselect'
+      // or another custom event. Check the component's documentation.
+      // Assuming it's 'gmp-placeselect' and the element has a getPlace() method
+      try {
+        const place = await autocompleteElement.getPlace();
+        if (place && place.formatted_address) {
+          setLocationAddress(place.formatted_address);
+          if (place.geometry && place.geometry.location) {
+            setLatitude(place.geometry.location.lat());
+            setLongitude(place.geometry.location.lng());
+          } else {
+            setLatitude(null);
+            setLongitude(null);
+          }
+        }
+      } catch (error) {
+        console.error("Error getting place details:", error);
+        toast({ title: "Address Error", description: "Could not fetch place details.", variant: "destructive" });
+      }
+    };
+    
+    const handleInputChange = (event: Event) => {
+        const target = event.target as HTMLInputElement | null;
+        if (target) {
+            setLocationAddress(target.value || '');
+            // If user types manually, clear lat/lng as it's no longer from a selected place
+            setLatitude(null);
+            setLongitude(null);
+        }
+    };
+
+    autocompleteElement.addEventListener('gmp-placeselect', handlePlaceSelect);
+    autocompleteElement.addEventListener('input', handleInputChange); // Listen to direct input changes
+
+    return () => {
+      autocompleteElement.removeEventListener('gmp-placeselect', handlePlaceSelect);
+      autocompleteElement.removeEventListener('input', handleInputChange);
+    };
+  }, [isOpen, toast]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +162,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        // For manual input, lat/lng might need manual entry or be set to 0,0
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0,
         address: locationAddress 
@@ -175,20 +250,25 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           
           <div>
             <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-            <Input 
-              id="jobLocationAddress" 
-              name="jobLocationAddress" 
+            {/* 
+              The 'value' prop on gmp-place-autocomplete-element is used for initial setting.
+              React state 'locationAddress' is updated via event listeners.
+              To ensure the displayed text updates if 'locationAddress' is changed by other means
+              (though less common for this specific setup), we bind its value prop.
+            */}
+            <gmp-place-autocomplete-element
+              id="jobLocationAddress"
+              name="jobLocationAddress"
+              ref={placeAutocompleteRef}
+              placeholder="Start typing address..."
               value={locationAddress} 
-              onChange={(e) => {
-                setLocationAddress(e.target.value);
-                // Manually clear lat/lng if address is typed, as it won't be auto-updated
-                setLatitude(null);
-                setLongitude(null);
-              }} 
-              placeholder="Enter address manually" 
-              required 
+              // The `value` attribute here ensures that if locationAddress is updated externally
+              // while the component is mounted, it reflects. However, direct manipulation
+              // of this web component's value is often done via its JS API or direct property set.
+              // We already handle setting initial value in useEffect.
+              // The 'input' event listener above handles user typing.
             />
-             <p className="text-xs text-muted-foreground mt-1">Enter address manually. Suggestions are currently unavailable.</p>
+             <p className="text-xs text-muted-foreground mt-1">Start typing for address suggestions.</p>
           </div>
 
           <Button type="submit" disabled={isLoading} className="w-full">

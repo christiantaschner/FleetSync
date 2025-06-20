@@ -1,17 +1,20 @@
 
-// ShipWheel import removed, as the icon is no longer used.
+import { cn } from "@/lib/utils";
 
 interface LogoProps {
   className?: string;
-  // iconSize prop removed as it's not relevant for a text-only logo
 }
 
 export function Logo({ className }: LogoProps) {
   return (
-    <div className={`flex items-center ${className}`}> {/* gap-2 might be adjusted or removed if there's only text */}
-      {/* ShipWheel JSX element removed */}
-      <span className="text-xl font-bold text-primary font-headline">
-        FleetSync <span className="text-primary">AI</span>
+    <div 
+      className={cn(
+        "inline-flex items-center bg-primary text-primary-foreground px-3 py-1.5 rounded-md", 
+        className
+      )}
+    >
+      <span className="text-xl font-bold font-headline">
+        FleetSync AI
       </span>
     </div>
   );

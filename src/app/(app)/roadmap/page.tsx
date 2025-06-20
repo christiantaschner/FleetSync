@@ -189,11 +189,6 @@ const roadmapFeatures = {
           "AI can analyze notes from 'AI-Assisted Digital Protocols' and technician documentation to help infer if a job was a true FTFR or if a follow-up is likely/needed.",
           "AI can identify patterns in non-FTFR jobs to suggest areas for improvement (e.g., specific training, common missing parts)."
         ],
-        uiUx: [
-          "Dashboard: Display FTFR KPIs in the 'Reports' section.",
-          "Mobile: Simple way for technicians to indicate if the job required a follow-up or if it was a complete fix.",
-          "Drill-down capabilities in reports to see details of non-FTFR jobs."
-        ],
         integrationPoints: [
           "Relies on accurate job status updates and detailed documentation from 'AI-Assisted Digital Protocols'.",
           "Connects to 'Intelligent Parts Management' (identifying missing parts) and 'Smart Skill Matching' (identifying skill gaps)."
@@ -602,38 +597,46 @@ const roadmapFeatures = {
       developerBrief: {
         coreFunctionality: [
           "Track customer equipment and their maintenance schedules/contracts.",
-          "Generate reminders or automatically create pending jobs for upcoming scheduled maintenance.",
-          "Technicians can access detailed service history of equipment on-site via mobile app.",
-          "Record details of maintenance performed."
+          "Generate system reminders for dispatchers or automatically create 'Pending' maintenance jobs based on `nextDueDate` in `MaintenanceContracts`.",
+          "Technicians can access detailed service history of specific equipment on-site via mobile app.",
+          "Record details of maintenance performed, updating `lastServiceDate` and recalculating `nextDueDate` on the contract.",
+          "Future: Option for automated customer reminders (e.g., email/SMS) for upcoming service appointments.",
+          "Future: Simple portal/link for customers to confirm suggested maintenance appointments or request rescheduling."
         ],
         dataModels: [
           "`Customer` document: can link to multiple `Equipment` documents.",
-          "`Equipment` document (linked to Customer): `equipmentId`, `type` (e.g., 'Gas Boiler', 'AC Unit'), `make`, `model`, `serialNumber`, `installationDate`, `locationInProperty`, `maintenanceContractId?`, `serviceHistory: { jobId: string, date: Date, notes: string, technicianId: string }[]`.",
-          "New Firestore collection: `MaintenanceContracts` (fields: `contractId`, `customerId`, `equipmentId[]`, `serviceFrequency` (e.g., 'annual', 'biannual'), `nextDueDate`, `lastServiceDate`, `contractTerms`)."
+          "`Equipment` document (linked to Customer): `equipmentId`, `type` (e.g., 'Gas Boiler', 'AC Unit'), `make`, `model`, `serialNumber`, `installationDate`, `locationInProperty`, `maintenanceContractId?`, `serviceHistory: { jobId: string, date: Date, notes: string, technicianId: string }[]` (populated from completed jobs).",
+          "New Firestore collection: `MaintenanceContracts` (fields: `contractId`, `customerId`, `equipmentId[]`, `serviceFrequency` (e.g., 'annual', 'biannual', 'custom_days: N'), `nextDueDate`, `lastServiceDate`, `contractTerms`, `customerNotificationPreferences?`)."
         ],
         aiComponents: [
-          "AI could analyze service history and equipment data to predict potential future issues or suggest preventative actions during maintenance."
+          "AI could analyze service history and equipment data to predict potential future issues or suggest preventative actions during maintenance.",
+          "AI could help optimize scheduling of maintenance jobs alongside reactive service calls."
         ],
         uiUx: [
-          "Dispatcher Dashboard: View for managing maintenance contracts and upcoming service jobs. Calendar view for scheduled maintenance.",
-          "Technician Mobile App: Access to full equipment details and service history when on a job for that equipment.",
-          "Interface for logging maintenance tasks performed against a piece of equipment."
+          "Dispatcher Dashboard: Dedicated view for managing maintenance contracts, viewing upcoming service schedules (e.g., calendar or list view), and tracking customer confirmations.",
+          "Technician Mobile App: Clear access to full equipment details and its complete service history when assigned a maintenance (or repair) job for that equipment.",
+          "Interface for logging maintenance tasks performed against specific equipment, possibly using a 'Digital Protocol'.",
+          "Dispatcher tools to manually trigger or adjust customer reminders.",
+          "Interface for setting up customer communication preferences for maintenance."
         ],
         integrationPoints: [
-          "Core to the 'Basic Integrated CRM' feature.",
-          "Links closely with 'Digital Protocols' for recording maintenance work.",
-          "Job creation process for scheduling maintenance jobs."
+          "Core to the 'Basic Integrated CRM' feature for customer and equipment data.",
+          "Links closely with 'AI-Assisted Digital Protocols' for recording detailed maintenance work performed.",
+          "Job creation process for scheduling maintenance jobs (manual or automated from reminders).",
+          "Future: Email/SMS service integration for customer notifications (e.g., SendGrid, Twilio)."
         ],
         technicalChallenges: [
-          "Initial data entry for existing customers and their equipment/contracts.",
-          "Designing a flexible system for various maintenance contract types and frequencies.",
-          "Ensuring data consistency between equipment records and job history."
+          "Initial data entry/migration for existing customers, their equipment, and current maintenance contracts.",
+          "Designing a flexible system for various maintenance contract types, service frequencies, and notification logic.",
+          "Ensuring data consistency between equipment records, contract due dates, and completed job history.",
+          "Building a simple, secure customer-facing interface for appointment confirmations if that path is pursued."
         ],
         successMetrics: [
-          "Increased recurring revenue from maintenance contracts.",
-          "Improved customer retention due to proactive service.",
-          "Higher technician efficiency due to better on-site information.",
-          "Reduced equipment breakdowns due to timely maintenance."
+          "Increased recurring revenue from proactively managed maintenance contracts.",
+          "Improved customer retention due to consistent and timely service.",
+          "Higher technician efficiency due to better on-site information and preparedness for maintenance tasks.",
+          "Reduced equipment breakdowns and emergency calls due to timely preventative maintenance.",
+          "High uptake of automated reminders/scheduling features by dispatchers."
         ]
       }
     },

@@ -12,7 +12,6 @@ import {
   Settings,
   LogOut,
   Loader2,
-  ShipWheel,
   ListChecks, 
 } from "lucide-react";
 

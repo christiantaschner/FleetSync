@@ -14,7 +14,7 @@ body {
     --card-foreground: 0 0% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 3.9%;
-    --primary: 210 60% 50%; /* Professional Blue #3377B3 */
+    --primary: 210 40% 40%; /* Deeper, Desaturated Blue */
     --primary-foreground: 0 0% 100%; /* White for contrast */
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
@@ -26,10 +26,10 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 210 60% 50%; /* Primary color for rings */
-    --chart-1: 210 60% 50%; /* New Primary Blue */
-    --chart-2: 160 50% 45%;  /* New Accent Green */
-    --chart-3: 210 40% 65%; /* Lighter Primary Blue */
+    --ring: 210 40% 40%; /* Primary color for rings */
+    --chart-1: 210 40% 40%; /* New Primary Blue */
+    --chart-2: 160 50% 45%;  /* Accent Green */
+    --chart-3: 210 35% 55%; /* Lighter New Primary Blue */
     --chart-4: 160 35% 60%; /* Lighter Accent Green */
     --chart-5: 190 40% 55%; /* Cyan/Blue-Green */
     --radius: 0.5rem;
@@ -37,12 +37,12 @@ body {
     /* Sidebar specific colors */
     --sidebar-background: 0 0% 100%; /* White */
     --sidebar-foreground: 240 5.3% 26.1%; /* Dark Gray */
-    --sidebar-primary: 210 60% 50%; /* New Primary Blue */
+    --sidebar-primary: 210 40% 40%; /* New Primary Blue for Sidebar */
     --sidebar-primary-foreground: 0 0% 100%; /* White */
     --sidebar-accent: 210 20% 92%; /* Light gray accent for hover */
-    --sidebar-accent-foreground: 210 60% 45%; /* Darker New Primary for hover text */
+    --sidebar-accent-foreground: 210 40% 35%; /* Darker New Primary for hover text */
     --sidebar-border: 0 0% 89.8%; /* Standard border */
-    --sidebar-ring: 210 60% 50%; /* New Primary Blue */
+    --sidebar-ring: 210 40% 40%; /* New Primary Blue for Sidebar rings */
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -51,8 +51,8 @@ body {
     --card-foreground: 0 0% 98%;
     --popover: 0 0% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 210 60% 55%; /* Adjusted Primary for dark mode */
-    --primary-foreground: 0 0% 0%; /* Black for contrast */
+    --primary: 210 40% 50%; /* Adjusted Primary for dark mode */
+    --primary-foreground: 0 0% 100%; 
     --secondary: 0 0% 14.9%;
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
@@ -63,22 +63,22 @@ body {
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
-    --ring: 210 60% 55%; /* Adjusted Primary for rings */
-    --chart-1: 210 60% 55%;
+    --ring: 210 40% 50%; /* Adjusted Primary for rings */
+    --chart-1: 210 40% 50%;
     --chart-2: 160 50% 50%;
-    --chart-3: 210 45% 70%;
+    --chart-3: 210 35% 65%;
     --chart-4: 160 40% 65%;
     --chart-5: 190 45% 60%;
 
     /* Dark Sidebar specific colors */
     --sidebar-background: 240 5.9% 10%; /* Dark */
     --sidebar-foreground: 210 20% 92%; /* Light Gray */
-    --sidebar-primary: 210 60% 55%; /* Adjusted Primary */
-    --sidebar-primary-foreground: 0 0% 0%; /* Black */
+    --sidebar-primary: 210 40% 50%; /* Adjusted Primary for Sidebar */
+    --sidebar-primary-foreground: 0 0% 100%; 
     --sidebar-accent: 240 3.7% 15.9%; /* Darker Accent */
-    --sidebar-accent-foreground: 210 60% 65%; /* Lighter New Primary for hover text */
+    --sidebar-accent-foreground: 210 40% 60%; /* Lighter New Primary for hover text */
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 210 60% 55%; /* Adjusted Primary */
+    --sidebar-ring: 210 40% 50%; /* Adjusted Primary for Sidebar rings */
   }
 }
 

@@ -11,7 +11,7 @@ export function Logo({ className }: LogoProps) {
     <div className={`flex items-center ${className}`}> {/* gap-2 might be adjusted or removed if there's only text */}
       {/* ShipWheel JSX element removed */}
       <span className="text-xl font-bold text-primary font-headline">
-        FleetSync <span className="text-accent">AI</span>
+        FleetSync <span className="text-primary">AI</span>
       </span>
     </div>
   );

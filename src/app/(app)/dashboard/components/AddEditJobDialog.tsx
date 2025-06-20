@@ -28,7 +28,8 @@ declare global {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
         'input-id'?: string;
-        // value?: string; // Removed to make it less controlled by React during typing
+        // value prop is intentionally omitted here to let the component manage its own state during typing
+        // React will set the initial value programmatically and sync via events.
         placeholder?: string;
         types?: string; 
         style?: React.CSSProperties;
@@ -56,7 +57,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
-  const [locationAddress, setLocationAddress] = useState(''); 
+  const [locationAddress, setLocationAddress] = useState(''); // Always initialize to empty string
   const [latitude, setLatitude] = useState<number | null>(null); 
   const [longitude, setLongitude] = useState<number | null>(null);
 
@@ -112,8 +113,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           setLatitude(newPlace.geometry.location.lat());
           setLongitude(newPlace.geometry.location.lng());
         } else {
-          // User typed something but didn't select a suggestion or place is invalid
-           if (gmpElement.value !== locationAddress) { // Avoid state update if value is already same
+           if (gmpElement.value !== locationAddress) { 
             setLocationAddress(gmpElement.value);
           }
           setLatitude(null);
@@ -123,10 +123,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 
       const handleDirectInput = (event: Event) => {
          const target = event.target as (HTMLElement & { value: string });
-         if (target.value !== locationAddress) { // Avoid state update if value is already same
+         if (target.value !== locationAddress) { 
             setLocationAddress(target.value);
          }
-         // When typing manually, we don't have a "place" object, so lat/lng should be cleared
          if (latitude !== null || longitude !== null) {
             setLatitude(null);
             setLongitude(null);
@@ -141,7 +140,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         autocompleteElement.removeEventListener('input', handleDirectInput);
       };
     }
-  }, [isOpen, latitude, longitude, locationAddress]); // Added locationAddress to dependencies
+  }, [isOpen, locationAddress, latitude, longitude]); 
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,14 +149,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
       return;
     }
-    // Check locationAddress specifically from state, as ref might not be perfectly synced if user didn't interact
     if (!locationAddress.trim()) {
         toast({ title: "Location Missing", description: "Please enter and select a job location.", variant: "destructive"});
         return;
     }
     if (latitude === null || longitude === null) {
-        // If there's text in the input (from state) but no selected place (no coords)
-        if (locationAddress.trim() && (placeAutocompleteRef.current?.value && !placeAutocompleteRef.current?.place)) {
+        const gmpElement = placeAutocompleteRef.current;
+        if (locationAddress.trim() && (gmpElement?.value && !gmpElement?.place)) {
             toast({ title: "Location Incomplete", description: "Please select a valid address from suggestions, or ensure the address provides coordinates.", variant: "destructive"});
             return;
         }
@@ -174,7 +172,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       location: { 
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0, 
-        address: locationAddress // Use state value which is updated by input/placechange
+        address: locationAddress 
       },
       updatedAt: serverTimestamp(),
     };
@@ -259,12 +257,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           <div>
             <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
             <gmp-place-autocomplete-element
-                key={job?.id || 'new-job-location-autocomplete'} // Ensure key is unique and stable for re-mounts
+                key={job?.id || 'new-job-location-autocomplete'} 
                 ref={placeAutocompleteRef}
-                input-id="jobLocationAddressGmp" // For label association
+                input-id="jobLocationAddressGmp" 
                 placeholder="Start typing address..."
                 types="address"
-                // value prop is intentionally removed to let the component manage its input during typing
                 className={cn(
                     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 )}

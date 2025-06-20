@@ -67,66 +67,73 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       setLatitude(34.0522); 
       setLongitude(-118.2437);
     }
-  }, [job, isOpen]); // Rerun when job changes or dialog opens/closes to reset form
+  }, [job, isOpen]); 
 
 
   const initAutocomplete = useCallback(() => {
-    if (isOpen && addressInputRef.current) {
+    if (isOpen && addressInputRef.current && !autocompleteInstanceRef.current) {
       if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Autocomplete) {
-        if (!autocompleteInstanceRef.current) { // Initialize only once
-          autocompleteInstanceRef.current = new window.google.maps.places.Autocomplete(
-            addressInputRef.current,
-            { types: ['address'], fields: ['formatted_address', 'geometry.location'] }
-          );
+        
+        autocompleteInstanceRef.current = new window.google.maps.places.Autocomplete(
+          addressInputRef.current,
+          { types: ['address'], fields: ['formatted_address', 'geometry.location'] }
+        );
 
-          placeChangedListenerRef.current = autocompleteInstanceRef.current.addListener('place_changed', () => {
-            const place = autocompleteInstanceRef.current?.getPlace();
-            if (place && place.formatted_address && place.geometry && place.geometry.location) {
-              setLocationAddress(place.formatted_address);
-              setLatitude(place.geometry.location.lat());
-              setLongitude(place.geometry.location.lng());
-              // Manually update the input's value if Google doesn't, though it usually does
-              if (addressInputRef.current) {
-                addressInputRef.current.value = place.formatted_address;
-              }
-            } else {
-              console.warn("Autocomplete: place_changed event fired, but place data is incomplete.", place);
+        placeChangedListenerRef.current = autocompleteInstanceRef.current.addListener('place_changed', () => {
+          const place = autocompleteInstanceRef.current?.getPlace();
+          if (place && place.formatted_address && place.geometry && place.geometry.location) {
+            setLocationAddress(place.formatted_address);
+            setLatitude(place.geometry.location.lat());
+            setLongitude(place.geometry.location.lng());
+            if (addressInputRef.current) {
+              addressInputRef.current.value = place.formatted_address; // Ensure input field also reflects the change
             }
-          });
-        }
+          } else {
+            console.warn("Autocomplete: place_changed event fired, but place data is incomplete or not available.", place);
+          }
+        });
       } else {
-        console.warn('Google Maps API, Places library, or Autocomplete service not available yet. Retrying in 500ms...');
-        // Optionally, retry initialization after a short delay if the script might still be loading
-        // This might be aggressive and lead to multiple timers if not handled carefully.
-        // For now, a console warning is safer. Users might need to close/reopen dialog if script loads late.
+        console.warn('Google Maps API, Places library, or Autocomplete service not available yet. Ensure the API script is loaded with libraries=places.');
       }
     }
-  }, [isOpen]); // Dependency: isOpen
+  }, [isOpen]); 
 
   useEffect(() => {
-    initAutocomplete(); // Attempt to initialize when isOpen changes (e.g. dialog opens)
+    if (isOpen) {
+      initAutocomplete();
+    }
 
     return () => {
-      // Cleanup logic
       if (placeChangedListenerRef.current) {
         placeChangedListenerRef.current.remove();
         placeChangedListenerRef.current = null;
       }
-      // Note: Google recommends not to directly manage the Autocomplete instance for deletion
-      // unless you are sure it's necessary and won't be reused.
-      // The .pac-container is managed by Google, but we can try to remove leftovers if they persist after dialog close.
-      if (!isOpen) { // Only remove pac-containers when dialog is truly closing
+      // Important: Detach Autocomplete from input to prevent memory leaks
+      // This does not destroy the Autocomplete instance itself, but removes its listeners from the input
+      if (autocompleteInstanceRef.current && addressInputRef.current) {
+          // No direct 'destroy' or 'unbind' method for the Autocomplete instance itself.
+          // Clearing listeners for the instance and removing the input's association is key.
+          // window.google.maps.event.clearInstanceListeners(autocompleteInstanceRef.current);
+          // The above line can be problematic. It's often better to just nullify the ref and let GC handle it
+          // or if Google specifically provides a dispose method for the Autocomplete object.
+      }
+      autocompleteInstanceRef.current = null; // Nullify to allow re-initialization if dialog reopens
+
+      // Clean up .pac-container elements that Google Maps API appends to the body
+      // This should be done carefully to avoid removing containers from other map instances.
+      if (!isOpen) { // Only on actual dialog close
         const pacContainers = document.getElementsByClassName('pac-container');
-        for (let i = 0; i < pacContainers.length; i++) {
-          // Check if it's not a persisted one for another map instance, if necessary
-          if (pacContainers[i].parentElement === document.body) { // A common check
-             pacContainers[i].remove();
-          }
-        }
-        autocompleteInstanceRef.current = null; // Allow re-initialization
+        // Convert HTMLCollection to array to iterate safely while removing
+        Array.from(pacContainers).forEach(container => {
+            // A more specific check could be added if there are multiple autocomplete instances on the page
+            // For now, this removes all, assuming this dialog is the primary user of Autocomplete
+            if (container.parentElement === document.body) {
+                container.remove();
+            }
+        });
       }
     };
-  }, [isOpen, initAutocomplete]); // initAutocomplete is now a dependency
+  }, [isOpen, initAutocomplete]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,18 +143,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       return;
     }
     
-    // Check if the address input still holds the user's typed value vs. a selected place
-    // This is important because if they typed but didn't select, locationAddress might be stale
-    // or latitude/longitude might not match.
-    if (addressInputRef.current && addressInputRef.current.value !== locationAddress) {
-        // Potentially the user typed more after selecting a place, or never selected one.
-        // We might want to force selection or use the typed value.
-        // For now, we rely on the 'place_changed' event to set locationAddress, lat, lon.
-        // If they type and submit without selecting, lat/lon might be from a previous selection or default.
-        console.warn("Address input differs from selected/stored address. Using stored address for submission:", locationAddress);
-    }
-
-
     setIsLoading(true);
 
     const jobData = {
@@ -204,10 +199,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   return (
     <Dialog open={isOpen} onOpenChange={(openState) => {
         setIsOpen(openState);
-        if (!openState) {
-            // Reset autocomplete instance when dialog closes
-            autocompleteInstanceRef.current = null; 
-        }
     }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
@@ -252,19 +243,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
             <Input 
               id="jobLocationAddress" 
               ref={addressInputRef}
-              defaultValue={locationAddress} // Use defaultValue, allow Google Autocomplete to control during interaction
+              value={locationAddress} // Controlled by state
               onChange={(e) => {
-                  // If user types manually *after* selection, this could update address
-                  // but lat/lon might become out of sync.
-                  // Best to rely on 'place_changed' for setting state.
-                  // This onChange is mainly for if they clear it or type something totally new
-                  // *without* selecting from Autocomplete.
-                  setLocationAddress(e.target.value);
+                  setLocationAddress(e.target.value); // Directly update state on manual typing
+                  // Autocomplete may still try to take over, but this ensures state reflects input
               }}
-              onFocus={initAutocomplete} // Attempt to init if not already, e.g. if dialog opened but input wasn't focused.
+              onFocus={initAutocomplete} 
               placeholder="Start typing address for suggestions..." 
               required
-              autoComplete="off" // Important to prevent browser's own autocomplete interfering
+              autoComplete="off" 
             />
             <p className="text-xs text-muted-foreground mt-1">Select an address from suggestions to set coordinates automatically.</p>
           </div>

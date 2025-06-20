@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserClock } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2 } from 'lucide-react'; // Removed UserClock
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -212,7 +212,8 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Next Up Technicians</CardTitle>
-              <UserClock className="h-4 w-4 text-muted-foreground" />
+              {/* UserClock icon removed here to prevent error */}
+              {/* <UserClock className="h-4 w-4 text-muted-foreground" /> */}
             </CardHeader>
             <CardContent>
                <div className="text-2xl font-bold">-</div>
@@ -325,5 +326,4 @@ export default function DashboardPage() {
     </APIProvider>
   );
 }
-
     

@@ -146,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 md:hidden">
+        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-primary/20 bg-primary px-4 text-primary-foreground md:px-6 md:hidden">
            <SidebarTrigger/>
            <Logo />
         </header>

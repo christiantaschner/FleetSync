@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input'; // Keep for other fields
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,6 +21,24 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus } from '@/types';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// TypeScript declaration for the Google Maps Place Autocomplete Web Component
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
+        'input-id'?: string;
+        value?: string; // For initial value and potentially for reading
+        placeholder?: string;
+        types?: string; // e.g. "address"
+        // Additional attributes like country, location-bias can be added if needed
+        style?: React.CSSProperties;
+      }, HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>;
+    }
+  }
+}
+
 
 interface AddEditJobDialogProps {
   children: React.ReactNode; // Trigger element
@@ -38,13 +56,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  
+  // Location state
   const [locationAddress, setLocationAddress] = useState(''); 
-  const [latitude, setLatitude] = useState(34.0522); 
-  const [longitude, setLongitude] = useState(-118.2437);
+  const [latitude, setLatitude] = useState<number | null>(null); 
+  const [longitude, setLongitude] = useState<number | null>(null);
 
-  const addressInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteInstanceRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const placeChangedListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  const placeAutocompleteRef = useRef<HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>(null);
 
   useEffect(() => {
     if (job) {
@@ -56,6 +74,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       setLocationAddress(job.location.address || '');
       setLatitude(job.location.latitude);
       setLongitude(job.location.longitude);
+      // Set initial value for the autocomplete element when editing
+      if (placeAutocompleteRef.current) {
+        placeAutocompleteRef.current.value = job.location.address || '';
+      }
     } else {
       // Reset for new job form
       setTitle('');
@@ -64,76 +86,52 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       setCustomerName('');
       setCustomerPhone('');
       setLocationAddress(''); 
-      setLatitude(34.0522); 
-      setLongitude(-118.2437);
+      setLatitude(null); 
+      setLongitude(null);
+      if (placeAutocompleteRef.current) {
+        placeAutocompleteRef.current.value = '';
+      }
     }
   }, [job, isOpen]); 
 
 
-  const initAutocomplete = useCallback(() => {
-    if (isOpen && addressInputRef.current && !autocompleteInstanceRef.current) {
-      if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.Autocomplete) {
-        
-        autocompleteInstanceRef.current = new window.google.maps.places.Autocomplete(
-          addressInputRef.current,
-          { types: ['address'], fields: ['formatted_address', 'geometry.location'] }
-        );
-
-        placeChangedListenerRef.current = autocompleteInstanceRef.current.addListener('place_changed', () => {
-          const place = autocompleteInstanceRef.current?.getPlace();
-          if (place && place.formatted_address && place.geometry && place.geometry.location) {
-            setLocationAddress(place.formatted_address);
-            setLatitude(place.geometry.location.lat());
-            setLongitude(place.geometry.location.lng());
-            if (addressInputRef.current) {
-              addressInputRef.current.value = place.formatted_address; // Ensure input field also reflects the change
-            }
-          } else {
-            console.warn("Autocomplete: place_changed event fired, but place data is incomplete or not available.", place);
-          }
-        });
-      } else {
-        console.warn('Google Maps API, Places library, or Autocomplete service not available yet. Ensure the API script is loaded with libraries=places.');
-      }
-    }
-  }, [isOpen]); 
-
   useEffect(() => {
-    if (isOpen) {
-      initAutocomplete();
+    const autocompleteElement = placeAutocompleteRef.current;
+    if (isOpen && autocompleteElement && window.google && window.google.maps && window.google.maps.places) {
+      
+      const handlePlaceChange = () => {
+        if (autocompleteElement.place && autocompleteElement.place.geometry && autocompleteElement.place.geometry.location) {
+          const newPlace = autocompleteElement.place;
+          setLocationAddress(newPlace.formatted_address || autocompleteElement.value);
+          setLatitude(newPlace.geometry.location.lat());
+          setLongitude(newPlace.geometry.location.lng());
+        } else {
+          // If place details are not available, update address from input value
+          // This covers manual typing or clearing the input
+          setLocationAddress(autocompleteElement.value);
+          // Potentially clear lat/lng if address is manually changed and not a valid place
+          // setLatitude(null); 
+          // setLongitude(null);
+        }
+      };
+
+      // Event listener for when a place is selected from suggestions
+      autocompleteElement.addEventListener('gmp-placechange', handlePlaceChange);
+      
+      // Event listener for direct input changes (typing)
+      // This helps keep locationAddress state in sync with what user types
+      const handleDirectInput = (event: Event) => {
+         setLocationAddress((event.target as HTMLInputElement).value);
+      };
+      autocompleteElement.addEventListener('input', handleDirectInput);
+
+
+      return () => {
+        autocompleteElement.removeEventListener('gmp-placechange', handlePlaceChange);
+        autocompleteElement.removeEventListener('input', handleDirectInput);
+      };
     }
-
-    return () => {
-      if (placeChangedListenerRef.current) {
-        placeChangedListenerRef.current.remove();
-        placeChangedListenerRef.current = null;
-      }
-      // Important: Detach Autocomplete from input to prevent memory leaks
-      // This does not destroy the Autocomplete instance itself, but removes its listeners from the input
-      if (autocompleteInstanceRef.current && addressInputRef.current) {
-          // No direct 'destroy' or 'unbind' method for the Autocomplete instance itself.
-          // Clearing listeners for the instance and removing the input's association is key.
-          // window.google.maps.event.clearInstanceListeners(autocompleteInstanceRef.current);
-          // The above line can be problematic. It's often better to just nullify the ref and let GC handle it
-          // or if Google specifically provides a dispose method for the Autocomplete object.
-      }
-      autocompleteInstanceRef.current = null; // Nullify to allow re-initialization if dialog reopens
-
-      // Clean up .pac-container elements that Google Maps API appends to the body
-      // This should be done carefully to avoid removing containers from other map instances.
-      if (!isOpen) { // Only on actual dialog close
-        const pacContainers = document.getElementsByClassName('pac-container');
-        // Convert HTMLCollection to array to iterate safely while removing
-        Array.from(pacContainers).forEach(container => {
-            // A more specific check could be added if there are multiple autocomplete instances on the page
-            // For now, this removes all, assuming this dialog is the primary user of Autocomplete
-            if (container.parentElement === document.body) {
-                container.remove();
-            }
-        });
-      }
-    };
-  }, [isOpen, initAutocomplete]);
+  }, [isOpen]); // Re-attach listeners when dialog opens
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,6 +139,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
     if (!title.trim() || !locationAddress.trim() || !description.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Location Address.", variant: "destructive" });
       return;
+    }
+    if (latitude === null || longitude === null) {
+         // If a place was selected, lat/lng should be set.
+         // If user typed an address and didn't select, and we didn't get lat/lng,
+         // we might want to prevent submission or try to geocode the address.
+         // For now, let's require a selected place or an address that resolved to coordinates.
+         // This check can be refined based on desired behavior for non-selected addresses.
+         if (placeAutocompleteRef.current?.value && !placeAutocompleteRef.current?.place) {
+            toast({ title: "Location Incomplete", description: "Please select a valid address from suggestions, or ensure the address provides coordinates.", variant: "destructive"});
+            return;
+         } else if (!placeAutocompleteRef.current?.value) {
+             toast({ title: "Location Missing", description: "Please enter and select a job location.", variant: "destructive"});
+             return;
+         }
     }
     
     setIsLoading(true);
@@ -152,8 +164,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: { 
-        latitude: latitude, 
-        longitude: longitude, 
+        // Ensure latitude and longitude are numbers. Fallback if somehow still null.
+        latitude: latitude ?? 0, 
+        longitude: longitude ?? 0, 
         address: locationAddress 
       },
       updatedAt: serverTimestamp(),
@@ -197,9 +210,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(openState) => {
-        setIsOpen(openState);
-    }}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -239,20 +250,23 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
             <Input id="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
           </div>
           <div>
-            <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-            <Input 
-              id="jobLocationAddress" 
-              ref={addressInputRef}
-              value={locationAddress} // Controlled by state
-              onChange={(e) => {
-                  setLocationAddress(e.target.value); // Directly update state on manual typing
-                  // Autocomplete may still try to take over, but this ensures state reflects input
-              }}
-              onFocus={initAutocomplete} 
-              placeholder="Start typing address for suggestions..." 
-              required
-              autoComplete="off" 
-            />
+            <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
+            {/* 
+              The value prop on gmp-place-autocomplete-element is for the *initial* value.
+              To make it behave more like a controlled component, we update its .value property
+              in the useEffect when `job` (and thus `locationAddress` state) changes.
+              The `locationAddress` state is updated via the 'input' event listener.
+            */}
+            <gmp-place-autocomplete-element
+                ref={placeAutocompleteRef}
+                input-id="jobLocationAddressGmp" // For associating label, though not strictly needed for functionality here
+                placeholder="Start typing address..."
+                types="address" // Restrict to addresses
+                className={cn( // Apply ShadCN input styles to the host element
+                    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                )}
+                // value={locationAddress} // Initial value is set via ref in useEffect
+             />
             <p className="text-xs text-muted-foreground mt-1">Select an address from suggestions to set coordinates automatically.</p>
           </div>
           

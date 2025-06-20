@@ -160,14 +160,13 @@ export default function DashboardPage() {
     setIsBatchLoading(true);
     const suggestions: AssignmentSuggestion[] = [];
     
-    // Create a mutable copy of technicians to simulate availability changes during sequential assignment
     let currentTechnicianPool = JSON.parse(JSON.stringify(technicians)) as Technician[];
 
     for (const job of pendingJobsForBatchAssign) {
       const availableAITechnicians: AITechnician[] = currentTechnicianPool.map(t => ({
         technicianId: t.id,
         technicianName: t.name,
-        isAvailable: t.isAvailable, // Use current simulated availability
+        isAvailable: t.isAvailable, 
         skills: t.skills as string[],
         location: {
           latitude: t.location.latitude,
@@ -185,7 +184,6 @@ export default function DashboardPage() {
       let techDetails: Technician | null = null;
       if (result.data) {
         techDetails = currentTechnicianPool.find(t => t.id === result.data!.suggestedTechnicianId) || null;
-        // Simulate technician becoming unavailable for the next job in the sequence
         if (techDetails && techDetails.isAvailable) {
            currentTechnicianPool = currentTechnicianPool.map(t => 
             t.id === techDetails!.id ? {...t, isAvailable: false, currentJobId: job.id } : t
@@ -195,7 +193,7 @@ export default function DashboardPage() {
       suggestions.push({
         job,
         suggestion: result.data,
-        suggestedTechnicianDetails: techDetails, // Use the original details for display, but check availability from original `technicians` list at confirmation
+        suggestedTechnicianDetails: techDetails, 
         error: result.error
       });
     }
@@ -216,7 +214,6 @@ export default function DashboardPage() {
     const originalTechnicianStates = new Map(technicians.map(t => [t.id, t]));
 
     for (const { job, suggestion, suggestedTechnicianDetails } of assignmentsToConfirm) {
-        // Ensure the technician is *still* actually available from the latest state
         const originalTech = originalTechnicianStates.get(suggestedTechnicianDetails!.id);
         if (job && suggestion && suggestedTechnicianDetails && originalTech && originalTech.isAvailable) {
             const jobDocRef = doc(db, "jobs", job.id);
@@ -231,7 +228,6 @@ export default function DashboardPage() {
                 isAvailable: false,
                 currentJobId: job.id,
             });
-            // Update the map for subsequent checks in this batch if needed, though primary check is against originalTechnicianStates
             originalTechnicianStates.set(originalTech.id, {...originalTech, isAvailable: false, currentJobId: job.id});
             assignmentsMade++;
         }
@@ -251,7 +247,6 @@ export default function DashboardPage() {
         setIsLoadingBatchConfirmation(false);
         setIsBatchReviewDialogOpen(false);
         setAssignmentSuggestionsForReview([]); 
-        // Local state for jobs and technicians will update via onSnapshot
     }
 };
 
@@ -292,8 +287,8 @@ export default function DashboardPage() {
               </Button>
             </AddEditJobDialog>
             <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-              <Button variant="outline" disabled={busyTechnicians.length === 0}>
-                <MapIcon className="mr-2 h-4 w-4" /> Manual AI Re-Optimization
+              <Button variant="accent" disabled={busyTechnicians.length === 0}>
+                <MapIcon className="mr-2 h-4 w-4" /> AI Route Re-Op
               </Button>
             </OptimizeRouteDialog>
           </div>
@@ -306,7 +301,6 @@ export default function DashboardPage() {
             jobToAssign={selectedJobForAIAssign}
             technicians={technicians}
             onJobAssigned={(assignedJob, updatedTechnician) => {
-              // Firestore listeners will update local state, but we can also optimistically update
               setJobs(prevJobs => prevJobs.map(j => j.id === assignedJob.id ? assignedJob : j));
               setTechnicians(prevTechs => prevTechs.map(t => t.id === updatedTechnician.id ? updatedTechnician : t));
               setSelectedJobForAIAssign(null); 
@@ -399,50 +393,48 @@ export default function DashboardPage() {
           </TabsContent>
           <TabsContent value="jobs">
             <Card>
-              <CardHeader>
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <CardTitle className="font-headline">Current Jobs</CardTitle>
-                        <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                        <Button
-                            onClick={handleBatchAIAssign}
-                            disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
-                            variant="outline"
-                            className="w-full sm:w-auto"
+              <CardHeader className="flex flex-col gap-4">
+                <div>
+                    <CardTitle className="font-headline">Current Jobs</CardTitle>
+                    <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                    <Button
+                        onClick={handleBatchAIAssign}
+                        disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
+                        variant="accent"
+                        className="w-full sm:w-auto"
+                    >
+                        {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        AI Batch Assign ({pendingJobsForBatchAssign.length})
+                    </Button>
+                    <div className="flex-1 sm:flex-initial">
+                        <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
+                        <Select 
+                            value={statusFilter} 
+                            onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
                         >
-                            {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                            AI-Assign All Pending ({pendingJobsForBatchAssign.length})
-                        </Button>
-                        <div className="flex-1 sm:flex-initial">
-                            <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
-                            <Select 
-                                value={statusFilter} 
-                                onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
-                            >
-                                <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
-                                    <SelectValue placeholder="Filter by Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
-                                    <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                                    {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                         <div className="flex-1 sm:flex-initial">
-                            <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
-                            <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
-                                <SelectTrigger id="priority-filter" className="w-full sm:w-[180px]">
-                                    <SelectValue placeholder="Filter by Priority" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
-                                     {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                            <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Filter by Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
+                                <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
+                                {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="flex-1 sm:flex-initial">
+                        <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
+                        <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
+                            <SelectTrigger id="priority-filter" className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Filter by Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
+                                 {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
               </CardHeader>

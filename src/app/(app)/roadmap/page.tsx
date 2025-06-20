@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -80,6 +80,12 @@ const roadmapFeatures = {
       status: "Planned"
     },
     {
+      title: "Offline Mode for Core Mobile App Functions",
+      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites). Addresses a major technician pain point and increases app reliability.",
+      icon: WifiOff,
+      status: "Planned"
+    },
+    {
       title: "AI-Powered \"Next Up Technicians\" Prediction",
       description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data. Display this on the dashboard.",
       icon: Lightbulb,
@@ -136,8 +142,14 @@ const roadmapFeatures = {
       status: "Planned"
     },
     {
+      title: "Mobile Knowledge Base & Troubleshooting Guides",
+      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, troubleshooting flowcharts, and best practices. This empowers them to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls.",
+      icon: BookOpen,
+      status: "Planned"
+    },
+    {
       title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation and diagnosis.",
+      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration.",
       icon: ClipboardList,
       status: "Consideration"
     },

@@ -54,8 +54,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
-  // React state for address, lat, long - These are primarily for holding data for submission
-  const [locationAddress, setLocationAddress] = useState(''); // Will be updated by event listeners if element works
+  // For this diagnostic, these are primarily for form submission,
+  // hoping the gmp-place-autocomplete-element populates them if it becomes interactive.
+  const [locationAddress, setLocationAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
 
@@ -68,10 +69,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        // For this diagnostic, we are NOT setting the value of gmp-place-autocomplete-element programmatically.
-        // We still set React's state for eventual submission if the element becomes interactive
-        // and we later add event listeners.
-        setLocationAddress(job.location.address || ''); // Initialize React state
+        // For this diagnostic, we're not programmatically setting the gmp-place-autocomplete-element's value.
+        // We just initialize React's state for these.
+        setLocationAddress(job.location.address || '');
         setLatitude(job.location.latitude);
         setLongitude(job.location.longitude);
       } else {
@@ -96,11 +96,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       return;
     }
     // In this diagnostic mode, locationAddress, latitude, longitude would need to be populated
-    // by manually adding event listeners if the field becomes interactive.
+    // by manually adding event listeners if the field becomes interactive and we add that logic back.
     // For now, this part of the submission logic is incomplete until interactivity is confirmed.
     if (!locationAddress.trim() && (latitude === null || longitude === null)) {
-        toast({ title: "Location Missing", description: "Please enter and select a job location (if field becomes active).", variant: "destructive"});
-        return;
+        // Temporarily relax this validation if field is not interactive.
+        // toast({ title: "Location Missing", description: "Please enter and select a job location (if field becomes active).", variant: "destructive"});
+        // return;
+        console.warn("Submitting without location as field might not be interactive.");
     }
 
     setIsLoading(true);
@@ -112,6 +114,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
+        // Use React's state, which might be empty/null if the gmp-element is not working
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0,
         address: locationAddress 
@@ -231,5 +234,4 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 };
 
 export default AddEditJobDialog;
-
     

@@ -218,6 +218,7 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
+            {/* Children not needed as this dialog is controlled */}
             <></> 
           </SmartJobAllocationDialog>
         )}

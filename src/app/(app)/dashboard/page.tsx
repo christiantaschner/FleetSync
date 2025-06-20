@@ -370,11 +370,13 @@ export default function DashboardPage() {
         </div>
         
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
-            <TabsTrigger value="overview">Overview Map</TabsTrigger>
-            <TabsTrigger value="jobs">Job List</TabsTrigger>
-            <TabsTrigger value="technicians">Technicians</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto sm:overflow-visible">
+              <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-3">
+                  <TabsTrigger value="overview">Overview Map</TabsTrigger>
+                  <TabsTrigger value="jobs">Job List</TabsTrigger>
+                  <TabsTrigger value="technicians">Technicians</TabsTrigger>
+              </TabsList>
+          </div>
           <TabsContent value="overview">
             <Card>
               <CardHeader>

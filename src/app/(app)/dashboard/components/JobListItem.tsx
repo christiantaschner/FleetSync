@@ -14,13 +14,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
-import AddEditJobDialog from './AddEditJobDialog'; // Assuming AddEditJobDialog needs technicians
+import AddEditJobDialog from './AddEditJobDialog';
 
 interface JobListItemProps {
   job: Job;
-  technicians: Technician[]; // Required for AddEditJobDialog if it needs it for AI suggestions
-  onAssignWithAI: (job: Job) => void; 
-  onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void; 
+  technicians: Technician[];
+  onAssignWithAI: (job: Job) => void;
+  onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWithAI, onJobUpdated }) => {
@@ -39,7 +39,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
       case 'En Route': return <Zap className="text-orange-500" />;
       case 'In Progress': return <Clock className="text-indigo-500" />;
       case 'Completed': return <CheckCircle className="text-green-500" />;
-      case 'Cancelled': return <AlertTriangle className="text-red-500" />; 
+      case 'Cancelled': return <AlertTriangle className="text-red-500" />;
       default: return <Briefcase />;
     }
   };

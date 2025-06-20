@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Job, Technician, JobStatus, JobPriority } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import OptimizeRouteDialog from './components/optimize-route-dialog';
-import JobListItem from './components/JobListItem'; 
+import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
 import { db } from '@/lib/firebase';
@@ -81,7 +81,6 @@ export default function DashboardPage() {
         return [jobWithTimestamps, ...prevJobs];
       }
     });
-    // If a tech was assigned (either via AI in Add dialog or manually later), update tech state
     if (assignedTechnicianId) {
         setTechnicians(prevTechs => prevTechs.map(t => 
             t.id === assignedTechnicianId 
@@ -208,7 +207,6 @@ export default function DashboardPage() {
               </p>
             </CardContent>
           </Card>
-          {/* Placeholder for Next Up Technicians */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Next Up Technicians</CardTitle>
@@ -230,7 +228,7 @@ export default function DashboardPage() {
           <TabsContent value="overview">
             <Card>
               <CardHeader>
-                <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                <CardTitle className="font-headline">Technician & Job Locations</CardTitle>
                 <CardDescription>Real-time overview of ongoing operations.</CardDescription>
               </CardHeader>
               <CardContent>

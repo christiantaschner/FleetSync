@@ -9,14 +9,17 @@ import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX } 
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 export default function TechnicianJobsPage() {
   const { user: firebaseUser, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,26 +43,22 @@ export default function TechnicianJobsPage() {
     setError(null);
 
     // Fetch Technician details
-    const fetchTechnicianDetails = async () => {
-      const techDocRef = doc(db, "technicians", currentTechnicianId);
-      try {
-        const techDocSnap = await getDoc(techDocRef);
-        if (techDocSnap.exists()) {
-          setTechnician({ id: techDocSnap.id, ...techDocSnap.data() } as Technician);
-        } else {
-          console.warn(`Technician document with ID ${currentTechnicianId} (Firebase UID) not found in Firestore.`);
-          setError(`No technician profile found for your account. Please contact an administrator.`);
-          setTechnician(null);
-        }
-      } catch (e) {
-        console.error("Error fetching technician details:", e);
-        setError("Could not load technician profile.");
+    // We use onSnapshot here so the UI updates if location changes
+    const techDocRef = doc(db, "technicians", currentTechnicianId);
+    const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setTechnician({ id: docSnap.id, ...docSnap.data() } as Technician);
+      } else {
+        console.warn(`Technician document with ID ${currentTechnicianId} (Firebase UID) not found in Firestore.`);
+        setError(`No technician profile found for your account. Please contact an administrator.`);
         setTechnician(null);
       }
-    };
+    }, (e) => {
+      console.error("Error fetching technician details:", e);
+      setError("Could not load technician profile.");
+      setTechnician(null);
+    });
     
-    fetchTechnicianDetails();
-
     // Define active job statuses
     const activeJobStatuses: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
@@ -86,7 +85,6 @@ export default function TechnicianJobsPage() {
       console.error("Error fetching assigned jobs: ", err);
       if (err.code === 'failed-precondition' && err.message.includes('requires an index')) {
         setError("Data loading requires a database index. Please create it using the link logged in the Firebase Functions console or provided in the error message.");
-        // You can also log the specific index creation link here if needed, though the user already has it
         console.error("Firestore index required. Create it here: ", err.message.substring(err.message.indexOf('https://')));
       } else {
         setError("Could not load assigned jobs.");
@@ -95,10 +93,51 @@ export default function TechnicianJobsPage() {
     });
 
     return () => {
+      unsubscribeTech();
       unsubscribeJobs();
     };
 
   }, [firebaseUser, authLoading]);
+
+  const handleUpdateLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive"});
+      return;
+    }
+
+    setIsUpdatingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        if (technician && db) {
+          const techDocRef = doc(db, "technicians", technician.id);
+          try {
+            await updateDoc(techDocRef, {
+              "location.latitude": latitude,
+              "location.longitude": longitude,
+            });
+            toast({ title: "Location Updated", description: "Your current location has been updated." });
+          } catch (error) {
+            console.error("Error updating location:", error);
+            toast({ title: "Update Failed", description: "Could not save your new location.", variant: "destructive" });
+          } finally {
+            setIsUpdatingLocation(false);
+          }
+        }
+      },
+      (error) => {
+        let message = "An unknown error occurred.";
+        if (error.code === error.PERMISSION_DENIED) {
+          message = "Please allow location access to update your position.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Location information is unavailable.";
+        }
+        toast({ title: "Geolocation Error", description: message, variant: "destructive" });
+        setIsUpdatingLocation(false);
+      }
+    );
+  };
 
 
   if (isLoading || authLoading) {
@@ -147,6 +186,16 @@ export default function TechnicianJobsPage() {
               <CardDescription>Your assigned jobs for today.</CardDescription>
             </div>
           </CardHeader>
+           <CardFooter className="bg-secondary/50 p-3">
+             <Button onClick={handleUpdateLocation} disabled={isUpdatingLocation} className="w-full">
+              {isUpdatingLocation ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <MapPin className="mr-2 h-4 w-4" />
+              )}
+              Update My Location
+            </Button>
+          </CardFooter>
         </Card>
       )}
 
@@ -209,4 +258,3 @@ export default function TechnicianJobsPage() {
     </div>
   );
 }
-

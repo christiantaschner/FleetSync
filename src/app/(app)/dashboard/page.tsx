@@ -165,6 +165,8 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
+            {/* This component does not require children that are visible; it's triggered by state. */}
+            {/* Passing an empty fragment or null if no trigger child is needed here. */}
             <></> 
           </SmartJobAllocationDialog>
         )}

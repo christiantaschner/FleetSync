@@ -2,8 +2,8 @@
 "use client";
 
 import React from 'react';
-import Image from 'next/image';
-import { User, MapPin, Briefcase, Phone, Mail, Circle } from 'lucide-react';
+// import Image from 'next/image'; // Not used directly
+import { MapPin, Briefcase, Phone, Mail, Circle } from 'lucide-react'; // User icon not needed here
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -56,6 +56,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs }) => 
             {technician.skills.map(skill => (
               <Badge key={skill} variant="secondary">{skill}</Badge>
             ))}
+            {technician.skills.length === 0 && <p className="text-xs text-muted-foreground">No skills listed.</p>}
           </div>
         </div>
       </CardContent>

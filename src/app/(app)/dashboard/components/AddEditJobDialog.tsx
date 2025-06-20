@@ -27,7 +27,7 @@ import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
 interface AddEditJobDialogProps {
   children: React.ReactNode;
   job?: Job;
-  technicians: Technician[]; // Technicians are now a required prop
+  technicians: Technician[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
@@ -100,17 +100,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
       setAiSuggestion(result.data);
       const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
       setSuggestedTechnicianDetails(tech || null);
-      // Toast for suggestion received can be overwhelming, consider removing or making it subtle
-      // toast({ title: "AI Suggestion Ready", description: `AI suggests ${tech?.name || 'a technician'}.`});
     }
   }, [technicians, toast]);
 
-  // Fetch AI suggestion for new jobs when description or priority changes
   useEffect(() => {
-    if (isOpen && !job && description.trim() && priority) { // Only for new jobs
+    if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
         fetchAISuggestion(description, priority);
-      }, 1000); // Debounce
+      }, 1000); 
       return () => clearTimeout(timer);
     }
   }, [description, priority, isOpen, job, fetchAISuggestion]);
@@ -131,7 +128,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        latitude: job?.location.latitude ?? 0,
+        // For manual address entry, lat/lng might need to be geocoded separately or remain 0
+        // Or if editing, preserve original lat/lng if address hasn't changed significantly
+        latitude: job?.location.latitude ?? 0, 
         longitude: job?.location.longitude ?? 0,
         address: locationAddress 
       },
@@ -140,16 +139,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
 
     try {
       let finalJob: Job;
-      if (job) { // Editing existing job
+      if (job) { 
         const jobDocRef = doc(db, "jobs", job.id);
-        // If assignTechId is passed (e.g. from a future "re-assign with AI" button on edit mode)
         const updatePayload = { ...jobData, ...(assignTechId && { assignedTechnicianId: assignTechId, status: 'Assigned' as JobStatus }) };
         await updateDoc(jobDocRef, updatePayload);
         finalJob = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJob.title}" has been updated.` });
         onJobAddedOrUpdated?.(finalJob, assignTechId);
 
-      } else { // Adding new job
+      } else { 
         const newJobPayload = {
           ...jobData,
           status: assignTechId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
@@ -157,7 +155,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
           createdAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDurationMinutes: 0, // Default, can be edited later
+          estimatedDurationMinutes: 0, 
         };
         const docRef = await addDoc(collection(db, "jobs"), newJobPayload);
         finalJob = {
@@ -208,7 +206,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
           <div>
             <Label htmlFor="jobPriority">Job Priority *</Label>
             <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
-              <SelectTrigger id="jobPriority">
+              <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
               <SelectContent>
@@ -263,25 +261,26 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
           )}
           
           <DialogFooter className="sm:justify-start gap-2 mt-4 pt-4 border-t">
-            {job ? ( // Edit mode
+            {job ? ( 
               <Button type="submit" disabled={isLoading} className="flex-1">
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save Changes
               </Button>
-            ) : ( // Add mode
+            ) : ( 
               <>
                 <Button 
                   type="button" 
                   onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)} 
-                  disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                  variant={aiSuggestion?.suggestedTechnicianId ? "default" : "secondary"}
+                  disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId || !suggestedTechnicianDetails?.isAvailable}
+                  variant={aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails?.isAvailable ? "default" : "secondary"}
                   className="flex-1"
+                  title={aiSuggestion?.suggestedTechnicianId && !suggestedTechnicianDetails?.isAvailable ? `${suggestedTechnicianDetails?.name} is unavailable` : ''}
                 >
                   {isLoading && aiSuggestion?.suggestedTechnicianId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
                   Save & Assign to {suggestedTechnicianDetails?.name || "Suggested"}
                 </Button>
                 <Button 
-                  type="submit" // This will call handleSubmit(null)
+                  type="submit" 
                   disabled={isLoading} 
                   variant="outline"
                   className="flex-1"

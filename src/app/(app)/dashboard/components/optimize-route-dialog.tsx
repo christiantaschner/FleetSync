@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { optimizeRoutesAction, OptimizeRoutesActionInput } from "@/actions/fleet-actions";
 import type { OptimizeRoutesOutput } from "@/ai/flows/optimize-routes";
-import type { Technician, Job, Task, AITask } from '@/types';
+import type { Technician, Job, AITask } from '@/types'; // Removed Task as AITask is used
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,13 +38,12 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   const [trafficData, setTrafficData] = useState<string>('');
   const [unexpectedEvents, setUnexpectedEvents] = useState<string>('');
 
-  const technicianOptions = technicians.filter(t => !t.isAvailable && t.currentJobId); // Only techs with active jobs
+  const technicianOptions = technicians.filter(t => !t.isAvailable && t.currentJobId); 
   const availableJobsForTech = selectedTechnicianId 
     ? jobs.filter(j => j.assignedTechnicianId === selectedTechnicianId && (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress'))
     : [];
 
   useEffect(() => {
-    // Reset selected jobs if technician changes
     setSelectedJobIds([]);
   }, [selectedTechnicianId]);
 
@@ -72,7 +71,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
     const tasksForOptimization: AITask[] = selectedJobIds.map(jobId => {
       const job = jobs.find(j => j.id === jobId);
-      if (!job) throw new Error(`Job with ID ${jobId} not found`); // Should not happen
+      if (!job) throw new Error(`Job with ID ${jobId} not found`); 
       
       let priority: 'high' | 'medium' | 'low';
       switch(job.priority) {
@@ -130,7 +129,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
             <Label htmlFor="technicianSelect">Select Technician</Label>
-            <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId}>
+            <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId} name="technicianSelect">
               <SelectTrigger id="technicianSelect">
                 <SelectValue placeholder="Select a technician" />
               </SelectTrigger>
@@ -149,11 +148,11 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
                 {availableJobsForTech.map(job => (
                   <div key={job.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`job-${job.id}`}
+                      id={`job-opt-${job.id}`} // Ensure unique ID
                       checked={selectedJobIds.includes(job.id)}
                       onCheckedChange={() => handleJobSelection(job.id)}
                     />
-                    <Label htmlFor={`job-${job.id}`} className="font-normal cursor-pointer">
+                    <Label htmlFor={`job-opt-${job.id}`} className="font-normal cursor-pointer">
                       {job.title} ({job.priority})
                     </Label>
                   </div>
@@ -167,11 +166,11 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
           <div>
             <Label htmlFor="trafficData">Traffic Data (Optional JSON)</Label>
-            <Textarea id="trafficData" value={trafficData} onChange={(e) => setTrafficData(e.target.value)} placeholder='e.g., {"M5_congestion": "high"}' />
+            <Textarea id="trafficData" name="trafficData" value={trafficData} onChange={(e) => setTrafficData(e.target.value)} placeholder='e.g., {"M5_congestion": "high"}' />
           </div>
           <div>
             <Label htmlFor="unexpectedEvents">Unexpected Events (Optional JSON)</Label>
-            <Textarea id="unexpectedEvents" value={unexpectedEvents} onChange={(e) => setUnexpectedEvents(e.target.value)} placeholder='e.g., {"road_closure": "Main St"}' />
+            <Textarea id="unexpectedEvents" name="unexpectedEvents" value={unexpectedEvents} onChange={(e) => setUnexpectedEvents(e.target.value)} placeholder='e.g., {"road_closure": "Main St"}' />
           </div>
 
           <Button type="submit" disabled={isLoading || !selectedTechnicianId || selectedJobIds.length === 0} className="w-full">

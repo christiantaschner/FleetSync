@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  // DialogTrigger, // Not used if dialog is controlled externally
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +22,7 @@ import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 interface SmartJobAllocationDialogProps {
-  children?: React.ReactNode; 
+  // children prop is removed as this dialog is fully controlled (no DialogTrigger inside)
   jobToAssign: Job | null; 
   technicians: Technician[];
   isOpen: boolean;
@@ -30,7 +31,6 @@ interface SmartJobAllocationDialogProps {
 }
 
 const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ 
-    children, 
     jobToAssign, 
     technicians,
     isOpen,
@@ -48,7 +48,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       return;
     }
     setIsLoadingAI(true);
-    // setSuggestedTechnician(null); // Keep previous suggestion if any, allow re-fetch if desired via button in future
 
     const availableAITechnicians: AITechnician[] = technicians.map(t => ({
       technicianId: t.id,
@@ -79,27 +78,34 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
     }
   };
   
-  // Automatically fetch AI suggestion when dialog opens for a job, if no suggestion exists yet
   useEffect(() => {
     if (isOpen && jobToAssign && !suggestedTechnician && !isLoadingAI) {
       handleGetAISuggestion();
     }
-    // Reset suggestion if dialog is closed or job changes
-    if (!isOpen || (jobToAssign && suggestedTechnician && jobToAssign.id !== (technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.currentJobId) )) {
-        // This logic might be too complex or not perfectly reset.
-        // Simpler: reset only when dialog closes OR when jobToAssign changes AND dialog is open.
-    }
     if(!isOpen) {
-        setSuggestedTechnician(null); // Clear suggestion when dialog closes
+        setSuggestedTechnician(null); 
     }
-
-  }, [isOpen, jobToAssign, suggestedTechnician, isLoadingAI]); // Dependencies for the effect
+  }, [isOpen, jobToAssign, suggestedTechnician, isLoadingAI]); // Removed handleGetAISuggestion from deps, it's stable
 
 
   const handleConfirmAssignJob = async () => {
     if (!suggestedTechnician || !db || !jobToAssign) return;
 
     setIsLoadingAssign(true);
+
+    const assignedTechDetails = technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId);
+    if (!assignedTechDetails) {
+        toast({ title: "Error", description: "Suggested technician details not found.", variant: "destructive" });
+        setIsLoadingAssign(false);
+        return;
+    }
+    if (!assignedTechDetails.isAvailable) {
+        toast({ title: "Assignment Error", description: `${assignedTechDetails.name} is no longer available. Please get a new suggestion.`, variant: "destructive" });
+        setSuggestedTechnician(null); // Clear suggestion as it's outdated
+        setIsLoadingAssign(false);
+        return;
+    }
+
 
     try {
       const jobDocRef = doc(db, "jobs", jobToAssign.id);
@@ -122,9 +128,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         currentJobId: jobToAssign.id,
       });
       
-      const assignedTechDetails = technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId);
-      if (!assignedTechDetails) throw new Error("Assigned technician details not found locally.");
-
       const updatedTechnician: Technician = {
         ...assignedTechDetails,
         isAvailable: false,
@@ -134,7 +137,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       onJobAssigned(updatedJob, updatedTechnician);
       toast({ title: "Job Assigned", description: `Job "${updatedJob.title}" assigned to ${assignedTechDetails?.name}.`});
       setIsOpen(false);
-      // setSuggestedTechnician(null); // Already handled by useEffect when isOpen becomes false
 
     } catch (error) {
       console.error("Error assigning job via AI Dialog: ", error);
@@ -147,9 +149,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
         setIsOpen(open);
-        // if (!open) { // Moved to useEffect for better control
-        //     setSuggestedTechnician(null); 
-        // }
     }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
@@ -177,14 +176,6 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
                 </div>
             </div>
         )}
-
-        {/* Button to manually trigger AI suggestion can be hidden or removed if auto-fetch is preferred */}
-        {/* 
-        <Button onClick={handleGetAISuggestion} disabled={isLoadingAI || !jobToAssign} className="w-full mt-2">
-            {isLoadingAI ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Get AI Suggestion
-        </Button> 
-        */}
         
         {isLoadingAI && !suggestedTechnician && (
             <div className="flex items-center justify-center flex-col my-4 p-4 bg-secondary rounded-md">
@@ -197,8 +188,15 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
           <div className="mt-4 p-4 bg-secondary rounded-md">
             <h3 className="text-lg font-semibold font-headline">AI Suggestion:</h3>
             <p><strong>Technician:</strong> {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || suggestedTechnician.suggestedTechnicianId}</p>
+            <p className="mb-1"><strong>Availability:</strong> {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.isAvailable ? 'Available' : 'Unavailable'}</p>
             <p><strong>Reasoning:</strong> {suggestedTechnician.reasoning}</p>
-            <Button onClick={handleConfirmAssignJob} className="w-full mt-3" variant="default" disabled={isLoadingAssign}>
+            <Button 
+              onClick={handleConfirmAssignJob} 
+              className="w-full mt-3" 
+              variant="default" 
+              disabled={isLoadingAssign || !technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.isAvailable}
+              title={!technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.isAvailable ? 'Suggested technician is unavailable' : ''}
+            >
               {isLoadingAssign ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Assign Job to {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || 'Suggested Tech'}
             </Button>

@@ -2,9 +2,9 @@
 "use client";
 
 import React from 'react';
-import { Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+import { Map, AdvancedMarker } from '@vis.gl/react-google-maps'; // Removed Pin as it's not used
 import type { Job, Technician } from '@/types';
-import { User, Briefcase, MapPin } from 'lucide-react';
+import { User, Briefcase } from 'lucide-react'; // Removed MapPin as it's not used
 import { cn } from '@/lib/utils';
 
 interface MapViewProps {
@@ -14,14 +14,7 @@ interface MapViewProps {
   defaultZoom: number;
 }
 
-// Note: APIProvider is now expected to be wrapping a parent component (e.g., DashboardPage)
-// So, it's removed from here to avoid nesting if the parent already provides it.
-// If this component were to be used standalone elsewhere, it would need its own APIProvider.
-
 const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, defaultZoom }) => {
-  // The API key check is removed here because APIProvider is now at a higher level.
-  // If the APIProvider at the higher level doesn't have the key, it will handle showing an error or similar.
-
   const activeJobs = jobs.filter(job => job.status !== 'Completed' && job.status !== 'Cancelled');
 
   return (

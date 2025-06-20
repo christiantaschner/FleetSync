@@ -28,18 +28,18 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
-    if (priority === 'Medium') return 'default'; // Or 'primary' if you have that style
+    if (priority === 'Medium') return 'default'; 
     return 'secondary';
   };
 
   const getStatusIcon = (status: Job['status']) => {
     switch (status) {
       case 'Pending': return <AlertTriangle className="text-yellow-500" />;
-      case 'Assigned': return <User className="text-blue-500" />; // Using theme primary
-      case 'En Route': return <Zap className="text-orange-500" />; // Using theme accent
-      case 'In Progress': return <Clock className="text-indigo-500" />; // Custom color, consider theme
+      case 'Assigned': return <User className="text-primary" />; 
+      case 'En Route': return <Zap className="text-accent" />; 
+      case 'In Progress': return <Clock className="text-indigo-500" />; 
       case 'Completed': return <CheckCircle className="text-green-500" />;
-      case 'Cancelled': return <AlertTriangle className="text-red-500" />; // Using theme destructive
+      case 'Cancelled': return <AlertTriangle className="text-destructive" />;
       default: return <Briefcase />;
     }
   };

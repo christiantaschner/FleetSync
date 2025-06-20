@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -533,13 +534,20 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
+// Combined props for button and anchor, plus custom props
+interface SidebarMenuButtonCombinedProps extends 
+  Omit<React.ComponentPropsWithoutRef<"button">, "type">, // Omit type from button props if we conditionally add it
+  Omit<React.ComponentPropsWithoutRef<"a">, "href"> { // Omit href from anchor props as it's explicitly handled
+  asChild?: boolean;
+  isActive?: boolean;
+  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+  href?: string; // Explicitly add href
+  // variant and size will be handled by VariantProps
+}
+
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean
-    isActive?: boolean
-    tooltip?: string | React.ComponentProps<typeof TooltipContent>
-  } & VariantProps<typeof sidebarMenuButtonVariants>
+  HTMLElement, // Ref can be button or anchor
+  SidebarMenuButtonCombinedProps & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
     {
@@ -549,42 +557,58 @@ const SidebarMenuButton = React.forwardRef<
       size = "default",
       tooltip,
       className,
-      ...props
+      children, // Ensure children is destructured
+      href,     // Ensure href is destructured
+      ...rest // Keep rest of the props
     },
     ref
   ) => {
-    const Comp = asChild ? Slot : "button"
-    const { isMobile, state } = useSidebar()
+    const { isMobile, state } = useSidebar();
+    
+    // Determine the component type
+    // If asChild is true, always use Slot.
+    // If href is present (and not asChild), use 'a'.
+    // Otherwise (not asChild and no href), use 'button'.
+    const Comp = asChild ? Slot : (href ? 'a' : 'button');
 
-    const button = (
+    const buttonContent = (
       <Comp
-        ref={ref}
+        ref={ref as React.Ref<any>} // Use 'any' for ref with polymorphic Comp, or manage types carefully
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        {...props}
-      />
-    )
+        href={Comp === 'a' ? href : undefined} // Only pass href if Comp is 'a'
+        type={Comp === 'button' ? (rest as React.ComponentPropsWithoutRef<"button">).type || 'button' : undefined} // Only pass type if Comp is 'button'
+        {...(Comp === 'button' ? rest as Omit<React.ComponentPropsWithoutRef<"button">, "href"> : rest as Omit<React.ComponentPropsWithoutRef<"a">, "type">)}
+        // The above spread might need more careful type handling if strictness is high
+        // A simpler spread for now, assuming attributes are mostly compatible or ignored:
+        // {...rest} 
+        // This line below uses the destructured children:
+      >
+        {children} 
+      </Comp>
+    );
 
     if (!tooltip) {
-      return button
+      return buttonContent;
     }
 
+    let tooltipContentProps: React.ComponentProps<typeof TooltipContent>;
     if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      }
+      tooltipContentProps = { children: tooltip };
+    } else {
+      tooltipContentProps = tooltip;
     }
 
     return (
       <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
         <TooltipContent
           side="right"
           align="center"
           hidden={state !== "collapsed" || isMobile}
-          {...tooltip}
+          {...tooltipContentProps}
         />
       </Tooltip>
     )
@@ -592,12 +616,10 @@ const SidebarMenuButton = React.forwardRef<
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
 
+
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean
-    showOnHover?: boolean
-  }
+  React.ComponentProps<"button"> & { asChild?: boolean; showOnHover?: boolean }
 >(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
 
@@ -761,3 +783,5 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+    

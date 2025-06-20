@@ -93,15 +93,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href}>
                   <SidebarMenuButton
-                    asChild
+                    // removed asChild
                     isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
                     className="w-full justify-start"
                     tooltip={item.label}
+                    // href is passed by Link to SidebarMenuButton, which will render as <a>
                   >
-                    <a>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </a>
+                    {/* Icon and span are now direct children of SidebarMenuButton */}
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
@@ -155,3 +155,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+
+    

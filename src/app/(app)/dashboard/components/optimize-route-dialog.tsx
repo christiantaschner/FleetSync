@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { optimizeRoutesAction, OptimizeRoutesActionInput } from "@/actions/fleet-actions";
 import type { OptimizeRoutesOutput } from "@/ai/flows/optimize-routes";
-import type { Technician, Job, AITask } from '@/types'; // Removed Task as AITask is used
+import type { Technician, Job, AITask } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,13 +39,23 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   const [unexpectedEvents, setUnexpectedEvents] = useState<string>('');
 
   const technicianOptions = technicians.filter(t => !t.isAvailable && t.currentJobId); 
-  const availableJobsForTech = selectedTechnicianId 
-    ? jobs.filter(j => j.assignedTechnicianId === selectedTechnicianId && (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress'))
-    : [];
+  
+  const availableJobsForTech = useMemo(() => {
+    if (!selectedTechnicianId) return [];
+    return jobs.filter(j => 
+      j.assignedTechnicianId === selectedTechnicianId && 
+      (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress')
+    );
+  }, [selectedTechnicianId, jobs]);
 
   useEffect(() => {
-    setSelectedJobIds([]);
-  }, [selectedTechnicianId]);
+    // Auto-select all available jobs for the technician when the technician or their jobs change
+    if (selectedTechnicianId && availableJobsForTech.length > 0) {
+      setSelectedJobIds(availableJobsForTech.map(job => job.id));
+    } else {
+      setSelectedJobIds([]); // Clear if no tech or no jobs
+    }
+  }, [selectedTechnicianId, availableJobsForTech]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,13 +127,22 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      setIsOpen(open);
+      if (!open) { // Reset state when dialog closes
+        setSelectedTechnicianId('');
+        setSelectedJobIds([]);
+        setOptimizedRoute(null);
+        setTrafficData('');
+        setUnexpectedEvents('');
+      }
+    }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Real-Time Route Optimization (AI)</DialogTitle>
+          <DialogTitle className="font-headline">Manual AI Route Re-Optimization</DialogTitle>
           <DialogDescription>
-            Optimize a technician's route based on current tasks, traffic, and unexpected events.
+            Manually trigger AI to re-optimize a selected technician&apos;s current route, considering their active jobs and any new information like traffic or unexpected events.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -143,12 +162,12 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
           {selectedTechnicianId && availableJobsForTech.length > 0 && (
             <div>
-              <Label>Select Jobs to Optimize</Label>
+              <Label>Select Jobs to Optimize (defaults to all active)</Label>
               <div className="space-y-2 mt-1 max-h-40 overflow-y-auto rounded-md border p-2">
                 {availableJobsForTech.map(job => (
                   <div key={job.id} className="flex items-center space-x-2">
                     <Checkbox
-                      id={`job-opt-${job.id}`} // Ensure unique ID
+                      id={`job-opt-${job.id}`}
                       checked={selectedJobIds.includes(job.id)}
                       onCheckedChange={() => handleJobSelection(job.id)}
                     />
@@ -175,7 +194,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
           <Button type="submit" disabled={isLoading || !selectedTechnicianId || selectedJobIds.length === 0} className="w-full">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Optimize Route
+            Optimize Technician&apos;s Route
           </Button>
         </form>
         
@@ -205,3 +224,4 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 };
 
 export default OptimizeRouteDialog;
+

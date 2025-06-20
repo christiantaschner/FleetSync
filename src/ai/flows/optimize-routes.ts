@@ -30,6 +30,7 @@ const OptimizeRoutesInputSchema = z.object({
           })
           .describe('The location of the task.'),
         priority: z.enum(['high', 'medium', 'low']).describe('The priority of the task.'),
+        scheduledTime: z.string().optional().describe('Optional specific requested appointment time for this task (ISO 8601 format). This is a strong constraint if provided.'),
       })
     )
     .describe('The list of tasks to be performed.'),
@@ -68,13 +69,16 @@ const prompt = ai.definePrompt({
   output: {schema: OptimizeRoutesOutputSchema},
   prompt: `You are an AI assistant specialized in optimizing routes for field technicians.
 
-  Given the technician's current location, a list of tasks with their locations and priorities,
+  Given the technician's current location, a list of tasks with their locations, priorities, and potentially specific scheduled times,
   real-time traffic data (if available), and information about unexpected events (if available),
   you will generate an optimized route that minimizes travel time and maximizes efficiency.
 
   Technician ID: {{{technicianId}}}
   Current Location: Latitude: {{{currentLocation.latitude}}}, Longitude: {{{currentLocation.longitude}}}
-  Tasks:{{#each tasks}} Task ID: {{{taskId}}}, Location: Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}}, Priority: {{{priority}}}{{#unless @last}}\n{{/unless}}{{/each}}
+  Tasks:
+  {{#each tasks}}
+  - Task ID: {{{taskId}}}, Location: Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}}, Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled Time: {{{scheduledTime}}} (MUST HONOR IF POSSIBLE){{/if}}
+  {{/each}}
   {{#if trafficData}}Traffic Data: {{{trafficData}}}{{/if}}
   {{#if unexpectedEvents}}Unexpected Events: {{{unexpectedEvents}}}{{/if}}
 
@@ -91,6 +95,7 @@ const prompt = ai.definePrompt({
   }
 
   Consider task priorities, travel times, and any available traffic or event information to create the most efficient route.
+  If any tasks have a specific 'scheduledTime', these are high-priority constraints that the optimized route must attempt to meet. Your reasoning should reflect this consideration.
   Explain your reasoning for the chosen route in the "reasoning" field.
 `,
 });

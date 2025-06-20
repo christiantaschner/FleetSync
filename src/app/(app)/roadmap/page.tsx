@@ -57,10 +57,10 @@ const roadmapFeatures = {
         coreFunctionality: [
           "Continuously monitor job statuses, technician locations, and new job arrivals.",
           "Trigger re-optimization based on events: new urgent job, job completion (early/late), technician becomes unavailable, significant traffic changes (future).",
-          "AI considers job priority, skills required, technician's current load, travel time, ETAs."
+          "AI considers job priority, skills required, technician's current load, travel time, ETAs, and crucially, any pre-committed customer appointment windows (`Job.scheduledTime`)."
         ],
         dataModels: [
-          "Relies heavily on real-time Job and Technician data (location, status, skills, currentJobId, estimatedDuration).",
+          "Relies heavily on real-time Job and Technician data (location, status, skills, currentJobId, estimatedDuration, scheduledTime).",
           "Potentially a temporary 'optimization_queue' for pending re-optimization requests if system is under load."
         ],
         aiComponents: [
@@ -81,13 +81,14 @@ const roadmapFeatures = {
         technicalChallenges: [
           "Handling high frequency of events and ensuring rapid re-optimization.",
           "Minimizing disruption to technicians already en route.",
-          "Algorithm complexity for balancing multiple competing factors (priority, travel time, technician load)."
+          "Algorithm complexity for balancing multiple competing factors (priority, travel time, technician load, fixed appointments)."
         ],
         successMetrics: [
           "Reduced average travel time per job.",
           "Increased number of jobs completed per technician per day.",
           "Faster response times for emergency jobs.",
-          "Reduced idle time for technicians."
+          "Reduced idle time for technicians.",
+          "Adherence to customer-scheduled appointment times."
         ]
       }
     },

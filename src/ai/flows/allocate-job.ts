@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
+  scheduledTime: z.string().optional().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
@@ -49,6 +50,7 @@ const prompt = ai.definePrompt({
 
   Given the following job description and a list of technicians with their availability, skills, and location, suggest the most suitable technician for the job.
   Consider the job priority when making your suggestion.
+  {{#if scheduledTime}}Crucially, the customer has requested a specific appointment time: {{{scheduledTime}}}. The suggested technician must be able to meet this appointment, considering their current location and other commitments. Factor this heavily into your decision.{{/if}}
 
   Job Description: {{{jobDescription}}}
   Job Priority: {{{jobPriority}}}
@@ -61,6 +63,7 @@ const prompt = ai.definePrompt({
   Suggest the most suitable technician ID and explain your reasoning.
   In your reasoning, refer to technicians by their name (e.g., "Technician Alice Smith is available...") instead of their ID.
   Ensure that the outputted suggestedTechnicianId exists in the technicianAvailability array.
+  If a scheduledTime is provided, explicitly state in your reasoning how the chosen technician can meet this appointment.
   `,
 });
 

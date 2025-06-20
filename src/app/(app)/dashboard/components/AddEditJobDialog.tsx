@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,21 +21,8 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus } from '@/types';
 import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-// TypeScript declaration for the Google Maps Place Autocomplete web component
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-        // value?: string; // Temporarily removed for diagnosis
-        placeholder?: string;
-        id?: string;
-        name?: string;
-      }, HTMLElement>;
-    }
-  }
-}
+// No gmp-place-autocomplete-element specific declarations needed now
 
 interface AddEditJobDialogProps {
   children: React.ReactNode;
@@ -53,8 +40,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  
-  const [manualLocationAddress, setManualLocationAddress] = useState(''); // For submission fallback & fallback input
+  const [locationAddress, setLocationAddress] = useState(''); // Standard text input for address
 
   useEffect(() => {
     if (isOpen) {
@@ -64,7 +50,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        setManualLocationAddress(job.location.address || ''); 
+        setLocationAddress(job.location.address || '');
       } else {
         // Reset for new job
         setTitle('');
@@ -72,16 +58,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority('Medium');
         setCustomerName('');
         setCustomerPhone('');
-        setManualLocationAddress('');
+        setLocationAddress('');
       }
     }
   }, [job, isOpen]);
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim() ) { 
-      toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
+    if (!title.trim() || !description.trim() || !locationAddress.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in Title, Description, and Address.", variant: "destructive" });
       return;
     }
     
@@ -94,9 +79,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        latitude: job?.location.latitude ?? 0, 
-        longitude: job?.location.longitude ?? 0, 
-        address: manualLocationAddress || "Address not captured by autocomplete" 
+        // Latitude and longitude will not be set from address suggestions
+        // They will default to 0 or existing values if editing.
+        latitude: job?.location.latitude ?? 0,
+        longitude: job?.location.longitude ?? 0,
+        address: locationAddress 
       },
       updatedAt: serverTimestamp(),
     };
@@ -181,28 +168,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           </div>
           
           <div>
-            <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
-            {/* Barebones gmp-place-autocomplete-element for rendering test */}
-            <gmp-place-autocomplete-element
-              id="jobLocationAddressGmp"
-              name="jobLocationAddressGmp"
-              placeholder="Start typing address for suggestions..."
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This field uses Google Maps suggestions. If it's not visible or clickable, there's an issue with Maps API loading.
-            </p>
-            
-            <Label htmlFor="manualJobLocationAddress" className="mt-3 block font-medium text-muted-foreground">Fallback / Manual Address Input:</Label>
-             <Input 
-                id="manualJobLocationAddress"
-                name="manualJobLocationAddress"
-                value={manualLocationAddress}
-                onChange={(e) => setManualLocationAddress(e.target.value)}
-                placeholder="Type address manually here"
-                className="mt-1"
+            <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
+            <Input 
+                id="jobLocationAddress"
+                name="jobLocationAddress"
+                value={locationAddress}
+                onChange={(e) => setLocationAddress(e.target.value)}
+                placeholder="Enter job address manually"
+                required
             />
              <p className="text-xs text-muted-foreground mt-1">
-              Use this field if the one above doesn't work.
+              Address suggestions are temporarily unavailable. Please enter manually.
             </p>
           </div>
 
@@ -222,5 +198,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 };
 
 export default AddEditJobDialog;
-
-    

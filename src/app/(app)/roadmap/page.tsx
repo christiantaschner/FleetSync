@@ -5,8 +5,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
-  Brain, Search, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList // Added ClipboardList
+  Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer // Added Timer
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -38,21 +38,15 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 const roadmapFeatures = {
   coreAiDispatcher: [
     {
-      title: "Google Maps Address Autocomplete",
-      description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
-      icon: Map,
-      status: "Planned"
-    },
-    {
-      title: "AI-Powered \"Next Up Technicians\" Prediction",
-      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data. Display this on the dashboard.",
-      icon: Lightbulb,
-      status: "Planned"
-    },
-    {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine continuously re-optimizing routes and assignments based on live events like early/late job completions, new urgent jobs, traffic changes, and technician unavailability, ensuring minimal downtime and maximizing punctuality.",
       icon: Shuffle, 
+      status: "Planned"
+    },
+    {
+      title: "Digital Time Tracking & Management",
+      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. Dispatchers can view time logs, generate reports on job duration and technician hours, and make necessary adjustments.",
+      icon: Timer,
       status: "Planned"
     },
     {
@@ -77,6 +71,18 @@ const roadmapFeatures = {
       title: "Customer Satisfaction & Response Time Analytics",
       description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality.",
       icon: Smile,
+      status: "Planned"
+    },
+    {
+      title: "Google Maps Address Autocomplete",
+      description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
+      icon: Map,
+      status: "Planned"
+    },
+    {
+      title: "AI-Powered \"Next Up Technicians\" Prediction",
+      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data. Display this on the dashboard.",
+      icon: Lightbulb,
       status: "Planned"
     },
     {
@@ -146,7 +152,7 @@ const roadmapFeatures = {
     {
       title: "Smart City Infrastructure Integration",
       description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
-      icon: Building2,
+      icon: Building2, // Changed from City
       status: "Vision"
     },
     {

@@ -13,6 +13,7 @@ export default {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Poppins', 'sans-serif'],
+        logo: ['"Exo 2"', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {

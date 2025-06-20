@@ -39,13 +39,13 @@ const roadmapFeatures = {
   coreAiDispatcher: [
     {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs and improves responsiveness.",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
       icon: Shuffle, 
       status: "Planned"
     },
     {
       title: "Digital Time Tracking & Management",
-      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing and payroll. Dispatchers can view time logs and generate reports.",
+      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing and payroll. Dispatchers can view time logs and generate reports. Accurate historical time data from this system also enhances the precision of AI-driven route optimization and future job scheduling.",
       icon: Timer,
       status: "Planned"
     },
@@ -57,7 +57,7 @@ const roadmapFeatures = {
     },
     {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
-      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction.",
+      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction. This is informed by data from AI-Assisted Digital Protocols.",
       icon: ThumbsUp,
       status: "Planned"
     },
@@ -87,13 +87,13 @@ const roadmapFeatures = {
     },
     {
       title: "AI-Powered \"Next Up Technicians\" Prediction",
-      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data. Display this on the dashboard.",
+      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data from time tracking and job statuses. Display this on the dashboard.",
       icon: Lightbulb,
       status: "Planned"
     },
     {
       title: "Real-time Chat with Technicians",
-      description: "Implement a direct messaging feature between dispatchers and technicians for quick communication, on-site support, and updates, reducing misunderstandings and improving collaboration.",
+      description: "Implement a direct messaging feature between dispatchers and technicians for quick communication, on-site support, and updates, reducing misunderstandings and improving collaboration. Can be contextually linked to job details and potentially integrate with the AI Knowledge Base for quick answers.",
       icon: MessageSquare,
       status: "Consideration"
     },
@@ -119,19 +119,19 @@ const roadmapFeatures = {
     },
     {
       title: "Intelligent Parts & Van Stock Management (HVAC/SHK)",
-      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage). Technicians get better visibility into needed parts for jobs and their van stock, minimizing repeat visits and reducing their frustration from missing components for HVAC/SHK tasks.",
+      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage). Technicians get better visibility into needed parts for jobs and their van stock, minimizing repeat visits and reducing their frustration from missing components for HVAC/SHK tasks. Integrates with data from completed job protocols.",
       icon: Truck,
       status: "Planned"
     },
     {
       title: "Proactive Maintenance Scheduling & Equipment History (HVAC/SHK)",
-      description: "Manage recurring maintenance contracts (heating, AC). The system will automatically suggest and help schedule these appointments. Provide technicians access to equipment history (model, past repairs, service intervals) at job locations via the mobile app, which is crucial for efficient HVAC/SHK servicing.",
+      description: "Manage recurring maintenance contracts (heating, AC). The system will automatically suggest and help schedule these appointments. Provide technicians access to equipment history (model, past repairs, service intervals from CRM) at job locations via the mobile app, which is crucial for efficient HVAC/SHK servicing.",
       icon: History,
       status: "Planned"
     },
     {
       title: "AI-Assisted Digital Protocols & Documentation (HVAC/SHK)",
-      description: "Provide customizable digital forms and protocols. AI will assist with documentation through features like voice-to-text for notes, automatic extraction of key information from speech or text, and smart suggestions for common entries. This drastically reduces manual data entry for service reports, maintenance logs, and checklists (e.g., for gas inspections, complex repairs), ensuring consistent and accurate information capture while minimizing the technician's time spent on cumbersome paperwork.",
+      description: "Provide customizable digital forms and protocols. AI will assist with documentation through features like voice-to-text for notes, automatic extraction of key information from speech or text, and smart suggestions for common entries. This drastically reduces manual data entry for service reports, maintenance logs, and checklists (e.g., for gas inspections, complex repairs), ensuring consistent and accurate information capture while minimizing the technician's time spent on cumbersome paperwork. Data captured (e.g., parts used, issues resolved) directly informs FTFR analytics, helps refine the AI Knowledge Base, and supports intelligent parts management.",
       icon: FileText,
       status: "Planned"
     },
@@ -143,13 +143,13 @@ const roadmapFeatures = {
     },
     {
       title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
-      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries (e.g., 'What does error E47 mean?'), AI-guided diagnostics based on symptoms, and contextual information suggestions based on the job type. This empowers technicians to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls, directly addressing a major technician pain point of difficult on-site problem-solving.",
+      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries (e.g., 'What does error E47 mean?'), AI-guided diagnostics based on symptoms, and contextual information suggestions based on the job type. The knowledge base continuously improves by learning from successfully documented solutions and common issues identified in completed job protocols. This empowers technicians to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls, directly addressing a major technician pain point of difficult on-site problem-solving.",
       icon: BookOpen,
       status: "Planned"
     },
     {
       title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration from lack of information about the customer or equipment.",
+      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration from lack of information about the customer or equipment. This data also enhances AI job allocation and parts suggestions.",
       icon: ClipboardList,
       status: "Consideration"
     },

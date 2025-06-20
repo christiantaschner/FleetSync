@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input'; // Keep for other fields
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -23,17 +23,16 @@ import type { Job, JobPriority, JobStatus } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// TypeScript declaration for the Google Maps Place Autocomplete Web Component
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
         'input-id'?: string;
-        value?: string; // For initial value and potentially for reading
+        value?: string; 
         placeholder?: string;
-        types?: string; // e.g. "address"
-        // Additional attributes like country, location-bias can be added if needed
+        types?: string; 
         style?: React.CSSProperties;
+        key?: string | number; // Allow key prop
       }, HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>;
     }
   }
@@ -41,8 +40,8 @@ declare global {
 
 
 interface AddEditJobDialogProps {
-  children: React.ReactNode; // Trigger element
-  job?: Job; // Job to edit, undefined for new job
+  children: React.ReactNode; 
+  job?: Job; 
   onJobAddedOrUpdated?: (job: Job) => void;
 }
 
@@ -57,7 +56,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
-  // Location state
   const [locationAddress, setLocationAddress] = useState(''); 
   const [latitude, setLatitude] = useState<number | null>(null); 
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -65,31 +63,25 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const placeAutocompleteRef = useRef<HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>(null);
 
   useEffect(() => {
-    if (job) {
-      setTitle(job.title);
-      setDescription(job.description);
-      setPriority(job.priority);
-      setCustomerName(job.customerName);
-      setCustomerPhone(job.customerPhone);
-      setLocationAddress(job.location.address || '');
-      setLatitude(job.location.latitude);
-      setLongitude(job.location.longitude);
-      // Set initial value for the autocomplete element when editing
-      if (placeAutocompleteRef.current) {
-        placeAutocompleteRef.current.value = job.location.address || '';
-      }
-    } else {
-      // Reset for new job form
-      setTitle('');
-      setDescription('');
-      setPriority('Medium');
-      setCustomerName('');
-      setCustomerPhone('');
-      setLocationAddress(''); 
-      setLatitude(null); 
-      setLongitude(null);
-      if (placeAutocompleteRef.current) {
-        placeAutocompleteRef.current.value = '';
+    if (isOpen) {
+      if (job) {
+        setTitle(job.title);
+        setDescription(job.description);
+        setPriority(job.priority);
+        setCustomerName(job.customerName);
+        setCustomerPhone(job.customerPhone);
+        setLocationAddress(job.location.address || '');
+        setLatitude(job.location.latitude);
+        setLongitude(job.location.longitude);
+      } else {
+        setTitle('');
+        setDescription('');
+        setPriority('Medium');
+        setCustomerName('');
+        setCustomerPhone('');
+        setLocationAddress(''); 
+        setLatitude(null); 
+        setLongitude(null);
       }
     }
   }, [job, isOpen]); 
@@ -106,32 +98,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           setLatitude(newPlace.geometry.location.lat());
           setLongitude(newPlace.geometry.location.lng());
         } else {
-          // If place details are not available, update address from input value
-          // This covers manual typing or clearing the input
           setLocationAddress(autocompleteElement.value);
-          // Potentially clear lat/lng if address is manually changed and not a valid place
-          // setLatitude(null); 
-          // setLongitude(null);
         }
       };
 
-      // Event listener for when a place is selected from suggestions
-      autocompleteElement.addEventListener('gmp-placechange', handlePlaceChange);
-      
-      // Event listener for direct input changes (typing)
-      // This helps keep locationAddress state in sync with what user types
       const handleDirectInput = (event: Event) => {
-         setLocationAddress((event.target as HTMLInputElement).value);
+         const target = event.target as (HTMLElement & { value: string });
+         setLocationAddress(target.value);
       };
+      
+      autocompleteElement.addEventListener('gmp-placechange', handlePlaceChange);
       autocompleteElement.addEventListener('input', handleDirectInput);
-
 
       return () => {
         autocompleteElement.removeEventListener('gmp-placechange', handlePlaceChange);
         autocompleteElement.removeEventListener('input', handleDirectInput);
       };
     }
-  }, [isOpen]); // Re-attach listeners when dialog opens
+  }, [isOpen, placeAutocompleteRef]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,11 +125,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       return;
     }
     if (latitude === null || longitude === null) {
-         // If a place was selected, lat/lng should be set.
-         // If user typed an address and didn't select, and we didn't get lat/lng,
-         // we might want to prevent submission or try to geocode the address.
-         // For now, let's require a selected place or an address that resolved to coordinates.
-         // This check can be refined based on desired behavior for non-selected addresses.
          if (placeAutocompleteRef.current?.value && !placeAutocompleteRef.current?.place) {
             toast({ title: "Location Incomplete", description: "Please select a valid address from suggestions, or ensure the address provides coordinates.", variant: "destructive"});
             return;
@@ -164,7 +143,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: { 
-        // Ensure latitude and longitude are numbers. Fallback if somehow still null.
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0, 
         address: locationAddress 
@@ -251,21 +229,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           </div>
           <div>
             <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
-            {/* 
-              The value prop on gmp-place-autocomplete-element is for the *initial* value.
-              To make it behave more like a controlled component, we update its .value property
-              in the useEffect when `job` (and thus `locationAddress` state) changes.
-              The `locationAddress` state is updated via the 'input' event listener.
-            */}
             <gmp-place-autocomplete-element
+                key={job?.id || 'new-job-location'} // Force re-mount on job change
                 ref={placeAutocompleteRef}
-                input-id="jobLocationAddressGmp" // For associating label, though not strictly needed for functionality here
+                input-id="jobLocationAddressGmp"
                 placeholder="Start typing address..."
-                types="address" // Restrict to addresses
-                className={cn( // Apply ShadCN input styles to the host element
+                types="address"
+                value={locationAddress} // Controlled component: value driven by React state
+                className={cn(
                     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 )}
-                // value={locationAddress} // Initial value is set via ref in useEffect
              />
             <p className="text-xs text-muted-foreground mt-1">Select an address from suggestions to set coordinates automatically.</p>
           </div>

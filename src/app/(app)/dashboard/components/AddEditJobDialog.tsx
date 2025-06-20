@@ -20,9 +20,13 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface AddEditJobDialogProps {
   children: React.ReactNode;
@@ -45,6 +49,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
+  const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
 
   const resetForm = useCallback(() => {
     setTitle(job?.title || '');
@@ -53,6 +58,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     setCustomerName(job?.customerName || '');
     setCustomerPhone(job?.customerPhone || '');
     setLocationAddress(job?.location.address || '');
+    setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
     setAiSuggestion(null);
     setSuggestedTechnicianDetails(null);
   }, [job]);
@@ -63,7 +69,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     }
   }, [job, isOpen, resetForm]);
 
-  const fetchAISuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority) => {
+  const fetchAISuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
       setAiSuggestion(null);
       setSuggestedTechnicianDetails(null);
@@ -88,6 +94,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
       jobDescription: currentDescription,
       jobPriority: currentPriority,
       technicianAvailability: availableAITechnicians,
+      scheduledTime: currentScheduledTime?.toISOString(),
     };
 
     const result = await allocateJobAction(input);
@@ -106,11 +113,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
   useEffect(() => {
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
-        fetchAISuggestion(description, priority);
+        fetchAISuggestion(description, priority, scheduledTime);
       }, 1000); 
       return () => clearTimeout(timer);
     }
-  }, [description, priority, isOpen, job, fetchAISuggestion]);
+  }, [description, priority, scheduledTime, isOpen, job, fetchAISuggestion]);
 
 
   const handleSubmit = async (assignTechId: string | null = null) => {
@@ -121,20 +128,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     
     setIsLoading(true);
 
-    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { updatedAt: any } = {
+    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { updatedAt: any; scheduledTime?: string; } = {
       title,
       description,
       priority,
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        // For manual address entry, lat/lng might need to be geocoded separately or remain 0
-        // Or if editing, preserve original lat/lng if address hasn't changed significantly
         latitude: job?.location.latitude ?? 0, 
         longitude: job?.location.longitude ?? 0,
         address: locationAddress 
       },
       updatedAt: serverTimestamp(),
+      scheduledTime: scheduledTime?.toISOString(),
     };
 
     try {
@@ -203,18 +209,46 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
             <Label htmlFor="jobDescription">Job Description *</Label>
             <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3}/>
           </div>
-          <div>
-            <Label htmlFor="jobPriority">Job Priority *</Label>
-            <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
-              <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="jobPriority">Job Priority *</Label>
+              <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
+                <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+             <div>
+                <Label htmlFor="scheduledTime">Scheduled Time (Optional)</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        id="scheduledTime"
+                        variant={"outline"}
+                        className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !scheduledTime && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={scheduledTime}
+                        onSelect={setScheduledTime}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+            </div>
           </div>
           <div>
             <Label htmlFor="customerName">Customer Name</Label>

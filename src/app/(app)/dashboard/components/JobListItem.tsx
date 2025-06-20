@@ -19,7 +19,7 @@ import AddEditJobDialog from './AddEditJobDialog';
 interface JobListItemProps {
   job: Job;
   technicians: Technician[];
-  onAssignWithAI: (job: Job) => void; // Renamed from onAIAssignInitiated for clarity
+  onAssignWithAI: (job: Job) => void;
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
@@ -113,4 +113,3 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
 };
 
 export default JobListItem;
-

@@ -9,6 +9,7 @@ import { z } from "zod";
 const AllocateJobActionInputSchema = z.object({
   jobDescription: z.string().min(1, "Job description is required."),
   jobPriority: z.enum(['High', 'Medium', 'Low']),
+  scheduledTime: z.string().optional(),
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string(),

@@ -16,6 +16,10 @@ import type { Job } from '@/types';
 import { Briefcase, AlertTriangle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
+// This component might no longer be used if AI assignment is moved contextually to JobListItem.
+// Keeping it for now in case of other use-cases or if the user wants to revert.
+// If confirmed as unused, it can be removed.
+
 interface SelectPendingJobDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
@@ -44,6 +48,7 @@ const SelectPendingJobDialog: React.FC<SelectPendingJobDialogProps> = ({
           <DialogTitle className="font-headline">Select Pending Job for AI Assignment</DialogTitle>
           <DialogDescription>
             Choose a pending job from the list below to get an AI technician suggestion.
+            (This dialog might be deprecated if assignment is done contextually)
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-3">
@@ -87,3 +92,4 @@ const SelectPendingJobDialog: React.FC<SelectPendingJobDialogProps> = ({
 };
 
 export default SelectPendingJobDialog;
+

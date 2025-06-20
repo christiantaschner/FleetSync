@@ -8,8 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Job, Technician, JobStatus, JobPriority } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
-import OptimizeRouteDialog from './components/optimize-route-dialog'; // Import OptimizeRouteDialog
-import SelectPendingJobDialog from './components/SelectPendingJobDialog';
+import OptimizeRouteDialog from './components/optimize-route-dialog'; 
+// SelectPendingJobDialog is no longer needed
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
@@ -35,9 +35,8 @@ export default function DashboardPage() {
   const [selectedJobForAIAssign, setSelectedJobForAIAssign] = useState<Job | null>(null);
   const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
   
-  const [isSelectPendingJobDialogOpen, setIsSelectPendingJobDialogOpen] = useState(false);
-  const [isOptimizeRouteDialogOpen, setIsOptimizeRouteDialogOpen] = useState(false); // State for OptimizeRouteDialog
-
+  // isSelectPendingJobDialogOpen is no longer needed
+  // const [isOptimizeRouteDialogOpen, setIsOptimizeRouteDialogOpen] = useState(false); // This state is internal to OptimizeRouteDialog now if it controls its own open/close
 
   const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
   const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
@@ -114,13 +113,8 @@ export default function DashboardPage() {
     });
   };
   
-  const openAIAssignDialogForSpecificJob = (job: Job) => {
-    setSelectedJobForAIAssign(job);
-    setIsAIAssignDialogOpen(true);
-  };
-
-  const handlePendingJobSelectedForAIAssign = (job: Job) => {
-    setIsSelectPendingJobDialogOpen(false);
+  // This function is now triggered from JobListItem for a specific job
+  const openAIAssignDialogForJob = (job: Job) => {
     setSelectedJobForAIAssign(job);
     setIsAIAssignDialogOpen(true);
   };
@@ -178,19 +172,13 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline">Dispatcher Dashboard</h1>
-          <div className="flex flex-wrap gap-2"> {/* Added flex-wrap */}
+          <div className="flex flex-wrap gap-2">
             <AddEditJobDialog technicians={technicians} onJobAddedOrUpdated={handleJobAddedOrUpdated}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
             </AddEditJobDialog>
-            <Button 
-              variant={pendingJobs.length > 0 ? "accent" : "outline"} 
-              onClick={() => setIsSelectPendingJobDialogOpen(true)} 
-              disabled={pendingJobs.length === 0}
-            >
-              <UserPlus className="mr-2 h-4 w-4" /> AI Assign Task
-            </Button>
+            {/* Removed AI Assign Task button - functionality moved to JobListItem */}
             <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
               <Button variant="outline" disabled={busyTechnicians.length === 0}>
                 <MapIcon className="mr-2 h-4 w-4" /> Manual AI Re-Optimization
@@ -199,12 +187,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <SelectPendingJobDialog
-            isOpen={isSelectPendingJobDialogOpen}
-            setIsOpen={setIsSelectPendingJobDialogOpen}
-            jobs={jobs}
-            onJobSelected={handlePendingJobSelectedForAIAssign}
-        />
+        {/* SelectPendingJobDialog is no longer needed here */}
 
         {selectedJobForAIAssign && (
           <SmartJobAllocationDialog
@@ -218,7 +201,6 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
-            {/* Children not needed as this dialog is controlled */}
             <></> 
           </SmartJobAllocationDialog>
         )}
@@ -300,7 +282,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle className="font-headline">Current Jobs</CardTitle>
-                        <CardDescription>Manage and track all ongoing and pending jobs.</CardDescription>
+                        <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for pending jobs.</CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <div className="flex-1 sm:flex-initial">
@@ -344,7 +326,7 @@ export default function DashboardPage() {
                     key={job.id} 
                     job={job} 
                     technicians={technicians} 
-                    onAssignWithAI={openAIAssignDialogForSpecificJob}
+                    onAssignWithAI={openAIAssignDialogForJob} // Changed prop name for clarity
                     onJobUpdated={handleJobAddedOrUpdated}
                   />
                 )) : (
@@ -392,5 +374,4 @@ export default function DashboardPage() {
     </APIProvider>
   );
 }
-
     

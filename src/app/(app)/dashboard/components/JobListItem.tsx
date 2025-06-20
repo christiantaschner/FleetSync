@@ -19,7 +19,7 @@ import AddEditJobDialog from './AddEditJobDialog';
 interface JobListItemProps {
   job: Job;
   technicians: Technician[];
-  onAssignWithAI: (job: Job) => void;
+  onAssignWithAI: (job: Job) => void; // Renamed from onAIAssignInitiated for clarity
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 

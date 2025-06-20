@@ -5,7 +5,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
-  Brain, Search, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap 
+  Brain, Search, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap // Added new icons
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -46,6 +47,36 @@ const roadmapFeatures = {
       title: "AI-Powered \"Next Up Technicians\" Prediction",
       description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data. Display this on the dashboard.",
       icon: Lightbulb,
+      status: "Planned"
+    },
+    {
+      title: "Advanced Real-time Dynamic Re-optimization",
+      description: "Core AI engine continuously re-optimizing routes and assignments based on live events like early/late job completions, new urgent jobs, traffic changes, and technician unavailability, ensuring minimal downtime and maximizing punctuality.",
+      icon: Shuffle, // Using Shuffle as Zap is already on dashboard
+      status: "Planned"
+    },
+    {
+      title: "Digital Customer Signatures (Mobile App)",
+      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and streamlined documentation.",
+      icon: FileSignature,
+      status: "Planned"
+    },
+    {
+      title: "First-Time-Fix-Rate (FTFR) Analytics",
+      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis.",
+      icon: ThumbsUp,
+      status: "Planned"
+    },
+    {
+      title: "CO2 Emission Estimation & Reporting",
+      description: "Estimate and report CO2 emissions based on travel data, helping businesses track and improve their environmental footprint.",
+      icon: Leaf,
+      status: "Planned"
+    },
+    {
+      title: "Customer Satisfaction & Response Time Analytics",
+      description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality.",
+      icon: Smile,
       status: "Planned"
     },
     {
@@ -109,7 +140,7 @@ const roadmapFeatures = {
     {
       title: "Smart City Infrastructure Integration",
       description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
-      icon: Building2, // Replaced City with Building2
+      icon: Building2,
       status: "Vision"
     },
     {
@@ -184,4 +215,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-    

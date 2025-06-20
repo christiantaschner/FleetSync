@@ -3,7 +3,10 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, Brain, Search, City, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap } from 'lucide-react';
+import { 
+  Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
+  Brain, Search, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap 
+} from 'lucide-react';
 
 interface RoadmapItemProps {
   title: string;
@@ -106,7 +109,7 @@ const roadmapFeatures = {
     {
       title: "Smart City Infrastructure Integration",
       description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
-      icon: City,
+      icon: Building2, // Replaced City with Building2
       status: "Vision"
     },
     {
@@ -181,5 +184,4 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
     

@@ -28,11 +28,11 @@ declare global {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
         'input-id'?: string;
-        value?: string; 
+        // value?: string; // Removed to make it less controlled by React during typing
         placeholder?: string;
         types?: string; 
         style?: React.CSSProperties;
-        key?: string | number; // Allow key prop
+        key?: string | number; 
       }, HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>;
     }
   }
@@ -62,49 +62,75 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 
   const placeAutocompleteRef = useRef<HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>(null);
 
+  // Effect to set initial form values when dialog opens or job changes
   useEffect(() => {
     if (isOpen) {
+      const autocompleteElement = placeAutocompleteRef.current;
       if (job) {
         setTitle(job.title);
         setDescription(job.description);
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        setLocationAddress(job.location.address || '');
+        
+        const initialAddress = job.location.address || '';
+        setLocationAddress(initialAddress); // Update React state
+        if (autocompleteElement) {
+          autocompleteElement.value = initialAddress; // Programmatically set web component's value
+        }
         setLatitude(job.location.latitude);
         setLongitude(job.location.longitude);
       } else {
+        // Reset for new job
         setTitle('');
         setDescription('');
         setPriority('Medium');
         setCustomerName('');
         setCustomerPhone('');
-        setLocationAddress(''); 
-        setLatitude(null); 
+        setLocationAddress(''); // Update React state
+        if (autocompleteElement) {
+          autocompleteElement.value = ''; // Programmatically set web component's value
+        }
+        setLatitude(null);
         setLongitude(null);
       }
     }
-  }, [job, isOpen]); 
+  }, [job, isOpen]);
 
 
+  // Effect to add/remove event listeners for the autocomplete element
   useEffect(() => {
     const autocompleteElement = placeAutocompleteRef.current;
-    if (isOpen && autocompleteElement && window.google && window.google.maps && window.google.maps.places) {
+    // Ensure API is ready and element is available
+    if (isOpen && autocompleteElement && window.google?.maps?.places?.PlaceAutocompleteElement) {
       
       const handlePlaceChange = () => {
-        if (autocompleteElement.place && autocompleteElement.place.geometry && autocompleteElement.place.geometry.location) {
-          const newPlace = autocompleteElement.place;
-          setLocationAddress(newPlace.formatted_address || autocompleteElement.value);
+        const gmpElement = autocompleteElement as HTMLElement & { place?: google.maps.places.PlaceResult; value: string };
+        if (gmpElement.place && gmpElement.place.geometry && gmpElement.place.geometry.location) {
+          const newPlace = gmpElement.place;
+          setLocationAddress(newPlace.formatted_address || gmpElement.value);
           setLatitude(newPlace.geometry.location.lat());
           setLongitude(newPlace.geometry.location.lng());
         } else {
-          setLocationAddress(autocompleteElement.value);
+          // User typed something but didn't select a suggestion or place is invalid
+           if (gmpElement.value !== locationAddress) { // Avoid state update if value is already same
+            setLocationAddress(gmpElement.value);
+          }
+          setLatitude(null);
+          setLongitude(null);
         }
       };
 
       const handleDirectInput = (event: Event) => {
          const target = event.target as (HTMLElement & { value: string });
-         setLocationAddress(target.value);
+         if (target.value !== locationAddress) { // Avoid state update if value is already same
+            setLocationAddress(target.value);
+         }
+         // When typing manually, we don't have a "place" object, so lat/lng should be cleared
+         if (latitude !== null || longitude !== null) {
+            setLatitude(null);
+            setLongitude(null);
+         }
       };
       
       autocompleteElement.addEventListener('gmp-placechange', handlePlaceChange);
@@ -115,23 +141,26 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         autocompleteElement.removeEventListener('input', handleDirectInput);
       };
     }
-  }, [isOpen, placeAutocompleteRef]);
+  }, [isOpen, latitude, longitude, locationAddress]); // Added locationAddress to dependencies
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !locationAddress.trim() || !description.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in Title, Description, and Location Address.", variant: "destructive" });
+    if (!title.trim() || !description.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
       return;
     }
+    // Check locationAddress specifically from state, as ref might not be perfectly synced if user didn't interact
+    if (!locationAddress.trim()) {
+        toast({ title: "Location Missing", description: "Please enter and select a job location.", variant: "destructive"});
+        return;
+    }
     if (latitude === null || longitude === null) {
-         if (placeAutocompleteRef.current?.value && !placeAutocompleteRef.current?.place) {
+        // If there's text in the input (from state) but no selected place (no coords)
+        if (locationAddress.trim() && (placeAutocompleteRef.current?.value && !placeAutocompleteRef.current?.place)) {
             toast({ title: "Location Incomplete", description: "Please select a valid address from suggestions, or ensure the address provides coordinates.", variant: "destructive"});
             return;
-         } else if (!placeAutocompleteRef.current?.value) {
-             toast({ title: "Location Missing", description: "Please enter and select a job location.", variant: "destructive"});
-             return;
-         }
+        }
     }
     
     setIsLoading(true);
@@ -145,7 +174,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       location: { 
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0, 
-        address: locationAddress 
+        address: locationAddress // Use state value which is updated by input/placechange
       },
       updatedAt: serverTimestamp(),
     };
@@ -230,12 +259,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           <div>
             <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
             <gmp-place-autocomplete-element
-                key={job?.id || 'new-job-location'} // Force re-mount on job change
+                key={job?.id || 'new-job-location-autocomplete'} // Ensure key is unique and stable for re-mounts
                 ref={placeAutocompleteRef}
-                input-id="jobLocationAddressGmp"
+                input-id="jobLocationAddressGmp" // For label association
                 placeholder="Start typing address..."
                 types="address"
-                value={locationAddress} // Controlled component: value driven by React state
+                // value prop is intentionally removed to let the component manage its input during typing
                 className={cn(
                     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 )}

@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2 } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -14,13 +14,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
-import AddEditJobDialog from './AddEditJobDialog';
+import AddEditJobDialog from './AddEditJobDialog'; // Assuming AddEditJobDialog needs technicians
 
 interface JobListItemProps {
   job: Job;
-  technicians: Technician[];
+  technicians: Technician[]; // Required for AddEditJobDialog if it needs it for AI suggestions
   onAssignWithAI: (job: Job) => void; 
-  onJobUpdated: (job: Job) => void; 
+  onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void; 
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWithAI, onJobUpdated }) => {
@@ -44,11 +44,16 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
     }
   };
 
+  const isHighPriorityPending = job.priority === 'High' && job.status === 'Pending';
+
   return (
-    <Card className="hover:shadow-md transition-shadow duration-200">
+    <Card className={cn(
+      "hover:shadow-lg transition-shadow duration-200 ease-in-out",
+      isHighPriorityPending && "border-destructive border-2 ring-2 ring-destructive/50 bg-destructive/5"
+    )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-headline flex items-center gap-2">
+          <CardTitle className={cn("text-lg font-headline flex items-center gap-2", isHighPriorityPending && "text-destructive")}>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -59,6 +64,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            {isHighPriorityPending && <Star className="h-5 w-5 text-destructive fill-destructive" />}
             {job.title}
           </CardTitle>
           <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
@@ -83,7 +89,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
                 <User className="h-3 w-3" /> {assignedTechnician.name}
               </span>
             ) : (
-              <span className={cn("flex items-center gap-1", job.status === 'Pending' ? 'text-orange-600' : 'text-muted-foreground')}>
+              <span className={cn("flex items-center gap-1", job.status === 'Pending' ? 'text-orange-600 font-semibold' : 'text-muted-foreground')}>
                 <AlertTriangle className="h-3 w-3" /> Unassigned
               </span>
             )}
@@ -96,7 +102,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
           </Button>
         )}
-         <AddEditJobDialog job={job} onJobAddedOrUpdated={onJobUpdated}>
+         <AddEditJobDialog job={job} technicians={technicians} onJobAddedOrUpdated={onJobUpdated}>
             <Button variant="secondary" size="sm">
                 <Edit className="mr-1 h-3 w-3" /> Edit
             </Button>

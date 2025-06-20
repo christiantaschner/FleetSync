@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,52 +19,104 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus } from '@/types';
-import { Loader2 } from 'lucide-react';
-
-// No gmp-place-autocomplete-element specific declarations needed now
+import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
+import { Loader2, Sparkles, UserCheck, Save } from 'lucide-react';
+import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
+import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
 
 interface AddEditJobDialogProps {
   children: React.ReactNode;
   job?: Job;
-  onJobAddedOrUpdated?: (job: Job) => void;
+  technicians: Technician[]; // Technicians are now a required prop
+  onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJobAddedOrUpdated }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, technicians, onJobAddedOrUpdated }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
+  const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [locationAddress, setLocationAddress] = useState(''); // Standard text input for address
+  const [locationAddress, setLocationAddress] = useState('');
+
+  const resetForm = useCallback(() => {
+    setTitle(job?.title || '');
+    setDescription(job?.description || '');
+    setPriority(job?.priority || 'Medium');
+    setCustomerName(job?.customerName || '');
+    setCustomerPhone(job?.customerPhone || '');
+    setLocationAddress(job?.location.address || '');
+    setAiSuggestion(null);
+    setSuggestedTechnicianDetails(null);
+  }, [job]);
 
   useEffect(() => {
     if (isOpen) {
-      if (job) {
-        setTitle(job.title);
-        setDescription(job.description);
-        setPriority(job.priority);
-        setCustomerName(job.customerName);
-        setCustomerPhone(job.customerPhone);
-        setLocationAddress(job.location.address || '');
-      } else {
-        // Reset for new job
-        setTitle('');
-        setDescription('');
-        setPriority('Medium');
-        setCustomerName('');
-        setCustomerPhone('');
-        setLocationAddress('');
-      }
+      resetForm();
     }
-  }, [job, isOpen]);
+  }, [job, isOpen, resetForm]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchAISuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority) => {
+    if (!currentDescription || !currentPriority || technicians.length === 0) {
+      setAiSuggestion(null);
+      setSuggestedTechnicianDetails(null);
+      return;
+    }
+    setIsFetchingAISuggestion(true);
+    setAiSuggestion(null);
+    setSuggestedTechnicianDetails(null);
+
+    const availableAITechnicians: AITechnician[] = technicians.map(t => ({
+      technicianId: t.id,
+      technicianName: t.name,
+      isAvailable: t.isAvailable,
+      skills: t.skills as string[],
+      location: {
+        latitude: t.location.latitude,
+        longitude: t.location.longitude,
+      },
+    }));
+
+    const input: AllocateJobActionInput = {
+      jobDescription: currentDescription,
+      jobPriority: currentPriority,
+      technicianAvailability: availableAITechnicians,
+    };
+
+    const result = await allocateJobAction(input);
+    setIsFetchingAISuggestion(false);
+
+    if (result.error) {
+      toast({ title: "AI Suggestion Error", description: result.error, variant: "destructive" });
+      setAiSuggestion(null);
+    } else if (result.data) {
+      setAiSuggestion(result.data);
+      const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
+      setSuggestedTechnicianDetails(tech || null);
+      // Toast for suggestion received can be overwhelming, consider removing or making it subtle
+      // toast({ title: "AI Suggestion Ready", description: `AI suggests ${tech?.name || 'a technician'}.`});
+    }
+  }, [technicians, toast]);
+
+  // Fetch AI suggestion for new jobs when description or priority changes
+  useEffect(() => {
+    if (isOpen && !job && description.trim() && priority) { // Only for new jobs
+      const timer = setTimeout(() => {
+        fetchAISuggestion(description, priority);
+      }, 1000); // Debounce
+      return () => clearTimeout(timer);
+    }
+  }, [description, priority, isOpen, job, fetchAISuggestion]);
+
+
+  const handleSubmit = async (assignTechId: string | null = null) => {
     if (!title.trim() || !description.trim() || !locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Address.", variant: "destructive" });
       return;
@@ -72,15 +124,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
     
     setIsLoading(true);
 
-    const jobData = {
+    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { updatedAt: any } = {
       title,
       description,
       priority,
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        // Latitude and longitude will not be set from address suggestions
-        // They will default to 0 or existing values if editing.
         latitude: job?.location.latitude ?? 0,
         longitude: job?.location.longitude ?? 0,
         address: locationAddress 
@@ -90,20 +140,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 
     try {
       let finalJob: Job;
-      if (job) {
+      if (job) { // Editing existing job
         const jobDocRef = doc(db, "jobs", job.id);
-        await updateDoc(jobDocRef, jobData);
-        finalJob = { ...job, ...jobData, updatedAt: new Date().toISOString() };
+        // If assignTechId is passed (e.g. from a future "re-assign with AI" button on edit mode)
+        const updatePayload = { ...jobData, ...(assignTechId && { assignedTechnicianId: assignTechId, status: 'Assigned' as JobStatus }) };
+        await updateDoc(jobDocRef, updatePayload);
+        finalJob = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJob.title}" has been updated.` });
-      } else {
+        onJobAddedOrUpdated?.(finalJob, assignTechId);
+
+      } else { // Adding new job
         const newJobPayload = {
           ...jobData,
-          status: 'Pending' as JobStatus,
-          assignedTechnicianId: null,
+          status: assignTechId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
+          assignedTechnicianId: assignTechId || null,
           createdAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDurationMinutes: 0,
+          estimatedDurationMinutes: 0, // Default, can be edited later
         };
         const docRef = await addDoc(collection(db, "jobs"), newJobPayload);
         finalJob = {
@@ -112,10 +166,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        toast({ title: "Job Added", description: `New job "${finalJob.title}" created with Pending status.` });
+        toast({ title: "Job Added", description: `New job "${finalJob.title}" created.` });
+        
+        if (assignTechId) {
+          const techDocRef = doc(db, "technicians", assignTechId);
+          await updateDoc(techDocRef, {
+            isAvailable: false,
+            currentJobId: finalJob.id,
+          });
+        }
+        onJobAddedOrUpdated?.(finalJob, assignTechId);
       }
-
-      onJobAddedOrUpdated?.(finalJob);
       setIsOpen(false);
     } catch (error) {
       console.error("Error saving job to Firestore: ", error);
@@ -125,7 +186,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
     }
   };
   
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -133,10 +193,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         <DialogHeader>
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
           <DialogDescription>
-            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. It will be created with "Pending" status.'}
+            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. AI will suggest a technician.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
           <div>
             <Label htmlFor="jobTitle">Job Title *</Label>
             <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
@@ -177,21 +237,65 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
                 placeholder="Enter job address manually"
                 required
             />
-             <p className="text-xs text-muted-foreground mt-1">
-              Address suggestions are temporarily unavailable. Please enter manually.
-            </p>
           </div>
 
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {job ? 'Save Changes' : 'Add Job'}
-          </Button>
+          {!job && technicians.length > 0 && (description.trim() || priority) && (
+            <div className="p-3 my-2 border rounded-md bg-secondary/50">
+              {isFetchingAISuggestion && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span>AI is finding the best technician...</span>
+                </div>
+              )}
+              {!isFetchingAISuggestion && aiSuggestion && suggestedTechnicianDetails && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
+                  <p className="text-sm">
+                    Assign to: <strong>{suggestedTechnicianDetails.name}</strong> ({suggestedTechnicianDetails.isAvailable ? "Available" : "Unavailable"}, Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'})
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
+                </div>
+              )}
+              {!isFetchingAISuggestion && !aiSuggestion && (description.trim() && priority) && (
+                <p className="text-sm text-muted-foreground">Enter job details for AI assignment suggestion.</p>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="sm:justify-start gap-2 mt-4 pt-4 border-t">
+            {job ? ( // Edit mode
+              <Button type="submit" disabled={isLoading} className="flex-1">
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Save Changes
+              </Button>
+            ) : ( // Add mode
+              <>
+                <Button 
+                  type="button" 
+                  onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)} 
+                  disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
+                  variant={aiSuggestion?.suggestedTechnicianId ? "default" : "secondary"}
+                  className="flex-1"
+                >
+                  {isLoading && aiSuggestion?.suggestedTechnicianId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                  Save & Assign to {suggestedTechnicianDetails?.name || "Suggested"}
+                </Button>
+                <Button 
+                  type="submit" // This will call handleSubmit(null)
+                  disabled={isLoading} 
+                  variant="outline"
+                  className="flex-1"
+                >
+                   {isLoading && !aiSuggestion?.suggestedTechnicianId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Save as Pending
+                </Button>
+              </>
+            )}
+            <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="sm:ml-auto">
+              Close
+            </Button>
+          </DialogFooter>
         </form>
-        <DialogFooter className="sm:justify-start mt-2">
-          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

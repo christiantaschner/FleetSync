@@ -3,19 +3,22 @@
 
 import React from 'react';
 // import Image from 'next/image'; // Not used directly
-import { MapPin, Briefcase, Phone, Mail, Circle } from 'lucide-react'; // User icon not needed here
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit } from 'lucide-react'; // User icon not needed here, Added Edit
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Technician, Job } from '@/types';
 import { cn } from '@/lib/utils';
+import AddEditTechnicianDialog from './AddEditTechnicianDialog'; // Import the new dialog
+import { Button } from '@/components/ui/button';
 
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
+  onTechnicianUpdated: (technician: Technician) => void; // Callback for updates
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onTechnicianUpdated }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
 
   return (
@@ -60,15 +63,23 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs }) => 
           </div>
         </div>
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground border-t pt-3">
-        {currentJob ? (
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-primary" />
-            <span>On Job: {currentJob.title}</span>
-          </div>
-        ) : (
-          <span>{technician.isAvailable ? 'Awaiting assignment' : 'Currently idle'}</span>
-        )}
+      <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex justify-between items-center">
+        <div>
+          {currentJob ? (
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4 text-primary" />
+              <span>On Job: {currentJob.title}</span>
+            </div>
+          ) : (
+            <span>{technician.isAvailable ? 'Awaiting assignment' : 'Currently idle'}</span>
+          )}
+        </div>
+        <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated}>
+          <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
+            <Edit className="h-3.5 w-3.5" />
+            <span className="sr-only">Edit Technician</span>
+          </Button>
+        </AddEditTechnicianDialog>
       </CardFooter>
     </Card>
   );

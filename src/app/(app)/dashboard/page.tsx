@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { Label } from '@/components/ui/label';
+import AddEditTechnicianDialog from './components/AddEditTechnicianDialog'; // Import AddEditTechnicianDialog
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
@@ -53,17 +54,20 @@ export default function DashboardPage() {
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       setJobs(jobsData);
-      setIsLoading(false);
+      // Keep isLoading true until technicians are also fetched or fail
     }, (error) => {
       console.error("Error fetching jobs: ", error);
       setIsLoading(false);
     });
 
-    const techniciansUnsubscribe = onSnapshot(collection(db, "technicians"), (querySnapshot) => {
+    const techniciansQuery = query(collection(db, "technicians"), orderBy("name", "asc")); // Order by name
+    const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
       setTechnicians(techniciansData);
+      setIsLoading(false); // Set loading to false after both are attempted
     }, (error) => {
       console.error("Error fetching technicians: ", error);
+      setIsLoading(false);
     });
     
     return () => {
@@ -95,6 +99,20 @@ export default function DashboardPage() {
             : t
         ));
     }
+  };
+
+  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
+    setTechnicians(prevTechs => {
+      const existingTechIndex = prevTechs.findIndex(t => t.id === updatedTechnician.id);
+      if (existingTechIndex > -1) {
+        const newTechs = [...prevTechs];
+        newTechs[existingTechIndex] = updatedTechnician;
+        return newTechs;
+      } else {
+         // Ensure timestamps if not already present (though AddEditTechnicianDialog should handle this from Firestore response)
+        return [updatedTechnician, ...prevTechs];
+      }
+    });
   };
   
   const openAIAssignDialogForSpecificJob = (job: Job) => {
@@ -131,7 +149,7 @@ export default function DashboardPage() {
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
     : { lat: 39.8283, lng: -98.5795 }; 
 
-  if (isLoading && jobs.length === 0 && !googleMapsApiKey) { 
+  if (isLoading && !googleMapsApiKey) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -173,14 +191,6 @@ export default function DashboardPage() {
             >
               <UserPlus className="mr-2 h-4 w-4" /> AI Assign Task
             </Button>
-            {/* 
-            // OptimizeRouteDialog button removed from here. The component still exists.
-            <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-              <Button variant="outline">
-                <Zap className="mr-2 h-4 w-4" /> Optimize Routes (AI)
-              </Button>
-            </OptimizeRouteDialog> 
-            */}
           </div>
         </div>
 
@@ -203,6 +213,7 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
+            {/* Empty Fragment because DialogTrigger is inside SmartJobAllocationDialog or controlled externally */}
             <></> 
           </SmartJobAllocationDialog>
         )}
@@ -320,7 +331,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {isLoading && jobs.length === 0 ? (
+                {isLoading && jobs.length === 0 && technicians.length === 0 ? ( // Check all data sources for initial load
                   <div className="flex justify-center items-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
@@ -342,9 +353,16 @@ export default function DashboardPage() {
           </TabsContent>
           <TabsContent value="technicians">
             <Card>
-              <CardHeader>
-                <CardTitle className="font-headline">Technician Roster</CardTitle>
-                <CardDescription>View technician status, skills, and current assignments.</CardDescription>
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <CardTitle className="font-headline">Technician Roster</CardTitle>
+                  <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
+                </div>
+                <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}>
+                  <Button variant="outline">
+                    <UserPlus className="mr-2 h-4 w-4" /> Add Technician
+                  </Button>
+                </AddEditTechnicianDialog>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {isLoading && technicians.length === 0 ? (
@@ -352,7 +370,12 @@ export default function DashboardPage() {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : technicians.map(technician => (
-                  <TechnicianCard key={technician.id} technician={technician} jobs={jobs} />
+                  <TechnicianCard 
+                    key={technician.id} 
+                    technician={technician} 
+                    jobs={jobs} 
+                    onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
+                  />
                 ))}
                 {!isLoading && technicians.length === 0 && (
                   <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
@@ -365,6 +388,3 @@ export default function DashboardPage() {
     </APIProvider>
   );
 }
-    
-
-    

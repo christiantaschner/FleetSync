@@ -5,13 +5,13 @@ export type Location = {
   address?: string;
 };
 
-export type TechnicianSkill = 'Plumbing' | 'Electrical' | 'HVAC' | 'Appliance Repair' | 'General Maintenance';
+export type TechnicianSkill = string; // Changed from union type to string
 
 export type Technician = {
   id: string;
   name: string;
   isAvailable: boolean;
-  skills: TechnicianSkill[];
+  skills: string[]; // Changed from TechnicianSkill[] to string[]
   location: Location;
   avatarUrl?: string;
   currentJobId?: string | null;
@@ -32,12 +32,12 @@ export type Job = {
   location: Location;
   customerName: string;
   customerPhone: string;
-  scheduledTime?: string; 
+  scheduledTime?: string;
   estimatedDurationMinutes?: number;
-  createdAt: string; 
-  updatedAt: string; 
+  createdAt: string;
+  updatedAt: string;
   notes?: string;
-  photos?: string[]; 
+  photos?: string[];
 };
 
 export type Task = {

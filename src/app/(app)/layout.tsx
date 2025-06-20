@@ -82,7 +82,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen>
       <Sidebar>
         <SidebarHeader>
-          <div className="flex items-center justify-between p-2">
+          <div className="flex items-center justify-between">
             <Logo />
             <div className="md:hidden">
               <SidebarTrigger />

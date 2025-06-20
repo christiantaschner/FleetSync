@@ -6,14 +6,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  PieChart,
+  // PieChart, // Removed for Reports
   Smartphone,
   Users,
   Settings,
   LogOut,
   Loader2,
   ShipWheel,
-  ListChecks, // Added for Roadmap
+  ListChecks, 
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
-  { href: "/reports", label: "Reports", icon: PieChart },
+  // { href: "/reports", label: "Reports", icon: PieChart }, // Removed Reports link
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
@@ -157,5 +157,4 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-
     

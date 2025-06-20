@@ -5,8 +5,8 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
-  Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog // Added Cog for Skill Library Mgt
+  Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -530,6 +530,51 @@ const roadmapFeatures = {
           "Reduced cognitive load for dispatchers when planning for incoming jobs.",
           "Faster assignment of newly created or urgent jobs.",
           "Improved resource utilization by minimizing unallocated idle time."
+        ]
+      }
+    },
+    {
+      title: "Comprehensive Reporting & Analytics",
+      description: "Provide comprehensive reporting and analytics with insights into key performance indicators (KPIs) such as travel times, technician utilization, job completion rates, first-time-fix rates, and fuel consumption to help inform data-driven decisions.",
+      icon: PieChart,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Display key performance indicators (KPIs) in an easy-to-understand format (e.g., KpiCards).",
+          "Generate charts and graphs for trends over time (e.g., job completion, technician performance).",
+          "Allow filtering of reports by date range, technician, job type, etc.",
+          "Provide insights based on the data (e.g., 'Technician utilization is low on Mondays', 'Average travel time has decreased by 10% this month').",
+          "Allow export of report data (e.g., to CSV)."
+        ],
+        dataModels: [
+          "Relies on aggregated data from `Jobs` (status, timestamps, priority, assignedTechnicianId), `Technicians` (isAvailable, skills), and potentially `timeEntries` (for utilization, actual job durations), `CO2Emissions` (if implemented).",
+          "May require creating aggregated summary collections in Firestore or performing complex queries."
+        ],
+        aiComponents: [
+          "AI could be used to generate natural language summaries of reports or highlight significant trends and anomalies."
+        ],
+        uiUx: [
+          "A dedicated 'Reports' section in the application.",
+          "Dashboard-like interface with various KPI cards and chart widgets.",
+          "User-friendly controls for filtering and customizing reports.",
+          "Clear presentation of data visualizations."
+        ],
+        integrationPoints: [
+          "Pulls data from various parts of the application (job management, technician management, time tracking).",
+          "FTFR Analytics data would be a key input.",
+          "CO2 Emission reporting data would be included."
+        ],
+        technicalChallenges: [
+          "Efficiently querying and aggregating large amounts of data for reporting.",
+          "Designing flexible and customizable report generation.",
+          "Ensuring data accuracy and consistency across different reports.",
+          "Developing meaningful and actionable insights from the data."
+        ],
+        successMetrics: [
+          "Improved operational efficiency based on data-driven insights.",
+          "Better resource allocation and utilization.",
+          "Identification of areas for improvement in service delivery.",
+          "Enhanced ability to track progress towards business goals."
         ]
       }
     },

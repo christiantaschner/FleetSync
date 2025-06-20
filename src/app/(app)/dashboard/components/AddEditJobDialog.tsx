@@ -28,22 +28,14 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-        value?: string;
+        // value?: string; // Temporarily removed for diagnosis
         placeholder?: string;
         id?: string;
         name?: string;
-        // Add other specific props if known and needed
       }, HTMLElement>;
     }
   }
 }
-
-interface PlaceAutocompleteElement extends HTMLElement {
-  value: string | null;
-  getPlace: () => Promise<google.maps.places.PlaceResult | null>;
-  // Add other properties or methods if needed based on the web component's API
-}
-
 
 interface AddEditJobDialogProps {
   children: React.ReactNode;
@@ -62,11 +54,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   
-  const [locationAddress, setLocationAddress] = useState('');
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-
-  const placeAutocompleteRef = useRef<PlaceAutocompleteElement>(null);
+  const [manualLocationAddress, setManualLocationAddress] = useState(''); // For submission fallback & fallback input
 
   useEffect(() => {
     if (isOpen) {
@@ -76,13 +64,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        setLocationAddress(job.location.address || '');
-        setLatitude(job.location.latitude);
-        setLongitude(job.location.longitude);
-        // Programmatically set value for gmp-place-autocomplete-element if editing
-        if (placeAutocompleteRef.current) {
-          placeAutocompleteRef.current.value = job.location.address || '';
-        }
+        setManualLocationAddress(job.location.address || ''); 
       } else {
         // Reset for new job
         setTitle('');
@@ -90,66 +72,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority('Medium');
         setCustomerName('');
         setCustomerPhone('');
-        setLocationAddress('');
-        setLatitude(null);
-        setLongitude(null);
-        if (placeAutocompleteRef.current) {
-          placeAutocompleteRef.current.value = '';
-        }
+        setManualLocationAddress('');
       }
     }
   }, [job, isOpen]);
 
-  useEffect(() => {
-    const autocompleteElement = placeAutocompleteRef.current;
-    if (!autocompleteElement || !isOpen) return;
-
-    const handlePlaceSelect = async (event: Event) => {
-      // The event for gmp-place-autocomplete-element might be 'gmp-placeselect'
-      // or another custom event. Check the component's documentation.
-      // Assuming it's 'gmp-placeselect' and the element has a getPlace() method
-      try {
-        const place = await autocompleteElement.getPlace();
-        if (place && place.formatted_address) {
-          setLocationAddress(place.formatted_address);
-          if (place.geometry && place.geometry.location) {
-            setLatitude(place.geometry.location.lat());
-            setLongitude(place.geometry.location.lng());
-          } else {
-            setLatitude(null);
-            setLongitude(null);
-          }
-        }
-      } catch (error) {
-        console.error("Error getting place details:", error);
-        toast({ title: "Address Error", description: "Could not fetch place details.", variant: "destructive" });
-      }
-    };
-    
-    const handleInputChange = (event: Event) => {
-        const target = event.target as HTMLInputElement | null;
-        if (target) {
-            setLocationAddress(target.value || '');
-            // If user types manually, clear lat/lng as it's no longer from a selected place
-            setLatitude(null);
-            setLongitude(null);
-        }
-    };
-
-    autocompleteElement.addEventListener('gmp-placeselect', handlePlaceSelect);
-    autocompleteElement.addEventListener('input', handleInputChange); // Listen to direct input changes
-
-    return () => {
-      autocompleteElement.removeEventListener('gmp-placeselect', handlePlaceSelect);
-      autocompleteElement.removeEventListener('input', handleInputChange);
-    };
-  }, [isOpen, toast]);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !description.trim() || !locationAddress.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in Title, Description, and Location Address.", variant: "destructive" });
+    if (!title.trim() || !description.trim() ) { 
+      toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
       return;
     }
     
@@ -162,9 +94,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        latitude: latitude ?? 0, 
-        longitude: longitude ?? 0,
-        address: locationAddress 
+        latitude: job?.location.latitude ?? 0, 
+        longitude: job?.location.longitude ?? 0, 
+        address: manualLocationAddress || "Address not captured by autocomplete" 
       },
       updatedAt: serverTimestamp(),
     };
@@ -249,26 +181,29 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           </div>
           
           <div>
-            <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-            {/* 
-              The 'value' prop on gmp-place-autocomplete-element is used for initial setting.
-              React state 'locationAddress' is updated via event listeners.
-              To ensure the displayed text updates if 'locationAddress' is changed by other means
-              (though less common for this specific setup), we bind its value prop.
-            */}
+            <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
+            {/* Barebones gmp-place-autocomplete-element for rendering test */}
             <gmp-place-autocomplete-element
-              id="jobLocationAddress"
-              name="jobLocationAddress"
-              ref={placeAutocompleteRef}
-              placeholder="Start typing address..."
-              value={locationAddress} 
-              // The `value` attribute here ensures that if locationAddress is updated externally
-              // while the component is mounted, it reflects. However, direct manipulation
-              // of this web component's value is often done via its JS API or direct property set.
-              // We already handle setting initial value in useEffect.
-              // The 'input' event listener above handles user typing.
+              id="jobLocationAddressGmp"
+              name="jobLocationAddressGmp"
+              placeholder="Start typing address for suggestions..."
             />
-             <p className="text-xs text-muted-foreground mt-1">Start typing for address suggestions.</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              This field uses Google Maps suggestions. If it's not visible or clickable, there's an issue with Maps API loading.
+            </p>
+            
+            <Label htmlFor="manualJobLocationAddress" className="mt-3 block font-medium text-muted-foreground">Fallback / Manual Address Input:</Label>
+             <Input 
+                id="manualJobLocationAddress"
+                name="manualJobLocationAddress"
+                value={manualLocationAddress}
+                onChange={(e) => setManualLocationAddress(e.target.value)}
+                placeholder="Type address manually here"
+                className="mt-1"
+            />
+             <p className="text-xs text-muted-foreground mt-1">
+              Use this field if the one above doesn't work.
+            </p>
           </div>
 
           <Button type="submit" disabled={isLoading} className="w-full">
@@ -287,3 +222,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 };
 
 export default AddEditJobDialog;
+
+    

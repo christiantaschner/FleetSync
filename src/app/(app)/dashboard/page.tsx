@@ -288,7 +288,7 @@ export default function DashboardPage() {
             </AddEditJobDialog>
             <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
               <Button variant="accent" disabled={busyTechnicians.length === 0}>
-                <MapIcon className="mr-2 h-4 w-4" /> AI Route Re-Op
+                <MapIcon className="mr-2 h-4 w-4" /> AI Route Optimizer
               </Button>
             </OptimizeRouteDialog>
           </div>
@@ -398,7 +398,37 @@ export default function DashboardPage() {
                     <CardTitle className="font-headline">Current Jobs</CardTitle>
                     <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
                 </div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
+                    <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                        <div className="w-full sm:w-auto">
+                            <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
+                            <Select 
+                                value={statusFilter} 
+                                onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
+                            >
+                                <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Filter by Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
+                                    <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
+                                    {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="w-full sm:w-auto">
+                            <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
+                            <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
+                                <SelectTrigger id="priority-filter" className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Filter by Priority" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
+                                    {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <Button
                         onClick={handleBatchAIAssign}
                         disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
@@ -408,34 +438,6 @@ export default function DashboardPage() {
                         {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                         AI Batch Assign ({pendingJobsForBatchAssign.length})
                     </Button>
-                    <div className="flex-1 sm:flex-initial">
-                        <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
-                        <Select 
-                            value={statusFilter} 
-                            onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
-                        >
-                            <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Filter by Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
-                                <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                                {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     <div className="flex-1 sm:flex-initial">
-                        <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
-                        <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
-                            <SelectTrigger id="priority-filter" className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Filter by Priority" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
-                                 {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -497,4 +499,3 @@ export default function DashboardPage() {
   );
 }
     
-

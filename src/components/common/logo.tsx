@@ -1,5 +1,6 @@
 
 import { cn } from "@/lib/utils";
+import { ShipWheel } from "lucide-react";
 
 interface LogoProps {
   className?: string;
@@ -7,7 +8,8 @@ interface LogoProps {
 
 export function Logo({ className }: LogoProps) {
   return (
-    <div className={cn(className)}> {/* Wrapper div, color inherited from parent */}
+    <div className={cn("flex items-center gap-2", className)}> {/* Wrapper div, color inherited from parent */}
+      <ShipWheel className="h-6 w-6" />
       <span className="text-xl font-bold font-logo">
         FleetSync AI
       </span>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,26 +23,25 @@ import type { Job, JobPriority, JobStatus } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Declaration for the Google Maps Place Autocomplete Web Component
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
         'input-id'?: string;
-        // value prop is intentionally omitted here to let the component manage its own state during typing
-        // React will set the initial value programmatically and sync via events.
         placeholder?: string;
-        types?: string; 
-        style?: React.CSSProperties;
-        key?: string | number; 
+        types?: string; // For address types
+        // We are deliberately NOT including 'value' here for this diagnostic step
+        // to let the component manage its own input value initially.
+        // We would also need 'onGmpPlacechange' if using it directly as a prop.
       }, HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>;
     }
   }
 }
 
-
 interface AddEditJobDialogProps {
-  children: React.ReactNode; 
-  job?: Job; 
+  children: React.ReactNode;
+  job?: Job;
   onJobAddedOrUpdated?: (job: Job) => void;
 }
 
@@ -50,35 +49,39 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  
-  const [locationAddress, setLocationAddress] = useState(''); // Always initialize to empty string
-  const [latitude, setLatitude] = useState<number | null>(null); 
+
+  // React state for address, latitude, and longitude
+  // We still need to manage this for form submission, even if not two-way binding for this test.
+  const [locationAddress, setLocationAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
 
+  // This ref is NOT used in this simplified version for direct manipulation,
+  // but kept here as it might be needed if this step works and we re-add listeners.
   const placeAutocompleteRef = useRef<HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>(null);
 
-  // Effect to set initial form values when dialog opens or job changes
+  // Effect to set initial form values (excluding location for this test)
   useEffect(() => {
     if (isOpen) {
-      const autocompleteElement = placeAutocompleteRef.current;
       if (job) {
         setTitle(job.title);
         setDescription(job.description);
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        
-        const initialAddress = job.location.address || '';
-        setLocationAddress(initialAddress); // Update React state
-        if (autocompleteElement) {
-          autocompleteElement.value = initialAddress; // Programmatically set web component's value
-        }
+        // For this diagnostic step, we are not setting the locationAddress state
+        // or programmatically setting the value of gmp-place-autocomplete-element.
+        // We want to see if it initializes correctly on its own.
+        // If it had an initial value, we'd set it like this:
+        // setLocationAddress(job.location.address || '');
+        // And if we were to programmatically set its value:
+        // if (placeAutocompleteRef.current) placeAutocompleteRef.current.value = job.location.address || '';
         setLatitude(job.location.latitude);
         setLongitude(job.location.longitude);
       } else {
@@ -88,60 +91,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority('Medium');
         setCustomerName('');
         setCustomerPhone('');
-        setLocationAddress(''); // Update React state
-        if (autocompleteElement) {
-          autocompleteElement.value = ''; // Programmatically set web component's value
-        }
+        // setLocationAddress('');
+        // if (placeAutocompleteRef.current) placeAutocompleteRef.current.value = '';
         setLatitude(null);
         setLongitude(null);
       }
     }
   }, [job, isOpen]);
 
-
-  // Effect to add/remove event listeners for the autocomplete element
-  useEffect(() => {
-    const autocompleteElement = placeAutocompleteRef.current;
-    // Ensure API is ready and element is available
-    if (isOpen && autocompleteElement && window.google?.maps?.places?.PlaceAutocompleteElement) {
-      
-      const handlePlaceChange = () => {
-        const gmpElement = autocompleteElement as HTMLElement & { place?: google.maps.places.PlaceResult; value: string };
-        if (gmpElement.place && gmpElement.place.geometry && gmpElement.place.geometry.location) {
-          const newPlace = gmpElement.place;
-          setLocationAddress(newPlace.formatted_address || gmpElement.value);
-          setLatitude(newPlace.geometry.location.lat());
-          setLongitude(newPlace.geometry.location.lng());
-        } else {
-           if (gmpElement.value !== locationAddress) { 
-            setLocationAddress(gmpElement.value);
-          }
-          setLatitude(null);
-          setLongitude(null);
-        }
-      };
-
-      const handleDirectInput = (event: Event) => {
-         const target = event.target as (HTMLElement & { value: string });
-         if (target.value !== locationAddress) { 
-            setLocationAddress(target.value);
-         }
-         if (latitude !== null || longitude !== null) {
-            setLatitude(null);
-            setLongitude(null);
-         }
-      };
-      
-      autocompleteElement.addEventListener('gmp-placechange', handlePlaceChange);
-      autocompleteElement.addEventListener('input', handleDirectInput);
-
-      return () => {
-        autocompleteElement.removeEventListener('gmp-placechange', handlePlaceChange);
-        autocompleteElement.removeEventListener('input', handleDirectInput);
-      };
-    }
-  }, [isOpen, locationAddress, latitude, longitude]); 
-
+  // In this diagnostic version, we are NOT adding event listeners via useEffect.
+  // If the input becomes clickable/typable, the next step would be to add them back
+  // to update locationAddress, latitude, and longitude states.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,18 +109,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
       return;
     }
-    if (!locationAddress.trim()) {
-        toast({ title: "Location Missing", description: "Please enter and select a job location.", variant: "destructive"});
-        return;
-    }
-    if (latitude === null || longitude === null) {
-        const gmpElement = placeAutocompleteRef.current;
-        if (locationAddress.trim() && (gmpElement?.value && !gmpElement?.place)) {
-            toast({ title: "Location Incomplete", description: "Please select a valid address from suggestions, or ensure the address provides coordinates.", variant: "destructive"});
-            return;
-        }
-    }
-    
+    // For this test, location validation is tricky as we're not syncing state.
+    // We'll assume it's filled for now if we were to submit.
+    // if (!locationAddress.trim()) {
+    //     toast({ title: "Location Missing", description: "Please enter a job location.", variant: "destructive"});
+    //     return;
+    // }
+    // if (latitude === null || longitude === null) {
+    //     // Further validation might be needed if suggestions are used
+    // }
+
     setIsLoading(true);
 
     const jobData = {
@@ -169,10 +127,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       priority,
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
-      location: { 
-        latitude: latitude ?? 0, 
-        longitude: longitude ?? 0, 
-        address: locationAddress 
+      location: {
+        latitude: latitude ?? 0, // These would be stale if not updated by event listeners
+        longitude: longitude ?? 0,
+        address: locationAddress // This would be stale if not updated by event listeners
       },
       updatedAt: serverTimestamp(),
     };
@@ -182,7 +140,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       if (job) {
         const jobDocRef = doc(db, "jobs", job.id);
         await updateDoc(jobDocRef, jobData);
-        finalJob = { ...job, ...jobData, updatedAt: new Date().toISOString() }; 
+        finalJob = { ...job, ...jobData, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJob.title}" has been updated.` });
       } else {
         const newJobPayload = {
@@ -192,18 +150,18 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           createdAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDurationMinutes: 0, 
+          estimatedDurationMinutes: 0,
         };
         const docRef = await addDoc(collection(db, "jobs"), newJobPayload);
-        finalJob = { 
-            ...newJobPayload, 
-            id: docRef.id, 
-            createdAt: new Date().toISOString(), 
+        finalJob = {
+            ...newJobPayload,
+            id: docRef.id,
+            createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
         toast({ title: "Job Added", description: `New job "${finalJob.title}" created with Pending status.` });
       }
-      
+
       onJobAddedOrUpdated?.(finalJob);
       setIsOpen(false);
     } catch (error) {
@@ -256,19 +214,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           </div>
           <div>
             <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
+            {/* Simplified gmp-place-autocomplete-element for diagnostic purposes */}
             <gmp-place-autocomplete-element
-                key={job?.id || 'new-job-location-autocomplete'} 
-                ref={placeAutocompleteRef}
-                input-id="jobLocationAddressGmp" 
+                // key is important to ensure it re-mounts if the job context changes
+                key={job?.id || 'new-job-location-autocomplete-diagnostic'}
+                input-id="jobLocationAddressGmp" // This ID is used by the component internally
                 placeholder="Start typing address..."
-                types="address"
+                types="address" // Restrict to addresses
                 className={cn(
                     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 )}
              />
-            <p className="text-xs text-muted-foreground mt-1">Select an address from suggestions to set coordinates automatically.</p>
+            <p className="text-xs text-muted-foreground mt-1">Enter address for suggestions.</p>
           </div>
-          
+
           <Button type="submit" disabled={isLoading} className="w-full">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {job ? 'Save Changes' : 'Add Job'}
@@ -285,4 +244,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
 };
 
 export default AddEditJobDialog;
-    

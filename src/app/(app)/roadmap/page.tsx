@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Search, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap // Added new icons
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList // Added ClipboardList
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -52,7 +52,7 @@ const roadmapFeatures = {
     {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine continuously re-optimizing routes and assignments based on live events like early/late job completions, new urgent jobs, traffic changes, and technician unavailability, ensuring minimal downtime and maximizing punctuality.",
-      icon: Shuffle, // Using Shuffle as Zap is already on dashboard
+      icon: Shuffle, 
       status: "Planned"
     },
     {
@@ -128,6 +128,12 @@ const roadmapFeatures = {
       description: "Implement an \"Emergency\" function for dispatchers that triggers immediate route re-optimization, considering technician qualifications and the availability of specific emergency kits or parts.",
       icon: AlertOctagon,
       status: "Planned"
+    },
+    {
+      title: "Basic Integrated CRM for Customer & Equipment Management",
+      description: "Manage customer details, contact history, site-specific notes, and track installed HVAC equipment (model, serial, installation date, warranty, service history) directly within the app. Link equipment to jobs for better technician preparation and service tracking.",
+      icon: ClipboardList,
+      status: "Consideration"
     },
   ],
   futureVision: [
@@ -215,3 +221,4 @@ export default function RoadmapPage() {
     </div>
   );
 }
+

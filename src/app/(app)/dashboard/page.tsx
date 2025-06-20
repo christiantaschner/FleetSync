@@ -1,14 +1,15 @@
 
 "use client";
 import React, { useEffect, useMemo, useState } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2 } from 'lucide-react'; // Removed UserClock
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus } from 'lucide-react'; // Added UserPlus
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Job, Technician, JobStatus, JobPriority } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
-import OptimizeRouteDialog from './components/optimize-route-dialog';
+// import OptimizeRouteDialog from './components/optimize-route-dialog'; // Removed, button is replaced
+import SelectPendingJobDialog from './components/SelectPendingJobDialog'; // New Dialog
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
@@ -27,8 +28,12 @@ export default function DashboardPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
   const [selectedJobForAIAssign, setSelectedJobForAIAssign] = useState<Job | null>(null);
   const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
+  
+  const [isSelectPendingJobDialogOpen, setIsSelectPendingJobDialogOpen] = useState(false);
+
 
   const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES>(ALL_STATUSES);
   const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
@@ -90,7 +95,13 @@ export default function DashboardPage() {
     }
   };
   
-  const openAIAssignDialog = (job: Job) => {
+  const openAIAssignDialogForSpecificJob = (job: Job) => {
+    setSelectedJobForAIAssign(job);
+    setIsAIAssignDialogOpen(true);
+  };
+
+  const handlePendingJobSelectedForAIAssign = (job: Job) => {
+    setIsSelectPendingJobDialogOpen(false);
     setSelectedJobForAIAssign(job);
     setIsAIAssignDialogOpen(true);
   };
@@ -145,13 +156,26 @@ export default function DashboardPage() {
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
             </AddEditJobDialog>
+            <Button variant="outline" onClick={() => setIsSelectPendingJobDialogOpen(true)} disabled={pendingJobs.length === 0}>
+              <UserPlus className="mr-2 h-4 w-4" /> AI Assign Task
+            </Button>
+            {/* 
+            // OptimizeRouteDialog button removed from here. The component still exists.
             <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
               <Button variant="outline">
                 <Zap className="mr-2 h-4 w-4" /> Optimize Routes (AI)
               </Button>
-            </OptimizeRouteDialog>
+            </OptimizeRouteDialog> 
+            */}
           </div>
         </div>
+
+        <SelectPendingJobDialog
+            isOpen={isSelectPendingJobDialogOpen}
+            setIsOpen={setIsSelectPendingJobDialogOpen}
+            jobs={jobs}
+            onJobSelected={handlePendingJobSelectedForAIAssign}
+        />
 
         {selectedJobForAIAssign && (
           <SmartJobAllocationDialog
@@ -165,8 +189,6 @@ export default function DashboardPage() {
               setSelectedJobForAIAssign(null); 
             }}
           >
-            {/* This component does not require children that are visible; it's triggered by state. */}
-            {/* Passing an empty fragment or null if no trigger child is needed here. */}
             <></> 
           </SmartJobAllocationDialog>
         )}
@@ -212,8 +234,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Next Up Technicians</CardTitle>
-              {/* UserClock icon removed here to prevent error */}
-              {/* <UserClock className="h-4 w-4 text-muted-foreground" /> */}
+               {/* <UserClock className="h-4 w-4 text-muted-foreground" /> Icon removed due to build error */}
             </CardHeader>
             <CardContent>
                <div className="text-2xl font-bold">-</div>
@@ -290,7 +311,7 @@ export default function DashboardPage() {
                     key={job.id} 
                     job={job} 
                     technicians={technicians} 
-                    onAssignWithAI={openAIAssignDialog}
+                    onAssignWithAI={openAIAssignDialogForSpecificJob}
                     onJobUpdated={handleJobAddedOrUpdated}
                   />
                 )) : (

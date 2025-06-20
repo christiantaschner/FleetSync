@@ -156,7 +156,11 @@ export default function DashboardPage() {
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
             </AddEditJobDialog>
-            <Button variant="outline" onClick={() => setIsSelectPendingJobDialogOpen(true)} disabled={pendingJobs.length === 0}>
+            <Button 
+              variant={pendingJobs.length > 0 ? "accent" : "outline"} 
+              onClick={() => setIsSelectPendingJobDialogOpen(true)} 
+              disabled={pendingJobs.length === 0}
+            >
               <UserPlus className="mr-2 h-4 w-4" /> AI Assign Task
             </Button>
             {/* 

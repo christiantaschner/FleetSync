@@ -3,18 +3,18 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon } from 'lucide-react';
+import { Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, Brain, Search, City, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap } from 'lucide-react';
 
 interface RoadmapItemProps {
   title: string;
   description: string;
   icon: React.ElementType;
-  status?: 'Planned' | 'In Progress' | 'Consideration'; // Optional status
+  status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision';
 }
 
 const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status }) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <Icon className="h-6 w-6 text-primary" />
@@ -24,7 +24,7 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
           <CardDescription className="text-xs pt-1">Status: {status}</CardDescription>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
@@ -95,6 +95,50 @@ const roadmapFeatures = {
       icon: AlertOctagon,
       status: "Planned"
     },
+  ],
+  futureVision: [
+    {
+      title: "Predictive Maintenance as a Service",
+      description: "Analyze vehicle consumption data and machine data to predict maintenance needs and enable proactive service planning, minimizing downtime and extending equipment lifespan.",
+      icon: Brain,
+      status: "Vision"
+    },
+    {
+      title: "Smart City Infrastructure Integration",
+      description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
+      icon: City,
+      status: "Vision"
+    },
+    {
+      title: "AI-Powered Material Management & Inventory Optimization",
+      description: "Extend AI to predict material requirements for jobs, optimizing warehousing and avoiding parts shortages in the field.",
+      icon: Package,
+      status: "Vision"
+    },
+    {
+      title: "Augmented Reality (AR) for Technicians",
+      description: "Utilize AR in the mobile app to support technicians on-site, e.g., through interactive instructions or by overlaying relevant device information.",
+      icon: Glasses,
+      status: "Vision"
+    },
+    {
+      title: "Marketplace for Craft Service Orders",
+      description: "Develop a platform enabling craft businesses to share or take on unassigned jobs within a trusted network, optimizing industry-wide utilization.",
+      icon: ShoppingCart,
+      status: "Vision"
+    },
+    {
+      title: "Automated Invoicing and Report Creation",
+      description: "Fully integrate job documentation into automated administrative processes to further reduce office workload.",
+      icon: FileSpreadsheet,
+      status: "Vision"
+    },
+    {
+      title: "Machine Learning for Skills Development",
+      description: "Analyze job data and technician performance to generate personalized further education recommendations for technicians, combating skills shortages through targeted qualification.",
+      icon: GraduationCap,
+      status: "Vision"
+    },
   ]
 };
 
@@ -104,7 +148,7 @@ export default function RoadmapPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">FleetSync AI Roadmap</h1>
         <p className="text-muted-foreground">
-          Our planned features and improvements to make fleet management smarter and more efficient.
+          Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.
         </p>
       </div>
 
@@ -118,9 +162,18 @@ export default function RoadmapPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">HVAC/SHK Specific Enhancements</h2>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">HVAC/SHK Specific Enhancements</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {roadmapFeatures.hvacSpecific.map((item) => (
+            <RoadmapItem key={item.title} {...item} />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Future Innovations &amp; Long-Term Vision</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {roadmapFeatures.futureVision.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
         </div>
@@ -128,3 +181,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+    

@@ -13,6 +13,7 @@ import {
   LogOut,
   Loader2,
   ShipWheel,
+  ListChecks, // Added for Roadmap
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
   { href: "/reports", label: "Reports", icon: PieChart },
+  { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer // Added Timer
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -39,13 +39,13 @@ const roadmapFeatures = {
   coreAiDispatcher: [
     {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine continuously re-optimizing routes and assignments based on live events like early/late job completions, new urgent jobs, traffic changes, and technician unavailability, ensuring minimal downtime and maximizing punctuality.",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments to prevent operational 'Chaos'. It reacts to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability, minimizing downtime and maximizing punctuality.",
       icon: Shuffle, 
       status: "Planned"
     },
     {
       title: "Digital Time Tracking & Management",
-      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. Dispatchers can view time logs, generate reports on job duration and technician hours, and make necessary adjustments.",
+      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This helps control 'Kosten' by managing overtime and provides data for accurate job costing. Dispatchers can view time logs and generate reports.",
       icon: Timer,
       status: "Planned"
     },
@@ -57,19 +57,19 @@ const roadmapFeatures = {
     },
     {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
-      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis.",
+      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction.",
       icon: ThumbsUp,
       status: "Planned"
     },
     {
       title: "CO2 Emission Estimation & Reporting",
-      description: "Estimate and report CO2 emissions based on travel data, helping businesses track and improve their environmental footprint.",
+      description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
       icon: Leaf,
       status: "Planned"
     },
     {
       title: "Customer Satisfaction & Response Time Analytics",
-      description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality.",
+      description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality, directly impacting customer retention.",
       icon: Smile,
       status: "Planned"
     },
@@ -99,7 +99,7 @@ const roadmapFeatures = {
     },
     {
       title: "Quantify Route Optimization Benefits",
-      description: "Show estimated time and distance savings (e.g., \"Saves approx. 15 minutes & 3 miles\") when AI suggests an optimized route.",
+      description: "Show estimated time and distance savings (e.g., \"Saves approx. 15 minutes & 3 miles\") when AI suggests an optimized route, making the value of AI tangible.",
       icon: CheckSquare,
       status: "Consideration"
     },
@@ -107,13 +107,13 @@ const roadmapFeatures = {
   hvacSpecific: [
     {
       title: "Smart Skill Matching for Technicians (HVAC/SHK)",
-      description: "Enhance technician profiles with specific certifications (e.g., gas, oil, heat pumps, refrigeration, drinking water hygiene). AI job allocation will prioritize technicians with the necessary qualifications for each specific job, alongside proximity and availability.",
+      description: "Enhance technician profiles with specific certifications (e.g., gas, oil, heat pumps, refrigeration, drinking water hygiene). AI job allocation will prioritize technicians with the necessary qualifications for each specific job, alongside proximity and availability, reducing mismatches and improving first-time fix rates.",
       icon: Wrench,
       status: "Planned"
     },
     {
       title: "Intelligent Parts & Van Stock Management (HVAC/SHK)",
-      description: "Allow tracking of technician van stock or central warehouse inventory. AI will consider available parts when assigning repair jobs, prioritizing technicians likely to have needed standard parts on hand to reduce trips to wholesalers.",
+      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage) by tracking van/warehouse inventory. AI considers parts availability for job assignment, prioritizing technicians with needed parts to minimize repeat visits and reduce costs.",
       icon: Truck,
       status: "Planned"
     },
@@ -152,7 +152,7 @@ const roadmapFeatures = {
     {
       title: "Smart City Infrastructure Integration",
       description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
-      icon: Building2, // Changed from City
+      icon: Building2,
       status: "Vision"
     },
     {
@@ -181,7 +181,7 @@ const roadmapFeatures = {
     },
     {
       title: "Machine Learning for Skills Development",
-      description: "Analyze job data and technician performance to generate personalized further education recommendations for technicians, combating skills shortages through targeted qualification.",
+      description: "Analyze job data and technician performance to generate personalized further education recommendations for technicians, actively helping to combat 'Fachkräftemangel' (labor shortage) through targeted qualification.",
       icon: GraduationCap,
       status: "Vision"
     },
@@ -194,7 +194,8 @@ export default function RoadmapPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">FleetSync AI Roadmap</h1>
         <p className="text-muted-foreground">
-          Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.
+          Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient,
+          directly addressing key industry pain points and leveraging cutting-edge AI.
         </p>
       </div>
 

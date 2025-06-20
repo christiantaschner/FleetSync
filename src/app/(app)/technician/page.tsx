@@ -2,7 +2,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { Job, Technician, JobPriority } from '@/types'; // Added JobPriority
+import type { Job, Technician, JobPriority, JobStatus } from '@/types'; // Added JobPriority
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX } from 'lucide-react';
@@ -60,11 +60,14 @@ export default function TechnicianJobsPage() {
     
     fetchTechnicianDetails();
 
+    // Define active job statuses
+    const activeJobStatuses: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+
     // Subscribe to jobs assigned to this technician (based on UID)
     const jobsQuery = query(
       collection(db, "jobs"),
       where("assignedTechnicianId", "==", currentTechnicianId),
-      where("status", "not-in", ["Completed", "Cancelled"])
+      where("status", "in", activeJobStatuses)
     );
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -79,9 +82,15 @@ export default function TechnicianJobsPage() {
       });
       setAssignedJobs(jobsForTech);
       setIsLoading(false); // Set loading to false after jobs are fetched (or tech details fail)
-    }, (err) => {
+    }, (err: any) => {
       console.error("Error fetching assigned jobs: ", err);
-      setError("Could not load assigned jobs.");
+      if (err.code === 'failed-precondition' && err.message.includes('requires an index')) {
+        setError("Data loading requires a database index. Please create it using the link logged in the Firebase Functions console or provided in the error message.");
+        // You can also log the specific index creation link here if needed, though the user already has it
+        console.error("Firestore index required. Create it here: ", err.message.substring(err.message.indexOf('https://')));
+      } else {
+        setError("Could not load assigned jobs.");
+      }
       setIsLoading(false);
     });
 
@@ -101,7 +110,7 @@ export default function TechnicianJobsPage() {
     );
   }
   
-  if (error && !technician) { // If there was an error and no technician profile was found
+  if (error && !technician && !isLoading) { // Show error if technician profile failed and not loading jobs
      return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <UserX className="h-12 w-12 text-destructive mb-4" />
@@ -111,13 +120,13 @@ export default function TechnicianJobsPage() {
     );
   }
   
-  if (!technician) { // Fallback if somehow technician is null after loading without specific error
+  if (!technician && !isLoading) { // Fallback if somehow technician is null after loading without specific error
      return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold">Technician Profile Not Available</h2>
         <p className="text-muted-foreground mt-2">
-          Could not load your technician profile.
+          Could not load your technician profile. If this persists, contact an administrator.
         </p>
       </div>
     );
@@ -126,32 +135,36 @@ export default function TechnicianJobsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <Card className="mb-6 shadow-lg">
-        <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={technician.avatarUrl || `https://placehold.co/100x100.png?text=${technician.name[0]}`} alt={technician.name} data-ai-hint="person portrait"/>
-            <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle className="text-2xl font-headline">{technician.name}</CardTitle>
-            <CardDescription>Your assigned jobs for today.</CardDescription>
-          </div>
-        </CardHeader>
-      </Card>
+      {technician && (
+        <Card className="mb-6 shadow-lg">
+          <CardHeader className="flex flex-row items-center gap-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={technician.avatarUrl || `https://placehold.co/100x100.png?text=${technician.name[0]}`} alt={technician.name} data-ai-hint="person portrait"/>
+              <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle className="text-2xl font-headline">{technician.name}</CardTitle>
+              <CardDescription>Your assigned jobs for today.</CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
 
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 font-headline">
         <ListChecks className="text-primary" /> My Active Jobs ({assignedJobs.length})
       </h2>
 
-      {error && <p className="text-destructive mb-4">{error}</p>}
+      {error && <p className="text-destructive mb-4 bg-destructive/10 p-3 rounded-md">{error}</p>}
 
-      {assignedJobs.length === 0 && !isLoading ? ( // Check isLoading here to avoid showing "no jobs" while loading
+      {assignedJobs.length === 0 && !isLoading && !error ? ( // Check isLoading and error here
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">You have no active jobs assigned.</p>
           </CardContent>
         </Card>
-      ) : (
+      ) : null}
+      
+      {assignedJobs.length > 0 && (
         <div className="space-y-4">
           {assignedJobs.map(job => (
             <Card key={job.id} className="overflow-hidden hover:shadow-md transition-shadow">

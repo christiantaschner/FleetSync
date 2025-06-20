@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays // Added CalendarDays
 } from 'lucide-react';
 
 interface RoadmapItemProps {
@@ -100,6 +100,59 @@ const roadmapFeatures = {
           "Reduced idle time for technicians.",
           "High adherence to customer-scheduled appointment times.",
           "Reduction in dispatcher stress due to automated handling of common disruptions like technician absence."
+        ]
+      }
+    },
+    {
+      title: "Interactive Visual Calendar Scheduling with AI-Assisted Reassignment",
+      description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes.",
+      icon: CalendarDays,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Display jobs on a multi-day calendar view (e.g., weekly, daily per technician).",
+          "Show key job info (title, technician, time) directly on calendar events.",
+          "Allow filtering by technician or viewing all.",
+          "Implement drag-and-drop of job 'events' between technicians or time slots.",
+          "When a job is dropped, trigger an AI re-optimization for the source and target technicians' schedules (and potentially others affected by cascading changes).",
+          "AI calculates a 'draft' schedule; no immediate live update.",
+          "Dispatcher is presented with the proposed changes (e.g., 'Technician A's new schedule: ...', 'Technician B's new schedule: ...').",
+          "Dispatcher can confirm or reject the draft. Confirmation applies changes to live data."
+        ],
+        dataModels: [
+          "No new core collections, but `Job` data (`scheduledTime`, `estimatedDurationMinutes`, `assignedTechnicianId`) is key.",
+          "May need temporary data structures in frontend state or a temporary backend store for 'draft schedules' if they are complex and involve many technicians."
+        ],
+        aiComponents: [
+          "Relies heavily on a mature 'Advanced Real-time Dynamic Re-optimization' flow.",
+          "The re-optimization flow would need to accept input specifying a 'manual move' of a job as a strong constraint/starting point for its calculation.",
+          "Output of the AI would be the 'draft' schedules for affected technicians."
+        ],
+        uiUx: [
+          "A robust calendar component (e.g., FullCalendar, or a custom solution).",
+          "Clear visual representation of jobs, technicians, and time.",
+          "Intuitive drag-and-drop interactions.",
+          "A modal or dedicated UI panel to display the 'draft changes' proposed by AI for review before confirmation.",
+          "Visual cues for jobs that have fixed `scheduledTime` constraints, making them less 'draggable' or warning if a drag violates the constraint."
+        ],
+        integrationPoints: [
+          "Directly uses and enhances the 'Advanced Real-time Dynamic Re-optimization' capability.",
+          "Job creation/editing dialogs would update the calendar view.",
+          "Technician status updates (e.g., job completion) should reflect on the calendar.",
+          "Future Vision: Integration with external calendar APIs (Google Calendar, Outlook) for technician/company-wide visibility."
+        ],
+        technicalChallenges: [
+          "Implementing a performant and interactive calendar UI, especially with many jobs/technicians.",
+          "Managing the 'draft state' of AI-proposed changes without affecting live data until confirmation.",
+          "Ensuring the AI re-optimization is fast enough for interactive use after a drag-and-drop.",
+          "Handling edge cases and conflicts gracefully (e.g., dragging a job to an unqualified technician, or to an impossible time slot).",
+          "Complexity of updating multiple technicians' schedules atomically upon confirmation."
+        ],
+        successMetrics: [
+          "Reduced time for dispatchers to perform complex rescheduling tasks.",
+          "Improved dispatcher confidence and control over AI-assisted planning.",
+          "Better overall schedule coherence and optimization.",
+          "High adoption rate of the visual scheduling interface."
         ]
       }
     },
@@ -949,5 +1002,6 @@ export default function RoadmapPage() {
     </div>
   );
 }
+    
 
     

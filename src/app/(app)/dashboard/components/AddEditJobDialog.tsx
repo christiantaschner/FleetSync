@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -28,13 +28,11 @@ declare global {
   namespace JSX {
     interface IntrinsicElements {
       'gmp-place-autocomplete-element': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement> & {
-        'input-id'?: string;
+        // For this diagnostic, we are not using 'input-id' or 'value'
         placeholder?: string;
         types?: string; // For address types
-        // We are deliberately NOT including 'value' here for this diagnostic step
-        // to let the component manage its own input value initially.
         // We would also need 'onGmpPlacechange' if using it directly as a prop.
-      }, HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>;
+      }, HTMLElement>;
     }
   }
 }
@@ -57,16 +55,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
   const [customerPhone, setCustomerPhone] = useState('');
 
   // React state for address, latitude, and longitude
-  // We still need to manage this for form submission, even if not two-way binding for this test.
+  // These will be updated by event listeners once we re-enable them.
+  // For now, they are primarily for holding data for submission.
   const [locationAddress, setLocationAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
 
-  // This ref is NOT used in this simplified version for direct manipulation,
-  // but kept here as it might be needed if this step works and we re-add listeners.
-  const placeAutocompleteRef = useRef<HTMLElement & { place?: google.maps.places.PlaceResult; value: string }>(null);
+  // In this diagnostic version, we are NOT using a ref for gmp-place-autocomplete-element.
 
-  // Effect to set initial form values (excluding location for this test)
   useEffect(() => {
     if (isOpen) {
       if (job) {
@@ -75,13 +71,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority(job.priority);
         setCustomerName(job.customerName);
         setCustomerPhone(job.customerPhone);
-        // For this diagnostic step, we are not setting the locationAddress state
-        // or programmatically setting the value of gmp-place-autocomplete-element.
-        // We want to see if it initializes correctly on its own.
-        // If it had an initial value, we'd set it like this:
-        // setLocationAddress(job.location.address || '');
-        // And if we were to programmatically set its value:
-        // if (placeAutocompleteRef.current) placeAutocompleteRef.current.value = job.location.address || '';
+        // We are NOT programmatically setting the value of gmp-place-autocomplete-element.
+        // We still set React's state for other fields and for eventual submission.
+        setLocationAddress(job.location.address || '');
         setLatitude(job.location.latitude);
         setLongitude(job.location.longitude);
       } else {
@@ -91,17 +83,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         setPriority('Medium');
         setCustomerName('');
         setCustomerPhone('');
-        // setLocationAddress('');
-        // if (placeAutocompleteRef.current) placeAutocompleteRef.current.value = '';
+        setLocationAddress('');
         setLatitude(null);
         setLongitude(null);
       }
     }
   }, [job, isOpen]);
 
-  // In this diagnostic version, we are NOT adding event listeners via useEffect.
-  // If the input becomes clickable/typable, the next step would be to add them back
-  // to update locationAddress, latitude, and longitude states.
+  // In this diagnostic version, we are NOT adding event listeners via useEffect to gmp-place-autocomplete-element.
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,14 +98,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       toast({ title: "Missing Information", description: "Please fill in Title and Description.", variant: "destructive" });
       return;
     }
-    // For this test, location validation is tricky as we're not syncing state.
-    // We'll assume it's filled for now if we were to submit.
-    // if (!locationAddress.trim()) {
-    //     toast({ title: "Location Missing", description: "Please enter a job location.", variant: "destructive"});
+    // For this test, if locationAddress is empty (because typing wasn't possible), this might be an issue.
+    // The goal here is to see if the input field *becomes* typable.
+    // if (!locationAddress.trim() && (latitude === null || longitude === null)) {
+    //     toast({ title: "Location Missing", description: "Please enter and select a job location.", variant: "destructive"});
     //     return;
-    // }
-    // if (latitude === null || longitude === null) {
-    //     // Further validation might be needed if suggestions are used
     // }
 
     setIsLoading(true);
@@ -128,9 +114,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        latitude: latitude ?? 0, // These would be stale if not updated by event listeners
+        // These would come from React state, which we'd populate via listeners if the input worked.
+        latitude: latitude ?? 0,
         longitude: longitude ?? 0,
-        address: locationAddress // This would be stale if not updated by event listeners
+        address: locationAddress
       },
       updatedAt: serverTimestamp(),
     };
@@ -213,14 +200,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
             <Input id="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
           </div>
           <div>
-            <Label htmlFor="jobLocationAddressGmp">Job Location (Address) *</Label>
-            {/* Simplified gmp-place-autocomplete-element for diagnostic purposes */}
+            {/* Using a unique ID for the label's htmlFor to match the element's ID */}
+            <Label htmlFor="gmp-address-input-diagnostic">Job Location (Address) *</Label>
+            {/* Extremely simplified gmp-place-autocomplete-element for diagnostic purposes */}
             <gmp-place-autocomplete-element
-                // key is important to ensure it re-mounts if the job context changes
-                key={job?.id || 'new-job-location-autocomplete-diagnostic'}
-                input-id="jobLocationAddressGmp" // This ID is used by the component internally
+                id="gmp-address-input-diagnostic" // Standard HTML id for the label
                 placeholder="Start typing address..."
                 types="address" // Restrict to addresses
+                // NO value prop, NO input-id prop, NO ref, NO key prop for this diagnostic
                 className={cn(
                     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                 )}

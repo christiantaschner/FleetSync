@@ -39,13 +39,13 @@ const roadmapFeatures = {
   coreAiDispatcher: [
     {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability.",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs and improves responsiveness.",
       icon: Shuffle, 
       status: "Planned"
     },
     {
       title: "Digital Time Tracking & Management",
-      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing. Dispatchers can view time logs and generate reports.",
+      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing and payroll. Dispatchers can view time logs and generate reports.",
       icon: Timer,
       status: "Planned"
     },
@@ -93,7 +93,7 @@ const roadmapFeatures = {
     },
     {
       title: "Real-time Chat with Technicians",
-      description: "Implement a direct messaging feature between dispatchers and technicians for quick communication, on-site support, and updates, reducing misunderstandings.",
+      description: "Implement a direct messaging feature between dispatchers and technicians for quick communication, on-site support, and updates, reducing misunderstandings and improving collaboration.",
       icon: MessageSquare,
       status: "Consideration"
     },
@@ -119,37 +119,37 @@ const roadmapFeatures = {
     },
     {
       title: "Intelligent Parts & Van Stock Management (HVAC/SHK)",
-      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage). Technicians get better visibility into needed parts for jobs and potentially their van stock, minimizing repeat visits and reducing their frustration from missing components.",
+      description: "Directly addresses 'Fehlfahrten' (wasted trips) and 'Teilemangel' (parts shortage). Technicians get better visibility into needed parts for jobs and potentially their van stock, minimizing repeat visits and reducing their frustration from missing components for HVAC/SHK tasks.",
       icon: Truck,
       status: "Planned"
     },
     {
       title: "Proactive Maintenance Scheduling & Equipment History (HVAC/SHK)",
-      description: "Manage recurring maintenance contracts (heating, AC). The system will automatically suggest and help schedule these appointments. Provide technicians access to equipment history (model, past repairs, service intervals) at job locations via the mobile app.",
+      description: "Manage recurring maintenance contracts (heating, AC). The system will automatically suggest and help schedule these appointments. Provide technicians access to equipment history (model, past repairs, service intervals) at job locations via the mobile app, which is crucial for efficient HVAC/SHK servicing.",
       icon: History,
       status: "Planned"
     },
     {
       title: "Digital On-Site Protocols & Checklists (HVAC/SHK)",
-      description: "Provide customizable digital forms for technicians to complete on-site (e.g., for maintenance, gas inspections, complex repairs). This streamlines their data entry, reduces manual paperwork, and ensures all necessary information, measurements, and photos are captured consistently.",
+      description: "Provide customizable digital forms for technicians to complete on-site (e.g., for maintenance, gas inspections, complex repairs). This streamlines their data entry, reduces manual paperwork, and ensures all necessary information, measurements, and photos are captured consistently, addressing a key technician pain point of cumbersome paperwork.",
       icon: FileText,
       status: "Planned"
     },
     {
       title: "Emergency Dispatch with Resource Check (HVAC/SHK)",
-      description: "Implement an \"Emergency\" function for dispatchers that triggers immediate route re-optimization, considering technician qualifications and the availability of specific emergency kits or parts.",
+      description: "Implement an \"Emergency\" function for dispatchers that triggers immediate route re-optimization, considering technician qualifications and the availability of specific emergency kits or parts for HVAC/SHK scenarios.",
       icon: AlertOctagon,
       status: "Planned"
     },
     {
-      title: "Mobile Knowledge Base & Troubleshooting Guides",
-      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, troubleshooting flowcharts, and best practices. This empowers them to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls.",
+      title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
+      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries (e.g., 'What does error E47 mean?'), AI-guided diagnostics based on symptoms, and contextual information suggestions based on the job type. This empowers technicians to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls, directly addressing a major technician pain point.",
       icon: BookOpen,
       status: "Planned"
     },
     {
       title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration.",
+      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration from lack of information.",
       icon: ClipboardList,
       status: "Consideration"
     },

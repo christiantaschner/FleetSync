@@ -47,7 +47,7 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 };
 
 const roadmapFeatures = {
-  coreAiDispatcher: [
+  mvp: [
     {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
@@ -195,6 +195,44 @@ const roadmapFeatures = {
           ]
       }
     },
+    {
+        title: "Google Maps Address Autocomplete",
+        description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
+        icon: Map,
+        status: "Planned",
+        developerBrief: {
+          coreFunctionality: [
+            "Use Google Places Autocomplete Service in address input fields.",
+            "On selecting a suggestion, populate address fields (street, city, postal code, country) and ideally latitude/longitude."
+          ],
+          dataModels: [
+            "No direct new Firestore models, but ensures higher quality `Job.location` and `Technician.location` data (address string, lat, lng)."
+          ],
+aiComponents: ["N/A"],
+          uiUx: [
+            "`AddEditJobDialog.tsx`: Enhance address input.",
+            "`AddEditTechnicianDialog.tsx`: Enhance address input.",
+            "Smooth user experience for selecting addresses."
+          ],
+          integrationPoints: [
+            "Requires `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` with Places API enabled.",
+            "Consider using the `@vis.gl/react-google-maps` library's `useAutocomplete` hook or similar.",
+            "Update form handling logic to process structured address data from Places API."
+          ],
+          technicalChallenges: [
+            "API key management and security.",
+            "Parsing the structured address components correctly for different locales.",
+            "Handling API usage costs if volume is high."
+          ],
+          successMetrics: [
+            "Reduced time for address entry.",
+            "Improved accuracy of geocoded job and technician locations.",
+            "Fewer errors due to mistyped addresses."
+          ]
+      }
+    },
+  ],
+  coreAiDispatcher: [
     {
       title: "Dynamic Skill Library Management",
       description: "Allows dispatchers to define and manage a central library of technician skills (e.g., specific certifications, equipment expertise). This list populates selection options when editing technicians and is used by AI for smarter job allocation. Ensures consistent skill terminology and makes skill-based assignment more robust.",
@@ -456,42 +494,6 @@ const roadmapFeatures = {
           "Reduction in critical response times (e.g., for high-priority jobs).",
           "Identification of factors impacting satisfaction and response times."
         ]
-      }
-    },
-    {
-        title: "Google Maps Address Autocomplete",
-        description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
-        icon: Map,
-        status: "Planned",
-        developerBrief: {
-          coreFunctionality: [
-            "Use Google Places Autocomplete Service in address input fields.",
-            "On selecting a suggestion, populate address fields (street, city, postal code, country) and ideally latitude/longitude."
-          ],
-          dataModels: [
-            "No direct new Firestore models, but ensures higher quality `Job.location` and `Technician.location` data (address string, lat, lng)."
-          ],
-aiComponents: ["N/A"],
-          uiUx: [
-            "`AddEditJobDialog.tsx`: Enhance address input.",
-            "`AddEditTechnicianDialog.tsx`: Enhance address input.",
-            "Smooth user experience for selecting addresses."
-          ],
-          integrationPoints: [
-            "Requires `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` with Places API enabled.",
-            "Consider using the `@vis.gl/react-google-maps` library's `useAutocomplete` hook or similar.",
-            "Update form handling logic to process structured address data from Places API."
-          ],
-          technicalChallenges: [
-            "API key management and security.",
-            "Parsing the structured address components correctly for different locales.",
-            "Handling API usage costs if volume is high."
-          ],
-          successMetrics: [
-            "Reduced time for address entry.",
-            "Improved accuracy of geocoded job and technician locations.",
-            "Fewer errors due to mistyped addresses."
-          ]
       }
     },
     {
@@ -806,18 +808,18 @@ export default function RoadmapPage() {
       </div>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Core AI & Dispatcher Experience</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">MVP: Core Features for Launch</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.coreAiDispatcher.map((item) => (
+          {roadmapFeatures.mvp.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">HVAC/SHK Specific Enhancements</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Post-MVP: Core Enhancements</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.hvacSpecific.map((item) => (
+          {roadmapFeatures.coreAiDispatcher.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
         </div>
@@ -834,6 +836,4 @@ export default function RoadmapPage() {
     </div>
   );
 }
-    
-
     

@@ -28,18 +28,18 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
-    if (priority === 'Medium') return 'default';
+    if (priority === 'Medium') return 'default'; // Or 'primary' if you have that style
     return 'secondary';
   };
 
   const getStatusIcon = (status: Job['status']) => {
     switch (status) {
       case 'Pending': return <AlertTriangle className="text-yellow-500" />;
-      case 'Assigned': return <User className="text-blue-500" />;
-      case 'En Route': return <Zap className="text-orange-500" />;
-      case 'In Progress': return <Clock className="text-indigo-500" />;
+      case 'Assigned': return <User className="text-blue-500" />; // Using theme primary
+      case 'En Route': return <Zap className="text-orange-500" />; // Using theme accent
+      case 'In Progress': return <Clock className="text-indigo-500" />; // Custom color, consider theme
       case 'Completed': return <CheckCircle className="text-green-500" />;
-      case 'Cancelled': return <AlertTriangle className="text-red-500" />;
+      case 'Cancelled': return <AlertTriangle className="text-red-500" />; // Using theme destructive
       default: return <Briefcase />;
     }
   };
@@ -89,7 +89,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
                 <User className="h-3 w-3" /> {assignedTechnician.name}
               </span>
             ) : (
-              <span className={cn("flex items-center gap-1", job.status === 'Pending' ? 'text-orange-600 font-semibold' : 'text-muted-foreground')}>
+              <span className={cn("flex items-center gap-1", job.status === 'Pending' ? 'text-accent font-semibold' : 'text-muted-foreground')}>
                 <AlertTriangle className="h-3 w-3" /> Unassigned
               </span>
             )}

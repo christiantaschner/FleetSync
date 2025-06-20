@@ -23,8 +23,6 @@ import type { Job, JobPriority, JobStatus } from '@/types';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Removed Google Maps Place Autocomplete Web Component declaration and related refs/effects
-
 interface AddEditJobDialogProps {
   children: React.ReactNode;
   job?: Job;
@@ -87,8 +85,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        // Latitude and longitude will be null if not set, or from existing job
-        // The ?? 0 ensures they are numbers when sent to Firestore if null
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0,
         address: locationAddress 
@@ -147,15 +143,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
         <form onSubmit={handleSubmit} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
           <div>
             <Label htmlFor="jobTitle">Job Title *</Label>
-            <Input id="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+            <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
           </div>
           <div>
             <Label htmlFor="jobDescription">Job Description *</Label>
-            <Textarea id="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3}/>
+            <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3}/>
           </div>
           <div>
             <Label htmlFor="jobPriority">Job Priority *</Label>
-            <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)}>
+            <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
               <SelectTrigger id="jobPriority">
                 <SelectValue placeholder="Select priority" />
               </SelectTrigger>
@@ -168,20 +164,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, onJo
           </div>
           <div>
             <Label htmlFor="customerName">Customer Name</Label>
-            <Input id="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g., John Doe" />
+            <Input id="customerName" name="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g., John Doe" />
           </div>
           <div>
             <Label htmlFor="customerPhone">Customer Phone</Label>
-            <Input id="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+            <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
           </div>
           <div>
             <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
             <Input 
                 id="jobLocationAddress" 
+                name="jobLocationAddress"
                 value={locationAddress} 
                 onChange={(e) => {
                     setLocationAddress(e.target.value);
-                    // Manually entered address won't have lat/lng, so clear them or set to null
                     setLatitude(null); 
                     setLongitude(null);
                 }} 

@@ -21,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
 import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -47,6 +47,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
+  const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
 
@@ -81,8 +82,35 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       resetForm();
     }
   }, [job, isOpen, resetForm]);
+  
+  const fetchAISkillSuggestion = useCallback(async (currentDescription: string) => {
+    if (!currentDescription.trim() || allSkills.length === 0) {
+      // Don't clear skills if description is empty, user might be editing other fields
+      return;
+    }
+    setIsFetchingSkillSuggestion(true);
+    const input: SuggestJobSkillsActionInput = {
+      jobDescription: currentDescription,
+      availableSkills: allSkills,
+    };
+    const result = await suggestJobSkillsAction(input);
+    if(result.data?.suggestedSkills) {
+      setRequiredSkills(result.data.suggestedSkills);
+    }
+    // Don't show error toast for this, it's a background suggestion
+    setIsFetchingSkillSuggestion(false);
+  }, [allSkills]);
 
-  const fetchAISuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
+  useEffect(() => {
+    if (isOpen && !job && description.trim()) {
+        const timer = setTimeout(() => {
+            fetchAISkillSuggestion(description);
+        }, 1000); // Debounce
+        return () => clearTimeout(timer);
+    }
+  }, [description, isOpen, job, fetchAISkillSuggestion]);
+
+  const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
       setAiSuggestion(null);
       setSuggestedTechnicianDetails(null);
@@ -138,11 +166,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   useEffect(() => {
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
-        fetchAISuggestion(description, priority, requiredSkills, scheduledTime);
+        fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
       }, 1000); 
       return () => clearTimeout(timer);
     }
-  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAISuggestion]);
+  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -321,7 +349,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
             </div>
           </div>
            <div>
-              <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Required Skills</Label>
+              <Label className="flex items-center gap-2">
+                <ListChecks className="h-3.5 w-3.5" />
+                Required Skills
+                {isFetchingSkillSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
+              </Label>
               <ScrollArea className="h-40 rounded-md border p-3 mt-1">
                 <div className="space-y-2">
                   {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}

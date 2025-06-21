@@ -6,14 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
-  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog
+  FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
+  Sparkles, Navigation
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RoadmapItemProps {
   title: string;
   description: string;
   icon: React.ElementType;
-  status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision';
+  status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision' | 'Completed';
   developerBrief?: DeveloperBrief;
 }
 
@@ -29,14 +31,17 @@ interface DeveloperBrief {
 
 const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status }) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow h-full flex flex-col">
+    <Card className={cn(
+        "hover:shadow-lg transition-shadow h-full flex flex-col",
+        status === 'Completed' && "border-green-600/50 bg-green-50/50"
+    )}>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <Icon className="h-6 w-6 text-primary" />
+          <Icon className={cn("h-6 w-6 text-primary", status === 'Completed' && "text-green-600")} />
           <CardTitle className="text-lg font-headline">{title}</CardTitle>
         </div>
         {status && (
-          <CardDescription className="text-xs pt-1">Status: {status}</CardDescription>
+          <CardDescription className={cn("text-xs pt-1", status === 'Completed' && "text-green-700 font-semibold")}>Status: {status}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="flex-grow">
@@ -48,6 +53,30 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 
 const roadmapFeatures = {
   mvp: [
+    {
+      title: "AI-Powered Job Allocation (Single & Batch)",
+      description: "Core AI feature suggests the best technician for new jobs. Includes a batch assignment mode with a review step for all pending jobs.",
+      icon: Sparkles,
+      status: "Completed",
+    },
+    {
+      title: "CSV Job Data Import",
+      description: "A critical feature for rapid onboarding. Allows dispatchers to import their existing job schedules from a CSV file, minimizing manual data entry.",
+      icon: FileSpreadsheet,
+      status: "Completed",
+    },
+    {
+        title: "Google Maps Address Autocomplete",
+        description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
+        icon: Map,
+        status: "Completed",
+    },
+    {
+        title: "Dashboard Map with Live Traffic",
+        description: "The main dashboard map view is enhanced with a real-time traffic layer from Google Maps, providing crucial operational awareness.",
+        icon: Map,
+        status: "Completed",
+    },
     {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
@@ -156,122 +185,31 @@ const roadmapFeatures = {
         ]
       }
     },
-    {
-      title: "CSV Job Data Import",
-      description: "A critical feature for rapid onboarding. Allows dispatchers to import their existing job schedules from a CSV file (e.g., exported from Excel or another calendar), minimizing manual data entry and demonstrating the AI's value immediately on their own data.",
-      icon: FileSpreadsheet,
-      status: "Planned",
-      developerBrief: {
-          coreFunctionality: [
-            "An upload interface on the dashboard for a CSV file.",
-            "Clear documentation or a downloadable template CSV file showing required format and fields (e.g., customer_name, address, job_description, scheduled_date, start_time, duration_hours, priority).",
-            "Client-side parsing of the CSV file.",
-            "A preview modal showing the parsed data in a table, highlighting any errors or missing required fields.",
-            "Option for the dispatcher to import all valid jobs, which initially can be created as 'Pending'.",
-            "A server action to perform a batch write to Firestore, creating new job documents."
-          ],
-          dataModels: [ "Relies on the existing `Job` data model. No new collections needed." ],
-          aiComponents: [ "Indirect integration. After jobs are imported as 'Pending', the 'AI Batch Assign' feature can be used to allocate them, showcasing the AI's ability to schedule a full workload." ],
-          uiUx: [
-            "A clear 'Import Jobs' button on the dashboard.",
-            "An intuitive upload dialog with progress indication.",
-            "A user-friendly preview table with clear error messaging and validation feedback."
-          ],
-          integrationPoints: [
-            "Feeds directly into the job list and the visual calendar.",
-            "Works hand-in-hand with the 'AI Batch Assign' feature.",
-            "Utilizes Firebase server actions for secure batch processing."
-          ],
-          technicalChallenges: [
-            "Robust CSV parsing and error handling for various delimiters and file encodings.",
-            "Efficiently handling potentially large CSV files without freezing the browser.",
-            "Managing Firestore write limits for large batch imports."
-          ],
-          successMetrics: [
-            "Drastically reduced onboarding time for new companies.",
-            "High success rate of imports.",
-            "Positive dispatcher feedback on ease of migration.",
-            "Rapid population of the system with real data, enabling immediate use of AI features."
-          ]
-      }
-    },
-    {
-        title: "Google Maps Address Autocomplete",
-        description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
-        icon: Map,
-        status: "Planned",
-        developerBrief: {
-          coreFunctionality: [
-            "Use Google Places Autocomplete Service in address input fields.",
-            "On selecting a suggestion, populate address fields (street, city, postal code, country) and ideally latitude/longitude."
-          ],
-          dataModels: [
-            "No direct new Firestore models, but ensures higher quality `Job.location` and `Technician.location` data (address string, lat, lng)."
-          ],
-aiComponents: ["N/A"],
-          uiUx: [
-            "`AddEditJobDialog.tsx`: Enhance address input.",
-            "`AddEditTechnicianDialog.tsx`: Enhance address input.",
-            "Smooth user experience for selecting addresses."
-          ],
-          integrationPoints: [
-            "Requires `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` with Places API enabled.",
-            "Consider using the `@vis.gl/react-google-maps` library's `useAutocomplete` hook or similar.",
-            "Update form handling logic to process structured address data from Places API."
-          ],
-          technicalChallenges: [
-            "API key management and security.",
-            "Parsing the structured address components correctly for different locales.",
-            "Handling API usage costs if volume is high."
-          ],
-          successMetrics: [
-            "Reduced time for address entry.",
-            "Improved accuracy of geocoded job and technician locations.",
-            "Fewer errors due to mistyped addresses."
-          ]
-      }
-    },
   ],
   coreAiDispatcher: [
     {
       title: "Dynamic Skill Library Management",
       description: "Allows dispatchers to define and manage a central library of technician skills (e.g., specific certifications, equipment expertise). This list populates selection options when editing technicians and is used by AI for smarter job allocation. Ensures consistent skill terminology and makes skill-based assignment more robust.",
       icon: Cog, 
-      status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Dispatcher UI (e.g., a new dialog or settings page) to add, edit, and delete skills in a master list.",
-          "Each skill to have a name and optionally a description or category.",
-          "The 'Add/Edit Technician' dialog will use this dynamic list to populate skill selection checkboxes (instead of a hardcoded list).",
-          "Store the master skill list in Firestore."
-        ],
-        dataModels: [
-          "New Firestore collection: `skillsLibrary` (documents with fields like `skillName: string`, `description?: string`, `category?: string`, `createdAt`, `updatedAt`).",
-          "Technician documents (`technicians.skills`) will store an array of skill names (or skill IDs if preferred for stricter linking) selected from this library."
-        ],
-        aiComponents: [
-          "AI job allocation flows (`allocateJobFlow`) will receive the technician's skills. Ensuring these skills originate from a standardized library improves matching accuracy if jobs also specify skills from this library."
-        ],
-        uiUx: [
-          "A dedicated interface for managing the skill library (e.g., table view with add/edit/delete actions).",
-          "`AddEditTechnicianDialog`: Skill checkboxes populated dynamically from `skillsLibrary`."
-        ],
-        integrationPoints: [
-          "Directly enhances `AddEditTechnicianDialog`.",
-          "Provides foundational data for 'Smart Skill Matching' (HVAC specific, but concept is general).",
-          "Technician profiles and job requirements would refer to skills from this library."
-        ],
-        technicalChallenges: [
-          "Ensuring data integrity if skill names are edited/deleted and technicians already have those skills assigned (consider soft deletes or update references).",
-          "User experience for managing a potentially long list of skills."
-        ],
-        successMetrics: [
-          "Increased consistency in skill assignment.",
-          "Easier for dispatchers to manage and update available skills.",
-          "Improved accuracy of AI skill matching for job allocation.",
-          "Reduced errors from typos or inconsistent skill naming."
-        ]
-      }
+      status: "Completed",
+    },
+    {
+      title: "AI Job Skill Suggestion",
+      description: "AI automatically analyzes job descriptions to suggest required skills from the company's skill library, which the dispatcher can then review and edit.",
+      icon: Lightbulb,
+      status: "Completed",
+    },
+    {
+      title: "AI-Powered \"Next Up Technicians\" Prediction",
+      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data from time tracking and job statuses. Display this on the dashboard.",
+      icon: Lightbulb,
+      status: "Completed",
+    },
+    {
+      title: "Technician Job Navigation",
+      description: "Technicians can tap a 'Navigate' button in their job view to open Google Maps on their mobile device with turn-by-turn directions to the job site.",
+      icon: Navigation,
+      status: "Completed",
     },
      {
       title: "Technician Profile Viewing & Change Suggestions",
@@ -532,45 +470,6 @@ aiComponents: ["N/A"],
           "Higher completion rate of job documentation as it can be done immediately.",
           "Reduced technician frustration with connectivity issues.",
           "Consistent data flow regardless of network conditions."
-        ]
-      }
-    },
-    {
-      title: "AI-Powered \"Next Up Technicians\" Prediction",
-      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data from time tracking and job statuses. Display this on the dashboard.",
-      icon: Lightbulb,
-      status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "AI model analyzes active jobs, technicians' current locations, ETAs for their ongoing tasks, typical travel times, and historical job completion times.",
-          "Predicts a ranked list of technicians who are likely to become available next, along with an estimated time of availability."
-        ],
-        dataModels: [
-          "Relies on `Job` data (status, assignedTechnicianId, location, estimatedDuration, scheduledTime), `Technician` data (isAvailable, location, skills), and `timeEntries` (for historical actual durations)."
-        ],
-        aiComponents: [
-          "Genkit flow: `predictNextAvailableTechniciansFlow`.",
-          "Gemini model for predictive analysis, considering multiple dynamic factors.",
-          "Input: Current snapshot of all active jobs and technician statuses.",
-          "Output: Array of objects: `{ technicianId: string, technicianName: string, estimatedAvailabilityTime: Date, confidenceScore?: number }`."
-        ],
-        uiUx: [
-          "Dispatcher Dashboard: A dedicated card or section displaying the top 3-5 'Next Up Technicians'.",
-          "Clear presentation of estimated availability time."
-        ],
-        integrationPoints: [
-          "Uses data from Digital Time Tracking for historical accuracy.",
-          "Relies on real-time job status updates from technicians."
-        ],
-        technicalChallenges: [
-          "Accuracy of prediction, especially with unforeseen delays or early completions.",
-          "Handling edge cases (e.g., all technicians busy on long jobs).",
-          "Presenting predictions in a way that manages dispatcher expectations (they are estimates)."
-        ],
-        successMetrics: [
-          "Reduced cognitive load for dispatchers when planning for incoming jobs.",
-          "Faster assignment of newly created or urgent jobs.",
-          "Improved resource utilization by minimizing unallocated idle time."
         ]
       }
     },

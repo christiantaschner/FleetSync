@@ -1,0 +1,3 @@
+title,description,priority,customerName,customerPhone,address,scheduledDate,scheduledTime,estimatedDurationMinutes,requiredSkills
+"Fix Leaky Pipe","Main bathroom pipe is leaking under the sink.","High","John Doe","555-123-4567","123 Main St, Anytown, USA","2024-12-25","10:00","60","Plumbing,Leak Detection"
+"AC Unit Maintenance","Annual check-up for a 5-ton AC unit.","Medium","Jane Smith","555-987-6543","456 Oak Ave, Somewhere, USA","2024-12-26","14:00","90","HVAC - AC Repair"

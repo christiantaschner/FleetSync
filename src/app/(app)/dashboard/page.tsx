@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +23,7 @@ import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './compon
 import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
+import ImportJobsDialog from './components/ImportJobsDialog';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -51,8 +52,17 @@ export default function DashboardPage() {
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
 
+  const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
+
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const fetchAllData = useCallback(() => {
+    // This function can be called to refresh all data, e.g., after an import
+    fetchSkills();
+    // The onSnapshot listeners for jobs/technicians will update automatically,
+    // but if we needed a manual re-fetch, logic would go here.
+  }, []);
 
   const fetchSkills = useCallback(async () => {
     if (!db) return;
@@ -80,6 +90,7 @@ export default function DashboardPage() {
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       setJobs(jobsData);
+      setIsLoadingData(false); // Set loading to false after first data load
     }, (error) => {
       console.error("Error fetching jobs: ", error);
       toast({ title: "Error fetching jobs", description: error.message, variant: "destructive"});
@@ -90,7 +101,6 @@ export default function DashboardPage() {
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
       setTechnicians(techniciansData);
-      setIsLoadingData(false); 
     }, (error) => {
       console.error("Error fetching technicians: ", error);
       toast({ title: "Error fetching technicians", description: error.message, variant: "destructive"});
@@ -104,41 +114,12 @@ export default function DashboardPage() {
   }, [user, toast, fetchSkills]);
 
   const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
-    setJobs(prevJobs => {
-      const existingJobIndex = prevJobs.findIndex(j => j.id === updatedJob.id);
-      if (existingJobIndex > -1) {
-        const newJobs = [...prevJobs];
-        newJobs[existingJobIndex] = updatedJob;
-        return newJobs;
-      } else {
-        const jobWithTimestamps : Job = {
-            ...updatedJob,
-            createdAt: updatedJob.createdAt || new Date().toISOString(), 
-            updatedAt: updatedJob.updatedAt || new Date().toISOString(), 
-        };
-        return [jobWithTimestamps, ...prevJobs];
-      }
-    });
-    if (assignedTechnicianId) {
-        setTechnicians(prevTechs => prevTechs.map(t => 
-            t.id === assignedTechnicianId 
-            ? { ...t, isAvailable: false, currentJobId: updatedJob.id } 
-            : t
-        ));
-    }
+    // This function can be simplified as onSnapshot will handle UI updates
+    // It's useful if we need to perform an immediate action after an update
   };
 
   const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
-    setTechnicians(prevTechs => {
-      const existingTechIndex = prevTechs.findIndex(t => t.id === updatedTechnician.id);
-      if (existingTechIndex > -1) {
-        const newTechs = [...prevTechs];
-        newTechs[existingTechIndex] = updatedTechnician;
-        return newTechs;
-      } else {
-        return [updatedTechnician, ...prevTechs];
-      }
-    });
+     // This function can be simplified as onSnapshot will handle UI updates
   };
   
   const openAIAssignDialogForJob = (job: Job) => {
@@ -306,6 +287,9 @@ export default function DashboardPage() {
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
             </AddEditJobDialog>
+             <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+            </Button>
             <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
               <Button variant="accent" disabled={busyTechnicians.length === 0}>
                 <MapIcon className="mr-2 h-4 w-4" /> AI Schedule Optimizer
@@ -321,13 +305,10 @@ export default function DashboardPage() {
             jobToAssign={selectedJobForAIAssign}
             technicians={technicians}
             onJobAssigned={(assignedJob, updatedTechnician) => {
-              setJobs(prevJobs => prevJobs.map(j => j.id === assignedJob.id ? assignedJob : j));
-              setTechnicians(prevTechs => prevTechs.map(t => t.id === updatedTechnician.id ? updatedTechnician : t));
+              // onSnapshot handles state updates
               setSelectedJobForAIAssign(null); 
             }}
-          >
-            <></> 
-          </SmartJobAllocationDialog>
+          />
         )}
 
         {isBatchReviewDialogOpen && (
@@ -344,6 +325,12 @@ export default function DashboardPage() {
             isOpen={isManageSkillsOpen}
             setIsOpen={setIsManageSkillsOpen}
             onSkillsUpdated={fetchSkills}
+        />
+
+        <ImportJobsDialog
+            isOpen={isImportJobsOpen}
+            setIsOpen={setIsImportJobsOpen}
+            onJobsImported={fetchAllData}
         />
 
 
@@ -469,7 +456,7 @@ export default function DashboardPage() {
                     </div>
                 </CardHeader>
               <CardContent className="space-y-4">
-                {isLoadingData && jobs.length === 0 && technicians.length === 0 ? ( 
+                {isLoadingData && jobs.length === 0 ? ( 
                   <div className="flex justify-center items-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
@@ -533,6 +520,3 @@ export default function DashboardPage() {
     </GoogleMapsAPIProvider>
   );
 }
-    
-
-    

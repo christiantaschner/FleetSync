@@ -314,6 +314,38 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Real-time Notifications for Schedule Changes",
+      description: "Actively notify technicians (e.g., via a visual alert or eventually a push notification) when their schedule has been changed by a dispatcher, ensuring they are always aware of the latest plan.",
+      icon: Zap,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Provide immediate feedback to technicians when their job list is re-ordered or a job is added/removed.",
+          "Initially, this can be an in-app visual cue (e.g., toast notification, highlight on changed items).",
+          "The ultimate goal is to integrate Firebase Cloud Messaging (FCM) for native push notifications that work even if the app is in the background."
+        ],
+        dataModels: ["No new data models for in-app alerts. FCM would require storing device tokens against technician profiles."],
+        aiComponents: ["N/A directly, but it's the output of AI re-optimization that triggers the need for notification."],
+        uiUx: [
+          "Toast notifications in the technician's mobile view after a change is received.",
+          "A subtle 'last updated' timestamp or a small notification icon in the header."
+        ],
+        integrationPoints: [
+          "Hooks into the real-time `onSnapshot` listeners in the technician view.",
+          "Future: Firebase Cloud Messaging for native push notifications."
+        ],
+        technicalChallenges: [
+          "For push notifications: Managing FCM device tokens, creating a backend service (e.g., Firebase Function) to send targeted notifications, handling permissions on the client.",
+          "For in-app alerts: Differentiating between the initial data load and a genuine update to prevent a notification on first open."
+        ],
+        successMetrics: [
+          "Reduced confusion for technicians about their current schedule.",
+          "Improved response time to schedule changes.",
+          "Increased technician trust in the system."
+        ]
+      }
+    },
+    {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
       description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction. This is informed by data from AI-Assisted Digital Protocols.",
       icon: ThumbsUp,
@@ -398,7 +430,7 @@ const roadmapFeatures = {
           "Job document: add `customerSatisfactionScore: number` (1-5), `surveySentTimestamp: Date`, `surveyCompletedTimestamp: Date`.",
           "Response times can be calculated from existing job timestamps (`createdAt`, `assignedAt` (needs adding), `enRouteAt` (needs adding), `inProgressAt` (needs adding), `completedAt`)."
         ],
-        aiComponents: ["AI could analyze free-text feedback from surveys for sentiment and common themes in a more advanced version."],
+aiComponents: ["AI could analyze free-text feedback from surveys for sentiment and common themes in a more advanced version."],
         uiUx: [
           "Dashboard: Display average satisfaction scores and response time KPIs in the 'Reports' section.",
           "Automated mechanism for sending survey links upon job completion.",

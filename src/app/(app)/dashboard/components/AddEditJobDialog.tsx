@@ -380,7 +380,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
                   className="flex-1"
                   title={aiSuggestion?.suggestedTechnicianId && !suggestedTechnicianDetails?.isAvailable ? `${suggestedTechnicianDetails?.name} is unavailable` : ''}
                 >
-                  {isLoading && aiSuggestion?.suggestedTechnicianId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
                   Save & Assign to {suggestedTechnicianDetails?.name || "Suggested"}
                 </Button>
                 <Button 

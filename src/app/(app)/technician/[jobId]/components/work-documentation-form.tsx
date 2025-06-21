@@ -2,28 +2,31 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Paperclip, UploadCloud, Image as ImageIcon, Trash2 } from 'lucide-react';
+import { Paperclip, UploadCloud, Image as ImageIcon, Trash2, RotateCcw, FileSignature } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { cn } from '@/lib/utils';
 
 interface WorkDocumentationFormProps {
-  onSubmit: (notes: string, photos: File[]) => void;
+  onSubmit: (notes: string, photos: File[], signatureDataUrl: string | null) => void;
+  isSubmitting: boolean;
 }
 
-const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit }) => {
+const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit, isSubmitting }) => {
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sigCanvasRef = useRef<SignatureCanvas>(null);
   const { toast } = useToast();
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files);
-      // Limit number of photos if needed, e.g., 5 total
       if (photos.length + newFiles.length > 5) {
         toast({
             title: "Upload Limit Exceeded",
@@ -43,35 +46,45 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit 
     setPhotos(prevPhotos => prevPhotos.filter((_, i) => i !== index));
     setPhotoPreviews(prevPreviews => {
       const newPreviews = prevPreviews.filter((_, i) => i !== index);
-      // Revoke object URL to free memory
       URL.revokeObjectURL(prevPreviews[index]);
       return newPreviews;
     });
   };
 
+  const clearSignature = () => {
+    sigCanvasRef.current?.clear();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notes.trim() && photos.length === 0) {
+    
+    const isSignatureEmpty = sigCanvasRef.current?.isEmpty() ?? true;
+
+    if (!notes.trim() && photos.length === 0 && isSignatureEmpty) {
       toast({
         title: "Nothing to Submit",
-        description: "Please add notes or upload photos.",
+        description: "Please add notes, upload photos, or capture a signature.",
         variant: "destructive"
       });
       return;
     }
-    onSubmit(notes, photos);
+    
+    const signatureDataUrl = isSignatureEmpty ? null : sigCanvasRef.current.toDataURL('image/png');
+    onSubmit(notes, photos, signatureDataUrl);
+    
+    // Clear form after submission attempt
     setNotes('');
     setPhotos([]);
-    // Revoke all object URLs after submission
     photoPreviews.forEach(url => URL.revokeObjectURL(url));
     setPhotoPreviews([]);
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Reset file input
+      fileInputRef.current.value = "";
     }
+    clearSignature();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <Label htmlFor="jobNotes">Notes</Label>
         <Textarea
@@ -80,18 +93,19 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit 
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Add any notes about the job completion, issues, or follow-up actions..."
           rows={4}
+          disabled={isSubmitting}
         />
       </div>
       
       <div>
         <Label htmlFor="jobPhotos">Upload Photos (Max 5)</Label>
-        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md border-input hover:border-primary transition-colors">
+        <div className={cn("mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md border-input transition-colors", !isSubmitting && "hover:border-primary")}>
           <div className="space-y-1 text-center">
             <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
             <div className="flex text-sm text-muted-foreground">
               <Label
                 htmlFor="jobPhotosInput"
-                className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+                className={cn("relative rounded-md font-medium text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2", !isSubmitting && "cursor-pointer hover:text-primary/80" )}
               >
                 <span>Upload files</span>
                 <Input 
@@ -103,6 +117,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit 
                   multiple 
                   accept="image/*"
                   onChange={handlePhotoChange}
+                  disabled={isSubmitting}
                 />
               </Label>
               <p className="pl-1">or drag and drop</p>
@@ -126,6 +141,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit 
                   className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => removePhoto(index)}
                   aria-label="Remove photo"
+                  disabled={isSubmitting}
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -135,9 +151,24 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit 
         </div>
       )}
 
-      <Button type="submit" className="w-full sm:w-auto">
+      <div>
+        <Label htmlFor="signature" className="flex items-center gap-2 mb-2"><FileSignature/>Customer Signature</Label>
+        <div className="relative w-full aspect-[2/1] bg-muted/50 rounded-md border">
+          <SignatureCanvas 
+            ref={sigCanvasRef}
+            penColor='black'
+            canvasProps={{className: 'w-full h-full'}} 
+            onBegin={() => isSubmitting && sigCanvasRef.current?.clear()} // Prevent drawing while submitting
+          />
+        </div>
+        <Button type="button" variant="ghost" onClick={clearSignature} className="mt-2" disabled={isSubmitting}>
+          <RotateCcw className="mr-2 h-4 w-4" /> Clear Signature
+        </Button>
+      </div>
+
+      <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
         <Paperclip className="mr-2 h-4 w-4" />
-        Save Documentation
+        {isSubmitting ? 'Submitting...' : 'Save Documentation'}
       </Button>
     </form>
   );

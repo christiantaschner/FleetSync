@@ -11,8 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import JobDetailsDisplay from './components/job-details-display';
 import StatusUpdateActions from './components/status-update-actions';
 import WorkDocumentationForm from './components/work-documentation-form';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL, uploadBytes } from "firebase/storage";
 import { useToast } from '@/hooks/use-toast';
 
 export default function TechnicianJobDetailPage() {
@@ -54,66 +55,96 @@ export default function TechnicianJobDetailPage() {
   }, [jobId, router, toast]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
-    if (job && db) {
-      setIsUpdating(true);
-      const jobDocRef = doc(db, "jobs", job.id);
-      try {
-        await updateDoc(jobDocRef, {
-          status: newStatus,
-          updatedAt: serverTimestamp(),
+    if (!job || !db || isUpdating) return;
+    
+    setIsUpdating(true);
+    const jobDocRef = doc(db, "jobs", job.id);
+    try {
+      await updateDoc(jobDocRef, {
+        status: newStatus,
+        updatedAt: serverTimestamp(),
+      });
+      
+      if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
+        const techDocRef = doc(db, "technicians", job.assignedTechnicianId);
+        await updateDoc(techDocRef, {
+          isAvailable: true,
+          currentJobId: null,
         });
-        
-        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
-          const techDocRef = doc(db, "technicians", job.assignedTechnicianId);
-          await updateDoc(techDocRef, {
-            isAvailable: true,
-            currentJobId: null,
-          });
-        }
-        
-        setJob(prevJob => prevJob ? { ...prevJob, status: newStatus, updatedAt: new Date().toISOString() } : null);
-      } catch (error) {
-        console.error("Error updating job status:", error);
-        toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
-      } finally {
-        setIsUpdating(false);
       }
+      
+      setJob(prevJob => prevJob ? { ...prevJob, status: newStatus, updatedAt: new Date().toISOString() } : null);
+      toast({ title: "Status Updated", description: `Job status set to ${newStatus}.`});
+    } catch (error) {
+      console.error("Error updating job status:", error);
+      toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  const handleWorkDocumented = async (notes: string, photos: File[]) => {
-     if (job && db) {
-      setIsUpdating(true);
-      // This is a placeholder for real file upload logic. In a production app,
-      // you would upload photos to Firebase Storage and get back URLs.
-      const photoUrls = photos.map(p => URL.createObjectURL(p));
-      
-      const jobDocRef = doc(db, "jobs", job.id);
-      try {
-        const updateData: any = {
-            updatedAt: serverTimestamp(),
-        };
-        if (notes.trim()) {
-            updateData.notes = `${job.notes ? job.notes + '\n\n' : ''}Technician Notes:\n${notes.trim()}`;
-        }
-        if (photoUrls.length > 0) {
-            updateData.photos = arrayUnion(...photoUrls);
-        }
+  const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null) => {
+    if (!job || !db || !storage || isUpdating) return;
 
-        await updateDoc(jobDocRef, updateData);
+    setIsUpdating(true);
+    const jobDocRef = doc(db, "jobs", job.id);
+    let newPhotoUrls: string[] = [];
+    let newSignatureUrl: string | null = null;
 
-        setJob(prevJob => prevJob ? { 
-          ...prevJob, 
-          notes: updateData.notes !== undefined ? updateData.notes : prevJob.notes,
-          photos: photoUrls.length > 0 ? [...(prevJob.photos || []), ...photoUrls] : prevJob.photos,
-          updatedAt: new Date().toISOString() 
-        } : null);
-      } catch (error) {
-        console.error("Error documenting work:", error);
-        toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
-      } finally {
-        setIsUpdating(false);
+    try {
+      // 1. Upload Photos
+      if (photos.length > 0) {
+        const photoUploadPromises = photos.map(async (photo) => {
+          const photoRef = ref(storage, `job-photos/${job.id}/${Date.now()}-${photo.name}`);
+          await uploadBytes(photoRef, photo);
+          return getDownloadURL(photoRef);
+        });
+        newPhotoUrls = await Promise.all(photoUploadPromises);
       }
+
+      // 2. Upload Signature
+      if (signatureDataUrl) {
+        const signatureRef = ref(storage, `signatures/${job.id}.png`);
+        await uploadString(signatureRef, signatureDataUrl, 'data_url');
+        newSignatureUrl = await getDownloadURL(signatureRef);
+      }
+
+      // 3. Update Firestore Document
+      const updateData: any = {
+        updatedAt: serverTimestamp(),
+      };
+      if (notes.trim()) {
+        updateData.notes = `${job.notes ? job.notes + '\n\n' : ''}Technician Notes:\n${notes.trim()}`;
+      }
+      if (newPhotoUrls.length > 0) {
+        updateData.photos = arrayUnion(...newPhotoUrls);
+      }
+      if (newSignatureUrl) {
+        updateData.customerSignatureUrl = newSignatureUrl;
+        updateData.customerSignatureTimestamp = new Date().toISOString();
+      }
+
+      await updateDoc(jobDocRef, updateData);
+      
+      // 4. Update local state
+      setJob(prevJob => {
+        if (!prevJob) return null;
+        return {
+          ...prevJob,
+          notes: updateData.notes !== undefined ? updateData.notes : prevJob.notes,
+          photos: newPhotoUrls.length > 0 ? [...(prevJob.photos || []), ...newPhotoUrls] : prevJob.photos,
+          customerSignatureUrl: newSignatureUrl || prevJob.customerSignatureUrl,
+          customerSignatureTimestamp: newSignatureUrl ? updateData.customerSignatureTimestamp : prevJob.customerSignatureTimestamp,
+          updatedAt: new Date().toISOString(),
+        };
+      });
+      toast({ title: "Success", description: "Work documentation saved."});
+
+    } catch (error) {
+      console.error("Error documenting work:", error);
+      toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -153,6 +184,8 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
+  const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
+
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between mb-4">
@@ -168,24 +201,28 @@ export default function TechnicianJobDetailPage() {
 
       <JobDetailsDisplay job={job} />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
-        </CardContent>
-      </Card>
+      {!isJobConcluded && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
+          </CardContent>
+        </Card>
+      )}
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work</CardTitle>
-          <CardDescription>Add notes and photos for this job. Photos are temporary for this demo.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <WorkDocumentationForm onSubmit={handleWorkDocumented} />
-        </CardContent>
-      </Card>
+      {!isJobConcluded && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>
+            <CardDescription>Add notes, photos, and capture customer signature. This replaces any previous documentation.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />
+          </CardContent>
+        </Card>
+      )}
 
       {job.photos && job.photos.length > 0 && (
         <Card>
@@ -194,9 +231,12 @@ export default function TechnicianJobDetailPage() {
           </CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {job.photos.map((photoUrl, index) => (
-              <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
+              <a href={photoUrl} target="_blank" rel="noopener noreferrer" key={index} className="relative aspect-square rounded-md overflow-hidden border group">
                 <Image src={photoUrl} alt={`Job photo ${index + 1}`} layout="fill" objectFit="cover" data-ai-hint="work site service" onError={(e) => e.currentTarget.src = 'https://placehold.co/300x300.png?text=Preview'} />
-              </div>
+                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                    <p className="text-xs">View Full</p>
+                </div>
+              </a>
             ))}
           </CardContent>
         </Card>

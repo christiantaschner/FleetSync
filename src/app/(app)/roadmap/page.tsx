@@ -211,6 +211,12 @@ const roadmapFeatures = {
       icon: Navigation,
       status: "Completed",
     },
+    {
+      title: "Digital Customer Signatures (Mobile App)",
+      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service, reducing paperwork and streamlining job completion.",
+      icon: FileSignature,
+      status: "Completed",
+    },
      {
       title: "Technician Profile Viewing & Change Suggestions",
       description: "Enable technicians to view their own detailed profiles (including skills, certifications, contact info) via the mobile app. Implement a system for them to suggest changes or additions (e.g., new skill acquired), which dispatchers can review and approve. Improves data accuracy and empowers technicians.",
@@ -286,45 +292,6 @@ const roadmapFeatures = {
           "Reduction in manual effort for time reporting.",
           "Improved AI prediction accuracy for job durations.",
           "Technician satisfaction with ease of logging hours."
-        ]
-      }
-    },
-    {
-      title: "Digital Customer Signatures (Mobile App)",
-      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service, reducing paperwork and streamlining job completion.",
-      icon: FileSignature,
-      status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Signature capture area on the technician's mobile device (tablet or phone).",
-          "Ability to save the signature as an image.",
-          "Associate signature with the completed job."
-        ],
-        dataModels: [
-          "Job document update: add `customerSignatureUrl: string` (pointing to Firebase Storage) and `signatureTimestamp: Date`."
-        ],
-        aiComponents: ["N/A for core signature capture, but AI could potentially verify signature presence for compliance in future."],
-        uiUx: [
-          "Mobile: A dedicated screen or modal in the job completion workflow for signature capture.",
-          "Clear instructions for the customer.",
-          "Option to re-sign if needed.",
-          "Display signature on job detail views in dispatcher dashboard and on any generated job reports/PDFs."
-        ],
-        integrationPoints: [
-          "Job completion workflow on mobile app.",
-          "Firebase Storage for storing signature images.",
-          "Reporting module for including signatures in job summaries."
-        ],
-        technicalChallenges: [
-          "Ensuring smooth signature capture on various devices and screen sizes.",
-          "Optimizing image size for storage and retrieval.",
-          "Legal considerations for digital signatures in the target region (Germany/Europe)."
-        ],
-        successMetrics: [
-          "Reduction in paper-based processes.",
-          "Faster job completion and invoicing cycle.",
-          "Improved proof of service documentation.",
-          "Customer convenience."
         ]
       }
     },
@@ -735,4 +702,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-    

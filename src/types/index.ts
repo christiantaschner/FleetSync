@@ -39,6 +39,8 @@ export type Job = {
   notes?: string;
   photos?: string[];
   requiredSkills?: string[];
+  customerSignatureUrl?: string;
+  customerSignatureTimestamp?: string;
 };
 
 export type Task = {

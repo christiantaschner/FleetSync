@@ -2,7 +2,8 @@
 "use client";
 
 import React from 'react';
-import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users } from 'lucide-react';
+import Image from 'next/image';
+import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -72,6 +73,19 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
             <div>
               <h3 className="text-sm font-semibold mb-1 text-muted-foreground flex items-center gap-1"><Edit/>Dispatcher Notes</h3>
               <p className="text-foreground whitespace-pre-wrap">{job.notes}</p>
+            </div>
+          </>
+        )}
+
+        {job.customerSignatureUrl && (
+          <>
+            <Separator />
+            <div>
+                <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><FileSignature />Customer Signature</h3>
+                <div className="p-2 border rounded-md bg-muted/50 max-w-sm">
+                    <Image src={job.customerSignatureUrl} alt="Customer Signature" width={400} height={200} className="w-full h-auto" />
+                </div>
+                {job.customerSignatureTimestamp && <p className="text-xs text-muted-foreground mt-1">Signed on: {new Date(job.customerSignatureTimestamp).toLocaleString()}</p>}
             </div>
           </>
         )}

@@ -41,6 +41,9 @@ export type Job = {
   requiredSkills?: string[];
   customerSignatureUrl?: string;
   customerSignatureTimestamp?: string;
+  enRouteAt?: string;
+  inProgressAt?: string;
+  completedAt?: string;
 };
 
 export type Task = {

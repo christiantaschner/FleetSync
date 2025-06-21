@@ -60,10 +60,27 @@ export default function TechnicianJobDetailPage() {
     setIsUpdating(true);
     const jobDocRef = doc(db, "jobs", job.id);
     try {
-      await updateDoc(jobDocRef, {
+      const updatePayload: any = {
         status: newStatus,
         updatedAt: serverTimestamp(),
-      });
+      };
+      const newTimestamp = new Date().toISOString();
+      let updatedJobState: Partial<Job> = { status: newStatus, updatedAt: newTimestamp };
+
+      if (newStatus === 'En Route') {
+        updatePayload.enRouteAt = serverTimestamp();
+        updatedJobState.enRouteAt = newTimestamp;
+      }
+      if (newStatus === 'In Progress') {
+        updatePayload.inProgressAt = serverTimestamp();
+        updatedJobState.inProgressAt = newTimestamp;
+      }
+      if (newStatus === 'Completed') {
+        updatePayload.completedAt = serverTimestamp();
+        updatedJobState.completedAt = newTimestamp;
+      }
+
+      await updateDoc(jobDocRef, updatePayload);
       
       if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
         const techDocRef = doc(db, "technicians", job.assignedTechnicianId);
@@ -73,7 +90,7 @@ export default function TechnicianJobDetailPage() {
         });
       }
       
-      setJob(prevJob => prevJob ? { ...prevJob, status: newStatus, updatedAt: new Date().toISOString() } : null);
+      setJob(prevJob => prevJob ? { ...prevJob, ...updatedJobState } : null);
       toast({ title: "Status Updated", description: `Job status set to ${newStatus}.`});
     } catch (error) {
       console.error("Error updating job status:", error);

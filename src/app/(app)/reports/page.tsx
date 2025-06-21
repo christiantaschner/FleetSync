@@ -91,15 +91,21 @@ export default function ReportsPage() {
       };
     }
 
-    const completedJobs = jobs.filter((j) => j.status === "Completed");
-    const totalDuration = completedJobs.reduce(
-      (acc, j) => acc + (j.estimatedDurationMinutes || 0),
-      0
+    const completedJobsWithTime = jobs.filter(
+      (j) => j.status === "Completed" && j.completedAt && j.inProgressAt
     );
+
+    const totalDurationMs = completedJobsWithTime.reduce((acc, j) => {
+        const start = new Date(j.inProgressAt!).getTime();
+        const end = new Date(j.completedAt!).getTime();
+        return acc + (end - start);
+    }, 0);
+    
     const avgDuration =
-      completedJobs.length > 0
-        ? (totalDuration / completedJobs.length).toFixed(0)
+      completedJobsWithTime.length > 0
+        ? (totalDurationMs / completedJobsWithTime.length / (1000 * 60)).toFixed(0) // in minutes
         : 0;
+
 
     const jobsByStatus = jobs.reduce((acc, job) => {
       acc[job.status] = (acc[job.status] || 0) + 1;
@@ -122,7 +128,7 @@ export default function ReportsPage() {
     return {
       kpis: {
         totalJobs: jobs.length,
-        completedJobs: completedJobs.length,
+        completedJobs: completedJobsWithTime.length,
         pendingJobs: jobs.filter((j) => j.status === "Pending").length,
         avgDuration: `${avgDuration} min`,
       },
@@ -198,6 +204,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.avgDuration}</div>
+            <p className="text-xs text-muted-foreground">Based on real-time data</p>
           </CardContent>
         </Card>
       </div>

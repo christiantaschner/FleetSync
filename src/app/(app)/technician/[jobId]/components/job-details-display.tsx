@@ -94,11 +94,29 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
 
          <div>
             <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><Clock />Timestamps</h3>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                 <div>
-                    <p className="font-medium text-foreground">Created At</p>
+                    <p className="font-medium text-foreground">Created</p>
                     <p className="text-muted-foreground">{new Date(job.createdAt).toLocaleString()}</p>
                 </div>
+                 {job.enRouteAt && (
+                    <div>
+                        <p className="font-medium text-foreground">Departed</p>
+                        <p className="text-muted-foreground">{new Date(job.enRouteAt).toLocaleString()}</p>
+                    </div>
+                 )}
+                 {job.inProgressAt && (
+                    <div>
+                        <p className="font-medium text-foreground">Started Work</p>
+                        <p className="text-muted-foreground">{new Date(job.inProgressAt).toLocaleString()}</p>
+                    </div>
+                 )}
+                  {job.completedAt && (
+                    <div>
+                        <p className="font-medium text-foreground">Completed</p>
+                        <p className="text-muted-foreground">{new Date(job.completedAt).toLocaleString()}</p>
+                    </div>
+                 )}
                 <div>
                     <p className="font-medium text-foreground">Last Updated</p>
                     <p className="text-muted-foreground">{new Date(job.updatedAt).toLocaleString()}</p>

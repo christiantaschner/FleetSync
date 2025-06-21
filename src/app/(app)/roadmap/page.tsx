@@ -265,41 +265,7 @@ const roadmapFeatures = {
       title: "Digital Time Tracking & Management",
       description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing and payroll. Accurate historical time data from this system also enhances the precision of AI-driven route optimization and future job scheduling.",
       icon: Timer,
-      status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Technician Mobile App: Start/stop timer for different phases (Travel, On-Site Work, Break). Manual entry/edit of time logs.",
-          "Dispatcher Dashboard: View detailed time logs per job and per technician. Generate summary reports (e.g., weekly/monthly hours). Export functionality (CSV).",
-          "Automatic linking of time entries to specific jobs."
-        ],
-        dataModels: [
-          "New Firestore collection: `timeEntries` (fields: `jobId`, `technicianId`, `entryType` ('travel', 'work', 'break'), `startTime`, `endTime`, `duration`, `notes`).",
-          "Possibly an aggregated `jobTimeSummary` on Job documents."
-        ],
-        aiComponents: [
-          "AI can use historical `timeEntries` data to refine job duration estimates for `allocateJobFlow` and `optimizeRoutesFlow`."
-        ],
-        uiUx: [
-          "Mobile: Clear start/stop buttons within the job detail view. Simple form for manual entries/notes.",
-          "Dashboard: A new 'Time Management' or 'Timesheets' section. Table views for logs, filtering options, report generation interface."
-        ],
-        integrationPoints: [
-          "Feeds accurate duration data into AI route optimization and job allocation.",
-          "Provides data for job costing in the 'Reports' section.",
-          "Foundation for payroll calculations (though full payroll system is out of scope initially)."
-        ],
-        technicalChallenges: [
-          "Ensuring ease of use for technicians to maximize adoption and accuracy.",
-          "Offline data capture and synchronization for time entries.",
-          "Handling scenarios like forgetting to stop a timer."
-        ],
-        successMetrics: [
-          "Accuracy of payroll and job costing.",
-          "Reduction in manual effort for time reporting.",
-          "Improved AI prediction accuracy for job durations.",
-          "Technician satisfaction with ease of logging hours."
-        ]
-      }
+      status: "Completed",
     },
     {
       title: "First-Time-Fix-Rate (FTFR) Analytics",

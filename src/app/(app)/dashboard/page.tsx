@@ -196,6 +196,7 @@ export default function DashboardPage() {
       const input: AllocateJobActionInput = {
         jobDescription: job.description,
         jobPriority: job.priority,
+        requiredSkills: job.requiredSkills,
         technicianAvailability: availableAITechnicians,
       };
 
@@ -300,7 +301,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline">Dispatcher Dashboard</h1>
           <div className="flex flex-wrap gap-2">
-            <AddEditJobDialog technicians={technicians} onJobAddedOrUpdated={handleJobAddedOrUpdated}>
+            <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
@@ -477,6 +478,7 @@ export default function DashboardPage() {
                     key={job.id} 
                     job={job} 
                     technicians={technicians} 
+                    allSkills={allSkills}
                     onAssignWithAI={openAIAssignDialogForJob}
                     onJobUpdated={handleJobAddedOrUpdated}
                   />

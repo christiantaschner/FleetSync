@@ -20,33 +20,38 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks } from 'lucide-react';
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface AddEditJobDialogProps {
   children: React.ReactNode;
   job?: Job;
   technicians: Technician[];
+  allSkills: string[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, technicians, onJobAddedOrUpdated }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, technicians, allSkills, onJobAddedOrUpdated }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
+  const [isFetchingSkills, setIsFetchingSkills] = useState(false);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
+  const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
@@ -58,6 +63,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     setTitle(job?.title || '');
     setDescription(job?.description || '');
     setPriority(job?.priority || 'Medium');
+    setRequiredSkills(job?.requiredSkills || []);
     setCustomerName(job?.customerName || '');
     setCustomerPhone(job?.customerPhone || '');
     setLocationAddress(job?.location.address || '');
@@ -74,7 +80,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     }
   }, [job, isOpen, resetForm]);
 
-  const fetchAISuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentScheduledTime?: Date) => {
+  const fetchAISuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
       setAiSuggestion(null);
       setSuggestedTechnicianDetails(null);
@@ -98,6 +104,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     const input: AllocateJobActionInput = {
       jobDescription: currentDescription,
       jobPriority: currentPriority,
+      requiredSkills: currentRequiredSkills,
       technicianAvailability: availableAITechnicians,
       scheduledTime: currentScheduledTime?.toISOString(),
     };
@@ -115,19 +122,52 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     }
   }, [technicians, toast]);
 
+  // Debounced effect for fetching AI skill suggestions
+  useEffect(() => {
+    if (isOpen && !job && description.trim() && allSkills.length > 0) {
+      const handler = setTimeout(async () => {
+        setIsFetchingSkills(true);
+        const result = await suggestJobSkillsAction({
+          jobDescription: description,
+          availableSkills: allSkills,
+        });
+        if (result.data?.suggestedSkills) {
+          setRequiredSkills(currentSkills => Array.from(new Set([...currentSkills, ...result.data!.suggestedSkills!])));
+        }
+        if(result.error) {
+            toast({ title: "AI Skill Suggestion Error", description: result.error, variant: "destructive" });
+        }
+        setIsFetchingSkills(false);
+      }, 1500);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }
+  }, [description, isOpen, job, allSkills, toast]);
+
+
   useEffect(() => {
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
-        fetchAISuggestion(description, priority, scheduledTime);
+        fetchAISuggestion(description, priority, requiredSkills, scheduledTime);
       }, 1000); 
       return () => clearTimeout(timer);
     }
-  }, [description, priority, scheduledTime, isOpen, job, fetchAISuggestion]);
+  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAISuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
     setLatitude(location.lat);
     setLongitude(location.lng);
+  };
+  
+  const handleSkillChange = (skill: string) => {
+    setRequiredSkills(prevSkills => 
+      prevSkills.includes(skill) 
+        ? prevSkills.filter(s => s !== skill) 
+        : [...prevSkills, skill]
+    );
   };
 
   const handleSubmit = async (assignTechId: string | null = null) => {
@@ -138,10 +178,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     
     setIsLoading(true);
 
-    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { updatedAt: any; scheduledTime?: string; } = {
+    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { updatedAt: any; scheduledTime?: string; requiredSkills?: string[] } = {
       title,
       description,
       priority,
+      requiredSkills,
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
@@ -203,11 +244,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
           <DialogDescription>
-            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. AI will suggest a technician.'}
+            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. AI will suggest a technician and required skills.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
@@ -260,6 +301,26 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
                 </Popover>
             </div>
           </div>
+           <div>
+              <Label className="flex items-center gap-2"><ListChecks className="inline h-3.5 w-3.5 mr-1" />Required Skills {isFetchingSkills && <Loader2 className="h-4 w-4 animate-spin"/>}</Label>
+              <ScrollArea className="h-40 rounded-md border p-3 mt-1">
+                <div className="space-y-2">
+                  {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
+                  {allSkills.map(skill => (
+                    <div key={skill} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`skill-${skill.replace(/\s+/g, '-')}`}
+                        checked={requiredSkills.includes(skill)}
+                        onCheckedChange={() => handleSkillChange(skill)}
+                      />
+                      <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                        {skill}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
           <div>
             <Label htmlFor="customerName">Customer Name</Label>
             <Input id="customerName" name="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g., John Doe" />

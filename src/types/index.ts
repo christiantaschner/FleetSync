@@ -38,6 +38,7 @@ export type Job = {
   updatedAt: string;
   notes?: string;
   photos?: string[];
+  requiredSkills?: string[];
 };
 
 export type Task = {

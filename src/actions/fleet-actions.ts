@@ -3,12 +3,14 @@
 
 import { allocateJob as allocateJobFlow, AllocateJobInput, AllocateJobOutput } from "@/ai/flows/allocate-job";
 import { optimizeRoutes as optimizeRoutesFlow, OptimizeRoutesInput, OptimizeRoutesOutput } from "@/ai/flows/optimize-routes";
+import { suggestJobSkills as suggestJobSkillsFlow, SuggestJobSkillsInput, SuggestJobSkillsOutput } from "@/ai/flows/suggest-job-skills";
 import { z } from "zod";
 
 // Define Zod schemas for server action inputs to ensure type safety from client
 const AllocateJobActionInputSchema = z.object({
   jobDescription: z.string().min(1, "Job description is required."),
   jobPriority: z.enum(['High', 'Medium', 'Low']),
+  requiredSkills: z.array(z.string()).optional(),
   scheduledTime: z.string().optional(),
   technicianAvailability: z.array(
     z.object({
@@ -78,5 +80,28 @@ export async function optimizeRoutesAction(
     }
     console.error("Error in optimizeRoutesAction:", e);
     return { data: null, error: "Failed to optimize routes. Please try again." };
+  }
+}
+
+const SuggestJobSkillsActionInputSchema = z.object({
+  jobDescription: z.string().min(1, "Job description is required."),
+  availableSkills: z.array(z.string()).min(1, "Available skills must be provided."),
+});
+
+export type SuggestJobSkillsActionInput = z.infer<typeof SuggestJobSkillsActionInputSchema>;
+
+export async function suggestJobSkillsAction(
+  input: SuggestJobSkillsActionInput
+): Promise<{ data: SuggestJobSkillsOutput | null; error: string | null }> {
+  try {
+    const validatedInput = SuggestJobSkillsActionInputSchema.parse(input);
+    const result = await suggestJobSkillsFlow(validatedInput);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in suggestJobSkillsAction:", e);
+    return { data: null, error: "Failed to suggest skills. Please try again." };
   }
 }

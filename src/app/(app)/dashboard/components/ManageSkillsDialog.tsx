@@ -15,9 +15,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc } from 'firebase/firestore';
-import { Loader2, PlusCircle, Trash2, X } from 'lucide-react';
+import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, writeBatch } from 'firebase/firestore';
+import { Loader2, PlusCircle, Trash2, X, Sparkles } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PREDEFINED_SKILLS } from '@/lib/skills';
 
 interface Skill {
   id: string;
@@ -36,6 +37,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   const [newSkillName, setNewSkillName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
 
   const fetchSkills = async () => {
     if (!db) return;
@@ -45,6 +47,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
       setSkills(skillsData);
+      setIsLibraryEmpty(skillsData.length === 0);
     } catch (error) {
       console.error("Error fetching skills: ", error);
       toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
@@ -73,8 +76,8 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
       await addDoc(collection(db, "skills"), { name: newSkillName.trim() });
       setNewSkillName('');
       toast({ title: "Success", description: `Skill "${newSkillName.trim()}" added.`});
-      await fetchSkills(); // Refetch to get the new list with ID
-      onSkillsUpdated(); // Notify parent to refetch
+      await fetchSkills(); 
+      onSkillsUpdated(); 
     } catch (error) {
       console.error("Error adding skill: ", error);
       toast({ title: "Error", description: "Could not add skill.", variant: "destructive" });
@@ -85,12 +88,12 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   const handleDeleteSkill = async (skillId: string) => {
     if (!db) return;
-    setIsLoading(true); // Use general loader for delete as well
+    setIsLoading(true); 
     try {
       await deleteDoc(doc(db, "skills", skillId));
       toast({ title: "Success", description: "Skill deleted."});
-      await fetchSkills(); // Refetch
-      onSkillsUpdated(); // Notify parent
+      await fetchSkills(); 
+      onSkillsUpdated(); 
     } catch (error) {
       console.error("Error deleting skill: ", error);
       toast({ title: "Error", description: "Could not delete skill. It might be in use.", variant: "destructive" });
@@ -98,6 +101,30 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
       setIsLoading(false);
     }
   };
+
+  const handleSeedSkills = async () => {
+    if (!db) return;
+    setIsSubmitting(true);
+    try {
+        const batch = writeBatch(db);
+        const skillsCollectionRef = collection(db, "skills");
+        
+        PREDEFINED_SKILLS.forEach(skillName => {
+            const docRef = doc(skillsCollectionRef);
+            batch.set(docRef, { name: skillName });
+        });
+
+        await batch.commit();
+        toast({ title: "Success", description: `Seeded ${PREDEFINED_SKILLS.length} common skills.` });
+        await fetchSkills();
+        onSkillsUpdated();
+    } catch(error) {
+        console.error("Error seeding skills:", error);
+        toast({ title: "Error", description: "Could not seed skills library.", variant: "destructive" });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -146,6 +173,14 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                             </Button>
                         </div>
                     ))
+                ) : isLibraryEmpty ? (
+                    <div className="text-center p-4">
+                        <p className="text-sm text-muted-foreground">Your skills library is empty.</p>
+                        <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedSkills} disabled={isSubmitting}>
+                           {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                           Seed with Common Skills
+                        </Button>
+                    </div>
                 ) : (
                     <p className="text-sm text-muted-foreground text-center p-4">No skills in the library. Add one above.</p>
                 )}

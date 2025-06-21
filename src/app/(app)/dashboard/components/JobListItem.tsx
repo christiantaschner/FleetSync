@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -19,11 +19,12 @@ import AddEditJobDialog from './AddEditJobDialog';
 interface JobListItemProps {
   job: Job;
   technicians: Technician[];
+  allSkills: string[];
   onAssignWithAI: (job: Job) => void;
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWithAI, onJobUpdated }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, allSkills, onAssignWithAI, onJobUpdated }) => {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -73,8 +74,20 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
           <MapPin className="h-3 w-3" /> {job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm pb-3">
+      <CardContent className="space-y-3 text-sm pb-3">
         <p className="text-muted-foreground line-clamp-2">{job.description}</p>
+        
+        {job.requiredSkills && job.requiredSkills.length > 0 && (
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-wrap gap-1">
+              {job.requiredSkills.map(skill => (
+                <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div>
             {job.scheduledTime && (
@@ -102,7 +115,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onAssignWit
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
           </Button>
         )}
-         <AddEditJobDialog job={job} technicians={technicians} onJobAddedOrUpdated={onJobUpdated}>
+         <AddEditJobDialog job={job} technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={onJobUpdated}>
             <Button variant="secondary" size="sm">
                 <Edit className="mr-1 h-3 w-3" /> Edit
             </Button>

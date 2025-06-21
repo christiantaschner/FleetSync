@@ -4,17 +4,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import type { Job, Technician, JobStatus } from '@/types'; // Added JobStatus
-import { ArrowLeft, MapPin, UserCircle, Phone, Clock, Edit3, Camera, ListChecks, AlertTriangle, Loader2 } from 'lucide-react'; // Added Loader2
+import type { Job, JobStatus } from '@/types';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
 import StatusUpdateActions from './components/status-update-actions';
 import WorkDocumentationForm from './components/work-documentation-form';
-import { db } from '@/lib/firebase'; // Import Firestore instance
-import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore'; // Import Firestore functions
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 export default function TechnicianJobDetailPage() {
@@ -24,10 +22,8 @@ export default function TechnicianJobDetailPage() {
   const { toast } = useToast();
 
   const [job, setJob] = useState<Job | null>(null);
-  // Technician details might not be strictly needed on this page if not displayed,
-  // but could be fetched if, e.g., you need to verify the assigned tech.
-  // const [technician, setTechnician] = useState<Technician | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     if (!jobId || !db) {
@@ -59,7 +55,7 @@ export default function TechnicianJobDetailPage() {
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (job && db) {
-      setIsLoading(true);
+      setIsUpdating(true);
       const jobDocRef = doc(db, "jobs", job.id);
       try {
         await updateDoc(jobDocRef, {
@@ -67,33 +63,30 @@ export default function TechnicianJobDetailPage() {
           updatedAt: serverTimestamp(),
         });
         
-        // If job is completed or cancelled, update technician status
         if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
           const techDocRef = doc(db, "technicians", job.assignedTechnicianId);
           await updateDoc(techDocRef, {
             isAvailable: true,
-            currentJobId: null, // Or use Firestore.FieldValue.delete()
+            currentJobId: null,
           });
         }
         
         setJob(prevJob => prevJob ? { ...prevJob, status: newStatus, updatedAt: new Date().toISOString() } : null);
-        // Success toast removed as per guidelines (only for errors)
       } catch (error) {
         console.error("Error updating job status:", error);
         toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
       } finally {
-        setIsLoading(false);
+        setIsUpdating(false);
       }
     }
   };
 
   const handleWorkDocumented = async (notes: string, photos: File[]) => {
      if (job && db) {
-      // In a real app, 'photos' would be uploaded to Firebase Storage, then store URLs.
-      // For now, we're simulating by storing local blob URLs which won't persist across sessions/users.
-      // This part needs Firebase Storage integration for real photo persistence.
-      setIsLoading(true);
-      const photoUrls = photos.map(p => URL.createObjectURL(p)); // MOCK URL creation for UI
+      setIsUpdating(true);
+      // This is a placeholder for real file upload logic. In a production app,
+      // you would upload photos to Firebase Storage and get back URLs.
+      const photoUrls = photos.map(p => URL.createObjectURL(p));
       
       const jobDocRef = doc(db, "jobs", job.id);
       try {
@@ -103,9 +96,6 @@ export default function TechnicianJobDetailPage() {
         if (notes.trim()) {
             updateData.notes = `${job.notes ? job.notes + '\n\n' : ''}Technician Notes:\n${notes.trim()}`;
         }
-        // For photos, if you were storing URLs from Firebase Storage, you'd add them here.
-        // Using arrayUnion to add to existing photos, if any.
-        // This assumes `job.photos` is an array of strings (URLs).
         if (photoUrls.length > 0) {
             updateData.photos = arrayUnion(...photoUrls);
         }
@@ -118,17 +108,27 @@ export default function TechnicianJobDetailPage() {
           photos: photoUrls.length > 0 ? [...(prevJob.photos || []), ...photoUrls] : prevJob.photos,
           updatedAt: new Date().toISOString() 
         } : null);
-        // Success toast removed
       } catch (error) {
         console.error("Error documenting work:", error);
         toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
       } finally {
-        setIsLoading(false);
+        setIsUpdating(false);
       }
     }
   };
-  
 
+  const handleNavigate = () => {
+    if (job?.location?.address) {
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`;
+      window.open(mapsUrl, '_blank');
+    } else if (job?.location) {
+        const mapsUrl = `https://www.google.com/maps?q=${job.location.latitude},${job.location.longitude}`;
+        window.open(mapsUrl, '_blank');
+    } else {
+        toast({ title: "Navigation Error", description: "No address or coordinates available for this job.", variant: "destructive"});
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4">
@@ -139,8 +139,6 @@ export default function TechnicianJobDetailPage() {
   }
 
   if (!job) {
-    // This case should ideally be handled by the redirect in useEffect if job not found.
-    // But as a fallback:
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
@@ -157,9 +155,16 @@ export default function TechnicianJobDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
-      <Button variant="outline" size="sm" onClick={() => router.back()} className="mb-4">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
-      </Button>
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="outline" size="sm" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
+        </Button>
+        <Button variant="default" size="sm" onClick={handleNavigate}>
+          <Navigation className="mr-2 h-4 w-4" /> Navigate to Job
+        </Button>
+      </div>
+      
+      { isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div> }
 
       <JobDetailsDisplay job={job} />
 

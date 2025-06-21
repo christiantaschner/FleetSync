@@ -46,6 +46,7 @@ export type Job = {
   enRouteAt?: string;
   inProgressAt?: string;
   completedAt?: string;
+  routeOrder?: number;
 };
 
 export type Task = {

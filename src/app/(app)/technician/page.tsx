@@ -9,7 +9,7 @@ import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, U
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, updateDoc, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 
@@ -74,12 +74,23 @@ export default function TechnicianJobsPage() {
       const jobsForTech = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       
       jobsForTech.sort((a, b) => {
+        // Primary sort: routeOrder (jobs without it go to the end)
+        const aOrder = a.routeOrder ?? Infinity;
+        const bOrder = b.routeOrder ?? Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+  
+        // Secondary sort: priority
         const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
         if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
           return priorityOrder[a.priority] - priorityOrder[b.priority];
         }
+  
+        // Tertiary sort: scheduled time
         return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
       });
+
       setAssignedJobs(jobsForTech);
       setIsLoading(false); // Set loading to false after jobs are fetched (or tech details fail)
     }, (err: any) => {

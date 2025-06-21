@@ -7,7 +7,7 @@ import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField } from "firebase/firestore";
 import type { Job, JobStatus } from "@/types";
 
 // Import all required schemas and types from the central types file
@@ -23,7 +23,8 @@ import {
   type SuggestJobSkillsOutput,
   PredictNextAvailableTechniciansInputSchema,
   type PredictNextAvailableTechniciansInput,
-  type PredictNextAvailableTechniciansOutput
+  type PredictNextAvailableTechniciansOutput,
+  OptimizeRoutesOutputSchema
 } from "@/types";
 
 
@@ -218,5 +219,48 @@ export async function handleTechnicianUnavailabilityAction(
     console.error("Error in handleTechnicianUnavailabilityAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to handle technician unavailability. ${errorMessage}` };
+  }
+}
+
+
+const ConfirmOptimizedRouteInputSchema = z.object({
+  technicianId: z.string().min(1, "Technician ID is required."),
+  optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
+  jobsNotInRoute: z.array(z.string()).describe("A list of job IDs that were assigned to the tech but not included in this optimization, to have their routeOrder cleared."),
+});
+
+export async function confirmOptimizedRouteAction(
+  input: z.infer<typeof ConfirmOptimizedRouteInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { optimizedRoute, jobsNotInRoute } = ConfirmOptimizedRouteInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+
+    const batch = writeBatch(db);
+
+    // Set new route order for optimized jobs
+    optimizedRoute.forEach((step, index) => {
+      const jobDocRef = doc(db, "jobs", step.taskId);
+      batch.update(jobDocRef, { routeOrder: index });
+    });
+    
+    // Clear route order for jobs that were unselected from optimization
+    jobsNotInRoute.forEach((jobId) => {
+      const jobDocRef = doc(db, "jobs", jobId);
+      batch.update(jobDocRef, { routeOrder: deleteField() });
+    });
+
+    await batch.commit();
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in confirmOptimizedRouteAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to confirm optimized route. ${errorMessage}` };
   }
 }

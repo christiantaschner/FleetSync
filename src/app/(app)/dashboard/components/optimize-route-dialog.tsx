@@ -13,14 +13,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { optimizeRoutesAction, OptimizeRoutesActionInput } from "@/actions/fleet-actions";
-import type { OptimizeRoutesOutput } from "@/ai/flows/optimize-routes";
+import { optimizeRoutesAction, OptimizeRoutesActionInput, confirmOptimizedRouteAction } from "@/actions/fleet-actions";
+import type { OptimizeRoutesOutput } from "@/types";
 import type { Technician, Job, AITask } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, MapIcon } from 'lucide-react';
+import { Loader2, MapIcon, CheckCircle } from 'lucide-react';
 
 interface OptimizeRouteDialogProps {
   children: React.ReactNode;
@@ -32,6 +32,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>('');
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [optimizedRoute, setOptimizedRoute] = useState<OptimizeRoutesOutput | null>(null);
@@ -121,21 +122,53 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
     }
   };
   
+  const handleConfirmRoute = async () => {
+    if (!optimizedRoute || !selectedTechnicianId) return;
+
+    setIsConfirming(true);
+    
+    const jobsNotInRoute = availableJobsForTech
+      .map(j => j.id)
+      .filter(id => !selectedJobIds.includes(id));
+
+    const result = await confirmOptimizedRouteAction({ 
+      technicianId: selectedTechnicianId,
+      optimizedRoute: optimizedRoute.optimizedRoute,
+      jobsNotInRoute
+    });
+    
+    setIsConfirming(false);
+
+    if (result.error) {
+      toast({ title: "Failed to Update Schedule", description: result.error, variant: "destructive" });
+    } else {
+      toast({ title: "Schedule Updated", description: "The technician's route has been successfully updated." });
+      setIsOpen(false);
+    }
+  };
+
+
   const handleJobSelection = (jobId: string) => {
     setSelectedJobIds(prev => 
       prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
     );
   };
+  
+  const resetDialogState = () => {
+    setSelectedTechnicianId('');
+    setSelectedJobIds([]);
+    setOptimizedRoute(null);
+    setTrafficData('');
+    setUnexpectedEvents('');
+    setIsLoading(false);
+    setIsConfirming(false);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       setIsOpen(open);
-      if (!open) { // Reset state when dialog closes
-        setSelectedTechnicianId('');
-        setSelectedJobIds([]);
-        setOptimizedRoute(null);
-        setTrafficData('');
-        setUnexpectedEvents('');
+      if (!open) {
+        resetDialogState();
       }
     }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
@@ -195,7 +228,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
           <Button type="submit" disabled={isLoading || !selectedTechnicianId || selectedJobIds.length === 0} className="w-full">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Optimize Technician&apos;s Route
+            Generate Optimized Route
           </Button>
         </form>
         
@@ -212,6 +245,10 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
               ))}
             </ul>
             <p className="mt-2"><strong>Reasoning:</strong> {optimizedRoute.reasoning}</p>
+            <Button onClick={handleConfirmRoute} disabled={isConfirming} className="w-full mt-4">
+              {isConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
+              Confirm & Update Schedule
+            </Button>
           </div>
         )}
          <DialogFooter className="sm:justify-start mt-2">

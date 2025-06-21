@@ -18,9 +18,9 @@ import type { OptimizeRoutesOutput } from "@/types";
 import type { Technician, Job, AITask } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapIcon, CheckCircle } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface OptimizeRouteDialogProps {
   children: React.ReactNode;
@@ -36,8 +36,6 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>('');
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [optimizedRoute, setOptimizedRoute] = useState<OptimizeRoutesOutput | null>(null);
-  const [trafficData, setTrafficData] = useState<string>('');
-  const [unexpectedEvents, setUnexpectedEvents] = useState<string>('');
 
   const technicianOptions = technicians.filter(t => !t.isAvailable && t.currentJobId); 
   
@@ -46,7 +44,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
     return jobs.filter(j => 
       j.assignedTechnicianId === selectedTechnicianId && 
       (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress')
-    );
+    ).sort((a,b) => (a.routeOrder ?? Infinity) - (b.routeOrder ?? Infinity));
   }, [selectedTechnicianId, jobs]);
 
   useEffect(() => {
@@ -107,8 +105,6 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
       technicianId: selectedTechnicianId,
       currentLocation: technician.location,
       tasks: tasksForOptimization,
-      trafficData: trafficData || undefined,
-      unexpectedEvents: unexpectedEvents || undefined,
     };
 
     const result = await optimizeRoutesAction(input);
@@ -127,8 +123,8 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
     setIsConfirming(true);
     
-    const jobsNotInRoute = availableJobsForTech
-      .map(j => j.id)
+    const allAssignedJobIds = availableJobsForTech.map(j => j.id);
+    const jobsNotInRoute = allAssignedJobIds
       .filter(id => !selectedJobIds.includes(id));
 
     const result = await confirmOptimizedRouteAction({ 
@@ -158,8 +154,6 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
     setSelectedTechnicianId('');
     setSelectedJobIds([]);
     setOptimizedRoute(null);
-    setTrafficData('');
-    setUnexpectedEvents('');
     setIsLoading(false);
     setIsConfirming(false);
   }
@@ -174,9 +168,9 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Manual AI Route Re-Optimization</DialogTitle>
+          <DialogTitle className="font-headline">AI Route Re-Optimization</DialogTitle>
           <DialogDescription>
-            Manually trigger AI to re-optimize a selected technician&apos;s current route, considering their active jobs and any new information like traffic or unexpected events.
+            Re-optimize a selected technician&apos;s current route. The AI will consider job priorities and scheduled times to find the most efficient sequence.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -196,8 +190,8 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 
           {selectedTechnicianId && availableJobsForTech.length > 0 && (
             <div>
-              <Label>Select Jobs to Optimize (defaults to all active)</Label>
-              <div className="space-y-2 mt-1 max-h-40 overflow-y-auto rounded-md border p-2">
+              <Label>Select Jobs to Optimize</Label>
+              <ScrollArea className="space-y-2 mt-1 max-h-48 rounded-md border p-3">
                 {availableJobsForTech.map(job => (
                   <div key={job.id} className="flex items-center space-x-2">
                     <Checkbox
@@ -205,53 +199,44 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
                       checked={selectedJobIds.includes(job.id)}
                       onCheckedChange={() => handleJobSelection(job.id)}
                     />
-                    <Label htmlFor={`job-opt-${job.id}`} className="font-normal cursor-pointer">
-                      {job.title} ({job.priority})
+                    <Label htmlFor={`job-opt-${job.id}`} className="font-normal cursor-pointer flex justify-between w-full">
+                      <span>{job.title} ({job.priority})</span>
+                      {job.routeOrder !== undefined && <Badge variant="secondary">Current: {job.routeOrder + 1}</Badge>}
                     </Label>
                   </div>
                 ))}
-              </div>
+              </ScrollArea>
             </div>
           )}
           {selectedTechnicianId && availableJobsForTech.length === 0 && (
-             <p className="text-sm text-muted-foreground">Selected technician has no active jobs to optimize.</p>
+             <p className="text-sm text-muted-foreground p-3 bg-secondary/50 rounded-md border text-center">Selected technician has no active jobs to optimize.</p>
           )}
-
-          <div>
-            <Label htmlFor="trafficData">Traffic Data (Optional JSON)</Label>
-            <Textarea id="trafficData" name="trafficData" value={trafficData} onChange={(e) => setTrafficData(e.target.value)} placeholder='e.g., {"M5_congestion": "high"}' />
-          </div>
-          <div>
-            <Label htmlFor="unexpectedEvents">Unexpected Events (Optional JSON)</Label>
-            <Textarea id="unexpectedEvents" name="unexpectedEvents" value={unexpectedEvents} onChange={(e) => setUnexpectedEvents(e.target.value)} placeholder='e.g., {"road_closure": "Main St"}' />
-          </div>
-
+          
           <Button type="submit" disabled={isLoading || !selectedTechnicianId || selectedJobIds.length === 0} className="w-full">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapIcon className="mr-2 h-4 w-4" />}
             Generate Optimized Route
           </Button>
         </form>
         
         {optimizedRoute && (
-          <div className="mt-6 p-4 bg-secondary rounded-md">
+          <div className="mt-4 p-4 bg-secondary/50 rounded-md">
             <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary" /> Optimized Route:</h3>
-            <p><strong>Total Travel Time:</strong> {optimizedRoute.totalTravelTime}</p>
-            <p className="mt-1"><strong>Order:</strong></p>
-            <ul className="list-disc list-inside ml-4 text-sm">
+             <p className="text-xs text-muted-foreground mb-2">{optimizedRoute.reasoning}</p>
+            <ul className="list-decimal list-inside ml-4 space-y-1 text-sm">
               {optimizedRoute.optimizedRoute.map(step => (
                 <li key={step.taskId}>
-                  {jobs.find(j => j.id === step.taskId)?.title || step.taskId} (ETA: {step.estimatedArrivalTime})
+                  <strong>{jobs.find(j => j.id === step.taskId)?.title || step.taskId}</strong> (ETA: {step.estimatedArrivalTime})
                 </li>
               ))}
             </ul>
-            <p className="mt-2"><strong>Reasoning:</strong> {optimizedRoute.reasoning}</p>
+            
             <Button onClick={handleConfirmRoute} disabled={isConfirming} className="w-full mt-4">
               {isConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
               Confirm & Update Schedule
             </Button>
           </div>
         )}
-         <DialogFooter className="sm:justify-start mt-2">
+         <DialogFooter className="sm:justify-start mt-2 pt-4 border-t">
            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
             Close
           </Button>

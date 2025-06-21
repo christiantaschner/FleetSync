@@ -90,7 +90,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
         <div className="flex items-center gap-1">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="px-2 py-1 h-auto text-destructive hover:bg-destructive/10 hover:text-destructive" title="Mark unavailable and reassign jobs" disabled={!technician.isAvailable}>
+              <Button variant="ghost" size="sm" className="px-2 py-1 h-auto text-destructive hover:bg-destructive/10 hover:text-destructive" title="Mark unavailable and reassign jobs">
                   <AlertOctagon className="h-3.5 w-3.5" />
                   <span className="sr-only">Mark Unavailable</span>
               </Button>

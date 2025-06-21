@@ -213,6 +213,45 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "AI-Powered Job Priority Suggestion",
+      description: "When a dispatcher creates a new job, the AI analyzes the description to suggest a priority level (e.g., 'High' for 'emergency,' 'Low' for 'maintenance'). It will also provide a brief justification for the suggested priority, helping dispatchers make faster, more consistent decisions.",
+      icon: Lightbulb,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "When typing in the 'Add New Job' dialog, trigger an AI flow after a short delay.",
+          "The AI flow takes the job description as input.",
+          "The AI flow outputs a suggested priority ('High', 'Medium', 'Low') and a short reasoning string."
+        ],
+        dataModels: [
+          "No new database models needed.",
+          "A new Genkit schema for the input (job description) and output (suggested priority and reasoning)."
+        ],
+        aiComponents: [
+          "A new Genkit flow: `suggestJobPriorityFlow`.",
+          "A new Genkit prompt: `suggestJobPriorityPrompt` that guides the LLM to analyze text for urgency keywords."
+        ],
+        uiUx: [
+          "In the 'Add New Job' dialog, display the AI's suggested priority and reasoning near the priority selection dropdown.",
+          "The dispatcher can easily accept the suggestion (e.g., by clicking it) or override it by choosing a different priority manually.",
+          "Show a loading indicator while the suggestion is being fetched."
+        ],
+        integrationPoints: [
+          "Integrates directly into `AddEditJobDialog.tsx` component.",
+          "A new server action `suggestJobPriorityAction` will be needed to call the Genkit flow."
+        ],
+        technicalChallenges: [
+          "Fine-tuning the prompt to accurately interpret a wide range of job descriptions.",
+          "Ensuring the AI response is fast enough not to disrupt the user's workflow."
+        ],
+        successMetrics: [
+          "Increased consistency in job prioritization across the dispatch team.",
+          "Reduced time for dispatchers to create new jobs.",
+          "High acceptance rate of AI-suggested priorities."
+        ]
+      }
+    },
+    {
       title: "AI-Powered \"Next Up Technicians\" Prediction",
       description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data from time tracking and job statuses. Display this on the dashboard.",
       icon: Lightbulb,

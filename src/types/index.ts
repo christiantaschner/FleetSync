@@ -1,4 +1,6 @@
 
+import { z } from "zod";
+
 export type Location = {
   latitude: number;
   longitude: number;
@@ -75,3 +77,138 @@ export type AITechnician = {
   };
   currentJobs?: { jobId: string; scheduledTime?: string; priority: JobPriority; }[];
 };
+
+
+// --- AI Flow Schemas ---
+
+export const AllocateJobInputSchema = z.object({
+  jobDescription: z.string().describe('The description of the job to be assigned.'),
+  jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
+  requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
+  scheduledTime: z.string().optional().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
+  technicianAvailability: z.array(
+    z.object({
+      technicianId: z.string().describe('The unique identifier of the technician.'),
+      technicianName: z.string().describe('The name of the technician.'),
+      isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
+      skills: z.array(z.string()).describe('The skills possessed by the technician.'),
+      location: z
+        .object({
+          latitude: z.number().describe('The latitude of the technician.'),
+          longitude: z.number().describe('The longitude of the technician.'),
+        })
+        .describe('The current location of the technician.'),
+      currentJobs: z.array(z.object({
+        jobId: z.string(),
+        scheduledTime: z.string().optional(),
+        priority: z.enum(['High', 'Medium', 'Low']),
+      })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
+    })
+  ).describe('A list of technicians and their availability, skills, and location.'),
+});
+export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
+
+export const AllocateJobOutputSchema = z.object({
+  suggestedTechnicianId: z.string().describe('The ID of the most suitable technician for the job.'),
+  reasoning: z.string().describe('The reasoning behind the technician suggestion.'),
+});
+export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
+
+
+export const OptimizeRoutesInputSchema = z.object({
+  technicianId: z.string().describe('The ID of the technician.'),
+  currentLocation: z
+    .object({
+      latitude: z.number().describe('The latitude of the current location.'),
+      longitude: z.number().describe('The longitude of the current location.'),
+    })
+    .describe('The current location of the technician.'),
+  tasks: z
+    .array(
+      z.object({
+        taskId: z.string().describe('The ID of the task.'),
+        location: z
+          .object({
+            latitude: z.number().describe('The latitude of the task location.'),
+            longitude: z.number().describe('The longitude of the task location.'),
+          })
+          .describe('The location of the task.'),
+        priority: z.enum(['high', 'medium', 'low']).describe('The priority of the task.'),
+        scheduledTime: z.string().optional().describe('Optional specific requested appointment time for this task (ISO 8601 format). This is a strong constraint if provided.'),
+      })
+    )
+    .describe('The list of tasks to be performed.'),
+  trafficData: z
+    .string()
+    .optional()
+    .describe('Optional real-time traffic data. Provide as a JSON string if available.'),
+  unexpectedEvents: z
+    .string()
+    .optional()
+    .describe('Optional information about unexpected events. Provide as a JSON string if available.'),
+});
+export type OptimizeRoutesInput = z.infer<typeof OptimizeRoutesInputSchema>;
+
+export const OptimizeRoutesOutputSchema = z.object({
+  optimizedRoute: z
+    .array(
+      z.object({
+        taskId: z.string().describe('The ID of the task in the optimized route.'),
+        estimatedArrivalTime: z.string().describe('The estimated arrival time for the task.'),
+      })
+    )
+    .describe('The optimized route for the technician.'),
+  totalTravelTime: z.string().describe('The total estimated travel time for the optimized route.'),
+  reasoning: z.string().describe('The reasoning behind the optimized route.'),
+});
+export type OptimizeRoutesOutput = z.infer<typeof OptimizeRoutesOutputSchema>;
+
+
+export const PredictNextAvailableTechniciansInputSchema = z.object({
+  activeJobs: z.array(
+    z.object({
+      jobId: z.string(),
+      title: z.string(),
+      assignedTechnicianId: z.string(),
+      estimatedDurationMinutes: z.number().optional(),
+      startedAt: z.string().optional().describe("ISO 8601 timestamp of when the job started."),
+    })
+  ).describe("A list of all jobs currently in progress."),
+  busyTechnicians: z.array(
+    z.object({
+      technicianId: z.string(),
+      technicianName: z.string(),
+      currentLocation: z.object({
+        latitude: z.number(),
+        longitude: z.number(),
+      }),
+      currentJobId: z.string(),
+    })
+  ).describe("A list of all technicians currently on a job."),
+  currentTime: z.string().describe("The current time in ISO 8601 format, to be used as the baseline for predictions."),
+});
+export type PredictNextAvailableTechniciansInput = z.infer<typeof PredictNextAvailableTechniciansInputSchema>;
+
+export const PredictNextAvailableTechniciansOutputSchema = z.object({
+  predictions: z.array(
+    z.object({
+      technicianId: z.string(),
+      technicianName: z.string(),
+      estimatedAvailabilityTime: z.string().describe("The estimated time the technician will be available, in ISO 8601 format."),
+      reasoning: z.string().describe("A brief explanation of the prediction."),
+    })
+  ).describe("A ranked list of technicians predicted to be available next, sorted by estimated availability time."),
+});
+export type PredictNextAvailableTechniciansOutput = z.infer<typeof PredictNextAvailableTechniciansOutputSchema>;
+
+
+export const SuggestJobSkillsInputSchema = z.object({
+  jobDescription: z.string().describe('The description of the job.'),
+  availableSkills: z.array(z.string()).describe('The list of all possible skills in the system.'),
+});
+export type SuggestJobSkillsInput = z.infer<typeof SuggestJobSkillsInputSchema>;
+
+export const SuggestJobSkillsOutputSchema = z.object({
+  suggestedSkills: z.array(z.string()).describe('An array of skill names suggested for the job, drawn exclusively from the availableSkills list.'),
+});
+export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;

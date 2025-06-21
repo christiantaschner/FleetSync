@@ -5,45 +5,15 @@
  * @fileOverview An AI agent that suggests the most suitable technician for a new job.
  *
  * - allocateJob - A function that suggests the most suitable technician for a new job.
- * - AllocateJobInput - The input type for the allocateJob function.
- * - AllocateJobOutput - The return type for the allocateJob function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-const AllocateJobInputSchema = z.object({
-  jobDescription: z.string().describe('The description of the job to be assigned.'),
-  jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
-  requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
-  scheduledTime: z.string().optional().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
-  technicianAvailability: z.array(
-    z.object({
-      technicianId: z.string().describe('The unique identifier of the technician.'),
-      technicianName: z.string().describe('The name of the technician.'),
-      isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
-      skills: z.array(z.string()).describe('The skills possessed by the technician.'),
-      location: z
-        .object({
-          latitude: z.number().describe('The latitude of the technician.'),
-          longitude: z.number().describe('The longitude of the technician.'),
-        })
-        .describe('The current location of the technician.'),
-      currentJobs: z.array(z.object({ 
-        jobId: z.string(), 
-        scheduledTime: z.string().optional(),
-        priority: z.enum(['High', 'Medium', 'Low']),
-      })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
-    })
-  ).describe('A list of technicians and their availability, skills, and location.'),
-});
-export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
-
-const AllocateJobOutputSchema = z.object({
-  suggestedTechnicianId: z.string().describe('The ID of the most suitable technician for the job.'),
-  reasoning: z.string().describe('The reasoning behind the technician suggestion.'),
-});
-export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
+import {
+  type AllocateJobInput,
+  AllocateJobInputSchema,
+  type AllocateJobOutput,
+  AllocateJobOutputSchema
+} from '@/types';
 
 export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobOutput> {
   return allocateJobFlow(input);

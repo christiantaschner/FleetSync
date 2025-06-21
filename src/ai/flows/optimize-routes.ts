@@ -1,63 +1,20 @@
+
 'use server';
 
 /**
  * @fileOverview AI-powered tool that dynamically re-optimizes routes and task assignments for field technicians in real time.
  *
  * - optimizeRoutes - A function that handles the route optimization process.
- * - OptimizeRoutesInput - The input type for the optimizeRoutes function.
- * - OptimizeRoutesOutput - The return type for the optimizeRoutes function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {
+  type OptimizeRoutesInput,
+  OptimizeRoutesInputSchema,
+  type OptimizeRoutesOutput,
+  OptimizeRoutesOutputSchema
+} from '@/types';
 
-const OptimizeRoutesInputSchema = z.object({
-  technicianId: z.string().describe('The ID of the technician.'),
-  currentLocation: z
-    .object({
-      latitude: z.number().describe('The latitude of the current location.'),
-      longitude: z.number().describe('The longitude of the current location.'),
-    })
-    .describe('The current location of the technician.'),
-  tasks: z
-    .array(
-      z.object({
-        taskId: z.string().describe('The ID of the task.'),
-        location: z
-          .object({
-            latitude: z.number().describe('The latitude of the task location.'),
-            longitude: z.number().describe('The longitude of the task location.'),
-          })
-          .describe('The location of the task.'),
-        priority: z.enum(['high', 'medium', 'low']).describe('The priority of the task.'),
-        scheduledTime: z.string().optional().describe('Optional specific requested appointment time for this task (ISO 8601 format). This is a strong constraint if provided.'),
-      })
-    )
-    .describe('The list of tasks to be performed.'),
-  trafficData: z
-    .string()
-    .optional()
-    .describe('Optional real-time traffic data. Provide as a JSON string if available.'),
-  unexpectedEvents: z
-    .string()
-    .optional()
-    .describe('Optional information about unexpected events. Provide as a JSON string if available.'),
-});
-export type OptimizeRoutesInput = z.infer<typeof OptimizeRoutesInputSchema>;
-
-const OptimizeRoutesOutputSchema = z.object({
-  optimizedRoute: z
-    .array(
-      z.object({
-        taskId: z.string().describe('The ID of the task in the optimized route.'),
-        estimatedArrivalTime: z.string().describe('The estimated arrival time for the task.'),
-      })
-    )
-    .describe('The optimized route for the technician.'),
-  totalTravelTime: z.string().describe('The total estimated travel time for the optimized route.'),
-  reasoning: z.string().describe('The reasoning behind the optimized route.'),
-});
-export type OptimizeRoutesOutput = z.infer<typeof OptimizeRoutesOutputSchema>;
 
 export async function optimizeRoutes(input: OptimizeRoutesInput): Promise<OptimizeRoutesOutput> {
   return optimizeRoutesFlow(input);

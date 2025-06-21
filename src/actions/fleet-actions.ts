@@ -1,49 +1,40 @@
 
 "use server";
 
-import { allocateJob as allocateJobFlow, AllocateJobInput, AllocateJobOutput } from "@/ai/flows/allocate-job";
-import { optimizeRoutes as optimizeRoutesFlow, OptimizeRoutesInput, OptimizeRoutesOutput } from "@/ai/flows/optimize-routes";
-import { suggestJobSkills as suggestJobSkillsFlow, SuggestJobSkillsInput, SuggestJobSkillsOutput } from "@/ai/flows/suggest-job-skills";
-import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow, PredictNextAvailableTechniciansInput, PredictNextAvailableTechniciansOutput } from "@/ai/flows/predict-next-technician";
+import { allocateJob as allocateJobFlow } from "@/ai/flows/allocate-job";
+import { optimizeRoutes as optimizeRoutesFlow } from "@/ai/flows/optimize-routes";
+import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job-skills";
+import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import type { Job, JobStatus } from "@/types";
 
+// Import all required schemas and types from the central types file
+import {
+  AllocateJobInputSchema,
+  type AllocateJobInput,
+  type AllocateJobOutput,
+  OptimizeRoutesInputSchema,
+  type OptimizeRoutesInput,
+  type OptimizeRoutesOutput,
+  SuggestJobSkillsInputSchema,
+  type SuggestJobSkillsInput,
+  type SuggestJobSkillsOutput,
+  PredictNextAvailableTechniciansInputSchema,
+  type PredictNextAvailableTechniciansInput,
+  type PredictNextAvailableTechniciansOutput
+} from "@/types";
 
-// Define Zod schemas for server action inputs to ensure type safety from client
-const AllocateJobActionInputSchema = z.object({
-  jobDescription: z.string().min(1, "Job description is required."),
-  jobPriority: z.enum(['High', 'Medium', 'Low']),
-  requiredSkills: z.array(z.string()).optional(),
-  scheduledTime: z.string().optional(),
-  technicianAvailability: z.array(
-    z.object({
-      technicianId: z.string(),
-      technicianName: z.string(),
-      isAvailable: z.boolean(),
-      skills: z.array(z.string()),
-      location: z.object({
-        latitude: z.number(),
-        longitude: z.number(),
-      }),
-      currentJobs: z.array(
-        z.object({
-          jobId: z.string(),
-          scheduledTime: z.string().optional(),
-        })
-      ).optional(),
-    })
-  ).min(1, "At least one technician must be provided."),
-});
 
-export type AllocateJobActionInput = z.infer<typeof AllocateJobActionInputSchema>;
+// Define action input types, aliasing from the central types file
+export type AllocateJobActionInput = AllocateJobInput;
 
 export async function allocateJobAction(
   input: AllocateJobActionInput
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
   try {
-    const validatedInput = AllocateJobActionInputSchema.parse(input);
+    const validatedInput = AllocateJobInputSchema.parse(input);
     const result = await allocateJobFlow(validatedInput);
     return { data: result, error: null };
   } catch (e) {
@@ -55,35 +46,13 @@ export async function allocateJobAction(
   }
 }
 
-
-const OptimizeRoutesActionInputSchema = z.object({
-  technicianId: z.string().min(1, "Technician ID is required."),
-  currentLocation: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-  }),
-  tasks: z.array(
-    z.object({
-      taskId: z.string(),
-      location: z.object({
-        latitude: z.number(),
-        longitude: z.number(),
-      }),
-      priority: z.enum(['high', 'medium', 'low']),
-      scheduledTime: z.string().optional(),
-    })
-  ).min(1, "At least one task must be provided."),
-  trafficData: z.string().optional(),
-  unexpectedEvents: z.string().optional(),
-});
-
-export type OptimizeRoutesActionInput = z.infer<typeof OptimizeRoutesActionInputSchema>;
+export type OptimizeRoutesActionInput = OptimizeRoutesInput;
 
 export async function optimizeRoutesAction(
   input: OptimizeRoutesActionInput
 ): Promise<{ data: OptimizeRoutesOutput | null; error: string | null }> {
   try {
-    const validatedInput = OptimizeRoutesActionInputSchema.parse(input);
+    const validatedInput = OptimizeRoutesInputSchema.parse(input);
     const result = await optimizeRoutesFlow(validatedInput);
     return { data: result, error: null };
   } catch (e) {
@@ -95,18 +64,13 @@ export async function optimizeRoutesAction(
   }
 }
 
-const SuggestJobSkillsActionInputSchema = z.object({
-  jobDescription: z.string().min(1, "Job description is required."),
-  availableSkills: z.array(z.string()).min(1, "Available skills must be provided."),
-});
-
-export type SuggestJobSkillsActionInput = z.infer<typeof SuggestJobSkillsActionInputSchema>;
+export type SuggestJobSkillsActionInput = SuggestJobSkillsInput;
 
 export async function suggestJobSkillsAction(
   input: SuggestJobSkillsActionInput
 ): Promise<{ data: SuggestJobSkillsOutput | null; error: string | null }> {
   try {
-    const validatedInput = SuggestJobSkillsActionInputSchema.parse(input);
+    const validatedInput = SuggestJobSkillsInputSchema.parse(input);
     const result = await suggestJobSkillsFlow(validatedInput);
     return { data: result, error: null };
   } catch (e) {
@@ -196,7 +160,7 @@ export async function predictNextAvailableTechniciansAction(
   input: PredictNextAvailableTechniciansActionInput
 ): Promise<{ data: PredictNextAvailableTechniciansOutput | null; error: string | null }> {
   try {
-    const validatedInput = input; // Assuming validation happens in the flow or is trusted server-to-server
+    const validatedInput = PredictNextAvailableTechniciansInputSchema.parse(input);
     const result = await predictNextAvailableTechniciansFlow(validatedInput);
     return { data: result, error: null };
   } catch (e) {

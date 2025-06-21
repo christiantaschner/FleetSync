@@ -4,49 +4,15 @@
  * @fileOverview An AI agent that predicts which technicians will become available soonest.
  *
  * - predictNextAvailableTechnicians - Predicts the next available technicians.
- * - PredictNextAvailableTechniciansInput - The input type for the function.
- * - PredictNextAvailableTechniciansOutput - The return type for the function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
-
-export const PredictNextAvailableTechniciansInputSchema = z.object({
-  activeJobs: z.array(
-    z.object({
-      jobId: z.string(),
-      title: z.string(),
-      assignedTechnicianId: z.string(),
-      estimatedDurationMinutes: z.number().optional(),
-      startedAt: z.string().optional().describe("ISO 8601 timestamp of when the job started."),
-    })
-  ).describe("A list of all jobs currently in progress."),
-  busyTechnicians: z.array(
-    z.object({
-      technicianId: z.string(),
-      technicianName: z.string(),
-      currentLocation: z.object({
-        latitude: z.number(),
-        longitude: z.number(),
-      }),
-      currentJobId: z.string(),
-    })
-  ).describe("A list of all technicians currently on a job."),
-  currentTime: z.string().describe("The current time in ISO 8601 format, to be used as the baseline for predictions."),
-});
-export type PredictNextAvailableTechniciansInput = z.infer<typeof PredictNextAvailableTechniciansInputSchema>;
-
-export const PredictNextAvailableTechniciansOutputSchema = z.object({
-  predictions: z.array(
-    z.object({
-      technicianId: z.string(),
-      technicianName: z.string(),
-      estimatedAvailabilityTime: z.string().describe("The estimated time the technician will be available, in ISO 8601 format."),
-      reasoning: z.string().describe("A brief explanation of the prediction."),
-    })
-  ).describe("A ranked list of technicians predicted to be available next, sorted by estimated availability time."),
-});
-export type PredictNextAvailableTechniciansOutput = z.infer<typeof PredictNextAvailableTechniciansOutputSchema>;
+import {
+  type PredictNextAvailableTechniciansInput,
+  PredictNextAvailableTechniciansInputSchema,
+  type PredictNextAvailableTechniciansOutput,
+  PredictNextAvailableTechniciansOutputSchema
+} from '@/types';
 
 
 export async function predictNextAvailableTechnicians(input: PredictNextAvailableTechniciansInput): Promise<PredictNextAvailableTechniciansOutput> {

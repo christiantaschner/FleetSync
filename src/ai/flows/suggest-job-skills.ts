@@ -4,23 +4,16 @@
  * @fileOverview An AI agent that suggests required skills for a job based on its description.
  *
  * - suggestJobSkills - A function that suggests skills based on a job description and a list of available skills.
- * - SuggestJobSkillsInput - The input type for the suggestJobSkills function.
- * - SuggestJobSkillsOutput - The return type for the suggestJobSkills function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {
+  type SuggestJobSkillsInput,
+  SuggestJobSkillsInputSchema,
+  type SuggestJobSkillsOutput,
+  SuggestJobSkillsOutputSchema
+} from '@/types';
 
-const SuggestJobSkillsInputSchema = z.object({
-  jobDescription: z.string().describe('The description of the job.'),
-  availableSkills: z.array(z.string()).describe('The list of all possible skills in the system.'),
-});
-export type SuggestJobSkillsInput = z.infer<typeof SuggestJobSkillsInputSchema>;
-
-const SuggestJobSkillsOutputSchema = z.object({
-  suggestedSkills: z.array(z.string()).describe('An array of skill names suggested for the job, drawn exclusively from the availableSkills list.'),
-});
-export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;
 
 export async function suggestJobSkills(input: SuggestJobSkillsInput): Promise<SuggestJobSkillsOutput> {
   return suggestJobSkillsFlow(input);

@@ -19,10 +19,11 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Technician } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, ImageIcon, MapPin, Settings } from 'lucide-react';
+import { Loader2, Save, User, Mail, Phone, ListChecks, ImageIcon, MapPin } from 'lucide-react';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import AddressAutocompleteInput from './AddressAutocompleteInput';
 
 interface AddEditTechnicianDialogProps {
   children: React.ReactNode;
@@ -41,6 +42,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
 
   const resetForm = useCallback(() => {
@@ -50,6 +53,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
     setSelectedSkills(technician?.skills || []);
     setAvatarUrl(technician?.avatarUrl || 'https://placehold.co/100x100.png');
     setLocationAddress(technician?.location.address || '');
+    setLatitude(technician?.location.latitude || null);
+    setLongitude(technician?.location.longitude || null);
     setIsAvailable(technician ? technician.isAvailable : true);
   }, [technician]);
 
@@ -65,6 +70,12 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
         ? prevSkills.filter(s => s !== skill) 
         : [...prevSkills, skill]
     );
+  };
+  
+  const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
+    setLocationAddress(location.address);
+    setLatitude(location.lat);
+    setLongitude(location.lng);
   };
 
   const handleSubmit = async () => {
@@ -82,8 +93,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       skills: selectedSkills,
       avatarUrl: avatarUrl || 'https://placehold.co/100x100.png',
       location: {
-        latitude: technician?.location.latitude ?? 0, 
-        longitude: technician?.location.longitude ?? 0,
+        latitude: latitude ?? 0, 
+        longitude: longitude ?? 0,
         address: locationAddress,
       },
       isAvailable,
@@ -135,7 +146,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} className="space-y-3 py-2">
-         <ScrollArea className="max-h-[calc(70vh-50px)] pr-3"> {/* Adjusted max height */}
+         <ScrollArea className="max-h-[calc(70vh-50px)] pr-3">
           <div className="space-y-3">
             <div>
               <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
@@ -157,7 +168,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
                   {PREDEFINED_SKILLS.map(skill => (
                     <div key={skill} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`skill-${skill.replace(/\s+/g, '-')}`} // Create a unique ID
+                        id={`skill-${skill.replace(/\s+/g, '-')}`}
                         checked={selectedSkills.includes(skill)}
                         onCheckedChange={() => handleSkillChange(skill)}
                       />
@@ -176,11 +187,11 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
             </div>
             <div>
               <Label htmlFor="techLocationAddress"><MapPin className="inline h-3.5 w-3.5 mr-1" />Location (Address) *</Label>
-              <Input 
-                  id="techLocationAddress"
+              <AddressAutocompleteInput 
                   value={locationAddress}
-                  onChange={(e) => setLocationAddress(e.target.value)}
-                  placeholder="Enter technician base address"
+                  onValueChange={setLocationAddress}
+                  onLocationSelect={handleLocationSelect}
+                  placeholder="Start typing technician address..."
                   required
               />
             </div>

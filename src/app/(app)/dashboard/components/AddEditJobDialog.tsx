@@ -27,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import AddressAutocompleteInput from './AddressAutocompleteInput';
 
 interface AddEditJobDialogProps {
   children: React.ReactNode;
@@ -49,6 +50,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
 
   const resetForm = useCallback(() => {
@@ -58,6 +61,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     setCustomerName(job?.customerName || '');
     setCustomerPhone(job?.customerPhone || '');
     setLocationAddress(job?.location.address || '');
+    setLatitude(job?.location.latitude || null);
+    setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
     setAiSuggestion(null);
     setSuggestedTechnicianDetails(null);
@@ -119,6 +124,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     }
   }, [description, priority, scheduledTime, isOpen, job, fetchAISuggestion]);
 
+  const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
+    setLocationAddress(location.address);
+    setLatitude(location.lat);
+    setLongitude(location.lng);
+  };
 
   const handleSubmit = async (assignTechId: string | null = null) => {
     if (!title.trim() || !description.trim() || !locationAddress.trim()) {
@@ -135,8 +145,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
-        latitude: job?.location.latitude ?? 0, 
-        longitude: job?.location.longitude ?? 0,
+        latitude: latitude ?? 0, 
+        longitude: longitude ?? 0,
         address: locationAddress 
       },
       updatedAt: serverTimestamp(),
@@ -261,12 +271,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
           
           <div>
             <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-            <Input 
-                id="jobLocationAddress"
-                name="jobLocationAddress"
+            <AddressAutocompleteInput
                 value={locationAddress}
-                onChange={(e) => setLocationAddress(e.target.value)}
-                placeholder="Enter job address manually"
+                onValueChange={setLocationAddress}
+                onLocationSelect={handleLocationSelect}
+                placeholder="Start typing job address..."
                 required
             />
           </div>

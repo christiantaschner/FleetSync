@@ -145,9 +145,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b border-primary/20 bg-primary px-4 text-primary-foreground md:px-6 md:hidden">
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/20 bg-primary px-4 text-primary-foreground md:hidden">
            <SidebarTrigger/>
            <Logo />
+           <div className="w-7"/>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}

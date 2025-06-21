@@ -12,6 +12,7 @@ import {
   Briefcase,
   Users,
   Loader2,
+  Timer,
 } from "lucide-react";
 import {
   Card,
@@ -46,6 +47,20 @@ const pieChartColors = [
   "hsl(var(--chart-5))",
   "#FBBF24", // yellow-400
 ];
+
+const formatDuration = (milliseconds: number): string => {
+    if (milliseconds < 0) return "N/A";
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    
+    let result = '';
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0 || hours === 0) result += `${minutes}m`;
+    
+    return result.trim() || '0m';
+}
+
 
 export default function ReportsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -83,8 +98,8 @@ export default function ReportsPage() {
         kpis: {
           totalJobs: 0,
           completedJobs: 0,
-          pendingJobs: 0,
           avgDuration: "N/A",
+          avgTimeToAssign: "N/A",
         },
         jobsByStatus: [],
         jobsPerTechnician: [],
@@ -101,9 +116,22 @@ export default function ReportsPage() {
         return acc + (end - start);
     }, 0);
     
-    const avgDuration =
+    const avgDurationMs =
       completedJobsWithTime.length > 0
-        ? (totalDurationMs / completedJobsWithTime.length / (1000 * 60)).toFixed(0) // in minutes
+        ? totalDurationMs / completedJobsWithTime.length
+        : 0;
+        
+    const assignedJobsWithTime = jobs.filter(j => j.assignedAt && j.createdAt);
+
+    const totalTimeToAssignMs = assignedJobsWithTime.reduce((acc, j) => {
+        const created = new Date(j.createdAt).getTime();
+        const assigned = new Date(j.assignedAt!).getTime();
+        return acc + (assigned - created);
+    }, 0);
+
+    const avgTimeToAssignMs = 
+        assignedJobsWithTime.length > 0
+        ? totalTimeToAssignMs / assignedJobsWithTime.length
         : 0;
 
 
@@ -129,8 +157,8 @@ export default function ReportsPage() {
       kpis: {
         totalJobs: jobs.length,
         completedJobs: completedJobsWithTime.length,
-        pendingJobs: jobs.filter((j) => j.status === "Pending").length,
-        avgDuration: `${avgDuration} min`,
+        avgDuration: formatDuration(avgDurationMs),
+        avgTimeToAssign: formatDuration(avgTimeToAssignMs),
       },
       jobsByStatus: pieData,
       jobsPerTechnician: jobsPerTechnician.filter(t => t.completed > 0),
@@ -190,21 +218,22 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Jobs</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Avg. Time to Assign</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reportData.kpis.pendingJobs}</div>
+            <div className="text-2xl font-bold">{reportData.kpis.avgTimeToAssign}</div>
+            <p className="text-xs text-muted-foreground">From creation to assignment</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Job Duration</CardTitle>
+            <CardTitle className="text-sm font-medium">Avg. On-Site Duration</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.avgDuration}</div>
-            <p className="text-xs text-muted-foreground">Based on real-time data</p>
+            <p className="text-xs text-muted-foreground">From start to completion</p>
           </CardContent>
         </Card>
       </div>

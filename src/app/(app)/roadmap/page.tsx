@@ -323,33 +323,7 @@ const roadmapFeatures = {
       title: "Real-time Notifications for Schedule Changes",
       description: "Actively notify technicians (e.g., via a visual alert or eventually a push notification) when their schedule has been changed by a dispatcher, ensuring they are always aware of the latest plan.",
       icon: Zap,
-      status: "In Progress",
-      developerBrief: {
-        coreFunctionality: [
-          "Provide immediate feedback to technicians when their job list is re-ordered or a job is added/removed.",
-          "Initially, this can be an in-app visual cue (e.g., toast notification, highlight on changed items).",
-          "The ultimate goal is to integrate Firebase Cloud Messaging (FCM) for native push notifications that work even if the app is in the background."
-        ],
-        dataModels: ["No new data models for in-app alerts. FCM would require storing device tokens against technician profiles."],
-        aiComponents: ["N/A directly, but it's the output of AI re-optimization that triggers the need for notification."],
-        uiUx: [
-          "Toast notifications in the technician's mobile view after a change is received.",
-          "A subtle 'last updated' timestamp or a small notification icon in the header."
-        ],
-        integrationPoints: [
-          "Hooks into the real-time `onSnapshot` listeners in the technician view.",
-          "Future: Firebase Cloud Messaging for native push notifications."
-        ],
-        technicalChallenges: [
-          "For push notifications: Managing FCM device tokens, creating a backend service (e.g., Firebase Function) to send targeted notifications, handling permissions on the client.",
-          "For in-app alerts: Differentiating between the initial data load and a genuine update to prevent a notification on first open."
-        ],
-        successMetrics: [
-          "Reduced confusion for technicians about their current schedule.",
-          "Improved response time to schedule changes.",
-          "Increased technician trust in the system."
-        ]
-      }
+      status: "Completed",
     },
     {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
@@ -426,7 +400,7 @@ const roadmapFeatures = {
       title: "Customer Satisfaction & Response Time Analytics",
       description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality, directly impacting customer retention.",
       icon: Smile,
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Response Time: Calculate and track key response time metrics (e.g., time from job creation to assignment, assignment to arrival, job creation to completion).",

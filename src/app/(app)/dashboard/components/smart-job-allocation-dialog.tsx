@@ -113,13 +113,15 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
         status: 'Assigned' as Job['status'],
         updatedAt: serverTimestamp(),
+        assignedAt: serverTimestamp(),
       });
       
       const updatedJob: Job = { 
         ...jobToAssign, 
         assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
         status: 'Assigned',
-        updatedAt: new Date().toISOString() 
+        updatedAt: new Date().toISOString(),
+        assignedAt: new Date().toISOString(),
       };
 
       const techDocRef = doc(db, "technicians", suggestedTechnician.suggestedTechnicianId);

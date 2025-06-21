@@ -232,8 +232,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 
       if (job) { // EDITING A JOB
         const jobDocRef = doc(db, "jobs", job.id);
-        // Note: Assigning during edit is not a current UI feature, but the logic is here if needed.
-        const updatePayload = { ...jobData, updatedAt: serverTimestamp(), ...(assignTechId && { assignedTechnicianId: assignTechId, status: 'Assigned' as JobStatus }) };
+        const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
+        if (assignTechId && job.assignedTechnicianId !== assignTechId) {
+            updatePayload.assignedTechnicianId = assignTechId;
+            updatePayload.status = 'Assigned';
+            updatePayload.assignedAt = serverTimestamp();
+        }
         await updateDoc(jobDocRef, updatePayload);
         finalJobDataForCallback = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJobDataForCallback.title}" has been updated.` });
@@ -247,7 +251,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 
         const newJobRef = doc(collection(db, "jobs"));
         
-        const newJobPayload = {
+        const newJobPayload: any = {
           ...jobData,
           status: assignTechId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
           assignedTechnicianId: assignTechId || null,
@@ -257,6 +261,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
           photos: [],
           estimatedDurationMinutes: 0,
         };
+
+        if(assignTechId) {
+            newJobPayload.assignedAt = serverTimestamp();
+        }
+
         batch.set(newJobRef, newJobPayload);
 
         if (assignTechId && techToAssign) {

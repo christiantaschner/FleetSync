@@ -252,6 +252,7 @@ export default function DashboardPage() {
         status: 'Assigned', 
         assignedTechnicianId: suggestedTechnicianDetails.id,
         updatedAt: serverTimestamp(),
+        assignedAt: serverTimestamp(),
     });
 
     // 2. Update the technician
@@ -387,6 +388,7 @@ export default function DashboardPage() {
                 assignedTechnicianId: suggestion.suggestedTechnicianId,
                 status: 'Assigned' as JobStatus,
                 updatedAt: serverTimestamp(),
+                assignedAt: serverTimestamp(),
             });
 
             const techDocRef = doc(db, "technicians", suggestion.suggestedTechnicianId);

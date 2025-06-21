@@ -91,7 +91,50 @@ body {
   }
 }
 
-/* 
-  The .pac-container styles are removed as PlaceAutocompleteElement 
-  handles its own suggestion UI.
-*/
+/* FullCalendar Customization */
+.fc-theme {
+    --fc-border-color: hsl(var(--border));
+    --fc-daygrid-event-dot-width: 8px;
+    --fc-list-event-dot-width: 10px;
+    --fc-list-event-hover-bg-color: hsl(var(--accent) / 0.1);
+}
+
+.fc .fc-toolbar-title {
+    @apply text-xl font-bold font-headline text-foreground;
+}
+
+.fc .fc-button {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active, 
+.fc .fc-button-primary:not(:disabled):active {
+    @apply bg-primary/90;
+}
+
+.fc .fc-button-primary {
+    @apply bg-primary text-primary-foreground;
+}
+.fc .fc-button-primary:hover {
+    @apply bg-primary/90;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    @apply bg-accent/20;
+}
+
+.fc .fc-col-header-cell-cushion {
+    @apply text-sm text-muted-foreground;
+}
+
+.fc .fc-daygrid-day-number {
+    @apply text-sm text-foreground;
+}
+
+.fc .fc-event {
+    @apply text-xs font-medium text-white;
+}
+
+.fc .fc-timegrid-slot-label-cushion {
+    @apply text-xs text-muted-foreground;
+}

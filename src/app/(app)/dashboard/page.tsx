@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -13,6 +13,7 @@ import OptimizeRouteDialog from './components/optimize-route-dialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
+import ScheduleCalendarView from './components/ScheduleCalendarView';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
@@ -631,10 +632,11 @@ export default function DashboardPage() {
         
         <Tabs defaultValue="overview" className="w-full">
           <div className="w-full overflow-x-auto sm:overflow-visible">
-              <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-3">
+              <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-4">
                   <TabsTrigger value="overview">Overview Map</TabsTrigger>
                   <TabsTrigger value="jobs">Job List</TabsTrigger>
                   <TabsTrigger value="technicians">Technicians</TabsTrigger>
+                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
               </TabsList>
           </div>
           <TabsContent value="overview">
@@ -763,6 +765,9 @@ export default function DashboardPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="schedule">
+            <ScheduleCalendarView jobs={jobs} technicians={technicians} />
           </TabsContent>
         </Tabs>
       </div>

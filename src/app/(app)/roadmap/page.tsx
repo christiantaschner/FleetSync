@@ -149,7 +149,7 @@ const roadmapFeatures = {
       title: "Interactive Visual Calendar Scheduling with AI-Assisted Reassignment",
       description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
       icon: CalendarDays,
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Display jobs on a multi-day calendar view (e.g., weekly, daily per technician). This allows dispatchers to manage future schedules in FleetSync while still running the current day on an old system, easing migration.",

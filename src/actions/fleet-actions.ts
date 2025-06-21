@@ -4,6 +4,7 @@
 import { allocateJob as allocateJobFlow } from "@/ai/flows/allocate-job";
 import { optimizeRoutes as optimizeRoutesFlow } from "@/ai/flows/optimize-routes";
 import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job-skills";
+import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest-job-priority";
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
@@ -25,7 +26,10 @@ import {
   type PredictNextAvailableTechniciansInput,
   type PredictNextAvailableTechniciansOutput,
   OptimizeRoutesOutputSchema,
-  ConfirmManualRescheduleInputSchema
+  ConfirmManualRescheduleInputSchema,
+  SuggestJobPriorityInputSchema,
+  type SuggestJobPriorityInput,
+  type SuggestJobPriorityOutput
 } from "@/types";
 
 
@@ -83,6 +87,25 @@ export async function suggestJobSkillsAction(
     return { data: null, error: "Failed to suggest skills. Please try again." };
   }
 }
+
+export type SuggestJobPriorityActionInput = SuggestJobPriorityInput;
+
+export async function suggestJobPriorityAction(
+  input: SuggestJobPriorityActionInput
+): Promise<{ data: SuggestJobPriorityOutput | null; error: string | null }> {
+  try {
+    const validatedInput = SuggestJobPriorityInputSchema.parse(input);
+    const result = await suggestJobPriorityFlow(validatedInput);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in suggestJobPriorityAction:", e);
+    return { data: null, error: "Failed to suggest job priority. Please try again." };
+  }
+}
+
 
 const JobImportSchema = z.object({
     title: z.string().min(1, "Title is required."),

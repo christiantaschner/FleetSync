@@ -214,6 +214,17 @@ export const SuggestJobSkillsOutputSchema = z.object({
 });
 export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;
 
+export const SuggestJobPriorityInputSchema = z.object({
+  jobDescription: z.string().describe('The job description to analyze.'),
+});
+export type SuggestJobPriorityInput = z.infer<typeof SuggestJobPriorityInputSchema>;
+
+export const SuggestJobPriorityOutputSchema = z.object({
+  suggestedPriority: z.enum(['High', 'Medium', 'Low']).describe("The AI's suggested priority for the job."),
+  reasoning: z.string().describe('A brief explanation for the suggested priority.'),
+});
+export type SuggestJobPriorityOutput = z.infer<typeof SuggestJobPriorityOutputSchema>;
+
 export const ConfirmManualRescheduleInputSchema = z.object({
   technicianId: z.string().describe("The ID of the technician whose route is being updated."),
   movedJobId: z.string().describe("The ID of the job that was manually moved."),

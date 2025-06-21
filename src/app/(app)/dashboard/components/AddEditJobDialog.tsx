@@ -20,9 +20,9 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput } from "@/actions/fleet-actions";
-import type { AllocateJobOutput } from "@/types";
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb } from 'lucide-react';
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput } from "@/actions/fleet-actions";
+import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -48,7 +48,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
+  const [isFetchingPrioritySuggestion, setIsFetchingPrioritySuggestion] = useState(false);
+  
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
+  const [aiPrioritySuggestion, setAiPrioritySuggestion] = useState<SuggestJobPriorityOutput | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
 
   const [title, setTitle] = useState('');
@@ -74,6 +77,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
     setAiSuggestion(null);
+    setAiPrioritySuggestion(null);
     setSuggestedTechnicianDetails(null);
   }, [job]);
 
@@ -85,7 +89,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   
   const fetchAISkillSuggestion = useCallback(async (currentDescription: string) => {
     if (!currentDescription.trim() || allSkills.length === 0) {
-      // Don't clear skills if description is empty, user might be editing other fields
       return;
     }
     setIsFetchingSkillSuggestion(true);
@@ -97,18 +100,33 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     if(result.data?.suggestedSkills) {
       setRequiredSkills(result.data.suggestedSkills);
     }
-    // Don't show error toast for this, it's a background suggestion
     setIsFetchingSkillSuggestion(false);
   }, [allSkills]);
+
+  const fetchAIPrioritySuggestion = useCallback(async (currentDescription: string) => {
+    if (!currentDescription.trim()) {
+      setAiPrioritySuggestion(null);
+      return;
+    }
+    setIsFetchingPrioritySuggestion(true);
+    setAiPrioritySuggestion(null);
+    const input: SuggestJobPriorityActionInput = { jobDescription: currentDescription };
+    const result = await suggestJobPriorityAction(input);
+    if (result.data) {
+        setAiPrioritySuggestion(result.data);
+    }
+    setIsFetchingPrioritySuggestion(false);
+  }, []);
 
   useEffect(() => {
     if (isOpen && !job && description.trim()) {
         const timer = setTimeout(() => {
             fetchAISkillSuggestion(description);
+            fetchAIPrioritySuggestion(description);
         }, 1000); // Debounce
         return () => clearTimeout(timer);
     }
-  }, [description, isOpen, job, fetchAISkillSuggestion]);
+  }, [description, isOpen, job, fetchAISkillSuggestion, fetchAIPrioritySuggestion]);
 
   const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
@@ -320,6 +338,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                   <SelectItem value="Low">Low</SelectItem>
                 </SelectContent>
               </Select>
+              {isFetchingPrioritySuggestion && !job && (
+                <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
+                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is analyzing...
+                </div>
+              )}
+              {!isFetchingPrioritySuggestion && aiPrioritySuggestion && !job && (
+                <div className="text-xs mt-1.5 p-2 bg-secondary/50 rounded-md border">
+                    <p className="font-medium flex items-center gap-1.5"><Lightbulb className="h-3 w-3 text-primary"/> AI Suggests: <strong className="text-primary">{aiPrioritySuggestion.suggestedPriority}</strong></p>
+                    <p className="text-muted-foreground italic">"{aiPrioritySuggestion.reasoning}"</p>
+                </div>
+              )}
             </div>
              <div>
                 <Label htmlFor="scheduledTime">Scheduled Time (Optional)</Label>

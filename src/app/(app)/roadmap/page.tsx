@@ -222,7 +222,7 @@ const roadmapFeatures = {
       title: "AI-Powered Job Priority Suggestion",
       description: "When a dispatcher creates a new job, the AI analyzes the description to suggest a priority level (e.g., 'High' for 'emergency,' 'Low' for 'maintenance'). It will also provide a brief justification for the suggested priority, helping dispatchers make faster, more consistent decisions.",
       icon: Lightbulb,
-      status: "Planned",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "When typing in the 'Add New Job' dialog, trigger an AI flow after a short delay.",

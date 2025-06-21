@@ -18,11 +18,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput } from "@/actions/fleet-actions";
-import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
+import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -191,7 +191,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     
     setIsLoading(true);
 
-    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { updatedAt: any; scheduledTime?: string; requiredSkills?: string[] } = {
+    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { scheduledTime?: string; requiredSkills?: string[] } = {
       title,
       description,
       priority,
@@ -203,47 +203,76 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         longitude: longitude ?? 0,
         address: locationAddress 
       },
-      updatedAt: serverTimestamp(),
       scheduledTime: scheduledTime?.toISOString(),
     };
 
     try {
-      let finalJob: Job;
-      if (job) { 
-        const jobDocRef = doc(db, "jobs", job.id);
-        const updatePayload = { ...jobData, ...(assignTechId && { assignedTechnicianId: assignTechId, status: 'Assigned' as JobStatus }) };
-        await updateDoc(jobDocRef, updatePayload);
-        finalJob = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
-        toast({ title: "Job Updated", description: `Job "${finalJob.title}" has been updated.` });
-        onJobAddedOrUpdated?.(finalJob, assignTechId);
+      let finalJobDataForCallback: Job;
 
-      } else { 
+      if (job) { // EDITING A JOB
+        const jobDocRef = doc(db, "jobs", job.id);
+        // Note: Assigning during edit is not a current UI feature, but the logic is here if needed.
+        const updatePayload = { ...jobData, updatedAt: serverTimestamp(), ...(assignTechId && { assignedTechnicianId: assignTechId, status: 'Assigned' as JobStatus }) };
+        await updateDoc(jobDocRef, updatePayload);
+        finalJobDataForCallback = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
+        toast({ title: "Job Updated", description: `Job "${finalJobDataForCallback.title}" has been updated.` });
+        onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
+
+      } else { // CREATING A NEW JOB
+        const techToAssign = assignTechId ? technicians.find(t => t.id === assignTechId) : null;
+        const isInterruption = !!(techToAssign && !techToAssign.isAvailable && techToAssign.currentJobId);
+
+        const batch = writeBatch(db);
+
+        const newJobRef = doc(collection(db, "jobs"));
+        
         const newJobPayload = {
           ...jobData,
           status: assignTechId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
           assignedTechnicianId: assignTechId || null,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDurationMinutes: 0, 
+          estimatedDurationMinutes: 0,
         };
-        const docRef = await addDoc(collection(db, "jobs"), newJobPayload);
-        finalJob = {
+        batch.set(newJobRef, newJobPayload);
+
+        if (assignTechId && techToAssign) {
+          const techDocRef = doc(db, "technicians", assignTechId);
+          batch.update(techDocRef, {
+              isAvailable: false, // Tech will be busy with the new job
+              currentJobId: newJobRef.id,
+          });
+
+          if (isInterruption) {
+              const oldJobRef = doc(db, "jobs", techToAssign.currentJobId!);
+              batch.update(oldJobRef, {
+                  status: 'Pending' as JobStatus,
+                  assignedTechnicianId: null,
+                  notes: 'This job was unassigned due to a higher priority interruption.',
+              });
+          }
+        }
+        
+        await batch.commit();
+
+        finalJobDataForCallback = {
             ...newJobPayload,
-            id: docRef.id,
+            id: newJobRef.id,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        toast({ title: "Job Added", description: `New job "${finalJob.title}" created.` });
-        
-        if (assignTechId) {
-          const techDocRef = doc(db, "technicians", assignTechId);
-          await updateDoc(techDocRef, {
-            isAvailable: false,
-            currentJobId: finalJob.id,
-          });
+
+        if (isInterruption) {
+            toast({ title: "Job Interrupted & Assigned", description: `Assigned "${finalJobDataForCallback.title}" and returned previous job to queue.` });
+        } else if (assignTechId) {
+            toast({ title: "Job Added & Assigned", description: `New job "${finalJobDataForCallback.title}" created and assigned.` });
+        } else {
+            toast({ title: "Job Added", description: `New job "${finalJobDataForCallback.title}" created.` });
         }
-        onJobAddedOrUpdated?.(finalJob, assignTechId);
+
+        onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
       }
       setIsOpen(false);
     } catch (error) {
@@ -253,6 +282,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       setIsLoading(false);
     }
   };
+
+  const isInterruptionSuggestion = aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails && !suggestedTechnicianDetails.isAvailable;
   
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -388,13 +419,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                 <Button 
                   type="button" 
                   onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)} 
-                  disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId || !suggestedTechnicianDetails?.isAvailable}
-                  variant={aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails?.isAvailable ? "default" : "secondary"}
+                  disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
+                  variant={isInterruptionSuggestion ? "destructive" : "default"}
                   className="flex-1"
-                  title={aiSuggestion?.suggestedTechnicianId && !suggestedTechnicianDetails?.isAvailable ? `${suggestedTechnicianDetails?.name} is unavailable` : ''}
+                  title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
                 >
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                  Save & Assign to {suggestedTechnicianDetails?.name || "Suggested"}
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                  {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
                 </Button>
                 <Button 
                   type="submit" 
@@ -418,3 +449,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 };
 
 export default AddEditJobDialog;
+
+    

@@ -1,9 +1,10 @@
 
 "use client";
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet } from 'lucide-react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Job, Technician, JobStatus, JobPriority, AITechnician } from '@/types';
@@ -59,6 +60,12 @@ export default function DashboardPage() {
   const [isPredicting, setIsPredicting] = useState(false);
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
+  // For proactive AI suggestions
+  const prevJobIdsRef = useRef<Set<string>>(new Set());
+  const [proactiveSuggestion, setProactiveSuggestion] = useState<AssignmentSuggestion | null>(null);
+  const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
+  const [isProcessingProactive, setIsProcessingProactive] = useState(false);
+
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -82,7 +89,7 @@ export default function DashboardPage() {
     }
   }, [toast]);
   
-
+  // Data fetching
   useEffect(() => {
     if (!db || !user) {
       setIsLoadingData(false);
@@ -95,7 +102,7 @@ export default function DashboardPage() {
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       setJobs(jobsData);
-      setIsLoadingData(false); // Set loading to false after first data load
+      if (isLoadingData) setIsLoadingData(false);
     }, (error) => {
       console.error("Error fetching jobs: ", error);
       toast({ title: "Error fetching jobs", description: error.message, variant: "destructive"});
@@ -118,6 +125,7 @@ export default function DashboardPage() {
     };
   }, [user, toast, fetchSkills]);
   
+  // Next Up Technician Prediction
   useEffect(() => {
     const predict = async () => {
         const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
@@ -135,7 +143,6 @@ export default function DashboardPage() {
                 title: job.title,
                 assignedTechnicianId: job.assignedTechnicianId!,
                 estimatedDurationMinutes: job.estimatedDurationMinutes,
-                // Use updatedAt as a proxy for when the job started, if it's 'In Progress'
                 startedAt: job.status === 'In Progress' ? job.updatedAt : undefined, 
             })),
             busyTechnicians: busyTechnicians.map(tech => ({
@@ -161,15 +168,128 @@ export default function DashboardPage() {
         predict();
     }
 
-}, [jobs, technicians, isLoadingData]);
+  }, [jobs, technicians, isLoadingData]);
+  
+  // Proactive High-Priority Job Suggestion
+  useEffect(() => {
+    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion) {
+      return;
+    }
+
+    const currentJobIds = new Set(jobs.map(j => j.id));
+    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id));
+    prevJobIdsRef.current = currentJobIds;
+    
+    if (newJobs.length === 0) {
+      return;
+    }
+
+    const highPriorityPendingJob = newJobs.find(
+      j => j.priority === 'High' && j.status === 'Pending'
+    );
+    
+    if (highPriorityPendingJob) {
+      fetchProactiveSuggestion(highPriorityPendingJob);
+    }
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion]);
+
+  const fetchProactiveSuggestion = useCallback(async (job: Job) => {
+    setIsFetchingProactiveSuggestion(true);
+
+    const aiTechnicians: AITechnician[] = technicians.map(t => ({
+      technicianId: t.id,
+      technicianName: t.name,
+      isAvailable: t.isAvailable,
+      skills: t.skills as string[],
+      location: t.location,
+      currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+        .map(j => ({
+          jobId: j.id,
+          scheduledTime: j.scheduledTime,
+          priority: j.priority,
+        }))
+    }));
+    
+    const input: AllocateJobActionInput = {
+      jobDescription: job.description,
+      jobPriority: job.priority,
+      requiredSkills: job.requiredSkills || [],
+      scheduledTime: job.scheduledTime,
+      technicianAvailability: aiTechnicians,
+    };
+    
+    const result = await allocateJobAction(input);
+    
+    if (result.data) {
+      const techDetails = technicians.find(t => t.id === result.data!.suggestedTechnicianId) || null;
+      setProactiveSuggestion({
+        job: job,
+        suggestion: result.data,
+        suggestedTechnicianDetails: techDetails,
+        error: null,
+      });
+    } else {
+      toast({ title: "Proactive AI", description: `Could not find a suggestion for ${job.title}. ${result.error || ''}`, variant: "destructive" });
+    }
+    
+    setIsFetchingProactiveSuggestion(false);
+  }, [technicians, jobs, toast]);
+  
+  const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
+    if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db) return;
+    
+    setIsProcessingProactive(true);
+    
+    const { job, suggestedTechnicianDetails } = suggestion;
+    const isInterruption = !suggestedTechnicianDetails.isAvailable && suggestedTechnicianDetails.currentJobId;
+
+    const batch = writeBatch(db);
+    
+    // 1. Assign the new job
+    const newJobRef = doc(db, "jobs", job.id);
+    batch.update(newJobRef, { 
+        status: 'Assigned', 
+        assignedTechnicianId: suggestedTechnicianDetails.id,
+        updatedAt: serverTimestamp(),
+    });
+
+    // 2. Update the technician
+    const techDocRef = doc(db, "technicians", suggestedTechnicianDetails.id);
+    batch.update(techDocRef, {
+        isAvailable: false,
+        currentJobId: job.id,
+    });
+    
+    // 3. Handle interruption
+    if (isInterruption) {
+        const oldJobRef = doc(db, "jobs", suggestedTechnicianDetails.currentJobId!);
+        batch.update(oldJobRef, {
+            status: 'Pending',
+            assignedTechnicianId: null,
+            notes: `This job was unassigned due to a higher priority interruption for job: ${job.title}.`,
+            updatedAt: serverTimestamp(),
+        });
+    }
+
+    try {
+        await batch.commit();
+        toast({ title: "Job Assigned!", description: `${job.title} assigned to ${suggestedTechnicianDetails.name}.` });
+        setProactiveSuggestion(null);
+    } catch (error: any) {
+        console.error("Error processing proactive assignment:", error);
+        toast({ title: "Assignment Failed", description: error.message, variant: "destructive" });
+    } finally {
+        setIsProcessingProactive(false);
+    }
+  };
+  
 
   const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
-    // This function can be simplified as onSnapshot will handle UI updates
-    // It's useful if we need to perform an immediate action after an update
+    // onSnapshot handles state updates
   };
 
   const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
-     // This function can be simplified as onSnapshot will handle UI updates
+     // onSnapshot handles state updates
   };
   
   const openAIAssignDialogForJob = (job: Job) => {
@@ -210,60 +330,37 @@ export default function DashboardPage() {
     }
     setIsBatchLoading(true);
     setAssignmentSuggestionsForReview([]);
-    const suggestions: AssignmentSuggestion[] = [];
     
-    // Create a deep copy of the technicians to modify their availability virtually during the batch process.
     let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
 
-    for (const job of currentPendingJobs) {
-      // Map the current state of the temporary technician pool to the AI-friendly format.
-      const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => {
-        const currentJobs = jobs
-          .filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
-          .map(j => ({
-            jobId: j.id,
-            scheduledTime: j.scheduledTime,
-            priority: j.priority,
-          }));
+    const suggestions = await Promise.all(currentPendingJobs.map(async (job) => {
+        const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => ({
+            technicianId: t.id,
+            technicianName: t.name,
+            isAvailable: t.isAvailable,
+            skills: t.skills as string[],
+            location: t.location,
+            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
+        }));
 
-        return {
-          technicianId: t.id,
-          technicianName: t.name,
-          isAvailable: t.isAvailable, 
-          skills: t.skills as string[],
-          location: t.location,
-          currentJobs: currentJobs,
+        const input: AllocateJobActionInput = {
+            jobDescription: job.description,
+            jobPriority: job.priority,
+            requiredSkills: job.requiredSkills || [],
+            scheduledTime: job.scheduledTime,
+            technicianAvailability: aiTechnicians,
         };
-      });
 
-      const input: AllocateJobActionInput = {
-        jobDescription: job.description,
-        jobPriority: job.priority,
-        requiredSkills: job.requiredSkills || [],
-        scheduledTime: job.scheduledTime,
-        technicianAvailability: aiTechnicians,
-      };
-
-      const result = await allocateJobAction(input);
-      let techDetails: Technician | null = null;
-
-      if (result.data) {
-        techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null;
-        // If a suitable, available technician was found, update their status in our temporary pool for the next iteration.
-        if (techDetails && techDetails.isAvailable) {
-           tempTechnicianPool = tempTechnicianPool.map((t: Technician) => 
-            t.id === techDetails!.id ? {...t, isAvailable: false, currentJobId: job.id } : t
-           );
+        const result = await allocateJobAction(input);
+        let techDetails: Technician | null = null;
+        if (result.data) {
+            techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null;
+            if (techDetails && techDetails.isAvailable) {
+                tempTechnicianPool = tempTechnicianPool.map((t: Technician) => t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t);
+            }
         }
-      }
-
-      suggestions.push({
-        job,
-        suggestion: result.data,
-        suggestedTechnicianDetails: techDetails,
-        error: result.error
-      });
-    }
+        return { job, suggestion: result.data, suggestedTechnicianDetails: techDetails, error: result.error };
+    }));
 
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
@@ -337,8 +434,6 @@ export default function DashboardPage() {
       description: "Their active jobs are now pending and ready for reassignment.",
     });
     
-    // Allow a brief moment for Firestore listeners to receive the updates
-    // before triggering the batch assignment, which relies on the updated job statuses.
     setTimeout(() => {
         handleBatchAIAssign();
         setIsHandlingUnavailability(false);
@@ -376,7 +471,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
             Dispatcher Dashboard
-            {isHandlingUnavailability && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+            {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </h1>
           <div className="flex flex-wrap gap-2">
             <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
@@ -429,6 +524,40 @@ export default function DashboardPage() {
             setIsOpen={setIsImportJobsOpen}
             onJobsImported={fetchAllData}
         />
+        
+        {proactiveSuggestion && proactiveSuggestion.job && proactiveSuggestion.suggestedTechnicianDetails && (
+            <Alert variant="default" className="border-primary/50 bg-primary/5">
+                 <Sparkles className="h-4 w-4 text-primary" />
+                <AlertTitle className="font-headline text-primary flex justify-between items-center">
+                  <span>Proactive AI Dispatch Suggestion</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setProactiveSuggestion(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </AlertTitle>
+                <AlertDescription>
+                   For new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>", the AI suggests assigning to <strong>{proactiveSuggestion.suggestedTechnicianDetails.name}</strong>.
+                   <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning}</p>
+                </AlertDescription>
+                <div className="mt-4 flex gap-2">
+                    <Button
+                        size="sm"
+                        onClick={() => handleProactiveAssign(proactiveSuggestion)}
+                        disabled={isProcessingProactive}
+                        variant={!proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? "destructive" : "default"}
+                    >
+                        {isProcessingProactive 
+                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                            : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable 
+                                ? <AlertTriangle className="mr-2 h-4 w-4" /> 
+                                : <UserCheck className="mr-2 h-4 w-4" />}
+                        {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
+                    </Button>
+                     <Button size="sm" variant="outline" onClick={() => setProactiveSuggestion(null)}>
+                        Dismiss
+                    </Button>
+                </div>
+            </Alert>
+        )}
 
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

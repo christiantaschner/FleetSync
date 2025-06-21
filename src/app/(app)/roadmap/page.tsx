@@ -258,6 +258,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Proactive Emergency Dispatch AI",
+      description: "When a new high-priority job is created, the AI automatically evaluates the best assignment across the entire fleet, even suggesting interruptions. The dispatcher is presented with this optimal suggestion on the dashboard for immediate approval.",
+      icon: Zap,
+      status: "In Progress",
+    },
+    {
       title: "Technician Job Navigation",
       description: "Technicians can tap a 'Navigate' button in their job view to open Google Maps on their mobile device with turn-by-turn directions to the job site.",
       icon: Navigation,

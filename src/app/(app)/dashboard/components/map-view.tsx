@@ -1,11 +1,32 @@
 
 "use client";
 
-import React from 'react';
-import { Map, AdvancedMarker } from '@vis.gl/react-google-maps'; // Removed Pin as it's not used
+import React, { useEffect } from 'react';
+import { Map, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import type { Job, Technician } from '@/types';
-import { User, Briefcase } from 'lucide-react'; // Removed MapPin as it's not used
+import { User, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// A separate component to hook into the map context
+const TrafficControl = () => {
+  const map = useMap();
+  const maps = useMapsLibrary('maps');
+
+  useEffect(() => {
+    if (!map || !maps) return;
+
+    const trafficLayer = new maps.TrafficLayer();
+    trafficLayer.setMap(map);
+
+    // Cleanup function to remove the layer when the component unmounts
+    return () => {
+      trafficLayer.setMap(null);
+    };
+  }, [map, maps]);
+
+  return null; // This component doesn't render anything itself
+};
+
 
 interface MapViewProps {
   jobs: Job[];
@@ -55,6 +76,7 @@ const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, def
             </div>
           </AdvancedMarker>
         ))}
+        <TrafficControl />
       </Map>
     </div>
   );

@@ -38,6 +38,7 @@ export default function TechnicianJobsPage() {
       return;
     }
     
+    // For this demo, we assume the Firebase Auth UID is the same as the Technician's document ID in Firestore.
     const currentTechnicianId = firebaseUser.uid;
     setIsLoading(true);
     setError(null);
@@ -60,7 +61,7 @@ export default function TechnicianJobsPage() {
     });
     
     // Define active job statuses
-    const activeJobStatuses: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+    const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
 
     // Subscribe to jobs assigned to this technician (based on UID)
     const jobsQuery = query(

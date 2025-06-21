@@ -216,7 +216,7 @@ export default function TechnicianJobDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>
-            <CardDescription>Add notes, photos, and capture customer signature. This replaces any previous documentation.</CardDescription>
+            <CardDescription>Add notes, photos, and capture customer signature.</CardDescription>
           </CardHeader>
           <CardContent>
             <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />

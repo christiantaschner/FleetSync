@@ -20,7 +20,8 @@ import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps'
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
-import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput } from "@/actions/fleet-actions";
+import type { PredictNextAvailableTechniciansOutput } from '@/ai/flows/predict-next-technician';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
@@ -53,6 +54,9 @@ export default function DashboardPage() {
   const [allSkills, setAllSkills] = useState<string[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
+
+  const [nextUpPredictions, setNextUpPredictions] = useState<PredictNextAvailableTechniciansOutput['predictions']>([]);
+  const [isPredicting, setIsPredicting] = useState(false);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -112,6 +116,51 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
     };
   }, [user, toast, fetchSkills]);
+  
+  useEffect(() => {
+    const predict = async () => {
+        const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
+        if (busyTechnicians.length === 0) {
+            setNextUpPredictions([]);
+            return;
+        }
+
+        setIsPredicting(true);
+        const activeJobsForPrediction = jobs.filter(j => busyTechnicians.some(t => t.currentJobId === j.id));
+
+        const input: PredictNextAvailableTechniciansActionInput = {
+            activeJobs: activeJobsForPrediction.map(job => ({
+                jobId: job.id,
+                title: job.title,
+                assignedTechnicianId: job.assignedTechnicianId!,
+                estimatedDurationMinutes: job.estimatedDurationMinutes,
+                // Use updatedAt as a proxy for when the job started, if it's 'In Progress'
+                startedAt: job.status === 'In Progress' ? job.updatedAt : undefined, 
+            })),
+            busyTechnicians: busyTechnicians.map(tech => ({
+                technicianId: tech.id,
+                technicianName: tech.name,
+                currentLocation: tech.location,
+                currentJobId: tech.currentJobId!,
+            })),
+            currentTime: new Date().toISOString(),
+        };
+
+        const result = await predictNextAvailableTechniciansAction(input);
+        if (result.data) {
+            setNextUpPredictions(result.data.predictions);
+        } else if (result.error) {
+            console.error("Prediction error:", result.error);
+            setNextUpPredictions([]);
+        }
+        setIsPredicting(false);
+    };
+
+    if (!isLoadingData && jobs.length > 0 && technicians.length > 0) {
+        predict();
+    }
+
+}, [jobs, technicians, isLoadingData]);
 
   const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
     // This function can be simplified as onSnapshot will handle UI updates
@@ -371,13 +420,34 @@ export default function DashboardPage() {
               </p>
             </CardContent>
           </Card>
-          <Card>
+           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Next Up Technicians</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-               <div className="text-2xl font-bold">-</div>
-               <p className="text-xs text-muted-foreground">AI prediction coming soon</p>
+                {isPredicting ? (
+                    <div className="flex items-center space-x-2 pt-2">
+                        <Loader2 className="h-4 w-4 animate-spin"/>
+                        <p className="text-xs text-muted-foreground">AI is predicting...</p>
+                    </div>
+                ) : nextUpPredictions.length > 0 ? (
+                    <div className="space-y-2 pt-1">
+                        {nextUpPredictions.slice(0, 2).map(p => (
+                            <div key={p.technicianId} className="text-sm">
+                                <p className="font-bold truncate">{p.technicianName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    ~{new Date(p.estimatedAvailabilityTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <>
+                        <div className="text-2xl font-bold">-</div>
+                        <p className="text-xs text-muted-foreground">No busy technicians to predict.</p>
+                    </>
+                )}
             </CardContent>
           </Card>
         </div>

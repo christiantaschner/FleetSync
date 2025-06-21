@@ -4,6 +4,7 @@
 import { allocateJob as allocateJobFlow, AllocateJobInput, AllocateJobOutput } from "@/ai/flows/allocate-job";
 import { optimizeRoutes as optimizeRoutesFlow, OptimizeRoutesInput, OptimizeRoutesOutput } from "@/ai/flows/optimize-routes";
 import { suggestJobSkills as suggestJobSkillsFlow, SuggestJobSkillsInput, SuggestJobSkillsOutput } from "@/ai/flows/suggest-job-skills";
+import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow, PredictNextAvailableTechniciansInput, PredictNextAvailableTechniciansOutput } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
@@ -179,4 +180,23 @@ export async function importJobsAction(
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         return { data: null, error: `Failed to import jobs. ${errorMessage}` };
     }
+}
+
+
+export type PredictNextAvailableTechniciansActionInput = PredictNextAvailableTechniciansInput;
+
+export async function predictNextAvailableTechniciansAction(
+  input: PredictNextAvailableTechniciansActionInput
+): Promise<{ data: PredictNextAvailableTechniciansOutput | null; error: string | null }> {
+  try {
+    const validatedInput = input; // Assuming validation happens in the flow or is trusted server-to-server
+    const result = await predictNextAvailableTechniciansFlow(validatedInput);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in predictNextAvailableTechniciansAction:", e);
+    return { data: null, error: "Failed to predict next available technicians." };
+  }
 }

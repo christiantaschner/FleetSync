@@ -4,3 +4,4 @@ config();
 import '@/ai/flows/optimize-routes.ts';
 import '@/ai/flows/allocate-job.ts';
 import '@/ai/flows/suggest-job-skills.ts';
+import '@/ai/flows/predict-next-technician.ts';

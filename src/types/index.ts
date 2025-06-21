@@ -213,3 +213,11 @@ export const SuggestJobSkillsOutputSchema = z.object({
   suggestedSkills: z.array(z.string()).describe('An array of skill names suggested for the job, drawn exclusively from the availableSkills list.'),
 });
 export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;
+
+export const ConfirmManualRescheduleInputSchema = z.object({
+  technicianId: z.string().describe("The ID of the technician whose route is being updated."),
+  movedJobId: z.string().describe("The ID of the job that was manually moved."),
+  newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
+  optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
+});
+export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;

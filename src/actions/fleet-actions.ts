@@ -24,7 +24,8 @@ import {
   PredictNextAvailableTechniciansInputSchema,
   type PredictNextAvailableTechniciansInput,
   type PredictNextAvailableTechniciansOutput,
-  OptimizeRoutesOutputSchema
+  OptimizeRoutesOutputSchema,
+  ConfirmManualRescheduleInputSchema
 } from "@/types";
 
 
@@ -262,5 +263,47 @@ export async function confirmOptimizedRouteAction(
     console.error("Error in confirmOptimizedRouteAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to confirm optimized route. ${errorMessage}` };
+  }
+}
+
+
+export async function confirmManualRescheduleAction(
+  input: z.infer<typeof ConfirmManualRescheduleInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { movedJobId, newScheduledTime, optimizedRoute } = ConfirmManualRescheduleInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+
+    const batch = writeBatch(db);
+
+    // Update the moved job with its new time
+    const movedJobRef = doc(db, "jobs", movedJobId);
+    batch.update(movedJobRef, { 
+      scheduledTime: newScheduledTime,
+      updatedAt: serverTimestamp(),
+     });
+
+    // Set new route order for all jobs in the optimized route
+    optimizedRoute.forEach((step, index) => {
+      const jobDocRef = doc(db, "jobs", step.taskId);
+      batch.update(jobDocRef, { 
+        routeOrder: index,
+        // Also update timestamp for all jobs in the sequence
+        updatedAt: serverTimestamp(),
+      });
+    });
+
+    await batch.commit();
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in confirmManualRescheduleAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to confirm reschedule. ${errorMessage}` };
   }
 }

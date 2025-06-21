@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation
+  Sparkles, Navigation, Repeat
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -94,7 +94,7 @@ const roadmapFeatures = {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
       icon: Shuffle, 
-      status: "Completed",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Continuously monitor job statuses, technician locations, and new job arrivals.",
@@ -146,7 +146,7 @@ const roadmapFeatures = {
       }
     },
     {
-      title: "Interactive Visual Calendar Scheduling with AI-Assisted Reassignment",
+      title: "Interactive Visual Calendar Scheduling",
       description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
       icon: CalendarDays,
       status: "Completed",
@@ -199,13 +199,26 @@ const roadmapFeatures = {
       }
     },
      {
-      title: "Digital Customer Signatures (Mobile App)",
-      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service, reducing paperwork and streamlining job completion.",
+      title: "Digital Customer Signatures & Photo Documentation",
+      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
       icon: FileSignature,
       status: "Completed",
     },
   ],
   coreAiDispatcher: [
+    {
+      title: "In-App Chat & Media Sharing",
+      description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
+      icon: MessageSquare,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: ["Direct, real-time chat between dispatchers and technicians.", "Ability to scope chats to a specific job.", "Support for sending photos within the chat to clarify on-site issues."],
+        dataModels: ["New Firestore collection: `chats` (with messages), linked to job and user IDs."],
+        uiUx: ["Chat interface within the dispatcher dashboard.", "Chat view integrated into the technician's mobile job detail page."],
+        integrationPoints: ["Links to user authentication and job data."],
+        successMetrics: ["Reduced need for phone calls/external messaging apps.", "Faster resolution of simple on-site queries."]
+      }
+    },
     {
       title: "Dynamic Skill Library Management",
       description: "Allows dispatchers to define and manage a central library of technician skills (e.g., specific certifications, equipment expertise). This list populates selection options when editing technicians and is used by AI for smarter job allocation. Ensures consistent skill terminology and makes skill-based assignment more robust.",
@@ -400,7 +413,7 @@ const roadmapFeatures = {
       title: "Customer Satisfaction & Response Time Analytics",
       description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality, directly impacting customer retention.",
       icon: Smile,
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "Response Time: Calculate and track key response time metrics (e.g., time from job creation to assignment, assignment to arrival, job creation to completion).",
@@ -432,7 +445,7 @@ aiComponents: ["AI could analyze free-text feedback from surveys for sentiment a
       }
     },
      {
-      title: "Reporting & Analytics Dashboard",
+      title: "Basic Reporting Dashboard",
       description: "A dashboard providing insights into key performance indicators (KPIs) like job completion rates and technician workloads. Includes charts for jobs by status and jobs completed per technician.",
       icon: PieChart,
       status: "Completed",
@@ -571,6 +584,66 @@ aiComponents: ["AI could analyze free-text feedback from surveys for sentiment a
     },
   ],
   futureVision: [
+    {
+      title: "Live Technician Tracking Portal for Customers",
+      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
+      icon: Navigation,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: ["Generate a unique, time-limited URL per job.", "Public-facing webpage showing a map with the technician's location and ETA.", "Technician location is updated in real-time."],
+        dataModels: ["Job document: add `publicTrackingId: string` and `trackingIdExpiresAt: Date`."],
+        technicalChallenges: ["Security and privacy: ensuring only the correct customer can view the location, and only for the duration of the job.", "Public-facing infrastructure to handle customer traffic."],
+        successMetrics: ["Significant reduction in 'Where is my technician?' calls.", "Improved customer experience and satisfaction."]
+      }
+    },
+    {
+      title: "Recurring Job & Maintenance Contract Management",
+      description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
+      icon: Repeat,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: ["Define recurring job templates (e.g., 'Annual HVAC Service').", "Set recurrence rules (e.g., yearly, quarterly).", "System automatically creates pending jobs based on these rules.", "AI suggests optimal dates based on expected workload and location."],
+        dataModels: ["New Firestore collection: `maintenanceContracts` and `recurringJobTemplates`."],
+        technicalChallenges: ["Complex logic for generating future jobs and suggesting optimal times.", "User interface for managing contracts and recurrence rules."],
+        successMetrics: ["Automated planning of maintenance schedules.", "Improved customer retention through proactive service."]
+      }
+    },
+    {
+      title: "AI-Assisted Digital Protocols & Checklists",
+      description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
+      icon: ClipboardList,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: ["Dispatcher can create and assign checklist templates to job types.", "Technician fills out the checklist on the mobile app.", "Completed checklists are saved as part of the job documentation."],
+        dataModels: ["New Firestore collections: `checklistTemplates` and `completedChecklists` (linked to jobs)."],
+        aiComponents: ["AI can analyze completed checklists to identify common failure points or suggest process improvements."],
+        successMetrics: ["Improved data quality and consistency.", "Elimination of paper forms.", "Enhanced compliance and safety."]
+      }
+    },
+    {
+      title: "Intelligent Parts & Van Stock Management",
+      description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
+      icon: Wrench,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: ["Manage a central parts/tools library.", "Assign inventory to each technician/van.", "Technicians can update their stock levels from the mobile app.", "AI job allocation considers required parts/tools as a factor."],
+        dataModels: ["New Firestore collections: `parts`, `tools`, and `vanInventory`."],
+        technicalChallenges: ["Keeping inventory data accurate and in sync.", "User experience for technicians managing their van stock."],
+        successMetrics: ["Reduced trips to the warehouse.", "Improved first-time-fix rate.", "Lower fuel costs and technician downtime."]
+      }
+    },
+    {
+      title: "Advanced Analytics & Performance Insights",
+      description: "Provide deeper insights by comparing planned vs. actual times, analyzing technician utilization rates, tracking punctuality, and identifying common reasons for schedule deviations to continuously refine planning estimates.",
+      icon: PieChart,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: ["Capture and compare estimated vs. actual travel and work times.", "Calculate technician utilization (time on job vs. idle/travel time).", "Track on-time performance against scheduled appointments.", "Categorize and report on reasons for delays."],
+        integrationPoints: ["Relies heavily on accurate timestamps from 'Digital Time Tracking' and route data from the optimization engine."],
+        technicalChallenges: ["Requires robust and clean data to be effective.", "Defining and calculating metrics like 'utilization' consistently."],
+        successMetrics: ["Actionable insights for improving operational efficiency.", "More accurate future job time estimations.", "Better workload balancing among technicians."]
+      }
+    },
     {
       title: "Predictive Maintenance as a Service",
       description: "Analyze vehicle consumption data and machine data to predict maintenance needs and enable proactive service planning, minimizing downtime and extending equipment lifespan.",

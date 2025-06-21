@@ -64,6 +64,7 @@ const OptimizeRoutesActionInputSchema = z.object({
         longitude: z.number(),
       }),
       priority: z.enum(['high', 'medium', 'low']),
+      scheduledTime: z.string().optional(),
     })
   ).min(1, "At least one task must be provided."),
   trafficData: z.string().optional(),

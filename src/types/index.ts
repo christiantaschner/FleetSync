@@ -61,6 +61,7 @@ export type AITask = {
     longitude: number;
   };
   priority: 'high' | 'medium' | 'low';
+  scheduledTime?: string;
 };
 
 export type AITechnician = {

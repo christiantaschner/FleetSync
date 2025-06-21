@@ -98,6 +98,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
           longitude: job.location.longitude,
         },
         priority: priority,
+        scheduledTime: job.scheduledTime,
       };
     });
     
@@ -224,4 +225,3 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
 };
 
 export default OptimizeRouteDialog;
-

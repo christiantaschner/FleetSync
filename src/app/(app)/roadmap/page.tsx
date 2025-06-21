@@ -94,7 +94,7 @@ const roadmapFeatures = {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
       icon: Shuffle, 
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "Continuously monitor job statuses, technician locations, and new job arrivals.",
@@ -149,7 +149,7 @@ const roadmapFeatures = {
       title: "Interactive Visual Calendar Scheduling with AI-Assisted Reassignment",
       description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
       icon: CalendarDays,
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "Display jobs on a multi-day calendar view (e.g., weekly, daily per technician). This allows dispatchers to manage future schedules in FleetSync while still running the current day on an old system, easing migration.",
@@ -261,7 +261,7 @@ const roadmapFeatures = {
       title: "Proactive Emergency Dispatch AI",
       description: "When a new high-priority job is created, the AI automatically evaluates the best assignment across the entire fleet, even suggesting interruptions. The dispatcher is presented with this optimal suggestion on the dashboard for immediate approval.",
       icon: Zap,
-      status: "In Progress",
+      status: "Completed",
     },
     {
       title: "Technician Job Navigation",

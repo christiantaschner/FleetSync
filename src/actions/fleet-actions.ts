@@ -20,13 +20,19 @@ const AllocateJobActionInputSchema = z.object({
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string(),
-      technicianName: z.string(), // Added technicianName
+      technicianName: z.string(),
       isAvailable: z.boolean(),
       skills: z.array(z.string()),
       location: z.object({
         latitude: z.number(),
         longitude: z.number(),
       }),
+      currentJobs: z.array(
+        z.object({
+          jobId: z.string(),
+          scheduledTime: z.string().optional(),
+        })
+      ).optional(),
     })
   ).min(1, "At least one technician must be provided."),
 });

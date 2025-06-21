@@ -209,46 +209,61 @@ export default function DashboardPage() {
       return;
     }
     setIsBatchLoading(true);
+    setAssignmentSuggestionsForReview([]);
     const suggestions: AssignmentSuggestion[] = [];
     
-    let currentTechnicianPool = JSON.parse(JSON.stringify(technicians)) as Technician[];
+    // Create a deep copy of the technicians to modify their availability virtually during the batch process.
+    let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
 
     for (const job of currentPendingJobs) {
-      const availableAITechnicians: AITechnician[] = currentTechnicianPool.map(t => ({
-        technicianId: t.id,
-        technicianName: t.name,
-        isAvailable: t.isAvailable, 
-        skills: t.skills as string[],
-        location: {
-          latitude: t.location.latitude,
-          longitude: t.location.longitude,
-        },
-      }));
+      // Map the current state of the temporary technician pool to the AI-friendly format.
+      const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => {
+        const currentJobs = jobs
+          .filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+          .map(j => ({
+            jobId: j.id,
+            scheduledTime: j.scheduledTime,
+          }));
+
+        return {
+          technicianId: t.id,
+          technicianName: t.name,
+          isAvailable: t.isAvailable, 
+          skills: t.skills as string[],
+          location: t.location,
+          currentJobs: currentJobs,
+        };
+      });
 
       const input: AllocateJobActionInput = {
         jobDescription: job.description,
         jobPriority: job.priority,
         requiredSkills: job.requiredSkills,
-        technicianAvailability: availableAITechnicians,
+        scheduledTime: job.scheduledTime,
+        technicianAvailability: aiTechnicians,
       };
 
       const result = await allocateJobAction(input);
       let techDetails: Technician | null = null;
+
       if (result.data) {
-        techDetails = currentTechnicianPool.find(t => t.id === result.data!.suggestedTechnicianId) || null;
+        techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null;
+        // If a suitable, available technician was found, update their status in our temporary pool for the next iteration.
         if (techDetails && techDetails.isAvailable) {
-           currentTechnicianPool = currentTechnicianPool.map(t => 
+           tempTechnicianPool = tempTechnicianPool.map((t: Technician) => 
             t.id === techDetails!.id ? {...t, isAvailable: false, currentJobId: job.id } : t
            );
         }
       }
+
       suggestions.push({
         job,
         suggestion: result.data,
-        suggestedTechnicianDetails: techDetails, 
+        suggestedTechnicianDetails: techDetails,
         error: result.error
       });
     }
+
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);

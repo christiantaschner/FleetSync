@@ -66,7 +66,7 @@ export type AITask = {
 
 export type AITechnician = {
   technicianId: string;
-  technicianName: string; // Added technicianName
+  technicianName: string;
   isAvailable: boolean;
   skills: string[]; // GenAI flow uses string array
   location: {

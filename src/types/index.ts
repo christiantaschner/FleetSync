@@ -73,5 +73,5 @@ export type AITechnician = {
     latitude: number;
     longitude: number;
   };
-  currentJobs?: { jobId: string; scheduledTime?: string }[];
+  currentJobs?: { jobId: string; scheduledTime?: string; priority: JobPriority; }[];
 };

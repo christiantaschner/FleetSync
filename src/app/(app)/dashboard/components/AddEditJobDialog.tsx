@@ -93,11 +93,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     setAiSuggestion(null);
     setSuggestedTechnicianDetails(null);
 
-    const availableAITechnicians: AITechnician[] = technicians.map(t => {
+    const aiTechnicians: AITechnician[] = technicians.map(t => {
       const currentJobs = jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
         .map(j => ({
           jobId: j.id,
           scheduledTime: j.scheduledTime,
+          priority: j.priority,
         }));
         
       return {
@@ -117,7 +118,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       jobDescription: currentDescription,
       jobPriority: currentPriority,
       requiredSkills: currentRequiredSkills,
-      technicianAvailability: availableAITechnicians,
+      technicianAvailability: aiTechnicians,
       scheduledTime: currentScheduledTime?.toISOString(),
     };
 

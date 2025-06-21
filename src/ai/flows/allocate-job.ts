@@ -21,7 +21,7 @@ const AllocateJobInputSchema = z.object({
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
       technicianName: z.string().describe('The name of the technician.'),
-      isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor; unavailable technicians should not be chosen.'),
+      isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
       location: z
         .object({
@@ -31,8 +31,9 @@ const AllocateJobInputSchema = z.object({
         .describe('The current location of the technician.'),
       currentJobs: z.array(z.object({ 
         jobId: z.string(), 
-        scheduledTime: z.string().optional() 
-      })).optional().describe('A list of jobs already assigned to the technician, with their scheduled times.'),
+        scheduledTime: z.string().optional(),
+        priority: z.enum(['High', 'Medium', 'Low']),
+      })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
 });
@@ -52,19 +53,24 @@ const prompt = ai.definePrompt({
   name: 'allocateJobPrompt',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
-  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians.
+  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, location, and job priority.
 
-  Your primary goal is to suggest the most suitable technician for the job. You MUST prioritize technicians where 'isAvailable' is true. Do not suggest a technician who is unavailable.
+  Follow these rules for availability:
+  1. Always prefer an available technician if they are a good fit.
+  2. **EXCEPTION FOR EMERGENCIES:** If the new job's priority is 'High', you MAY suggest interrupting a technician who is currently on a 'Low' priority job. You should only do this if it provides a significant advantage (e.g., much closer, has a rare required skill).
+  3. You must explicitly state in your reasoning that this is an interruption and why it is justified.
+  4. You MUST NOT suggest interrupting a technician who is on a 'Medium' or 'High' priority job.
+  5. If you suggest an interruption, the 'suggestedTechnicianId' should be the ID of the technician you are suggesting to interrupt. The UI will handle the fact that they are currently unavailable.
   
   {{#if requiredSkills.length}}
   CRITICAL: The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
   {{/if}}
 
-  Given the following job description and a list of technicians with their availability, skills, and location, suggest the most suitable technician for the job.
+  Given the following job description and a list of technicians, suggest the most suitable technician for the job.
   Consider the job priority when making your suggestion.
   {{#if scheduledTime}}Crucially, the customer has requested a specific appointment time: {{{scheduledTime}}}. The suggested technician must be able to meet this appointment, considering their current location and other commitments. Factor this heavily into your decision.{{/if}}
 
-  When evaluating a technician, consider their 'currentJobs' list to see if they can realistically accommodate this new job alongside their existing commitments, especially if this new job has a specific 'scheduledTime'.
+  When evaluating a technician, consider their 'currentJobs' list to see if they can realistically accommodate this new job alongside their existing commitments.
 
   Job Description: {{{jobDescription}}}
   Job Priority: {{{jobPriority}}}
@@ -75,15 +81,14 @@ const prompt = ai.definePrompt({
     {{#if currentJobs.length}}
     Current Assigned Jobs:
     {{#each currentJobs}}
-    - Job ID: {{{jobId}}}{{#if scheduledTime}}, Scheduled at: {{{scheduledTime}}}{{/if}}
+    - Job ID: {{{jobId}}}, Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled at: {{{scheduledTime}}}{{/if}}
     {{/each}}
     {{/if}}
   {{/each}}
 
   Suggest the most suitable technician ID and explain your reasoning.
   In your reasoning, refer to technicians by their name (e.g., "Technician Alice Smith is available...") instead of their ID.
-  Ensure that the outputted suggestedTechnicianId exists in the technicianAvailability array and has 'isAvailable' set to true.
-  If a scheduledTime is provided, explicitly state in your reasoning how the chosen technician can meet this appointment.
+  Ensure that the outputted suggestedTechnicianId exists in the technicianAvailability array.
   `,
 });
 

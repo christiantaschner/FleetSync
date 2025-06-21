@@ -13,6 +13,7 @@ import {
   Users,
   Loader2,
   Timer,
+  Smile,
 } from "lucide-react";
 import {
   Card,
@@ -49,7 +50,7 @@ const pieChartColors = [
 ];
 
 const formatDuration = (milliseconds: number): string => {
-    if (milliseconds < 0) return "N/A";
+    if (milliseconds < 0 || isNaN(milliseconds)) return "N/A";
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -100,6 +101,7 @@ export default function ReportsPage() {
           completedJobs: 0,
           avgDuration: "N/A",
           avgTimeToAssign: "N/A",
+          avgSatisfaction: "N/A",
         },
         jobsByStatus: [],
         jobsPerTechnician: [],
@@ -133,6 +135,12 @@ export default function ReportsPage() {
         assignedJobsWithTime.length > 0
         ? totalTimeToAssignMs / assignedJobsWithTime.length
         : 0;
+    
+    const jobsWithSatisfaction = jobs.filter(j => typeof j.customerSatisfactionScore === 'number');
+    const totalSatisfactionScore = jobsWithSatisfaction.reduce((acc, j) => acc + j.customerSatisfactionScore!, 0);
+    const avgSatisfaction = jobsWithSatisfaction.length > 0 
+        ? (totalSatisfactionScore / jobsWithSatisfaction.length).toFixed(2)
+        : "N/A";
 
 
     const jobsByStatus = jobs.reduce((acc, job) => {
@@ -159,6 +167,7 @@ export default function ReportsPage() {
         completedJobs: completedJobsWithTime.length,
         avgDuration: formatDuration(avgDurationMs),
         avgTimeToAssign: formatDuration(avgTimeToAssignMs),
+        avgSatisfaction: avgSatisfaction,
       },
       jobsByStatus: pieData,
       jobsPerTechnician: jobsPerTechnician.filter(t => t.completed > 0),
@@ -197,7 +206,7 @@ export default function ReportsPage() {
           </h1>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
@@ -234,6 +243,16 @@ export default function ReportsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.avgDuration}</div>
             <p className="text-xs text-muted-foreground">From start to completion</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Satisfaction</CardTitle>
+            <Smile className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reportData.kpis.avgSatisfaction} / 5</div>
+            <p className="text-xs text-muted-foreground">Across all rated jobs</p>
           </CardContent>
         </Card>
       </div>

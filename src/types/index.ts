@@ -48,6 +48,7 @@ export type Job = {
   inProgressAt?: string;
   completedAt?: string;
   routeOrder?: number;
+  customerSatisfactionScore?: number;
 };
 
 export type Task = {

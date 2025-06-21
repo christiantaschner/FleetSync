@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Job, JobStatus } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
@@ -15,6 +15,7 @@ import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL, uploadBytes } from "firebase/storage";
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function TechnicianJobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [satisfactionScore, setSatisfactionScore] = useState(0);
 
   useEffect(() => {
     if (!jobId || !db) {
@@ -38,7 +40,11 @@ export default function TechnicianJobDetailPage() {
       try {
         const docSnap = await getDoc(jobDocRef);
         if (docSnap.exists()) {
-          setJob({ id: docSnap.id, ...docSnap.data() } as Job);
+          const fetchedJob = { id: docSnap.id, ...docSnap.data() } as Job;
+          setJob(fetchedJob);
+          if (fetchedJob.customerSatisfactionScore) {
+            setSatisfactionScore(fetchedJob.customerSatisfactionScore);
+          }
         } else {
           toast({ title: "Error", description: "Job not found.", variant: "destructive" });
           router.push('/technician');
@@ -164,6 +170,27 @@ export default function TechnicianJobDetailPage() {
       setIsUpdating(false);
     }
   };
+  
+  const handleSatisfactionSubmit = async () => {
+    if (!job || !db || isUpdating || satisfactionScore === 0) return;
+    
+    setIsUpdating(true);
+    const jobDocRef = doc(db, "jobs", job.id);
+    try {
+        await updateDoc(jobDocRef, {
+            customerSatisfactionScore: satisfactionScore,
+            updatedAt: serverTimestamp(),
+        });
+        setJob(prevJob => prevJob ? { ...prevJob, customerSatisfactionScore: satisfactionScore } : null);
+        toast({ title: "Rating Submitted", description: `Thank you for recording the customer's feedback.` });
+    } catch (error) {
+        console.error("Error submitting satisfaction score:", error);
+        toast({ title: "Error", description: "Could not save the rating.", variant: "destructive" });
+    } finally {
+        setIsUpdating(false);
+    }
+  };
+
 
   const handleNavigate = () => {
     if (job?.location?.address) {
@@ -238,6 +265,48 @@ export default function TechnicianJobDetailPage() {
           <CardContent>
             <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />
           </CardContent>
+        </Card>
+      )}
+
+      {job.status === 'Completed' && (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Satisfaction</CardTitle>
+                <CardDescription>Record the customer's satisfaction rating for this job.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                onClick={() => !job.customerSatisfactionScore && setSatisfactionScore(star)}
+                                disabled={!!job.customerSatisfactionScore || isUpdating}
+                                className="disabled:cursor-not-allowed"
+                            >
+                                <Star
+                                    className={cn(
+                                        "h-8 w-8 text-gray-300 transition-colors",
+                                        satisfactionScore >= star && "text-yellow-400",
+                                        !job.customerSatisfactionScore && "hover:text-yellow-300"
+                                    )}
+                                    fill={satisfactionScore >= star ? 'currentColor' : 'none'}
+                                />
+                            </button>
+                        ))}
+                    </div>
+                     <Button
+                        onClick={handleSatisfactionSubmit}
+                        disabled={!satisfactionScore || !!job.customerSatisfactionScore || isUpdating}
+                     >
+                        {isUpdating && !job.customerSatisfactionScore ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                        {job.customerSatisfactionScore ? 'Rating Saved' : 'Submit Rating'}
+                    </Button>
+                </div>
+                 {job.customerSatisfactionScore && (
+                    <p className="text-sm text-green-600 mt-2">Thank you! A rating of {job.customerSatisfactionScore} stars was submitted.</p>
+                 )}
+            </CardContent>
         </Card>
       )}
 

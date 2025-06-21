@@ -33,15 +33,22 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
   return (
     <Card className={cn(
         "hover:shadow-lg transition-shadow h-full flex flex-col",
-        status === 'Completed' && "border-green-600/50 bg-green-50/50"
+        status === 'Completed' && "border-green-600/50 bg-green-50/50",
+        status === 'In Progress' && "border-amber-500/50 bg-amber-50/50 ring-2 ring-amber-500/20"
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
-          <Icon className={cn("h-6 w-6 text-primary", status === 'Completed' && "text-green-600")} />
+          <Icon className={cn("h-6 w-6 text-primary", 
+            status === 'Completed' && "text-green-600",
+            status === 'In Progress' && "text-amber-600"
+          )} />
           <CardTitle className="text-lg font-headline">{title}</CardTitle>
         </div>
         {status && (
-          <CardDescription className={cn("text-xs pt-1", status === 'Completed' && "text-green-700 font-semibold")}>Status: {status}</CardDescription>
+          <CardDescription className={cn("text-xs pt-1", 
+            status === 'Completed' && "text-green-700 font-semibold",
+            status === 'In Progress' && "text-amber-700 font-semibold"
+          )}>Status: {status}</CardDescription>
         )}
       </CardHeader>
       <CardContent className="flex-grow">
@@ -87,7 +94,7 @@ const roadmapFeatures = {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
       icon: Shuffle, 
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Continuously monitor job statuses, technician locations, and new job arrivals.",

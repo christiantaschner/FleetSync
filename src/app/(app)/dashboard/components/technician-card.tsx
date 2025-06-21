@@ -15,10 +15,11 @@ import { Button } from '@/components/ui/button';
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
+  allSkills: string[];
   onTechnicianUpdated: (technician: Technician) => void; // Callback for updates
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onTechnicianUpdated }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, onTechnicianUpdated }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
 
   return (
@@ -74,7 +75,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onTec
             <span>{technician.isAvailable ? 'Awaiting assignment' : 'Currently idle'}</span>
           )}
         </div>
-        <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated}>
+        <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills}>
           <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
             <Edit className="h-3.5 w-3.5" />
             <span className="sr-only">Edit Technician</span>

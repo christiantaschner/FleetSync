@@ -20,7 +20,6 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Technician } from '@/types';
 import { Loader2, Save, User, Mail, Phone, ListChecks, ImageIcon, MapPin } from 'lucide-react';
-import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
@@ -28,10 +27,11 @@ import AddressAutocompleteInput from './AddressAutocompleteInput';
 interface AddEditTechnicianDialogProps {
   children: React.ReactNode;
   technician?: Technician;
+  allSkills: string[]; // Changed from PREDEFINED_SKILLS
   onTechnicianAddedOrUpdated?: (technician: Technician) => void;
 }
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, onTechnicianAddedOrUpdated }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, allSkills, onTechnicianAddedOrUpdated }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,7 +165,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
               <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
               <ScrollArea className="h-40 rounded-md border p-3 mt-1">
                 <div className="space-y-2">
-                  {PREDEFINED_SKILLS.map(skill => (
+                  {allSkills.map(skill => (
                     <div key={skill} className="flex items-center space-x-2">
                       <Checkbox
                         id={`skill-${skill.replace(/\s+/g, '-')}`}
@@ -177,6 +177,9 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
                       </Label>
                     </div>
                   ))}
+                  {allSkills.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No skills defined in the library. Go to the Technicians tab to manage skills.</p>
+                  )}
                 </div>
               </ScrollArea>
             </div>

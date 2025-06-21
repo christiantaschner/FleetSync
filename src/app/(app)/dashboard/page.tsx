@@ -1,7 +1,7 @@
 
 "use client";
-import React, { useEffect, useMemo, useState } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles } from 'lucide-react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +13,7 @@ import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps'; // Renamed import
@@ -22,6 +22,7 @@ import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
 import { useToast } from '@/hooks/use-toast';
+import ManageSkillsDialog from './components/ManageSkillsDialog';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -46,9 +47,26 @@ export default function DashboardPage() {
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
   const [isBatchLoading, setIsBatchLoading] = useState(false);
   const [isLoadingBatchConfirmation, setIsLoadingBatchConfirmation] = useState(false);
+  
+  const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const fetchSkills = useCallback(async () => {
+    if (!db) return;
+    try {
+      const skillsQuery = query(collection(db, "skills"), orderBy("name"));
+      const querySnapshot = await getDocs(skillsQuery);
+      const skillsData = querySnapshot.docs.map(doc => doc.data().name as string);
+      setAllSkills(skillsData);
+    } catch (error) {
+      console.error("Error fetching skills: ", error);
+      toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+    }
+  }, [toast]);
+  
 
   useEffect(() => {
     if (!db || !user) {
@@ -56,6 +74,7 @@ export default function DashboardPage() {
       return;
     }
     setIsLoadingData(true);
+    fetchSkills();
 
     const jobsQuery = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -82,7 +101,7 @@ export default function DashboardPage() {
       jobsUnsubscribe();
       techniciansUnsubscribe();
     };
-  }, [user, toast]);
+  }, [user, toast, fetchSkills]);
 
   const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
     setJobs(prevJobs => {
@@ -319,6 +338,12 @@ export default function DashboardPage() {
                 isLoadingConfirmation={isLoadingBatchConfirmation}
             />
         )}
+        
+        <ManageSkillsDialog 
+            isOpen={isManageSkillsOpen}
+            setIsOpen={setIsManageSkillsOpen}
+            onSkillsUpdated={fetchSkills}
+        />
 
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -470,11 +495,16 @@ export default function DashboardPage() {
                   <CardTitle className="font-headline">Technician Roster</CardTitle>
                   <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
                 </div>
-                <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}>
-                  <Button variant="outline">
-                    <UserPlus className="mr-2 h-4 w-4" /> Add Technician
+                 <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
                   </Button>
-                </AddEditTechnicianDialog>
+                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
+                    <Button variant="default">
+                      <UserPlus className="mr-2 h-4 w-4" /> Add Technician
+                    </Button>
+                  </AddEditTechnicianDialog>
+                </div>
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {isLoadingData && technicians.length === 0 ? (
@@ -487,6 +517,7 @@ export default function DashboardPage() {
                     technician={technician} 
                     jobs={jobs} 
                     onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
+                    allSkills={allSkills}
                   />
                 ))}
                 {!isLoadingData && technicians.length === 0 && (

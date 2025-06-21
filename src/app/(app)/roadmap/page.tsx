@@ -198,6 +198,12 @@ const roadmapFeatures = {
         ]
       }
     },
+     {
+      title: "Digital Customer Signatures (Mobile App)",
+      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service, reducing paperwork and streamlining job completion.",
+      icon: FileSignature,
+      status: "Completed",
+    },
   ],
   coreAiDispatcher: [
     {
@@ -269,17 +275,11 @@ const roadmapFeatures = {
       icon: Navigation,
       status: "Completed",
     },
-    {
-      title: "Digital Customer Signatures (Mobile App)",
-      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service, reducing paperwork and streamlining job completion.",
-      icon: FileSignature,
-      status: "Completed",
-    },
      {
       title: "Technician Profile Viewing & Change Suggestions",
       description: "Enable technicians to view their own detailed profiles (including skills, certifications, contact info) via the mobile app. Implement a system for them to suggest changes or additions (e.g., new skill acquired), which dispatchers can review and approve. Improves data accuracy and empowers technicians.",
       icon: User, 
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Technician Mobile App: A new 'My Profile' section displaying all their data stored in the `technicians` collection.",

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { Job, Technician, JobPriority, JobStatus } from '@/types'; // Added JobPriority
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX } from 'lucide-react';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
@@ -187,7 +187,7 @@ export default function TechnicianJobsPage() {
               <CardDescription>Your assigned jobs for today.</CardDescription>
             </div>
           </CardHeader>
-           <CardFooter className="bg-secondary/50 p-3">
+           <CardFooter className="bg-secondary/50 p-3 grid grid-cols-2 gap-2">
              <Button onClick={handleUpdateLocation} disabled={isUpdatingLocation} className="w-full">
               {isUpdatingLocation ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -196,6 +196,11 @@ export default function TechnicianJobsPage() {
               )}
               Update My Location
             </Button>
+            <Link href="/technician/profile" className="w-full">
+                <Button variant="outline" className="w-full">
+                    <User className="mr-2 h-4 w-4" /> View My Profile
+                </Button>
+            </Link>
           </CardFooter>
         </Card>
       )}

@@ -323,7 +323,7 @@ const roadmapFeatures = {
       title: "Real-time Notifications for Schedule Changes",
       description: "Actively notify technicians (e.g., via a visual alert or eventually a push notification) when their schedule has been changed by a dispatcher, ensuring they are always aware of the latest plan.",
       icon: Zap,
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Provide immediate feedback to technicians when their job list is re-ordered or a job is added/removed.",

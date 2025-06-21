@@ -1,6 +1,6 @@
 
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Job, Technician, JobPriority, JobStatus } from '@/types'; // Added JobPriority
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,10 @@ export default function TechnicianJobsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const isInitialLoad = useRef(true);
+  const prevJobOrder = useRef<string>("");
+
 
   useEffect(() => {
     if (authLoading) return; // Wait for auth state to resolve
@@ -91,6 +95,21 @@ export default function TechnicianJobsPage() {
         return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
       });
 
+      const currentJobOrder = jobsForTech.map(j => j.id).join(',');
+
+      if (isInitialLoad.current) {
+        prevJobOrder.current = currentJobOrder;
+        isInitialLoad.current = false;
+      } else {
+        if (prevJobOrder.current !== currentJobOrder) {
+           toast({
+            title: "Schedule Updated",
+            description: "Your job list has been changed. Please review the new order."
+          });
+        }
+        prevJobOrder.current = currentJobOrder;
+      }
+
       setAssignedJobs(jobsForTech);
       setIsLoading(false); // Set loading to false after jobs are fetched (or tech details fail)
     }, (err: any) => {
@@ -109,7 +128,7 @@ export default function TechnicianJobsPage() {
       unsubscribeJobs();
     };
 
-  }, [firebaseUser, authLoading]);
+  }, [firebaseUser, authLoading, toast]);
 
   const handleUpdateLocation = () => {
     if (!navigator.geolocation) {

@@ -29,6 +29,10 @@ const AllocateJobInputSchema = z.object({
           longitude: z.number().describe('The longitude of the technician.'),
         })
         .describe('The current location of the technician.'),
+      currentJobs: z.array(z.object({ 
+        jobId: z.string(), 
+        scheduledTime: z.string().optional() 
+      })).optional().describe('A list of jobs already assigned to the technician, with their scheduled times.'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
 });
@@ -60,12 +64,20 @@ const prompt = ai.definePrompt({
   Consider the job priority when making your suggestion.
   {{#if scheduledTime}}Crucially, the customer has requested a specific appointment time: {{{scheduledTime}}}. The suggested technician must be able to meet this appointment, considering their current location and other commitments. Factor this heavily into your decision.{{/if}}
 
+  When evaluating a technician, consider their 'currentJobs' list to see if they can realistically accommodate this new job alongside their existing commitments, especially if this new job has a specific 'scheduledTime'.
+
   Job Description: {{{jobDescription}}}
   Job Priority: {{{jobPriority}}}
 
   Technician Availability:
   {{#each technicianAvailability}}
   - Technician ID: {{{technicianId}}}, Name: {{{technicianName}}}, Available: {{{isAvailable}}}, Skills: {{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}, Location: (Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}})
+    {{#if currentJobs.length}}
+    Current Assigned Jobs:
+    {{#each currentJobs}}
+    - Job ID: {{{jobId}}}{{#if scheduledTime}}, Scheduled at: {{{scheduledTime}}}{{/if}}
+    {{/each}}
+    {{/if}}
   {{/each}}
 
   Suggest the most suitable technician ID and explain your reasoning.

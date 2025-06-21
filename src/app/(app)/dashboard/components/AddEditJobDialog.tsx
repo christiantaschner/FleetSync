@@ -31,15 +31,18 @@ import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+
 interface AddEditJobDialogProps {
   children: React.ReactNode;
   job?: Job;
+  jobs: Job[];
   technicians: Technician[];
   allSkills: string[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, technicians, allSkills, onJobAddedOrUpdated }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, onJobAddedOrUpdated }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,16 +93,25 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
     setAiSuggestion(null);
     setSuggestedTechnicianDetails(null);
 
-    const availableAITechnicians: AITechnician[] = technicians.map(t => ({
-      technicianId: t.id,
-      technicianName: t.name,
-      isAvailable: t.isAvailable,
-      skills: t.skills as string[],
-      location: {
-        latitude: t.location.latitude,
-        longitude: t.location.longitude,
-      },
-    }));
+    const availableAITechnicians: AITechnician[] = technicians.map(t => {
+      const currentJobs = jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+        .map(j => ({
+          jobId: j.id,
+          scheduledTime: j.scheduledTime,
+        }));
+        
+      return {
+        technicianId: t.id,
+        technicianName: t.name,
+        isAvailable: t.isAvailable,
+        skills: t.skills as string[],
+        location: {
+          latitude: t.location.latitude,
+          longitude: t.location.longitude,
+        },
+        currentJobs: currentJobs,
+      };
+    });
 
     const input: AllocateJobActionInput = {
       jobDescription: currentDescription,
@@ -120,7 +132,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, tech
       const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
       setSuggestedTechnicianDetails(tech || null);
     }
-  }, [technicians, toast]);
+  }, [technicians, toast, jobs]);
 
   // Debounced effect for fetching AI skill suggestions
   useEffect(() => {

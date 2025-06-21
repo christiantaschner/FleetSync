@@ -363,7 +363,7 @@ export default function DashboardPage() {
             {isHandlingUnavailability && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </h1>
           <div className="flex flex-wrap gap-2">
-            <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated}>
+            <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
@@ -566,6 +566,7 @@ export default function DashboardPage() {
                   <JobListItem 
                     key={job.id} 
                     job={job} 
+                    jobs={jobs}
                     technicians={technicians} 
                     allSkills={allSkills}
                     onAssignWithAI={openAIAssignDialogForJob}

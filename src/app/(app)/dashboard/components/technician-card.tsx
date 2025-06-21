@@ -3,7 +3,7 @@
 
 import React from 'react';
 // import Image from 'next/image'; // Not used directly
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit } from 'lucide-react'; // User icon not needed here, Added Edit
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon } from 'lucide-react'; // User icon not needed here, Added Edit
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -11,15 +11,27 @@ import type { Technician, Job } from '@/types';
 import { cn } from '@/lib/utils';
 import AddEditTechnicianDialog from './AddEditTechnicianDialog'; // Import the new dialog
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
   allSkills: string[];
   onTechnicianUpdated: (technician: Technician) => void; // Callback for updates
+  onMarkUnavailable: (technicianId: string) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, onTechnicianUpdated }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, onTechnicianUpdated, onMarkUnavailable }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
 
   return (
@@ -75,12 +87,37 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
             <span>{technician.isAvailable ? 'Awaiting assignment' : 'Currently idle'}</span>
           )}
         </div>
-        <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills}>
-          <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
-            <Edit className="h-3.5 w-3.5" />
-            <span className="sr-only">Edit Technician</span>
-          </Button>
-        </AddEditTechnicianDialog>
+        <div className="flex items-center gap-1">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="px-2 py-1 h-auto text-destructive hover:bg-destructive/10 hover:text-destructive" title="Mark unavailable and reassign jobs" disabled={!technician.isAvailable}>
+                  <AlertOctagon className="h-3.5 w-3.5" />
+                  <span className="sr-only">Mark Unavailable</span>
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will mark <strong>{technician.name}</strong> as unavailable and unassign all their active jobs.
+                  The system will then help you reassign these jobs. This action cannot be undone immediately from this screen.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onMarkUnavailable(technician.id)} className="bg-destructive hover:bg-destructive/90">
+                  Confirm
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills}>
+            <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
+              <Edit className="h-3.5 w-3.5" />
+              <span className="sr-only">Edit Technician</span>
+            </Button>
+          </AddEditTechnicianDialog>
+        </div>
       </CardFooter>
     </Card>
   );

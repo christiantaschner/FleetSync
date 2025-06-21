@@ -7,7 +7,7 @@ import { suggestJobSkills as suggestJobSkillsFlow, SuggestJobSkillsInput, Sugges
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow, PredictNextAvailableTechniciansInput, PredictNextAvailableTechniciansOutput } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import type { Job, JobStatus } from "@/types";
 
 
@@ -198,5 +198,54 @@ export async function predictNextAvailableTechniciansAction(
     }
     console.error("Error in predictNextAvailableTechniciansAction:", e);
     return { data: null, error: "Failed to predict next available technicians." };
+  }
+}
+
+const HandleTechnicianUnavailabilityInputSchema = z.object({
+  technicianId: z.string().min(1, "Technician ID is required."),
+});
+
+export async function handleTechnicianUnavailabilityAction(
+  input: z.infer<typeof HandleTechnicianUnavailabilityInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { technicianId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+
+    const batch = writeBatch(db);
+    
+    // 1. Mark technician as unavailable
+    const techDocRef = doc(db, "technicians", technicianId);
+    batch.update(techDocRef, { isAvailable: false, currentJobId: null });
+
+    // 2. Find and unassign active jobs
+    const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+    const jobsQuery = query(
+      collection(db, "jobs"),
+      where("assignedTechnicianId", "==", technicianId),
+      where("status", "in", activeJobStatuses)
+    );
+    const querySnapshot = await getDocs(jobsQuery);
+
+    querySnapshot.forEach((jobDoc) => {
+      batch.update(jobDoc.ref, {
+        status: "Pending" as JobStatus,
+        assignedTechnicianId: null,
+      });
+    });
+
+    // 3. Commit all changes
+    await batch.commit();
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in handleTechnicianUnavailabilityAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to handle technician unavailability. ${errorMessage}` };
   }
 }

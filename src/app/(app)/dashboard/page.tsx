@@ -20,7 +20,7 @@ import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps'
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
-import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput, handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
 import type { PredictNextAvailableTechniciansOutput } from '@/ai/flows/predict-next-technician';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
@@ -57,6 +57,7 @@ export default function DashboardPage() {
 
   const [nextUpPredictions, setNextUpPredictions] = useState<PredictNextAvailableTechniciansOutput['predictions']>([]);
   const [isPredicting, setIsPredicting] = useState(false);
+  const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -201,8 +202,9 @@ export default function DashboardPage() {
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
     : { lat: 39.8283, lng: -98.5795 }; 
 
-  const handleBatchAIAssign = async () => {
-    if (pendingJobsForBatchAssign.length === 0 || technicians.length === 0) {
+  const handleBatchAIAssign = useCallback(async () => {
+    const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
+    if (currentPendingJobs.length === 0 || technicians.length === 0) {
       toast({ title: "Batch Assignment", description: "No pending jobs or no technicians available for assignment.", variant: "default" });
       return;
     }
@@ -211,7 +213,7 @@ export default function DashboardPage() {
     
     let currentTechnicianPool = JSON.parse(JSON.stringify(technicians)) as Technician[];
 
-    for (const job of pendingJobsForBatchAssign) {
+    for (const job of currentPendingJobs) {
       const availableAITechnicians: AITechnician[] = currentTechnicianPool.map(t => ({
         technicianId: t.id,
         technicianName: t.name,
@@ -250,7 +252,7 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  };
+  }, [jobs, technicians, toast]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
     if (!db) {
@@ -298,7 +300,34 @@ export default function DashboardPage() {
         setIsBatchReviewDialogOpen(false);
         setAssignmentSuggestionsForReview([]); 
     }
-};
+  };
+  
+  const handleMarkTechnicianUnavailable = async (technicianId: string) => {
+    setIsHandlingUnavailability(true);
+    const result = await handleTechnicianUnavailabilityAction({ technicianId });
+
+    if (result.error) {
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
+      setIsHandlingUnavailability(false);
+      return;
+    }
+    
+    toast({
+      title: "Technician Marked Unavailable",
+      description: "Their active jobs are now pending and ready for reassignment.",
+    });
+    
+    // Allow a brief moment for Firestore listeners to receive the updates
+    // before triggering the batch assignment, which relies on the updated job statuses.
+    setTimeout(() => {
+        handleBatchAIAssign();
+        setIsHandlingUnavailability(false);
+    }, 1500);
+  };
 
 
   if (isLoadingData && !googleMapsApiKey) { 
@@ -329,7 +358,10 @@ export default function DashboardPage() {
     <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Dispatcher Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
+            Dispatcher Dashboard
+            {isHandlingUnavailability && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+          </h1>
           <div className="flex flex-wrap gap-2">
             <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated}>
               <Button>
@@ -577,6 +609,7 @@ export default function DashboardPage() {
                     jobs={jobs} 
                     onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
                     allSkills={allSkills}
+                    onMarkUnavailable={handleMarkTechnicianUnavailable}
                   />
                 ))}
                 {!isLoadingData && technicians.length === 0 && (

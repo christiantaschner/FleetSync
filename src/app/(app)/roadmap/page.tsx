@@ -77,6 +77,12 @@ const roadmapFeatures = {
         icon: Map,
         status: "Completed",
     },
+     {
+      title: "Handle Technician Unavailability & AI Reassignment",
+      description: "Allows dispatchers to mark a technician as unavailable, which automatically unassigns their active jobs and triggers the AI to suggest reassignments for those jobs, streamlining the response to unexpected staff changes.",
+      icon: AlertOctagon,
+      status: "Completed",
+    },
     {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",

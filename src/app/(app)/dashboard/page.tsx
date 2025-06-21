@@ -223,6 +223,7 @@ export default function DashboardPage() {
           .map(j => ({
             jobId: j.id,
             scheduledTime: j.scheduledTime,
+            priority: j.priority,
           }));
 
         return {
@@ -238,7 +239,7 @@ export default function DashboardPage() {
       const input: AllocateJobActionInput = {
         jobDescription: job.description,
         jobPriority: job.priority,
-        requiredSkills: job.requiredSkills,
+        requiredSkills: job.requiredSkills || [],
         scheduledTime: job.scheduledTime,
         technicianAvailability: aiTechnicians,
       };

@@ -21,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
 import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -49,7 +49,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
-  const [isFetchingSkills, setIsFetchingSkills] = useState(false);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -134,30 +133,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       setSuggestedTechnicianDetails(tech || null);
     }
   }, [technicians, toast, jobs]);
-
-  // Debounced effect for fetching AI skill suggestions
-  useEffect(() => {
-    if (isOpen && !job && description.trim() && allSkills.length > 0) {
-      const handler = setTimeout(async () => {
-        setIsFetchingSkills(true);
-        const result = await suggestJobSkillsAction({
-          jobDescription: description,
-          availableSkills: allSkills,
-        });
-        if (result.data?.suggestedSkills) {
-          setRequiredSkills(currentSkills => Array.from(new Set([...currentSkills, ...result.data!.suggestedSkills!])));
-        }
-        if(result.error) {
-            toast({ title: "AI Skill Suggestion Error", description: result.error, variant: "destructive" });
-        }
-        setIsFetchingSkills(false);
-      }, 1500);
-
-      return () => {
-        clearTimeout(handler);
-      };
-    }
-  }, [description, isOpen, job, allSkills, toast]);
 
 
   useEffect(() => {
@@ -292,7 +267,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         <DialogHeader>
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
           <DialogDescription>
-            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. AI will suggest a technician and required skills.'}
+            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. AI will suggest a technician.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
@@ -346,7 +321,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
             </div>
           </div>
            <div>
-              <Label className="flex items-center gap-2"><ListChecks className="inline h-3.5 w-3.5 mr-1" />Required Skills {isFetchingSkills && <Loader2 className="h-4 w-4 animate-spin"/>}</Label>
+              <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Required Skills</Label>
               <ScrollArea className="h-40 rounded-md border p-3 mt-1">
                 <div className="space-y-2">
                   {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
@@ -449,5 +424,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 };
 
 export default AddEditJobDialog;
-
-    

@@ -407,6 +407,12 @@ const roadmapFeatures = {
         ]
       }
     },
+     {
+      title: "Reporting & Analytics Dashboard",
+      description: "A dashboard providing insights into key performance indicators (KPIs) like job completion rates and technician workloads. Includes charts for jobs by status and jobs completed per technician.",
+      icon: PieChart,
+      status: "Completed",
+    },
     {
       title: "Offline Mode for Core Mobile App Functions",
       description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites). Addresses a major technician pain point and increases app reliability.",
@@ -443,53 +449,6 @@ const roadmapFeatures = {
           "Higher completion rate of job documentation as it can be done immediately.",
           "Reduced technician frustration with connectivity issues.",
           "Consistent data flow regardless of network conditions."
-        ]
-      }
-    },
-    {
-      title: "Comprehensive Reporting & Analytics",
-      description: "Provide comprehensive reporting and analytics with insights into key performance indicators (KPIs) such as travel times, technician utilization, job completion rates, first-time-fix rates, and fuel consumption to help inform data-driven decisions.",
-      icon: PieChart,
-      status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Display key performance indicators (KPIs) in an easy-to-understand format (e.g., KpiCards).",
-          "Generate charts and graphs for trends over time (e.g., job completion, technician performance).",
-          "Allow filtering of reports by date range, technician, job type, etc.",
-          "Provide insights based on the data (e.g., 'Technician utilization is low on Mondays', 'Average travel time has decreased by 10% this month').",
-          "Allow export of report data (e.g., to CSV)."
-        ],
-        dataModels: [
-          "Relies on aggregated data from `Jobs` (status, timestamps, priority, assignedTechnicianId), `Technicians` (isAvailable, skills), and potentially `timeEntries` (for utilization, actual job durations), `CO2Emissions` (if implemented).",
-          "May require creating aggregated summary collections in Firestore or performing complex queries."
-        ],
-        aiComponents: [
-          "AI could be used to generate natural language summaries of reports or highlight significant trends and anomalies."
-        ],
-        uiUx: [
-          "A dedicated 'Reports' section in the application.",
-          "Dashboard-like interface with various KPI cards and chart widgets.",
-          "User-friendly controls for filtering and customizing reports.",
-          "Clear presentation of data visualizations."
-        ],
-        integrationPoints: [
-          "Pulls data from various parts of the application (job management, technician management, time tracking).",
-          "FTFR Analytics data would be a key input.",
-          "CO2 Emission reporting data would be included."
-        ],
-        integrationPoints: [
-          "Tightly coupled with 'Advanced Real-time Dynamic Re-optimization'.",
-          "Utilizes 'Smart Skill Matching'.",
-          "Future: Integrates with 'Intelligent Parts & Van Stock Management' for resource checks."
-        ],
-        technicalChallenges: [
-          "Defining the override logic for non-emergency tasks when an emergency arises (e.g., how much disruption is acceptable?).",
-          "Ensuring the AI can quickly find the *best possible* (not just any) response for an emergency."
-        ],
-        successMetrics: [
-          "Drastic reduction in response times for emergency jobs.",
-          "Improved customer satisfaction in critical situations.",
-          "Efficient allocation of appropriately skilled technicians to emergencies."
         ]
       }
     },

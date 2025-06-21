@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  // PieChart, // Removed for Reports
+  PieChart, 
   Smartphone,
   Users,
   Settings,
@@ -44,7 +44,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
-  // { href: "/reports", label: "Reports", icon: PieChart }, // Removed Reports link
+  { href: "/reports", label: "Reports", icon: PieChart }, 
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 

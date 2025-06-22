@@ -14,6 +14,7 @@ import {
   Loader2,
   ListChecks,
   Repeat,
+  ClipboardList,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
   { href: "/contracts", label: "Contracts", icon: Repeat },
+  { href: "/customers", label: "Customers", icon: ClipboardList },
   { href: "/reports", label: "Reports", icon: PieChart },
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];

@@ -241,7 +241,7 @@ const roadmapFeatures = {
       title: "Basic Integrated CRM for Customer & Equipment Management",
       description: "Manage customer details, contact history, and track installed HVAC equipment, enabling better on-site preparation and faster diagnosis. This data also enhances AI job allocation.",
       icon: ClipboardList,
-      status: "Consideration",
+      status: "In Progress",
     },
   ],
   futureVision: [

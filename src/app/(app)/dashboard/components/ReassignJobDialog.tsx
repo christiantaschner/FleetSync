@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction, type AllocateJobActionInput, reassignJobAction } from "@/actions/fleet-actions";
-import type { AllocateJobOutput, Technician, Job, AITechnician } from '@/types';
+import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Loader2, Sparkles, UserCheck, AlertTriangle } from 'lucide-react';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];

@@ -102,60 +102,11 @@ const roadmapFeatures = {
       icon: FileSignature,
       status: "Completed",
     },
-     {
+    {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
       icon: Shuffle, 
       status: "Completed",
-      developerBrief: {
-        coreFunctionality: [
-          "Continuously monitor job statuses, technician locations, and new job arrivals.",
-          "Trigger re-optimization based on events: new urgent job, job completion (early/late), technician becomes unavailable (e.g., sickness), significant traffic changes (future).",
-          "AI considers job priority, skills required, technician's current load, travel time, ETAs, and crucially, any pre-committed customer appointment windows (`Job.scheduledTime`).",
-          "Handle technician unavailability: System allows dispatcher to mark a technician as unavailable (e.g., sick for the day). This action should trigger unassignment of their active jobs and initiate a re-allocation/re-optimization process for these jobs across the remaining available and qualified workforce. The AI should suggest optimal reassignments or highlight jobs needing urgent manual attention if no suitable automatic reassignment is found.",
-          "Process new high-priority emergency jobs: Dispatcher flags a job as 'emergency'. AI finds the best-suited technician (considering availability, skills, location, potential interruption of current lower-priority task) and re-optimizes schedules for the assigned technician and any others impacted by cascaded changes. The AI should clearly highlight the proposed interruption and its consequences.",
-          "Allow dispatchers to manually trigger a full re-evaluation for a region or specific group of technicians if a major unforeseen event occurs (e.g., widespread traffic incident not yet in system, multiple unexpected technician absences)."
-        ],
-        dataModels: [
-          "Relies heavily on real-time Job and Technician data (location, status, skills, currentJobId, estimatedDuration, scheduledTime, isAvailable).",
-          "May need a temporary 'optimization_queue' for pending re-optimization requests if system is under load.",
-          "Technician model may need a temporary 'outOfServiceReason' field (e.g., 'sick', 'vehicle_breakdown') and 'outOfServiceUntil' timestamp when marked unavailable by dispatcher."
-        ],
-        aiComponents: [
-          "Main Genkit flow: `dynamicReoptimizerFlow` (or similar name).",
-          "Gemini model for complex multi-constraint scheduling and routing.",
-          "Input: Current state of all relevant jobs & technicians, event trigger (e.g., 'technician_unavailable', 'new_emergency_job', 'manual_request'). Needs to handle `Job.scheduledTime` as a strong constraint.",
-          "Output: Updated job sequences for affected technicians, revised ETAs, notifications of changes. For technician unavailability, it should output a list of unassigned jobs and suggested reassignments or alerts for dispatcher review."
-        ],
-        uiUx: [
-          "Dispatcher dashboard: Map updates in real-time, notifications for significant changes or conflicts requiring manual review.",
-          "Interface for dispatcher to mark a technician as unavailable (e.g., 'Mark as Sick Today'). This action should clearly indicate that it will unassign their jobs and trigger AI re-allocation.",
-          "Clear visualization of AI-suggested changes before dispatcher confirms (for major re-optimizations, minor ones might be automatic or have a quick accept/reject).",
-          "Technician mobile app: Receives updated route/job sequence with clear notifications and reasons for changes if significant."
-        ],
-        integrationPoints: [
-          "Extends/integrates with `optimizeRoutesFlow` and `allocateJobFlow` concepts but operates at a more global and continuous level.",
-          "Job status updates and availability changes from technician app are critical triggers.",
-          "Traffic API (future) for real-time data.",
-          "Links to `AddEditTechnicianDialog` for marking technicians unavailable.",
-          "Links to `AddEditJobDialog` for flagging new jobs as emergencies."
-        ],
-        technicalChallenges: [
-          "Handling high frequency of events and ensuring rapid re-optimization without overwhelming the system or the user.",
-          "Minimizing disruption to technicians already en route unless absolutely necessary (e.g., for a higher priority emergency).",
-          "Algorithm complexity for balancing multiple competing factors (priority, travel time, technician load, fixed appointments, skills).",
-          "Ensuring dispatcher override capabilities and clear communication of AI-driven changes, especially for unassigning/reassigning jobs.",
-          "User experience for the dispatcher when handling technician sickness: how are unassigned jobs presented? How are AI suggestions for re-allocation displayed and confirmed?"
-        ],
-        successMetrics: [
-          "Reduced average travel time per job.",
-          "Increased number of jobs completed per technician per day.",
-          "Faster response times for emergency jobs.",
-          "Reduced idle time for technicians.",
-          "High adherence to customer-scheduled appointment times.",
-          "Reduction in dispatcher stress due to automated handling of common disruptions like technician absence."
-        ]
-      }
     },
   ],
   coreAiDispatcher: [

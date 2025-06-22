@@ -150,7 +150,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     }
   }, [description, isOpen, job, fetchAISkillSuggestion, fetchAIPrioritySuggestion, fetchAIPartSuggestion]);
 
-  const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
+  const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentRequiredParts: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
       setAiSuggestion(null);
       setSuggestedTechnicianDetails(null);
@@ -173,6 +173,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         technicianName: t.name,
         isAvailable: t.isAvailable,
         skills: t.skills as string[],
+        partsInventory: t.partsInventory || [],
         location: {
           latitude: t.location.latitude,
           longitude: t.location.longitude,
@@ -185,6 +186,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       jobDescription: currentDescription,
       jobPriority: currentPriority,
       requiredSkills: currentRequiredSkills,
+      requiredParts: currentRequiredParts,
       technicianAvailability: aiTechnicians,
       scheduledTime: currentScheduledTime?.toISOString(),
     };
@@ -206,11 +208,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   useEffect(() => {
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
-        fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
+        fetchAIAssignmentSuggestion(description, priority, requiredSkills, requiredParts, scheduledTime);
       }, 1000); 
       return () => clearTimeout(timer);
     }
-  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion]);
+  }, [description, priority, requiredSkills, requiredParts, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);

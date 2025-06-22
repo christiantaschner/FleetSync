@@ -21,11 +21,12 @@ interface JobListItemProps {
   jobs: Job[];
   technicians: Technician[];
   allSkills: string[];
+  allParts: string[];
   onAssignWithAI: (job: Job) => void;
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, onAssignWithAI, onJobUpdated }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, allParts, onAssignWithAI, onJobUpdated }) => {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -127,7 +128,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
           </Button>
         )}
-         <AddEditJobDialog job={job} jobs={jobs} technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={onJobUpdated}>
+         <AddEditJobDialog job={job} jobs={jobs} technicians={technicians} allSkills={allSkills} allParts={allParts} onJobUpdated={onJobUpdated}>
             <Button variant="secondary" size="sm">
                 <Edit className="mr-1 h-3 w-3" /> Edit
             </Button>

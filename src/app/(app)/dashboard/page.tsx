@@ -273,6 +273,7 @@ export default function DashboardPage() {
       technicianName: t.name,
       isAvailable: t.isAvailable,
       skills: t.skills as string[],
+      partsInventory: t.partsInventory || [],
       location: t.location,
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
         .map(j => ({
@@ -286,6 +287,7 @@ export default function DashboardPage() {
       jobDescription: job.description,
       jobPriority: job.priority,
       requiredSkills: job.requiredSkills || [],
+      requiredParts: job.requiredParts || [],
       scheduledTime: job.scheduledTime,
       technicianAvailability: aiTechnicians,
     };
@@ -453,6 +455,7 @@ export default function DashboardPage() {
             technicianName: t.name,
             isAvailable: t.isAvailable,
             skills: t.skills as string[],
+            partsInventory: t.partsInventory || [],
             location: t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
@@ -461,6 +464,7 @@ export default function DashboardPage() {
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
+            requiredParts: job.requiredParts || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
         };
@@ -885,6 +889,7 @@ export default function DashboardPage() {
                     jobs={jobs}
                     technicians={technicians} 
                     allSkills={allSkills}
+                    allParts={allParts}
                     onAssignWithAI={openAIAssignDialogForJob}
                     onJobUpdated={handleJobAddedOrUpdated}
                   />
@@ -910,7 +915,7 @@ export default function DashboardPage() {
                    <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
                     <Package className="mr-2 h-4 w-4" /> Manage Parts
                   </Button>
-                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
+                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills} allParts={allParts}>
                     <Button variant="default">
                       <UserPlus className="mr-2 h-4 w-4" /> Add Technician
                     </Button>
@@ -931,6 +936,7 @@ export default function DashboardPage() {
                         jobs={jobs} 
                         onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
                         allSkills={allSkills}
+                        allParts={allParts}
                         onMarkUnavailable={handleMarkTechnicianUnavailable}
                     />
                     ))}

@@ -2,14 +2,13 @@
 "use client";
 
 import React from 'react';
-// import Image from 'next/image'; // Not used directly
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon } from 'lucide-react'; // User icon not needed here, Added Edit
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Technician, Job } from '@/types';
 import { cn } from '@/lib/utils';
-import AddEditTechnicianDialog from './AddEditTechnicianDialog'; // Import the new dialog
+import AddEditTechnicianDialog from './AddEditTechnicianDialog';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -22,16 +21,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
   allSkills: string[];
-  onTechnicianUpdated: (technician: Technician) => void; // Callback for updates
+  allParts: string[];
+  onTechnicianUpdated: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, onTechnicianUpdated, onMarkUnavailable }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, allParts, onTechnicianUpdated, onMarkUnavailable }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
 
   return (
@@ -50,30 +51,31 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
         </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-2 text-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <MapPin className="h-4 w-4" />
+        <div className="flex items-start gap-2 text-muted-foreground">
+          <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
           <span>{technician.location.address || `Lat: ${technician.location.latitude.toFixed(2)}, Lon: ${technician.location.longitude.toFixed(2)}`}</span>
         </div>
-        {technician.phone && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Phone className="h-4 w-4" />
-            <span>{technician.phone}</span>
-          </div>
-        )}
-        {technician.email && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Mail className="h-4 w-4" />
-            <span>{technician.email}</span>
-          </div>
-        )}
+        
         <div className="pt-1">
-          <p className="font-medium text-xs text-foreground mb-1">Skills:</p>
+          <p className="font-medium text-xs text-foreground mb-1.5">Skills:</p>
           <div className="flex flex-wrap gap-1">
             {technician.skills.map(skill => (
               <Badge key={skill} variant="secondary">{skill}</Badge>
             ))}
             {technician.skills.length === 0 && <p className="text-xs text-muted-foreground">No skills listed.</p>}
           </div>
+        </div>
+
+         <div className="pt-1">
+          <p className="font-medium text-xs text-foreground mb-1.5 flex items-center gap-1"><Package className="h-3.5 w-3.5"/>Van Inventory:</p>
+          <ScrollArea className="h-16">
+            <div className="flex flex-wrap gap-1">
+                {technician.partsInventory?.map(part => (
+                  <Badge key={part} variant="outline" className="font-normal">{part}</Badge>
+                ))}
+                {(!technician.partsInventory || technician.partsInventory.length === 0) && <p className="text-xs text-muted-foreground">No parts in inventory.</p>}
+            </div>
+          </ScrollArea>
         </div>
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex justify-between items-center">
@@ -111,7 +113,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills}>
+          <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills} allParts={allParts}>
             <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
               <Edit className="h-3.5 w-3.5" />
               <span className="sr-only">Edit Technician</span>

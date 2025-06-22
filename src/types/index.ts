@@ -14,6 +14,7 @@ export type Technician = {
   name: string;
   isAvailable: boolean;
   skills: string[]; // Changed from TechnicianSkill[] to string[]
+  partsInventory?: string[];
   location: Location;
   avatarUrl?: string;
   currentJobId?: string | null;
@@ -79,6 +80,7 @@ export type AITechnician = {
   technicianName: string;
   isAvailable: boolean;
   skills: string[]; // GenAI flow uses string array
+  partsInventory: string[];
   location: {
     latitude: number;
     longitude: number;
@@ -107,6 +109,7 @@ export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
+  requiredParts: z.array(z.string()).optional().describe('A list of parts explicitly required for this job.'),
   scheduledTime: z.string().optional().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
   technicianAvailability: z.array(
     z.object({
@@ -114,6 +117,7 @@ export const AllocateJobInputSchema = z.object({
       technicianName: z.string().describe('The name of the technician.'),
       isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
+      partsInventory: z.array(z.string()).describe('The parts available in the technician\'s van inventory.'),
       location: z
         .object({
           latitude: z.number().describe('The latitude of the technician.'),

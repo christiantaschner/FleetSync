@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -125,7 +126,7 @@ const roadmapFeatures = {
       title: "In-App Chat & Media Sharing",
       description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
       icon: MessageSquare,
-      status: "Completed",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: ["Direct, real-time chat between dispatchers and technicians.", "Ability to scope chats to a specific job.", "Support for sending photos within the chat to clarify on-site issues."],
         dataModels: ["New Firestore collection: `chatMessages` (with messages), linked to jobId, senderId, receiverId. Message contains text, timestamp, and optional imageUrl."],
@@ -139,7 +140,7 @@ const roadmapFeatures = {
       title: "AI-Assisted Digital Protocols & Checklists",
       description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
       icon: ClipboardList,
-      status: "Completed",
+      status: "In Progress",
     },
     {
       title: "Dynamic Skill Library Management",
@@ -157,7 +158,7 @@ const roadmapFeatures = {
       title: "Intelligent Parts & Van Stock Management",
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
       icon: Wrench,
-      status: "Completed",
+      status: "In Progress",
     },
     {
       title: "AI-Powered Job Priority Suggestion",
@@ -193,7 +194,7 @@ const roadmapFeatures = {
       title: "Digital Time Tracking & Management",
       description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing and payroll. Accurate historical time data from this system also enhances the precision of AI-driven route optimization and future job scheduling.",
       icon: Timer,
-      status: "Completed",
+      status: "In Progress",
     },
     {
       title: "Real-time Notifications for Schedule Changes",
@@ -205,7 +206,7 @@ const roadmapFeatures = {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
       description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction.",
       icon: ThumbsUp,
-      status: "Completed",
+      status: "In Progress",
     },
     {
       title: "Customer Satisfaction & Response Time Analytics",
@@ -229,7 +230,7 @@ const roadmapFeatures = {
       title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
       description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries and guided diagnostics based on symptoms.",
       icon: BookOpen,
-      status: "Completed",
+      status: "In Progress",
     },
     {
       title: "Offline Mode for Core Mobile App Functions",

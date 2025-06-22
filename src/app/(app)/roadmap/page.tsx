@@ -117,6 +117,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Recurring Job & Maintenance Contract Management",
+      description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
+      icon: Repeat,
+      status: "In Progress",
+    },
+    {
       title: "In-App Chat & Media Sharing",
       description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
       icon: MessageSquare,
@@ -231,12 +237,6 @@ const roadmapFeatures = {
       title: "Live Technician Tracking Portal for Customers",
       description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
       icon: Navigation,
-      status: "Planned",
-    },
-    {
-      title: "Recurring Job & Maintenance Contract Management",
-      description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
-      icon: Repeat,
       status: "Planned",
     },
     {

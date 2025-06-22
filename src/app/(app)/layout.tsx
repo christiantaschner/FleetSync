@@ -12,7 +12,8 @@ import {
   Settings,
   LogOut,
   Loader2,
-  ListChecks, 
+  ListChecks,
+  Repeat,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -44,7 +45,8 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
-  { href: "/reports", label: "Reports", icon: PieChart }, 
+  { href: "/reports", label: "Reports", icon: PieChart },
+  { href: "/contracts", label: "Contracts", icon: Repeat },
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 

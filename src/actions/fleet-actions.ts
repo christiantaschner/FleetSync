@@ -11,8 +11,9 @@ import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predi
 import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest, Technician } from "@/types";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
+import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract } from "@/types";
+import { add, addDays, addMonths, addWeeks } from 'date-fns';
 
 // Import all required schemas and types from the central types file
 import {
@@ -621,5 +622,77 @@ export async function reassignJobAction(
     console.error("Error in reassignJobAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to reassign job. ${errorMessage}` };
+  }
+}
+
+const GenerateRecurringJobsInputSchema = z.object({
+  untilDate: z.string().describe("The date (ISO 8601 format) up to which jobs should be generated."),
+});
+
+export async function generateRecurringJobsAction(
+  input: z.infer<typeof GenerateRecurringJobsInputSchema>
+): Promise<{ data: { jobsCreated: number }; error: string | null }> {
+  try {
+    const { untilDate } = GenerateRecurringJobsInputSchema.parse(input);
+    const targetDate = new Date(untilDate);
+
+    if (!db) throw new Error("Firestore not initialized");
+
+    const contractsQuery = query(collection(db, "contracts"), where("isActive", "==", true));
+    const querySnapshot = await getDocs(contractsQuery);
+    
+    const contracts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+    const batch = writeBatch(db);
+    let jobsCreated = 0;
+
+    for (const contract of contracts) {
+      let currentDate = contract.lastGeneratedUntil ? addDays(new Date(contract.lastGeneratedUntil), 1) : new Date(contract.startDate);
+
+      while (currentDate <= targetDate) {
+        // Create job
+        const newJobRef = doc(collection(db, "jobs"));
+        const newJobPayload = {
+          ...contract.jobTemplate,
+          customerName: contract.customerName,
+          customerPhone: contract.customerPhone,
+          location: { address: contract.customerAddress, latitude: 0, longitude: 0 },
+          status: 'Pending' as JobStatus,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          scheduledTime: currentDate.toISOString(),
+          assignedTechnicianId: null,
+          notes: `Generated from Contract ID: ${contract.id}`,
+          sourceContractId: contract.id,
+        };
+        batch.set(newJobRef, newJobPayload);
+        jobsCreated++;
+
+        // Increment current date
+        switch (contract.frequency) {
+          case 'Weekly': currentDate = addWeeks(currentDate, 1); break;
+          case 'Bi-Weekly': currentDate = addWeeks(currentDate, 2); break;
+          case 'Monthly': currentDate = addMonths(currentDate, 1); break;
+          case 'Quarterly': currentDate = addMonths(currentDate, 3); break;
+          case 'Semi-Annually': currentDate = addMonths(currentDate, 6); break;
+          case 'Annually': currentDate = addMonths(currentDate, 12); break;
+          default: throw new Error(`Unknown frequency: ${contract.frequency}`);
+        }
+      }
+
+      // Update contract's last generated date
+      const contractDocRef = doc(db, "contracts", contract.id!);
+      batch.update(contractDocRef, { lastGeneratedUntil: targetDate.toISOString() });
+    }
+
+    await batch.commit();
+    return { data: { jobsCreated }, error: null };
+    
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error generating recurring jobs:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to generate jobs. ${errorMessage}` };
   }
 }

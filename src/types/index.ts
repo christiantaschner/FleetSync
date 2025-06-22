@@ -55,6 +55,7 @@ export type Job = {
   customerSatisfactionScore?: number;
   isFirstTimeFix?: boolean;
   reasonForFollowUp?: string;
+  sourceContractId?: string;
 };
 
 export type Task = {
@@ -101,6 +102,28 @@ export type ProfileChangeRequest = {
     approvedChanges?: Record<string, any>;
     reviewNotes?: string;
 };
+
+export const ContractSchema = z.object({
+    id: z.string().optional(),
+    customerName: z.string().min(1, "Customer name is required."),
+    customerPhone: z.string().optional(),
+    customerAddress: z.string().min(1, "Customer address is required."),
+    frequency: z.enum(['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']),
+    startDate: z.string().describe("The start date of the contract in ISO 8601 format."),
+    jobTemplate: z.object({
+        title: z.string().min(1, "Job title is required."),
+        description: z.string().min(1, "Job description is required."),
+        priority: z.enum(['High', 'Medium', 'Low']),
+        estimatedDurationMinutes: z.number().positive("Duration must be positive.").optional(),
+        requiredSkills: z.array(z.string()).optional(),
+        requiredParts: z.array(z.string()).optional(),
+    }),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+    lastGeneratedUntil: z.string().optional().describe("The last date up to which jobs were generated for this contract."),
+    isActive: z.boolean().default(true),
+});
+export type Contract = z.infer<typeof ContractSchema>;
 
 
 // --- AI Flow Schemas ---

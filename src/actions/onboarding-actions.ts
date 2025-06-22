@@ -44,7 +44,7 @@ export async function completeOnboardingAction(
     const userRef = doc(db, 'users', currentUser.uid);
     batch.update(userRef, {
       companyId: companyId,
-      role: 'admin',
+      role: 'admin', // Assign the 'admin' role to the creator
       onboardingStatus: 'completed',
     });
 

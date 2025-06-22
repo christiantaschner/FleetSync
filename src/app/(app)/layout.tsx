@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  PieChart, 
+  PieChart,
   Smartphone,
   Users,
   Settings,
@@ -15,6 +15,7 @@ import {
   ListChecks,
   Repeat,
   ClipboardList,
+  UserCog,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/logo";
@@ -43,12 +45,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const navItems = [
+const adminNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
   { href: "/contracts", label: "Contracts", icon: Repeat },
   { href: "/customers", label: "Customers", icon: ClipboardList },
   { href: "/reports", label: "Reports", icon: PieChart },
+];
+
+const technicianNavItems = [
+  { href: "/technician", label: "My Active Jobs", icon: Smartphone },
+];
+
+const sharedNavItems = [
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
@@ -56,22 +64,37 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userProfile, loading, logout } = useAuth();
-
+  
   React.useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
       router.replace("/login");
-    } else if (!loading && user && userProfile?.onboardingStatus === 'pending_onboarding') {
-      if (pathname !== '/onboarding') {
-        router.replace('/onboarding');
+      return;
+    }
+
+    if (userProfile) {
+      if (userProfile.onboardingStatus === 'pending_onboarding') {
+        if (pathname !== '/onboarding') {
+          router.replace('/onboarding');
+        }
+        return;
       }
-    } else if (!loading && user && userProfile?.onboardingStatus === 'completed') {
-       if (pathname === '/onboarding') {
-        router.replace('/dashboard');
+
+      if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
+        if (pathname === '/onboarding') {
+          router.replace('/dashboard');
+        }
+        // Redirect technician to their view if they are not in it
+        if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
+          router.replace('/technician');
+        }
+        return;
       }
     }
   }, [user, userProfile, loading, router, pathname]);
 
-  if (loading || !userProfile || (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding')) {
+  if (loading || !userProfile) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -79,18 +102,55 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
+  // This handles the redirect away from onboarding
+  if (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding') {
+      return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+  }
+  
+  // This handles the user who has created an account but not a company yet.
   if (pathname === '/onboarding') {
       return <>{children}</>;
   }
-
-
-  if (!user) {
-    return null; 
+  
+  // NEW: Handle "waiting room" for users without a companyId after onboarding phase
+  if (userProfile.onboardingStatus === 'completed' && !userProfile.companyId) {
+    return (
+        <div className="flex h-screen w-screen flex-col items-center justify-center bg-muted p-4">
+            <Logo />
+            <div className="mt-8 text-center">
+                <h1 className="text-2xl font-semibold">Account Pending</h1>
+                <p className="mt-2 text-muted-foreground">
+                    Your account is created but not yet linked to a company.
+                </p>
+                <p className="text-muted-foreground">
+                    Please contact your company's administrator to be added.
+                </p>
+                <Button onClick={logout} variant="outline" className="mt-6">
+                    <LogOut className="mr-2 h-4 w-4"/>
+                    Log Out
+                </Button>
+            </div>
+        </div>
+    );
   }
+
 
   const userInitial = user.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user.email || "User";
 
+  const getNavItemsForRole = () => {
+    if (userProfile?.role === 'technician') {
+      return [...technicianNavItems, ...sharedNavItems];
+    }
+    // Default to admin/dispatcher view
+    return [...adminNavItems, ...sharedNavItems];
+  };
+  
+  const navItems = getNavItemsForRole();
 
   return (
     <SidebarProvider defaultOpen>
@@ -119,6 +179,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuItem>
             ))}
+            {/* Show link to technician view for admins */}
+            {userProfile?.role === 'admin' && (
+              <>
+                <SidebarSeparator />
+                 <SidebarMenuItem>
+                    <Link href="/technician">
+                    <SidebarMenuButton
+                        isActive={pathname.startsWith("/technician")}
+                        className="w-full justify-start"
+                        tooltip="Technician View"
+                    >
+                        <Smartphone className="h-4 w-4" />
+                        <span>Technician View</span>
+                    </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+              </>
+            )}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
@@ -136,10 +214,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuContent side="right" align="start" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <Users className="mr-2 h-4 w-4" />
-                <span>Profile</span>
-              </DropdownMenuItem>
+               {userProfile?.role === 'admin' && (
+                 <Link href="/technician/profile">
+                    <DropdownMenuItem>
+                        <UserCog className="mr-2 h-4 w-4" />
+                        <span>My Technician Profile</span>
+                    </DropdownMenuItem>
+                </Link>
+               )}
+                {userProfile?.role === 'technician' && (
+                    <Link href="/technician/profile">
+                        <DropdownMenuItem>
+                            <Users className="mr-2 h-4 w-4" />
+                            <span>My Profile</span>
+                        </DropdownMenuItem>
+                    </Link>
+                )}
               <DropdownMenuItem disabled>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>

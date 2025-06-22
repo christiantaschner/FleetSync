@@ -262,3 +262,59 @@ export const RejectProfileChangeRequestInputSchema = z.object({
     requestId: z.string(),
     reviewNotes: z.string().optional(),
 });
+
+export const PredictScheduleRiskInputSchema = z.object({
+    currentTime: z.string().describe('The current time in ISO 8601 format.'),
+    technician: z.object({
+        technicianId: z.string(),
+        technicianName: z.string(),
+        currentLocation: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+    }),
+    currentJob: z.object({
+        jobId: z.string(),
+        location: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+        startedAt: z.string().describe('ISO 8601 timestamp for when work began.'),
+        estimatedDurationMinutes: z.number(),
+    }),
+    nextJob: z.object({
+        jobId: z.string(),
+        location: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+        scheduledTime: z.string().optional().describe('ISO 8601 timestamp for the appointment.'),
+    }),
+});
+export type PredictScheduleRiskInput = z.infer<typeof PredictScheduleRiskInputSchema>;
+
+export const PredictScheduleRiskOutputSchema = z.object({
+    predictedDelayMinutes: z.number().describe('The predicted delay in minutes. 0 or negative means on time.'),
+    reasoning: z.string().describe('A brief explanation of the prediction.'),
+});
+export type PredictScheduleRiskOutput = z.infer<typeof PredictScheduleRiskOutputSchema>;
+
+export const NotifyCustomerInputSchema = z.object({
+    jobId: z.string(),
+    customerName: z.string(),
+    technicianName: z.string(),
+    delayMinutes: z.number(),
+});
+export type NotifyCustomerInput = z.infer<typeof NotifyCustomerInputSchema>;
+
+export const GenerateCustomerNotificationInputSchema = z.object({
+  customerName: z.string(),
+  technicianName: z.string(),
+  delayMinutes: z.number(),
+});
+export type GenerateCustomerNotificationInput = z.infer<typeof GenerateCustomerNotificationInputSchema>;
+
+export const GenerateCustomerNotificationOutputSchema = z.object({
+  message: z.string().describe("The generated customer-facing notification message."),
+});
+export type GenerateCustomerNotificationOutput = z.infer<typeof GenerateCustomerNotificationOutputSchema>;

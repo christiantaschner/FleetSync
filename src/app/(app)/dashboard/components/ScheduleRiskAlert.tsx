@@ -36,7 +36,10 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else {
-      toast({ title: 'Customer Notified', description: 'A notification has been simulated.' });
+      toast({ 
+        title: 'Customer Notified (Simulated)', 
+        description: `Message generated: "${result.data?.message}"`
+      });
       onDismiss(technician.id);
     }
     setIsNotifying(false);

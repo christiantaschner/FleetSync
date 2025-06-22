@@ -6,10 +6,12 @@ import { optimizeRoutes as optimizeRoutesFlow } from "@/ai/flows/optimize-routes
 import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job-skills";
 import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest-job-priority";
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
+import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predict-schedule-risk";
+import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest } from "@/types";
+import type { Job, JobStatus, ProfileChangeRequest, Technician } from "@/types";
 
 // Import all required schemas and types from the central types file
 import {
@@ -31,7 +33,12 @@ import {
   type SuggestJobPriorityInput,
   type SuggestJobPriorityOutput,
   ApproveProfileChangeRequestInputSchema,
-  RejectProfileChangeRequestInputSchema
+  RejectProfileChangeRequestInputSchema,
+  PredictScheduleRiskInputSchema,
+  type PredictScheduleRiskInput,
+  type PredictScheduleRiskOutput,
+  NotifyCustomerInputSchema,
+  type NotifyCustomerInput,
 } from "@/types";
 
 
@@ -440,5 +447,106 @@ export async function rejectProfileChangeRequestAction(
     console.error("Error in rejectProfileChangeRequestAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to reject request. ${errorMessage}` };
+  }
+}
+
+
+export type CheckScheduleHealthResult = {
+  technician: Technician;
+  currentJob: Job;
+  nextJob: Job | null;
+  risk?: PredictScheduleRiskOutput | null;
+  error?: string;
+};
+
+export async function checkScheduleHealthAction(
+  { technicians, jobs }: { technicians: Technician[], jobs: Job[] }
+): Promise<{ data: CheckScheduleHealthResult[] | null; error: string | null }> {
+  try {
+    const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
+    if (busyTechnicians.length === 0) {
+      return { data: [], error: null };
+    }
+
+    const results: CheckScheduleHealthResult[] = await Promise.all(
+      busyTechnicians.map(async (tech) => {
+        const currentJob = jobs.find(j => j.id === tech.currentJobId);
+        if (!currentJob || currentJob.status !== 'In Progress' || !currentJob.inProgressAt) {
+          return { technician: tech, currentJob: currentJob!, nextJob: null, error: 'Technician not on an active, in-progress job.' };
+        }
+
+        const technicianJobs = jobs
+          .filter(j => j.assignedTechnicianId === tech.id && j.status === 'Assigned')
+          .sort((a, b) => (a.routeOrder ?? Infinity) - (b.routeOrder ?? Infinity));
+
+        const nextJob = technicianJobs.length > 0 ? technicianJobs[0] : null;
+
+        if (!nextJob) {
+          return { technician: tech, currentJob, nextJob: null };
+        }
+
+        const input: PredictScheduleRiskInput = {
+          currentTime: new Date().toISOString(),
+          technician: {
+            technicianId: tech.id,
+            technicianName: tech.name,
+            currentLocation: tech.location,
+          },
+          currentJob: {
+            jobId: currentJob.id,
+            location: currentJob.location,
+            startedAt: currentJob.inProgressAt,
+            estimatedDurationMinutes: currentJob.estimatedDurationMinutes || 60,
+          },
+          nextJob: {
+            jobId: nextJob.id,
+            location: nextJob.location,
+            scheduledTime: nextJob.scheduledTime,
+          }
+        };
+
+        const riskResult = await predictScheduleRiskFlow(input);
+        return { technician: tech, currentJob, nextJob, risk: riskResult };
+      })
+    );
+
+    return { data: results, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in checkScheduleHealthAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to check schedule health. ${errorMessage}` };
+  }
+}
+
+export async function notifyCustomerAction(
+  input: NotifyCustomerInput
+): Promise<{ data: { message: string } | null; error: string | null }> {
+  try {
+    const { jobId, customerName, technicianName, delayMinutes } = NotifyCustomerInputSchema.parse(input);
+    
+    // Have an AI generate the message for a more professional touch
+    const notificationResult = await generateCustomerNotificationFlow({
+        customerName,
+        technicianName,
+        delayMinutes,
+    });
+
+    const message = notificationResult.message;
+    
+    // In a real application, this would integrate with an SMS/Email service like Twilio.
+    // For this demo, we'll log it and return the message to be displayed in a toast.
+    console.log(`Simulating notification for job ${jobId}: "${message}"`);
+    
+    return { data: { message }, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in notifyCustomerAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to simulate notification. ${errorMessage}` };
   }
 }

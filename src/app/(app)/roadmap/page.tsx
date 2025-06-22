@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat
+  Sparkles, Navigation, Repeat, ShieldQuestion
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -90,9 +90,21 @@ const roadmapFeatures = {
       icon: AlertOctagon,
       status: "Completed",
     },
-    {
+     {
+      title: "Interactive Visual Calendar Scheduling",
+      description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
+      icon: CalendarDays,
+      status: "Completed",
+    },
+     {
+      title: "Digital Customer Signatures & Photo Documentation",
+      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
+      icon: FileSignature,
+      status: "Completed",
+    },
+     {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments, reacting to live events like new urgent jobs and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
       icon: Shuffle, 
       status: "In Progress",
       developerBrief: {
@@ -145,20 +157,14 @@ const roadmapFeatures = {
         ]
       }
     },
-    {
-      title: "Interactive Visual Calendar Scheduling",
-      description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
-      icon: CalendarDays,
-      status: "Completed",
-    },
-     {
-      title: "Digital Customer Signatures & Photo Documentation",
-      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
-      icon: FileSignature,
-      status: "Completed",
-    },
   ],
   coreAiDispatcher: [
+    {
+      title: "Proactive Delay Warnings & Smart Suggestions",
+      description: "The system proactively warns dispatchers BEFORE a technician misses a time window and suggests concrete solutions, such as notifying the customer or reassigning the job.",
+      icon: ShieldQuestion,
+      status: "Completed",
+    },
     {
       title: "In-App Chat & Media Sharing",
       description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
@@ -213,38 +219,6 @@ const roadmapFeatures = {
       description: "Enable technicians to view their own detailed profiles (including skills, certifications, contact info) via the mobile app. Implement a system for them to suggest changes or additions (e.g., new skill acquired), which dispatchers can review and approve. Improves data accuracy and empowers technicians.",
       icon: User, 
       status: "Completed",
-      developerBrief: {
-        coreFunctionality: [
-          "Technician Mobile App: A new 'My Profile' section displaying all their data stored in the `technicians` collection.",
-          "Interface for technicians to submit change requests (e.g., 'Add skill: Advanced Heat Pump Diagnostics', 'Update phone number').",
-          "Dispatcher Dashboard: A notification system or dedicated area to review and approve/reject these suggestions.",
-          "Approved suggestions update the technician's Firestore document."
-        ],
-        dataModels: [
-          "Potentially a new Firestore collection: `profileChangeRequests` (fields: `requestId`, `technicianId`, `requestedChanges: object`, `status: 'pending' | 'approved' | 'rejected'`, `requestDate`, `reviewDate?`, `reviewerId?`).",
-          "Updates to the `technicians` collection upon approval."
-        ],
-        aiComponents: ["N/A for this feature directly, but accurate technician profiles benefit AI allocation."],
-        uiUx: [
-          "Mobile App: Clear, read-only display of profile data. Simple form for submitting change suggestions.",
-          "Dispatcher Dashboard: List of pending suggestions with diffs or clear indication of requested changes. Approve/Reject buttons."
-        ],
-        integrationPoints: [
-          "Relies on Firebase Authentication for identifying the technician.",
-          "Updates `technicians` data used by all other parts of the system."
-        ],
-        technicalChallenges: [
-          "Designing a secure and auditable approval workflow.",
-          "Handling concurrent edits if a dispatcher modifies a profile while a suggestion is pending.",
-          "User experience for both technicians submitting suggestions and dispatchers reviewing them."
-        ],
-        successMetrics: [
-          "More accurate and up-to-date technician profiles.",
-          "Increased technician engagement and ownership of their data.",
-          "Reduced administrative burden on dispatchers for routine profile updates.",
-          "Improved data quality feeding into AI systems."
-        ]
-      }
     },
     {
       title: "Digital Time Tracking & Management",
@@ -260,74 +234,15 @@ const roadmapFeatures = {
     },
     {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
-      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction. This is informed by data from AI-Assisted Digital Protocols.",
+      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction.",
       icon: ThumbsUp,
       status: "Completed",
-      developerBrief: {
-        coreFunctionality: [
-          "Mechanism to mark a job as a 'first-time fix' or a 'follow-up visit'.",
-          "Calculation of FTFR percentage overall, per technician, per job type, per equipment type.",
-          "Identification of common reasons for non-FTFR (e.g., parts missing, misdiagnosis, skill gap)."
-        ],
-        dataModels: [
-          "Job document: add `isFirstTimeFix: boolean` (set by technician or inferred), `followUpToJobId: string` (if it's a repeat visit).",
-          "Possibly a new `jobIssueCodes` collection to categorize reasons for non-FTFR."
-        ],
-        aiComponents: [
-          "AI can analyze notes from 'AI-Assisted Digital Protocols' and technician documentation to help infer if a job was a true FTFR or if a follow-up is likely/needed.",
-          "AI can identify patterns in non-FTFR jobs to suggest areas for improvement (e.g., specific training, common missing parts)."
-        ],
-        integrationPoints: [
-          "Relies on accurate job status updates and detailed documentation from 'AI-Assisted Digital Protocols'.",
-          "Connects to 'Intelligent Parts Management' (identifying missing parts) and 'Smart Skill Matching' (identifying skill gaps)."
-        ],
-        technicalChallenges: [
-          "Defining clear criteria for what constitutes a 'first-time fix' versus a separate issue or planned phased work.",
-          "Ensuring consistent data capture by technicians.",
-          "Linking follow-up jobs accurately to original jobs."
-        ],
-        successMetrics: [
-          "Increase in overall FTFR percentage.",
-          "Reduction in repeat visits for the same issue.",
-          "Improved customer satisfaction due to faster problem resolution.",
-          "Identification of actionable insights for training or process improvement."
-        ]
-      }
     },
     {
       title: "CO2 Emission Estimation & Reporting",
       description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
       icon: Leaf,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Calculate estimated CO2 emissions per job based on distance traveled.",
-          "Aggregate CO2 emissions data for reporting (per technician, per period, overall).",
-          "Allow configuration of average vehicle fuel efficiency or CO2 emission factors."
-        ],
-        dataModels: [
-          "Technician profile: add optional `vehicleType: string` (e.g., 'Van Diesel', 'Car Petrol', 'EV') and `fuelEfficiency` (e.g., L/100km or kWh/100km).",
-          "Job document: store `estimatedTravelDistance: number` (from route optimization) and `estimatedCO2Emissions: number`."
-        ],
-        aiComponents: ["N/A directly for CO2 calculation, but AI route optimization is the primary driver for reduction."],
-        uiUx: [
-          "Dashboard: Display CO2 emission KPIs and trends in the 'Reports' section.",
-          "Option to set default emission factors if specific vehicle data isn't available."
-        ],
-        integrationPoints: [
-          "Uses travel distance data from the route optimization engine.",
-          "Could potentially integrate with telematics data in a more advanced version."
-        ],
-        technicalChallenges: [
-          "Accuracy of CO2 estimation, heavily dependent on input data (vehicle type, driving style, real fuel consumption vs. averages).",
-          "Sourcing and maintaining accurate emission factors for different vehicle types."
-        ],
-        successMetrics: [
-          "Demonstrable reduction in estimated CO2 emissions over time (primarily via route optimization).",
-          "Increased awareness of environmental impact.",
-          "Support for company sustainability reporting initiatives."
-        ]
-      }
     },
     {
       title: "Customer Satisfaction & Response Time Analytics",
@@ -343,135 +258,21 @@ const roadmapFeatures = {
     },
     {
       title: "Offline Mode for Core Mobile App Functions",
-      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites). Addresses a major technician pain point and increases app reliability.",
+      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
       icon: WifiOff,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Cache assigned job details (including customer info, description, protocols) on the technician's device.",
-          "Allow technicians to update job status (e.g., 'In Progress', 'Completed') while offline.",
-          "Allow technicians to complete digital protocols and save work documentation (notes, photos taken offline) locally.",
-          "Queue all offline changes for automatic synchronization when internet connectivity is restored."
-        ],
-        dataModels: [
-          "Utilize Firestore's built-in offline persistence capabilities for structured data (job details, status updates, notes).",
-          "For photos/files taken offline: Store locally on device (e.g., using Capacitor/Cordova filesystem APIs if it were a native app, or browser's IndexedDB/localStorage for PWA for temporary storage before upload). Upload to Firebase Storage upon reconnection."
-        ],
-        aiComponents: ["N/A for core offline functionality itself."],
-        uiUx: [
-          "Mobile app: Clear visual indicators of offline status.",
-          "Visual cues for data that is pending synchronization.",
-          "Robust error handling for sync conflicts (though Firestore handles many cases automatically)."
-        ],
-        integrationPoints: [
-          "Deep integration with Firestore SDK.",
-          "Firebase Storage for file uploads post-reconnection."
-        ],
-        technicalChallenges: [
-          "Managing local storage limits, especially for photos.",
-          "Ensuring data integrity and handling potential sync conflicts (e.g., if a job is modified by dispatch while technician is offline - Firestore's 'last write wins' is default, may need more complex logic).",
-          "Reliable background synchronization."
-        ],
-        successMetrics: [
-          "Increased app usability and reliability in areas with poor connectivity.",
-          "Higher completion rate of job documentation as it can be done immediately.",
-          "Reduced technician frustration with connectivity issues.",
-          "Consistent data flow regardless of network conditions."
-        ]
-      }
     },
     {
       title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
-      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries (e.g., 'What does error E47 mean?'), AI-guided diagnostics based on symptoms, and contextual information suggestions based on the job type. The knowledge base continuously improves by learning from successfully documented solutions and common issues identified in completed job protocols. This empowers technicians to resolve issues faster on-site, improves first-time fix rates, and reduces reliance on support calls, directly addressing a major technician pain point of difficult on-site problem-solving.",
+      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries and guided diagnostics based on symptoms.",
       icon: BookOpen,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Repository for documents: equipment manuals, troubleshooting guides, error code lists, best practice articles (PDFs, structured text, images).",
-          "Technician Mobile App: Search (keyword-based initially, then AI natural language). Browse by category/equipment type.",
-          "AI Query: Technicians ask questions like 'How to fix error X on Y model?' or describe symptoms.",
-          "AI Guided Diagnostics: AI presents a series of questions or steps to narrow down a problem based on symptoms.",
-          "Contextual Suggestions: AI suggests relevant articles based on current job's equipment type or description.",
-          "Feedback Loop: Solutions from 'AI-Assisted Digital Protocols' can be used to refine/add to the knowledge base."
-        ],
-        dataModels: [
-          "New Firestore collection: `KnowledgeBaseArticles` (fields: `articleId`, `title`, `content` (markdown/HTML), `equipmentTypeAssociation[]`, `errorCodes[]`, `tags[]`, `authorId`, `createdAt`, `updatedAt`, `sourceDocumentUrl?`).",
-          "For AI search (RAG): Potentially use Vertex AI Vector Search or similar to store embeddings of article content."
-        ],
-        aiComponents: [
-          "Genkit flow: `queryKnowledgeBaseFlow` (Input: natural language query, job context. Output: relevant articles, summaries, or diagnostic steps).",
-          "Gemini model for understanding queries, summarizing articles, generating diagnostic questions (RAG pattern).",
-          "Text embedding model (e.g., from Google AI Studio) for creating vectors for semantic search."
-        ],
-        uiUx: [
-          "Dispatcher Dashboard: Interface for managing (uploading, editing, tagging) knowledge base articles.",
-          "Technician Mobile App: Clean, easily searchable interface. Display articles clearly. Interactive diagnostic flow.",
-          "Option for technicians to rate article usefulness or suggest improvements."
-        ],
-        integrationPoints: [
-          "Data from 'AI-Assisted Digital Protocols' (successful fixes) can be curated to create new KB articles or validate existing ones.",
-          "CRM/Equipment History can provide context for AI suggestions.",
-          "Real-time Chat could allow AI to suggest KB articles to dispatchers/technicians."
-        ],
-        technicalChallenges: [
-          "Initial creation and curation of a comprehensive knowledge base.",
-          "Keeping content up-to-date.",
-          "Effectiveness of AI natural language understanding and relevance of search results.",
-          "Designing effective AI-guided diagnostic flows."
-        ],
-        successMetrics: [
-          "Reduced average on-site troubleshooting time.",
-          "Improved First-Time-Fix-Rate.",
-          "Fewer support calls from technicians to dispatch/seniors.",
-          "Increased technician confidence and autonomy.",
-          "High usage and positive feedback on the KB feature."
-        ]
-      }
     },
     {
       title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, and site-specific notes. Crucially for technicians, this will track installed HVAC equipment (model, serial, installation date, warranty, service history) accessible via the mobile app, enabling better on-site preparation, faster diagnosis, and reducing technician frustration from lack of information about the customer or equipment. This data also enhances AI job allocation and parts suggestions.",
+      description: "Manage customer details, contact history, and track installed HVAC equipment, enabling better on-site preparation and faster diagnosis. This data also enhances AI job allocation.",
       icon: ClipboardList,
       status: "Consideration",
-      developerBrief: {
-        coreFunctionality: [
-          "Manage customer records (name, contact info, multiple site addresses).",
-          "Track equipment installed at customer sites (type, make, model, serial, installation date, warranty info).",
-          "Log service history against each piece of equipment (linking to completed jobs).",
-          "Technicians can view relevant customer and equipment details for their assigned jobs on mobile."
-        ],
-        dataModels: [
-          "New Firestore collection: `Customers` (fields: `customerId`, `name`, `contactPerson`, `phone`, `email`, `billingAddress`, `siteAddresses: [{ addressId, fullAddress, notes }]`).",
-          "New Firestore collection: `Equipment` (fields: `equipmentId`, `customerId`, `siteAddressId`, `type`, `make`, `model`, `serialNumber`, `installationDate`, `warrantyExpiryDate`, `notes`, `serviceHistoryJobIds: string[]`).",
-          "`Job` document: link to `customerId` and potentially `equipmentId[]` being serviced."
-        ],
-        aiComponents: [
-          "AI job allocation can use equipment history (e.g., technician familiar with specific model).",
-          "AI parts suggestion can be more accurate with known equipment details.",
-          "AI in Knowledge Base can use equipment type for contextual suggestions."
-        ],
-        uiUx: [
-          "Dispatcher Dashboard: Interface for CRUD operations on customers and equipment. View to link equipment to customers/sites.",
-          "Technician Mobile App: Clear display of customer contact details, site access notes, and detailed list of equipment at the job location with their service history.",
-          "Easy way to add new equipment discovered on-site."
-        ],
-        integrationPoints: [
-          "Foundation for 'Proactive Maintenance Scheduling'.",
-          "Provides critical context for 'AI-Assisted Digital Protocols', 'Intelligent Parts Management', and 'AI-Powered Knowledge Base'.",
-          "Job creation flow would allow selecting customer and site, then relevant equipment."
-        ],
-        technicalChallenges: [
-          "Initial data migration/entry for existing customer and equipment data.",
-          "Designing a user-friendly interface for managing potentially complex relationships (customers, multiple sites, multiple pieces of equipment per site).",
-          "Ensuring data accuracy and consistency."
-        ],
-        successMetrics: [
-          "Reduced time for technicians to find customer/equipment information on-site.",
-          "Improved technician preparedness for jobs.",
-          "Enhanced accuracy of AI suggestions (parts, allocation) due to better contextual data.",
-          "Better tracking of equipment under maintenance contracts."
-        ]
-      }
     },
   ],
   futureVision: [
@@ -480,137 +281,72 @@ const roadmapFeatures = {
       description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
       icon: Navigation,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: ["Generate a unique, time-limited URL per job.", "Public-facing webpage showing a map with the technician's location and ETA.", "Technician location is updated in real-time."],
-        dataModels: ["Job document: add `publicTrackingId: string` and `trackingIdExpiresAt: Date`."],
-        technicalChallenges: ["Security and privacy: ensuring only the correct customer can view the location, and only for the duration of the job.", "Public-facing infrastructure to handle customer traffic."],
-        successMetrics: ["Significant reduction in 'Where is my technician?' calls.", "Improved customer experience and satisfaction."]
-      }
     },
     {
       title: "Recurring Job & Maintenance Contract Management",
       description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
       icon: Repeat,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: ["Define recurring job templates (e.g., 'Annual HVAC Service').", "Set recurrence rules (e.g., yearly, quarterly).", "System automatically creates pending jobs based on these rules.", "AI suggests optimal dates based on expected workload and location."],
-        dataModels: ["New Firestore collection: `maintenanceContracts` and `recurringJobTemplates`."],
-        technicalChallenges: ["Complex logic for generating future jobs and suggesting optimal times.", "User interface for managing contracts and recurrence rules."],
-        successMetrics: ["Automated planning of maintenance schedules.", "Improved customer retention through proactive service."]
-      }
     },
     {
       title: "AI-Assisted Digital Protocols & Checklists",
       description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
       icon: ClipboardList,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: ["Dispatcher can create and assign checklist templates to job types.", "Technician fills out the checklist on the mobile app.", "Completed checklists are saved as part of the job documentation."],
-        dataModels: ["New Firestore collections: `checklistTemplates` and `completedChecklists` (linked to jobs)."],
-        aiComponents: ["AI can analyze completed checklists to identify common failure points or suggest process improvements."],
-        successMetrics: ["Improved data quality and consistency.", "Elimination of paper forms.", "Enhanced compliance and safety."]
-      }
     },
     {
       title: "Intelligent Parts & Van Stock Management",
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
       icon: Wrench,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: ["Manage a central parts/tools library.", "Assign inventory to each technician/van.", "Technicians can update their stock levels from the mobile app.", "AI job allocation considers required parts/tools as a factor."],
-        dataModels: ["New Firestore collections: `parts`, `tools`, and `vanInventory`."],
-        technicalChallenges: ["Keeping inventory data accurate and in sync.", "User experience for technicians managing their van stock."],
-        successMetrics: ["Reduced trips to the warehouse.", "Improved first-time-fix rate.", "Lower fuel costs and technician downtime."]
-      }
     },
     {
       title: "Advanced Analytics & Performance Insights",
       description: "Provide deeper insights by comparing planned vs. actual times, analyzing technician utilization rates, tracking punctuality, and identifying common reasons for schedule deviations to continuously refine planning estimates.",
       icon: PieChart,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: ["Capture and compare estimated vs. actual travel and work times.", "Calculate technician utilization (time on job vs. idle/travel time).", "Track on-time performance against scheduled appointments.", "Categorize and report on reasons for delays."],
-        integrationPoints: ["Relies heavily on accurate timestamps from 'Digital Time Tracking' and route data from the optimization engine."],
-        technicalChallenges: ["Requires robust and clean data to be effective.", "Defining and calculating metrics like 'utilization' consistently."],
-        successMetrics: ["Actionable insights for improving operational efficiency.", "More accurate future job estimations.", "Better workload balancing among technicians."]
-      }
     },
     {
       title: "Predictive Maintenance as a Service",
       description: "Analyze vehicle consumption data and machine data to predict maintenance needs and enable proactive service planning, minimizing downtime and extending equipment lifespan.",
       icon: Brain,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["Collect and analyze sensor data from HVAC equipment (if available via IoT) or patterns from manual service reports.", "AI models to predict failures or optimal maintenance timing."],
-        dataModels: ["Requires `EquipmentSensorReadings` or detailed structured data from service protocols.", "AI models for anomaly detection/prediction."],
-        technicalChallenges: ["Requires IoT integration or highly structured data. Complex AI modeling."]
-      }
     },
     {
       title: "Smart City Infrastructure Integration",
       description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
       icon: Building2,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["Integrate with public/private APIs for real-time city data."],
-        aiComponents: ["Route optimization AI to consume new data streams."],
-        technicalChallenges: ["API availability and reliability, data standardization."]
-      }
     },
     {
       title: "AI-Powered Material Management & Inventory Optimization",
       description: "Extend AI to predict material requirements for jobs, optimizing warehousing and avoiding parts shortages in the field.",
       icon: Package,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["AI for demand forecasting of parts based on historical usage, job types, seasonality.", "Optimization of central warehouse stock levels."],
-        integrationPoints: ["Extends 'Intelligent Parts & Van Stock Management'.", "Potential integration with supplier ERPs."],
-        technicalChallenges: ["Complex AI for forecasting, requires significant historical data."]
-      }
     },
     {
       title: "Augmented Reality (AR) for Technicians",
       description: "Utilize AR in the mobile app to support technicians on-site, e.g., through interactive instructions or by overlaying relevant device information.",
       icon: Glasses,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["Overlay digital information (manuals, schematics, sensor readings) onto a camera view of equipment."],
-        uiUx: ["Mobile AR interface using ARKit/ARCore or WebXR."],
-        technicalChallenges: ["High development complexity, device compatibility, creating AR content."]
-      }
     },
     {
       title: "Marketplace for Craft Service Orders",
       description: "Develop a platform enabling craft businesses to share or take on unassigned jobs within a trusted network, optimizing industry-wide utilization.",
       icon: ShoppingCart,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["Platform for businesses to post jobs they can't handle and for others to bid/accept.", "Reputation and payment systems."],
-        technicalChallenges: ["Multi-tenancy, trust and safety, complex business logic."]
-      }
     },
     {
       title: "Automated Invoicing and Report Creation",
       description: "Fully integrate job documentation into automated administrative processes to further reduce office workload.",
       icon: FileSpreadsheet,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["Generate invoices from completed job data (time, parts, protocols).", "Automate creation of customer service reports."],
-        integrationPoints: ["Uses data from Time Tracking, Parts Management, Digital Protocols.", "Potential integration with accounting software (e.g., DATEV, Lexoffice)."],
-        technicalChallenges: ["Tax calculation, localization, diverse invoicing requirements."]
-      }
     },
     {
       title: "Machine Learning for Skills Development",
       description: "Analyze job data and technician performance to generate personalized further education recommendations for technicians, actively helping to combat 'Fachkräftemangel' (labor shortage) through targeted qualification.",
       icon: GraduationCap,
       status: "Vision",
-      developerBrief: {
-        coreFunctionality: ["AI analyzes technician performance on different job types/equipment vs. their current skills/certifications.", "Suggests relevant training modules or areas for development."],
-        dataModels: ["Requires detailed performance data (FTFR, job duration, customer feedback) linked to technician skills."],
-        aiComponents: ["ML models for skill gap analysis and recommendation."],
-        technicalChallenges: ["Defining performance objectively, sourcing/integrating training content."]
-      }
     },
   ]
 };

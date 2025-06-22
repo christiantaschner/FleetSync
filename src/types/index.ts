@@ -389,3 +389,5 @@ export const SuggestNextAppointmentOutputSchema = z.object({
   message: z.string().describe("The drafted customer-facing appointment scheduling message."),
 });
 export type SuggestNextAppointmentOutput = z.infer<typeof SuggestNextAppointmentOutputSchema>;
+
+    

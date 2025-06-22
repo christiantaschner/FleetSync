@@ -126,3 +126,5 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
 };
 
 export default TechnicianCard;
+
+    

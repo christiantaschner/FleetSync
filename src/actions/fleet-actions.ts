@@ -717,3 +717,5 @@ export async function suggestNextAppointmentAction(
     return { data: null, error: `Failed to suggest appointment. ${errorMessage}` };
   }
 }
+
+    

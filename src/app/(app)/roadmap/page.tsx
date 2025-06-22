@@ -225,16 +225,16 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Basic Integrated CRM for Customer & Equipment Management",
+      description: "Manage customer details, contact history, and track installed HVAC equipment, enabling better on-site preparation and faster diagnosis. This data also enhances AI job allocation.",
+      icon: ClipboardList,
+      status: "Completed",
+    },
+    {
       title: "Offline Mode for Core Mobile App Functions",
       description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
       icon: WifiOff,
       status: "Planned",
-    },
-    {
-      title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, and track installed HVAC equipment, enabling better on-site preparation and faster diagnosis. This data also enhances AI job allocation.",
-      icon: ClipboardList,
-      status: "In Progress",
     },
   ],
   futureVision: [

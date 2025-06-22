@@ -10,7 +10,7 @@ import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predi
 import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician } from "@/types";
 
 // Import all required schemas and types from the central types file
@@ -39,6 +39,7 @@ import {
   type PredictScheduleRiskOutput,
   NotifyCustomerInputSchema,
   type NotifyCustomerInput,
+  ReassignJobInputSchema,
 } from "@/types";
 
 
@@ -549,5 +550,51 @@ export async function notifyCustomerAction(
     console.error("Error in notifyCustomerAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { data: null, error: `Failed to simulate notification. ${errorMessage}` };
+  }
+}
+
+export async function reassignJobAction(
+  input: z.infer<typeof ReassignJobInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { jobId, newTechnicianId, reason } = ReassignJobInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+
+    const batch = writeBatch(db);
+
+    // 1. Update the job to point to the new technician
+    const jobDocRef = doc(db, "jobs", jobId);
+    const updatePayload: any = {
+      assignedTechnicianId: newTechnicianId,
+      status: "Assigned" as JobStatus,
+      updatedAt: serverTimestamp(),
+      assignedAt: serverTimestamp(),
+      routeOrder: deleteField(), // Clear route order as it belongs to a new tech's route
+    };
+    
+    if (reason) {
+        updatePayload.notes = arrayUnion(`(Reassigned by dispatcher: ${reason})`);
+    }
+
+    batch.update(jobDocRef, updatePayload);
+
+    // 2. Mark the new technician as unavailable, as they now have an assigned job.
+    const newTechDocRef = doc(db, "technicians", newTechnicianId);
+    batch.update(newTechDocRef, {
+        isAvailable: false
+    });
+
+    await batch.commit();
+    return { error: null };
+
+  } catch (e) {
+     if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in reassignJobAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to reassign job. ${errorMessage}` };
   }
 }

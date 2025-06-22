@@ -320,3 +320,11 @@ export const GenerateCustomerNotificationOutputSchema = z.object({
   message: z.string().describe("The generated customer-facing notification message."),
 });
 export type GenerateCustomerNotificationOutput = z.infer<typeof GenerateCustomerNotificationOutputSchema>;
+
+
+export const ReassignJobInputSchema = z.object({
+    jobId: z.string(),
+    newTechnicianId: z.string(),
+    reason: z.string().optional(),
+});
+export type ReassignJobInput = z.infer<typeof ReassignJobInputSchema>;

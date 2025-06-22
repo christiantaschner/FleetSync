@@ -203,7 +203,7 @@ export default function TechnicianJobDetailPage() {
         reasonForFollowUp: isFirstTimeFix ? '' : reasonForFollowUp,
         updatedAt: serverTimestamp(),
       });
-      setJob(prevJob => prevJob ? { ...prevJob, isFirstTimeFix, reasonForFollowUp } : null);
+      setJob(prevJob => prevJob ? { ...prevJob, isFirstTimeFix, reasonForFollowUp: isFirstTimeFix ? '' : reasonForFollowUp } : null);
       toast({ title: "FTFR Data Saved", description: "First-Time-Fix information has been recorded." });
     } catch (error) {
       console.error("Error submitting FTFR data:", error);

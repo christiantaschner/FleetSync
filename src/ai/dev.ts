@@ -12,5 +12,3 @@ import '@/ai/flows/predict-schedule-risk.ts';
 import '@/ai/flows/generate-customer-notification-flow.ts';
 import '@/ai/flows/suggest-next-appointment-flow.ts';
 import '@/ai/flows/troubleshoot-flow.ts';
-    
-    

@@ -744,5 +744,3 @@ export async function troubleshootEquipmentAction(
     return { data: null, error: `Failed to get troubleshooting steps. ${errorMessage}` };
   }
 }
-    
-    

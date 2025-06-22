@@ -386,7 +386,7 @@ export default function TechnicianJobDetailPage() {
         <ChatCard job={job} technician={technician} />
       )}
 
-      {job.status === 'In Progress' && (
+      {(job.status === 'In Progress' || job.status === 'Completed') && (
         <TroubleshootingCard jobTitle={job.title} />
       )}
       

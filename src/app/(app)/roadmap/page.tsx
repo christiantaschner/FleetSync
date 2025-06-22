@@ -126,12 +126,13 @@ const roadmapFeatures = {
       title: "In-App Chat & Media Sharing",
       description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
       icon: MessageSquare,
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: ["Direct, real-time chat between dispatchers and technicians.", "Ability to scope chats to a specific job.", "Support for sending photos within the chat to clarify on-site issues."],
-        dataModels: ["New Firestore collection: `chats` (with messages), linked to job and user IDs."],
-        uiUx: ["Chat interface within the dispatcher dashboard.", "Chat view integrated into the technician's mobile job detail page."],
-        integrationPoints: ["Links to user authentication and job data."],
+        dataModels: ["New Firestore collection: `chatMessages` (with messages), linked to jobId, senderId, receiverId. Message contains text, timestamp, and optional imageUrl."],
+        uiUx: ["Chat sheet/dialog within the dispatcher dashboard, accessible from a job.", "Chat view integrated into the technician's mobile job detail page."],
+        integrationPoints: ["Links to user authentication (for senderId) and job data."],
+        technicalChallenges: ["Implementing a real-time listener with `onSnapshot` for a smooth chat experience.", "Handling image uploads to Firebase Storage before creating the message document."],
         successMetrics: ["Reduced need for phone calls/external messaging apps.", "Faster resolution of simple on-site queries."]
       }
     },
@@ -342,5 +343,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-    

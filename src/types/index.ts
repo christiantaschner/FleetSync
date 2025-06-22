@@ -104,6 +104,18 @@ export type ProfileChangeRequest = {
     reviewNotes?: string;
 };
 
+export type ChatMessage = {
+    id: string;
+    jobId: string;
+    senderId: string;
+    senderName: string;
+    receiverId: string;
+    text: string;
+    imageUrl?: string | null;
+    timestamp: string;
+    isRead: boolean;
+}
+
 export const ContractSchema = z.object({
     id: z.string().optional(),
     customerName: z.string().min(1, "Customer name is required."),
@@ -389,5 +401,3 @@ export const SuggestNextAppointmentOutputSchema = z.object({
   message: z.string().describe("The drafted customer-facing appointment scheduling message."),
 });
 export type SuggestNextAppointmentOutput = z.infer<typeof SuggestNextAppointmentOutputSchema>;
-
-    

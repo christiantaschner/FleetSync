@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks, Package } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks, Package, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -24,9 +24,10 @@ interface JobListItemProps {
   allParts: string[];
   onAssignWithAI: (job: Job) => void;
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
+  onOpenChat: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, allParts, onAssignWithAI, onJobUpdated }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, allParts, onAssignWithAI, onJobUpdated, onOpenChat }) => {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -123,6 +124,11 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
+        {job.status !== 'Pending' && job.assignedTechnicianId && (
+            <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
+                <MessageSquare className="mr-1 h-3 w-3" /> Chat
+            </Button>
+        )}
         {job.status === 'Pending' && (
           <Button variant="outline" size="sm" onClick={() => onAssignWithAI(job)}>
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
@@ -139,5 +145,3 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
 };
 
 export default JobListItem;
-
-    

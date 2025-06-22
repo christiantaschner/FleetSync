@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import type { Job, JobStatus } from '@/types';
+import type { Job, JobStatus, Technician } from '@/types';
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,14 +19,18 @@ import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import ChatCard from './components/ChatCard';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
   const params = useParams();
   const jobId = params.jobId as string;
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
+  const [technician, setTechnician] = useState<Technician | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   
@@ -36,29 +40,40 @@ export default function TechnicianJobDetailPage() {
   const isBreakActive = job?.status === 'In Progress' && job.breaks?.some(b => !b.end);
 
   useEffect(() => {
-    if (!jobId || !db) {
+    if (!jobId || !db || !user) {
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
-    const jobDocRef = doc(db, "jobs", jobId);
-
-    const fetchJob = async () => {
+    
+    const fetchJobAndTechnician = async () => {
       try {
-        const docSnap = await getDoc(jobDocRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          // Convert any Firebase Timestamp fields to ISO strings
-          for (const key in data) {
-              if (data[key] && typeof data[key].toDate === 'function') {
-                  data[key] = data[key].toDate().toISOString();
+        const jobDocRef = doc(db, "jobs", jobId);
+        const jobDocSnap = await getDoc(jobDocRef);
+
+        if (jobDocSnap.exists()) {
+          const jobData = jobDocSnap.data();
+          for (const key in jobData) {
+              if (jobData[key] && typeof jobData[key].toDate === 'function') {
+                  jobData[key] = jobData[key].toDate().toISOString();
               }
           }
-          const fetchedJob = { id: docSnap.id, ...data } as Job;
+          const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
           setJob(fetchedJob);
+          
           if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
             setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
           }
+
+          // Fetch the technician details using the current user's UID
+          const techDocRef = doc(db, "technicians", user.uid);
+          const techDocSnap = await getDoc(techDocRef);
+          if (techDocSnap.exists()) {
+              setTechnician({ id: techDocSnap.id, ...techDocSnap.data() } as Technician);
+          } else {
+              toast({ title: "Error", description: "Technician profile not found.", variant: "destructive" });
+          }
+
         } else {
           toast({ title: "Error", description: "Job not found.", variant: "destructive" });
           router.push('/technician');
@@ -71,8 +86,8 @@ export default function TechnicianJobDetailPage() {
       }
     };
 
-    fetchJob();
-  }, [jobId, router, toast]);
+    fetchJobAndTechnician();
+  }, [jobId, router, toast, user]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (!job || !db || isUpdating) return;
@@ -281,7 +296,7 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
-  if (!job) {
+  if (!job || !technician) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
@@ -332,6 +347,10 @@ export default function TechnicianJobDetailPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {job && technician && !isJobConcluded && (
+        <ChatCard job={job} technician={technician} />
       )}
       
       {job.status === 'In Progress' && (

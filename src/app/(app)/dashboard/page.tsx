@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -32,6 +32,7 @@ import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
+import ChatSheet from './components/ChatSheet';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -81,6 +82,10 @@ export default function DashboardPage() {
   const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
+
+  // For Chat
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedChatJob, setSelectedChatJob] = useState<Job | null>(null);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -412,6 +417,11 @@ export default function DashboardPage() {
     setSelectedJobForAIAssign(job);
     setIsAIAssignDialogOpen(true);
   };
+  
+  const handleOpenChat = (job: Job) => {
+    setSelectedChatJob(job);
+    setIsChatOpen(true);
+  };
 
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
@@ -604,6 +614,12 @@ export default function DashboardPage() {
   return (
     <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
       <div className="flex flex-col gap-6">
+        <ChatSheet 
+            isOpen={isChatOpen} 
+            setIsOpen={setIsChatOpen} 
+            job={selectedChatJob} 
+            technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
+        />
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
             Dispatcher Dashboard
@@ -892,6 +908,7 @@ export default function DashboardPage() {
                     allParts={allParts}
                     onAssignWithAI={openAIAssignDialogForJob}
                     onJobUpdated={handleJobAddedOrUpdated}
+                    onOpenChat={handleOpenChat}
                   />
                 )) : (
                   <p className="text-muted-foreground text-center py-10">
@@ -955,5 +972,3 @@ export default function DashboardPage() {
     </GoogleMapsAPIProvider>
   );
 }
-
-    

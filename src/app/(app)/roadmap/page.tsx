@@ -239,12 +239,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "CO2 Emission Estimation & Reporting",
-      description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
-      icon: Leaf,
-      status: "Planned",
-    },
-    {
       title: "Customer Satisfaction & Response Time Analytics",
       description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality, directly impacting customer retention.",
       icon: Smile,
@@ -253,6 +247,12 @@ const roadmapFeatures = {
      {
       title: "Basic Reporting Dashboard",
       description: "A dashboard providing insights into key performance indicators (KPIs) like job completion rates and technician workloads. Includes charts for jobs by status and jobs completed per technician.",
+      icon: PieChart,
+      status: "Completed",
+    },
+    {
+      title: "Advanced Analytics & Performance Insights",
+      description: "Provide deeper insights by comparing planned vs. actual times, analyzing technician utilization rates, tracking punctuality, and identifying common reasons for schedule deviations to continuously refine planning estimates.",
       icon: PieChart,
       status: "Completed",
     },
@@ -301,9 +301,9 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "Advanced Analytics & Performance Insights",
-      description: "Provide deeper insights by comparing planned vs. actual times, analyzing technician utilization rates, tracking punctuality, and identifying common reasons for schedule deviations to continuously refine planning estimates.",
-      icon: PieChart,
+      title: "CO2 Emission Estimation & Reporting",
+      description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
+      icon: Leaf,
       status: "Planned",
     },
     {

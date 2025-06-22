@@ -116,10 +116,12 @@ export default function ReportsPage() {
           avgSatisfaction: "N/A",
           ftfr: "N/A",
           onTimeArrivalRate: "N/A",
+          avgEstimateAccuracy: 0,
         },
         jobsByStatus: [],
         jobsPerTechnician: [],
         punctualityChartData: [],
+        durationComparisonChartData: [],
       };
     }
 
@@ -183,6 +185,21 @@ export default function ReportsPage() {
     const onTimeArrivalRate = totalPunctualityJobs > 0 
         ? (((punctuality.early + punctuality.onTime) / totalPunctualityJobs) * 100).toFixed(1) 
         : "N/A";
+    
+    const completedJobsWithDuration = completedJobs.filter(
+        j => j.inProgressAt && j.completedAt && j.estimatedDurationMinutes && j.estimatedDurationMinutes > 0
+    );
+
+    const totalDeviation = completedJobsWithDuration.reduce((acc, j) => {
+        const actualDurationMs = new Date(j.completedAt!).getTime() - new Date(j.inProgressAt!).getTime();
+        const actualDurationMinutes = Math.round(actualDurationMs / 60000);
+        const deviation = Math.abs(actualDurationMinutes - j.estimatedDurationMinutes!);
+        return acc + deviation;
+    }, 0);
+
+    const avgEstimateAccuracy = completedJobsWithDuration.length > 0 
+        ? Math.round(totalDeviation / completedJobsWithDuration.length)
+        : 0;
 
     // --- Chart Data ---
     const jobsByStatus = jobs.reduce((acc, job) => {
@@ -207,6 +224,16 @@ export default function ReportsPage() {
         { name: 'On Time', value: punctuality.onTime, fill: 'hsl(var(--chart-1))' },
         { name: 'Late', value: punctuality.late, fill: 'hsl(var(--destructive))' },
     ].filter(d => d.value > 0);
+    
+    const durationComparisonChartData = completedJobsWithDuration.map(j => {
+        const actualDurationMs = new Date(j.completedAt!).getTime() - new Date(j.inProgressAt!).getTime();
+        const actualDurationMinutes = Math.round(actualDurationMs / 60000);
+        return {
+            name: j.title.length > 20 ? j.title.substring(0, 17) + '...' : j.title,
+            estimated: j.estimatedDurationMinutes,
+            actual: actualDurationMinutes,
+        };
+    }).slice(-10); // Last 10 completed jobs
 
     return {
       kpis: {
@@ -217,10 +244,12 @@ export default function ReportsPage() {
         avgSatisfaction: avgSatisfaction,
         ftfr: ftfrPercentage,
         onTimeArrivalRate: onTimeArrivalRate,
+        avgEstimateAccuracy: avgEstimateAccuracy,
       },
       jobsByStatus: pieData,
       jobsPerTechnician: jobsPerTechnician.filter(t => t.completed > 0),
       punctualityChartData: punctualityChartData,
+      durationComparisonChartData: durationComparisonChartData,
     };
   }, [jobs, technicians]);
 
@@ -245,6 +274,17 @@ export default function ReportsPage() {
     'Early': { label: 'Early' },
     'On Time': { label: 'On Time' },
     'Late': { label: 'Late' },
+  } satisfies ChartConfig;
+  
+  const durationComparisonChartConfig = {
+      estimated: {
+        label: "Estimated",
+        color: "hsl(var(--chart-2))",
+      },
+      actual: {
+        label: "Actual",
+        color: "hsl(var(--chart-1))",
+      },
   } satisfies ChartConfig;
 
 
@@ -331,6 +371,16 @@ export default function ReportsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.ftfr}%</div>
             <p className="text-xs text-muted-foreground">Of jobs resolved in one visit</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Estimate Accuracy</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+/- {reportData.kpis.avgEstimateAccuracy} min</div>
+            <p className="text-xs text-muted-foreground">Avg. deviation from estimate</p>
           </CardContent>
         </Card>
       </div>
@@ -429,7 +479,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
           <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2">
@@ -488,6 +538,42 @@ export default function ReportsPage() {
                     <p className="text-muted-foreground text-center py-10">No punctuality data available for this chart.</p>
                 )}
             </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2">
+                        <BarChart /> Estimated vs. Actual Duration
+                    </CardTitle>
+                    <CardDescription>Comparison for the last 10 completed jobs with estimates (in minutes).</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {reportData.durationComparisonChartData.length > 0 ? (
+                    <ChartContainer config={durationComparisonChartConfig} className="min-h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={reportData.durationComparisonChartData}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="name"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    className="text-xs"
+                                />
+                                <YAxis unit="m" />
+                                <ChartTooltip
+                                    cursor={false}
+                                    content={<ChartTooltipContent indicator="dot" />}
+                                />
+                                <ChartLegend content={<ChartLegendContent />} />
+                                <Bar dataKey="estimated" fill="hsl(var(--chart-2))" radius={4} />
+                                <Bar dataKey="actual" fill="hsl(var(--chart-1))" radius={4} />
+                            </BarChart>
+                    </ResponsiveContainer>
+                    </ChartContainer>
+                    ) : (
+                        <p className="text-muted-foreground text-center py-10">No completed jobs with duration estimates to compare.</p>
+                    )}
+                </CardContent>
             </Card>
       </div>
     </div>

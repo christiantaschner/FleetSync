@@ -303,14 +303,16 @@ export const NotifyCustomerInputSchema = z.object({
     jobId: z.string(),
     customerName: z.string(),
     technicianName: z.string(),
-    delayMinutes: z.number(),
+    delayMinutes: z.number().optional(),
+    newTime: z.string().optional(),
 });
 export type NotifyCustomerInput = z.infer<typeof NotifyCustomerInputSchema>;
 
 export const GenerateCustomerNotificationInputSchema = z.object({
   customerName: z.string(),
   technicianName: z.string(),
-  delayMinutes: z.number(),
+  delayMinutes: z.number().optional(),
+  newTime: z.string().optional(),
 });
 export type GenerateCustomerNotificationInput = z.infer<typeof GenerateCustomerNotificationInputSchema>;
 

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { optimizeRoutesAction, type OptimizeRoutesActionInput, confirmManualRescheduleAction } from "@/actions/fleet-actions";
+import { optimizeRoutesAction, type OptimizeRoutesActionInput, confirmManualRescheduleAction, notifyCustomerAction } from "@/actions/fleet-actions";
 import type { OptimizeRoutesOutput, Technician, Job, AITask } from "@/types";
 import type { EventDropArg } from '@fullcalendar/core';
 import { Loader2, MapIcon, CheckCircle, AlertTriangle } from 'lucide-react';
@@ -113,6 +113,25 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
         onClose(true); // Revert calendar on failure
     } else {
         toast({ title: "Schedule Updated", description: "The technician's route has been successfully updated." });
+
+        const movedJob = jobs.find(j => j.id === event.id);
+        if (movedJob) {
+            // Fire-and-forget notification to the customer
+            notifyCustomerAction({
+                jobId: movedJob.id,
+                customerName: movedJob.customerName,
+                technicianName: technician.name,
+                newTime: new Date(event.start!).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+            }).then(notificationResult => {
+                if(notificationResult.data?.message) {
+                    toast({
+                        title: "Customer Notified (Simulated)",
+                        description: `Message generated: "${notificationResult.data.message}"`
+                    });
+                }
+            });
+        }
+
         onRescheduleConfirmed();
         onClose(false); // Close without reverting
     }
@@ -150,7 +169,7 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Confirm Changes</AlertTitle>
                 <AlertDescription>
-                    Applying this change will update the scheduled time and route for this technician. This action cannot be undone from this dialog.
+                    Applying this change will update the scheduled time and route for this technician. A notification will be simulated for the customer.
                 </AlertDescription>
             </Alert>
           </div>

@@ -24,19 +24,34 @@ const prompt = ai.definePrompt({
     output: {schema: GenerateCustomerNotificationOutputSchema},
     prompt: `You are a helpful customer service assistant for a field service company.
     
-    Your task is to write a polite, concise, and professional SMS message to a customer about a potential schedule delay.
+    Your task is to write a polite, concise, and professional SMS message to a customer. The tone should adapt based on the situation.
     
     - Customer's Name: {{{customerName}}}
     - Technician's Name: {{{technicianName}}}
+    
+    {{#if delayMinutes}}
+    This is a proactive alert about a potential delay.
     - Estimated Delay: {{{delayMinutes}}} minutes
     
     The message should:
     1. Greet the customer by name.
-    2. Briefly state that this is a courtesy alert about their upcoming service.
-    3. Inform them that their technician, by name, might be running late by the estimated number of minutes.
+    2. State this is a courtesy alert about their upcoming service.
+    3. Inform them that their technician, {{{technicianName}}}, might be running late by approximately {{{delayMinutes}}} minutes.
     4. Apologize for any inconvenience.
-    5. Do not include salutations like "Sincerely" or a company name. Keep it brief for an SMS.
+    {{/if}}
     
+    {{#if newTime}}
+    This is a notification about a confirmed schedule change.
+    - New Appointment Time: {{{newTime}}}
+    
+    The message should:
+    1. Greet the customer by name.
+    2. Inform them that due to a schedule update, their appointment time has been changed.
+    3. Clearly state the new appointment is for {{{newTime}}}.
+    4. Apologize for the change and advise them to call our office if this new time is inconvenient.
+    {{/if}}
+
+    Do not include salutations like "Sincerely" or a company name. Keep it brief for an SMS.
     Return a JSON object with the generated message in the "message" field.
     `,
 });

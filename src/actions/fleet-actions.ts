@@ -525,20 +525,21 @@ export async function notifyCustomerAction(
   input: NotifyCustomerInput
 ): Promise<{ data: { message: string } | null; error: string | null }> {
   try {
-    const { jobId, customerName, technicianName, delayMinutes } = NotifyCustomerInputSchema.parse(input);
+    const validatedInput = NotifyCustomerInputSchema.parse(input);
     
     // Have an AI generate the message for a more professional touch
     const notificationResult = await generateCustomerNotificationFlow({
-        customerName,
-        technicianName,
-        delayMinutes,
+        customerName: validatedInput.customerName,
+        technicianName: validatedInput.technicianName,
+        delayMinutes: validatedInput.delayMinutes,
+        newTime: validatedInput.newTime,
     });
 
     const message = notificationResult.message;
     
     // In a real application, this would integrate with an SMS/Email service like Twilio.
     // For this demo, we'll log it and return the message to be displayed in a toast.
-    console.log(`Simulating notification for job ${jobId}: "${message}"`);
+    console.log(`Simulating notification for job ${validatedInput.jobId}: "${message}"`);
     
     return { data: { message }, error: null };
   } catch (e) {

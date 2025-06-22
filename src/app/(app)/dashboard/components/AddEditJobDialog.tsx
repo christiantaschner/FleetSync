@@ -30,6 +30,7 @@ import { cn } from '@/lib/utils';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useAuth } from '@/contexts/auth-context';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
@@ -44,6 +45,7 @@ interface AddEditJobDialogProps {
 }
 
 const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, allParts, onJobAddedOrUpdated }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -243,9 +245,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       return;
     }
     
+    if (!user) {
+      toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+      return;
+    }
     setIsLoading(true);
 
-    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { scheduledTime?: string; requiredSkills?: string[]; requiredParts?: string[] } = {
+    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { companyId: string, scheduledTime?: string; requiredSkills?: string[]; requiredParts?: string[] } = {
+      companyId: user.uid,
       title,
       description,
       priority,
@@ -553,5 +560,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 };
 
 export default AddEditJobDialog;
-
-    

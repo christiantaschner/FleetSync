@@ -42,14 +42,7 @@ export default function TechnicianProfilePage() {
   const [isSuggestChangeOpen, setIsSuggestChangeOpen] = useState(false);
 
   useEffect(() => {
-    if (authLoading) return;
-
-    if (!firebaseUser) {
-      setIsLoading(false);
-      setError("User not authenticated.");
-      router.push('/login');
-      return;
-    }
+    if (authLoading || !firebaseUser) return;
 
     if (!db) {
       setIsLoading(false);
@@ -57,58 +50,53 @@ export default function TechnicianProfilePage() {
       return;
     }
 
-    const fetchAllSkills = async () => {
-        const skillsQuery = query(collection(db, "skills"), orderBy("name"));
-        const querySnapshot = await getDocs(skillsQuery);
-        setAllSkills(querySnapshot.docs.map(doc => doc.data().name as string));
-    };
-    
-    fetchAllSkills();
-
     const techDocRef = doc(db, "technicians", firebaseUser.uid);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
         if (docSnap.exists()) {
-          const data = docSnap.data();
-          for (const key in data) {
-              if (data[key] && typeof data[key].toDate === 'function') {
-                  data[key] = data[key].toDate().toISOString();
-              }
-          }
-          setTechnician({ id: docSnap.id, ...data } as Technician);
+          const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
+          setTechnician(techData);
+
+          const skillsQuery = query(collection(db, "skills"), where("companyId", "==", techData.companyId), orderBy("name"));
+          getDocs(skillsQuery).then(querySnapshot => {
+            setAllSkills(querySnapshot.docs.map(doc => doc.data().name as string));
+          });
+          
+          const requestsQuery = query(
+            collection(db, "profileChangeRequests"),
+            where("companyId", "==", techData.companyId),
+            where("technicianId", "==", firebaseUser.uid)
+          );
+          const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+              const requestsData = snapshot.docs.map(doc => {
+                  const data = doc.data();
+                  for (const key in data) {
+                      if (data[key] && typeof data[key].toDate === 'function') {
+                          data[key] = data[key].toDate().toISOString();
+                      }
+                  }
+                  return { id: doc.id, ...data } as ProfileChangeRequest
+              });
+              requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+              setSubmittedRequests(requestsData);
+          });
+          
+          setIsLoading(false);
+          return () => unsubscribeRequests(); // Nested cleanup
         } else {
           setError("No technician profile found for your account.");
           setTechnician(null);
+          setIsLoading(false);
         }
-        setIsLoading(false);
     }, (e) => {
         console.error("Error fetching technician profile:", e);
         setError("Could not load your profile.");
         setIsLoading(false);
     });
 
-    const requestsQuery = query(
-      collection(db, "profileChangeRequests"),
-      where("technicianId", "==", firebaseUser.uid)
-    );
-    const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
-        const requestsData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
-                }
-            }
-            return { id: doc.id, ...data } as ProfileChangeRequest
-        });
-        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setSubmittedRequests(requestsData);
-    });
-
     return () => {
         unsubscribeTech();
-        unsubscribeRequests();
     };
-  }, [firebaseUser, authLoading, router]);
+  }, [firebaseUser, authLoading]);
 
   if (isLoading || authLoading) {
     return (

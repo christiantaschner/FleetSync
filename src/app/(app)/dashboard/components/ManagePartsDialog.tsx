@@ -15,10 +15,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, writeBatch, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Package } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_PARTS } from '@/lib/parts';
+import { useAuth } from '@/contexts/auth-context';
 
 interface Part {
   id: string;
@@ -32,6 +33,7 @@ interface ManagePartsDialogProps {
 }
 
 const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen, onPartsUpdated }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [parts, setParts] = useState<Part[]>([]);
   const [newPartName, setNewPartName] = useState('');
@@ -40,10 +42,10 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
 
   const fetchParts = async () => {
-    if (!db) return;
+    if (!db || !user) return;
     setIsLoading(true);
     try {
-      const partsQuery = query(collection(db, "parts"), orderBy("name"));
+      const partsQuery = query(collection(db, "parts"), where("companyId", "==", user.uid), orderBy("name"));
       const querySnapshot = await getDocs(partsQuery);
       const partsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
       setParts(partsData);
@@ -64,7 +66,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 
   const handleAddPart = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPartName.trim() || !db) return;
+    if (!newPartName.trim() || !db || !user) return;
     
     if (parts.some(part => part.name.toLowerCase() === newPartName.trim().toLowerCase())) {
         toast({ title: "Duplicate Part", description: "This part already exists.", variant: "destructive"});
@@ -73,7 +75,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "parts"), { name: newPartName.trim() });
+      await addDoc(collection(db, "parts"), { name: newPartName.trim(), companyId: user.uid });
       setNewPartName('');
       toast({ title: "Success", description: `Part "${newPartName.trim()}" added.`});
       await fetchParts(); 
@@ -103,7 +105,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   };
 
   const handleSeedParts = async () => {
-    if (!db) return;
+    if (!db || !user) return;
     setIsSubmitting(true);
     try {
         const batch = writeBatch(db);
@@ -111,7 +113,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
         
         PREDEFINED_PARTS.forEach(partName => {
             const docRef = doc(partsCollectionRef);
-            batch.set(docRef, { name: partName });
+            batch.set(docRef, { name: partName, companyId: user.uid });
         });
 
         await batch.commit();
@@ -198,5 +200,3 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 };
 
 export default ManagePartsDialog;
-
-    

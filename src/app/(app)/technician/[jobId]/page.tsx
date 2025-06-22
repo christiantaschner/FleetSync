@@ -62,19 +62,31 @@ export default function TechnicianJobDetailPage() {
               }
           }
           const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
-          setJob(fetchedJob);
           
-          if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
-            setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
-          }
-
           // Fetch the technician details using the current user's UID
           const techDocRef = doc(db, "technicians", user.uid);
           const techDocSnap = await getDoc(techDocRef);
-          if (techDocSnap.exists()) {
-              setTechnician({ id: techDocSnap.id, ...techDocSnap.data() } as Technician);
-          } else {
-              toast({ title: "Error", description: "Technician profile not found.", variant: "destructive" });
+          
+          if (!techDocSnap.exists()) {
+             toast({ title: "Error", description: "Technician profile not found.", variant: "destructive" });
+             router.push('/technician');
+             return;
+          }
+
+          const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
+
+          // Security Check: Ensure the job belongs to the technician's company
+          if (fetchedJob.companyId !== fetchedTechnician.companyId) {
+             toast({ title: "Access Denied", description: "You do not have permission to view this job.", variant: "destructive" });
+             router.push('/technician');
+             return;
+          }
+
+          setJob(fetchedJob);
+          setTechnician(fetchedTechnician);
+          
+          if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
+            setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
           }
 
         } else {
@@ -139,6 +151,7 @@ export default function TechnicianJobDetailPage() {
       if (newStatus === 'Completed' && job.assignedTechnicianId) {
         // Fire-and-forget metric calculation
         calculateTravelMetricsAction({ 
+            companyId: job.companyId,
             jobId: job.id, 
             technicianId: job.assignedTechnicianId 
         }).catch(err => {

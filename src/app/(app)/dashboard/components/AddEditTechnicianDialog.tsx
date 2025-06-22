@@ -23,6 +23,7 @@ import { Loader2, Save, User, Mail, Phone, ListChecks, ImageIcon, MapPin, Packag
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
+import { useAuth } from '@/contexts/auth-context';
 
 interface AddEditTechnicianDialogProps {
   children: React.ReactNode;
@@ -33,6 +34,7 @@ interface AddEditTechnicianDialogProps {
 }
 
 const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, allSkills, allParts, onTechnicianAddedOrUpdated }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,10 +96,15 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       toast({ title: "Missing Information", description: "Please fill in Name and Location Address.", variant: "destructive" });
       return;
     }
+    if (!user) {
+      toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+      return;
+    }
     
     setIsLoading(true);
 
-    const technicianData: Omit<Technician, 'id' | 'currentJobId'> & { updatedAt?: any, createdAt?: any } = {
+    const technicianData: Omit<Technician, 'id' | 'currentJobId'> & { companyId: string, updatedAt?: any, createdAt?: any } = {
+      companyId: user.uid,
       name,
       email: email || "", 
       phone: phone || "",
@@ -257,5 +264,3 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
 };
 
 export default AddEditTechnicianDialog;
-
-    

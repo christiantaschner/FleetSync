@@ -19,6 +19,7 @@ import { Loader2, Upload, FileSpreadsheet, Download, CheckCircle, AlertTriangle 
 import Papa from 'papaparse';
 import { importJobsAction, type ImportJobsActionInput } from '@/actions/fleet-actions';
 import type { JobPriority } from '@/types';
+import { useAuth } from '@/contexts/auth-context';
 
 interface ImportJobsDialogProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ interface ImportJobsDialogProps {
 }
 
 type ParsedJob = {
-  data: ImportJobsActionInput[number];
+  data: ImportJobsActionInput['jobs'][number];
   rowIndex: number;
 };
 
@@ -43,6 +44,7 @@ const REQUIRED_HEADERS = [
 ];
 
 const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, onJobsImported }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [parsedJobs, setParsedJobs] = useState<ParsedJob[]>([]);
@@ -115,7 +117,7 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
           
           const duration = row.estimatedDurationMinutes ? parseInt(row.estimatedDurationMinutes, 10) : undefined;
 
-          const job: ImportJobsActionInput[number] = {
+          const job: ImportJobsActionInput['jobs'][number] = {
             title: row.title,
             description: row.description,
             priority: row.priority as JobPriority,
@@ -149,9 +151,17 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
       toast({ title: "No Valid Jobs", description: "There are no valid jobs to import.", variant: "destructive" });
       return;
     }
+     if (!user) {
+      toast({ title: "Authentication Error", description: "You must be logged in to import jobs.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
-    const jobsToImport = parsedJobs.map(p => p.data);
-    const result = await importJobsAction(jobsToImport);
+    
+    const result = await importJobsAction({
+        companyId: user.uid,
+        jobs: parsedJobs.map(p => p.data),
+    });
+    
     setIsSubmitting(false);
 
     if (result.error) {

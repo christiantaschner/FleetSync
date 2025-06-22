@@ -42,105 +42,88 @@ export default function TechnicianJobsPage() {
       return;
     }
     
-    // For this demo, we assume the Firebase Auth UID is the same as the Technician's document ID in Firestore.
     const currentTechnicianId = firebaseUser.uid;
     setIsLoading(true);
     setError(null);
 
-    // Fetch Technician details
-    // We use onSnapshot here so the UI updates if location changes
     const techDocRef = doc(db, "technicians", currentTechnicianId);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data();
-         for (const key in data) {
-            if (data[key] && typeof data[key].toDate === 'function') {
-                data[key] = data[key].toDate().toISOString();
+        const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
+        setTechnician(techData);
+
+        // Define active job statuses
+        const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+
+        // Subscribe to jobs for this technician's company
+        const jobsQuery = query(
+          collection(db, "jobs"),
+          where("companyId", "==", techData.companyId),
+          where("assignedTechnicianId", "==", currentTechnicianId),
+          where("status", "in", activeJobStatuses)
+        );
+
+        const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
+          const jobsForTech = querySnapshot.docs.map(doc => {
+              const data = doc.data();
+              for (const key in data) {
+                  if (data[key] && typeof data[key].toDate === 'function') {
+                      data[key] = data[key].toDate().toISOString();
+                  }
+              }
+              return { id: doc.id, ...data } as Job;
+          });
+          
+          jobsForTech.sort((a, b) => {
+            const aOrder = a.routeOrder ?? Infinity;
+            const bOrder = b.routeOrder ?? Infinity;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
+            if (priorityOrder[a.priority] !== priorityOrder[b.priority]) return priorityOrder[a.priority] - priorityOrder[b.priority];
+            return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
+          });
+
+          const currentJobOrder = jobsForTech.map(j => j.id).join(',');
+
+          if (isInitialLoad.current) {
+            prevJobOrder.current = currentJobOrder;
+            isInitialLoad.current = false;
+          } else {
+            if (prevJobOrder.current !== currentJobOrder) {
+               toast({
+                title: "Schedule Updated",
+                description: "Your job list has been changed. Please review the new order."
+              });
             }
-        }
-        setTechnician({ id: docSnap.id, ...data } as Technician);
+            prevJobOrder.current = currentJobOrder;
+          }
+
+          setAssignedJobs(jobsForTech);
+          setIsLoading(false);
+        }, (err: any) => {
+          console.error("Error fetching assigned jobs: ", err);
+          setError("Could not load assigned jobs.");
+          setIsLoading(false);
+        });
+
+        // Cleanup function for jobs subscription
+        return () => unsubscribeJobs();
+
       } else {
-        console.warn(`Technician document with ID ${currentTechnicianId} (Firebase UID) not found in Firestore.`);
+        console.warn(`Technician document with ID ${currentTechnicianId} not found.`);
         setError(`No technician profile found for your account. Please contact an administrator.`);
         setTechnician(null);
+        setIsLoading(false);
       }
     }, (e) => {
       console.error("Error fetching technician details:", e);
       setError("Could not load technician profile.");
       setTechnician(null);
-    });
-    
-    // Define active job statuses
-    const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
-
-    // Subscribe to jobs assigned to this technician (based on UID)
-    const jobsQuery = query(
-      collection(db, "jobs"),
-      where("assignedTechnicianId", "==", currentTechnicianId),
-      where("status", "in", activeJobStatuses)
-    );
-
-    const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
-      const jobsForTech = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          for (const key in data) {
-              if (data[key] && typeof data[key].toDate === 'function') {
-                  data[key] = data[key].toDate().toISOString();
-              }
-          }
-          return { id: doc.id, ...data } as Job;
-      });
-      
-      jobsForTech.sort((a, b) => {
-        // Primary sort: routeOrder (jobs without it go to the end)
-        const aOrder = a.routeOrder ?? Infinity;
-        const bOrder = b.routeOrder ?? Infinity;
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-  
-        // Secondary sort: priority
-        const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
-        if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
-          return priorityOrder[a.priority] - priorityOrder[b.priority];
-        }
-  
-        // Tertiary sort: scheduled time
-        return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
-      });
-
-      const currentJobOrder = jobsForTech.map(j => j.id).join(',');
-
-      if (isInitialLoad.current) {
-        prevJobOrder.current = currentJobOrder;
-        isInitialLoad.current = false;
-      } else {
-        if (prevJobOrder.current !== currentJobOrder) {
-           toast({
-            title: "Schedule Updated",
-            description: "Your job list has been changed. Please review the new order."
-          });
-        }
-        prevJobOrder.current = currentJobOrder;
-      }
-
-      setAssignedJobs(jobsForTech);
-      setIsLoading(false); // Set loading to false after jobs are fetched (or tech details fail)
-    }, (err: any) => {
-      console.error("Error fetching assigned jobs: ", err);
-      if (err.code === 'failed-precondition' && err.message.includes('requires an index')) {
-        setError("Data loading requires a database index. Please create it using the link logged in the Firebase Functions console or provided in the error message.");
-        console.error("Firestore index required. Create it here: ", err.message.substring(err.message.indexOf('https://')));
-      } else {
-        setError("Could not load assigned jobs.");
-      }
       setIsLoading(false);
     });
-
-    return () => {
-      unsubscribeTech();
-      unsubscribeJobs();
-    };
+    
+    // Cleanup function for technician subscription
+    return () => unsubscribeTech();
 
   }, [firebaseUser, authLoading, toast]);
 

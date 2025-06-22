@@ -378,25 +378,29 @@ export async function approveProfileChangeRequestAction(
   input: z.infer<typeof ApproveProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { requestId, technicianId, requestedChanges } = ApproveProfileChangeRequestInputSchema.parse(input);
+    const { requestId, technicianId, approvedChanges, reviewNotes } = ApproveProfileChangeRequestInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
     
     const batch = writeBatch(db);
 
-    // 1. Update the technician's document
-    const techDocRef = doc(db, "technicians", technicianId);
-    batch.update(techDocRef, {
-      ...requestedChanges,
-      updatedAt: serverTimestamp(),
-    });
+    // 1. Update the technician's document if there are changes
+    if (Object.keys(approvedChanges).length > 0) {
+        const techDocRef = doc(db, "technicians", technicianId);
+        batch.update(techDocRef, {
+            ...approvedChanges,
+            updatedAt: serverTimestamp(),
+        });
+    }
 
     // 2. Update the request's status
     const requestDocRef = doc(db, "profileChangeRequests", requestId);
     batch.update(requestDocRef, {
       status: 'approved',
       reviewedAt: new Date().toISOString(),
+      approvedChanges: approvedChanges,
+      reviewNotes: reviewNotes || '',
     });
 
     await batch.commit();
@@ -416,7 +420,7 @@ export async function rejectProfileChangeRequestAction(
   input: z.infer<typeof RejectProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { requestId } = RejectProfileChangeRequestInputSchema.parse(input);
+    const { requestId, reviewNotes } = RejectProfileChangeRequestInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
@@ -425,6 +429,7 @@ export async function rejectProfileChangeRequestAction(
     await updateDoc(requestDocRef, {
       status: 'rejected',
       reviewedAt: new Date().toISOString(),
+      reviewNotes: reviewNotes || '',
     });
 
     return { error: null };

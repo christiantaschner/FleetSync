@@ -3,23 +3,38 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Technician } from '@/types';
-import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit } from 'lucide-react';
+import type { Technician, ProfileChangeRequest } from '@/types';
+import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SuggestChangeDialog from './components/SuggestChangeDialog';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { cn } from '@/lib/utils';
+
+const getStatusClass = (status: ProfileChangeRequest['status']) => {
+    switch (status) {
+        case 'approved':
+            return 'bg-green-100 text-green-800';
+        case 'rejected':
+            return 'bg-red-100 text-red-800';
+        case 'pending':
+        default:
+            return 'bg-yellow-100 text-yellow-800';
+    }
+};
 
 export default function TechnicianProfilePage() {
   const router = useRouter();
   const { user: firebaseUser, loading: authLoading } = useAuth();
 
   const [technician, setTechnician] = useState<Technician | null>(null);
+  const [submittedRequests, setSubmittedRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSuggestChangeOpen, setIsSuggestChangeOpen] = useState(false);
@@ -40,26 +55,35 @@ export default function TechnicianProfilePage() {
       return;
     }
 
-    const fetchTechnicianProfile = async () => {
-      setIsLoading(true);
-      setError(null);
-      const techDocRef = doc(db, "technicians", firebaseUser.uid);
-      try {
-        const docSnap = await getDoc(techDocRef);
+    const techDocRef = doc(db, "technicians", firebaseUser.uid);
+    const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
         if (docSnap.exists()) {
           setTechnician({ id: docSnap.id, ...docSnap.data() } as Technician);
         } else {
           setError("No technician profile found for your account.");
+          setTechnician(null);
         }
-      } catch (e) {
+        setIsLoading(false);
+    }, (e) => {
         console.error("Error fetching technician profile:", e);
         setError("Could not load your profile.");
-      } finally {
         setIsLoading(false);
-      }
-    };
+    });
 
-    fetchTechnicianProfile();
+    const requestsQuery = query(
+      collection(db, "profileChangeRequests"),
+      where("technicianId", "==", firebaseUser.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+        const requestsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
+        setSubmittedRequests(requestsData);
+    });
+
+    return () => {
+        unsubscribeTech();
+        unsubscribeRequests();
+    };
   }, [firebaseUser, authLoading, router]);
 
   if (isLoading || authLoading) {
@@ -71,7 +95,7 @@ export default function TechnicianProfilePage() {
     );
   }
 
-  if (error) {
+  if (error && !technician) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <UserX className="h-12 w-12 text-destructive mb-4" />
@@ -85,23 +109,16 @@ export default function TechnicianProfilePage() {
   }
 
   if (!technician) {
-    // This case should be covered by the error state, but as a fallback.
-    return (
-        <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
-            <p className="text-muted-foreground mt-2">Technician profile not found.</p>
-        </div>
-    );
+    return null;
   }
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
-        {technician && (
-             <SuggestChangeDialog
-                isOpen={isSuggestChangeOpen}
-                setIsOpen={setIsSuggestChangeOpen}
-                technician={technician}
-            />
-        )}
+        <SuggestChangeDialog
+            isOpen={isSuggestChangeOpen}
+            setIsOpen={setIsSuggestChangeOpen}
+            technician={technician}
+        />
         <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={() => router.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
@@ -149,6 +166,67 @@ export default function TechnicianProfilePage() {
                     To update your profile details, you can suggest a change for dispatcher review.
                 </p>
             </CardFooter>
+        </Card>
+
+         <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><History/>My Change Requests</CardTitle>
+                <CardDescription>History of your submitted profile change requests.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {submittedRequests.length > 0 ? (
+                    <Accordion type="multiple" className="w-full">
+                        {submittedRequests.map(request => (
+                             <AccordionItem value={request.id} key={request.id}>
+                                <AccordionTrigger>
+                                    <div className="flex justify-between items-center w-full pr-4">
+                                        <span className="font-semibold text-sm">
+                                            Requested: {new Date(request.createdAt).toLocaleDateString()}
+                                        </span>
+                                        <Badge className={cn("capitalize", getStatusClass(request.status))}>{request.status}</Badge>
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="space-y-3 bg-secondary/30 p-3 rounded-b-md">
+                                    {Object.keys(request.requestedChanges).length > 0 && (
+                                        <div>
+                                            <p className="text-xs font-semibold mb-1">Your Request:</p>
+                                            <ul className="list-disc pl-5 text-xs text-muted-foreground">
+                                                {Object.entries(request.requestedChanges).map(([key, val]) => <li key={key}><span className="capitalize font-medium text-foreground">{key}:</span> {String(val)}</li>)}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {request.status === 'approved' && request.approvedChanges && (
+                                        <div>
+                                            <p className="text-xs font-semibold mb-1">Final Approved Values:</p>
+                                             <ul className="list-disc pl-5 text-xs text-muted-foreground">
+                                                {Object.entries(request.approvedChanges).map(([key, val]) => (
+                                                    <li key={key} className={request.requestedChanges[key] !== val ? 'text-green-600 font-bold' : ''}>
+                                                        <span className="capitalize font-medium text-foreground">{key}:</span> {String(val)}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                     {request.notes && (
+                                        <div>
+                                            <p className="text-xs font-semibold mb-1">Your Notes:</p>
+                                            <p className="text-xs text-muted-foreground italic">"{request.notes}"</p>
+                                        </div>
+                                     )}
+                                     {request.reviewNotes && (
+                                        <div>
+                                            <p className="text-xs font-semibold mb-1">Dispatcher's Notes:</p>
+                                            <p className="text-xs text-muted-foreground italic bg-background p-2 rounded-md">"{request.reviewNotes}"</p>
+                                        </div>
+                                     )}
+                                </AccordionContent>
+                             </AccordionItem>
+                        ))}
+                    </Accordion>
+                ) : (
+                    <p className="text-sm text-muted-foreground text-center">You have not submitted any change requests.</p>
+                )}
+            </CardContent>
         </Card>
     </div>
   );

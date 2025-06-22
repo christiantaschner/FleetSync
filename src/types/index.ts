@@ -93,6 +93,8 @@ export type ProfileChangeRequest = {
     createdAt: string;
     reviewedAt?: string;
     reviewerId?: string;
+    approvedChanges?: Record<string, any>;
+    reviewNotes?: string;
 };
 
 
@@ -252,9 +254,11 @@ export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualReschedul
 export const ApproveProfileChangeRequestInputSchema = z.object({
     requestId: z.string(),
     technicianId: z.string(),
-    requestedChanges: z.record(z.any()),
+    approvedChanges: z.record(z.any()),
+    reviewNotes: z.string().optional(),
 });
 
 export const RejectProfileChangeRequestInputSchema = z.object({
     requestId: z.string(),
+    reviewNotes: z.string().optional(),
 });

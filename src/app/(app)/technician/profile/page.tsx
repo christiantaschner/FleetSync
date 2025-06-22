@@ -78,8 +78,7 @@ export default function TechnicianProfilePage() {
 
     const requestsQuery = query(
       collection(db, "profileChangeRequests"),
-      where("technicianId", "==", firebaseUser.uid),
-      orderBy("createdAt", "desc")
+      where("technicianId", "==", firebaseUser.uid)
     );
     const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
         const requestsData = snapshot.docs.map(doc => {
@@ -91,6 +90,7 @@ export default function TechnicianProfilePage() {
             }
             return { id: doc.id, ...data } as ProfileChangeRequest
         });
+        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setSubmittedRequests(requestsData);
     });
 

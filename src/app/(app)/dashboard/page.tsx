@@ -159,9 +159,10 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, "profileChangeRequests"), where("status", "==", "pending"), orderBy("createdAt", "desc"));
+    const requestsQuery = query(collection(db, "profileChangeRequests"), where("status", "==", "pending"));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
         const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
+        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setProfileChangeRequests(requestsData);
         onListenerLoaded();
     }, (error) => {
@@ -305,7 +306,7 @@ export default function DashboardPage() {
           const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
           const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
           
-          // Also, remove alerts that are no longer high-risk by finding which of the current alerts are NOT in the new high risk list
+          // Also, remove alerts that are no longer high-risk by find-ing which of the current alerts are NOT in the new high risk list
           const stillValidAlerts = currentAlerts.filter(oldAlert => highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id));
 
           if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {

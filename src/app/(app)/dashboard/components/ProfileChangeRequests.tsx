@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { ProfileChangeRequest } from '@/types';
 import {
   Accordion,
@@ -10,11 +10,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, X, Loader2, UserCog, History } from 'lucide-react';
+import { Check, X, Loader2, UserCog, History, ListChecks } from 'lucide-react';
 import { approveProfileChangeRequestAction, rejectProfileChangeRequestAction } from '@/actions/fleet-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -24,60 +23,27 @@ interface ProfileChangeRequestsProps {
   onAction: () => void;
 }
 
-type EditableRequest = {
-  approvedChanges: Record<string, any>;
-  reviewNotes: string;
-};
-
 const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests, onAction }) => {
   const { toast } = useToast();
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [editableRequests, setEditableRequests] = useState<Record<string, EditableRequest>>({});
-
-  useEffect(() => {
-    // Initialize or update the editable state when requests prop changes
-    const initialState: Record<string, EditableRequest> = {};
-    for (const request of requests) {
-      initialState[request.id] = {
-        approvedChanges: { ...request.requestedChanges }, // Start with the requested values
-        reviewNotes: '',
-      };
-    }
-    setEditableRequests(initialState);
-  }, [requests]);
-
-  const handleFieldChange = (requestId: string, field: string, value: string) => {
-    setEditableRequests(prev => ({
-      ...prev,
-      [requestId]: {
-        ...prev[requestId],
-        approvedChanges: {
-          ...prev[requestId].approvedChanges,
-          [field]: value,
-        },
-      },
-    }));
-  };
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   const handleNotesChange = (requestId: string, value: string) => {
-     setEditableRequests(prev => ({
+     setReviewNotes(prev => ({
       ...prev,
-      [requestId]: {
-        ...prev[requestId],
-        reviewNotes: value,
-      },
+      [requestId]: value,
     }));
   };
 
   const handleApprove = async (request: ProfileChangeRequest) => {
     setProcessingId(request.id);
-    const { approvedChanges, reviewNotes } = editableRequests[request.id];
     
     const result = await approveProfileChangeRequestAction({
       requestId: request.id,
       technicianId: request.technicianId,
-      approvedChanges,
-      reviewNotes,
+      // Pass the original requested changes for approval
+      approvedChanges: request.requestedChanges,
+      reviewNotes: reviewNotes[request.id] || '',
     });
     
     if (result.error) {
@@ -91,9 +57,12 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
 
   const handleReject = async (requestId: string) => {
     setProcessingId(requestId);
-    const { reviewNotes } = editableRequests[requestId];
 
-    const result = await rejectProfileChangeRequestAction({ requestId, reviewNotes });
+    const result = await rejectProfileChangeRequestAction({ 
+        requestId, 
+        reviewNotes: reviewNotes[requestId] || '' 
+    });
+
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else {
@@ -116,7 +85,7 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
             <Badge variant="default">{requests.length}</Badge>
         </CardTitle>
         <CardDescription>
-          Review, edit, and approve or reject change requests submitted by technicians.
+          Review and approve or reject change requests submitted by technicians.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -136,20 +105,22 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
                 <div className="space-y-4 p-2 bg-secondary/50 rounded-md">
                     {Object.keys(request.requestedChanges).length > 0 && (
                         <div>
-                            <h4 className="text-sm font-semibold mb-2">Requested Changes (Editable):</h4>
+                            <h4 className="text-sm font-semibold mb-2">Requested Changes:</h4>
                             <div className="space-y-3">
                                 {Object.entries(request.requestedChanges).map(([key, value]) => (
-                                    <div key={key} className="grid grid-cols-3 items-center gap-2">
-                                        <Label htmlFor={`${request.id}-${key}`} className="capitalize text-right">
+                                    <div key={key} className="grid grid-cols-3 items-start gap-2">
+                                        <Label className="capitalize text-right pt-2">
                                             {key}
                                         </Label>
-                                        <Input
-                                            id={`${request.id}-${key}`}
-                                            value={editableRequests[request.id]?.approvedChanges[key] || ''}
-                                            onChange={(e) => handleFieldChange(request.id, key, e.target.value)}
-                                            className="col-span-2"
-                                            disabled={!!processingId}
-                                        />
+                                        <div className="col-span-2 bg-background p-2 rounded-md border text-sm font-medium">
+                                          {key === 'skills' && Array.isArray(value) ? (
+                                              <div className="flex flex-wrap gap-1">
+                                                  {value.length > 0 ? value.map(skill => <Badge key={skill} variant="secondary">{skill}</Badge>) : <span className="text-muted-foreground italic">No skills selected</span>}
+                                              </div>
+                                          ) : (
+                                              <span>{String(value)}</span>
+                                          )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -165,7 +136,7 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
                     <Label htmlFor={`${request.id}-reviewNotes`}>Review Notes (Optional)</Label>
                     <Textarea 
                       id={`${request.id}-reviewNotes`}
-                      value={editableRequests[request.id]?.reviewNotes || ''}
+                      value={reviewNotes[request.id] || ''}
                       onChange={(e) => handleNotesChange(request.id, e.target.value)}
                       placeholder="Add notes for the technician..."
                       disabled={!!processingId}

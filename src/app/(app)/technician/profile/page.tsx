@@ -11,11 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, collection, query, where, orderBy } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SuggestChangeDialog from './components/SuggestChangeDialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
+import { isEqual } from 'lodash';
 
 const getStatusClass = (status: ProfileChangeRequest['status']) => {
     switch (status) {
@@ -35,6 +36,7 @@ export default function TechnicianProfilePage() {
 
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [submittedRequests, setSubmittedRequests] = useState<ProfileChangeRequest[]>([]);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSuggestChangeOpen, setIsSuggestChangeOpen] = useState(false);
@@ -54,6 +56,14 @@ export default function TechnicianProfilePage() {
       setError("Database service not available.");
       return;
     }
+
+    const fetchAllSkills = async () => {
+        const skillsQuery = query(collection(db, "skills"), orderBy("name"));
+        const querySnapshot = await getDocs(skillsQuery);
+        setAllSkills(querySnapshot.docs.map(doc => doc.data().name as string));
+    };
+    
+    fetchAllSkills();
 
     const techDocRef = doc(db, "technicians", firebaseUser.uid);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
@@ -132,6 +142,7 @@ export default function TechnicianProfilePage() {
             isOpen={isSuggestChangeOpen}
             setIsOpen={setIsSuggestChangeOpen}
             technician={technician}
+            allSkills={allSkills}
         />
         <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={() => router.back()}>
@@ -205,7 +216,15 @@ export default function TechnicianProfilePage() {
                                         <div>
                                             <p className="text-xs font-semibold mb-1">Your Request:</p>
                                             <ul className="list-disc pl-5 text-xs text-muted-foreground">
-                                                {Object.entries(request.requestedChanges).map(([key, val]) => <li key={key}><span className="capitalize font-medium text-foreground">{key}:</span> {String(val)}</li>)}
+                                                {Object.entries(request.requestedChanges).map(([key, val]) => (
+                                                  <li key={key}>
+                                                      <span className="capitalize font-medium text-foreground">{key}:</span>{' '}
+                                                      {key === 'skills' && Array.isArray(val) ? 
+                                                        (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map(s => <Badge key={s} variant="outline" className="font-normal">{s}</Badge>)}</div>)
+                                                        : (String(val))
+                                                      }
+                                                  </li>
+                                                ))}
                                             </ul>
                                         </div>
                                     )}
@@ -213,11 +232,26 @@ export default function TechnicianProfilePage() {
                                         <div>
                                             <p className="text-xs font-semibold mb-1">Final Approved Values:</p>
                                              <ul className="list-disc pl-5 text-xs text-muted-foreground">
-                                                {Object.entries(request.approvedChanges).map(([key, val]) => (
-                                                    <li key={key} className={request.requestedChanges[key] !== val ? 'text-green-600 font-bold' : ''}>
-                                                        <span className="capitalize font-medium text-foreground">{key}:</span> {String(val)}
-                                                    </li>
-                                                ))}
+                                                {Object.entries(request.approvedChanges).map(([key, val]) => {
+                                                    const requestedValue = request.requestedChanges[key];
+                                                    const approvedValue = val;
+                                                    let wasChanged = false;
+                                                    if(Array.isArray(requestedValue) && Array.isArray(approvedValue)) {
+                                                        wasChanged = !isEqual(requestedValue.sort(), approvedValue.sort());
+                                                    } else {
+                                                        wasChanged = requestedValue !== approvedValue;
+                                                    }
+
+                                                    return (
+                                                        <li key={key} className={wasChanged ? 'text-green-600 font-bold' : ''}>
+                                                            <span className="capitalize font-medium text-foreground">{key}:</span>{' '}
+                                                            {key === 'skills' && Array.isArray(val) ? 
+                                                              (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map(s => <Badge key={s} variant="outline" className="font-normal">{s}</Badge>)}</div>)
+                                                              : (String(val))
+                                                            }
+                                                        </li>
+                                                    )
+                                                })}
                                             </ul>
                                         </div>
                                      )}

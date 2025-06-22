@@ -8,8 +8,8 @@ import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField } from "firebase/firestore";
-import type { Job, JobStatus } from "@/types";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc } from "firebase/firestore";
+import type { Job, JobStatus, ProfileChangeRequest } from "@/types";
 
 // Import all required schemas and types from the central types file
 import {
@@ -328,5 +328,46 @@ export async function confirmManualRescheduleAction(
     console.error("Error in confirmManualRescheduleAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to confirm reschedule. ${errorMessage}` };
+  }
+}
+
+const RequestProfileChangeInputSchema = z.object({
+  technicianId: z.string().min(1),
+  technicianName: z.string().min(1),
+  requestedChanges: z.record(z.any()), // Simple object for changes
+  notes: z.string().optional(),
+});
+
+export async function requestProfileChangeAction(
+  input: z.infer<typeof RequestProfileChangeInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { technicianId, technicianName, requestedChanges, notes } = RequestProfileChangeInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+    
+    const requestsCollectionRef = collection(db, "profileChangeRequests");
+    
+    const newRequest: Omit<ProfileChangeRequest, 'id'> = {
+        technicianId,
+        technicianName,
+        requestedChanges,
+        notes: notes || '',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+    };
+
+    await addDoc(requestsCollectionRef, newRequest);
+
+    return { error: null };
+
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in requestProfileChangeAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to submit profile change request. ${errorMessage}` };
   }
 }

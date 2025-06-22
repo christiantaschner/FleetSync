@@ -59,7 +59,7 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 };
 
 const roadmapFeatures = {
-  mvp: [
+  completed: [
     {
       title: "AI-Powered Job Allocation (Single & Batch)",
       description: "Core AI feature suggests the best technician for new jobs. Includes a batch assignment mode with a review step for all pending jobs.",
@@ -114,8 +114,6 @@ const roadmapFeatures = {
       icon: ShieldQuestion,
       status: "Completed",
     },
-  ],
-  coreAiDispatcher: [
     {
       title: "Recurring Job & Maintenance Contract Management",
       description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
@@ -231,24 +229,26 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Offline Mode for Core Mobile App Functions",
-      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
-      icon: WifiOff,
-      status: "Planned",
-    },
-  ],
-  futureVision: [
-    {
       title: "Live Technician Tracking Portal for Customers",
       description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
       icon: Navigation,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  planned: [
     {
       title: "CO2 Emission Estimation & Reporting",
       description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
       icon: Leaf,
       status: "Planned",
+    },
+  ],
+  vision: [
+     {
+      title: "Offline Mode for Core Mobile App Functions",
+      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
+      icon: WifiOff,
+      status: "Vision",
     },
     {
       title: "Predictive Maintenance as a Service",
@@ -307,18 +307,18 @@ export default function RoadmapPage() {
       </div>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Core Features</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Completed Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.mvp.map((item) => (
+          {roadmapFeatures.completed.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Enhancements</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Planned Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.coreAiDispatcher.map((item) => (
+          {roadmapFeatures.planned.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
         </div>
@@ -327,7 +327,7 @@ export default function RoadmapPage() {
       <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Future Innovations &amp; Long-Term Vision</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.futureVision.map((item) => (
+          {roadmapFeatures.vision.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
         </div>

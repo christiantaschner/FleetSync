@@ -63,6 +63,16 @@ export type Job = {
   sourceContractId?: string;
   breaks?: { start: string; end?: string; }[];
   checklistResults?: ChecklistResult[];
+  trackingToken?: string;
+  trackingTokenExpiresAt?: string;
+};
+
+export type PublicTrackingInfo = {
+    jobStatus: JobStatus;
+    jobLocation: Location;
+    technicianName: string;
+    technicianLocation: Location;
+    customerName: string;
 };
 
 export type Task = {

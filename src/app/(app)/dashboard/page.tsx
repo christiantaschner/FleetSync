@@ -33,6 +33,7 @@ import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
+import ShareTrackingDialog from './components/ShareTrackingDialog';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -86,6 +87,10 @@ export default function DashboardPage() {
   // For Chat
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatJob, setSelectedChatJob] = useState<Job | null>(null);
+  
+  // For Tracking Link
+  const [isTrackingDialogOpen, setIsTrackingDialogOpen] = useState(false);
+  const [selectedJobForTracking, setSelectedJobForTracking] = useState<Job | null>(null);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -422,6 +427,11 @@ export default function DashboardPage() {
     setSelectedChatJob(job);
     setIsChatOpen(true);
   };
+  
+  const handleShareTracking = (job: Job) => {
+    setSelectedJobForTracking(job);
+    setIsTrackingDialogOpen(true);
+  };
 
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
@@ -614,6 +624,11 @@ export default function DashboardPage() {
   return (
     <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
       <div className="flex flex-col gap-6">
+        <ShareTrackingDialog 
+            isOpen={isTrackingDialogOpen}
+            setIsOpen={setIsTrackingDialogOpen}
+            job={selectedJobForTracking}
+        />
         <ChatSheet 
             isOpen={isChatOpen} 
             setIsOpen={setIsChatOpen} 
@@ -909,6 +924,7 @@ export default function DashboardPage() {
                     onAssignWithAI={openAIAssignDialogForJob}
                     onJobUpdated={handleJobAddedOrUpdated}
                     onOpenChat={handleOpenChat}
+                    onShareTracking={handleShareTracking}
                   />
                 )) : (
                   <p className="text-muted-foreground text-center py-10">

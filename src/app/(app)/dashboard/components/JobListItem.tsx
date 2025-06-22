@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks, Package, MessageSquare } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks, Package, MessageSquare, Share2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -25,9 +25,10 @@ interface JobListItemProps {
   onAssignWithAI: (job: Job) => void;
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
   onOpenChat: (job: Job) => void;
+  onShareTracking: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, allParts, onAssignWithAI, onJobUpdated, onOpenChat }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, allParts, onAssignWithAI, onJobUpdated, onOpenChat, onShareTracking }) => {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -49,6 +50,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
   };
 
   const isHighPriorityPending = job.priority === 'High' && job.status === 'Pending';
+  const canShareTracking = job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress';
 
   return (
     <Card className={cn(
@@ -127,6 +129,11 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
         {job.status !== 'Pending' && job.assignedTechnicianId && (
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
                 <MessageSquare className="mr-1 h-3 w-3" /> Chat
+            </Button>
+        )}
+        {canShareTracking && (
+            <Button variant="outline" size="sm" onClick={() => onShareTracking(job)}>
+                <Share2 className="mr-1 h-3 w-3" /> Share Tracking
             </Button>
         )}
         {job.status === 'Pending' && (

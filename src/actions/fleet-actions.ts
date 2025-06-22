@@ -15,7 +15,8 @@ import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract } from "@/types";
-import { add, addDays, addMonths, addWeeks } from 'date-fns';
+import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
+import crypto from 'crypto';
 
 // Import all required schemas and types from the central types file
 import {
@@ -743,4 +744,39 @@ export async function troubleshootEquipmentAction(
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { data: null, error: `Failed to get troubleshooting steps. ${errorMessage}` };
   }
+}
+
+const GenerateTrackingLinkInputSchema = z.object({
+    jobId: z.string(),
+});
+export type GenerateTrackingLinkInput = z.infer<typeof GenerateTrackingLinkInputSchema>;
+
+export async function generateTrackingLinkAction(
+    input: GenerateTrackingLinkInput
+): Promise<{ data: { trackingUrl: string } | null; error: string | null }> {
+    try {
+        const { jobId } = GenerateTrackingLinkInputSchema.parse(input);
+        if (!db) throw new Error("Firestore not initialized");
+
+        const token = crypto.randomUUID();
+        const expiresAt = addHours(new Date(), 4); // Link is valid for 4 hours
+
+        const jobDocRef = doc(db, "jobs", jobId);
+        await updateDoc(jobDocRef, {
+            trackingToken: token,
+            trackingTokenExpiresAt: expiresAt.toISOString(),
+        });
+        
+        const trackingUrl = `/track/${token}`;
+
+        return { data: { trackingUrl }, error: null };
+
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map(err => err.message).join(", ") };
+        }
+        console.error("Error generating tracking link:", e);
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        return { data: null, error: `Failed to generate tracking link. ${errorMessage}` };
+    }
 }

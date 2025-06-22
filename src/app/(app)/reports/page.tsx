@@ -15,6 +15,7 @@ import {
   Timer,
   Smile,
   ThumbsUp,
+  CalendarClock,
 } from "lucide-react";
 import {
   Card,
@@ -104,14 +105,17 @@ export default function ReportsPage() {
           avgTimeToAssign: "N/A",
           avgSatisfaction: "N/A",
           ftfr: "N/A",
+          onTimeArrivalRate: "N/A",
         },
         jobsByStatus: [],
         jobsPerTechnician: [],
+        punctualityChartData: [],
       };
     }
 
     const completedJobs = jobs.filter(j => j.status === "Completed");
 
+    // --- KPI Calculations ---
     const completedJobsWithTime = completedJobs.filter(
       (j) => j.completedAt && j.inProgressAt
     );
@@ -150,12 +154,31 @@ export default function ReportsPage() {
     const firstTimeFixes = ftfrJobs.filter(j => j.isFirstTimeFix).length;
     const ftfrPercentage = ftfrJobs.length > 0 ? ((firstTimeFixes / ftfrJobs.length) * 100).toFixed(1) : "N/A";
 
+    const jobsWithPunctualityData = completedJobs.filter(
+      (j) => j.scheduledTime && j.inProgressAt
+    );
+    
+    const punctuality = { early: 0, onTime: 0, late: 0 };
+    jobsWithPunctualityData.forEach(j => {
+        const scheduled = new Date(j.scheduledTime!).getTime();
+        const arrived = new Date(j.inProgressAt!).getTime();
+        const diffMinutes = (arrived - scheduled) / (1000 * 60);
 
+        if (diffMinutes < -15) punctuality.early++;
+        else if (diffMinutes > 15) punctuality.late++;
+        else punctuality.onTime++;
+    });
+
+    const totalPunctualityJobs = jobsWithPunctualityData.length;
+    const onTimeArrivalRate = totalPunctualityJobs > 0 
+        ? (((punctuality.early + punctuality.onTime) / totalPunctualityJobs) * 100).toFixed(1) 
+        : "N/A";
+
+    // --- Chart Data ---
     const jobsByStatus = jobs.reduce((acc, job) => {
       acc[job.status] = (acc[job.status] || 0) + 1;
       return acc;
     }, {} as Record<Job["status"], number>);
-
     const pieData = Object.entries(jobsByStatus).map(([name, value]) => ({
       name,
       value,
@@ -168,6 +191,12 @@ export default function ReportsPage() {
         (j) => j.assignedTechnicianId === tech.id && j.status === "Completed"
       ).length,
     }));
+    
+    const punctualityChartData = [
+        { name: 'Early', value: punctuality.early, fill: 'hsl(var(--chart-2))' },
+        { name: 'On Time', value: punctuality.onTime, fill: 'hsl(var(--chart-1))' },
+        { name: 'Late', value: punctuality.late, fill: 'hsl(var(--destructive))' },
+    ].filter(d => d.value > 0);
 
     return {
       kpis: {
@@ -177,9 +206,11 @@ export default function ReportsPage() {
         avgTimeToAssign: formatDuration(avgTimeToAssignMs),
         avgSatisfaction: avgSatisfaction,
         ftfr: ftfrPercentage,
+        onTimeArrivalRate: onTimeArrivalRate,
       },
       jobsByStatus: pieData,
       jobsPerTechnician: jobsPerTechnician.filter(t => t.completed > 0),
+      punctualityChartData: punctualityChartData,
     };
   }, [jobs, technicians]);
 
@@ -197,7 +228,14 @@ export default function ReportsPage() {
       completed: {
         label: "Completed Jobs",
       },
-  } satisfies ChartConfig
+  } satisfies ChartConfig;
+
+  const punctualityChartConfig = {
+    'Early': { label: 'Early' },
+    'On Time': { label: 'On Time' },
+    'Late': { label: 'Late' },
+  } satisfies ChartConfig;
+
 
   if (isLoading) {
     return (
@@ -215,7 +253,7 @@ export default function ReportsPage() {
           </h1>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
@@ -236,12 +274,12 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Time to Assign</CardTitle>
-            <Timer className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">On-Time Arrival Rate</CardTitle>
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{reportData.kpis.avgTimeToAssign}</div>
-            <p className="text-xs text-muted-foreground">From creation to assignment</p>
+            <div className="text-2xl font-bold">{reportData.kpis.onTimeArrivalRate}%</div>
+            <p className="text-xs text-muted-foreground">Within 15min of schedule</p>
           </CardContent>
         </Card>
         <Card>
@@ -252,6 +290,16 @@ export default function ReportsPage() {
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.avgDuration}</div>
             <p className="text-xs text-muted-foreground">From start to completion</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg. Time to Assign</CardTitle>
+            <Timer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{reportData.kpis.avgTimeToAssign}</div>
+            <p className="text-xs text-muted-foreground">From creation to assignment</p>
           </CardContent>
         </Card>
         <Card>
@@ -369,6 +417,67 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                <PieChartIcon /> Arrival Punctuality
+                </CardTitle>
+                <CardDescription>Breakdown of on-time, early, and late arrivals for scheduled jobs.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {reportData.punctualityChartData.length > 0 ? (
+                <ChartContainer config={punctualityChartConfig} className="min-h-[300px] w-full">
+                <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                    <Pie
+                        data={reportData.punctualityChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={110}
+                        labelLine={false}
+                        label={({
+                        cx,
+                        cy,
+                        midAngle,
+                        innerRadius,
+                        outerRadius,
+                        percent,
+                        }) => {
+                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                        return (
+                            <text
+                            x={x}
+                            y={y}
+                            fill="white"
+                            textAnchor={x > cx ? "start" : "end"}
+                            dominantBaseline="central"
+                            className="text-xs font-bold"
+                            >
+                            {`${(percent * 100).toFixed(0)}%`}
+                            </text>
+                        );
+                        }}
+                    >
+                        {reportData.punctualityChartData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                    </Pie>
+                    <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                    </PieChart>
+                </ResponsiveContainer>
+                </ChartContainer>
+                ) : (
+                    <p className="text-muted-foreground text-center py-10">No punctuality data available for this chart.</p>
+                )}
+            </CardContent>
+            </Card>
       </div>
     </div>
   );

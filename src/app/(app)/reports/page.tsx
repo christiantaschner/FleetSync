@@ -41,6 +41,9 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
+import type { DateRange } from "react-day-picker";
+import { subDays } from "date-fns";
 
 const pieChartColors = [
   "hsl(var(--chart-1))",
@@ -69,6 +72,10 @@ export default function ReportsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: subDays(new Date(), 29),
+    to: new Date(),
+  });
 
   useEffect(() => {
     if (!db) {
@@ -106,7 +113,15 @@ export default function ReportsPage() {
   }, []);
 
   const reportData = useMemo(() => {
-    if (jobs.length === 0) {
+    const filteredJobs = jobs.filter(job => {
+        if (!date || !date.from) return true;
+        const jobDate = new Date(job.createdAt);
+        const fromDate = date.from;
+        const toDate = date.to ? new Date(new Date(date.to).setHours(23, 59, 59, 999)) : new Date();
+        return jobDate >= fromDate && jobDate <= toDate;
+    });
+
+    if (filteredJobs.length === 0) {
       return {
         kpis: {
           totalJobs: 0,
@@ -125,7 +140,7 @@ export default function ReportsPage() {
       };
     }
 
-    const completedJobs = jobs.filter(j => j.status === "Completed");
+    const completedJobs = filteredJobs.filter(j => j.status === "Completed");
 
     // --- KPI Calculations ---
     const completedJobsWithTime = completedJobs.filter(
@@ -143,7 +158,7 @@ export default function ReportsPage() {
         ? totalDurationMs / completedJobsWithTime.length
         : 0;
         
-    const assignedJobsWithTime = jobs.filter(j => j.assignedAt && j.createdAt);
+    const assignedJobsWithTime = filteredJobs.filter(j => j.assignedAt && j.createdAt);
 
     const totalTimeToAssignMs = assignedJobsWithTime.reduce((acc, j) => {
         const created = new Date(j.createdAt).getTime();
@@ -156,7 +171,7 @@ export default function ReportsPage() {
         ? totalTimeToAssignMs / assignedJobsWithTime.length
         : 0;
     
-    const jobsWithSatisfaction = jobs.filter(j => typeof j.customerSatisfactionScore === 'number');
+    const jobsWithSatisfaction = completedJobs.filter(j => typeof j.customerSatisfactionScore === 'number');
     const totalSatisfactionScore = jobsWithSatisfaction.reduce((acc, j) => acc + j.customerSatisfactionScore!, 0);
     const avgSatisfaction = jobsWithSatisfaction.length > 0 
         ? (totalSatisfactionScore / jobsWithSatisfaction.length).toFixed(2)
@@ -202,7 +217,7 @@ export default function ReportsPage() {
         : 0;
 
     // --- Chart Data ---
-    const jobsByStatus = jobs.reduce((acc, job) => {
+    const jobsByStatus = filteredJobs.reduce((acc, job) => {
       acc[job.status] = (acc[job.status] || 0) + 1;
       return acc;
     }, {} as Record<Job["status"], number>);
@@ -214,8 +229,8 @@ export default function ReportsPage() {
 
     const jobsPerTechnician = technicians.map((tech) => ({
       name: tech.name,
-      completed: jobs.filter(
-        (j) => j.assignedTechnicianId === tech.id && j.status === "Completed"
+      completed: completedJobs.filter(
+        (j) => j.assignedTechnicianId === tech.id
       ).length,
     }));
     
@@ -237,7 +252,7 @@ export default function ReportsPage() {
 
     return {
       kpis: {
-        totalJobs: jobs.length,
+        totalJobs: filteredJobs.length,
         completedJobs: completedJobs.length,
         avgDuration: formatDuration(avgDurationMs),
         avgTimeToAssign: formatDuration(avgTimeToAssignMs),
@@ -251,7 +266,7 @@ export default function ReportsPage() {
       punctualityChartData: punctualityChartData,
       durationComparisonChartData: durationComparisonChartData,
     };
-  }, [jobs, technicians]);
+  }, [jobs, technicians, date]);
 
   const jobsByStatusChartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -302,6 +317,7 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
             Reporting & Analytics
           </h1>
+          <DateRangePicker date={date} setDate={setDate} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -312,6 +328,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.totalJobs}</div>
+            <p className="text-xs text-muted-foreground">In selected period</p>
           </CardContent>
         </Card>
         <Card>
@@ -321,6 +338,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{reportData.kpis.completedJobs}</div>
+             <p className="text-xs text-muted-foreground">In selected period</p>
           </CardContent>
         </Card>
         <Card>

@@ -2,22 +2,26 @@
 "use client";
 
 import React, { useState, useMemo } from 'react';
-import type { Job, Contract } from '@/types';
+import type { Job, Contract, Equipment } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, MapPin, Briefcase, Repeat, Circle } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, Repeat, Circle, Package, PackagePlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import AddEquipmentDialog from './AddEquipmentDialog';
+import { Button } from '@/components/ui/button';
 
 interface CustomerViewProps {
     jobs: Job[];
     contracts: Contract[];
+    equipment: Equipment[];
 }
 
 interface Customer {
+    id: string; // A unique identifier for the customer
     name: string;
     phone: string;
     address: string;
@@ -26,16 +30,18 @@ interface Customer {
     contractCount: number;
 }
 
-export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
+export default function CustomerView({ jobs, contracts, equipment }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
 
     const customers = useMemo(() => {
-        const customerMap = new Map<string, Customer & { jobs: Job[]; contracts: Contract[] }>();
+        const customerMap = new Map<string, Customer & { jobs: Job[]; contracts: Contract[]; equipment: Equipment[] }>();
 
         const processRecord = (key: string, record: { name: string; phone: string; address: string; date: string }) => {
             if (!customerMap.has(key)) {
                 customerMap.set(key, {
+                    id: key,
                     name: record.name,
                     phone: record.phone,
                     address: record.address,
@@ -44,6 +50,7 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
                     lastActivity: '1970-01-01T00:00:00.000Z',
                     jobs: [],
                     contracts: [],
+                    equipment: [],
                 });
             }
             const customer = customerMap.get(key)!;
@@ -55,7 +62,8 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
         }
         
         jobs.forEach(job => {
-            const key = `${job.customerName.toLowerCase()}|${job.customerPhone}`;
+            const key = job.customerPhone || job.customerName.toLowerCase();
+            if (!key) return;
             const customer = processRecord(key, {
                 name: job.customerName,
                 phone: job.customerPhone,
@@ -67,8 +75,9 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
         });
 
         contracts.forEach(contract => {
-            const key = `${contract.customerName.toLowerCase()}|${contract.customerPhone}`;
-             const customer = processRecord(key, {
+            const key = contract.customerPhone || contract.customerName.toLowerCase();
+            if (!key) return;
+            const customer = processRecord(key, {
                 name: contract.customerName,
                 phone: contract.customerPhone || 'N/A',
                 address: contract.customerAddress,
@@ -76,7 +85,14 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
             });
             customer.contractCount++;
             customer.contracts.push(contract);
-        })
+        });
+
+        equipment.forEach(item => {
+            const key = item.customerId;
+            if (customerMap.has(key)) {
+                customerMap.get(key)!.equipment.push(item);
+            }
+        });
 
         const sortedCustomers = Array.from(customerMap.values()).sort((a, b) => 
             new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
@@ -84,7 +100,7 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
         
         return sortedCustomers;
 
-    }, [jobs, contracts]);
+    }, [jobs, contracts, equipment]);
 
     const filteredCustomers = useMemo(() => {
         if (!searchTerm) return customers;
@@ -96,17 +112,31 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
 
     const selectedCustomerData = useMemo(() => {
         if (!selectedCustomer) return null;
-        const customerData = customers.find(c => c.name === selectedCustomer.name && c.phone === selectedCustomer.phone);
+        const customerData = customers.find(c => c.id === selectedCustomer.id);
         if (!customerData) return null;
 
         return {
             jobs: customerData.jobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-            contracts: customerData.contracts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+            contracts: customerData.contracts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
+            equipment: customerData.equipment.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
         };
     }, [selectedCustomer, customers]);
 
+    const handleEquipmentAdded = () => {
+        // The onSnapshot listener in the parent will handle the data refresh.
+    };
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {selectedCustomer && (
+                 <AddEquipmentDialog
+                    isOpen={isAddEquipmentOpen}
+                    setIsOpen={setIsAddEquipmentOpen}
+                    customerId={selectedCustomer.id}
+                    customerName={selectedCustomer.name}
+                    onEquipmentAdded={handleEquipmentAdded}
+                />
+            )}
             <Card className="lg:col-span-1">
                 <CardHeader>
                     <CardTitle>All Customers</CardTitle>
@@ -122,12 +152,12 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
                         <div className="space-y-3 pr-4">
                             {filteredCustomers.map(customer => (
                                 <button 
-                                    key={`${customer.name}-${customer.phone}`} 
+                                    key={customer.id} 
                                     onClick={() => setSelectedCustomer(customer)}
-                                    className={`w-full p-3 rounded-lg text-left transition-colors ${selectedCustomer?.name === customer.name && selectedCustomer?.phone === customer.phone ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}`}
+                                    className={`w-full p-3 rounded-lg text-left transition-colors ${selectedCustomer?.id === customer.id ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}`}
                                 >
                                     <p className="font-semibold">{customer.name}</p>
-                                    <p className="text-sm opacity-80 flex items-center gap-1"><Phone size={12}/>{customer.phone}</p>
+                                    <p className="text-sm opacity-80 flex items-center gap-1"><Phone size={12}/>{customer.phone || 'No phone'}</p>
                                     <div className="flex justify-between items-center text-xs opacity-70 mt-1">
                                        <span>{customer.jobCount} job(s) / {customer.contractCount} contract(s)</span>
                                        <span>Last active: {new Date(customer.lastActivity).toLocaleDateString()}</span>
@@ -143,11 +173,18 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
                 {selectedCustomer && selectedCustomerData ? (
                      <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><User />{selectedCustomer.name}</CardTitle>
-                            <CardDescription>
-                                <p className="flex items-center gap-1"><Phone size={14}/>{selectedCustomer.phone}</p>
-                                <p className="flex items-center gap-1 mt-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
-                            </CardDescription>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="flex items-center gap-2"><User />{selectedCustomer.name}</CardTitle>
+                                    <CardDescription>
+                                        <p className="flex items-center gap-1"><Phone size={14}/>{selectedCustomer.phone || 'No phone'}</p>
+                                        <p className="flex items-center gap-1 mt-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
+                                    </CardDescription>
+                                </div>
+                                <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)}>
+                                    <PackagePlus className="mr-2 h-4 w-4" /> Add Equipment
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
@@ -188,6 +225,21 @@ export default function CustomerView({ jobs, contracts }: CustomerViewProps) {
                                     </div>
                                </ScrollArea>
                            </div>
+                           <div>
+                                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Package/>Installed Equipment ({selectedCustomerData.equipment.length})</h3>
+                                <ScrollArea className="h-40 border rounded-md p-2">
+                                    <div className="space-y-3 p-2">
+                                    {selectedCustomerData.equipment.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No equipment logged.</p>}
+                                    {selectedCustomerData.equipment.map(item => (
+                                        <div key={item.id} className="p-3 rounded-md bg-secondary/50">
+                                            <p className="font-semibold text-sm">{item.name}</p>
+                                            <p className="text-xs text-muted-foreground">Model: {item.model || 'N/A'} | S/N: {item.serialNumber || 'N/A'}</p>
+                                            {item.installDate && <p className="text-xs text-muted-foreground">Installed: {new Date(item.installDate).toLocaleDateString()}</p>}
+                                        </div>
+                                    ))}
+                                    </div>
+                               </ScrollArea>
+                            </div>
                         </CardContent>
                     </Card>
                 ) : (

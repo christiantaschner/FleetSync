@@ -307,7 +307,7 @@ export default function RoadmapPage() {
       </div>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">MVP: Core Features for Launch</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Core Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {roadmapFeatures.mvp.map((item) => (
             <RoadmapItem key={item.title} {...item} />
@@ -316,7 +316,7 @@ export default function RoadmapPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Post-MVP: Core Enhancements</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Enhancements</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {roadmapFeatures.coreAiDispatcher.map((item) => (
             <RoadmapItem key={item.title} {...item} />

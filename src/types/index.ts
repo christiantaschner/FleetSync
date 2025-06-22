@@ -144,6 +144,20 @@ export const ContractSchema = z.object({
 });
 export type Contract = z.infer<typeof ContractSchema>;
 
+export const EquipmentSchema = z.object({
+    id: z.string().optional(),
+    customerId: z.string(),
+    customerName: z.string(),
+    name: z.string(),
+    model: z.string().optional(),
+    serialNumber: z.string().optional(),
+    installDate: z.string().optional(),
+    notes: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+});
+export type Equipment = z.infer<typeof EquipmentSchema>;
+
 
 // --- AI Flow Schemas ---
 

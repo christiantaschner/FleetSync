@@ -2,15 +2,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import { collection, onSnapshot, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Job, Contract } from '@/types';
+import type { Job, Contract, Equipment } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 
 export default function CustomersPage() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -20,11 +21,12 @@ export default function CustomersPage() {
             return;
         }
 
-        let jobsLoaded = false;
-        let contractsLoaded = false;
+        let loadedCount = 0;
+        const totalCollections = 3;
 
         const updateLoadingState = () => {
-            if (jobsLoaded && contractsLoaded) {
+            loadedCount++;
+            if (loadedCount === totalCollections) {
                 setIsLoading(false);
             }
         }
@@ -41,12 +43,10 @@ export default function CustomersPage() {
                 return { id: doc.id, ...data } as Job;
             });
             setJobs(jobsData);
-            jobsLoaded = true;
             updateLoadingState();
-        }, (error) => {
-            console.error("Error fetching jobs for customer view:", error);
+        }, (err) => {
+            console.error("Error fetching jobs for customer view:", err);
             setError("Could not fetch job data.");
-            jobsLoaded = true;
             updateLoadingState();
         });
 
@@ -62,12 +62,29 @@ export default function CustomersPage() {
                 return { id: doc.id, ...data } as Contract;
             });
             setContracts(contractsData);
-            contractsLoaded = true;
             updateLoadingState();
-        }, (error) => {
-            console.error("Error fetching contracts for customer view:", error);
+        }, (err) => {
+            console.error("Error fetching contracts for customer view:", err);
             setError("Could not fetch contract data.");
-            contractsLoaded = true;
+            updateLoadingState();
+        });
+        
+        const equipmentQuery = query(collection(db, "equipment"));
+        const unsubscribeEquipment = onSnapshot(equipmentQuery, (snapshot) => {
+            const equipmentData = snapshot.docs.map(doc => {
+                 const data = doc.data();
+                 for (const key in data) {
+                    if (data[key] && typeof data[key].toDate === 'function') {
+                        data[key] = data[key].toDate().toISOString();
+                    }
+                }
+                return { id: doc.id, ...data } as Equipment;
+            });
+            setEquipment(equipmentData);
+            updateLoadingState();
+        }, (err) => {
+            console.error("Error fetching equipment for customer view:", err);
+            setError("Could not fetch equipment data.");
             updateLoadingState();
         });
 
@@ -75,6 +92,7 @@ export default function CustomersPage() {
         return () => {
             unsubscribeJobs();
             unsubscribeContracts();
+            unsubscribeEquipment();
         };
     }, []);
 
@@ -86,5 +104,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView jobs={jobs} contracts={contracts} />;
+    return <CustomerView jobs={jobs} contracts={contracts} equipment={equipment} />;
 }

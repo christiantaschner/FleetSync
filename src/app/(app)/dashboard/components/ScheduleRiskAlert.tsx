@@ -23,22 +23,23 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
   const [isNotifying, setIsNotifying] = useState(false);
   const { technician, nextJob, risk } = riskAlert;
 
-  const handleNotifyCustomer = async () => {
-    if (!nextJob) return;
+  const handleDraftNotification = async () => {
+    if (!nextJob || !risk) return;
     setIsNotifying(true);
     const result = await notifyCustomerAction({
       jobId: nextJob.id,
       customerName: nextJob.customerName,
       technicianName: technician.name,
-      delayMinutes: risk?.predictedDelayMinutes || 0,
+      delayMinutes: risk.predictedDelayMinutes,
     });
 
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
-    } else {
-      toast({ 
-        title: 'Customer Notified (Simulated)', 
-        description: `Message generated: "${result.data?.message}"`
+    } else if (result.data?.message) {
+      toast({
+        title: 'AI Message Draft',
+        description: result.data.message,
+        duration: 9000,
       });
       onDismiss(technician.id);
     }
@@ -70,9 +71,9 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
             <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize
           </Button>
         </OptimizeRouteDialog>
-        <Button size="sm" variant="default" className="bg-amber-500 hover:bg-amber-600 text-white" onClick={handleNotifyCustomer} disabled={isNotifying}>
+        <Button size="sm" variant="default" className="bg-amber-500 hover:bg-amber-600 text-white" onClick={handleDraftNotification} disabled={isNotifying}>
           {isNotifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
-          Notify Customer
+          Draft Notification
         </Button>
       </div>
     </Alert>

@@ -116,7 +116,7 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
 
         const movedJob = jobs.find(j => j.id === event.id);
         if (movedJob) {
-            // Fire-and-forget notification to the customer
+            // Fire-and-forget to generate the draft message
             notifyCustomerAction({
                 jobId: movedJob.id,
                 customerName: movedJob.customerName,
@@ -125,8 +125,9 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
             }).then(notificationResult => {
                 if(notificationResult.data?.message) {
                     toast({
-                        title: "Customer Notified (Simulated)",
-                        description: `Message generated: "${notificationResult.data.message}"`
+                        title: "AI Message Draft (For Reschedule)",
+                        description: notificationResult.data.message,
+                        duration: 9000,
                     });
                 }
             });
@@ -169,7 +170,7 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Confirm Changes</AlertTitle>
                 <AlertDescription>
-                    Applying this change will update the scheduled time and route for this technician. A notification will be simulated for the customer.
+                    Applying this change will update the scheduled time and route for this technician. A message draft will be generated for the customer.
                 </AlertDescription>
             </Alert>
           </div>

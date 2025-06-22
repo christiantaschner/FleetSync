@@ -192,7 +192,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
             ref={sigCanvasRef}
             penColor='black'
             canvasProps={{className: 'w-full h-full'}} 
-            onBegin={() => isSubmitting && sigCanvasRef.current?.clear()} // Prevent drawing while submitting
+            onBegin={() => isSubmitting && sigCanvasRef.current?.clear()}
           />
         </div>
         <Button type="button" variant="ghost" onClick={clearSignature} className="mt-2" disabled={isSubmitting}>

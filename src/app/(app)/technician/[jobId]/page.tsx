@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Job, JobStatus } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
@@ -33,6 +33,7 @@ export default function TechnicianJobDetailPage() {
   const [isFirstTimeFix, setIsFirstTimeFix] = useState<boolean | null>(null);
   const [reasonForFollowUp, setReasonForFollowUp] = useState('');
 
+  const isBreakActive = job?.status === 'In Progress' && job.breaks?.some(b => !b.end);
 
   useEffect(() => {
     if (!jobId || !db) {
@@ -76,6 +77,11 @@ export default function TechnicianJobDetailPage() {
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (!job || !db || isUpdating) return;
     
+    if (isBreakActive) {
+      toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
+      return;
+    }
+
     setIsUpdating(true);
     const jobDocRef = doc(db, "jobs", job.id);
     try {
@@ -213,6 +219,46 @@ export default function TechnicianJobDetailPage() {
     }
   };
 
+  const handleToggleBreak = async () => {
+    if (!job || !db || isUpdating) return;
+
+    setIsUpdating(true);
+    const jobDocRef = doc(db, "jobs", job.id);
+    const now = new Date().toISOString();
+    const currentBreaks = job.breaks || [];
+
+    try {
+      let updatedBreaks;
+      if (isBreakActive) {
+        // Ending a break
+        toast({ title: "Resuming Work" });
+        updatedBreaks = currentBreaks.map((b, index) => {
+          if (index === currentBreaks.length - 1 && !b.end) {
+            return { ...b, end: now };
+          }
+          return b;
+        });
+      } else {
+        // Starting a new break
+        toast({ title: "Break Started" });
+        updatedBreaks = [...currentBreaks, { start: now }];
+      }
+      
+      await updateDoc(jobDocRef, {
+        breaks: updatedBreaks,
+        updatedAt: serverTimestamp(),
+      });
+      
+      setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+      
+    } catch(error) {
+       console.error("Error updating break status:", error);
+      toast({ title: "Error", description: "Could not update break status.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
 
   const handleNavigate = () => {
     if (job?.location?.address) {
@@ -272,8 +318,18 @@ export default function TechnicianJobDetailPage() {
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-wrap gap-3 items-center">
             <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
+            {job.status === 'In Progress' && (
+              <Button
+                variant={isBreakActive ? "destructive" : "outline"}
+                onClick={handleToggleBreak}
+                disabled={isUpdating}
+              >
+                {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+                {isBreakActive ? 'End Break' : 'Start Break'}
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

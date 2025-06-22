@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature, Package, ThumbsUp, Smile, Star } from 'lucide-react';
+import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature, Package, ThumbsUp, Smile, Star, Timer } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +12,19 @@ import { cn } from '@/lib/utils';
 
 interface JobDetailsDisplayProps {
   job: Job;
+}
+
+const formatDuration = (milliseconds: number): string => {
+    if (milliseconds < 0 || isNaN(milliseconds)) return "N/A";
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    
+    let result = '';
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0 || hours === 0) result += `${minutes}m`;
+    
+    return result.trim() || '0m';
 }
 
 const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
@@ -125,8 +138,8 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
         <Separator />
 
          <div>
-            <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><Clock />Timestamps</h3>
-             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><Clock />Timestamps &amp; History</h3>
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-2 text-xs">
                 <div>
                     <p className="font-medium text-foreground">Created</p>
                     <p className="text-muted-foreground">{new Date(job.createdAt).toLocaleString()}</p>
@@ -154,6 +167,20 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                     <p className="text-muted-foreground">{new Date(job.updatedAt).toLocaleString()}</p>
                 </div>
             </div>
+             {job.breaks && job.breaks.length > 0 && (
+                <div className="mt-4">
+                     <h4 className="font-medium text-foreground text-xs flex items-center gap-1"><Timer size={14}/> Break History</h4>
+                     <ul className="list-disc pl-5 mt-1 text-xs text-muted-foreground">
+                        {job.breaks.map((b, index) => (
+                            <li key={index}>
+                                {new Date(b.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                                {b.end ? ` ${new Date(b.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ' (Ongoing)'}
+                                {b.end && <span className="font-semibold text-foreground ml-2">({formatDuration(new Date(b.end).getTime() - new Date(b.start).getTime())})</span>}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
       </CardContent>
     </Card>

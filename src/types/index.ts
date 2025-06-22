@@ -56,6 +56,7 @@ export type Job = {
   isFirstTimeFix?: boolean;
   reasonForFollowUp?: string;
   sourceContractId?: string;
+  breaks?: { start: string; end?: string; }[];
 };
 
 export type Task = {

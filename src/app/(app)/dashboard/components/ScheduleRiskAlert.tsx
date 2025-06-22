@@ -4,12 +4,37 @@
 import React, { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Loader2, MessageSquare, Shuffle, X } from 'lucide-react';
+import { AlertTriangle, Loader2, MessageSquare, Shuffle, X, Copy } from 'lucide-react';
 import type { CheckScheduleHealthResult } from '@/actions/fleet-actions';
 import { notifyCustomerAction } from '@/actions/fleet-actions';
 import { useToast } from '@/hooks/use-toast';
 import OptimizeRouteDialog from './optimize-route-dialog';
 import type { Technician, Job } from '@/types';
+
+// A small, self-contained component for the toast body
+const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
+  const { toast } = useToast();
+  return (
+    <div className="w-full space-y-3">
+      <p className="text-sm">{message}</p>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            navigator.clipboard.writeText(message);
+            toast({ title: "Copied to clipboard!", duration: 2000 });
+          }}
+        >
+          <Copy className="mr-2 h-4 w-4" /> Copy Text
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDismiss}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 interface ScheduleRiskAlertProps {
   riskAlert: CheckScheduleHealthResult;
@@ -36,10 +61,10 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else if (result.data?.message) {
-      toast({
-        title: 'AI Message Draft',
-        description: result.data.message,
-        duration: 9000,
+      const { dismiss } = toast({
+        title: "AI Message Draft",
+        description: <ToastWithCopy message={result.data.message} onDismiss={() => dismiss()} />,
+        duration: Infinity,
       });
       onDismiss(technician.id);
     }

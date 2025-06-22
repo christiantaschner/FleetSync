@@ -15,8 +15,34 @@ import { useToast } from "@/hooks/use-toast";
 import { optimizeRoutesAction, type OptimizeRoutesActionInput, confirmManualRescheduleAction, notifyCustomerAction } from "@/actions/fleet-actions";
 import type { OptimizeRoutesOutput, Technician, Job, AITask } from "@/types";
 import type { EventDropArg } from '@fullcalendar/core';
-import { Loader2, MapIcon, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Loader2, MapIcon, CheckCircle, AlertTriangle, Copy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+// A small, self-contained component for the toast body
+const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
+  const { toast } = useToast();
+  return (
+    <div className="w-full space-y-3">
+      <p className="text-sm">{message}</p>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            navigator.clipboard.writeText(message);
+            toast({ title: "Copied to clipboard!", duration: 2000 });
+          }}
+        >
+          <Copy className="mr-2 h-4 w-4" /> Copy Text
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDismiss}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 interface RescheduleDialogProps {
   isOpen: boolean;
@@ -124,10 +150,10 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
                 newTime: new Date(event.start!).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
             }).then(notificationResult => {
                 if(notificationResult.data?.message) {
-                    toast({
+                    const { dismiss } = toast({
                         title: "AI Message Draft (For Reschedule)",
-                        description: notificationResult.data.message,
-                        duration: 9000,
+                        description: <ToastWithCopy message={notificationResult.data.message} onDismiss={() => dismiss()} />,
+                        duration: Infinity,
                     });
                 }
             });

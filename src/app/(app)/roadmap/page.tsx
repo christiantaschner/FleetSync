@@ -96,16 +96,16 @@ const roadmapFeatures = {
       icon: CalendarDays,
       status: "Completed",
     },
-     {
-      title: "Digital Customer Signatures & Photo Documentation",
-      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
-      icon: FileSignature,
-      status: "Completed",
-    },
     {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
       icon: Shuffle, 
+      status: "Completed",
+    },
+    {
+      title: "Digital Customer Signatures & Photo Documentation",
+      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
+      icon: FileSignature,
       status: "Completed",
     },
   ],
@@ -249,7 +249,7 @@ const roadmapFeatures = {
       title: "Intelligent Parts & Van Stock Management",
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
       icon: Wrench,
-      status: "In Progress",
+      status: "Completed",
     },
     {
       title: "CO2 Emission Estimation & Reporting",

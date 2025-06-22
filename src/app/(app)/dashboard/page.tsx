@@ -159,7 +159,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, "profileChangeRequests"), orderBy("createdAt", "desc"));
+    const requestsQuery = query(collection(db, "profileChangeRequests"), where("status", "==", "pending"), orderBy("createdAt", "desc"));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
         const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
         setProfileChangeRequests(requestsData);
@@ -411,8 +411,6 @@ export default function DashboardPage() {
   const activeJobs = jobs.filter(job => job.status === 'Assigned' || job.status === 'In Progress' || job.status === 'En Route');
   const pendingJobsCount = pendingJobsForBatchAssign.length;
   const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
-  
-  const pendingProfileRequests = useMemo(() => profileChangeRequests.filter(r => r.status === 'pending'), [profileChangeRequests]);
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
@@ -765,8 +763,8 @@ export default function DashboardPage() {
                   <TabsTrigger value="jobs">Job List</TabsTrigger>
                   <TabsTrigger value="technicians" className="relative">
                     Technicians
-                    {pendingProfileRequests.length > 0 && (
-                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{pendingProfileRequests.length}</Badge>
+                    {profileChangeRequests.length > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="schedule">Schedule</TabsTrigger>
@@ -891,7 +889,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ProfileChangeRequests requests={pendingProfileRequests} onAction={() => {}} />
+                <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {isLoadingData && technicians.length === 0 ? (
                     <div className="col-span-full flex justify-center items-center py-10">

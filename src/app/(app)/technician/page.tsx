@@ -52,7 +52,13 @@ export default function TechnicianJobsPage() {
     const techDocRef = doc(db, "technicians", currentTechnicianId);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        setTechnician({ id: docSnap.id, ...docSnap.data() } as Technician);
+        const data = docSnap.data();
+         for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        setTechnician({ id: docSnap.id, ...data } as Technician);
       } else {
         console.warn(`Technician document with ID ${currentTechnicianId} (Firebase UID) not found in Firestore.`);
         setError(`No technician profile found for your account. Please contact an administrator.`);
@@ -75,7 +81,15 @@ export default function TechnicianJobsPage() {
     );
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
-      const jobsForTech = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
+      const jobsForTech = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          for (const key in data) {
+              if (data[key] && typeof data[key].toDate === 'function') {
+                  data[key] = data[key].toDate().toISOString();
+              }
+          }
+          return { id: doc.id, ...data } as Job;
+      });
       
       jobsForTech.sort((a, b) => {
         // Primary sort: routeOrder (jobs without it go to the end)

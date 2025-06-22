@@ -58,7 +58,13 @@ export default function TechnicianProfilePage() {
     const techDocRef = doc(db, "technicians", firebaseUser.uid);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
         if (docSnap.exists()) {
-          setTechnician({ id: docSnap.id, ...docSnap.data() } as Technician);
+          const data = docSnap.data();
+          for (const key in data) {
+              if (data[key] && typeof data[key].toDate === 'function') {
+                  data[key] = data[key].toDate().toISOString();
+              }
+          }
+          setTechnician({ id: docSnap.id, ...data } as Technician);
         } else {
           setError("No technician profile found for your account.");
           setTechnician(null);
@@ -76,7 +82,15 @@ export default function TechnicianProfilePage() {
       orderBy("createdAt", "desc")
     );
     const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
-        const requestsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
+        const requestsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as ProfileChangeRequest
+        });
         setSubmittedRequests(requestsData);
     });
 
@@ -206,7 +220,7 @@ export default function TechnicianProfilePage() {
                                                 ))}
                                             </ul>
                                         </div>
-                                    )}
+                                     )}
                                      {request.notes && (
                                         <div>
                                             <p className="text-xs font-semibold mb-1">Your Notes:</p>

@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -103,9 +103,9 @@ export default function DashboardPage() {
   }, []);
 
   const fetchSkills = useCallback(async () => {
-    if (!db) return;
+    if (!db || !user) return;
     try {
-      const skillsQuery = query(collection(db, "skills"), orderBy("name"));
+      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", user.uid), orderBy("name"));
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => doc.data().name as string);
       setAllSkills(skillsData);
@@ -113,12 +113,12 @@ export default function DashboardPage() {
       console.error("Error fetching skills: ", error);
       toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
     }
-  }, [toast]);
+  }, [user, toast]);
 
   const fetchParts = useCallback(async () => {
-    if (!db) return;
+    if (!db || !user) return;
     try {
-      const partsQuery = query(collection(db, "parts"), orderBy("name"));
+      const partsQuery = query(collection(db, "parts"), where("companyId", "==", user.uid), orderBy("name"));
       const querySnapshot = await getDocs(partsQuery);
       const partsData = querySnapshot.docs.map(doc => doc.data().name as string);
       setAllParts(partsData);
@@ -126,7 +126,7 @@ export default function DashboardPage() {
       console.error("Error fetching parts: ", error);
       toast({ title: "Error", description: "Could not fetch parts library.", variant: "destructive" });
     }
-  }, [toast]);
+  }, [user, toast]);
   
   // Data fetching
   useEffect(() => {
@@ -137,6 +137,7 @@ export default function DashboardPage() {
     setIsLoadingData(true);
     let activeListeners = 0;
     const requiredListeners = 3;
+    const companyId = user.uid;
 
     const onListenerLoaded = () => {
         activeListeners++;
@@ -148,7 +149,7 @@ export default function DashboardPage() {
     fetchSkills();
     fetchParts();
 
-    const jobsQuery = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
+    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -168,7 +169,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
 
-    const techniciansQuery = query(collection(db, "technicians"), orderBy("name", "asc"));
+    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId), orderBy("name", "asc"));
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -188,7 +189,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, "profileChangeRequests"), where("status", "==", "pending"));
+    const requestsQuery = query(collection(db, "profileChangeRequests"), where("companyId", "==", companyId), where("status", "==", "pending"));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
         const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
         requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -254,12 +255,12 @@ export default function DashboardPage() {
   
   // Proactive High-Priority Job Suggestion
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion) {
+    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion || !user) {
       return;
     }
 
     const currentJobIds = new Set(jobs.map(j => j.id));
-    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id));
+    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id) && j.companyId === user.uid);
     prevJobIdsRef.current = currentJobIds;
     
     if (newJobs.length === 0) {
@@ -273,7 +274,7 @@ export default function DashboardPage() {
     if (highPriorityPendingJob) {
       fetchProactiveSuggestion(highPriorityPendingJob);
     }
-  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion]);
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, user]);
 
   const fetchProactiveSuggestion = useCallback(async (job: Job) => {
     setIsFetchingProactiveSuggestion(true);
@@ -555,8 +556,9 @@ export default function DashboardPage() {
   };
   
   const handleMarkTechnicianUnavailable = async (technicianId: string) => {
+    if (!user) return;
     setIsHandlingUnavailability(true);
-    const result = await handleTechnicianUnavailabilityAction({ technicianId });
+    const result = await handleTechnicianUnavailabilityAction({ companyId: user.uid, technicianId });
 
     if (result.error) {
       toast({

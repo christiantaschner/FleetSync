@@ -27,6 +27,7 @@ import { Loader2, Save, Calendar as CalendarIcon, Repeat, User, Phone, MapPin, B
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/auth-context';
 
 interface AddEditContractDialogProps {
     isOpen: boolean;
@@ -36,12 +37,12 @@ interface AddEditContractDialogProps {
 }
 
 const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, onClose, contract, onContractUpdated }) => {
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { register, handleSubmit, control, reset, formState: { errors } } = useForm<Contract>({
-        resolver: zodResolver(ContractSchema),
-        defaultValues: contract || {
+    const defaultValues = contract || {
+            companyId: user?.uid || '',
             customerName: '',
             customerPhone: '',
             customerAddress: '',
@@ -56,12 +57,17 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 requiredSkills: [],
                 requiredParts: [],
             }
-        }
+        };
+
+    const { register, handleSubmit, control, reset, formState: { errors } } = useForm<Contract>({
+        resolver: zodResolver(ContractSchema),
+        defaultValues
     });
 
     useEffect(() => {
         if (isOpen) {
-            reset(contract || {
+             const newDefaultValues = contract || {
+                companyId: user?.uid || '',
                 customerName: '',
                 customerPhone: '',
                 customerAddress: '',
@@ -76,9 +82,10 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                     requiredSkills: [],
                     requiredParts: [],
                 }
-            });
+            };
+            reset(newDefaultValues);
         }
-    }, [isOpen, contract, reset]);
+    }, [isOpen, contract, reset, user]);
     
     const frequencies: Contract['frequency'][] = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually'];
     const priorities: JobPriority[] = ['Low', 'Medium', 'High'];
@@ -91,14 +98,18 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 await updateDoc(contractRef, { ...data, updatedAt: serverTimestamp() });
                 toast({ title: "Success", description: "Contract updated successfully." });
             } else {
-                await addDoc(collection(db, "contracts"), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+                 if (!user?.uid) {
+                    throw new Error("User not authenticated.");
+                }
+                await addDoc(collection(db, "contracts"), { ...data, companyId: user.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
                 toast({ title: "Success", description: "Contract created successfully." });
             }
             onContractUpdated();
             onClose();
         } catch (error) {
             console.error("Error saving contract:", error);
-            toast({ title: "Error", description: "Could not save the contract.", variant: "destructive" });
+            const errorMessage = error instanceof Error ? error.message : "Could not save the contract.";
+            toast({ title: "Error", description: errorMessage, variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }

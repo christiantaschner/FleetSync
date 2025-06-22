@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
 import type { Contract } from '@/types';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import AddEditContractDialog from './components/AddEditContractDialog';
 import ContractListItem from './components/ContractListItem';
@@ -30,7 +30,11 @@ export default function ContractsPage() {
     const fetchContracts = useCallback(() => {
         if (!db || !user) return;
         setIsLoading(true);
-        const contractsQuery = query(collection(db, "contracts"), orderBy("customerName", "asc"));
+        const contractsQuery = query(
+            collection(db, "contracts"), 
+            where("companyId", "==", user.uid), 
+            orderBy("customerName", "asc")
+        );
         const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
                 const data = doc.data();

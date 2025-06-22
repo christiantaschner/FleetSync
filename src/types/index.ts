@@ -11,6 +11,7 @@ export type TechnicianSkill = string; // Changed from union type to string
 
 export type Technician = {
   id: string;
+  companyId: string;
   name: string;
   isAvailable: boolean;
   skills: string[]; // Changed from TechnicianSkill[] to string[]
@@ -34,6 +35,7 @@ export type ChecklistResult = {
 
 export type Job = {
   id: string;
+  companyId: string;
   title: string;
   description: string;
   priority: JobPriority;
@@ -110,6 +112,7 @@ export type AITechnician = {
 
 export type ProfileChangeRequest = {
     id: string;
+    companyId: string;
     technicianId: string;
     technicianName: string;
     requestedChanges: Record<string, any>;
@@ -125,6 +128,7 @@ export type ProfileChangeRequest = {
 export type ChatMessage = {
     id: string;
     jobId: string;
+    companyId: string;
     senderId: string;
     senderName: string;
     receiverId: string;
@@ -136,6 +140,7 @@ export type ChatMessage = {
 
 export const ContractSchema = z.object({
     id: z.string().optional(),
+    companyId: z.string(),
     customerName: z.string().min(1, "Customer name is required."),
     customerPhone: z.string().optional(),
     customerAddress: z.string().min(1, "Customer address is required."),
@@ -158,6 +163,7 @@ export type Contract = z.infer<typeof ContractSchema>;
 
 export const EquipmentSchema = z.object({
     id: z.string().optional(),
+    companyId: z.string(),
     customerId: z.string(),
     customerName: z.string(),
     name: z.string(),
@@ -448,6 +454,7 @@ export const TroubleshootEquipmentOutputSchema = z.object({
 export type TroubleshootEquipmentOutput = z.infer<typeof TroubleshootEquipmentOutputSchema>;
 
 export const CalculateTravelMetricsInputSchema = z.object({
+    companyId: z.string(),
     jobId: z.string(),
     technicianId: z.string(),
 });

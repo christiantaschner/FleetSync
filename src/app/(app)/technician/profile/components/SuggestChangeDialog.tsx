@@ -21,6 +21,7 @@ import { requestProfileChangeAction } from '@/actions/fleet-actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { isEqual } from 'lodash';
+import { useAuth } from '@/contexts/auth-context';
 
 interface SuggestChangeDialogProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ interface SuggestChangeDialogProps {
 }
 
 const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIsOpen, technician, allSkills }) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(technician.name);
@@ -58,6 +60,11 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
 
   const handleSubmit = async () => {
+    if (!user) {
+        toast({ title: "Not Authenticated", description: "You must be logged in to submit a change.", variant: "destructive" });
+        return;
+    }
+
     const requestedChanges: any = {};
     if (name !== technician.name) requestedChanges.name = name;
     if (email !== technician.email) requestedChanges.email = email;
@@ -76,6 +83,7 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
     setIsSubmitting(true);
     const result = await requestProfileChangeAction({
+        companyId: technician.companyId,
         technicianId: technician.id,
         technicianName: technician.name,
         requestedChanges,

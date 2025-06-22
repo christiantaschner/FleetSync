@@ -8,6 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const SendChatMessageInputSchema = z.object({
     jobId: z.string(),
+    companyId: z.string(),
     senderId: z.string(),
     senderName: z.string(),
     receiverId: z.string(),
@@ -17,6 +18,7 @@ const SendChatMessageInputSchema = z.object({
 
 type SendChatMessageInput = {
     jobId: string;
+    companyId: string;
     senderId: string;
     senderName: string;
     receiverId: string;
@@ -40,6 +42,7 @@ export async function sendChatMessageAction(
 
         const messageData = {
             jobId: input.jobId,
+            companyId: input.companyId,
             senderId: input.senderId,
             senderName: input.senderName,
             receiverId: input.receiverId,

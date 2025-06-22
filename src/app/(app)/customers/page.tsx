@@ -2,13 +2,15 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Job, Contract, Equipment } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function CustomersPage() {
+    const { user } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -16,13 +18,14 @@ export default function CustomersPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!db) {
+        if (!db || !user) {
             setIsLoading(false);
             return;
         }
 
         let loadedCount = 0;
         const totalCollections = 3;
+        const companyId = user.uid;
 
         const updateLoadingState = () => {
             loadedCount++;
@@ -31,7 +34,7 @@ export default function CustomersPage() {
             }
         }
 
-        const jobsQuery = query(collection(db, "jobs"));
+        const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
         const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
             const jobsData = snapshot.docs.map(doc => {
                 const data = doc.data();
@@ -50,7 +53,7 @@ export default function CustomersPage() {
             updateLoadingState();
         });
 
-        const contractsQuery = query(collection(db, "contracts"));
+        const contractsQuery = query(collection(db, "contracts"), where("companyId", "==", companyId));
         const unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -69,7 +72,7 @@ export default function CustomersPage() {
             updateLoadingState();
         });
         
-        const equipmentQuery = query(collection(db, "equipment"));
+        const equipmentQuery = query(collection(db, "equipment"), where("companyId", "==", companyId));
         const unsubscribeEquipment = onSnapshot(equipmentQuery, (snapshot) => {
             const equipmentData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -94,7 +97,7 @@ export default function CustomersPage() {
             unsubscribeContracts();
             unsubscribeEquipment();
         };
-    }, []);
+    }, [user]);
 
     if (isLoading) {
         return (

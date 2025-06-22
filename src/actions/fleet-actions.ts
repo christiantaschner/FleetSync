@@ -164,7 +164,11 @@ const JobImportSchema = z.object({
     requiredSkills: z.array(z.string()).optional(),
 });
 
-const ImportJobsActionInputSchema = z.array(JobImportSchema);
+const ImportJobsActionInputSchema = z.object({
+  companyId: z.string(),
+  jobs: z.array(JobImportSchema),
+});
+
 
 export type ImportJobsActionInput = z.infer<typeof ImportJobsActionInputSchema>;
 
@@ -172,7 +176,7 @@ export async function importJobsAction(
   input: ImportJobsActionInput
 ): Promise<{ data: { successCount: number }; error: string | null }> {
     try {
-        const validatedInput = ImportJobsActionInputSchema.parse(input);
+        const { companyId, jobs } = ImportJobsActionInputSchema.parse(input);
         if (!db) {
             throw new Error("Firestore not initialized");
         }
@@ -181,10 +185,11 @@ export async function importJobsAction(
 
         const jobsCollectionRef = collection(db, "jobs");
 
-        for (const jobData of validatedInput) {
+        for (const jobData of jobs) {
             const newJobRef = doc(jobsCollectionRef);
             
             const finalPayload = {
+              companyId,
               title: jobData.title,
               description: jobData.description,
               priority: jobData.priority,
@@ -243,6 +248,7 @@ export async function predictNextAvailableTechniciansAction(
 }
 
 const HandleTechnicianUnavailabilityInputSchema = z.object({
+  companyId: z.string(),
   technicianId: z.string().min(1, "Technician ID is required."),
 });
 
@@ -250,7 +256,7 @@ export async function handleTechnicianUnavailabilityAction(
   input: z.infer<typeof HandleTechnicianUnavailabilityInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { technicianId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
+    const { companyId, technicianId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
@@ -261,10 +267,11 @@ export async function handleTechnicianUnavailabilityAction(
     const techDocRef = doc(db, "technicians", technicianId);
     batch.update(techDocRef, { isAvailable: false, currentJobId: null });
 
-    // 2. Find and unassign active jobs
+    // 2. Find and unassign active jobs for that company
     const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
     const jobsQuery = query(
       collection(db, "jobs"),
+      where("companyId", "==", companyId),
       where("assignedTechnicianId", "==", technicianId),
       where("status", "in", activeJobStatuses)
     );
@@ -377,6 +384,7 @@ export async function confirmManualRescheduleAction(
 }
 
 const RequestProfileChangeInputSchema = z.object({
+  companyId: z.string(),
   technicianId: z.string().min(1),
   technicianName: z.string().min(1),
   requestedChanges: z.record(z.any()), // Simple object for changes
@@ -387,7 +395,7 @@ export async function requestProfileChangeAction(
   input: z.infer<typeof RequestProfileChangeInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { technicianId, technicianName, requestedChanges, notes } = RequestProfileChangeInputSchema.parse(input);
+    const { companyId, technicianId, technicianName, requestedChanges, notes } = RequestProfileChangeInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
@@ -395,6 +403,7 @@ export async function requestProfileChangeAction(
     const requestsCollectionRef = collection(db, "profileChangeRequests");
     
     const newRequest: Omit<ProfileChangeRequest, 'id'> = {
+        companyId,
         technicianId,
         technicianName,
         requestedChanges,
@@ -637,6 +646,7 @@ export async function reassignJobAction(
 }
 
 const GenerateRecurringJobsInputSchema = z.object({
+  companyId: z.string(),
   untilDate: z.string().describe("The date (ISO 8601 format) up to which jobs should be generated."),
 });
 
@@ -644,12 +654,12 @@ export async function generateRecurringJobsAction(
   input: z.infer<typeof GenerateRecurringJobsInputSchema>
 ): Promise<{ data: { jobsCreated: number }; error: string | null }> {
   try {
-    const { untilDate } = GenerateRecurringJobsInputSchema.parse(input);
+    const { companyId, untilDate } = GenerateRecurringJobsInputSchema.parse(input);
     const targetDate = new Date(untilDate);
 
     if (!db) throw new Error("Firestore not initialized");
 
-    const contractsQuery = query(collection(db, "contracts"), where("isActive", "==", true));
+    const contractsQuery = query(collection(db, "contracts"), where("companyId", "==", companyId), where("isActive", "==", true));
     const querySnapshot = await getDocs(contractsQuery);
     
     const contracts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
@@ -664,6 +674,7 @@ export async function generateRecurringJobsAction(
         const newJobRef = doc(collection(db, "jobs"));
         const newJobPayload = {
           ...contract.jobTemplate,
+          companyId,
           customerName: contract.customerName,
           customerPhone: contract.customerPhone,
           location: { address: contract.customerAddress, latitude: 0, longitude: 0 },
@@ -789,7 +800,7 @@ export async function calculateTravelMetricsAction(
   input: z.infer<typeof CalculateTravelMetricsInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { jobId, technicianId } = CalculateTravelMetricsInputSchema.parse(input);
+    const { companyId, jobId, technicianId } = CalculateTravelMetricsInputSchema.parse(input);
     if (!db) throw new Error("Firestore not initialized");
 
     const jobDocRef = doc(db, "jobs", jobId);
@@ -804,6 +815,7 @@ export async function calculateTravelMetricsAction(
     
     const q = query(
       collection(db, "jobs"),
+      where("companyId", "==", companyId),
       where("assignedTechnicianId", "==", technicianId),
       where("status", "==", "Completed"),
       where("completedAt", ">=", startOfDay),

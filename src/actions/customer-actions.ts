@@ -8,6 +8,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 export const AddEquipmentInputSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required.'),
   customerName: z.string().min(1, 'Customer name is required.'),
+  companyId: z.string().min(1, 'Company ID is required.'),
   name: z.string().min(1, 'Equipment name is required.'),
   model: z.string().optional(),
   serialNumber: z.string().optional(),

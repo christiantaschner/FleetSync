@@ -75,6 +75,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
 
         const result = await sendChatMessageAction({
             jobId: job.id,
+            companyId: job.companyId,
             senderId: user.uid,
             senderName: technician.name,
             // In the technician app, the receiver is always the dispatcher. We'll use a placeholder ID for now.

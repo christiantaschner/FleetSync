@@ -19,6 +19,7 @@ import { generateRecurringJobsAction } from '@/actions/fleet-actions';
 import { Loader2, CalendarPlus, Calendar as CalendarIcon } from 'lucide-react';
 import { format, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 interface GenerateJobsDialogProps {
     isOpen: boolean;
@@ -26,6 +27,7 @@ interface GenerateJobsDialogProps {
 }
 
 const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOpen }) => {
+    const { user } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [untilDate, setUntilDate] = useState<Date | undefined>(addMonths(new Date(), 3));
@@ -36,8 +38,16 @@ const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOp
             return;
         }
 
+        if (!user) {
+            toast({ title: "Authentication Error", description: "You must be logged in to perform this action.", variant: "destructive" });
+            return;
+        }
+
         setIsSubmitting(true);
-        const result = await generateRecurringJobsAction({ untilDate: untilDate.toISOString() });
+        const result = await generateRecurringJobsAction({ 
+            companyId: user.uid, 
+            untilDate: untilDate.toISOString() 
+        });
         setIsSubmitting(false);
 
         if (result.error) {

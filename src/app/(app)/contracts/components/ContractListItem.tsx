@@ -6,16 +6,17 @@ import type { Contract } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Repeat, User, MapPin, Calendar, Edit, Circle, CheckCircle, AlertCircle } from 'lucide-react';
+import { Repeat, User, MapPin, Calendar, Edit, Circle, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ContractListItemProps {
     contract: Contract;
     onEdit: (contract: Contract) => void;
+    onSuggestAppointment: (contract: Contract) => void;
 }
 
-const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit }) => {
+const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, onSuggestAppointment }) => {
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-4">
@@ -48,8 +49,11 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit })
                      <p className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5"/>{contract.lastGeneratedUntil ? format(new Date(contract.lastGeneratedUntil), 'PPP') : format(new Date(contract.startDate), 'PPP')}</p>
                 </div>
             </CardContent>
-            <CardContent className="pt-2">
-                <Button variant="outline" size="sm" onClick={() => onEdit(contract)}>
+            <CardContent className="pt-2 flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => onSuggestAppointment(contract)}>
+                    <MessageSquare className="mr-2 h-4 w-4" /> Suggest Appointment
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onEdit(contract)}>
                     <Edit className="mr-2 h-4 w-4" /> Edit Contract
                 </Button>
             </CardContent>

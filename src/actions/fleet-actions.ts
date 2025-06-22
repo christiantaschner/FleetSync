@@ -9,6 +9,7 @@ import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predict-schedule-risk";
 import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
+import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows/suggest-next-appointment-flow";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
@@ -45,6 +46,9 @@ import {
   NotifyCustomerInputSchema,
   type NotifyCustomerInput,
   ReassignJobInputSchema,
+  SuggestNextAppointmentInputSchema,
+  type SuggestNextAppointmentInput,
+  type SuggestNextAppointmentOutput,
 } from "@/types";
 
 
@@ -694,5 +698,22 @@ export async function generateRecurringJobsAction(
     console.error("Error generating recurring jobs:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { data: null, error: `Failed to generate jobs. ${errorMessage}` };
+  }
+}
+
+export async function suggestNextAppointmentAction(
+  input: SuggestNextAppointmentInput
+): Promise<{ data: SuggestNextAppointmentOutput | null; error: string | null }> {
+  try {
+    const validatedInput = SuggestNextAppointmentInputSchema.parse(input);
+    const result = await suggestNextAppointmentFlow(validatedInput);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in suggestNextAppointmentAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to suggest appointment. ${errorMessage}` };
   }
 }

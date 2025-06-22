@@ -373,3 +373,18 @@ export const ReassignJobInputSchema = z.object({
     reason: z.string().optional(),
 });
 export type ReassignJobInput = z.infer<typeof ReassignJobInputSchema>;
+
+
+export const SuggestNextAppointmentInputSchema = z.object({
+  customerName: z.string(),
+  jobTitle: z.string(),
+  frequency: z.enum(['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']),
+  lastAppointmentDate: z.string().describe("The last known appointment or service date in ISO 8601 format."),
+});
+export type SuggestNextAppointmentInput = z.infer<typeof SuggestNextAppointmentInputSchema>;
+
+export const SuggestNextAppointmentOutputSchema = z.object({
+  suggestedDate: z.string().describe("The suggested date for the next appointment in a human-readable format (e.g., 'Tuesday, March 15, 2025')."),
+  message: z.string().describe("The drafted customer-facing appointment scheduling message."),
+});
+export type SuggestNextAppointmentOutput = z.infer<typeof SuggestNextAppointmentOutputSchema>;

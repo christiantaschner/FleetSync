@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import AddEditContractDialog from './components/AddEditContractDialog';
 import ContractListItem from './components/ContractListItem';
 import GenerateJobsDialog from './components/GenerateJobsDialog';
+import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function ContractsPage() {
@@ -24,6 +25,7 @@ export default function ContractsPage() {
     const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
 
     const [isGenerateJobsOpen, setIsGenerateJobsOpen] = useState(false);
+    const [isSuggestAppointmentOpen, setIsSuggestAppointmentOpen] = useState(false);
 
     const fetchContracts = useCallback(() => {
         if (!db || !user) return;
@@ -59,6 +61,11 @@ export default function ContractsPage() {
         setSelectedContract(contract);
         setIsAddEditDialogOpen(true);
     };
+    
+    const handleSuggestAppointment = (contract: Contract) => {
+        setSelectedContract(contract);
+        setIsSuggestAppointmentOpen(true);
+    };
 
     const handleAddNewContract = () => {
         setSelectedContract(null);
@@ -67,6 +74,11 @@ export default function ContractsPage() {
 
     const onDialogClose = () => {
         setIsAddEditDialogOpen(false);
+        setSelectedContract(null);
+    }
+    
+    const onSuggestDialogClose = () => {
+        setIsSuggestAppointmentOpen(false);
         setSelectedContract(null);
     }
     
@@ -81,6 +93,11 @@ export default function ContractsPage() {
             <GenerateJobsDialog
                 isOpen={isGenerateJobsOpen}
                 setIsOpen={setIsGenerateJobsOpen}
+            />
+            <SuggestAppointmentDialog
+                isOpen={isSuggestAppointmentOpen}
+                onClose={onSuggestDialogClose}
+                contract={selectedContract}
             />
 
             <Card>
@@ -106,7 +123,12 @@ export default function ContractsPage() {
                     ) : contracts.length > 0 ? (
                         <div className="space-y-4">
                             {contracts.map(contract => (
-                                <ContractListItem key={contract.id} contract={contract} onEdit={handleEditContract} />
+                                <ContractListItem 
+                                    key={contract.id} 
+                                    contract={contract} 
+                                    onEdit={handleEditContract} 
+                                    onSuggestAppointment={handleSuggestAppointment} 
+                                />
                             ))}
                         </div>
                     ) : (

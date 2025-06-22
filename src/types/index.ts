@@ -235,6 +235,17 @@ export const SuggestJobSkillsOutputSchema = z.object({
 });
 export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;
 
+export const SuggestJobPartsInputSchema = z.object({
+  jobDescription: z.string().describe('The description of the job.'),
+  availableParts: z.array(z.string()).describe('The list of all possible parts in the system inventory.'),
+});
+export type SuggestJobPartsInput = z.infer<typeof SuggestJobPartsInputSchema>;
+
+export const SuggestJobPartsOutputSchema = z.object({
+  suggestedParts: z.array(z.string()).describe('An array of part names suggested for the job, drawn exclusively from the availableParts list.'),
+});
+export type SuggestJobPartsOutput = z.infer<typeof SuggestJobPartsOutputSchema>;
+
 export const SuggestJobPriorityInputSchema = z.object({
   jobDescription: z.string().describe('The job description to analyze.'),
 });

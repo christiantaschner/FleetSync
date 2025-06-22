@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,6 +26,7 @@ import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechnici
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
+import ManagePartsDialog from './components/ManagePartsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +61,9 @@ export default function DashboardPage() {
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
 
+  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
+  const [allParts, setAllParts] = useState<string[]>([]);
+
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
   const [nextUpPredictions, setNextUpPredictions] = useState<PredictNextAvailableTechniciansOutput['predictions']>([]);
@@ -84,6 +88,7 @@ export default function DashboardPage() {
   const fetchAllData = useCallback(() => {
     // This function can be called to refresh all data, e.g., after an import
     fetchSkills();
+    fetchParts();
     // The onSnapshot listeners for jobs/technicians/requests will update automatically
   }, []);
 
@@ -97,6 +102,19 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error fetching skills: ", error);
       toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+    }
+  }, [toast]);
+
+  const fetchParts = useCallback(async () => {
+    if (!db) return;
+    try {
+      const partsQuery = query(collection(db, "parts"), orderBy("name"));
+      const querySnapshot = await getDocs(partsQuery);
+      const partsData = querySnapshot.docs.map(doc => doc.data().name as string);
+      setAllParts(partsData);
+    } catch (error) {
+      console.error("Error fetching parts: ", error);
+      toast({ title: "Error", description: "Could not fetch parts library.", variant: "destructive" });
     }
   }, [toast]);
   
@@ -118,6 +136,7 @@ export default function DashboardPage() {
     }
 
     fetchSkills();
+    fetchParts();
 
     const jobsQuery = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -176,7 +195,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [user, toast, fetchSkills]);
+  }, [user, toast, fetchSkills, fetchParts]);
   
   // Next Up Technician Prediction
   useEffect(() => {
@@ -590,7 +609,7 @@ export default function DashboardPage() {
             <Button variant="outline" onClick={handleCheckScheduleHealth} disabled={busyTechnicians.length === 0 || isCheckingHealth}>
                 <ShieldQuestion className="mr-2 h-4 w-4" /> Check Schedule Health
             </Button>
-            <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
+            <AddEditJobDialog technicians={technicians} allSkills={allSkills} allParts={allParts} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
@@ -645,6 +664,12 @@ export default function DashboardPage() {
             isOpen={isManageSkillsOpen}
             setIsOpen={setIsManageSkillsOpen}
             onSkillsUpdated={fetchSkills}
+        />
+        
+        <ManagePartsDialog
+            isOpen={isManagePartsOpen}
+            setIsOpen={setIsManagePartsOpen}
+            onPartsUpdated={fetchParts}
         />
 
         <ImportJobsDialog
@@ -881,6 +906,9 @@ export default function DashboardPage() {
                  <div className="flex flex-wrap gap-2">
                   <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
                     <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                  </Button>
+                   <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
+                    <Package className="mr-2 h-4 w-4" /> Manage Parts
                   </Button>
                   <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
                     <Button variant="default">

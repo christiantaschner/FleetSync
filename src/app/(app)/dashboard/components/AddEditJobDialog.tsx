@@ -21,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
 import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Package } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestJobPartsAction, SuggestJobPartsActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -39,15 +39,17 @@ interface AddEditJobDialogProps {
   jobs: Job[];
   technicians: Technician[];
   allSkills: string[];
+  allParts: string[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, onJobAddedOrUpdated }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, allParts, onJobAddedOrUpdated }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
+  const [isFetchingPartSuggestion, setIsFetchingPartSuggestion] = useState(false);
   const [isFetchingPrioritySuggestion, setIsFetchingPrioritySuggestion] = useState(false);
   
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
@@ -105,6 +107,23 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     setIsFetchingSkillSuggestion(false);
   }, [allSkills]);
 
+  const fetchAIPartSuggestion = useCallback(async (currentDescription: string) => {
+    if (!currentDescription.trim() || allParts.length === 0) {
+      return;
+    }
+    setIsFetchingPartSuggestion(true);
+    const input: SuggestJobPartsActionInput = {
+      jobDescription: currentDescription,
+      availableParts: allParts,
+    };
+    const result = await suggestJobPartsAction(input);
+    if(result.data?.suggestedParts) {
+      setRequiredParts(result.data.suggestedParts);
+    }
+    setIsFetchingPartSuggestion(false);
+  }, [allParts]);
+
+
   const fetchAIPrioritySuggestion = useCallback(async (currentDescription: string) => {
     if (!currentDescription.trim()) {
       setAiPrioritySuggestion(null);
@@ -124,11 +143,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     if (isOpen && !job && description.trim()) {
         const timer = setTimeout(() => {
             fetchAISkillSuggestion(description);
+            fetchAIPartSuggestion(description);
             fetchAIPrioritySuggestion(description);
         }, 1000); // Debounce
         return () => clearTimeout(timer);
     }
-  }, [description, isOpen, job, fetchAISkillSuggestion, fetchAIPrioritySuggestion]);
+  }, [description, isOpen, job, fetchAISkillSuggestion, fetchAIPrioritySuggestion, fetchAIPartSuggestion]);
 
   const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
@@ -205,6 +225,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         : [...prevSkills, skill]
     );
   };
+  
+  const handlePartChange = (part: string) => {
+    setRequiredParts(prevParts => 
+      prevParts.includes(part) 
+        ? prevParts.filter(p => p !== part) 
+        : [...prevParts, part]
+    );
+  };
+
 
   const handleSubmit = async (assignTechId: string | null = null) => {
     if (!title.trim() || !description.trim() || !locationAddress.trim()) {
@@ -415,16 +444,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                 </ScrollArea>
               </div>
               <div>
-                <Label htmlFor="requiredParts" className="flex items-center gap-2">
+                <Label className="flex items-center gap-2">
                     <Package className="h-3.5 w-3.5" /> Required Parts
+                    {isFetchingPartSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
                 </Label>
-                <Textarea 
-                    id="requiredParts"
-                    value={requiredParts.join(', ')}
-                    onChange={(e) => setRequiredParts(e.target.value.split(',').map(p => p.trim()).filter(Boolean))}
-                    placeholder="e.g., Compressor, Filter, 2x Copper Pipes"
-                    className="h-40 mt-1"
-                />
+                 <ScrollArea className="h-40 rounded-md border p-3 mt-1">
+                  <div className="space-y-2">
+                    {allParts.length === 0 && <p className="text-sm text-muted-foreground">No parts defined in library.</p>}
+                    {allParts.map(part => (
+                      <div key={part} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`part-${part.replace(/\s+/g, '-')}`}
+                          checked={requiredParts.includes(part)}
+                          onCheckedChange={() => handlePartChange(part)}
+                        />
+                        <Label htmlFor={`part-${part.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                          {part}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           <div>

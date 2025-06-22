@@ -98,7 +98,11 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
           <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100" onClick={() => setIsReassignOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" /> Find Alternative
           </Button>
-          <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+          <OptimizeRouteDialog 
+            technicians={technicians} 
+            jobs={jobs}
+            defaultTechnicianId={technician.id}
+          >
             <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100">
               <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
             </Button>

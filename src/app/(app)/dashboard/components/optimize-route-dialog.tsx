@@ -26,9 +26,10 @@ interface OptimizeRouteDialogProps {
   children: React.ReactNode;
   technicians: Technician[];
   jobs: Job[];
+  defaultTechnicianId?: string;
 }
 
-const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, technicians, jobs }) => {
+const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, technicians, jobs, defaultTechnicianId }) => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +47,13 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
       (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress')
     ).sort((a,b) => (a.routeOrder ?? Infinity) - (b.routeOrder ?? Infinity));
   }, [selectedTechnicianId, jobs]);
+
+  // If a default technician is provided, select them when the dialog opens.
+  useEffect(() => {
+    if (isOpen && defaultTechnicianId) {
+        setSelectedTechnicianId(defaultTechnicianId);
+    }
+  }, [isOpen, defaultTechnicianId]);
 
   useEffect(() => {
     // Auto-select all available jobs for the technician when the technician or their jobs change

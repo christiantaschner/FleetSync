@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Package } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -58,6 +58,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [requiredParts, setRequiredParts] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
@@ -70,6 +71,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     setDescription(job?.description || '');
     setPriority(job?.priority || 'Medium');
     setRequiredSkills(job?.requiredSkills || []);
+    setRequiredParts(job?.requiredParts || []);
     setCustomerName(job?.customerName || '');
     setCustomerPhone(job?.customerPhone || '');
     setLocationAddress(job?.location.address || '');
@@ -212,11 +214,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     
     setIsLoading(true);
 
-    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { scheduledTime?: string; requiredSkills?: string[] } = {
+    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { scheduledTime?: string; requiredSkills?: string[]; requiredParts?: string[] } = {
       title,
       description,
       priority,
       requiredSkills,
+      requiredParts,
       customerName: customerName || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
@@ -386,29 +389,43 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                 </Popover>
             </div>
           </div>
-           <div>
-              <Label className="flex items-center gap-2">
-                <ListChecks className="h-3.5 w-3.5" />
-                Required Skills
-                {isFetchingSkillSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
-              </Label>
-              <ScrollArea className="h-40 rounded-md border p-3 mt-1">
-                <div className="space-y-2">
-                  {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
-                  {allSkills.map(skill => (
-                    <div key={skill} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`skill-${skill.replace(/\s+/g, '-')}`}
-                        checked={requiredSkills.includes(skill)}
-                        onCheckedChange={() => handleSkillChange(skill)}
-                      />
-                      <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                        {skill}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+                <Label className="flex items-center gap-2">
+                  <ListChecks className="h-3.5 w-3.5" />
+                  Required Skills
+                  {isFetchingSkillSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
+                </Label>
+                <ScrollArea className="h-40 rounded-md border p-3 mt-1">
+                  <div className="space-y-2">
+                    {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
+                    {allSkills.map(skill => (
+                      <div key={skill} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`skill-${skill.replace(/\s+/g, '-')}`}
+                          checked={requiredSkills.includes(skill)}
+                          onCheckedChange={() => handleSkillChange(skill)}
+                        />
+                        <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                          {skill}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div>
+                <Label htmlFor="requiredParts" className="flex items-center gap-2">
+                    <Package className="h-3.5 w-3.5" /> Required Parts
+                </Label>
+                <Textarea 
+                    id="requiredParts"
+                    value={requiredParts.join(', ')}
+                    onChange={(e) => setRequiredParts(e.target.value.split(',').map(p => p.trim()).filter(Boolean))}
+                    placeholder="e.g., Compressor, Filter, 2x Copper Pipes"
+                    className="h-40 mt-1"
+                />
+              </div>
             </div>
           <div>
             <Label htmlFor="customerName">Customer Name</Label>

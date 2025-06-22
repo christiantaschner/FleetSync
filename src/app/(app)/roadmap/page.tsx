@@ -298,7 +298,7 @@ const roadmapFeatures = {
       title: "Intelligent Parts & Van Stock Management",
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
       icon: Wrench,
-      status: "Planned",
+      status: "In Progress",
     },
     {
       title: "CO2 Emission Estimation & Reporting",

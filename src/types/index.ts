@@ -43,6 +43,7 @@ export type Job = {
   notes?: string;
   photos?: string[];
   requiredSkills?: string[];
+  requiredParts?: string[];
   customerSignatureUrl?: string;
   customerSignatureTimestamp?: string;
   assignedAt?: string;

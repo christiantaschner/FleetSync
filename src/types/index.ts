@@ -404,6 +404,7 @@ export type SuggestNextAppointmentOutput = z.infer<typeof SuggestNextAppointment
 
 export const TroubleshootEquipmentInputSchema = z.object({
     query: z.string().describe('The technician\'s question about the equipment issue.'),
+    photoDataUri: z.string().optional().describe("An optional photo of the equipment (e.g., model number), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
     knowledgeBase: z.string().optional().describe('Optional text containing internal company knowledge, manuals, or previous similar issues.'),
 });
 export type TroubleshootEquipmentInput = z.infer<typeof TroubleshootEquipmentInputSchema>;

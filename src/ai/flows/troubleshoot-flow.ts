@@ -22,12 +22,17 @@ const prompt = ai.definePrompt({
     output: { schema: TroubleshootEquipmentOutputSchema },
     prompt: `You are an AI assistant providing expert technical guidance to a field service technician.
 
-Your task is to analyze a problem description and provide a clear, step-by-step troubleshooting guide.
+Your task is to analyze a problem description and an optional photo to provide a clear, step-by-step troubleshooting guide.
 Prioritize safety and logical diagnostic flow.
 
 Start with the simplest and most common solutions first.
 
 Problem Description: "{{{query}}}"
+
+{{#if photoDataUri}}
+Use the attached photo as visual context. It may show a model number, error code, or the physical state of the equipment.
+Photo: {{media url=photoDataUri}}
+{{/if}}
 
 {{#if knowledgeBase}}
 Use the following internal knowledge base as your primary reference:

@@ -11,10 +11,11 @@ import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predi
 import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
 import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows/suggest-next-appointment-flow";
 import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/troubleshoot-flow";
+import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract } from "@/types";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy } from "firebase/firestore";
+import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
 import crypto from 'crypto';
 
@@ -54,6 +55,7 @@ import {
   TroubleshootEquipmentInputSchema,
   type TroubleshootEquipmentInput,
   type TroubleshootEquipmentOutput,
+  CalculateTravelMetricsInputSchema,
 } from "@/types";
 
 
@@ -779,4 +781,72 @@ export async function generateTrackingLinkAction(
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         return { data: null, error: `Failed to generate tracking link. ${errorMessage}` };
     }
+}
+
+const AVERAGE_EMISSIONS_KG_PER_KM = 0.192; // Avg for a light commercial vehicle
+
+export async function calculateTravelMetricsAction(
+  input: z.infer<typeof CalculateTravelMetricsInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { jobId, technicianId } = CalculateTravelMetricsInputSchema.parse(input);
+    if (!db) throw new Error("Firestore not initialized");
+
+    const jobDocRef = doc(db, "jobs", jobId);
+    const jobSnap = await getDoc(jobDocRef);
+    if (!jobSnap.exists()) throw new Error("Completed job not found.");
+    const completedJob = jobSnap.data() as Job;
+    if (!completedJob.completedAt) throw new Error("Job is not yet completed.");
+
+    // Find the previously completed job for this technician on the same day
+    const completedDate = new Date(completedJob.completedAt);
+    const startOfDay = new Date(completedDate.setHours(0, 0, 0, 0)).toISOString();
+    
+    const q = query(
+      collection(db, "jobs"),
+      where("assignedTechnicianId", "==", technicianId),
+      where("status", "==", "Completed"),
+      where("completedAt", ">=", startOfDay),
+      where("completedAt", "<", completedJob.completedAt), // Jobs completed *before* this one
+      orderBy("completedAt", "desc"),
+      limit(1)
+    );
+    const prevJobsSnap = await getDocs(q);
+    
+    let startLocation: Location;
+    if (!prevJobsSnap.empty) {
+      const prevJob = prevJobsSnap.docs[0].data() as Job;
+      startLocation = prevJob.location;
+    } else {
+      // First job of the day, use technician's home base
+      const techDocRef = doc(db, "technicians", technicianId);
+      const techSnap = await getDoc(techDocRef);
+      if (!techSnap.exists()) throw new Error("Technician not found.");
+      const technician = techSnap.data() as Technician;
+      startLocation = technician.location;
+    }
+    
+    const endLocation = completedJob.location;
+
+    const distanceResult = await estimateTravelDistanceFlow({
+        startLocation: { latitude: startLocation.latitude, longitude: startLocation.longitude },
+        endLocation: { latitude: endLocation.latitude, longitude: endLocation.longitude },
+    });
+
+    if (distanceResult) {
+        const distanceKm = distanceResult.distanceKm;
+        const co2EmissionsKg = distanceKm * AVERAGE_EMISSIONS_KG_PER_KM;
+
+        await updateDoc(jobDocRef, {
+            travelDistanceKm: distanceKm,
+            co2EmissionsKg: co2EmissionsKg,
+        });
+    }
+
+    return { error: null };
+  } catch (e) {
+    console.error("Error calculating travel metrics:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to calculate metrics. ${errorMessage}` };
+  }
 }

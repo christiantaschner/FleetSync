@@ -234,14 +234,15 @@ const roadmapFeatures = {
       icon: Navigation,
       status: "Completed",
     },
-  ],
-  planned: [
     {
       title: "CO2 Emission Estimation & Reporting",
       description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
       icon: Leaf,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  planned: [
+    
   ],
   vision: [
      {
@@ -318,9 +319,9 @@ export default function RoadmapPage() {
       <section>
         <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Planned Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.planned.map((item) => (
-            <RoadmapItem key={item.title} {...item} />
-          ))}
+            {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
+                <RoadmapItem key={item.title} {...item} />
+            )) : <p className="text-muted-foreground col-span-full">All planned features are complete! See the Vision section for what's next.</p>}
         </div>
       </section>
 

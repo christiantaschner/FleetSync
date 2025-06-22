@@ -23,6 +23,7 @@ import ChatCard from './components/ChatCard';
 import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import ChecklistCard from './components/ChecklistCard';
+import { calculateTravelMetricsAction } from '@/actions/fleet-actions';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -134,6 +135,18 @@ export default function TechnicianJobDetailPage() {
       
       setJob(prevJob => prevJob ? { ...prevJob, ...updatedJobState } : null);
       toast({ title: "Status Updated", description: `Job status set to ${newStatus}.`});
+
+      if (newStatus === 'Completed' && job.assignedTechnicianId) {
+        // Fire-and-forget metric calculation
+        calculateTravelMetricsAction({ 
+            jobId: job.id, 
+            technicianId: job.assignedTechnicianId 
+        }).catch(err => {
+            // Log error but don't block UI
+            console.error("Failed to trigger travel metrics calculation:", err);
+        });
+      }
+
     } catch (error) {
       console.error("Error updating job status:", error);
       toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });

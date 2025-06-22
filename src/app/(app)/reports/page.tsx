@@ -17,6 +17,7 @@ import {
   ThumbsUp,
   CalendarClock,
   User,
+  Leaf,
 } from "lucide-react";
 import {
   Card,
@@ -143,11 +144,13 @@ export default function ReportsPage() {
           ftfr: "N/A",
           onTimeArrivalRate: "N/A",
           avgEstimateAccuracy: 0,
+          totalEmissions: 0,
         },
         jobsByStatus: [],
         jobsPerTechnician: [],
         punctualityChartData: [],
         durationComparisonChartData: [],
+        emissionsPerTechnician: [],
       };
     }
 
@@ -235,6 +238,8 @@ export default function ReportsPage() {
     const avgEstimateAccuracy = completedJobsWithDuration.length > 0 
         ? Math.round(totalDeviation / completedJobsWithDuration.length)
         : 0;
+    
+    const totalEmissions = completedJobs.reduce((acc, j) => acc + (j.co2EmissionsKg || 0), 0);
 
     // --- Chart Data ---
     const jobsByStatus = filteredJobs.reduce((acc, job) => {
@@ -270,6 +275,16 @@ export default function ReportsPage() {
         };
     }).slice(-10); // Last 10 completed jobs
 
+    const emissionsPerTechnician = technicians.map(tech => {
+        const techJobs = completedJobs.filter(j => j.assignedTechnicianId === tech.id);
+        const totalTechEmissions = techJobs.reduce((acc, j) => acc + (j.co2EmissionsKg || 0), 0);
+        return {
+            name: tech.name,
+            emissions: parseFloat(totalTechEmissions.toFixed(2)),
+        };
+    });
+
+
     return {
       kpis: {
         totalJobs: filteredJobs.length,
@@ -280,11 +295,13 @@ export default function ReportsPage() {
         ftfr: ftfrPercentage,
         onTimeArrivalRate: onTimeArrivalRate,
         avgEstimateAccuracy: avgEstimateAccuracy,
+        totalEmissions: parseFloat(totalEmissions.toFixed(2)),
       },
       jobsByStatus: pieData,
       jobsPerTechnician: jobsPerTechnician.filter(t => t.completed > 0),
       punctualityChartData: punctualityChartData,
       durationComparisonChartData: durationComparisonChartData,
+      emissionsPerTechnician: emissionsPerTechnician.filter(t => t.emissions > 0),
     };
   }, [jobs, technicians, date, selectedTechnicianId]);
 
@@ -319,6 +336,13 @@ export default function ReportsPage() {
       actual: {
         label: "Actual",
         color: "hsl(var(--chart-1))",
+      },
+  } satisfies ChartConfig;
+
+  const emissionsChartConfig = {
+      emissions: {
+        label: "CO2 Emissions (kg)",
+        color: "hsl(var(--chart-2))",
       },
   } satisfies ChartConfig;
 
@@ -438,12 +462,12 @@ export default function ReportsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Estimate Accuracy</CardTitle>
-            <Timer className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total CO2 Emissions</CardTitle>
+            <Leaf className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+/- {reportData.kpis.avgEstimateAccuracy} min</div>
-            <p className="text-xs text-muted-foreground">Avg. deviation from estimate</p>
+            <div className="text-2xl font-bold">{reportData.kpis.totalEmissions} kg</div>
+            <p className="text-xs text-muted-foreground">Est. from travel distance</p>
           </CardContent>
         </Card>
       </div>
@@ -543,7 +567,7 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
           <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2">
@@ -606,15 +630,15 @@ export default function ReportsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2">
-                        <BarChart /> Estimated vs. Actual Duration
+                        <BarChart /> CO2 Emissions by Technician
                     </CardTitle>
-                    <CardDescription>Comparison for the last 10 completed jobs with estimates (in minutes).</CardDescription>
+                    <CardDescription>Estimated CO2 emissions (in kg) from travel. This chart shows all technicians, regardless of the filter above.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {reportData.durationComparisonChartData.length > 0 ? (
-                    <ChartContainer config={durationComparisonChartConfig} className="min-h-[300px] w-full">
+                    {reportData.emissionsPerTechnician.length > 0 ? (
+                    <ChartContainer config={emissionsChartConfig} className="min-h-[300px] w-full">
                         <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={reportData.durationComparisonChartData}>
+                            <BarChart data={reportData.emissionsPerTechnician}>
                                 <CartesianGrid vertical={false} />
                                 <XAxis
                                     dataKey="name"
@@ -623,19 +647,18 @@ export default function ReportsPage() {
                                     axisLine={false}
                                     className="text-xs"
                                 />
-                                <YAxis unit="m" />
+                                <YAxis unit=" kg" />
                                 <ChartTooltip
                                     cursor={false}
                                     content={<ChartTooltipContent indicator="dot" />}
                                 />
                                 <ChartLegend content={<ChartLegendContent />} />
-                                <Bar dataKey="estimated" fill="hsl(var(--chart-2))" radius={4} />
-                                <Bar dataKey="actual" fill="hsl(var(--chart-1))" radius={4} />
+                                <Bar dataKey="emissions" fill="hsl(var(--chart-2))" radius={4} />
                             </BarChart>
                     </ResponsiveContainer>
                     </ChartContainer>
                     ) : (
-                        <p className="text-muted-foreground text-center py-10">No completed jobs with duration estimates to compare.</p>
+                        <p className="text-muted-foreground text-center py-10">No emissions data available to display.</p>
                     )}
                 </CardContent>
             </Card>

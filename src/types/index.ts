@@ -65,6 +65,8 @@ export type Job = {
   checklistResults?: ChecklistResult[];
   trackingToken?: string;
   trackingTokenExpiresAt?: string;
+  travelDistanceKm?: number;
+  co2EmissionsKg?: number;
 };
 
 export type PublicTrackingInfo = {
@@ -444,3 +446,9 @@ export const TroubleshootEquipmentOutputSchema = z.object({
     disclaimer: z.string().describe('A standard safety disclaimer to show to the technician.'),
 });
 export type TroubleshootEquipmentOutput = z.infer<typeof TroubleshootEquipmentOutputSchema>;
+
+export const CalculateTravelMetricsInputSchema = z.object({
+    jobId: z.string(),
+    technicianId: z.string(),
+});
+export type CalculateTravelMetricsInput = z.infer<typeof CalculateTravelMetricsInputSchema>;

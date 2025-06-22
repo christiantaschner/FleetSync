@@ -55,25 +55,36 @@ const navItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading, logout } = useAuth();
+  const { user, userProfile, loading, logout } = useAuth();
 
   React.useEffect(() => {
     if (!loading && !user) {
-      router.push("/login");
+      router.replace("/login");
+    } else if (!loading && user && userProfile?.onboardingStatus === 'pending_onboarding') {
+      if (pathname !== '/onboarding') {
+        router.replace('/onboarding');
+      }
+    } else if (!loading && user && userProfile?.onboardingStatus === 'completed') {
+       if (pathname === '/onboarding') {
+        router.replace('/dashboard');
+      }
     }
-  }, [user, loading, router]);
+  }, [user, userProfile, loading, router, pathname]);
 
-  if (loading) {
+  if (loading || !userProfile || (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+  
+  if (pathname === '/onboarding') {
+      return <>{children}</>;
+  }
+
 
   if (!user) {
-    // This state should ideally be brief due to the redirect effect.
-    // You could also return null or a minimal loading state here.
     return null; 
   }
 
@@ -98,13 +109,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href}>
                   <SidebarMenuButton
-                    // removed asChild
                     isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
                     className="w-full justify-start"
                     tooltip={item.label}
-                    // href is passed by Link to SidebarMenuButton, which will render as <a>
                   >
-                    {/* Icon and span are now direct children of SidebarMenuButton */}
                     <item.icon className="h-4 w-4" />
                     <span>{item.label}</span>
                   </SidebarMenuButton>
@@ -118,13 +126,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
                 <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
-                  {/* Placeholder for user avatar if available */}
-                  {/* <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt="User Avatar" /> */}
                   <AvatarFallback>{userInitial}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
                   <span className="text-sm font-medium truncate max-w-[120px]">{userDisplayName}</span>
-                  {/* <span className="text-xs text-muted-foreground">Dispatcher</span> */}
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -161,5 +166,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
-    
-    

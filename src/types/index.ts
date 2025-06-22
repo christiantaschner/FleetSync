@@ -1,26 +1,51 @@
 
 import { z } from "zod";
 
+// --- Core Data Models ---
+
 export type Location = {
   latitude: number;
   longitude: number;
   address?: string;
 };
 
-export type TechnicianSkill = string; // Changed from union type to string
+export type TechnicianSkill = string; 
+
+export type UserRole = 'admin' | 'dispatcher' | 'technician';
+export type OnboardingStatus = 'pending_creation' | 'pending_onboarding' | 'completed';
+
+export const UserProfileSchema = z.object({
+    uid: z.string(),
+    email: z.string(),
+    companyId: z.string().optional(),
+    role: z.nativeEnum(['admin', 'dispatcher', 'technician']).optional(),
+    onboardingStatus: z.nativeEnum(['pending_creation', 'pending_onboarding', 'completed']),
+});
+export type UserProfile = z.infer<typeof UserProfileSchema>;
+
+export const CompanySchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    ownerId: z.string(),
+    subscriptionTier: z.string().optional(), // e.g., 'free', 'pro'
+    subscriptionStatus: z.string().optional(), // e.g., 'active', 'past_due'
+    createdAt: z.string(),
+});
+export type Company = z.infer<typeof CompanySchema>;
+
 
 export type Technician = {
-  id: string;
+  id: string; // This will be the same as the user's UID
   companyId: string;
   name: string;
   isAvailable: boolean;
-  skills: string[]; // Changed from TechnicianSkill[] to string[]
+  skills: string[]; 
   partsInventory?: string[];
   location: Location;
   avatarUrl?: string;
   currentJobId?: string | null;
   phone?: string;
-  email?: string;
+  email: string; // Email is required for a technician
   createdAt?: string;
   updatedAt?: string;
 };

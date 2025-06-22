@@ -11,11 +11,14 @@ import {
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { auth } from "@/lib/firebase"; // Ensure auth is exported from firebase.ts
+import { auth, db } from "@/lib/firebase"; 
+import { doc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import type { UserProfile } from "@/types";
 
 interface AuthContextType {
   user: User | null;
+  userProfile: UserProfile | null;
   loading: boolean;
   login: (email_address: string, pass_word: string) => Promise<boolean>;
   signup: (email_address: string, pass_word: string) => Promise<boolean>;
@@ -26,21 +29,45 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!auth) {
-      console.error("Firebase Auth is not initialized. Check your Firebase configuration.");
+    if (!auth || !db) {
+      console.error("Firebase Auth or Firestore is not initialized.");
       setLoading(false);
-      // Optionally, you could redirect to an error page or show a global error message
       return;
     }
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setLoading(false);
+      if (currentUser) {
+        // User is logged in, listen to their profile document
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUserProfile(docSnap.data() as UserProfile);
+          } else {
+            // User exists in Auth, but not in Firestore. 
+            // This is the state right after signup, before the backend function runs.
+            setUserProfile({
+              uid: currentUser.uid,
+              email: currentUser.email!,
+              onboardingStatus: 'pending_creation', // A temporary status
+            });
+          }
+          setLoading(false);
+        });
+        return unsubscribeProfile; // This will be called on cleanup
+      } else {
+        // User is logged out
+        setUserProfile(null);
+        setLoading(false);
+      }
     });
+
     return () => unsubscribe();
   }, []);
 
@@ -51,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       await signInWithEmailAndPassword(auth, email_address, pass_word);
-      router.push("/dashboard");
+      // Redirection is now handled by the useEffect in the AppLayout
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
@@ -67,7 +94,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       await createUserWithEmailAndPassword(auth, email_address, pass_word);
-      router.push("/dashboard");
+      // Redirection is now handled by the useEffect in the AppLayout
+      // The backend function will create the user document in Firestore.
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -91,7 +119,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -302,7 +302,7 @@ export default function DashboardPage() {
     const timer = setTimeout(checkHealth, 2000); 
     
     // And also run it periodically
-    const intervalId = setInterval(checkHealth, 30000); // Check every 30 seconds
+    const intervalId = setInterval(checkHealth, 600000); // Check every 10 minutes
 
     return () => {
       clearTimeout(timer);
@@ -904,5 +904,3 @@ export default function DashboardPage() {
     </GoogleMapsAPIProvider>
   );
 }
-
-    

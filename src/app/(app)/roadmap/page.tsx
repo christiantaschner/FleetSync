@@ -97,15 +97,15 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
-      icon: Shuffle, 
-      status: "Completed",
-    },
-    {
       title: "Digital Customer Signatures & Photo Documentation",
       description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
       icon: FileSignature,
+      status: "Completed",
+    },
+    {
+      title: "Advanced Real-time Dynamic Re-optimization",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
+      icon: Shuffle, 
       status: "Completed",
     },
   ],

@@ -60,6 +60,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
             technicianName: t.name,
             isAvailable: t.isAvailable,
             skills: t.skills as string[],
+            partsInventory: t.partsInventory || [],
             location: t.location,
             currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
@@ -68,6 +69,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
             jobDescription: jobToReassign.description,
             jobPriority: jobToReassign.priority,
             requiredSkills: jobToReassign.requiredSkills || [],
+            requiredParts: jobToReassign.requiredParts || [],
             scheduledTime: jobToReassign.scheduledTime,
             technicianAvailability: aiTechnicians,
         };

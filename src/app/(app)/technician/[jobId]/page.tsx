@@ -298,11 +298,11 @@ export default function TechnicianJobDetailPage() {
         </Card>
       )}
       
-      {!isJobConcluded && (
+      {job.status === 'In Progress' && (
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>
-            <CardDescription>Add notes, photos, and capture customer signature.</CardDescription>
+            <CardDescription>Add notes, photos, and capture customer signature before completing the job.</CardDescription>
           </CardHeader>
           <CardContent>
             <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />

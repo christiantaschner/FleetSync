@@ -120,7 +120,7 @@ const roadmapFeatures = {
       title: "Recurring Job & Maintenance Contract Management",
       description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
       icon: Repeat,
-      status: "In Progress",
+      status: "Completed",
     },
     {
       title: "In-App Chat & Media Sharing",
@@ -145,6 +145,12 @@ const roadmapFeatures = {
       title: "AI Job Skill Suggestion",
       description: "AI automatically analyzes job descriptions to suggest required skills from the company's skill library, which the dispatcher can then review and edit.",
       icon: Lightbulb,
+      status: "Completed",
+    },
+    {
+      title: "Intelligent Parts & Van Stock Management",
+      description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
+      icon: Wrench,
       status: "Completed",
     },
     {
@@ -244,12 +250,6 @@ const roadmapFeatures = {
       description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
       icon: ClipboardList,
       status: "Planned",
-    },
-    {
-      title: "Intelligent Parts & Van Stock Management",
-      description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
-      icon: Wrench,
-      status: "Completed",
     },
     {
       title: "CO2 Emission Estimation & Reporting",

@@ -1,13 +1,13 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Job, Technician, JobStatus, JobPriority, AITechnician } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import OptimizeRouteDialog from './components/optimize-route-dialog'; 
 import JobListItem from './components/JobListItem';
@@ -15,7 +15,7 @@ import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
 import ScheduleCalendarView from './components/ScheduleCalendarView';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps'; // Renamed import
@@ -27,6 +27,7 @@ import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
+import ProfileChangeRequests from './components/ProfileChangeRequests';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -39,6 +40,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
   const [selectedJobForAIAssign, setSelectedJobForAIAssign] = useState<Job | null>(null);
@@ -73,8 +75,7 @@ export default function DashboardPage() {
   const fetchAllData = useCallback(() => {
     // This function can be called to refresh all data, e.g., after an import
     fetchSkills();
-    // The onSnapshot listeners for jobs/technicians will update automatically,
-    // but if we needed a manual re-fetch, logic would go here.
+    // The onSnapshot listeners for jobs/technicians/requests will update automatically
   }, []);
 
   const fetchSkills = useCallback(async () => {
@@ -97,32 +98,55 @@ export default function DashboardPage() {
       return;
     }
     setIsLoadingData(true);
+    let activeListeners = 0;
+    const requiredListeners = 3;
+
+    const onListenerLoaded = () => {
+        activeListeners++;
+        if (activeListeners === requiredListeners) {
+            setIsLoadingData(false);
+        }
+    }
+
     fetchSkills();
 
     const jobsQuery = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
       setJobs(jobsData);
-      if (isLoadingData) setIsLoadingData(false);
+      onListenerLoaded();
     }, (error) => {
       console.error("Error fetching jobs: ", error);
       toast({ title: "Error fetching jobs", description: error.message, variant: "destructive"});
-      setIsLoadingData(false);
+      onListenerLoaded();
     });
 
     const techniciansQuery = query(collection(db, "technicians"), orderBy("name", "asc"));
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
       setTechnicians(techniciansData);
+      onListenerLoaded();
     }, (error) => {
       console.error("Error fetching technicians: ", error);
       toast({ title: "Error fetching technicians", description: error.message, variant: "destructive"});
-      setIsLoadingData(false);
+      onListenerLoaded();
+    });
+    
+    const requestsQuery = query(collection(db, "profileChangeRequests"), orderBy("createdAt", "desc"));
+    const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
+        const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
+        setProfileChangeRequests(requestsData);
+        onListenerLoaded();
+    }, (error) => {
+        console.error("Error fetching profile change requests: ", error);
+        toast({ title: "Error fetching requests", description: error.message, variant: "destructive"});
+        onListenerLoaded();
     });
     
     return () => {
       jobsUnsubscribe();
       techniciansUnsubscribe();
+      requestsUnsubscribe();
     };
   }, [user, toast, fetchSkills]);
   
@@ -747,24 +771,27 @@ export default function DashboardPage() {
                   </AddEditTechnicianDialog>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {isLoadingData && technicians.length === 0 ? (
-                   <div className="col-span-full flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : technicians.map(technician => (
-                  <TechnicianCard 
-                    key={technician.id} 
-                    technician={technician} 
-                    jobs={jobs} 
-                    onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
-                    allSkills={allSkills}
-                    onMarkUnavailable={handleMarkTechnicianUnavailable}
-                  />
-                ))}
-                {!isLoadingData && technicians.length === 0 && (
-                  <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
-                )}
+              <CardContent className="space-y-4">
+                <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {isLoadingData && technicians.length === 0 ? (
+                    <div className="col-span-full flex justify-center items-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                    ) : technicians.map(technician => (
+                    <TechnicianCard 
+                        key={technician.id} 
+                        technician={technician} 
+                        jobs={jobs} 
+                        onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
+                        allSkills={allSkills}
+                        onMarkUnavailable={handleMarkTechnicianUnavailable}
+                    />
+                    ))}
+                    {!isLoadingData && technicians.length === 0 && (
+                    <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
+                    )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

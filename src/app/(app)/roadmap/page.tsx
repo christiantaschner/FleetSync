@@ -92,7 +92,7 @@ const roadmapFeatures = {
     },
     {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments. For technicians, this means smoother schedules, less downtime, and more logical job sequencing, reacting to live events like early/late job completions, new urgent jobs, traffic, and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by continuously re-optimizing routes and assignments, reacting to live events like new urgent jobs and technician unavailability. This directly reduces costs ('Kosten') and improves responsiveness.",
       icon: Shuffle, 
       status: "In Progress",
       developerBrief: {
@@ -212,7 +212,7 @@ const roadmapFeatures = {
       title: "Technician Profile Viewing & Change Suggestions",
       description: "Enable technicians to view their own detailed profiles (including skills, certifications, contact info) via the mobile app. Implement a system for them to suggest changes or additions (e.g., new skill acquired), which dispatchers can review and approve. Improves data accuracy and empowers technicians.",
       icon: User, 
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "Technician Mobile App: A new 'My Profile' section displaying all their data stored in the `technicians` collection.",

@@ -248,3 +248,13 @@ export const ConfirmManualRescheduleInputSchema = z.object({
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
 });
 export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;
+
+export const ApproveProfileChangeRequestInputSchema = z.object({
+    requestId: z.string(),
+    technicianId: z.string(),
+    requestedChanges: z.record(z.any()),
+});
+
+export const RejectProfileChangeRequestInputSchema = z.object({
+    requestId: z.string(),
+});

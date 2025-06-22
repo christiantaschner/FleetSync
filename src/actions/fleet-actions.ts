@@ -8,7 +8,7 @@ import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest } from "@/types";
 
 // Import all required schemas and types from the central types file
@@ -29,7 +29,9 @@ import {
   ConfirmManualRescheduleInputSchema,
   SuggestJobPriorityInputSchema,
   type SuggestJobPriorityInput,
-  type SuggestJobPriorityOutput
+  type SuggestJobPriorityOutput,
+  ApproveProfileChangeRequestInputSchema,
+  RejectProfileChangeRequestInputSchema
 } from "@/types";
 
 
@@ -369,5 +371,69 @@ export async function requestProfileChangeAction(
     console.error("Error in requestProfileChangeAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to submit profile change request. ${errorMessage}` };
+  }
+}
+
+export async function approveProfileChangeRequestAction(
+  input: z.infer<typeof ApproveProfileChangeRequestInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { requestId, technicianId, requestedChanges } = ApproveProfileChangeRequestInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+    
+    const batch = writeBatch(db);
+
+    // 1. Update the technician's document
+    const techDocRef = doc(db, "technicians", technicianId);
+    batch.update(techDocRef, {
+      ...requestedChanges,
+      updatedAt: serverTimestamp(),
+    });
+
+    // 2. Update the request's status
+    const requestDocRef = doc(db, "profileChangeRequests", requestId);
+    batch.update(requestDocRef, {
+      status: 'approved',
+      reviewedAt: new Date().toISOString(),
+    });
+
+    await batch.commit();
+    return { error: null };
+
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in approveProfileChangeRequestAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to approve request. ${errorMessage}` };
+  }
+}
+
+export async function rejectProfileChangeRequestAction(
+  input: z.infer<typeof RejectProfileChangeRequestInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { requestId } = RejectProfileChangeRequestInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+
+    const requestDocRef = doc(db, "profileChangeRequests", requestId);
+    await updateDoc(requestDocRef, {
+      status: 'rejected',
+      reviewedAt: new Date().toISOString(),
+    });
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in rejectProfileChangeRequestAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to reject request. ${errorMessage}` };
   }
 }

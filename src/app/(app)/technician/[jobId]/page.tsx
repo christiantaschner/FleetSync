@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Job, JobStatus } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
@@ -16,6 +16,9 @@ import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/fi
 import { ref, uploadString, getDownloadURL, uploadBytes } from "firebase/storage";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -27,6 +30,10 @@ export default function TechnicianJobDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [satisfactionScore, setSatisfactionScore] = useState(0);
+  
+  const [isFirstTimeFix, setIsFirstTimeFix] = useState<boolean | null>(null);
+  const [reasonForFollowUp, setReasonForFollowUp] = useState('');
+
 
   useEffect(() => {
     if (!jobId || !db) {
@@ -44,6 +51,9 @@ export default function TechnicianJobDetailPage() {
           setJob(fetchedJob);
           if (fetchedJob.customerSatisfactionScore) {
             setSatisfactionScore(fetchedJob.customerSatisfactionScore);
+          }
+          if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
+            setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
           }
         } else {
           toast({ title: "Error", description: "Job not found.", variant: "destructive" });
@@ -190,6 +200,31 @@ export default function TechnicianJobDetailPage() {
         setIsUpdating(false);
     }
   };
+  
+   const handleFtfrSubmit = async () => {
+    if (!job || !db || isUpdating || isFirstTimeFix === null) return;
+    if (isFirstTimeFix === false && !reasonForFollowUp.trim()) {
+      toast({ title: "Reason Required", description: "Please provide a reason for the follow-up.", variant: "destructive"});
+      return;
+    }
+
+    setIsUpdating(true);
+    const jobDocRef = doc(db, "jobs", job.id);
+    try {
+      await updateDoc(jobDocRef, {
+        isFirstTimeFix: isFirstTimeFix,
+        reasonForFollowUp: isFirstTimeFix ? '' : reasonForFollowUp,
+        updatedAt: serverTimestamp(),
+      });
+      setJob(prevJob => prevJob ? { ...prevJob, isFirstTimeFix, reasonForFollowUp } : null);
+      toast({ title: "FTFR Data Saved", description: "First-Time-Fix information has been recorded." });
+    } catch (error) {
+      console.error("Error submitting FTFR data:", error);
+      toast({ title: "Error", description: "Could not save FTFR data.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
 
   const handleNavigate = () => {
@@ -269,6 +304,51 @@ export default function TechnicianJobDetailPage() {
       )}
 
       {job.status === 'Completed' && (
+        <>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><ThumbsUp /> First-Time-Fix Rate</CardTitle>
+            <CardDescription>Help us improve by providing details on this job's outcome.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              <RadioGroup
+                value={isFirstTimeFix === null ? '' : isFirstTimeFix.toString()}
+                onValueChange={(value) => setIsFirstTimeFix(value === 'true')}
+                disabled={typeof job.isFirstTimeFix === 'boolean' || isUpdating}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="true" id="ftfr-yes" />
+                  <Label htmlFor="ftfr-yes">Yes, the issue was resolved in one visit.</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="false" id="ftfr-no" />
+                  <Label htmlFor="ftfr-no">No, a follow-up visit is required.</Label>
+                </div>
+              </RadioGroup>
+
+              {isFirstTimeFix === false && (
+                <div className="space-y-2 pl-2">
+                  <Label htmlFor="follow-up-reason">Reason for follow-up</Label>
+                  <Textarea
+                    id="follow-up-reason"
+                    value={reasonForFollowUp}
+                    onChange={(e) => setReasonForFollowUp(e.target.value)}
+                    placeholder="e.g., Missing part, requires senior technician, etc."
+                    disabled={typeof job.isFirstTimeFix === 'boolean' || isUpdating}
+                  />
+                </div>
+              )}
+
+              <Button
+                onClick={handleFtfrSubmit}
+                disabled={isFirstTimeFix === null || typeof job.isFirstTimeFix === 'boolean' || isUpdating}
+              >
+                {isUpdating && typeof job.isFirstTimeFix !== 'boolean' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                {typeof job.isFirstTimeFix === 'boolean' ? 'Data Saved' : 'Save Fix Status'}
+              </Button>
+          </CardContent>
+        </Card>
+
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Satisfaction</CardTitle>
@@ -308,6 +388,7 @@ export default function TechnicianJobDetailPage() {
                  )}
             </CardContent>
         </Card>
+        </>
       )}
 
       {job.photos && job.photos.length > 0 && (

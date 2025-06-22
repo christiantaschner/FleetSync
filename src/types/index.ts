@@ -49,6 +49,8 @@ export type Job = {
   completedAt?: string;
   routeOrder?: number;
   customerSatisfactionScore?: number;
+  isFirstTimeFix?: boolean;
+  reasonForFollowUp?: string;
 };
 
 export type Task = {

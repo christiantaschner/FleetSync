@@ -150,53 +150,6 @@ const roadmapFeatures = {
       description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
       icon: CalendarDays,
       status: "Completed",
-      developerBrief: {
-        coreFunctionality: [
-          "Display jobs on a multi-day calendar view (e.g., weekly, daily per technician). This allows dispatchers to manage future schedules in FleetSync while still running the current day on an old system, easing migration.",
-          "Show key job info (title, technician, time) directly on calendar events.",
-          "Allow filtering by technician or viewing all.",
-          "Implement drag-and-drop of job 'events' between technicians or time slots.",
-          "When a job is dropped, trigger an AI re-optimization for the source and target technicians' schedules (and potentially others affected by cascading changes).",
-          "AI calculates a 'draft' schedule; no immediate live update.",
-          "Dispatcher is presented with the proposed changes (e.g., 'Technician A's new schedule: ...', 'Technician B's new schedule: ...').",
-          "Dispatcher can confirm or reject the draft. Confirmation applies changes to live data."
-        ],
-        dataModels: [
-          "No new core collections, but `Job` data (`scheduledTime`, `estimatedDurationMinutes`, `assignedTechnicianId`) is key.",
-          "May need temporary data structures in frontend state or a temporary backend store for 'draft schedules' if they are complex and involve many technicians."
-        ],
-        aiComponents: [
-          "Relies heavily on a mature 'Advanced Real-time Dynamic Re-optimization' flow.",
-          "The re-optimization flow would need to accept input specifying a 'manual move' of a job as a strong constraint/starting point for its calculation.",
-          "Output of the AI would be the 'draft' schedules for affected technicians."
-        ],
-        uiUx: [
-          "A robust calendar component (e.g., FullCalendar, or a custom solution).",
-          "Clear visual representation of jobs, technicians, and time.",
-          "Intuitive drag-and-drop interactions.",
-          "A modal or dedicated UI panel to display the 'draft changes' proposed by AI for review before confirmation.",
-          "Visual cues for jobs that have fixed `scheduledTime` constraints, making them less 'draggable' or warning if a drag violates the constraint."
-        ],
-        integrationPoints: [
-          "Directly uses and enhances the 'Advanced Real-time Dynamic Re-optimization' capability.",
-          "Job creation/editing dialogs would update the calendar view. Crucially, the 'CSV Job Data Import' feature would populate this calendar.",
-          "Technician status updates (e.g., job completion) should reflect on the calendar.",
-          "Future Vision: Integration with external calendar APIs (Google Calendar, Outlook) for technician/company-wide visibility."
-        ],
-        technicalChallenges: [
-          "Implementing a performant and interactive calendar UI, especially with many jobs/technicians.",
-          "Managing the 'draft state' of AI-proposed changes without affecting live data until confirmation.",
-          "Ensuring the AI re-optimization is fast enough for interactive use after a drag-and-drop.",
-          "Handling edge cases and conflicts gracefully (e.g., dragging a job to an unqualified technician, or to an impossible time slot).",
-          "Complexity of updating multiple technicians' schedules atomically upon confirmation."
-        ],
-        successMetrics: [
-          "Reduced time for dispatchers to perform complex rescheduling tasks.",
-          "Improved dispatcher confidence and control over AI-assisted planning.",
-          "Better overall schedule coherence and optimization.",
-          "High adoption rate by dispatchers migrating from spreadsheet-based planning."
-        ]
-      }
     },
      {
       title: "Digital Customer Signatures & Photo Documentation",
@@ -236,39 +189,6 @@ const roadmapFeatures = {
       description: "When a dispatcher creates a new job, the AI analyzes the description to suggest a priority level (e.g., 'High' for 'emergency,' 'Low' for 'maintenance'). It will also provide a brief justification for the suggested priority, helping dispatchers make faster, more consistent decisions.",
       icon: Lightbulb,
       status: "Completed",
-      developerBrief: {
-        coreFunctionality: [
-          "When typing in the 'Add New Job' dialog, trigger an AI flow after a short delay.",
-          "The AI flow takes the job description as input.",
-          "The AI flow outputs a suggested priority ('High', 'Medium', 'Low') and a short reasoning string."
-        ],
-        dataModels: [
-          "No new database models needed.",
-          "A new Genkit schema for the input (job description) and output (suggested priority and reasoning)."
-        ],
-        aiComponents: [
-          "A new Genkit flow: `suggestJobPriorityFlow`.",
-          "A new Genkit prompt: `suggestJobPriorityPrompt` that guides the LLM to analyze text for urgency keywords."
-        ],
-        uiUx: [
-          "In the 'Add New Job' dialog, display the AI's suggested priority and reasoning near the priority selection dropdown.",
-          "The dispatcher can easily accept the suggestion (e.g., by clicking it) or override it by choosing a different priority manually.",
-          "Show a loading indicator while the suggestion is being fetched."
-        ],
-        integrationPoints: [
-          "Integrates directly into `AddEditJobDialog.tsx` component.",
-          "A new server action `suggestJobPriorityAction` will be needed to call the Genkit flow."
-        ],
-        technicalChallenges: [
-          "Fine-tuning the prompt to accurately interpret a wide range of job descriptions.",
-          "Ensuring the AI response is fast enough not to disrupt the user's workflow."
-        ],
-        successMetrics: [
-          "Increased consistency in job prioritization across the dispatch team.",
-          "Reduced time for dispatchers to create new jobs.",
-          "High acceptance rate of AI-suggested priorities."
-        ]
-      }
     },
     {
       title: "AI-Powered \"Next Up Technicians\" Prediction",
@@ -342,7 +262,7 @@ const roadmapFeatures = {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
       description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction. This is informed by data from AI-Assisted Digital Protocols.",
       icon: ThumbsUp,
-      status: "Planned",
+      status: "In Progress",
       developerBrief: {
         coreFunctionality: [
           "Mechanism to mark a job as a 'first-time fix' or a 'follow-up visit'.",
@@ -414,35 +334,6 @@ const roadmapFeatures = {
       description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality, directly impacting customer retention.",
       icon: Smile,
       status: "Completed",
-      developerBrief: {
-        coreFunctionality: [
-          "Response Time: Calculate and track key response time metrics (e.g., time from job creation to assignment, assignment to arrival, job creation to completion).",
-          "Customer Satisfaction: Implement a simple mechanism for capturing customer feedback (e.g., a 1-5 star rating or a short post-job survey link sent via email/SMS)."
-        ],
-        dataModels: [
-          "Job document: add `customerSatisfactionScore: number` (1-5), `surveySentTimestamp: Date`, `surveyCompletedTimestamp: Date`.",
-          "Response times can be calculated from existing job timestamps (`createdAt`, `assignedAt` (needs adding), `enRouteAt` (needs adding), `inProgressAt` (needs adding), `completedAt`)."
-        ],
-aiComponents: ["AI could analyze free-text feedback from surveys for sentiment and common themes in a more advanced version."],
-        uiUx: [
-          "Dashboard: Display average satisfaction scores and response time KPIs in the 'Reports' section.",
-          "Automated mechanism for sending survey links upon job completion.",
-          "Technician mobile app: Potentially a very quick satisfaction capture if feasible (e.g., customer rates on technician's device)."
-        ],
-        integrationPoints: [
-          "Relies on accurate job status timestamp updates from technicians.",
-          "Could integrate with external survey tools if needed."
-        ],
-        technicalChallenges: [
-          "Achieving good response rates for customer surveys.",
-          "Defining and consistently capturing all necessary timestamps for accurate response time calculation."
-        ],
-        successMetrics: [
-          "Improvement in average customer satisfaction scores.",
-          "Reduction in critical response times (e.g., for high-priority jobs).",
-          "Identification of factors impacting satisfaction and response times."
-        ]
-      }
     },
      {
       title: "Basic Reporting Dashboard",
@@ -641,7 +532,7 @@ aiComponents: ["AI could analyze free-text feedback from surveys for sentiment a
         coreFunctionality: ["Capture and compare estimated vs. actual travel and work times.", "Calculate technician utilization (time on job vs. idle/travel time).", "Track on-time performance against scheduled appointments.", "Categorize and report on reasons for delays."],
         integrationPoints: ["Relies heavily on accurate timestamps from 'Digital Time Tracking' and route data from the optimization engine."],
         technicalChallenges: ["Requires robust and clean data to be effective.", "Defining and calculating metrics like 'utilization' consistently."],
-        successMetrics: ["Actionable insights for improving operational efficiency.", "More accurate future job time estimations.", "Better workload balancing among technicians."]
+        successMetrics: ["Actionable insights for improving operational efficiency.", "More accurate future job estimations.", "Better workload balancing among technicians."]
       }
     },
     {

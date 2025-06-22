@@ -19,6 +19,8 @@ export type Technician = {
   currentJobId?: string | null;
   phone?: string;
   email?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';

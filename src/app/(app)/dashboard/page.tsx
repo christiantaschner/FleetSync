@@ -121,7 +121,16 @@ export default function DashboardPage() {
 
     const jobsQuery = query(collection(db, "jobs"), orderBy("createdAt", "desc"));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
-      const jobsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
+      const jobsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert any Firebase Timestamp fields to ISO strings to make them serializable
+        for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        return { id: doc.id, ...data } as Job;
+      });
       setJobs(jobsData);
       onListenerLoaded();
     }, (error) => {
@@ -132,7 +141,16 @@ export default function DashboardPage() {
 
     const techniciansQuery = query(collection(db, "technicians"), orderBy("name", "asc"));
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
-      const techniciansData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
+      const techniciansData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Convert any Firebase Timestamp fields to ISO strings to make them serializable
+        for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        return { id: doc.id, ...data } as Technician;
+      });
       setTechnicians(techniciansData);
       onListenerLoaded();
     }, (error) => {

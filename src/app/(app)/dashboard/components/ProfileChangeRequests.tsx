@@ -53,9 +53,7 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
     setProcessingId(null);
   };
 
-  const pendingRequests = requests.filter(r => r.status === 'pending');
-
-  if (pendingRequests.length === 0) {
+  if (requests.length === 0) {
     return null; // Don't render anything if there are no pending requests
   }
 
@@ -65,7 +63,7 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
         <CardTitle className="font-headline flex items-center gap-2">
             <UserCog className="h-5 w-5 text-primary"/>
             Pending Profile Change Requests
-            <Badge variant="default">{pendingRequests.length}</Badge>
+            <Badge variant="default">{requests.length}</Badge>
         </CardTitle>
         <CardDescription>
           Review and approve or reject change requests submitted by technicians.
@@ -73,7 +71,7 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full">
-          {pendingRequests.map((request) => (
+          {requests.map((request) => (
             <AccordionItem value={request.id} key={request.id}>
               <AccordionTrigger>
                 <div className="flex justify-between w-full pr-4">
@@ -142,3 +140,5 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
 };
 
 export default ProfileChangeRequests;
+
+    

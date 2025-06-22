@@ -28,6 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
+import { Badge } from '@/components/ui/badge';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -343,6 +344,8 @@ export default function DashboardPage() {
   const activeJobs = jobs.filter(job => job.status === 'Assigned' || job.status === 'In Progress' || job.status === 'En Route');
   const pendingJobsCount = pendingJobsForBatchAssign.length;
   const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
+  
+  const pendingProfileRequests = useMemo(() => profileChangeRequests.filter(r => r.status === 'pending'), [profileChangeRequests]);
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
@@ -661,7 +664,12 @@ export default function DashboardPage() {
               <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-4">
                   <TabsTrigger value="overview">Overview Map</TabsTrigger>
                   <TabsTrigger value="jobs">Job List</TabsTrigger>
-                  <TabsTrigger value="technicians">Technicians</TabsTrigger>
+                  <TabsTrigger value="technicians" className="relative">
+                    Technicians
+                    {pendingProfileRequests.length > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{pendingProfileRequests.length}</Badge>
+                    )}
+                  </TabsTrigger>
                   <TabsTrigger value="schedule">Schedule</TabsTrigger>
               </TabsList>
           </div>
@@ -772,7 +780,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />
+                <ProfileChangeRequests requests={pendingProfileRequests} onAction={() => {}} />
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {isLoadingData && technicians.length === 0 ? (
                     <div className="col-span-full flex justify-center items-center py-10">
@@ -803,3 +811,5 @@ export default function DashboardPage() {
     </GoogleMapsAPIProvider>
   );
 }
+
+    

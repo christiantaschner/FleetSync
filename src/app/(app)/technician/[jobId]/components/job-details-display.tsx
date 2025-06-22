@@ -3,11 +3,12 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature, Package } from 'lucide-react';
+import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature, Package, ThumbsUp, Smile, Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { Job } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface JobDetailsDisplayProps {
   job: Job;
@@ -90,16 +91,33 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
             </div>
           </>
         )}
-
-        {job.customerSignatureUrl && (
+        
+        {(job.customerSignatureUrl || job.customerSatisfactionScore) && (
           <>
             <Separator />
             <div>
-                <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><FileSignature />Customer Signature</h3>
-                <div className="p-2 border rounded-md bg-muted/50 max-w-sm">
-                    <Image src={job.customerSignatureUrl} alt="Customer Signature" width={400} height={200} className="w-full h-auto" />
+                <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><ThumbsUp /> Customer Feedback</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {job.customerSignatureUrl && (
+                        <div>
+                            <p className="font-medium text-foreground flex items-center gap-1"><FileSignature size={14}/> Signature</p>
+                            <div className="p-2 border rounded-md bg-muted/50 max-w-sm mt-1">
+                                <Image src={job.customerSignatureUrl} alt="Customer Signature" width={400} height={200} className="w-full h-auto" />
+                            </div>
+                            {job.customerSignatureTimestamp && <p className="text-xs text-muted-foreground mt-1">Signed on: {new Date(job.customerSignatureTimestamp).toLocaleString()}</p>}
+                        </div>
+                    )}
+                    {job.customerSatisfactionScore && (
+                         <div>
+                            <p className="font-medium text-foreground flex items-center gap-1"><Smile size={14}/> Rating</p>
+                             <div className="flex items-center gap-1 mt-1">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                   <Star key={star} className={cn("h-6 w-6", job.customerSatisfactionScore && job.customerSatisfactionScore >= star ? "text-yellow-400" : "text-gray-300")} fill="currentColor"/>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                {job.customerSignatureTimestamp && <p className="text-xs text-muted-foreground mt-1">Signed on: {new Date(job.customerSignatureTimestamp).toLocaleString()}</p>}
             </div>
           </>
         )}

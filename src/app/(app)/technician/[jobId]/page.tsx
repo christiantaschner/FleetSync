@@ -29,7 +29,6 @@ export default function TechnicianJobDetailPage() {
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [satisfactionScore, setSatisfactionScore] = useState(0);
   
   const [isFirstTimeFix, setIsFirstTimeFix] = useState<boolean | null>(null);
   const [reasonForFollowUp, setReasonForFollowUp] = useState('');
@@ -56,9 +55,6 @@ export default function TechnicianJobDetailPage() {
           }
           const fetchedJob = { id: docSnap.id, ...data } as Job;
           setJob(fetchedJob);
-          if (fetchedJob.customerSatisfactionScore) {
-            setSatisfactionScore(fetchedJob.customerSatisfactionScore);
-          }
           if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
             setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
           }
@@ -123,7 +119,7 @@ export default function TechnicianJobDetailPage() {
     }
   };
 
-  const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null) => {
+  const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => {
     if (!job || !db || !storage || isUpdating) return;
 
     setIsUpdating(true);
@@ -163,6 +159,9 @@ export default function TechnicianJobDetailPage() {
         updateData.customerSignatureUrl = newSignatureUrl;
         updateData.customerSignatureTimestamp = new Date().toISOString();
       }
+      if (satisfactionScore > 0) {
+        updateData.customerSatisfactionScore = satisfactionScore;
+      }
 
       await updateDoc(jobDocRef, updateData);
       
@@ -175,6 +174,7 @@ export default function TechnicianJobDetailPage() {
           photos: newPhotoUrls.length > 0 ? [...(prevJob.photos || []), ...newPhotoUrls] : prevJob.photos,
           customerSignatureUrl: newSignatureUrl || prevJob.customerSignatureUrl,
           customerSignatureTimestamp: newSignatureUrl ? updateData.customerSignatureTimestamp : prevJob.customerSignatureTimestamp,
+          customerSatisfactionScore: satisfactionScore > 0 ? satisfactionScore : prevJob.customerSatisfactionScore,
           updatedAt: new Date().toISOString(),
         };
       });
@@ -185,26 +185,6 @@ export default function TechnicianJobDetailPage() {
       toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
     } finally {
       setIsUpdating(false);
-    }
-  };
-  
-  const handleSatisfactionSubmit = async () => {
-    if (!job || !db || isUpdating || satisfactionScore === 0) return;
-    
-    setIsUpdating(true);
-    const jobDocRef = doc(db, "jobs", job.id);
-    try {
-        await updateDoc(jobDocRef, {
-            customerSatisfactionScore: satisfactionScore,
-            updatedAt: serverTimestamp(),
-        });
-        setJob(prevJob => prevJob ? { ...prevJob, customerSatisfactionScore: satisfactionScore } : null);
-        toast({ title: "Rating Submitted", description: `Thank you for recording the customer's feedback.` });
-    } catch (error) {
-        console.error("Error submitting satisfaction score:", error);
-        toast({ title: "Error", description: "Could not save the rating.", variant: "destructive" });
-    } finally {
-        setIsUpdating(false);
     }
   };
   
@@ -302,10 +282,14 @@ export default function TechnicianJobDetailPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>
-            <CardDescription>Add notes, photos, and capture customer signature before completing the job.</CardDescription>
+            <CardDescription>Add notes, photos, and capture customer rating and signature before completing the job.</CardDescription>
           </CardHeader>
           <CardContent>
-            <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />
+            <WorkDocumentationForm 
+              onSubmit={handleWorkDocumented} 
+              isSubmitting={isUpdating} 
+              initialSatisfactionScore={job.customerSatisfactionScore}
+            />
           </CardContent>
         </Card>
       )}
@@ -354,46 +338,6 @@ export default function TechnicianJobDetailPage() {
                 {typeof job.isFirstTimeFix === 'boolean' ? 'Data Saved' : 'Save Fix Status'}
               </Button>
           </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Satisfaction</CardTitle>
-                <CardDescription>Record the customer's satisfaction rating for this job.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                                key={star}
-                                onClick={() => !job.customerSatisfactionScore && setSatisfactionScore(star)}
-                                disabled={!!job.customerSatisfactionScore || isUpdating}
-                                className="disabled:cursor-not-allowed"
-                            >
-                                <Star
-                                    className={cn(
-                                        "h-8 w-8 text-gray-300 transition-colors",
-                                        satisfactionScore >= star && "text-yellow-400",
-                                        !job.customerSatisfactionScore && "hover:text-yellow-300"
-                                    )}
-                                    fill={satisfactionScore >= star ? 'currentColor' : 'none'}
-                                />
-                            </button>
-                        ))}
-                    </div>
-                     <Button
-                        onClick={handleSatisfactionSubmit}
-                        disabled={!satisfactionScore || !!job.customerSatisfactionScore || isUpdating}
-                     >
-                        {isUpdating && !job.customerSatisfactionScore ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                        {job.customerSatisfactionScore ? 'Rating Saved' : 'Submit Rating'}
-                    </Button>
-                </div>
-                 {job.customerSatisfactionScore && (
-                    <p className="text-sm text-green-600 mt-2">Thank you! A rating of {job.customerSatisfactionScore} stars was submitted.</p>
-                 )}
-            </CardContent>
         </Card>
         </>
       )}

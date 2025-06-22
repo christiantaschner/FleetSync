@@ -1,28 +1,34 @@
 
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import SignatureCanvas from 'react-signature-canvas';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Paperclip, UploadCloud, Image as ImageIcon, Trash2, RotateCcw, FileSignature } from 'lucide-react';
+import { Paperclip, UploadCloud, Image as ImageIcon, Trash2, RotateCcw, FileSignature, Smile, Star } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 
 interface WorkDocumentationFormProps {
-  onSubmit: (notes: string, photos: File[], signatureDataUrl: string | null) => void;
+  onSubmit: (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => void;
   isSubmitting: boolean;
+  initialSatisfactionScore?: number;
 }
 
-const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit, isSubmitting }) => {
+const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit, isSubmitting, initialSatisfactionScore = 0 }) => {
   const [notes, setNotes] = useState('');
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [satisfactionScore, setSatisfactionScore] = useState(initialSatisfactionScore);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setSatisfactionScore(initialSatisfactionScore);
+  }, [initialSatisfactionScore]);
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -60,17 +66,17 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
     
     const isSignatureEmpty = sigCanvasRef.current?.isEmpty() ?? true;
 
-    if (!notes.trim() && photos.length === 0 && isSignatureEmpty) {
+    if (!notes.trim() && photos.length === 0 && isSignatureEmpty && satisfactionScore === 0) {
       toast({
         title: "Nothing to Submit",
-        description: "Please add notes, upload photos, or capture a signature.",
+        description: "Please add notes, photos, a signature, or a rating.",
         variant: "destructive"
       });
       return;
     }
     
     const signatureDataUrl = isSignatureEmpty ? null : sigCanvasRef.current.toDataURL('image/png');
-    onSubmit(notes, photos, signatureDataUrl);
+    onSubmit(notes, photos, signatureDataUrl, satisfactionScore);
     
     // Clear form after submission attempt
     setNotes('');
@@ -81,6 +87,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
       fileInputRef.current.value = "";
     }
     clearSignature();
+    setSatisfactionScore(0);
   };
 
   return (
@@ -150,6 +157,33 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
           </div>
         </div>
       )}
+
+      <div>
+        <Label htmlFor="satisfaction" className="flex items-center gap-2 mb-2"><Smile/>Customer Satisfaction</Label>
+        <div className="flex items-center gap-2 rounded-md border bg-muted/50 p-3">
+            {[1, 2, 3, 4, 5].map((star) => (
+            <button
+                key={star}
+                type="button"
+                onClick={() => setSatisfactionScore(star)}
+                disabled={isSubmitting || initialSatisfactionScore > 0}
+                className="disabled:cursor-not-allowed"
+            >
+                <Star
+                    className={cn(
+                        "h-8 w-8 text-gray-300 transition-colors",
+                        satisfactionScore >= star && "text-yellow-400",
+                        initialSatisfactionScore === 0 && !isSubmitting && "hover:text-yellow-300"
+                    )}
+                    fill={satisfactionScore >= star ? 'currentColor' : 'none'}
+                />
+            </button>
+            ))}
+            {initialSatisfactionScore > 0 && (
+            <p className="text-sm text-muted-foreground ml-auto">Rating already submitted.</p>
+            )}
+        </div>
+      </div>
 
       <div>
         <Label htmlFor="signature" className="flex items-center gap-2 mb-2"><FileSignature/>Customer Signature</Label>

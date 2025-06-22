@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -22,13 +22,15 @@ import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps'
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
-import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput, handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput, handleTechnicianUnavailabilityAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/fleet-actions";
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
+import ScheduleHealthDialog from './components/ScheduleHealthDialog';
+import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -69,6 +71,12 @@ export default function DashboardPage() {
   const [proactiveSuggestion, setProactiveSuggestion] = useState<AssignmentSuggestion | null>(null);
   const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
   const [isProcessingProactive, setIsProcessingProactive] = useState(false);
+
+  // For Schedule Health Check
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
+  const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
+  const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -260,6 +268,47 @@ export default function DashboardPage() {
     
     setIsFetchingProactiveSuggestion(false);
   }, [technicians, jobs, toast]);
+  
+  // Proactive Health Check (Interval-based)
+  useEffect(() => {
+    const checkHealth = async () => {
+      // Avoid running if data is not ready
+      if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
+        return;
+      }
+      
+      const result = await checkScheduleHealthAction({ technicians, jobs });
+      if (result.data) {
+        // Filter for high-risk alerts to display proactively
+        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 15);
+        
+        // This logic ensures we don't re-add alerts the user has dismissed
+        setRiskAlerts(currentAlerts => {
+          const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
+          const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
+          
+          // Also, remove alerts that are no longer high-risk by finding which of the current alerts are NOT in the new high risk list
+          const stillValidAlerts = currentAlerts.filter(oldAlert => highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id));
+
+          if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {
+            return [...stillValidAlerts, ...newAlertsToAdd];
+          }
+          return currentAlerts; // No change
+        });
+      }
+    };
+    
+    // Run the check immediately on data change (debounced)
+    const timer = setTimeout(checkHealth, 2000); 
+    
+    // And also run it periodically
+    const intervalId = setInterval(checkHealth, 30000); // Check every 30 seconds
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(intervalId);
+    };
+  }, [jobs, technicians, isLoadingData]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db) return;
@@ -470,6 +519,23 @@ export default function DashboardPage() {
     }, 1500);
   };
 
+  const handleCheckScheduleHealth = async () => {
+    setIsCheckingHealth(true);
+    setHealthResults([]);
+    const result = await checkScheduleHealthAction({ technicians, jobs });
+    if (result.error) {
+        toast({ title: "Health Check Failed", description: result.error, variant: "destructive" });
+    } else if (result.data) {
+        setHealthResults(result.data);
+        setIsHealthDialogOpen(true);
+    }
+    setIsCheckingHealth(false);
+  };
+
+  const handleDismissRiskAlert = (technicianId: string) => {
+    setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
+  };
+
 
   if (isLoadingData && !googleMapsApiKey) { 
     return (
@@ -501,24 +567,39 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
             Dispatcher Dashboard
-            {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+            {(isHandlingUnavailability || isFetchingProactiveSuggestion || isCheckingHealth) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </h1>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={handleCheckScheduleHealth} disabled={busyTechnicians.length === 0 || isCheckingHealth}>
+                <ShieldQuestion className="mr-2 h-4 w-4" /> Check Schedule Health
+            </Button>
             <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
             </AddEditJobDialog>
-             <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
-            </Button>
-            <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-              <Button variant="accent" disabled={busyTechnicians.length === 0}>
-                <MapIcon className="mr-2 h-4 w-4" /> AI Schedule Optimizer
-              </Button>
-            </OptimizeRouteDialog>
           </div>
         </div>
+
+        {riskAlerts.length > 0 && (
+          <div className="space-y-2">
+            {riskAlerts.map(alert => (
+              <ScheduleRiskAlert 
+                key={alert.technician.id}
+                riskAlert={alert}
+                onDismiss={handleDismissRiskAlert}
+                technicians={technicians}
+                jobs={jobs}
+              />
+            ))}
+          </div>
+        )}
+
+        <ScheduleHealthDialog 
+            isOpen={isHealthDialogOpen}
+            setIsOpen={setIsHealthDialogOpen}
+            healthResults={healthResults}
+        />
 
         {selectedJobForAIAssign && (
           <SmartJobAllocationDialog
@@ -675,9 +756,21 @@ export default function DashboardPage() {
           </div>
           <TabsContent value="overview">
             <Card>
-              <CardHeader>
-                <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
-                <CardDescription>Real-time overview of ongoing operations.</CardDescription>
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div>
+                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                    <CardDescription>Real-time overview of ongoing operations.</CardDescription>
+                </div>
+                 <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
+                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+                    </Button>
+                    <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+                        <Button variant="accent" disabled={busyTechnicians.length === 0}>
+                            <MapIcon className="mr-2 h-4 w-4" /> AI Schedule Optimizer
+                        </Button>
+                    </OptimizeRouteDialog>
+                </div>
               </CardHeader>
               <CardContent>
                 <MapView 

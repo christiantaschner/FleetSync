@@ -47,7 +47,14 @@ export default function TechnicianJobDetailPage() {
       try {
         const docSnap = await getDoc(jobDocRef);
         if (docSnap.exists()) {
-          const fetchedJob = { id: docSnap.id, ...docSnap.data() } as Job;
+          const data = docSnap.data();
+          // Convert any Firebase Timestamp fields to ISO strings
+          for (const key in data) {
+              if (data[key] && typeof data[key].toDate === 'function') {
+                  data[key] = data[key].toDate().toISOString();
+              }
+          }
+          const fetchedJob = { id: docSnap.id, ...data } as Job;
           setJob(fetchedJob);
           if (fetchedJob.customerSatisfactionScore) {
             setSatisfactionScore(fetchedJob.customerSatisfactionScore);

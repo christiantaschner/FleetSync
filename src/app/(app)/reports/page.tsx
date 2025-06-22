@@ -79,7 +79,17 @@ export default function ReportsPage() {
     const techniciansQuery = query(collection(db, "technicians"));
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
-      setJobs(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Job)));
+      const jobsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        // Convert any Firebase Timestamp fields to ISO strings to make them serializable
+        for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        return { id: doc.id, ...data } as Job;
+      });
+      setJobs(jobsData);
       setIsLoading(false);
     });
 
@@ -227,6 +237,7 @@ export default function ReportsPage() {
   const jobsPerTechnicianChartConfig = {
       completed: {
         label: "Completed Jobs",
+        color: "hsl(var(--chart-1))",
       },
   } satisfies ChartConfig;
 

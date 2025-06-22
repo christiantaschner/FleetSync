@@ -401,3 +401,15 @@ export const SuggestNextAppointmentOutputSchema = z.object({
   message: z.string().describe("The drafted customer-facing appointment scheduling message."),
 });
 export type SuggestNextAppointmentOutput = z.infer<typeof SuggestNextAppointmentOutputSchema>;
+
+export const TroubleshootEquipmentInputSchema = z.object({
+    query: z.string().describe('The technician\'s question about the equipment issue.'),
+    knowledgeBase: z.string().optional().describe('Optional text containing internal company knowledge, manuals, or previous similar issues.'),
+});
+export type TroubleshootEquipmentInput = z.infer<typeof TroubleshootEquipmentInputSchema>;
+
+export const TroubleshootEquipmentOutputSchema = z.object({
+    steps: z.array(z.string()).describe('A list of step-by-step instructions to diagnose the problem.'),
+    disclaimer: z.string().describe('A standard safety disclaimer to show to the technician.'),
+});
+export type TroubleshootEquipmentOutput = z.infer<typeof TroubleshootEquipmentOutputSchema>;

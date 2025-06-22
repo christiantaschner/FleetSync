@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Job, JobStatus, Technician } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import ChatCard from './components/ChatCard';
 import { useAuth } from '@/contexts/auth-context';
+import TroubleshootingCard from './components/TroubleshootingCard';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -351,6 +352,10 @@ export default function TechnicianJobDetailPage() {
 
       {job && technician && !isJobConcluded && (
         <ChatCard job={job} technician={technician} />
+      )}
+
+      {job.status === 'In Progress' && (
+        <TroubleshootingCard jobTitle={job.title} />
       )}
       
       {job.status === 'In Progress' && (

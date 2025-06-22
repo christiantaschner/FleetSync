@@ -126,7 +126,7 @@ const roadmapFeatures = {
       title: "In-App Chat & Media Sharing",
       description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
       icon: MessageSquare,
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: ["Direct, real-time chat between dispatchers and technicians.", "Ability to scope chats to a specific job.", "Support for sending photos within the chat to clarify on-site issues."],
         dataModels: ["New Firestore collection: `chatMessages` (with messages), linked to jobId, senderId, receiverId. Message contains text, timestamp, and optional imageUrl."],
@@ -221,15 +221,15 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Offline Mode for Core Mobile App Functions",
-      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
-      icon: WifiOff,
-      status: "Planned",
-    },
-    {
       title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
       description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries and guided diagnostics based on symptoms.",
       icon: BookOpen,
+      status: "In Progress",
+    },
+    {
+      title: "Offline Mode for Core Mobile App Functions",
+      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
+      icon: WifiOff,
       status: "Planned",
     },
     {

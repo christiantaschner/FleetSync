@@ -10,6 +10,7 @@ import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow 
 import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predict-schedule-risk";
 import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
 import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows/suggest-next-appointment-flow";
+import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/troubleshoot-flow";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
@@ -49,6 +50,9 @@ import {
   SuggestNextAppointmentInputSchema,
   type SuggestNextAppointmentInput,
   type SuggestNextAppointmentOutput,
+  TroubleshootEquipmentInputSchema,
+  type TroubleshootEquipmentInput,
+  type TroubleshootEquipmentOutput,
 } from "@/types";
 
 
@@ -718,4 +722,26 @@ export async function suggestNextAppointmentAction(
   }
 }
 
+
+export async function troubleshootEquipmentAction(
+  input: TroubleshootEquipmentInput
+): Promise<{ data: TroubleshootEquipmentOutput | null; error: string | null }> {
+  try {
+    const validatedInput = TroubleshootEquipmentInputSchema.parse(input);
+    // In a real app, you might fetch a dynamic knowledge base from Firestore here.
+    // For now, we'll use a hardcoded example.
+    const result = await troubleshootEquipmentFlow({
+        ...validatedInput,
+        knowledgeBase: "Standard procedure for HVAC units is to first check the thermostat settings, then the circuit breaker, then the air filter for blockages before inspecting any internal components like capacitors or contactors. Always cut power before opening panels."
+    });
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in troubleshootEquipmentAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to get troubleshooting steps. ${errorMessage}` };
+  }
+}
     

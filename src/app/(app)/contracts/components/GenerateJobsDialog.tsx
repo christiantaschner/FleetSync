@@ -101,5 +101,3 @@ const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOp
 };
 
 export default GenerateJobsDialog;
-
-    

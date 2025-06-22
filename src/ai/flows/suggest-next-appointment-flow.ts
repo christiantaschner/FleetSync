@@ -89,5 +89,3 @@ const suggestNextAppointmentFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

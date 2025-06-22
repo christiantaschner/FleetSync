@@ -233,5 +233,3 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
 };
 
 export default AddEditContractDialog;
-
-    

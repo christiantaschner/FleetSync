@@ -16,6 +16,7 @@ import {
   Smile,
   ThumbsUp,
   CalendarClock,
+  User,
 } from "lucide-react";
 import {
   Card,
@@ -44,6 +45,8 @@ import {
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const pieChartColors = [
   "hsl(var(--chart-1))",
@@ -76,6 +79,7 @@ export default function ReportsPage() {
     from: subDays(new Date(), 29),
     to: new Date(),
   });
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("all");
 
   useEffect(() => {
     if (!db) {
@@ -113,13 +117,20 @@ export default function ReportsPage() {
   }, []);
 
   const reportData = useMemo(() => {
-    const filteredJobs = jobs.filter(job => {
+    // First, filter by date range
+    const dateFilteredJobs = jobs.filter(job => {
         if (!date || !date.from) return true;
         const jobDate = new Date(job.createdAt);
         const fromDate = date.from;
         const toDate = date.to ? new Date(new Date(date.to).setHours(23, 59, 59, 999)) : new Date();
         return jobDate >= fromDate && jobDate <= toDate;
     });
+
+    // Then, filter by technician if one is selected
+    const filteredJobs = selectedTechnicianId === 'all' 
+        ? dateFilteredJobs 
+        : dateFilteredJobs.filter(job => job.assignedTechnicianId === selectedTechnicianId);
+
 
     if (filteredJobs.length === 0) {
       return {
@@ -266,7 +277,7 @@ export default function ReportsPage() {
       punctualityChartData: punctualityChartData,
       durationComparisonChartData: durationComparisonChartData,
     };
-  }, [jobs, technicians, date]);
+  }, [jobs, technicians, date, selectedTechnicianId]);
 
   const jobsByStatusChartConfig = useMemo(() => {
     const config: ChartConfig = {};
@@ -317,7 +328,32 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
             Reporting & Analytics
           </h1>
-          <DateRangePicker date={date} setDate={setDate} />
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId}>
+                <SelectTrigger className="w-full sm:w-[220px]">
+                    <SelectValue placeholder="Filter by Technician" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                           <Users className="h-4 w-4" /> All Technicians
+                        </div>
+                    </SelectItem>
+                    {technicians.map(tech => (
+                        <SelectItem key={tech.id} value={tech.id}>
+                             <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                    <AvatarImage src={tech.avatarUrl} alt={tech.name} />
+                                    <AvatarFallback>{tech.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                {tech.name}
+                            </div>
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <DateRangePicker date={date} setDate={setDate} />
+          </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -468,6 +504,7 @@ export default function ReportsPage() {
             <CardTitle className="font-headline flex items-center gap-2">
               <BarChart /> Completed Jobs per Technician
             </CardTitle>
+             <CardDescription>This chart shows all technicians, regardless of the filter above.</CardDescription>
           </CardHeader>
           <CardContent>
              {reportData.jobsPerTechnician.length > 0 ? (

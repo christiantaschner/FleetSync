@@ -262,7 +262,7 @@ const roadmapFeatures = {
       title: "First-Time-Fix-Rate (FTFR) Analytics",
       description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction. This is informed by data from AI-Assisted Digital Protocols.",
       icon: ThumbsUp,
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "Mechanism to mark a job as a 'first-time fix' or a 'follow-up visit'.",

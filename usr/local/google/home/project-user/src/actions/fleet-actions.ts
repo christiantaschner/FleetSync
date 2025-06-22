@@ -6,10 +6,11 @@ import { optimizeRoutes as optimizeRoutesFlow } from "@/ai/flows/optimize-routes
 import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job-skills";
 import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest-job-priority";
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
+import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predict-schedule-risk";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField } from "firebase/firestore";
-import type { Job, JobStatus } from "@/types";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc } from "firebase/firestore";
+import type { Job, JobStatus, ProfileChangeRequest, Technician } from "@/types";
 
 // Import all required schemas and types from the central types file
 import {
@@ -29,7 +30,12 @@ import {
   ConfirmManualRescheduleInputSchema,
   SuggestJobPriorityInputSchema,
   type SuggestJobPriorityInput,
-  type SuggestJobPriorityOutput
+  type SuggestJobPriorityOutput,
+  ApproveProfileChangeRequestInputSchema,
+  RejectProfileChangeRequestInputSchema,
+  PredictScheduleRiskInputSchema,
+  type PredictScheduleRiskInput,
+  type PredictScheduleRiskOutput
 } from "@/types";
 
 
@@ -328,5 +334,186 @@ export async function confirmManualRescheduleAction(
     console.error("Error in confirmManualRescheduleAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to confirm reschedule. ${errorMessage}` };
+  }
+}
+
+const RequestProfileChangeInputSchema = z.object({
+  technicianId: z.string().min(1),
+  technicianName: z.string().min(1),
+  requestedChanges: z.record(z.any()), // Simple object for changes
+  notes: z.string().optional(),
+});
+
+export async function requestProfileChangeAction(
+  input: z.infer<typeof RequestProfileChangeInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { technicianId, technicianName, requestedChanges, notes } = RequestProfileChangeInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+    
+    const requestsCollectionRef = collection(db, "profileChangeRequests");
+    
+    const newRequest: Omit<ProfileChangeRequest, 'id'> = {
+        technicianId,
+        technicianName,
+        requestedChanges,
+        notes: notes || '',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+    };
+
+    await addDoc(requestsCollectionRef, newRequest);
+
+    return { error: null };
+
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in requestProfileChangeAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to submit profile change request. ${errorMessage}` };
+  }
+}
+
+export async function approveProfileChangeRequestAction(
+  input: z.infer<typeof ApproveProfileChangeRequestInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { requestId, technicianId, approvedChanges, reviewNotes } = ApproveProfileChangeRequestInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+    
+    const batch = writeBatch(db);
+
+    // 1. Update the technician's document if there are changes
+    if (Object.keys(approvedChanges).length > 0) {
+        const techDocRef = doc(db, "technicians", technicianId);
+        batch.update(techDocRef, {
+            ...approvedChanges,
+            updatedAt: serverTimestamp(),
+        });
+    }
+
+    // 2. Update the request's status
+    const requestDocRef = doc(db, "profileChangeRequests", requestId);
+    batch.update(requestDocRef, {
+      status: 'approved',
+      reviewedAt: new Date().toISOString(),
+      approvedChanges: approvedChanges,
+      reviewNotes: reviewNotes || '',
+    });
+
+    await batch.commit();
+    return { error: null };
+
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in approveProfileChangeRequestAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to approve request. ${errorMessage}` };
+  }
+}
+
+export async function rejectProfileChangeRequestAction(
+  input: z.infer<typeof RejectProfileChangeRequestInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    const { requestId, reviewNotes } = RejectProfileChangeRequestInputSchema.parse(input);
+    if (!db) {
+      throw new Error("Firestore not initialized");
+    }
+
+    const requestDocRef = doc(db, "profileChangeRequests", requestId);
+    await updateDoc(requestDocRef, {
+      status: 'rejected',
+      reviewedAt: new Date().toISOString(),
+      reviewNotes: reviewNotes || '',
+    });
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in rejectProfileChangeRequestAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { error: `Failed to reject request. ${errorMessage}` };
+  }
+}
+
+
+export type CheckScheduleHealthResult = {
+  technician: Technician;
+  currentJob: Job;
+  nextJob: Job | null;
+  risk?: PredictScheduleRiskOutput | null;
+  error?: string;
+};
+
+export async function checkScheduleHealthAction(
+  { technicians, jobs }: { technicians: Technician[], jobs: Job[] }
+): Promise<{ data: CheckScheduleHealthResult[] | null; error: string | null }> {
+  try {
+    const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
+    if (busyTechnicians.length === 0) {
+      return { data: [], error: null };
+    }
+
+    const results: CheckScheduleHealthResult[] = await Promise.all(
+      busyTechnicians.map(async (tech) => {
+        const currentJob = jobs.find(j => j.id === tech.currentJobId);
+        if (!currentJob || currentJob.status !== 'In Progress' || !currentJob.inProgressAt) {
+          return { technician: tech, currentJob: currentJob!, nextJob: null, error: 'Technician not on an active, in-progress job.' };
+        }
+
+        const technicianJobs = jobs
+          .filter(j => j.assignedTechnicianId === tech.id && j.status === 'Assigned')
+          .sort((a, b) => (a.routeOrder ?? Infinity) - (b.routeOrder ?? Infinity));
+
+        const nextJob = technicianJobs.length > 0 ? technicianJobs[0] : null;
+
+        if (!nextJob) {
+          return { technician: tech, currentJob, nextJob: null };
+        }
+
+        const input: PredictScheduleRiskInput = {
+          currentTime: new Date().toISOString(),
+          technician: {
+            technicianId: tech.id,
+            technicianName: tech.name,
+            currentLocation: tech.location,
+          },
+          currentJob: {
+            jobId: currentJob.id,
+            location: currentJob.location,
+            startedAt: currentJob.inProgressAt,
+            estimatedDurationMinutes: currentJob.estimatedDurationMinutes || 60,
+          },
+          nextJob: {
+            jobId: nextJob.id,
+            location: nextJob.location,
+            scheduledTime: nextJob.scheduledTime,
+          }
+        };
+
+        const riskResult = await predictScheduleRiskFlow(input);
+        return { technician: tech, currentJob, nextJob, risk: riskResult };
+      })
+    );
+
+    return { data: results, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in checkScheduleHealthAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to check schedule health. ${errorMessage}` };
   }
 }

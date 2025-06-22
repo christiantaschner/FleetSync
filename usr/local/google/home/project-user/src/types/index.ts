@@ -49,6 +49,8 @@ export type Job = {
   completedAt?: string;
   routeOrder?: number;
   customerSatisfactionScore?: number;
+  isFirstTimeFix?: boolean;
+  reasonForFollowUp?: string;
 };
 
 export type Task = {
@@ -79,6 +81,20 @@ export type AITechnician = {
     longitude: number;
   };
   currentJobs?: { jobId: string; scheduledTime?: string; priority: JobPriority; }[];
+};
+
+export type ProfileChangeRequest = {
+    id: string;
+    technicianId: string;
+    technicianName: string;
+    requestedChanges: Record<string, any>;
+    notes: string;
+    status: 'pending' | 'approved' | 'rejected';
+    createdAt: string;
+    reviewedAt?: string;
+    reviewerId?: string;
+    approvedChanges?: Record<string, any>;
+    reviewNotes?: string;
 };
 
 
@@ -234,3 +250,51 @@ export const ConfirmManualRescheduleInputSchema = z.object({
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
 });
 export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;
+
+export const ApproveProfileChangeRequestInputSchema = z.object({
+    requestId: z.string(),
+    technicianId: z.string(),
+    approvedChanges: z.record(z.any()),
+    reviewNotes: z.string().optional(),
+});
+
+export const RejectProfileChangeRequestInputSchema = z.object({
+    requestId: z.string(),
+    reviewNotes: z.string().optional(),
+});
+
+export const PredictScheduleRiskInputSchema = z.object({
+    currentTime: z.string().describe('The current time in ISO 8601 format.'),
+    technician: z.object({
+        technicianId: z.string(),
+        technicianName: z.string(),
+        currentLocation: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+    }),
+    currentJob: z.object({
+        jobId: z.string(),
+        location: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+        startedAt: z.string().describe('ISO 8601 timestamp for when work began.'),
+        estimatedDurationMinutes: z.number(),
+    }),
+    nextJob: z.object({
+        jobId: z.string(),
+        location: z.object({
+            latitude: z.number(),
+            longitude: z.number(),
+        }),
+        scheduledTime: z.string().optional().describe('ISO 8601 timestamp for the appointment.'),
+    }),
+});
+export type PredictScheduleRiskInput = z.infer<typeof PredictScheduleRiskInputSchema>;
+
+export const PredictScheduleRiskOutputSchema = z.object({
+    predictedDelayMinutes: z.number().describe('The predicted delay in minutes. 0 or negative means on time.'),
+    reasoning: z.string().describe('A brief explanation of the prediction.'),
+});
+export type PredictScheduleRiskOutput = z.infer<typeof PredictScheduleRiskOutputSchema>;

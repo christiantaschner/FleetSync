@@ -298,3 +298,11 @@ export const PredictScheduleRiskOutputSchema = z.object({
     reasoning: z.string().describe('A brief explanation of the prediction.'),
 });
 export type PredictScheduleRiskOutput = z.infer<typeof PredictScheduleRiskOutputSchema>;
+
+export const NotifyCustomerInputSchema = z.object({
+    jobId: z.string(),
+    customerName: z.string(),
+    technicianName: z.string(),
+    delayMinutes: z.number(),
+});
+export type NotifyCustomerInput = z.infer<typeof NotifyCustomerInputSchema>;

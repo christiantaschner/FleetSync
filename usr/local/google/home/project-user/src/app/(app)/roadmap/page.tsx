@@ -104,7 +104,7 @@ const roadmapFeatures = {
     },
      {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on manual dispatcher triggers (e.g., calendar changes, handling unavailability). Includes an on-demand 'Schedule Health Check' to predict delays.",
+      description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
       icon: Shuffle, 
       status: "In Progress",
       developerBrief: {
@@ -163,7 +163,7 @@ const roadmapFeatures = {
       title: "Proactive Delay Warnings & Smart Suggestions",
       description: "The system proactively warns dispatchers BEFORE a technician misses a time window and suggests concrete solutions, such as notifying the customer or reassigning the job.",
       icon: ShieldQuestion,
-      status: "Planned",
+      status: "In Progress",
     },
     {
       title: "In-App Chat & Media Sharing",

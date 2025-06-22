@@ -30,6 +30,7 @@ import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
+import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -75,6 +76,7 @@ export default function DashboardPage() {
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
+  const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -266,6 +268,28 @@ export default function DashboardPage() {
     
     setIsFetchingProactiveSuggestion(false);
   }, [technicians, jobs, toast]);
+  
+  // Proactive Health Check
+  useEffect(() => {
+    // Only run if not loading, and there are technicians to check
+    if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
+      return;
+    }
+
+    const checkHealth = async () => {
+      const result = await checkScheduleHealthAction({ technicians, jobs });
+      if (result.data) {
+        // Filter for high-risk alerts to display proactively
+        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 15);
+        setRiskAlerts(highRiskAlerts);
+      }
+    };
+
+    // Use a timer to debounce the check, preventing rapid-fire checks on minor updates
+    const timer = setTimeout(checkHealth, 2000); 
+
+    return () => clearTimeout(timer);
+  }, [jobs, technicians, isLoadingData]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db) return;
@@ -489,6 +513,10 @@ export default function DashboardPage() {
     setIsCheckingHealth(false);
   };
 
+  const handleDismissRiskAlert = (technicianId: string) => {
+    setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
+  };
+
 
   if (isLoadingData && !googleMapsApiKey) { 
     return (
@@ -533,6 +561,20 @@ export default function DashboardPage() {
             </AddEditJobDialog>
           </div>
         </div>
+
+        {riskAlerts.length > 0 && (
+          <div className="space-y-2">
+            {riskAlerts.map(alert => (
+              <ScheduleRiskAlert 
+                key={alert.technician.id}
+                riskAlert={alert}
+                onDismiss={handleDismissRiskAlert}
+                technicians={technicians}
+                jobs={jobs}
+              />
+            ))}
+          </div>
+        )}
 
         <ScheduleHealthDialog 
             isOpen={isHealthDialogOpen}

@@ -35,7 +35,9 @@ import {
   RejectProfileChangeRequestInputSchema,
   PredictScheduleRiskInputSchema,
   type PredictScheduleRiskInput,
-  type PredictScheduleRiskOutput
+  type PredictScheduleRiskOutput,
+  NotifyCustomerInputSchema,
+  type NotifyCustomerInput,
 } from "@/types";
 
 
@@ -515,5 +517,28 @@ export async function checkScheduleHealthAction(
     console.error("Error in checkScheduleHealthAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { data: null, error: `Failed to check schedule health. ${errorMessage}` };
+  }
+}
+
+export async function notifyCustomerAction(
+  input: NotifyCustomerInput
+): Promise<{ data: { message: string } | null; error: string | null }> {
+  try {
+    const { jobId, customerName, technicianName, delayMinutes } = NotifyCustomerInputSchema.parse(input);
+    
+    // In a real application, this would integrate with an SMS/Email service like Twilio.
+    // For this demo, we'll just log it to the console.
+    const message = `Simulating notification for job ${jobId}: "Hello ${customerName}, this is a courtesy alert from FleetSync AI. Your technician, ${technicianName}, may be running approximately ${delayMinutes} minutes behind schedule. We apologize for any inconvenience."`;
+    
+    console.log(message);
+    
+    return { data: { message }, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in notifyCustomerAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to simulate notification. ${errorMessage}` };
   }
 }

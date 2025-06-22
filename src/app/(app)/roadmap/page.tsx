@@ -224,7 +224,7 @@ const roadmapFeatures = {
       title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
       description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries and guided diagnostics based on symptoms.",
       icon: BookOpen,
-      status: "In Progress",
+      status: "Completed",
     },
     {
       title: "Offline Mode for Core Mobile App Functions",
@@ -343,3 +343,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+    

@@ -62,3 +62,5 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
 };
 
 export default ContractListItem;
+
+    

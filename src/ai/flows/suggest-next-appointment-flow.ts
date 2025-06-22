@@ -12,6 +12,7 @@ import {
   type SuggestNextAppointmentOutput
 } from '@/types';
 import { addWeeks, addMonths, format } from 'date-fns';
+import { z } from 'zod';
 
 export async function suggestNextAppointment(input: SuggestNextAppointmentInput): Promise<SuggestNextAppointmentOutput> {
   return suggestNextAppointmentFlow(input);
@@ -79,6 +80,14 @@ const suggestNextAppointmentFlow = ai.defineFlow(
         suggestedDate: suggestedDate,
     });
     
+    // The prompt now returns the full output object, but we need to ensure the suggestedDate is part of it.
+    // Since the prompt doesn't know the date, we add it back to the final output.
+    if (output) {
+      output.suggestedDate = suggestedDate;
+    }
+    
     return output!;
   }
 );
+
+    

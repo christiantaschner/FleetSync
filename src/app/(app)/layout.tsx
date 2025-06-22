@@ -45,8 +45,8 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/technician", label: "My Jobs (Technician)", icon: Smartphone },
-  { href: "/reports", label: "Reports", icon: PieChart },
   { href: "/contracts", label: "Contracts", icon: Repeat },
+  { href: "/reports", label: "Reports", icon: PieChart },
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
@@ -159,4 +159,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </SidebarProvider>
   );
 }
+    
     

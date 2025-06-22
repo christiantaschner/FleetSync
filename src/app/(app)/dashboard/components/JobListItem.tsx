@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Zap, Edit, Users2, Star, ListChecks, Package } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -84,6 +84,17 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
             <div className="flex flex-wrap gap-1">
               {job.requiredSkills.map(skill => (
                 <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {job.requiredParts && job.requiredParts.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-wrap gap-1">
+              {job.requiredParts.map(part => (
+                <Badge key={part} variant="outline" className="text-xs">{part}</Badge>
               ))}
             </div>
           </div>

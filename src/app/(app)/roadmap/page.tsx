@@ -106,7 +106,7 @@ const roadmapFeatures = {
       title: "Advanced Real-time Dynamic Re-optimization",
       description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
       icon: Shuffle, 
-      status: "In Progress",
+      status: "Completed",
       developerBrief: {
         coreFunctionality: [
           "Continuously monitor job statuses, technician locations, and new job arrivals.",

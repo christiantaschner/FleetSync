@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -108,14 +107,14 @@ const roadmapFeatures = {
       icon: Shuffle, 
       status: "Completed",
     },
-  ],
-  coreAiDispatcher: [
-    {
+     {
       title: "Proactive Delay Warnings & Smart Suggestions",
       description: "The system proactively warns dispatchers BEFORE a technician misses a time window and suggests concrete solutions, such as notifying the customer or reassigning the job.",
       icon: ShieldQuestion,
       status: "Completed",
     },
+  ],
+  coreAiDispatcher: [
     {
       title: "Recurring Job & Maintenance Contract Management",
       description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
@@ -135,6 +134,12 @@ const roadmapFeatures = {
         technicalChallenges: ["Implementing a real-time listener with `onSnapshot` for a smooth chat experience.", "Handling image uploads to Firebase Storage before creating the message document."],
         successMetrics: ["Reduced need for phone calls/external messaging apps.", "Faster resolution of simple on-site queries."]
       }
+    },
+    {
+      title: "AI-Assisted Digital Protocols & Checklists",
+      description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
+      icon: ClipboardList,
+      status: "Completed",
     },
     {
       title: "Dynamic Skill Library Management",
@@ -247,12 +252,6 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "AI-Assisted Digital Protocols & Checklists",
-      description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
-      icon: ClipboardList,
-      status: "Planned",
-    },
-    {
       title: "CO2 Emission Estimation & Reporting",
       description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
       icon: Leaf,
@@ -343,5 +342,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-    

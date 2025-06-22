@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 export type Location = {
@@ -26,6 +25,11 @@ export type Technician = {
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
 export type JobStatus = 'Pending' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Cancelled';
+
+export type ChecklistResult = {
+    item: string;
+    checked: boolean;
+}
 
 export type Job = {
   id: string;
@@ -57,6 +61,7 @@ export type Job = {
   reasonForFollowUp?: string;
   sourceContractId?: string;
   breaks?: { start: string; end?: string; }[];
+  checklistResults?: ChecklistResult[];
 };
 
 export type Task = {
@@ -195,7 +200,7 @@ export const OptimizeRoutesInputSchema = z.object({
             longitude: z.number().describe('The longitude of the task location.'),
           })
           .describe('The location of the task.'),
-        priority: z.enum(['high', 'medium', 'low']).describe('The priority of the task.'),
+        priority: z.enum(['high', 'medium' | 'low']).describe('The priority of the task.'),
         scheduledTime: z.string().optional().describe('Optional specific requested appointment time for this task (ISO 8601 format). This is a strong constraint if provided.'),
       })
     )
@@ -292,7 +297,7 @@ export const SuggestJobPriorityInputSchema = z.object({
 export type SuggestJobPriorityInput = z.infer<typeof SuggestJobPriorityInputSchema>;
 
 export const SuggestJobPriorityOutputSchema = z.object({
-  suggestedPriority: z.enum(['High', 'Medium', 'Low']).describe("The AI's suggested priority for the job."),
+  suggestedPriority: z.enum(['High', 'Medium' | 'Low']).describe("The AI's suggested priority for the job."),
   reasoning: z.string().describe('A brief explanation for the suggested priority.'),
 });
 export type SuggestJobPriorityOutput = z.infer<typeof SuggestJobPriorityOutputSchema>;
@@ -414,5 +419,3 @@ export const TroubleshootEquipmentOutputSchema = z.object({
     disclaimer: z.string().describe('A standard safety disclaimer to show to the technician.'),
 });
 export type TroubleshootEquipmentOutput = z.infer<typeof TroubleshootEquipmentOutputSchema>;
-
-    

@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import type { Job, JobStatus, Technician } from '@/types';
+import type { Job, JobStatus, Technician, ChecklistResult } from '@/types';
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ChatCard from './components/ChatCard';
 import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
+import ChecklistCard from './components/ChecklistCard';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -275,6 +275,24 @@ export default function TechnicianJobDetailPage() {
     }
   };
 
+  const handleChecklistSubmit = async (results: ChecklistResult[]) => {
+    if (!job || !db || isUpdating) return;
+    setIsUpdating(true);
+    const jobDocRef = doc(db, "jobs", job.id);
+    try {
+      await updateDoc(jobDocRef, {
+        checklistResults: results,
+        updatedAt: serverTimestamp(),
+      });
+      setJob(prev => prev ? { ...prev, checklistResults: results, updatedAt: new Date().toISOString() } : null);
+      toast({ title: "Checklist Saved", description: "Pre-work safety checks are complete."});
+    } catch (error) {
+      console.error("Error submitting checklist:", error);
+      toast({ title: "Error", description: "Could not save checklist.", variant: "destructive" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleNavigate = () => {
     if (job?.location?.address) {
@@ -313,6 +331,7 @@ export default function TechnicianJobDetailPage() {
   }
 
   const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
+  const isChecklistComplete = !!job.checklistResults && job.checklistResults.length > 0;
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
@@ -335,7 +354,11 @@ export default function TechnicianJobDetailPage() {
             <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3 items-center">
-            <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
+            <StatusUpdateActions 
+                currentStatus={job.status} 
+                onUpdateStatus={handleStatusUpdate} 
+                isChecklistComplete={isChecklistComplete} 
+            />
             {job.status === 'In Progress' && (
               <Button
                 variant={isBreakActive ? "destructive" : "outline"}
@@ -348,6 +371,14 @@ export default function TechnicianJobDetailPage() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {job && (job.status === 'Assigned' || job.status === 'En Route') && (
+        <ChecklistCard 
+            job={job}
+            onSubmit={handleChecklistSubmit}
+            isUpdating={isUpdating}
+        />
       )}
 
       {job && technician && !isJobConcluded && (

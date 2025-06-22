@@ -188,3 +188,5 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
 };
 
 export default JobDetailsDisplay;
+
+    

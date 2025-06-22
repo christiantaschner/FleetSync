@@ -161,7 +161,16 @@ export default function ReportsPage() {
     const totalDurationMs = completedJobsWithTime.reduce((acc, j) => {
         const start = new Date(j.inProgressAt!).getTime();
         const end = new Date(j.completedAt!).getTime();
-        return acc + (end - start);
+        const grossDuration = end - start;
+
+        const breakDuration = j.breaks?.reduce((breakAcc, breakItem) => {
+            if (breakItem.start && breakItem.end) {
+                return breakAcc + (new Date(breakItem.end).getTime() - new Date(breakItem.start).getTime());
+            }
+            return breakAcc;
+        }, 0) || 0;
+
+        return acc + (grossDuration - breakDuration);
     }, 0);
     
     const avgDurationMs =
@@ -634,3 +643,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    

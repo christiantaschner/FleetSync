@@ -1,3 +1,4 @@
-title,description,priority,customerName,customerPhone,address,scheduledDate,scheduledTime,estimatedDurationMinutes,requiredSkills
-"Fix Leaky Pipe","Main bathroom pipe is leaking under the sink.","High","John Doe","555-123-4567","123 Main St, Anytown, USA","2024-12-25","10:00","60","Plumbing,Leak Detection"
-"AC Unit Maintenance","Annual check-up for a 5-ton AC unit.","Medium","Jane Smith","555-987-6543","456 Oak Ave, Somewhere, USA","2024-12-26","14:00","90","HVAC - AC Repair"
+title,description,priority,address,customerName,customerPhone,scheduledDate,scheduledTime,estimatedDurationMinutes,requiredSkills
+"Annual HVAC Checkup","Perform full diagnostic and cleaning on Model X3 unit.","Medium","123 Maple Street, Anytown, USA","John Doe","555-123-4567","2024-08-15","10:00","90","HVAC - General,HVAC - Residential Systems"
+"Emergency Leak Repair","Water leaking from under the kitchen sink. Urgent attention needed.","High","456 Oak Avenue, Someplace, USA","Jane Smith","555-987-6543","","","60","Plumbing - General,Leak Detection"
+"Install New Thermostat","Replace old thermostat with new SmartTemp 5000 model.","Low","789 Pine Lane, Newville, USA","Peter Jones","","2024-08-16","14:30","45","Electrical - General,Smart Home Device Installation"

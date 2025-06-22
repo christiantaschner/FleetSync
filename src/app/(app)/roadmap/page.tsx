@@ -16,17 +16,6 @@ interface RoadmapItemProps {
   description: string;
   icon: React.ElementType;
   status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision' | 'Completed';
-  developerBrief?: DeveloperBrief;
-}
-
-interface DeveloperBrief {
-  coreFunctionality?: string[];
-  dataModels?: string[];
-  aiComponents?: string[];
-  uiUx?: string[];
-  integrationPoints?: string[];
-  technicalChallenges?: string[];
-  successMetrics?: string[];
 }
 
 const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status }) => {

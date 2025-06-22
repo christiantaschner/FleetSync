@@ -532,8 +532,10 @@ export async function notifyCustomerAction(
     const notificationResult = await generateCustomerNotificationFlow({
         customerName: validatedInput.customerName,
         technicianName: validatedInput.technicianName,
+        jobTitle: validatedInput.jobTitle,
         delayMinutes: validatedInput.delayMinutes,
         newTime: validatedInput.newTime,
+        reasonForChange: validatedInput.reasonForChange,
     });
 
     const message = notificationResult.message;

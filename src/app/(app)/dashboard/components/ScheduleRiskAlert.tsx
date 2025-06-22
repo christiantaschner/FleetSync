@@ -59,6 +59,8 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
       customerName: nextJob.customerName,
       technicianName: technician.name,
       delayMinutes: risk.predictedDelayMinutes,
+      jobTitle: nextJob.title,
+      reasonForChange: `Technician is currently running behind due to their previous job.`,
     });
 
     if (result.error) {

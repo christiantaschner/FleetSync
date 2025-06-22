@@ -28,6 +28,7 @@ const prompt = ai.definePrompt({
     
     - Customer's Name: {{{customerName}}}
     - Technician's Name: {{{technicianName}}}
+    {{#if jobTitle}}- Job: {{{jobTitle}}}{{/if}}
     
     {{#if delayMinutes}}
     This is a proactive alert about a potential delay.
@@ -35,7 +36,7 @@ const prompt = ai.definePrompt({
     
     The message should:
     1. Greet the customer by name.
-    2. State this is a courtesy alert about their upcoming service.
+    2. Reference their service appointment{{#if jobTitle}} for "{{{jobTitle}}}"{{/if}}.
     3. Inform them that their technician, {{{technicianName}}}, might be running late by approximately {{{delayMinutes}}} minutes.
     4. Apologize for any inconvenience.
     {{/if}}
@@ -46,9 +47,13 @@ const prompt = ai.definePrompt({
     
     The message should:
     1. Greet the customer by name.
-    2. Inform them that due to a schedule update, their appointment time has been changed.
+    2. Inform them that their appointment{{#if jobTitle}} for "{{{jobTitle}}}"{{/if}} has been rescheduled.
     3. Clearly state the new appointment is for {{{newTime}}}.
     4. Apologize for the change and advise them to call our office if this new time is inconvenient.
+    {{/if}}
+
+    {{#if reasonForChange}}
+    Please include this reason in the message in a customer-friendly way: "{{{reasonForChange}}}"
     {{/if}}
 
     Do not include salutations like "Sincerely" or a company name. Keep it brief for an SMS.

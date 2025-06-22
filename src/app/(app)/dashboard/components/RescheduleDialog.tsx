@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { optimizeRoutesAction, type OptimizeRoutesActionInput, confirmManualRescheduleAction, notifyCustomerAction } from "@/actions/fleet-actions";
-import type { OptimizeRoutesOutput, Technician, Job, AITask } from "@/types";
+import type { OptimizeRoutesOutput, Technician, Job, AITask } from '@/types';
 import type { EventDropArg } from '@fullcalendar/core';
 import { Loader2, MapIcon, CheckCircle, AlertTriangle, Copy } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -147,7 +147,9 @@ const RescheduleDialog: React.FC<RescheduleDialogProps> = ({
                 jobId: movedJob.id,
                 customerName: movedJob.customerName,
                 technicianName: technician.name,
+                jobTitle: movedJob.title,
                 newTime: new Date(event.start!).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }),
+                reasonForChange: "Your appointment time was updated by our dispatch team to optimize scheduling."
             }).then(notificationResult => {
                 if(notificationResult.data?.message) {
                     const { dismiss } = toast({

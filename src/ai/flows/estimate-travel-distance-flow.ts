@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview An AI agent that estimates the driving distance between two points.
@@ -11,10 +10,6 @@ import {
   type EstimateTravelDistanceOutput,
   EstimateTravelDistanceOutputSchema,
 } from '@/types';
-
-export async function estimateTravelDistance(input: EstimateTravelDistanceInput): Promise<EstimateTravelDistanceOutput> {
-  return estimateTravelDistanceFlow(input);
-}
 
 const prompt = ai.definePrompt({
     name: 'estimateTravelDistancePrompt',
@@ -42,3 +37,7 @@ const estimateTravelDistanceFlow = ai.defineFlow(
     return output!;
   }
 );
+
+export async function estimateTravelDistance(input: EstimateTravelDistanceInput): Promise<EstimateTravelDistanceOutput> {
+  return estimateTravelDistanceFlow(input);
+}

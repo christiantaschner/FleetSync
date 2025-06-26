@@ -40,17 +40,7 @@ import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-
-// Deep imports for Recharts to fix build issues
-import { BarChart } from "recharts/es6/chart/BarChart";
-import { PieChart } from "recharts/es6/chart/PieChart";
-import { Bar } from "recharts/es6/cartesian/Bar";
-import { CartesianGrid } from "recharts/es6/cartesian/CartesianGrid";
-import { XAxis } from "recharts/es6/cartesian/XAxis";
-import { YAxis } from "recharts/es6/cartesian/YAxis";
-import { Pie } from "recharts/es6/polar/Pie";
-import { Cell } from "recharts/es6/component/Cell";
-import { ResponsiveContainer } from "recharts/es6/component/ResponsiveContainer";
+import * as Recharts from "recharts";
 
 
 const pieChartColors = [
@@ -490,49 +480,47 @@ export default function ReportsPage() {
           <CardContent>
             {reportData.jobsByStatus.length > 0 ? (
             <ChartContainer config={jobsByStatusChartConfig} className="min-h-[300px] w-full">
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                  <Pie
-                    data={reportData.jobsByStatus}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={110}
-                    labelLine={false}
-                    label={({
-                      cx,
-                      cy,
-                      midAngle,
-                      innerRadius,
-                      outerRadius,
-                      percent,
-                    }) => {
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                      const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                      const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                      return (
-                        <text
-                          x={x}
-                          y={y}
-                          fill="white"
-                          textAnchor={x > cx ? "start" : "end"}
-                          dominantBaseline="central"
-                          className="text-xs font-bold"
-                        >
-                          {`${(percent * 100).toFixed(0)}%`}
-                        </text>
-                      );
-                    }}
-                  >
-                    {reportData.jobsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={pieChartColors[index % pieChartColors.length]} />
-                    ))}
-                  </Pie>
-                  <ChartLegend content={<ChartLegendContent />} />
-                </PieChart>
-              </ResponsiveContainer>
+              <Recharts.PieChart>
+                <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                <Recharts.Pie
+                  data={reportData.jobsByStatus}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={110}
+                  labelLine={false}
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    percent,
+                  }) => {
+                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                    return (
+                      <text
+                        x={x}
+                        y={y}
+                        fill="white"
+                        textAnchor={x > cx ? "start" : "end"}
+                        dominantBaseline="central"
+                        className="text-xs font-bold"
+                      >
+                        {`${(percent * 100).toFixed(0)}%`}
+                      </text>
+                    );
+                  }}
+                >
+                  {reportData.jobsByStatus.map((entry, index) => (
+                    <Recharts.Cell key={`cell-${index}`} fill={pieChartColors[index % pieChartColors.length]} />
+                  ))}
+                </Recharts.Pie>
+                <ChartLegend content={<ChartLegendContent />} />
+              </Recharts.PieChart>
             </ChartContainer>
             ) : (
                 <p className="text-muted-foreground text-center py-10">No job data available for this chart.</p>
@@ -550,24 +538,22 @@ export default function ReportsPage() {
           <CardContent>
              {reportData.jobsPerTechnician.length > 0 ? (
             <ChartContainer config={jobsPerTechnicianChartConfig} className="min-h-[300px] w-full">
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={reportData.jobsPerTechnician}>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="name"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            className="text-xs"
-                        />
-                         <YAxis allowDecimals={false} />
-                        <ChartTooltip
-                            cursor={false}
-                            content={<ChartTooltipContent indicator="dot" />}
-                        />
-                        <Bar dataKey="completed" fill="hsl(var(--chart-1))" radius={4} />
-                    </BarChart>
-              </ResponsiveContainer>
+                <Recharts.BarChart data={reportData.jobsPerTechnician}>
+                    <Recharts.CartesianGrid vertical={false} />
+                    <Recharts.XAxis
+                        dataKey="name"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                        className="text-xs"
+                    />
+                     <Recharts.YAxis allowDecimals={false} />
+                    <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent indicator="dot" />}
+                    />
+                    <Recharts.Bar dataKey="completed" fill="hsl(var(--chart-1))" radius={4} />
+                </Recharts.BarChart>
             </ChartContainer>
              ) : (
                 <p className="text-muted-foreground text-center py-10">No completed jobs to display.</p>
@@ -586,49 +572,47 @@ export default function ReportsPage() {
             <CardContent>
                 {reportData.punctualityChartData.length > 0 ? (
                 <ChartContainer config={punctualityChartConfig} className="min-h-[300px] w-full">
-                <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                    <Pie
-                        data={reportData.punctualityChartData}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={110}
-                        labelLine={false}
-                        label={({
-                        cx,
-                        cy,
-                        midAngle,
-                        innerRadius,
-                        outerRadius,
-                        percent,
-                        }) => {
-                        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                        const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                        const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                        return (
-                            <text
-                            x={x}
-                            y={y}
-                            fill="white"
-                            textAnchor={x > cx ? "start" : "end"}
-                            dominantBaseline="central"
-                            className="text-xs font-bold"
-                            >
-                            {`${(percent * 100).toFixed(0)}%`}
-                            </text>
-                        );
-                        }}
-                    >
-                        {reportData.punctualityChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                    </Pie>
-                    <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-                    </PieChart>
-                </ResponsiveContainer>
+                <Recharts.PieChart>
+                  <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                  <Recharts.Pie
+                      data={reportData.punctualityChartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={110}
+                      labelLine={false}
+                      label={({
+                      cx,
+                      cy,
+                      midAngle,
+                      innerRadius,
+                      outerRadius,
+                      percent,
+                      }) => {
+                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+                      const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+                      const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+                      return (
+                          <text
+                          x={x}
+                          y={y}
+                          fill="white"
+                          textAnchor={x > cx ? "start" : "end"}
+                          dominantBaseline="central"
+                          className="text-xs font-bold"
+                          >
+                          {`${(percent * 100).toFixed(0)}%`}
+                          </text>
+                      );
+                      }}
+                  >
+                      {reportData.punctualityChartData.map((entry, index) => (
+                          <Recharts.Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                  </Recharts.Pie>
+                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
+                </Recharts.PieChart>
                 </ChartContainer>
                 ) : (
                     <p className="text-muted-foreground text-center py-10">No punctuality data available for this chart.</p>
@@ -645,25 +629,23 @@ export default function ReportsPage() {
                 <CardContent>
                     {reportData.emissionsPerTechnician.length > 0 ? (
                     <ChartContainer config={emissionsChartConfig} className="min-h-[300px] w-full">
-                        <ResponsiveContainer width="100%" height={300}>
-                            <BarChart data={reportData.emissionsPerTechnician}>
-                                <CartesianGrid vertical={false} />
-                                <XAxis
-                                    dataKey="name"
-                                    tickLine={false}
-                                    tickMargin={10}
-                                    axisLine={false}
-                                    className="text-xs"
-                                />
-                                <YAxis unit=" kg" />
-                                <ChartTooltip
-                                    cursor={false}
-                                    content={<ChartTooltipContent indicator="dot" />}
-                                />
-                                <ChartLegend content={<ChartLegendContent />} />
-                                <Bar dataKey="emissions" fill="hsl(var(--chart-2))" radius={4} />
-                            </BarChart>
-                    </ResponsiveContainer>
+                        <Recharts.BarChart data={reportData.emissionsPerTechnician}>
+                            <Recharts.CartesianGrid vertical={false} />
+                            <Recharts.XAxis
+                                dataKey="name"
+                                tickLine={false}
+                                tickMargin={10}
+                                axisLine={false}
+                                className="text-xs"
+                            />
+                            <Recharts.YAxis unit=" kg" />
+                            <ChartTooltip
+                                cursor={false}
+                                content={<ChartTooltipContent indicator="dot" />}
+                            />
+                            <ChartLegend content={<ChartLegendContent />} />
+                            <Recharts.Bar dataKey="emissions" fill="hsl(var(--chart-2))" radius={4} />
+                        </Recharts.BarChart>
                     </ChartContainer>
                     ) : (
                         <p className="text-muted-foreground text-center py-10">No emissions data available to display.</p>
@@ -674,3 +656,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    

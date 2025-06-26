@@ -41,11 +41,11 @@ export default function SignupPage() {
 
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     setIsLoading(true);
-    const success = await signup(data.email, data.password);
-     if (!success) {
-      setIsLoading(false);
-    }
-    // Navigation is handled by the signup function on success
+    await signup(data.email, data.password);
+    // The signup function shows a toast on error.
+    // AuthProvider handles navigation on success.
+    // Reset loading state in case of an error.
+    setIsLoading(false);
   };
 
   return (

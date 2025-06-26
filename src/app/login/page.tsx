@@ -36,11 +36,11 @@ export default function LoginPage() {
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     setIsLoading(true);
-    const success = await login(data.email, data.password);
-    if (!success) {
-      setIsLoading(false);
-    }
-    // Navigation is handled by the login function on success
+    await login(data.email, data.password);
+    // The login function shows a toast on error.
+    // AuthProvider handles navigation on success.
+    // We just need to reset the loading state in case of an error.
+    setIsLoading(false);
   };
 
   return (

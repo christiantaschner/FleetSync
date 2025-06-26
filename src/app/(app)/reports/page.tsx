@@ -1,11 +1,11 @@
 
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Job, Technician } from "@/types";
 import {
-  BarChart,
+  BarChart as BarChartIcon,
   PieChart as PieChartIcon,
   CheckCircle,
   Clock,
@@ -34,20 +34,24 @@ import {
   ChartLegendContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import {
-  Bar,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-} from "recharts";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/auth-context";
+
+// Deep imports for Recharts to fix build issues
+import { BarChart } from "recharts/es6/chart/BarChart";
+import { PieChart } from "recharts/es6/chart/PieChart";
+import { Bar } from "recharts/es6/cartesian/Bar";
+import { CartesianGrid } from "recharts/es6/cartesian/CartesianGrid";
+import { XAxis } from "recharts/es6/cartesian/XAxis";
+import { YAxis } from "recharts/es6/cartesian/YAxis";
+import { Pie } from "recharts/es6/polar/Pie";
+import { Cell } from "recharts/es6/component/Cell";
+import { ResponsiveContainer } from "recharts/es6/component/ResponsiveContainer";
+
 
 const pieChartColors = [
   "hsl(var(--chart-1))",
@@ -73,6 +77,7 @@ const formatDuration = (milliseconds: number): string => {
 
 
 export default function ReportsPage() {
+  const { userProfile } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,12 +88,15 @@ export default function ReportsPage() {
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("all");
 
   useEffect(() => {
-    if (!db) {
+    if (!db || !userProfile?.companyId) {
       setIsLoading(false);
       return;
     }
-    const jobsQuery = query(collection(db, "jobs"));
-    const techniciansQuery = query(collection(db, "technicians"));
+    
+    const companyId = userProfile.companyId;
+
+    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
+    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId));
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
       const jobsData = snapshot.docs.map((doc) => {
@@ -115,7 +123,7 @@ export default function ReportsPage() {
       unsubscribeJobs();
       unsubscribeTechnicians();
     };
-  }, []);
+  }, [userProfile]);
 
   const reportData = useMemo(() => {
     // First, filter by date range
@@ -535,7 +543,7 @@ export default function ReportsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-              <BarChart /> Completed Jobs per Technician
+              <BarChartIcon /> Completed Jobs per Technician
             </CardTitle>
              <CardDescription>This chart shows all technicians, regardless of the filter above.</CardDescription>
           </CardHeader>
@@ -630,7 +638,7 @@ export default function ReportsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline flex items-center gap-2">
-                        <BarChart /> CO2 Emissions by Technician
+                        <BarChartIcon /> CO2 Emissions by Technician
                     </CardTitle>
                     <CardDescription>Estimated CO2 emissions (in kg) from travel. This chart shows all technicians, regardless of the filter above.</CardDescription>
                 </CardHeader>

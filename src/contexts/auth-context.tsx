@@ -15,6 +15,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile } from "@/types";
+import { ensureUserDocumentAction } from "@/actions/user-actions";
 
 interface AuthContextType {
   user: User | null;
@@ -41,21 +42,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
+        // As a replacement for a Cloud Function, we ensure the user document exists.
+        // This is idempotent, so it's safe to call on every auth state change.
+        await ensureUserDocumentAction({ 
+            uid: currentUser.uid, 
+            email: currentUser.email! 
+        });
+
+        setUser(currentUser);
         // User is logged in, listen to their profile document
         const userDocRef = doc(db, "users", currentUser.uid);
         const unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             setUserProfile(docSnap.data() as UserProfile);
           } else {
-            // User exists in Auth, but not in Firestore. 
-            // This is the state right after signup, before the backend function runs.
+            // This case should now be less likely to be hit for long,
+            // as ensureUserDocumentAction will create it. But as a fallback:
             setUserProfile({
               uid: currentUser.uid,
               email: currentUser.email!,
-              onboardingStatus: 'pending_creation', // A temporary status
+              onboardingStatus: 'pending_creation',
+              companyId: undefined,
+              role: undefined
             });
           }
           setLoading(false);
@@ -63,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return unsubscribeProfile; // This will be called on cleanup
       } else {
         // User is logged out
+        setUser(null);
         setUserProfile(null);
         setLoading(false);
       }
@@ -95,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await createUserWithEmailAndPassword(auth, email_address, pass_word);
       // Redirection is now handled by the useEffect in the AppLayout
-      // The backend function will create the user document in Firestore.
+      // The client-side action will create the user document in Firestore.
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);

@@ -41,14 +41,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 
-import { BarChart } from 'recharts/es6/chart/BarChart';
-import { PieChart } from 'recharts/es6/chart/PieChart';
-import { Bar } from 'recharts/es6/cartesian/Bar';
-import { XAxis } from 'recharts/es6/cartesian/XAxis';
-import { YAxis } from 'recharts/es6/cartesian/YAxis';
-import { CartesianGrid } from 'recharts/es6/cartesian/CartesianGrid';
-import { Pie } from 'recharts/es6/polar/Pie';
-import { Cell } from 'recharts/es6/component/Cell';
+import { BarChart } from 'recharts/lib/chart/BarChart';
+import { PieChart } from 'recharts/lib/chart/PieChart';
+import { Bar } from 'recharts/lib/cartesian/Bar';
+import { XAxis } from 'recharts/lib/cartesian/XAxis';
+import { YAxis } from 'recharts/lib/cartesian/YAxis';
+import { CartesianGrid } from 'recharts/lib/cartesian/CartesianGrid';
+import { Pie } from 'recharts/lib/polar/Pie';
+import { Cell } from 'recharts/lib/component/Cell';
 
 
 const pieChartColors = [

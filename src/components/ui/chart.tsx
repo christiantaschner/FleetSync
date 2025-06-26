@@ -2,9 +2,9 @@
 "use client"
 
 import * as React from "react"
-import { ResponsiveContainer } from "recharts/es6/component/ResponsiveContainer"
-import { Legend } from "recharts/es6/component/Legend"
-import { Tooltip } from "recharts/es6/component/Tooltip"
+import { ResponsiveContainer } from "recharts/lib/component/ResponsiveContainer"
+import { Legend } from "recharts/lib/component/Legend"
+import { Tooltip } from "recharts/lib/component/Tooltip"
 
 import { cn } from "@/lib/utils"
 

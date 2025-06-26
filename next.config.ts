@@ -3,7 +3,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  transpilePackages: ['recharts', 'react-resize-detector'],
+  transpilePackages: ['recharts', 'react-resize-detector', 'lodash'],
   typescript: {
     ignoreBuildErrors: true,
   },

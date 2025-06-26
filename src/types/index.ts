@@ -11,9 +11,6 @@ export type Location = {
 
 export type TechnicianSkill = string; 
 
-export type UserRole = 'admin' | 'dispatcher' | 'technician';
-export type OnboardingStatus = 'pending_creation' | 'pending_onboarding' | 'completed';
-
 export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
@@ -501,3 +498,8 @@ export const CalculateTravelMetricsInputSchema = z.object({
     technicianId: z.string(),
 });
 export type CalculateTravelMetricsInput = z.infer<typeof CalculateTravelMetricsInputSchema>;
+
+export const CompleteOnboardingInputSchema = z.object({
+  companyName: z.string().min(2, 'Company name must be at least 2 characters.'),
+});
+export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSchema>;

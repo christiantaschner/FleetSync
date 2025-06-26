@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { completeOnboardingAction, CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/actions/onboarding-actions';
+import { completeOnboardingAction } from '@/actions/onboarding-actions';
+import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
 import { Loader2, Building, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/common/logo';
 

@@ -6,12 +6,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';
-
-export const CompleteOnboardingInputSchema = z.object({
-  companyName: z.string().min(2, 'Company name must be at least 2 characters.'),
-});
-
-export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSchema>;
+import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput

@@ -105,9 +105,10 @@ export default function DashboardPage() {
   const fetchSkills = useCallback(async () => {
     if (!db || !user) return;
     try {
-      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", user.uid), orderBy("name"));
+      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", user.uid));
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => doc.data().name as string);
+      skillsData.sort((a, b) => a.localeCompare(b));
       setAllSkills(skillsData);
     } catch (error) {
       console.error("Error fetching skills: ", error);
@@ -118,9 +119,10 @@ export default function DashboardPage() {
   const fetchParts = useCallback(async () => {
     if (!db || !user) return;
     try {
-      const partsQuery = query(collection(db, "parts"), where("companyId", "==", user.uid), orderBy("name"));
+      const partsQuery = query(collection(db, "parts"), where("companyId", "==", user.uid));
       const querySnapshot = await getDocs(partsQuery);
       const partsData = querySnapshot.docs.map(doc => doc.data().name as string);
+      partsData.sort((a, b) => a.localeCompare(b));
       setAllParts(partsData);
     } catch (error) {
       console.error("Error fetching parts: ", error);
@@ -149,7 +151,7 @@ export default function DashboardPage() {
     fetchSkills();
     fetchParts();
 
-    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
+    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -161,6 +163,7 @@ export default function DashboardPage() {
         }
         return { id: doc.id, ...data } as Job;
       });
+      jobsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setJobs(jobsData);
       onListenerLoaded();
     }, (error) => {
@@ -169,7 +172,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
 
-    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId), orderBy("name", "asc"));
+    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId));
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -181,6 +184,7 @@ export default function DashboardPage() {
         }
         return { id: doc.id, ...data } as Technician;
       });
+      techniciansData.sort((a, b) => a.name.localeCompare(b.name));
       setTechnicians(techniciansData);
       onListenerLoaded();
     }, (error) => {

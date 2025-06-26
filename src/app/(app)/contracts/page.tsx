@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
 import type { Contract } from '@/types';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import AddEditContractDialog from './components/AddEditContractDialog';
 import ContractListItem from './components/ContractListItem';
@@ -32,8 +32,7 @@ export default function ContractsPage() {
         setIsLoading(true);
         const contractsQuery = query(
             collection(db, "contracts"), 
-            where("companyId", "==", user.uid), 
-            orderBy("customerName", "asc")
+            where("companyId", "==", user.uid)
         );
         const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
@@ -45,6 +44,7 @@ export default function ContractsPage() {
                 }
                 return { id: doc.id, ...data } as Contract;
             });
+            contractsData.sort((a, b) => a.customerName.localeCompare(b.customerName));
             setContracts(contractsData);
             setIsLoading(false);
         }, (error) => {

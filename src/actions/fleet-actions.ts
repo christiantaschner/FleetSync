@@ -819,15 +819,15 @@ export async function calculateTravelMetricsAction(
       where("assignedTechnicianId", "==", technicianId),
       where("status", "==", "Completed"),
       where("completedAt", ">=", startOfDay),
-      where("completedAt", "<", completedJob.completedAt), // Jobs completed *before* this one
-      orderBy("completedAt", "desc"),
-      limit(1)
+      where("completedAt", "<", completedJob.completedAt) // Jobs completed *before* this one
     );
     const prevJobsSnap = await getDocs(q);
     
     let startLocation: Location;
     if (!prevJobsSnap.empty) {
-      const prevJob = prevJobsSnap.docs[0].data() as Job;
+      const prevJobs = prevJobsSnap.docs.map(doc => doc.data() as Job);
+      prevJobs.sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
+      const prevJob = prevJobs[0];
       startLocation = prevJob.location;
     } else {
       // First job of the day, use technician's home base

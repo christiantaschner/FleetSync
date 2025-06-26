@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -36,17 +35,24 @@ export default function LoginPage() {
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     setIsLoading(true);
-    await login(data.email, data.password);
-    // The login function shows a toast on error.
-    // AuthProvider handles navigation on success.
-    // We just need to reset the loading state in case of an error.
-    setIsLoading(false);
+    const success = await login(data.email, data.password);
+    if (success) {
+      // The user is now logged in. The AuthProvider will detect the user
+      // and their profile status, and the AppLayout will redirect them
+      // to the correct page (/onboarding or /dashboard).
+      // We just need to navigate to a page within AppLayout to trigger it.
+      router.push('/dashboard');
+    } else {
+      // If login fails, the toast is shown by the auth context.
+      // We just need to stop the loading spinner.
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8">
-        <Logo /> {/* iconSize prop removed */}
+        <Logo />
       </div>
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>

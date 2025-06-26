@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from "react";
@@ -41,17 +40,21 @@ export default function SignupPage() {
 
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     setIsLoading(true);
-    await signup(data.email, data.password);
-    // The signup function shows a toast on error.
-    // AuthProvider handles navigation on success.
-    // Reset loading state in case of an error.
-    setIsLoading(false);
+    const success = await signup(data.email, data.password);
+    if (success) {
+      // On successful signup, the user is logged in.
+      // The AppLayout's effect will redirect them to onboarding.
+      router.push('/onboarding');
+    } else {
+      // On failure, the auth context shows a toast. We just need to stop loading.
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
        <div className="mb-8">
-        <Logo /> {/* iconSize prop removed */}
+        <Logo />
       </div>
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>

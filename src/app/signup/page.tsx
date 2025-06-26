@@ -40,15 +40,11 @@ export default function SignupPage() {
 
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     setIsLoading(true);
-    const success = await signup(data.email, data.password);
-    if (success) {
-      // On successful signup, the user is logged in.
-      // The AppLayout's effect will redirect them to onboarding.
-      router.push('/onboarding');
-    } else {
-      // On failure, the auth context shows a toast. We just need to stop loading.
-      setIsLoading(false);
-    }
+    await signup(data.email, data.password);
+    // The user will be redirected by the effect in AppLayout
+    // once the auth state is fully resolved. We just manage the
+    // loading state for the button here.
+    setIsLoading(false);
   };
 
   return (

@@ -478,6 +478,23 @@ export const TroubleshootEquipmentOutputSchema = z.object({
 });
 export type TroubleshootEquipmentOutput = z.infer<typeof TroubleshootEquipmentOutputSchema>;
 
+export const EstimateTravelDistanceInputSchema = z.object({
+  startLocation: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
+  endLocation: z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+  }),
+});
+export type EstimateTravelDistanceInput = z.infer<typeof EstimateTravelDistanceInputSchema>;
+
+export const EstimateTravelDistanceOutputSchema = z.object({
+  distanceKm: z.number().describe('The estimated driving distance in kilometers.'),
+});
+export type EstimateTravelDistanceOutput = z.infer<typeof EstimateTravelDistanceOutputSchema>;
+
 export const CalculateTravelMetricsInputSchema = z.object({
     companyId: z.string(),
     jobId: z.string(),

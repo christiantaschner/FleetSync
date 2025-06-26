@@ -5,24 +5,12 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'zod';
-
-const LocationSchema = z.object({
-    latitude: z.number(),
-    longitude: z.number(),
-});
-
-export const EstimateTravelDistanceInputSchema = z.object({
-  startLocation: LocationSchema,
-  endLocation: LocationSchema,
-});
-export type EstimateTravelDistanceInput = z.infer<typeof EstimateTravelDistanceInputSchema>;
-
-export const EstimateTravelDistanceOutputSchema = z.object({
-  distanceKm: z.number().describe('The estimated driving distance in kilometers.'),
-});
-export type EstimateTravelDistanceOutput = z.infer<typeof EstimateTravelDistanceOutputSchema>;
-
+import {
+  type EstimateTravelDistanceInput,
+  EstimateTravelDistanceInputSchema,
+  type EstimateTravelDistanceOutput,
+  EstimateTravelDistanceOutputSchema,
+} from '@/types';
 
 export async function estimateTravelDistance(input: EstimateTravelDistanceInput): Promise<EstimateTravelDistanceOutput> {
   return estimateTravelDistanceFlow(input);

@@ -16,6 +16,8 @@ import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/t
 import { Loader2, Building, Sparkles } from 'lucide-react';
 import { Logo } from '@/components/common/logo';
 
+type OnboardingFormValues = Pick<CompleteOnboardingInput, 'companyName'>;
+
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, userProfile, loading } = useAuth();
@@ -29,13 +31,27 @@ export default function OnboardingPage() {
     }
   }, [userProfile, loading, router]);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<CompleteOnboardingInput>({
-    resolver: zodResolver(CompleteOnboardingInputSchema),
+  const { register, handleSubmit, formState: { errors } } = useForm<OnboardingFormValues>({
+    resolver: zodResolver(CompleteOnboardingInputSchema.omit({ uid: true })),
   });
   
-  const onSubmit = async (data: CompleteOnboardingInput) => {
+  const onSubmit = async (data: OnboardingFormValues) => {
     setIsSubmitting(true);
-    const result = await completeOnboardingAction(data);
+    
+    if (!user) {
+        toast({
+            title: "Onboarding Failed",
+            description: "You must be logged in to complete onboarding.",
+            variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    
+    const result = await completeOnboardingAction({
+        ...data,
+        uid: user.uid
+    });
 
     if (result.error) {
       toast({

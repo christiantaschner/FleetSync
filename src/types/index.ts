@@ -363,7 +363,7 @@ export const ConfirmManualRescheduleInputSchema = z.object({
   newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
 });
-export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;
+export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInput>;
 
 export const ApproveProfileChangeRequestInputSchema = z.object({
     requestId: z.string(),
@@ -500,6 +500,7 @@ export const CalculateTravelMetricsInputSchema = z.object({
 export type CalculateTravelMetricsInput = z.infer<typeof CalculateTravelMetricsInputSchema>;
 
 export const CompleteOnboardingInputSchema = z.object({
+  uid: z.string().min(1, "UID is required"),
   companyName: z.string().min(2, 'Company name must be at least 2 characters.'),
 });
 export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSchema>;

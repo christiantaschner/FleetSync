@@ -16,7 +16,7 @@ import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function ContractsPage() {
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const { toast } = useToast();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -28,11 +28,11 @@ export default function ContractsPage() {
     const [isSuggestAppointmentOpen, setIsSuggestAppointmentOpen] = useState(false);
 
     const fetchContracts = useCallback(() => {
-        if (!db || !user) return;
+        if (!db || !userProfile?.companyId) return;
         setIsLoading(true);
         const contractsQuery = query(
             collection(db, "contracts"), 
-            where("companyId", "==", user.uid)
+            where("companyId", "==", userProfile.companyId)
         );
         const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
@@ -54,7 +54,7 @@ export default function ContractsPage() {
         });
 
         return unsubscribe;
-    }, [user, toast]);
+    }, [userProfile, toast]);
 
     useEffect(() => {
         const unsubscribe = fetchContracts();
@@ -88,16 +88,21 @@ export default function ContractsPage() {
     
     return (
         <div className="space-y-6">
-            <AddEditContractDialog
-                isOpen={isAddEditDialogOpen}
-                onClose={onDialogClose}
-                contract={selectedContract}
-                onContractUpdated={fetchContracts}
-            />
-            <GenerateJobsDialog
-                isOpen={isGenerateJobsOpen}
-                setIsOpen={setIsGenerateJobsOpen}
-            />
+            {userProfile?.companyId && (
+                <AddEditContractDialog
+                    isOpen={isAddEditDialogOpen}
+                    onClose={onDialogClose}
+                    contract={selectedContract}
+                    onContractUpdated={fetchContracts}
+                />
+            )}
+             {userProfile?.companyId && (
+                <GenerateJobsDialog
+                    isOpen={isGenerateJobsOpen}
+                    setIsOpen={setIsGenerateJobsOpen}
+                    companyId={userProfile.companyId}
+                />
+             )}
             <SuggestAppointmentDialog
                 isOpen={isSuggestAppointmentOpen}
                 onClose={onSuggestDialogClose}

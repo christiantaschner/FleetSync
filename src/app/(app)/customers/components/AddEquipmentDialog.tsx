@@ -19,18 +19,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
 import { addEquipmentAction, AddEquipmentInputSchema, type AddEquipmentInput } from '@/actions/customer-actions';
 import { Loader2, PackagePlus } from 'lucide-react';
-import { useAuth } from '@/contexts/auth-context';
 
 interface AddEquipmentDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   customerId: string;
   customerName: string;
+  companyId: string;
   onEquipmentAdded: () => void;
 }
 
-const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOpen, customerId, customerName, onEquipmentAdded }) => {
-  const { user } = useAuth();
+const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOpen, customerId, customerName, companyId, onEquipmentAdded }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +38,7 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
     defaultValues: {
       customerId,
       customerName,
-      companyId: user?.uid,
+      companyId,
       name: '',
       model: '',
       serialNumber: '',
@@ -49,12 +48,12 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
   });
 
   const onSubmitForm = async (data: AddEquipmentInput) => {
-    if (!user) {
-        toast({ title: "Authentication Error", description: "You must be logged in to add equipment.", variant: "destructive" });
+    if (!companyId) {
+        toast({ title: "Authentication Error", description: "Company ID is missing.", variant: "destructive" });
         return;
     }
     setIsSubmitting(true);
-    const result = await addEquipmentAction({ ...data, companyId: user.uid, customerId, customerName });
+    const result = await addEquipmentAction({ ...data, companyId, customerId, customerName });
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else {
@@ -69,7 +68,7 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
         if (!open) {
-            reset({ customerId, customerName, companyId: user?.uid, name: '', model: '', serialNumber: '', installDate: '', notes: '' });
+            reset({ customerId, customerName, companyId, name: '', model: '', serialNumber: '', installDate: '', notes: '' });
         }
         setIsOpen(open);
     }}>

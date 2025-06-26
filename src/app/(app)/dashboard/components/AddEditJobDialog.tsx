@@ -45,7 +45,7 @@ interface AddEditJobDialogProps {
 }
 
 const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, allParts, onJobAddedOrUpdated }) => {
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -245,14 +245,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       return;
     }
     
-    if (!user) {
-      toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+    if (!userProfile?.companyId) {
+      toast({ title: "Authentication Error", description: "Company ID not found.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
 
     const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { companyId: string, scheduledTime?: string; requiredSkills?: string[]; requiredParts?: string[] } = {
-      companyId: user.uid,
+      companyId: userProfile.companyId,
       title,
       description,
       priority,

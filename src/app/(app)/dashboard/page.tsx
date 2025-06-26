@@ -42,7 +42,7 @@ const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -103,9 +103,9 @@ export default function DashboardPage() {
   }, []);
 
   const fetchSkills = useCallback(async () => {
-    if (!db || !user) return;
+    if (!db || !userProfile?.companyId) return;
     try {
-      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", user.uid));
+      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => doc.data().name as string);
       skillsData.sort((a, b) => a.localeCompare(b));
@@ -114,12 +114,12 @@ export default function DashboardPage() {
       console.error("Error fetching skills: ", error);
       toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
     }
-  }, [user, toast]);
+  }, [userProfile, toast]);
 
   const fetchParts = useCallback(async () => {
-    if (!db || !user) return;
+    if (!db || !userProfile?.companyId) return;
     try {
-      const partsQuery = query(collection(db, "parts"), where("companyId", "==", user.uid));
+      const partsQuery = query(collection(db, "parts"), where("companyId", "==", userProfile.companyId));
       const querySnapshot = await getDocs(partsQuery);
       const partsData = querySnapshot.docs.map(doc => doc.data().name as string);
       partsData.sort((a, b) => a.localeCompare(b));
@@ -128,18 +128,18 @@ export default function DashboardPage() {
       console.error("Error fetching parts: ", error);
       toast({ title: "Error", description: "Could not fetch parts library.", variant: "destructive" });
     }
-  }, [user, toast]);
+  }, [userProfile, toast]);
   
   // Data fetching
   useEffect(() => {
-    if (!db || !user) {
+    if (!db || !userProfile?.companyId) {
       setIsLoadingData(false);
       return;
     }
     setIsLoadingData(true);
     let activeListeners = 0;
     const requiredListeners = 3;
-    const companyId = user.uid;
+    const companyId = userProfile.companyId;
 
     const onListenerLoaded = () => {
         activeListeners++;
@@ -210,7 +210,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [user, toast, fetchSkills, fetchParts]);
+  }, [userProfile, toast, fetchSkills, fetchParts]);
   
   // Next Up Technician Prediction
   useEffect(() => {
@@ -259,12 +259,12 @@ export default function DashboardPage() {
   
   // Proactive High-Priority Job Suggestion
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion || !user) {
+    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion || !userProfile?.companyId) {
       return;
     }
 
     const currentJobIds = new Set(jobs.map(j => j.id));
-    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id) && j.companyId === user.uid);
+    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id) && j.companyId === userProfile.companyId);
     prevJobIdsRef.current = currentJobIds;
     
     if (newJobs.length === 0) {
@@ -278,7 +278,7 @@ export default function DashboardPage() {
     if (highPriorityPendingJob) {
       fetchProactiveSuggestion(highPriorityPendingJob);
     }
-  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, user]);
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile]);
 
   const fetchProactiveSuggestion = useCallback(async (job: Job) => {
     setIsFetchingProactiveSuggestion(true);
@@ -560,9 +560,9 @@ export default function DashboardPage() {
   };
   
   const handleMarkTechnicianUnavailable = async (technicianId: string) => {
-    if (!user) return;
+    if (!userProfile?.companyId) return;
     setIsHandlingUnavailability(true);
-    const result = await handleTechnicianUnavailabilityAction({ companyId: user.uid, technicianId });
+    const result = await handleTechnicianUnavailabilityAction({ companyId: userProfile.companyId, technicianId });
 
     if (result.error) {
       toast({

@@ -34,7 +34,7 @@ interface AddEditTechnicianDialogProps {
 }
 
 const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, allSkills, allParts, onTechnicianAddedOrUpdated }) => {
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,15 +96,15 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       toast({ title: "Missing Information", description: "Please fill in Name and Location Address.", variant: "destructive" });
       return;
     }
-    if (!user) {
-      toast({ title: "Authentication Error", description: "You must be logged in.", variant: "destructive" });
+    if (!userProfile?.companyId) {
+      toast({ title: "Authentication Error", description: "Company ID not found.", variant: "destructive" });
       return;
     }
     
     setIsLoading(true);
 
     const technicianData: Omit<Technician, 'id' | 'currentJobId'> & { companyId: string, updatedAt?: any, createdAt?: any } = {
-      companyId: user.uid,
+      companyId: userProfile.companyId,
       name,
       email: email || "", 
       phone: phone || "",

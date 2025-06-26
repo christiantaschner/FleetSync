@@ -18,6 +18,7 @@ interface CustomerViewProps {
     jobs: Job[];
     contracts: Contract[];
     equipment: Equipment[];
+    companyId?: string;
 }
 
 interface Customer {
@@ -30,7 +31,7 @@ interface Customer {
     contractCount: number;
 }
 
-export default function CustomerView({ jobs, contracts, equipment }: CustomerViewProps) {
+export default function CustomerView({ jobs, contracts, equipment, companyId }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
@@ -128,12 +129,13 @@ export default function CustomerView({ jobs, contracts, equipment }: CustomerVie
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {selectedCustomer && (
+            {selectedCustomer && companyId && (
                  <AddEquipmentDialog
                     isOpen={isAddEquipmentOpen}
                     setIsOpen={setIsAddEquipmentOpen}
                     customerId={selectedCustomer.id}
                     customerName={selectedCustomer.name}
+                    companyId={companyId}
                     onEquipmentAdded={handleEquipmentAdded}
                 />
             )}
@@ -181,7 +183,7 @@ export default function CustomerView({ jobs, contracts, equipment }: CustomerVie
                                         <p className="flex items-center gap-1 mt-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)}>
+                                <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)} disabled={!companyId}>
                                     <PackagePlus className="mr-2 h-4 w-4" /> Add Equipment
                                 </Button>
                             </div>
@@ -238,7 +240,7 @@ export default function CustomerView({ jobs, contracts, equipment }: CustomerVie
                                         </div>
                                     ))}
                                     </div>
-                               </ScrollArea>
+                                </ScrollArea>
                             </div>
                         </CardContent>
                     </Card>

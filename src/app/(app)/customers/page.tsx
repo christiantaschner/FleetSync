@@ -10,7 +10,7 @@ import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function CustomersPage() {
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -18,14 +18,14 @@ export default function CustomersPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!db || !user) {
+        if (!db || !userProfile?.companyId) {
             setIsLoading(false);
             return;
         }
 
         let loadedCount = 0;
         const totalCollections = 3;
-        const companyId = user.uid;
+        const companyId = userProfile.companyId;
 
         const updateLoadingState = () => {
             loadedCount++;
@@ -97,7 +97,7 @@ export default function CustomersPage() {
             unsubscribeContracts();
             unsubscribeEquipment();
         };
-    }, [user]);
+    }, [userProfile]);
 
     if (isLoading) {
         return (
@@ -107,5 +107,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView jobs={jobs} contracts={contracts} equipment={equipment} />;
+    return <CustomerView jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} />;
 }

@@ -40,7 +40,15 @@ import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import * as Recharts from "recharts";
+
+import { BarChart } from 'recharts/es6/chart/BarChart';
+import { PieChart } from 'recharts/es6/chart/PieChart';
+import { Bar } from 'recharts/es6/cartesian/Bar';
+import { XAxis } from 'recharts/es6/cartesian/XAxis';
+import { YAxis } from 'recharts/es6/cartesian/YAxis';
+import { CartesianGrid } from 'recharts/es6/cartesian/CartesianGrid';
+import { Pie } from 'recharts/es6/polar/Pie';
+import { Cell } from 'recharts/es6/component/Cell';
 
 
 const pieChartColors = [
@@ -480,9 +488,9 @@ export default function ReportClientView() {
           <CardContent>
             {reportData.jobsByStatus.length > 0 ? (
             <ChartContainer config={jobsByStatusChartConfig} className="min-h-[300px] w-full">
-              <Recharts.PieChart>
+              <PieChart>
                 <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                <Recharts.Pie
+                <Pie
                   data={reportData.jobsByStatus}
                   dataKey="value"
                   nameKey="name"
@@ -516,11 +524,11 @@ export default function ReportClientView() {
                   }}
                 >
                   {reportData.jobsByStatus.map((entry, index) => (
-                    <Recharts.Cell key={`cell-${index}`} fill={pieChartColors[index % pieChartColors.length]} />
+                    <Cell key={`cell-${index}`} fill={pieChartColors[index % pieChartColors.length]} />
                   ))}
-                </Recharts.Pie>
+                </Pie>
                 <ChartLegend content={<ChartLegendContent />} />
-              </Recharts.PieChart>
+              </PieChart>
             </ChartContainer>
             ) : (
                 <p className="text-muted-foreground text-center py-10">No job data available for this chart.</p>
@@ -538,22 +546,22 @@ export default function ReportClientView() {
           <CardContent>
              {reportData.jobsPerTechnician.length > 0 ? (
             <ChartContainer config={jobsPerTechnicianChartConfig} className="min-h-[300px] w-full">
-                <Recharts.BarChart data={reportData.jobsPerTechnician}>
-                    <Recharts.CartesianGrid vertical={false} />
-                    <Recharts.XAxis
+                <BarChart data={reportData.jobsPerTechnician}>
+                    <CartesianGrid vertical={false} />
+                    <XAxis
                         dataKey="name"
                         tickLine={false}
                         tickMargin={10}
                         axisLine={false}
                         className="text-xs"
                     />
-                     <Recharts.YAxis allowDecimals={false} />
+                     <YAxis allowDecimals={false} />
                     <ChartTooltip
                         cursor={false}
                         content={<ChartTooltipContent indicator="dot" />}
                     />
-                    <Recharts.Bar dataKey="completed" fill="hsl(var(--chart-1))" radius={4} />
-                </Recharts.BarChart>
+                    <Bar dataKey="completed" fill="hsl(var(--chart-1))" radius={4} />
+                </BarChart>
             </ChartContainer>
              ) : (
                 <p className="text-muted-foreground text-center py-10">No completed jobs to display.</p>
@@ -572,9 +580,9 @@ export default function ReportClientView() {
             <CardContent>
                 {reportData.punctualityChartData.length > 0 ? (
                 <ChartContainer config={punctualityChartConfig} className="min-h-[300px] w-full">
-                <Recharts.PieChart>
+                <PieChart>
                   <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                  <Recharts.Pie
+                  <Pie
                       data={reportData.punctualityChartData}
                       dataKey="value"
                       nameKey="name"
@@ -608,11 +616,11 @@ export default function ReportClientView() {
                       }}
                   >
                       {reportData.punctualityChartData.map((entry, index) => (
-                          <Recharts.Cell key={`cell-${index}`} fill={entry.fill} />
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
-                  </Recharts.Pie>
+                  </Pie>
                   <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-                </Recharts.PieChart>
+                </PieChart>
                 </ChartContainer>
                 ) : (
                     <p className="text-muted-foreground text-center py-10">No punctuality data available for this chart.</p>
@@ -629,23 +637,23 @@ export default function ReportClientView() {
                 <CardContent>
                     {reportData.emissionsPerTechnician.length > 0 ? (
                     <ChartContainer config={emissionsChartConfig} className="min-h-[300px] w-full">
-                        <Recharts.BarChart data={reportData.emissionsPerTechnician}>
-                            <Recharts.CartesianGrid vertical={false} />
-                            <Recharts.XAxis
+                        <BarChart data={reportData.emissionsPerTechnician}>
+                            <CartesianGrid vertical={false} />
+                            <XAxis
                                 dataKey="name"
                                 tickLine={false}
                                 tickMargin={10}
                                 axisLine={false}
                                 className="text-xs"
                             />
-                            <Recharts.YAxis unit=" kg" />
+                            <YAxis unit=" kg" />
                             <ChartTooltip
                                 cursor={false}
                                 content={<ChartTooltipContent indicator="dot" />}
                             />
                             <ChartLegend content={<ChartLegendContent />} />
-                            <Recharts.Bar dataKey="emissions" fill="hsl(var(--chart-2))" radius={4} />
-                        </Recharts.BarChart>
+                            <Bar dataKey="emissions" fill="hsl(var(--chart-2))" radius={4} />
+                        </BarChart>
                     </ChartContainer>
                     ) : (
                         <p className="text-muted-foreground text-center py-10">No emissions data available to display.</p>

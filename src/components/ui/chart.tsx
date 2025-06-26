@@ -2,7 +2,9 @@
 "use client"
 
 import * as React from "react"
-import * as Recharts from "recharts"
+import { ResponsiveContainer } from "recharts/es6/component/ResponsiveContainer"
+import { Legend } from "recharts/es6/component/Legend"
+import { Tooltip } from "recharts/es6/component/Tooltip"
 
 import { cn } from "@/lib/utils"
 
@@ -39,7 +41,7 @@ const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
-    children: React.ComponentProps<typeof Recharts.ResponsiveContainer>["children"]
+    children: React.ComponentProps<typeof ResponsiveContainer>["children"]
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()
@@ -57,7 +59,7 @@ const ChartContainer = React.forwardRef<
         {...props}
       >
         <ChartStyle id={chartId} config={config} />
-        <Recharts.ResponsiveContainer>{children}</Recharts.ResponsiveContainer>
+        <ResponsiveContainer>{children}</ResponsiveContainer>
       </div>
     </ChartContext.Provider>
   )
@@ -97,11 +99,11 @@ ${colorConfig
   )
 }
 
-const ChartTooltip = Recharts.Tooltip
+const ChartTooltip = Tooltip
 
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof Recharts.Tooltip> &
+  React.ComponentProps<typeof Tooltip> &
     React.ComponentProps<"div"> & {
       hideLabel?: boolean
       hideIndicator?: boolean
@@ -253,12 +255,12 @@ const ChartTooltipContent = React.forwardRef<
 )
 ChartTooltipContent.displayName = "ChartTooltip"
 
-const ChartLegend = Recharts.Legend
+const ChartLegend = Legend
 
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> &
-    Pick<React.ComponentProps<typeof Recharts.Legend>, "payload" | "verticalAlign"> & {
+    Pick<React.ComponentProps<typeof Legend>, "payload" | "verticalAlign"> & {
       hideIcon?: boolean
       nameKey?: string
     }

@@ -35,12 +35,15 @@ export default function LoginPage() {
 
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     setIsLoading(true);
-    await login(data.email, data.password);
-    // The user will be redirected by the effect in AppLayout
-    // once the auth state is fully resolved.
-    // We only stop the loading spinner if the login fails,
-    // otherwise the user will see a brief flash of the button.
-    setIsLoading(false);
+    const success = await login(data.email, data.password);
+    if (success) {
+      // On success, redirect to the main app. The layout will then handle
+      // routing to either /onboarding or /dashboard based on user status.
+      router.push('/dashboard');
+    } else {
+      // On failure, re-enable the button so the user can try again.
+      setIsLoading(false);
+    }
   };
 
   return (

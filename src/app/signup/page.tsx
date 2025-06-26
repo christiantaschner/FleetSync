@@ -40,11 +40,13 @@ export default function SignupPage() {
 
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     setIsLoading(true);
-    await signup(data.email, data.password);
-    // The user will be redirected by the effect in AppLayout
-    // once the auth state is fully resolved. We just manage the
-    // loading state for the button here.
-    setIsLoading(false);
+    const success = await signup(data.email, data.password);
+    if (success) {
+      // New users should always be directed to the onboarding flow.
+      router.push('/onboarding');
+    } else {
+      setIsLoading(false);
+    }
   };
 
   return (

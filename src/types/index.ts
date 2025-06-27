@@ -20,6 +20,21 @@ export const UserProfileSchema = z.object({
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
+export const BusinessDaySchema = z.object({
+  dayOfWeek: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
+  isOpen: z.boolean(),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format, use HH:MM" }),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format, use HH:MM" }),
+});
+
+export const CompanySettingsSchema = z.object({
+  address: z.string().optional(),
+  timezone: z.string().optional(),
+  businessHours: z.array(BusinessDaySchema).length(7).optional(),
+});
+export type CompanySettings = z.infer<typeof CompanySettingsSchema>;
+
+
 export const CompanySchema = z.object({
     id: z.string(),
     name: z.string(),
@@ -27,6 +42,7 @@ export const CompanySchema = z.object({
     subscriptionTier: z.string().optional(), // e.g., 'free', 'pro'
     subscriptionStatus: z.string().optional(), // e.g., 'active', 'past_due'
     createdAt: z.string(),
+    settings: CompanySettingsSchema.optional(),
 });
 export type Company = z.infer<typeof CompanySchema>;
 

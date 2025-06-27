@@ -50,6 +50,7 @@ const adminNavItems = [
   { href: "/contracts", label: "Contracts", icon: Repeat },
   { href: "/customers", label: "Customers", icon: ClipboardList },
   { href: "/reports", label: "Reports", icon: PieChart },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const technicianNavItems = [
@@ -230,10 +231,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         </DropdownMenuItem>
                     </Link>
                 )}
-              <DropdownMenuItem disabled>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+              <Link href="/settings">
+                <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />

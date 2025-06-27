@@ -870,7 +870,7 @@ export default function DashboardPage() {
                         <Button
                             onClick={handleBatchAIAssign}
                             disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
-                            variant="secondary"
+                            variant="accent"
                             className="w-full sm:w-auto"
                         >
                             {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}

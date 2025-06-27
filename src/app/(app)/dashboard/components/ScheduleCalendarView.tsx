@@ -173,7 +173,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
             <div className="flex items-center flex-wrap gap-2">
                  <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                    <Button variant="outline" disabled={busyTechniciansCount === 0}>
+                    <Button variant="accent" disabled={busyTechniciansCount === 0}>
                         <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
                     </Button>
                 </OptimizeRouteDialog>

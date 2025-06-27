@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare, Share2 } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare, Share2, Shuffle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -657,16 +657,41 @@ export default function DashboardPage() {
             {(isHandlingUnavailability || isFetchingProactiveSuggestion || isCheckingHealth) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </h1>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={handleCheckScheduleHealth} disabled={busyTechnicians.length === 0 || isCheckingHealth}>
-                <ShieldQuestion className="mr-2 h-4 w-4" /> Check Schedule Health
-            </Button>
-            <AddEditJobDialog technicians={technicians} allSkills={allSkills} allParts={allParts} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
+             <AddEditJobDialog technicians={technicians} allSkills={allSkills} allParts={allParts} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
             </AddEditJobDialog>
           </div>
         </div>
+
+        <Card>
+           <CardHeader>
+                <CardTitle className="font-headline text-base">Global Actions</CardTitle>
+                <CardDescription className="text-xs">
+                    High-level tools for managing your operations and data.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+                 <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                  </Button>
+                   <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
+                    <Package className="mr-2 h-4 w-4" /> Manage Parts
+                  </Button>
+                 <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+                </Button>
+                <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+                    <Button variant="accent" disabled={busyTechnicians.length === 0}>
+                        <Shuffle className="mr-2 h-4 w-4" /> AI Route Optimizer
+                    </Button>
+                </OptimizeRouteDialog>
+                 <Button variant="outline" onClick={handleCheckScheduleHealth} disabled={busyTechnicians.length === 0 || isCheckingHealth}>
+                    <ShieldQuestion className="mr-2 h-4 w-4" /> Check Schedule Health
+                </Button>
+            </CardContent>
+        </Card>
 
         {riskAlerts.length > 0 && (
           <div className="space-y-2">
@@ -915,12 +940,6 @@ export default function DashboardPage() {
                   <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
-                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                  </Button>
-                   <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
-                    <Package className="mr-2 h-4 w-4" /> Manage Parts
-                  </Button>
                   <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills} allParts={allParts}>
                     <Button variant="default">
                       <UserPlus className="mr-2 h-4 w-4" /> Add Technician
@@ -955,21 +974,9 @@ export default function DashboardPage() {
           </TabsContent>
           <TabsContent value="overview">
             <Card>
-              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div>
+              <CardHeader>
                     <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
                     <CardDescription>Real-time overview of ongoing operations.</CardDescription>
-                </div>
-                 <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
-                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
-                    </Button>
-                    <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                        <Button variant="accent" disabled={busyTechnicians.length === 0}>
-                            <MapIcon className="mr-2 h-4 w-4" /> AI Schedule Optimizer
-                        </Button>
-                    </OptimizeRouteDialog>
-                </div>
               </CardHeader>
               <CardContent>
                 <MapView 

@@ -1,10 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { type DateClickArg } from '@fullcalendar/interaction';
 import type { EventInput, EventDropArg } from '@fullcalendar/core';
 import type { Job, Technician, JobPriority } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -18,6 +19,7 @@ interface ScheduleCalendarViewProps {
 
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, technicians, onScheduleChange }) => {
     const [rescheduleData, setRescheduleData] = React.useState<EventDropArg | null>(null);
+    const calendarRef = React.useRef<FullCalendar>(null);
 
     const events = React.useMemo(() => {
         return jobs
@@ -62,6 +64,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
   const handleEventDrop = (dropInfo: EventDropArg) => {
     setRescheduleData(dropInfo);
   };
+  
+  const handleDateClick = (arg: DateClickArg) => {
+    const calendarApi = calendarRef.current?.getApi();
+    if (calendarApi && arg.view.type === 'dayGridMonth') {
+        calendarApi.changeView('timeGridDay', arg.dateStr);
+    }
+  }
 
   const handleDialogClose = (reverted: boolean) => {
     if (reverted && rescheduleData) {
@@ -82,6 +91,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
         <CardContent>
             <div className="fc-theme">
                 <FullCalendar
+                    ref={calendarRef}
                     plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                     initialView="timeGridWeek"
                     headerToolbar={{
@@ -97,6 +107,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
                     weekends={true}
                     height="70vh"
                     eventDrop={handleEventDrop}
+                    dateClick={handleDateClick}
                     eventContent={(eventInfo) => (
                         <div className="p-1.5 overflow-hidden">
                             <b className="font-semibold">{eventInfo.timeText}</b>

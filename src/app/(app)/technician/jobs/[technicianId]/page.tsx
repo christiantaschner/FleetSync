@@ -7,13 +7,14 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Job, Technician, JobPriority, JobStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft } from 'lucide-react';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, updateDoc, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
@@ -192,6 +193,17 @@ export default function TechnicianJobListPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician List
         </Button>
       )}
+
+      {userProfile?.role === 'admin' && !isViewingOwnPage && (
+        <Alert className="mb-6">
+            <Eye className="h-4 w-4" />
+            <AlertTitle className="font-semibold">Administrator View</AlertTitle>
+            <AlertDescription>
+                You are viewing this page as an administrator. Actions for this technician are disabled in this view.
+            </AlertDescription>
+        </Alert>
+      )}
+
       <Card className="mb-6 shadow-lg">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="h-16 w-16">

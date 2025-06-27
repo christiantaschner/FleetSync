@@ -40,7 +40,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
       <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
         <Avatar className="h-12 w-12 border">
           <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
-          <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+          <AvatarFallback>{technician.name ? technician.name.split(' ').map(n => n[0]).join('') : 'T'}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <CardTitle className="text-lg font-headline">{technician.name}</CardTitle>
@@ -59,10 +59,13 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
         <div className="pt-1">
           <p className="font-medium text-xs text-foreground mb-1.5">Skills:</p>
           <div className="flex flex-wrap gap-1">
-            {technician.skills.map(skill => (
-              <Badge key={skill} variant="secondary">{skill}</Badge>
-            ))}
-            {technician.skills.length === 0 && <p className="text-xs text-muted-foreground">No skills listed.</p>}
+            {(technician.skills && technician.skills.length > 0) ? (
+              technician.skills.map(skill => (
+                <Badge key={skill} variant="secondary">{skill}</Badge>
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground">No skills listed.</p>
+            )}
           </div>
         </div>
 
@@ -70,10 +73,13 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
           <p className="font-medium text-xs text-foreground mb-1.5 flex items-center gap-1"><Package className="h-3.5 w-3.5"/>Van Inventory:</p>
           <ScrollArea className="h-16">
             <div className="flex flex-wrap gap-1">
-                {technician.partsInventory?.map(part => (
-                  <Badge key={part} variant="outline" className="font-normal">{part}</Badge>
-                ))}
-                {(!technician.partsInventory || technician.partsInventory.length === 0) && <p className="text-xs text-muted-foreground">No parts in inventory.</p>}
+                {technician.partsInventory && technician.partsInventory.length > 0 ? (
+                  technician.partsInventory.map(part => (
+                    <Badge key={part} variant="outline" className="font-normal">{part}</Badge>
+                  ))
+                ) : (
+                  <p className="text-xs text-muted-foreground">No parts in inventory.</p>
+                )}
             </div>
           </ScrollArea>
         </div>
@@ -126,5 +132,3 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
 };
 
 export default TechnicianCard;
-
-    

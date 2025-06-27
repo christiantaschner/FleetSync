@@ -36,7 +36,7 @@ export default function SelectTechnicianPage() {
         const techsQuery = query(collection(db, "technicians"), where("companyId", "==", userProfile.companyId));
         const unsubscribe = onSnapshot(techsQuery, (snapshot) => {
             const techsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
-            techsData.sort((a, b) => a.name.localeCompare(b.name));
+            techsData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
             setTechnicians(techsData);
             setIsLoading(false);
         }, (error) => {
@@ -89,11 +89,13 @@ export default function SelectTechnicianPage() {
                                 <div className="flex items-center p-3 rounded-md border bg-card hover:bg-secondary transition-colors cursor-pointer">
                                     <Avatar className="h-10 w-10 mr-4">
                                         <AvatarImage src={tech.avatarUrl} alt={tech.name} />
-                                        <AvatarFallback>{tech.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                        <AvatarFallback>{tech.name ? tech.name.split(' ').map(n => n[0]).join('') : 'T'}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-grow">
-                                        <p className="font-semibold">{tech.name}</p>
-                                        <p className="text-sm text-muted-foreground">{tech.skills.join(', ')}</p>
+                                        <p className="font-semibold">{tech.name || 'Unnamed Technician'}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {(tech.skills && tech.skills.length > 0) ? tech.skills.join(', ') : 'No skills listed'}
+                                        </p>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                                 </div>

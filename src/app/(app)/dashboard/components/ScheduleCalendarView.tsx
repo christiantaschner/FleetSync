@@ -1,23 +1,25 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { Job, Technician, JobStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
+import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay } from 'date-fns';
+import { ChevronLeft, ChevronRight, Briefcase, Clock, User, MapPin, Circle } from 'lucide-react';
 
-const getStatusColor = (status: JobStatus) => {
+// Color mapping for job blocks based on status
+const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
-      case 'Completed': return 'bg-green-600 border-green-700 text-green-50';
-      case 'In Progress': return 'bg-blue-600 border-blue-700 text-blue-50';
-      case 'En Route': return 'bg-yellow-500 border-yellow-600 text-yellow-50';
-      case 'Assigned': return 'bg-gray-500 border-gray-600 text-gray-50';
-      default: return 'bg-gray-400 border-gray-500 text-gray-900';
+      case 'Completed': return 'bg-green-100 border-l-4 border-green-500 text-green-800';
+      case 'In Progress': return 'bg-blue-100 border-l-4 border-blue-500 text-blue-800';
+      case 'En Route': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800';
+      case 'Assigned': return 'bg-sky-100 border-l-4 border-sky-500 text-sky-800';
+      case 'Cancelled': return 'bg-gray-200 border-l-4 border-gray-400 text-gray-600 line-through';
+      default: return 'bg-gray-100 border-l-4 border-gray-400 text-gray-700'; // Pending
     }
 };
 
@@ -31,37 +33,74 @@ const JobBlock = ({ job, dayStart, totalMinutes }: { job: Job, dayStart: Date, t
   const left = (offsetMinutes / totalMinutes) * 100;
   const width = (durationMinutes / totalMinutes) * 100;
 
-  // Don't render jobs that are completely outside the visible timeline
-  if ((left + width) < 0 || left > 100) return null;
-  
+  if (left > 100 || (left + width) < 0) return null;
+
+  const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn("absolute h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-md", getStatusColor(job.status))}
+            className={cn(
+              "absolute h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
+              getStatusAppearance(job.status),
+              priorityColor
+            )}
             style={{ 
               left: `${Math.max(0, left)}%`, 
               width: `${Math.min(100 - Math.max(0, left), width)}%`,
               minWidth: '20px'
             }}
           >
-            <Briefcase className="h-3 w-3 mr-1.5 shrink-0" />
-            <span className="truncate font-medium">{job.title}</span>
+            <div className="flex flex-col w-full truncate">
+                <span className="font-bold truncate">{format(jobStart, 'p')}</span>
+                <span className="truncate">{job.customerName}</span>
+                <span className="text-muted-foreground truncate italic">{job.title}</span>
+            </div>
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-bold">{job.title}</p>
-          <p>Status: {job.status}</p>
-          <p>Customer: {job.customerName}</p>
-          <p>Scheduled: {format(jobStart, 'p')}</p>
-          <p>Duration: {durationMinutes} mins</p>
+        <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
+          <p className="font-bold text-base mb-1">{job.title}</p>
+          <p className="text-sm"><strong>Status:</strong> {job.status}</p>
+          <p className="text-sm"><strong>Priority:</strong> {job.priority}</p>
+          <p className="text-sm"><strong>Customer:</strong> {job.customerName}</p>
+          <p className="text-sm"><strong>Address:</strong> {job.location.address}</p>
+          <p className="text-sm"><strong>Scheduled:</strong> {format(jobStart, 'PP p')}</p>
+          <p className="text-sm"><strong>Duration:</strong> {durationMinutes} mins</p>
+          {job.description && <p className="text-sm mt-2 pt-2 border-t"><strong>Notes:</strong> {job.description}</p>}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 };
 
+const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, totalMinutes: number }) => {
+    const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+    useEffect(() => {
+      // Set initial time on client mount to avoid hydration mismatch
+      setCurrentTime(new Date());
+
+      const timer = setInterval(() => {
+          setCurrentTime(new Date());
+      }, 60000); // Update every minute
+      return () => clearInterval(timer);
+    }, []);
+
+    if (!currentTime || !isSameDay(currentTime, dayStart)) return null;
+
+    const offsetMinutes = (currentTime.getTime() - dayStart.getTime()) / 60000;
+    const left = (offsetMinutes / totalMinutes) * 100;
+
+    if (left < 0 || left > 100) return null;
+
+    return (
+        <div className="absolute top-0 bottom-0 z-10 w-0.5 bg-red-500" style={{ left: `${left}%` }}>
+            <div className="absolute -top-1 -translate-x-1/2 h-2 w-2 rounded-full bg-red-500"></div>
+        </div>
+    );
+}
 
 interface ScheduleCalendarViewProps {
   jobs: Job[];
@@ -70,14 +109,33 @@ interface ScheduleCalendarViewProps {
 
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, technicians }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const dayStart = startOfDay(currentDate);
-  dayStart.setHours(7, 0, 0, 0); // View starts at 7:00 AM
-  const dayEnd = startOfDay(currentDate);
-  dayEnd.setHours(19, 0, 0, 0); // View ends at 7:00 PM (19:00)
+  const dayStart = useMemo(() => {
+    const d = startOfDay(currentDate);
+    d.setHours(7, 0, 0, 0); // View starts at 7:00 AM
+    return d;
+  }, [currentDate]);
 
-  const hours = eachHourOfInterval({ start: dayStart, end: dayEnd });
-  const totalMinutes = (dayEnd.getTime() - dayStart.getTime()) / 60000;
+  const dayEnd = useMemo(() => {
+    const d = startOfDay(currentDate);
+    d.setHours(19, 0, 0, 0); // View ends at 7:00 PM (19:00)
+    return d;
+  }, [currentDate]);
+
+  const hours = useMemo(() => eachHourOfInterval({ start: dayStart, end: dayEnd }), [dayStart, dayEnd]);
+  const totalMinutes = useMemo(() => (dayEnd.getTime() - dayStart.getTime()) / 60000, [dayStart, dayEnd]);
+
+  useEffect(() => {
+    if (containerRef.current && isSameDay(currentDate, new Date())) {
+        const now = new Date();
+        const startHour = dayStart.getHours();
+        const currentHour = now.getHours();
+        const scrollPosition = (containerRef.current.scrollWidth / hours.length) * (currentHour - startHour - 1);
+        containerRef.current.scrollLeft = scrollPosition > 0 ? scrollPosition : 0;
+    }
+  }, [currentDate, dayStart, hours.length]);
+
 
   const jobsByTechnician = (techId: string) => {
     const startOfDayDate = startOfDay(currentDate);
@@ -112,11 +170,10 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto border rounded-lg">
-          <div className="relative" style={{ minWidth: '900px' }}>
-            {/* Timeline Header */}
-            <div className="relative h-10 flex border-b bg-muted/50">
-              <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center">Technician</div>
+        <div className="overflow-x-auto border rounded-lg" ref={containerRef}>
+          <div className="relative" style={{ minWidth: '1200px' }}>
+            <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
+              <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
               <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                 {hours.map((hour, index) => (
                   <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
@@ -126,25 +183,28 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
               </div>
             </div>
 
-            {/* Technician Lanes */}
-            <div className="divide-y">
+            <div className="relative">
               {technicians.length > 0 ? technicians.map(tech => (
-                <div key={tech.id} className="flex h-16 items-center">
-                  <div className="w-48 shrink-0 p-2 flex items-center gap-2">
+                <div key={tech.id} className="flex h-20 items-center border-t">
+                  <div className="w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
                     <Avatar className="h-9 w-9">
                        <AvatarImage src={tech.avatarUrl} alt={tech.name} />
                        <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                     </Avatar>
-                    <span className="font-medium text-sm truncate">{tech.name}</span>
+                    <div className="truncate">
+                        <span className="font-medium text-sm truncate block">{tech.name}</span>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Circle className={cn("h-2 w-2 fill-current", tech.isAvailable ? "text-green-500" : "text-red-500")} />
+                            <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
+                        </div>
+                    </div>
                   </div>
                   <div className="flex-1 relative h-full">
-                     {/* Background grid lines */}
                      <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                         {hours.map((_, index) => (
-                            <div key={index} className={cn("h-full", index > 0 && "border-l")}></div>
+                            <div key={index} className={cn("h-full bg-white", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
                         ))}
                     </div>
-                    {/* Job blocks container */}
                     <div className="relative h-full p-1.5">
                       {jobsByTechnician(tech.id).map(job => (
                         <JobBlock key={job.id} job={job} dayStart={dayStart} totalMinutes={totalMinutes} />
@@ -155,6 +215,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
               )) : (
                  <div className="text-center py-16 text-muted-foreground">No technicians have been added yet.</div>
               )}
+               <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
             </div>
           </div>
         </div>

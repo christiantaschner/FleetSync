@@ -1,13 +1,52 @@
 
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents for any authenticated user.
-    // This is suitable for development but should be replaced with more
-    // granular rules for production.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Helper function to get the user's company ID from their profile document.
+    function getUserCompanyId() {
+      // Allow access if the user is authenticated.
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+    }
+
+    // --- User Profile Rules ---
+    // Users can manage their own profile, but with restrictions.
+    match /users/{userId} {
+      // READ: A user can only read their own profile.
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // CREATE: A user can create their own profile document. This is for initial signup.
+      allow create: if request.auth != null && request.auth.uid == userId;
+      
+      // UPDATE: A user can update their profile. A production app would lock down
+      // role/companyId changes to be admin-only, but this allows our onboarding logic to work.
+      allow update: if request.auth != null && request.auth.uid == userId;
+      
+      // DELETE: Users cannot delete their own profiles from the client.
+      allow delete: if false;
+    }
+
+    // --- Company Metadata Rules ---
+    // Rules for the 'companies' collection itself.
+    match /companies/{companyId} {
+      // READ: Any user belonging to the company can read the company document.
+      allow read: if request.auth != null && getUserCompanyId() == companyId;
+      
+      // WRITE: Only allow writes if the user belongs to the company.
+      // In production, this should be stricter (e.g., admin-only).
+      allow write: if request.auth != null && getUserCompanyId() == companyId;
+    }
+
+    // --- General Company Data Rules (Jobs, Technicians, etc.) ---
+    // This rule applies to any collection that contains documents with a 'companyId' field.
+    match /{collection}/{docId} {
+      // This rule should NOT apply to 'users' or 'companies' as they have their own specific rules.
+      allow read, write: if collection != 'users' && collection != 'companies' &&
+                            request.auth != null && 
+                            // On create, the incoming document must have the user's company ID.
+                            (request.method == 'create' ? request.resource.data.companyId == getUserCompanyId() 
+                            // On read, update, or delete, the existing document's company ID must match the user's.
+                            : resource.data.companyId == getUserCompanyId());
     }
   }
 }

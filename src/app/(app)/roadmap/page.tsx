@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -231,7 +231,12 @@ const roadmapFeatures = {
     },
   ],
   planned: [
-    
+    {
+      title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",
+      description: "Ability to group technicians (e.g., a master craftsman and an apprentice) who are always scheduled for jobs together. The AI allocation engine will be updated to assign suitable jobs to a team, respecting their combined skills and availability.",
+      icon: Users2,
+      status: "Planned",
+    },
   ],
   vision: [
      {

@@ -823,48 +823,20 @@ export default function DashboardPage() {
           </Card>
         </div>
         
-        <Tabs defaultValue="overview" className="w-full">
+        <Tabs defaultValue="jobs" className="w-full">
           <div className="w-full overflow-x-auto sm:overflow-visible">
               <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-4">
-                  <TabsTrigger value="overview">Overview Map</TabsTrigger>
                   <TabsTrigger value="jobs">Job List</TabsTrigger>
+                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
                   <TabsTrigger value="technicians" className="relative">
                     Technicians
                     {profileChangeRequests.length > 0 && (
                         <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                  <TabsTrigger value="overview">Overview Map</TabsTrigger>
               </TabsList>
           </div>
-          <TabsContent value="overview">
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div>
-                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
-                    <CardDescription>Real-time overview of ongoing operations.</CardDescription>
-                </div>
-                 <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
-                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
-                    </Button>
-                    <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                        <Button variant="accent" disabled={busyTechnicians.length === 0}>
-                            <MapIcon className="mr-2 h-4 w-4" /> AI Schedule Optimizer
-                        </Button>
-                    </OptimizeRouteDialog>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <MapView 
-                  technicians={technicians} 
-                  jobs={jobs} 
-                  defaultCenter={defaultMapCenter}
-                  defaultZoom={4} 
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
           <TabsContent value="jobs">
             <Card>
                 <CardHeader className="flex flex-col gap-4">
@@ -940,6 +912,9 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </TabsContent>
+           <TabsContent value="schedule">
+            <ScheduleCalendarView jobs={jobs} technicians={technicians} />
+          </TabsContent>
           <TabsContent value="technicians">
             <Card>
               <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -986,8 +961,33 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="schedule">
-            <ScheduleCalendarView jobs={jobs} technicians={technicians} />
+          <TabsContent value="overview">
+            <Card>
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div>
+                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                    <CardDescription>Real-time overview of ongoing operations.</CardDescription>
+                </div>
+                 <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
+                        <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+                    </Button>
+                    <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+                        <Button variant="accent" disabled={busyTechnicians.length === 0}>
+                            <MapIcon className="mr-2 h-4 w-4" /> AI Schedule Optimizer
+                        </Button>
+                    </OptimizeRouteDialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <MapView 
+                  technicians={technicians} 
+                  jobs={jobs} 
+                  defaultCenter={defaultMapCenter}
+                  defaultZoom={4} 
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

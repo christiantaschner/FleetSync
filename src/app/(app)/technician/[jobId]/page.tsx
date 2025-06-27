@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Job, JobStatus, Technician, ChecklistResult } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
@@ -24,13 +24,14 @@ import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import ChecklistCard from './components/ChecklistCard';
 import { calculateTravelMetricsAction } from '@/actions/fleet-actions';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
   const params = useParams();
   const jobId = params.jobId as string;
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
   const [technician, setTechnician] = useState<Technician | null>(null);
@@ -342,6 +343,8 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
+  const isViewingOwnPage = user?.uid === job.assignedTechnicianId;
+  const isAdminView = userProfile?.role === 'admin' && !isViewingOwnPage;
   const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
   const isChecklistComplete = !!job.checklistResults && job.checklistResults.length > 0;
 
@@ -356,112 +359,127 @@ export default function TechnicianJobDetailPage() {
         </Button>
       </div>
       
+      {isAdminView && (
+        <Alert>
+          <Eye className="h-4 w-4" />
+          <AlertTitle className="font-semibold">Administrator View</AlertTitle>
+          <AlertDescription>
+            You are viewing this job as an administrator. Actions for this technician are disabled.
+          </AlertDescription>
+        </Alert>
+      )}
+
       { isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div> }
 
       <JobDetailsDisplay job={job} />
 
-      {!isJobConcluded && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-3 items-center">
-            <StatusUpdateActions 
-                currentStatus={job.status} 
-                onUpdateStatus={handleStatusUpdate} 
-                isChecklistComplete={isChecklistComplete} 
-            />
-            {job.status === 'In Progress' && (
-              <Button
-                variant={isBreakActive ? "destructive" : "outline"}
-                onClick={handleToggleBreak}
-                disabled={isUpdating}
-              >
-                {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
-                {isBreakActive ? 'End Break' : 'Start Break'}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {job && (job.status === 'Assigned' || job.status === 'En Route') && (
-        <ChecklistCard 
-            job={job}
-            onSubmit={handleChecklistSubmit}
-            isUpdating={isUpdating}
-        />
-      )}
-
-      {job && technician && !isJobConcluded && (
-        <ChatCard job={job} technician={technician} />
-      )}
-
-      {(job.status === 'In Progress' || job.status === 'Completed') && (
-        <TroubleshootingCard jobTitle={job.title} />
-      )}
-      
-      {job.status === 'In Progress' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>
-            <CardDescription>Add notes, photos, and capture customer rating and signature before completing the job.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <WorkDocumentationForm 
-              onSubmit={handleWorkDocumented} 
-              isSubmitting={isUpdating} 
-              initialSatisfactionScore={job.customerSatisfactionScore}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {job.status === 'Completed' && (
+      {/* Conditionally render all action cards based on if it's the technician's own view */}
+      {isViewingOwnPage && (
         <>
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><ThumbsUp /> First-Time-Fix Rate</CardTitle>
-            <CardDescription>Help us improve by providing details on this job's outcome.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-              <RadioGroup
-                value={isFirstTimeFix === null ? '' : isFirstTimeFix.toString()}
-                onValueChange={(value) => setIsFirstTimeFix(value === 'true')}
-                disabled={typeof job.isFirstTimeFix === 'boolean' || isUpdating}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="true" id="ftfr-yes" />
-                  <Label htmlFor="ftfr-yes">Yes, the issue was resolved in one visit.</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="false" id="ftfr-no" />
-                  <Label htmlFor="ftfr-no">No, a follow-up visit is required.</Label>
-                </div>
-              </RadioGroup>
+          {!isJobConcluded && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-3 items-center">
+                <StatusUpdateActions 
+                    currentStatus={job.status} 
+                    onUpdateStatus={handleStatusUpdate} 
+                    isChecklistComplete={isChecklistComplete} 
+                />
+                {job.status === 'In Progress' && (
+                  <Button
+                    variant={isBreakActive ? "destructive" : "outline"}
+                    onClick={handleToggleBreak}
+                    disabled={isUpdating}
+                  >
+                    {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+                    {isBreakActive ? 'End Break' : 'Start Break'}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
-              {isFirstTimeFix === false && (
-                <div className="space-y-2 pl-2">
-                  <Label htmlFor="follow-up-reason">Reason for follow-up</Label>
-                  <Textarea
-                    id="follow-up-reason"
-                    value={reasonForFollowUp}
-                    onChange={(e) => setReasonForFollowUp(e.target.value)}
-                    placeholder="e.g., Missing part, requires senior technician, etc."
+          {job && (job.status === 'Assigned' || job.status === 'En Route') && (
+            <ChecklistCard 
+                job={job}
+                onSubmit={handleChecklistSubmit}
+                isUpdating={isUpdating}
+            />
+          )}
+
+          {job && technician && !isJobConcluded && (
+            <ChatCard job={job} technician={technician} />
+          )}
+
+          {(job.status === 'In Progress' || job.status === 'Completed') && (
+            <TroubleshootingCard jobTitle={job.title} />
+          )}
+          
+          {job.status === 'In Progress' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>
+                <CardDescription>Add notes, photos, and capture customer rating and signature before completing the job.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WorkDocumentationForm 
+                  onSubmit={handleWorkDocumented} 
+                  isSubmitting={isUpdating} 
+                  initialSatisfactionScore={job.customerSatisfactionScore}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {job.status === 'Completed' && (
+            <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><ThumbsUp /> First-Time-Fix Rate</CardTitle>
+                <CardDescription>Help us improve by providing details on this job's outcome.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <RadioGroup
+                    value={isFirstTimeFix === null ? '' : isFirstTimeFix.toString()}
+                    onValueChange={(value) => setIsFirstTimeFix(value === 'true')}
                     disabled={typeof job.isFirstTimeFix === 'boolean' || isUpdating}
-                  />
-                </div>
-              )}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="true" id="ftfr-yes" />
+                      <Label htmlFor="ftfr-yes">Yes, the issue was resolved in one visit.</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="false" id="ftfr-no" />
+                      <Label htmlFor="ftfr-no">No, a follow-up visit is required.</Label>
+                    </div>
+                  </RadioGroup>
 
-              <Button
-                onClick={handleFtfrSubmit}
-                disabled={isFirstTimeFix === null || typeof job.isFirstTimeFix === 'boolean' || isUpdating}
-              >
-                {isUpdating && typeof job.isFirstTimeFix !== 'boolean' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
-                {typeof job.isFirstTimeFix === 'boolean' ? 'Data Saved' : 'Save Fix Status'}
-              </Button>
-          </CardContent>
-        </Card>
+                  {isFirstTimeFix === false && (
+                    <div className="space-y-2 pl-2">
+                      <Label htmlFor="follow-up-reason">Reason for follow-up</Label>
+                      <Textarea
+                        id="follow-up-reason"
+                        value={reasonForFollowUp}
+                        onChange={(e) => setReasonForFollowUp(e.target.value)}
+                        placeholder="e.g., Missing part, requires senior technician, etc."
+                        disabled={typeof job.isFirstTimeFix === 'boolean' || isUpdating}
+                      />
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleFtfrSubmit}
+                    disabled={isFirstTimeFix === null || typeof job.isFirstTimeFix === 'boolean' || isUpdating}
+                  >
+                    {isUpdating && typeof job.isFirstTimeFix !== 'boolean' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                    {typeof job.isFirstTimeFix === 'boolean' ? 'Data Saved' : 'Save Fix Status'}
+                  </Button>
+              </CardContent>
+            </Card>
+            </>
+          )}
         </>
       )}
 

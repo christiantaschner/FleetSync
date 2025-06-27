@@ -1,80 +1,59 @@
 
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-
-    function isUserInCompany(companyId) {
-      return request.auth != null && getUserData(request.auth.uid).companyId == companyId;
+    // ---- Helper Functions ----
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
     
-    function isUserAdmin(companyId) {
-        return isUserInCompany(companyId) && getUserData(request.auth.uid).role == 'admin';
+    function isUserAdmin() {
+      return request.auth != null && getUserData().role == 'admin';
     }
 
-    // Rules for the 'users' Collection
-    match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isUserAdmin(get(/databases/$(database)/documents/users/$(userId)).data.companyId));
-      
-      allow create: if request.auth != null && request.auth.uid == userId;
+    function userCompanyId() {
+      return getUserData().companyId;
+    }
 
-      // Prevent users from escalating their own privileges
-      allow update: if request.auth != null &&
-                       (request.auth.uid == userId &&
+    // ---- Collections Rules ----
+
+    match /users/{userId} {
+      allow read, create: if request.auth.uid == userId;
+      allow update: if request.auth.uid == userId &&
                        request.resource.data.uid == resource.data.uid &&
                        request.resource.data.email == resource.data.email &&
                        request.resource.data.companyId == resource.data.companyId &&
-                       request.resource.data.role == resource.data.role);
-
+                       request.resource.data.role == resource.data.role;
       allow delete: if false;
     }
-
-    // Rules for company-specific data
+    
     match /companies/{companyId} {
-      allow read: if isUserInCompany(companyId);
-      allow write: if isUserAdmin(companyId);
+      // Any user in the company can read the company doc.
+      allow read: if request.auth != null && userCompanyId() == companyId;
+      // Only an admin of that company can write to it.
+      allow write: if isUserAdmin() && userCompanyId() == companyId;
     }
 
-    match /jobs/{jobId} {
-        allow read, write: if isUserInCompany(get(/databases/$(database)/documents/jobs/$(jobId)).data.companyId);
-    }
-    
-    match /technicians/{techId} {
-        allow read: if isUserAdmin(get(/databases/$(database)/documents/technicians/$(techId)).data.companyId) || request.auth.uid == techId;
-        allow write: if isUserAdmin(get(/databases/$(database)/documents/technicians/$(techId)).data.companyId);
-    }
-    
-    match /contracts/{contractId} {
-        allow read, write: if isUserInCompany(get(/databases/$(database)/documents/contracts/$(contractId)).data.companyId);
-    }
-    
-    match /equipment/{equipmentId} {
-        allow read, write: if isUserInCompany(get(/databases/$(database)/documents/equipment/$(equipmentId)).data.companyId);
-    }
-    
-    match /skills/{skillId} {
-        allow read, write: if isUserInCompany(get(/databases/$(database)/documents/skills/$(skillId)).data.companyId);
-    }
-    
-    match /parts/{partId} {
-        allow read, write: if isUserInCompany(get(/databases/$(database)/documents/parts/$(partId)).data.companyId);
-    }
-    
-    match /profileChangeRequests/{requestId} {
-        allow read: if isUserInCompany(get(/databases/$(database)/documents/profileChangeRequests/$(requestId)).data.companyId) && 
-                     (isUserAdmin(get(/databases/$(database)/documents/profileChangeRequests/$(requestId)).data.companyId) || request.auth.uid == get(/databases/$(database)/documents/profileChangeRequests/$(requestId)).data.technicianId);
-        
-        allow write: if isUserAdmin(request.resource.data.companyId) || 
-                      (request.method == 'create' && isUserInCompany(request.resource.data.companyId) && request.auth.uid == request.resource.data.technicianId);
-    }
+    // Default rules for most company-scoped collections (technicians, jobs, skills, parts, etc.)
+    match /{collection}/{docId} {
+      // READ: 
+      // Allows a read if the requesting user belongs to the same company as the document.
+      // This rule works for collection queries as long as the client includes a `where("companyId", "==", ...)` clause.
+      // Individual document reads are also covered.
+      // Specific technician access (reading their own jobs/profile) is handled by client logic.
+      allow read: if request.auth != null && userCompanyId() == resource.data.companyId;
 
-    match /chatMessages/{messageId} {
-      allow read: if isUserInCompany(get(/databases/$(database)/documents/chatMessages/$(messageId)).data.companyId);
-      allow write: if isUserInCompany(request.resource.data.companyId);
+      // WRITE: More restrictive.
+      allow write: if request.auth != null &&
+                      // Is the user an admin of their own company, and is the data for their company?
+                      (isUserAdmin() && userCompanyId() == request.resource.data.companyId) ||
+                      // Is it a tech updating their own job?
+                      (collection == 'jobs' && request.auth.uid == resource.data.assignedTechnicianId) ||
+                      // Is it a tech creating a profile change request for themself?
+                      (collection == 'profileChangeRequests' && request.auth.uid == request.resource.data.technicianId && userCompanyId() == request.resource.data.companyId) ||
+                       // Is it a user sending a chat message in their company?
+                      (collection == 'chatMessages' && request.auth.uid == request.resource.data.senderId && userCompanyId() == request.resource.data.companyId);
     }
   }
 }

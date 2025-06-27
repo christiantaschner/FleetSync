@@ -1,59 +1,133 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ---- Helper Functions ----
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    
+    // =================================
+    // Helper Functions
+    // =================================
+    function isSignedIn() {
+      return request.auth != null;
     }
     
-    function isUserAdmin() {
-      return request.auth != null && getUserData().role == 'admin';
+    function isUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    function userCompanyId() {
-      return getUserData().companyId;
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
+    function getUserRole() {
+      return getUserData(request.auth.uid).role;
+    }
+    
+    function isUserInCompany(companyId) {
+      return isSignedIn() && getUserData(request.auth.uid).companyId == companyId;
     }
 
-    // ---- Collections Rules ----
+    function isCompanyAdmin(companyId) {
+      return isUserInCompany(companyId) && getUserRole() == 'admin';
+    }
 
+    function isCompanyCsr(companyId) {
+      return isUserInCompany(companyId) && getUserRole() == 'csr';
+    }
+
+    function isCompanyTechnician(companyId) {
+        return isUserInCompany(companyId) && getUserRole() == 'technician';
+    }
+
+    // =================================
+    // Collection Rules
+    // =================================
+
+    // --- Users Collection ---
+    // User profiles, storing role and company affiliation.
     match /users/{userId} {
-      allow read, create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId &&
-                       request.resource.data.uid == resource.data.uid &&
-                       request.resource.data.email == resource.data.email &&
-                       request.resource.data.companyId == resource.data.companyId &&
-                       request.resource.data.role == resource.data.role;
-      allow delete: if false;
+      // Users can create their own profile on signup.
+      allow create: if isUser(userId);
+      // Users can read their own profile. Admins can read any profile in their company.
+      allow read: if isUser(userId) || isCompanyAdmin(getUserData(userId).companyId);
+      // Users can update their own profile (e.g., during onboarding). Admins can update roles.
+      allow update: if isUser(userId) || isCompanyAdmin(resource.data.companyId);
     }
     
+    // --- Companies Collection ---
+    // Company-specific details and settings.
     match /companies/{companyId} {
-      // Any user in the company can read the company doc.
-      allow read: if request.auth != null && userCompanyId() == companyId;
-      // Only an admin of that company can write to it.
-      allow write: if isUserAdmin() && userCompanyId() == companyId;
+      // Any user belonging to the company can read its details.
+      allow read: if isUserInCompany(companyId);
+      // Only an admin of the company can update its settings.
+      allow update: if isCompanyAdmin(companyId);
+      // Disallow client-side creation/deletion of companies.
+      allow create, delete: if false;
     }
 
-    // Default rules for most company-scoped collections (technicians, jobs, skills, parts, etc.)
-    match /{collection}/{docId} {
-      // READ: 
-      // Allows a read if the requesting user belongs to the same company as the document.
-      // This rule works for collection queries as long as the client includes a `where("companyId", "==", ...)` clause.
-      // Individual document reads are also covered.
-      // Specific technician access (reading their own jobs/profile) is handled by client logic.
-      allow read: if request.auth != null && userCompanyId() == resource.data.companyId;
+    // --- Jobs Collection ---
+    // The core work orders for the business.
+    match /jobs/{jobId} {
+      // Any authenticated user within the company can read job details.
+      allow read: if isUserInCompany(request.resource.data.companyId);
+      // Admins and CSRs can create new jobs.
+      allow create: if isCompanyAdmin(request.resource.data.companyId) || isCompanyCsr(request.resource.data.companyId);
+      // Admins can update any job. Technicians can only update jobs they are assigned to.
+      allow update: if isCompanyAdmin(request.resource.data.companyId) || (isCompanyTechnician(request.resource.data.companyId) && request.auth.uid == resource.data.assignedTechnicianId);
+      // Only admins can delete jobs.
+      allow delete: if isCompanyAdmin(request.resource.data.companyId);
+    }
+    
+    // --- Technicians Collection ---
+    // Profiles for all technicians in a company.
+    match /technicians/{techId} {
+        // Any user in the company can view technician profiles.
+        allow read: if isUserInCompany(resource.data.companyId);
+        // Only admins can create new technicians.
+        allow create: if isCompanyAdmin(request.resource.data.companyId);
+        // Admins can update any technician profile. Technicians can update their own.
+        allow update: if isCompanyAdmin(request.resource.data.companyId) || isUser(techId);
+        // Only admins can delete technicians.
+        allow delete: if isCompanyAdmin(resource.data.companyId);
+    }
+    
+    // --- Skills & Parts Collections ---
+    // Central libraries for skills and parts.
+    match /{collectionName}/{docId}
+      where collectionName in ['skills', 'parts'] {
+      // Any user in the company can read the libraries.
+      allow read: if isUserInCompany(resource.data.companyId);
+      // Only admins can create, update, or delete skills/parts.
+      allow write: if isCompanyAdmin(request.resource.data.companyId);
+    }
+    
+    // --- Profile Change Requests ---
+    match /profileChangeRequests/{reqId} {
+        // Admins and the technician who made the request can read it.
+        allow read: if isCompanyAdmin(resource.data.companyId) || isUser(resource.data.technicianId);
+        // Technicians can create requests for their own profile.
+        allow create: if isUser(request.resource.data.technicianId);
+        // Only admins can update (approve/reject) the request.
+        allow update: if isCompanyAdmin(request.resource.data.companyId);
+        allow delete: if false;
+    }
 
-      // WRITE: More restrictive.
-      allow write: if request.auth != null &&
-                      // Is the user an admin of their own company, and is the data for their company?
-                      (isUserAdmin() && userCompanyId() == request.resource.data.companyId) ||
-                      // Is it a tech updating their own job?
-                      (collection == 'jobs' && request.auth.uid == resource.data.assignedTechnicianId) ||
-                      // Is it a tech creating a profile change request for themself?
-                      (collection == 'profileChangeRequests' && request.auth.uid == request.resource.data.technicianId && userCompanyId() == request.resource.data.companyId) ||
-                       // Is it a user sending a chat message in their company?
-                      (collection == 'chatMessages' && request.auth.uid == request.resource.data.senderId && userCompanyId() == request.resource.data.companyId);
+    // --- Chat Messages ---
+    match /chatMessages/{msgId} {
+        // Only the sender or an admin (as dispatcher) can read messages.
+        allow read: if isCompanyAdmin(resource.data.companyId) || isUser(resource.data.senderId);
+        // Only the authenticated sender can create a message.
+        allow create: if isUser(request.resource.data.senderId);
+        allow update, delete: if false;
+    }
+
+    // --- Contracts & Equipment ---
+     match /{collectionName}/{docId}
+      where collectionName in ['contracts', 'equipment'] {
+      // Any user in the company can read the data.
+      allow read: if isUserInCompany(resource.data.companyId);
+      // Only admins and CSRs can create, update, or delete.
+      allow write: if isCompanyAdmin(request.resource.data.companyId) || isCompanyCsr(request.resource.data.companyId);
     }
   }
 }

@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // For simplicity, this allows any authenticated user to read/write.
+    // In a production app, you should restrict this further based on your app's logic.
+    // For example, only let users write to specific paths.
+    match /{allPaths=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    // A more secure example: Allow users to write to a folder matching their user ID
+    // match /users/{userId}/{allPaths=**} {
+    //   allow write: if request.auth.uid == userId;
+    // }
+
+    // Example for job photos: Only allow authenticated users to upload to job-specific folders.
+    match /job-photos/{jobId}/{allPaths=**} {
+      allow write: if isSignedIn();
+    }
+    
+    // Example for signatures:
+    match /signatures/{jobId} {
+      allow write: if isSignedIn();
+    }
+  }
+}

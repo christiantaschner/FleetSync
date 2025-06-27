@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +8,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { Technician } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Users, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Loader2, Users, ChevronRight, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function SelectTechnicianPage() {
@@ -93,8 +92,13 @@ export default function SelectTechnicianPage() {
                                     </Avatar>
                                     <div className="flex-grow">
                                         <p className="font-semibold">{tech.name || 'Unnamed Technician'}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {(tech.skills && tech.skills.length > 0) ? tech.skills.join(', ') : 'No skills listed'}
+                                        <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                                            <Mail className="h-3 w-3" />
+                                            {tech.email || 'No email provided'}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                                            <MapPin className="h-3 w-3" />
+                                            {tech.location?.address || 'No address provided'}
                                         </p>
                                     </div>
                                     <ChevronRight className="h-5 w-5 text-muted-foreground" />

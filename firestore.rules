@@ -1,147 +1,114 @@
-rules_version = '2';
 
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ========================
-    // Helper Functions
-    // ========================
+    
+    // Helper functions to get data about the requesting user.
+    // These require that the user can read their own document in `/users`.
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isOwner(userId) {
+        return request.auth.uid == userId;
+    }
+    
+    function userRole() {
+        return getUserData(request.auth.uid).role;
+    }
+    
+    function userCompanyId() {
+        return getUserData(request.auth.uid).companyId;
     }
 
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
+    // --- Core Collections ---
 
-    function getUserRole() {
-      return getUserData(request.auth.uid).role;
-    }
-
-    function isUserInCompany(companyId) {
-      // Check if user is signed in and has a companyId that matches.
-      // Use this in rules where the user document is guaranteed to exist.
-      return isSignedIn() && getUserData(request.auth.uid).companyId == companyId;
-    }
-
-    function isCompanyAdmin(companyId) {
-        return isUserInCompany(companyId) && getUserRole() == 'admin';
-    }
-
-    function isCompanyCsr(companyId) {
-        return isUserInCompany(companyId) && getUserRole() == 'csr';
-    }
-
-    function isCompanyTechnician(companyId) {
-        return isUserInCompany(companyId) && getUserRole() == 'technician';
-    }
-
-
-    // ========================
-    // User Profile Rules
-    // ========================
     match /users/{userId} {
-      // A user can create their own document (e.g., during signup).
-      allow create: if isUser(userId);
+      // A user can get their own document. This is critical for other rules.
+      allow get: if isSignedIn() && isOwner(userId);
       
-      // A user can read their own profile.
-      // An admin can read profiles of users within their company.
-      allow read: if isUser(userId) || isCompanyAdmin(getUserData(userId).companyId);
+      // An admin can read profiles of users in their own company.
+      // This rule is more complex because list requires different logic from get.
+      allow list: if isSignedIn() && userRole() == 'admin';
+      allow get: if isSignedIn() && userRole() == 'admin' && userCompanyId() == resource.data.companyId;
+
+      // A user can update their own profile.
+      allow update: if isSignedIn() && isOwner(userId);
       
-      // A user can update their own profile during onboarding.
-      // An admin can update any user profile in their company.
-      // The resource.data refers to the document state *after* the update.
-      allow update: if (isUser(userId) && request.resource.data.onboardingStatus == 'completed') || isCompanyAdmin(resource.data.companyId);
+      // A user can create their own profile document (e.g., on first sign-in).
+      allow create: if isSignedIn() && isOwner(userId);
     }
 
-    // ========================
-    // Company Data Rules
-    // ========================
     match /companies/{companyId} {
-        // The user creating the company must be the owner specified in the document.
-        allow create: if isUser(request.resource.data.ownerId);
-        
-        // Any authenticated user belonging to the company can read its details.
-        allow read: if isUserInCompany(companyId);
-        
-        // Only admins of the company can update its settings.
-        allow update: if isCompanyAdmin(companyId);
+      // A user can read their own company document.
+      allow read: if isSignedIn() && userCompanyId() == companyId;
+      
+      // Only an admin can update their company document.
+      allow update: if isSignedIn() && userRole() == 'admin' && userCompanyId() == companyId;
+      
+      // A new user can create a company during onboarding.
+      allow create: if isSignedIn();
     }
 
-    // ========================
-    // Core App Data Rules
-    // ========================
+    // --- Company-Scoped Data (Jobs, Technicians, etc.) ---
+    // For these rules, we rely on the client always querying with `where("companyId", "==", user.companyId)`.
     
-    // Skills Library
-    match /skills/{skillId} {
-        // Any user in the company can read the skills list.
-        allow read: if isUserInCompany(get(/databases/$(database)/documents/skills/$(skillId)).data.companyId);
-        // Only admins can create, update, or delete skills.
-        allow write: if isCompanyAdmin(request.resource.data.companyId);
-    }
-
-    // Parts Library
-    match /parts/{partId} {
-        // Any user in the company can read the parts list.
-        allow read: if isUserInCompany(get(/databases/$(database)/documents/parts/$(partId)).data.companyId);
-        // Only admins can create, update, or delete parts.
-        allow write: if isCompanyAdmin(request.resource.data.companyId);
-    }
-
-    // Technicians
-    match /technicians/{techId} {
-        // Any user in the company can read technician data.
-        allow read: if isUserInCompany(resource.data.companyId);
-        // Admins can create, update, and delete technicians.
-        allow write: if isCompanyAdmin(request.resource.data.companyId);
-    }
-    
-    // Jobs
     match /jobs/{jobId} {
-        // Any user in the company can read job data.
-        allow read: if isUserInCompany(resource.data.companyId);
+      // Any authenticated user in the company can read jobs.
+      allow read: if isSignedIn() && userCompanyId() == resource.data.companyId;
+      // Admins or CSRs can create jobs for their company.
+      allow create: if isSignedIn() && (userRole() == 'admin' || userRole() == 'csr') && userCompanyId() == request.resource.data.companyId;
+      // Admins can update any job, Technicians can update their assigned job.
+      allow update: if isSignedIn() && ( (userRole() == 'admin' && userCompanyId() == resource.data.companyId) || (isOwner(resource.data.assignedTechnicianId)) );
+    }
 
-        // Admins and CSRs can create jobs.
-        allow create: if isCompanyAdmin(request.resource.data.companyId) || isCompanyCsr(request.resource.data.companyId);
-        
-        // Admins can update any job. Technicians can update their own assigned jobs.
-        allow update: if isCompanyAdmin(resource.data.companyId) 
-                      || (isCompanyTechnician(resource.data.companyId) && request.auth.uid == resource.data.assignedTechnicianId);
+    match /technicians/{techId} {
+      // Any authenticated user in the company can read technician data.
+      allow read: if isSignedIn() && userCompanyId() == resource.data.companyId;
+      // Only admins can create or update technicians.
+      allow create, update: if isSignedIn() && userRole() == 'admin' && userCompanyId() == request.resource.data.companyId;
+    }
+
+    match /skills/{skillId} {
+      // Anyone in the company can read the skills list.
+      allow read: if isSignedIn() && userCompanyId() == resource.data.companyId;
+      // Only admins can manage skills for their company.
+      allow write: if isSignedIn() && userRole() == 'admin' && userCompanyId() == request.resource.data.companyId;
+    }
+
+    match /parts/{partId} {
+      // Anyone in the company can read the parts list.
+      allow read: if isSignedIn() && userCompanyId() == resource.data.companyId;
+      // Only admins can manage parts for their company.
+      allow write: if isSignedIn() && userRole() == 'admin' && userCompanyId() == request.resource.data.companyId;
     }
     
-    // Profile Change Requests
-    match /profileChangeRequests/{requestId} {
-        // Admins can read and update requests in their company.
-        allow read, update: if isCompanyAdmin(resource.data.companyId);
-        // Technicians can create requests for themselves.
-        allow create: if isCompanyTechnician(request.resource.data.companyId) && request.auth.uid == request.resource.data.technicianId;
+    match /profileChangeRequests/{reqId} {
+        // Admins can read all requests in their company. Techs can read their own.
+        allow read: if isSignedIn() && (userRole() == 'admin' && userCompanyId() == resource.data.companyId || isOwner(resource.data.technicianId));
+        // A technician can create a request for themselves.
+        allow create: if isSignedIn() && isOwner(request.resource.data.technicianId) && userCompanyId() == request.resource.data.companyId;
+        // Only admins can approve/reject.
+        allow update: if isSignedIn() && userRole() == 'admin' && userCompanyId() == resource.data.companyId;
     }
 
-    // Contracts
+    match /chatMessages/{msgId} {
+        // Any user in the company can read/write chat messages.
+        allow read, write: if isSignedIn() && userCompanyId() == request.resource.data.companyId;
+    }
+    
     match /contracts/{contractId} {
-        // Admins can manage contracts.
-        allow write: if isCompanyAdmin(request.resource.data.companyId);
-        // Any user in the company can read contracts.
-        allow read: if isUserInCompany(resource.data.companyId);
-    }
-
-    // Equipment
-    match /equipment/{equipmentId} {
-        // Admins can manage equipment.
-        allow write: if isCompanyAdmin(request.resource.data.companyId);
-        // Any user in the company can read equipment records.
-        allow read: if isUserInCompany(resource.data.companyId);
+        allow read: if isSignedIn() && userCompanyId() == resource.data.companyId;
+        allow write: if isSignedIn() && userRole() == 'admin' && userCompanyId() == request.resource.data.companyId;
     }
     
-    // Chat Messages
-    match /chatMessages/{messageId} {
-        // Any user in the company can read or create chat messages.
-        // For more security, this could be restricted to only participants of the chat (e.g., sender, receiver, and admin).
-        allow read, create: if isUserInCompany(request.resource.data.companyId);
+    match /equipment/{equipId} {
+        allow read: if isSignedIn() && userCompanyId() == resource.data.companyId;
+        allow write: if isSignedIn() && userCompanyId() == request.resource.data.companyId;
     }
   }
 }

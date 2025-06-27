@@ -99,15 +99,8 @@ export default function DashboardPage() {
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  const fetchAllData = useCallback(() => {
-    // This function can be called to refresh all data, e.g., after an import
-    fetchSkills();
-    fetchParts();
-    // The onSnapshot listeners for jobs/technicians/requests will update automatically
-  }, []);
-
   const fetchSkills = useCallback(async () => {
-    if (!db || !userProfile?.companyId) return;
+    if (!db || !userProfile?.companyId) return; // Safeguard
     try {
       const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
       const querySnapshot = await getDocs(skillsQuery);
@@ -121,7 +114,7 @@ export default function DashboardPage() {
   }, [userProfile, toast]);
 
   const fetchParts = useCallback(async () => {
-    if (!db || !userProfile?.companyId) return;
+    if (!db || !userProfile?.companyId) return; // Safeguard
     try {
       const partsQuery = query(collection(db, "parts"), where("companyId", "==", userProfile.companyId));
       const querySnapshot = await getDocs(partsQuery);
@@ -134,12 +127,20 @@ export default function DashboardPage() {
     }
   }, [userProfile, toast]);
   
+  const fetchAllData = useCallback(() => {
+    fetchSkills();
+    fetchParts();
+  }, [fetchSkills, fetchParts]);
+
   // Data fetching
   useEffect(() => {
     if (!db || !userProfile?.companyId) {
-      setIsLoadingData(false);
+      if (userProfile && userProfile.onboardingStatus === 'completed') {
+          setIsLoadingData(false);
+      }
       return;
     }
+    
     setIsLoadingData(true);
     let activeListeners = 0;
     const requiredListeners = 3;

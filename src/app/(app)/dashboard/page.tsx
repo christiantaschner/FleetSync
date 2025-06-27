@@ -987,7 +987,7 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
           <TabsContent value="schedule">
-            <ScheduleCalendarView jobs={jobs} technicians={technicians} onScheduleChange={fetchAllData} />
+            <ScheduleCalendarView jobs={jobs} technicians={technicians} />
           </TabsContent>
         </Tabs>
       </div>

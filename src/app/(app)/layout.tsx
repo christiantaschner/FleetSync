@@ -16,6 +16,7 @@ import {
   Repeat,
   ClipboardList,
   UserCog,
+  PlusCircle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -55,6 +56,10 @@ const adminNavItems = [
 
 const getTechnicianNavItems = (uid: string) => [
   { href: `/technician/jobs/${uid}`, label: "My Active Jobs", icon: Smartphone },
+];
+
+const csrNavItems = [
+  { href: "/dashboard", label: "Create Job", icon: PlusCircle },
 ];
 
 const sharedNavItems = [
@@ -141,10 +146,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const userDisplayName = user.email || "User";
 
   const getNavItemsForRole = () => {
-    if (userProfile?.role === 'technician') {
-      return [...getTechnicianNavItems(user.uid), ...sharedNavItems];
+    switch (userProfile?.role) {
+        case 'technician':
+            return [...getTechnicianNavItems(user.uid), ...sharedNavItems];
+        case 'csr':
+            return [...csrNavItems];
+        case 'admin':
+        default:
+            return [...adminNavItems, ...sharedNavItems];
     }
-    return [...adminNavItems, ...sharedNavItems];
   };
   
   const navItems = getNavItemsForRole();

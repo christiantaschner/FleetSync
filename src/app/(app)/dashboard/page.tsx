@@ -635,6 +635,37 @@ export default function DashboardPage() {
       </div>
     );
   }
+  
+  if (userProfile?.role === 'csr') {
+    return (
+      <div className="space-y-6">
+          <h1 className="text-3xl font-bold tracking-tight font-headline">
+              Customer Service Dashboard
+          </h1>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Create a New Work Order</CardTitle>
+                  <CardDescription>
+                      Use the button below to open the form and create a new job. The job will then be sent to a dispatcher for assignment.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <AddEditJobDialog 
+                      technicians={technicians} 
+                      allSkills={allSkills} 
+                      allParts={allParts} 
+                      onJobAddedOrUpdated={handleJobAddedOrUpdated} 
+                      jobs={jobs}
+                  >
+                      <Button size="lg">
+                          <PlusCircle className="mr-2 h-5 w-5" /> Add New Job
+                      </Button>
+                  </AddEditJobDialog>
+              </CardContent>
+          </Card>
+      </div>
+    );
+  }
 
 
   return (

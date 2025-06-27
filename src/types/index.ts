@@ -15,7 +15,7 @@ export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
     companyId: z.string().optional(),
-    role: z.nativeEnum(['admin', 'dispatcher', 'technician']).optional(),
+    role: z.nativeEnum(['admin', 'dispatcher', 'technician', 'csr']).optional(),
     onboardingStatus: z.nativeEnum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;

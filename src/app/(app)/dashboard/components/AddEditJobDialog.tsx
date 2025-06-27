@@ -363,7 +363,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         <DialogHeader>
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
           <DialogDescription>
-            {job ? 'Update the details for this job.' : 'Fill in the details for the new job. AI will suggest a technician.'}
+            {job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}} className="space-y-4 py-2 max-h-[70vh] overflow-y-auto pr-2">
@@ -496,7 +496,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
             />
           </div>
 
-          {!job && technicians.length > 0 && (description.trim() || priority) && (
+          {userProfile?.role !== 'csr' && !job && technicians.length > 0 && (description.trim() || priority) && (
             <div className="p-3 my-2 border rounded-md bg-secondary/50">
               {isFetchingAISuggestion && (
                 <div className="flex items-center text-sm text-muted-foreground">
@@ -525,29 +525,31 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save Changes
               </Button>
-            ) : ( 
-              <>
-                <Button 
-                  type="button" 
-                  onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)} 
-                  disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                  variant={isInterruptionSuggestion ? "destructive" : "default"}
-                  className="flex-1"
-                  title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
-                >
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                  {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isLoading} 
-                  variant="outline"
-                  className="flex-1"
-                >
-                   {isLoading && !aiSuggestion?.suggestedTechnicianId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Save as Pending
-                </Button>
-              </>
+            ) : (
+                <>
+                    {userProfile?.role !== 'csr' && (
+                        <Button
+                            type="button"
+                            onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
+                            disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
+                            variant={isInterruptionSuggestion ? "destructive" : "default"}
+                            className="flex-1"
+                            title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
+                        >
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                            {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
+                        </Button>
+                    )}
+                     <Button
+                        type="submit"
+                        disabled={isLoading}
+                        variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
+                        className="flex-1"
+                    >
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+                    </Button>
+                </>
             )}
             <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="sm:ml-auto">
               Close

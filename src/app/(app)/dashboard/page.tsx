@@ -667,18 +667,12 @@ export default function DashboardPage() {
 
         <Card>
            <CardHeader>
-                <CardTitle className="font-headline text-base">Global Actions</CardTitle>
+                <CardTitle className="font-headline text-base">Daily Operations</CardTitle>
                 <CardDescription className="text-xs">
-                    High-level tools for managing your operations and data.
+                    High-impact tools for managing your daily schedule.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-                 <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
-                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                  </Button>
-                   <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
-                    <Package className="mr-2 h-4 w-4" /> Manage Parts
-                  </Button>
                  <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
                     <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
                 </Button>
@@ -940,6 +934,12 @@ export default function DashboardPage() {
                   <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
                 </div>
                  <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                  </Button>
+                   <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
+                    <Package className="mr-2 h-4 w-4" /> Manage Parts
+                  </Button>
                   <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills} allParts={allParts}>
                     <Button variant="default">
                       <UserPlus className="mr-2 h-4 w-4" /> Add Technician

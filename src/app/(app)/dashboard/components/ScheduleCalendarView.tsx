@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -17,41 +16,39 @@ interface ScheduleCalendarViewProps {
   onScheduleChange: () => void;
 }
 
-const getPriorityColor = (priority: JobPriority): string => {
-    switch (priority) {
-        case 'High':
-            return 'hsl(var(--destructive))';
-        case 'Medium':
-            return 'hsl(var(--primary))';
-        case 'Low':
-            return 'hsl(var(--chart-2))';
-        default:
-            return 'hsl(var(--secondary-foreground))';
-    }
-}
-
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, technicians, onScheduleChange }) => {
     const [rescheduleData, setRescheduleData] = React.useState<EventDropArg | null>(null);
 
     const events = React.useMemo(() => {
         return jobs
-          .filter(job => job.status !== 'Pending' && job.status !== 'Cancelled') // Only show scheduled jobs
+          .filter(job => job.status !== 'Pending' && job.status !== 'Cancelled')
           .map((job): EventInput => {
             const tech = technicians.find(t => t.id === job.assignedTechnicianId);
             const title = `${tech ? `[${tech.name.split(' ')[0]}] ` : '[Unassigned] '}${job.title}`;
-
-            // Set default duration if not specified
             const durationMinutes = job.estimatedDurationMinutes || 60;
             const startDate = job.scheduledTime ? new Date(job.scheduledTime) : new Date(job.createdAt);
             const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
             
+            let eventClassNames: string[] = [];
+            switch (job.priority) {
+                case 'High':
+                    eventClassNames.push('fc-event-destructive');
+                    break;
+                case 'Medium':
+                    eventClassNames.push('fc-event-primary');
+                    break;
+                case 'Low':
+                default:
+                    eventClassNames.push('fc-event-secondary');
+                    break;
+            }
+
             return {
                 id: job.id,
                 title: title,
                 start: startDate,
                 end: endDate,
-                backgroundColor: getPriorityColor(job.priority),
-                borderColor: getPriorityColor(job.priority),
+                classNames: eventClassNames,
                 extendedProps: {
                     technicianId: tech?.id,
                     jobStatus: job.status,
@@ -63,7 +60,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
     }, [jobs, technicians]);
 
   const handleEventDrop = (dropInfo: EventDropArg) => {
-    // We don't revert immediately; we open a dialog to confirm the change.
     setRescheduleData(dropInfo);
   };
 
@@ -102,9 +98,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
                     height="70vh"
                     eventDrop={handleEventDrop}
                     eventContent={(eventInfo) => (
-                        <div className="p-1">
-                            <b>{eventInfo.timeText}</b>
-                            <p className="whitespace-normal text-xs">{eventInfo.event.title}</p>
+                        <div className="p-1.5 overflow-hidden">
+                            <b className="font-semibold">{eventInfo.timeText}</b>
+                            <p className="text-xs">{eventInfo.event.title}</p>
                         </div>
                     )}
                 />

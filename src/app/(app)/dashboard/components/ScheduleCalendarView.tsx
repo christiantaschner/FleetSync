@@ -9,7 +9,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, Clock, User, MapPin, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, Clock, User, MapPin, Circle, ShieldQuestion, Shuffle } from 'lucide-react';
+import OptimizeRouteDialog from './optimize-route-dialog';
 
 // Color mapping for job blocks based on status
 const getStatusAppearance = (status: JobStatus) => {
@@ -106,9 +107,18 @@ const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, tota
 interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
+  onCheckScheduleHealth: () => void;
+  isCheckingHealth: boolean;
+  busyTechniciansCount: number;
 }
 
-const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, technicians }) => {
+const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ 
+    jobs, 
+    technicians,
+    onCheckScheduleHealth,
+    isCheckingHealth,
+    busyTechniciansCount
+}) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -161,7 +171,15 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ jobs, techn
                 <CardTitle className="font-headline">Technician Schedule</CardTitle>
                 <CardDescription>Daily timeline view of technician assignments.</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center flex-wrap gap-2">
+                 <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+                    <Button variant="outline" disabled={busyTechniciansCount === 0}>
+                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
+                    </Button>
+                </OptimizeRouteDialog>
+                 <Button variant="outline" onClick={onCheckScheduleHealth} disabled={busyTechniciansCount === 0 || isCheckingHealth}>
+                    <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
+                </Button>
                 <Button variant="outline" size="icon" onClick={handlePrevDay} aria-label="Previous day"><ChevronLeft className="h-4 w-4" /></Button>
                 <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
                     {format(currentDate, 'PPP')}

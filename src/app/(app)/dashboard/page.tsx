@@ -654,9 +654,12 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
             Dispatcher Dashboard
-            {(isHandlingUnavailability || isFetchingProactiveSuggestion || isCheckingHealth) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+            {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </h1>
           <div className="flex flex-wrap gap-2">
+             <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+            </Button>
              <AddEditJobDialog technicians={technicians} allSkills={allSkills} allParts={allParts} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
@@ -664,28 +667,6 @@ export default function DashboardPage() {
             </AddEditJobDialog>
           </div>
         </div>
-
-        <Card>
-           <CardHeader>
-                <CardTitle className="font-headline text-base">Daily Operations</CardTitle>
-                <CardDescription className="text-xs">
-                    Tools to proactively manage your team's day. Import jobs, re-optimize a technician's route, or find potential delays.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-                 <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
-                </Button>
-                <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                    <Button variant="accent" disabled={busyTechnicians.length === 0}>
-                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
-                    </Button>
-                </OptimizeRouteDialog>
-                 <Button variant="outline" onClick={handleCheckScheduleHealth} disabled={busyTechnicians.length === 0 || isCheckingHealth}>
-                    <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
-                </Button>
-            </CardContent>
-        </Card>
 
         {riskAlerts.length > 0 && (
           <div className="space-y-2">
@@ -889,7 +870,7 @@ export default function DashboardPage() {
                         <Button
                             onClick={handleBatchAIAssign}
                             disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
-                            variant="accent"
+                            variant="secondary"
                             className="w-full sm:w-auto"
                         >
                             {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
@@ -924,7 +905,13 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
            <TabsContent value="schedule">
-            <ScheduleCalendarView jobs={jobs} technicians={technicians} />
+             <ScheduleCalendarView
+                jobs={jobs}
+                technicians={technicians}
+                onCheckScheduleHealth={handleCheckScheduleHealth}
+                isCheckingHealth={isCheckingHealth}
+                busyTechniciansCount={busyTechnicians.length}
+             />
           </TabsContent>
           <TabsContent value="technicians">
             <Card>

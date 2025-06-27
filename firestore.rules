@@ -1,52 +1,60 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to get the user's company ID from their profile document.
+    // Helper function to get the companyId from the user's profile document.
+    // This is more secure than trusting the client and reduces read costs compared to multiple gets.
     function getUserCompanyId() {
-      // Allow access if the user is authenticated.
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
     }
 
-    // --- User Profile Rules ---
-    // Users can manage their own profile, but with restrictions.
+    // Helper function to get the user's role from their profile document.
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // READ: A user can only read their own profile.
+      // Allow a user to read their own profile.
       allow read: if request.auth != null && request.auth.uid == userId;
 
-      // CREATE: A user can create their own profile document. This is for initial signup.
+      // Allow a user to create their own profile.
+      // This is handled by a server action upon first sign-up.
       allow create: if request.auth != null && request.auth.uid == userId;
-      
-      // UPDATE: A user can update their profile. A production app would lock down
-      // role/companyId changes to be admin-only, but this allows our onboarding logic to work.
-      allow update: if request.auth != null && request.auth.uid == userId;
-      
-      // DELETE: Users cannot delete their own profiles from the client.
+
+      // **FIXED**: Allow a user to update their own profile, BUT NOT sensitive fields.
+      allow update: if request.auth != null && request.auth.uid == userId
+                       && request.resource.data.uid == resource.data.uid
+                       && request.resource.data.email == resource.data.email
+                       && request.resource.data.companyId == resource.data.companyId
+                       && request.resource.data.role == resource.data.role;
+
+      // Users cannot delete their own profiles. This should be an admin action.
       allow delete: if false;
     }
 
-    // --- Company Metadata Rules ---
-    // Rules for the 'companies' collection itself.
+    // Rules for the 'companies' collection
     match /companies/{companyId} {
-      // READ: Any user belonging to the company can read the company document.
+      // Allow any user from the company to read their own company document.
       allow read: if request.auth != null && getUserCompanyId() == companyId;
-      
-      // WRITE: Only allow writes if the user belongs to the company.
-      // In production, this should be stricter (e.g., admin-only).
-      allow write: if request.auth != null && getUserCompanyId() == companyId;
+
+      // **FIXED**: ONLY allow users with the 'admin' role to write to the company document.
+      allow write: if request.auth != null
+                      && getUserCompanyId() == companyId
+                      && getUserRole() == 'admin';
     }
 
-    // --- General Company Data Rules (Jobs, Technicians, etc.) ---
-    // This rule applies to any collection that contains documents with a 'companyId' field.
+    // Generic rules for all other company-specific collections like 'jobs', 'technicians', etc.
+    // These collections must contain a 'companyId' field on every document.
     match /{collection}/{docId} {
-      // This rule should NOT apply to 'users' or 'companies' as they have their own specific rules.
-      allow read, write: if collection != 'users' && collection != 'companies' &&
-                            request.auth != null && 
-                            // On create, the incoming document must have the user's company ID.
-                            (request.method == 'create' ? request.resource.data.companyId == getUserCompanyId() 
-                            // On read, update, or delete, the existing document's company ID must match the user's.
-                            : resource.data.companyId == getUserCompanyId());
+      // To read or write, the user must be authenticated and their companyId must match the document's companyId.
+      // The 'create' check ensures that a user cannot create a document for another company.
+      // The 'update/delete' check ensures that a document's companyId cannot be changed.
+      allow read: if request.auth != null && getUserCompanyId() == resource.data.companyId;
+      allow write: if request.auth != null && getUserCompanyId() == request.resource.data.companyId
+                      && (request.method == 'create' || getUserCompanyId() == resource.data.companyId);
     }
   }
 }

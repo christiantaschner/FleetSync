@@ -19,7 +19,7 @@ import type { Technician, Job, AITask } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, MapIcon, CheckCircle } from 'lucide-react';
+import { Loader2, MapIcon, CheckCircle, Shuffle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface OptimizeRouteDialogProps {
@@ -176,9 +176,9 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">AI Route Re-Optimization</DialogTitle>
+          <DialogTitle className="font-headline">Re-Optimize a Technician's Route</DialogTitle>
           <DialogDescription>
-            Re-optimize a selected technician&apos;s current route. The AI will consider job priorities and scheduled times to find the most efficient sequence.
+            Select a technician to have the AI find the most efficient order for their assigned jobs. This is useful if a job is cancelled or finishes early.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -221,7 +221,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
           )}
           
           <Button type="submit" disabled={isLoading || !selectedTechnicianId || selectedJobIds.length === 0} className="w-full">
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapIcon className="mr-2 h-4 w-4" />}
+            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shuffle className="mr-2 h-4 w-4" />}
             Generate Optimized Route
           </Button>
         </form>

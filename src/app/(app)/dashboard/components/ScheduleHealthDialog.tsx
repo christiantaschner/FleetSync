@@ -50,7 +50,7 @@ const ScheduleHealthDialog: React.FC<ScheduleHealthDialogProps> = ({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <ShieldQuestion className="text-primary h-5 w-5" /> Schedule Health Report
+            <ShieldQuestion className="text-primary h-5 w-5" /> Schedule Risk Report
           </DialogTitle>
           <DialogDescription>
             AI-powered analysis of active technicians' schedules to predict potential delays for their next job.

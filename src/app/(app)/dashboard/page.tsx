@@ -669,7 +669,7 @@ export default function DashboardPage() {
            <CardHeader>
                 <CardTitle className="font-headline text-base">Daily Operations</CardTitle>
                 <CardDescription className="text-xs">
-                    High-impact tools for managing your daily schedule.
+                    Tools to proactively manage your team's day. Import jobs, re-optimize a technician's route, or find potential delays.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
@@ -678,11 +678,11 @@ export default function DashboardPage() {
                 </Button>
                 <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
                     <Button variant="accent" disabled={busyTechnicians.length === 0}>
-                        <Shuffle className="mr-2 h-4 w-4" /> AI Route Optimizer
+                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
                     </Button>
                 </OptimizeRouteDialog>
                  <Button variant="outline" onClick={handleCheckScheduleHealth} disabled={busyTechnicians.length === 0 || isCheckingHealth}>
-                    <ShieldQuestion className="mr-2 h-4 w-4" /> Check Schedule Health
+                    <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
                 </Button>
             </CardContent>
         </Card>

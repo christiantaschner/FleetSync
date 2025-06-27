@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare, Share2, Shuffle } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare, Share2, Shuffle, ArrowDownUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -42,6 +42,8 @@ const ALL_PRIORITIES = "all_priorities";
 const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
+type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
+
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
@@ -55,6 +57,7 @@ export default function DashboardPage() {
   
   const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
   const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
 
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
@@ -164,7 +167,6 @@ export default function DashboardPage() {
         }
         return { id: doc.id, ...data } as Job;
       });
-      jobsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setJobs(jobsData);
       onListenerLoaded();
     }, (error) => {
@@ -454,6 +456,33 @@ export default function DashboardPage() {
       return statusMatch && priorityMatch;
     });
   }, [jobs, statusFilter, priorityFilter]);
+
+  const sortedJobs = useMemo(() => {
+    const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
+    const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
+    const statusOrder = { 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Cancelled': 6 } as Record<JobStatus, number>;
+
+    return [...filteredJobs].sort((a, b) => {
+        switch (sortOrder) {
+            case 'priority':
+                return priorityOrder[a.priority] - priorityOrder[b.priority] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'status':
+                return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'technician':
+                const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz'; // Unassigned at end
+                const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
+                return techA.localeCompare(techB) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'customer':
+                return a.customerName.localeCompare(b.customerName) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'scheduledTime':
+                const timeA = a.scheduledTime ? new Date(a.scheduledTime).getTime() : Infinity;
+                const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
+                return timeA - timeB || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            default:
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+    });
+  }, [filteredJobs, sortOrder, technicians]);
 
   const pendingJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Pending'), [jobs]);
   const pendingJobsCount = pendingJobsForBatchAssign.length;
@@ -869,13 +898,13 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
                         <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                            <div className="w-full sm:w-auto">
+                            <div className="w-full sm:w-[160px]">
                                 <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
                                 <Select 
                                     value={statusFilter} 
                                     onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
                                 >
-                                    <SelectTrigger id="status-filter" className="w-full sm:w-[180px]">
+                                    <SelectTrigger id="status-filter">
                                         <SelectValue placeholder="Filter by Status" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -885,15 +914,31 @@ export default function DashboardPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="w-full sm:w-auto">
+                            <div className="w-full sm:w-[160px]">
                                 <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
                                 <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
-                                    <SelectTrigger id="priority-filter" className="w-full sm:w-[180px]">
+                                    <SelectTrigger id="priority-filter">
                                         <SelectValue placeholder="Filter by Priority" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
                                         {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="w-full sm:w-[160px]">
+                                <Label htmlFor="sort-order" className="sr-only">Sort by</Label>
+                                <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
+                                    <SelectTrigger id="sort-order">
+                                        <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" />
+                                        <SelectValue placeholder="Sort by..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="priority">Priority</SelectItem>
+                                        <SelectItem value="status">Status</SelectItem>
+                                        <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
+                                        <SelectItem value="technician">Technician</SelectItem>
+                                        <SelectItem value="customer">Customer Name</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -914,7 +959,7 @@ export default function DashboardPage() {
                   <div className="flex justify-center items-center py-10">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                ) : filteredJobs.length > 0 ? filteredJobs.map(job => (
+                ) : sortedJobs.length > 0 ? sortedJobs.map(job => (
                   <JobListItem 
                     key={job.id} 
                     job={job} 

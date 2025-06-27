@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -235,6 +235,18 @@ const roadmapFeatures = {
       title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",
       description: "Ability to group technicians (e.g., a master craftsman and an apprentice) who are always scheduled for jobs together. The AI allocation engine will be updated to assign suitable jobs to a team, respecting their combined skills and availability.",
       icon: Users2,
+      status: "Planned",
+    },
+    {
+      title: "Customizable Technician Working Hours",
+      description: "Define standard working hours and days for each technician (e.g., Mon-Thu, 8am-2pm). The AI scheduling engine will respect these hours for regular job assignments, improving scheduling accuracy and work-life balance.",
+      icon: CalendarClock,
+      status: "Planned",
+    },
+    {
+      title: "On-Call & Emergency Duty Roster",
+      description: "Create and manage on-call schedules for emergency jobs that occur outside of normal business hours. The AI will prioritize the designated on-duty technician for any urgent weekend or night-time requests.",
+      icon: Zap,
       status: "Planned",
     },
   ],

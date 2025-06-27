@@ -36,6 +36,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
             setIsLoading(true);
             const q = query(
                 collection(db, 'chatMessages'),
+                where('companyId', '==', job.companyId),
                 where('jobId', '==', job.id),
                 orderBy('timestamp', 'asc')
             );

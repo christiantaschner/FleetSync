@@ -30,7 +30,7 @@ interface ChatSheetProps {
 }
 
 const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technician }) => {
-    const { user } = useAuth();
+    const { user, userProfile } = useAuth();
     const { toast } = useToast();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
@@ -45,6 +45,7 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
             setIsLoading(true);
             const q = query(
                 collection(db, 'chatMessages'),
+                where('companyId', '==', job.companyId),
                 where('jobId', '==', job.id),
                 orderBy('timestamp', 'asc')
             );
@@ -79,14 +80,15 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if ((!newMessage.trim() && !attachment) || !job || !user || !technician) return;
+        if ((!newMessage.trim() && !attachment) || !job || !user || !technician || !userProfile) return;
         
         setIsSending(true);
 
         const result = await sendChatMessageAction({
             jobId: job.id,
+            companyId: userProfile.companyId!,
             senderId: user.uid,
-            senderName: "Dispatcher",
+            senderName: userProfile.role === 'admin' ? "Dispatcher" : technician.name,
             receiverId: technician.id,
             text: newMessage.trim(),
             attachment,

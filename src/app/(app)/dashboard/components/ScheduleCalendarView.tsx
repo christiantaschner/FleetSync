@@ -16,10 +16,11 @@ const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 border-l-4 border-green-500 text-green-800';
       case 'In Progress': return 'bg-blue-100 border-l-4 border-blue-500 text-blue-800';
-      case 'En Route': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800';
+      case 'En Route': return 'bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800';
       case 'Assigned': return 'bg-sky-100 border-l-4 border-sky-500 text-sky-800';
-      case 'Cancelled': return 'bg-gray-200 border-l-4 border-gray-400 text-gray-600 line-through';
-      default: return 'bg-gray-100 border-l-4 border-gray-400 text-gray-700'; // Pending
+      case 'Pending': return 'bg-amber-100 border-l-4 border-amber-500 text-amber-800';
+      case 'Cancelled': return 'bg-red-100/70 border-l-4 border-red-500 text-red-800 line-through';
+      default: return 'bg-gray-100 border-l-4 border-gray-400 text-gray-700';
     }
 };
 

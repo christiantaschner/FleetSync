@@ -34,6 +34,7 @@ import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
 import ShareTrackingDialog from './components/ShareTrackingDialog';
+import { isToday } from 'date-fns';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -455,7 +456,6 @@ export default function DashboardPage() {
   }, [jobs, statusFilter, priorityFilter]);
 
   const pendingJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Pending'), [jobs]);
-  const activeJobs = jobs.filter(job => job.status === 'Assigned' || job.status === 'In Progress' || job.status === 'En Route');
   const pendingJobsCount = pendingJobsForBatchAssign.length;
   const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
   
@@ -601,6 +601,16 @@ export default function DashboardPage() {
   const handleDismissRiskAlert = (technicianId: string) => {
     setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
   };
+  
+  const highPriorityPendingCount = useMemo(() => 
+    jobs.filter(j => j.status === 'Pending' && j.priority === 'High').length, 
+    [jobs]
+  );
+
+  const jobsTodayCount = useMemo(() => 
+    jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
+    [jobs]
+  );
 
 
   if (isLoadingData && !googleMapsApiKey) { 
@@ -755,27 +765,15 @@ export default function DashboardPage() {
 
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
+           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{activeJobs.length}</div>
+              <div className="text-2xl font-bold">{highPriorityPendingCount}</div>
               <p className="text-xs text-muted-foreground">
-                Currently assigned or in progress
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available Technicians</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Ready for assignments
+                Urgent jobs needing assignment
               </p>
             </CardContent>
           </Card>
@@ -787,38 +785,32 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-2xl font-bold">{pendingJobsCount}</div>
               <p className="text-xs text-muted-foreground">
-                Awaiting assignment
+                Total jobs awaiting assignment
               </p>
             </CardContent>
           </Card>
            <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Next Up Technicians</CardTitle>
+              <CardTitle className="text-sm font-medium">Available Technicians</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                {isPredicting ? (
-                    <div className="flex items-center space-x-2 pt-2">
-                        <Loader2 className="h-4 w-4 animate-spin"/>
-                        <p className="text-xs text-muted-foreground">AI is predicting...</p>
-                    </div>
-                ) : nextUpPredictions.length > 0 ? (
-                    <div className="space-y-2 pt-1">
-                        {nextUpPredictions.slice(0, 2).map(p => (
-                            <div key={p.technicianId} className="text-sm">
-                                <p className="font-bold truncate">{p.technicianName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    ~{new Date(p.estimatedAvailabilityTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <>
-                        <div className="text-2xl font-bold">-</div>
-                        <p className="text-xs text-muted-foreground">No busy technicians to predict.</p>
-                    </>
-                )}
+              <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Ready for assignments
+              </p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{jobsTodayCount}</div>
+                <p className="text-xs text-muted-foreground">
+                    Total appointments for the day
+                </p>
             </CardContent>
           </Card>
         </div>

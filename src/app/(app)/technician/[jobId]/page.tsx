@@ -41,6 +41,7 @@ export default function TechnicianJobDetailPage() {
   const [reasonForFollowUp, setReasonForFollowUp] = useState('');
 
   const isBreakActive = job?.status === 'In Progress' && job.breaks?.some(b => !b.end);
+  const backUrl = job?.assignedTechnicianId ? `/technician/jobs/${job.assignedTechnicianId}` : '/dashboard';
 
   useEffect(() => {
     if (!jobId || !db || !user) {
@@ -63,27 +64,18 @@ export default function TechnicianJobDetailPage() {
           }
           const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
           
-          // Fetch the technician details using the current user's UID
-          const techDocRef = doc(db, "technicians", user.uid);
+          const techDocRef = doc(db, "technicians", fetchedJob.assignedTechnicianId!);
           const techDocSnap = await getDoc(techDocRef);
           
           if (!techDocSnap.exists()) {
-             toast({ title: "Error", description: "Technician profile not found.", variant: "destructive" });
-             router.push('/technician');
-             return;
-          }
-
-          const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
-
-          // Security Check: Ensure the job belongs to the technician's company
-          if (fetchedJob.companyId !== fetchedTechnician.companyId) {
-             toast({ title: "Access Denied", description: "You do not have permission to view this job.", variant: "destructive" });
-             router.push('/technician');
-             return;
+             toast({ title: "Error", description: "Assigned technician profile not found.", variant: "destructive" });
+             setTechnician(null);
+          } else {
+            const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
+            setTechnician(fetchedTechnician);
           }
 
           setJob(fetchedJob);
-          setTechnician(fetchedTechnician);
           
           if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
             setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
@@ -155,7 +147,6 @@ export default function TechnicianJobDetailPage() {
             jobId: job.id, 
             technicianId: job.assignedTechnicianId 
         }).catch(err => {
-            // Log error but don't block UI
             console.error("Failed to trigger travel metrics calculation:", err);
         });
       }
@@ -177,7 +168,6 @@ export default function TechnicianJobDetailPage() {
     let newSignatureUrl: string | null = null;
 
     try {
-      // 1. Upload Photos
       if (photos.length > 0) {
         const photoUploadPromises = photos.map(async (photo) => {
           const photoRef = ref(storage, `job-photos/${job.id}/${Date.now()}-${photo.name}`);
@@ -187,14 +177,12 @@ export default function TechnicianJobDetailPage() {
         newPhotoUrls = await Promise.all(photoUploadPromises);
       }
 
-      // 2. Upload Signature
       if (signatureDataUrl) {
         const signatureRef = ref(storage, `signatures/${job.id}.png`);
         await uploadString(signatureRef, signatureDataUrl, 'data_url');
         newSignatureUrl = await getDownloadURL(signatureRef);
       }
 
-      // 3. Update Firestore Document
       const updateData: any = {
         updatedAt: serverTimestamp(),
       };
@@ -214,7 +202,6 @@ export default function TechnicianJobDetailPage() {
 
       await updateDoc(jobDocRef, updateData);
       
-      // 4. Update local state
       setJob(prevJob => {
         if (!prevJob) return null;
         return {
@@ -273,7 +260,6 @@ export default function TechnicianJobDetailPage() {
     try {
       let updatedBreaks;
       if (isBreakActive) {
-        // Ending a break
         toast({ title: "Resuming Work" });
         updatedBreaks = currentBreaks.map((b, index) => {
           if (index === currentBreaks.length - 1 && !b.end) {
@@ -282,7 +268,6 @@ export default function TechnicianJobDetailPage() {
           return b;
         });
       } else {
-        // Starting a new break
         toast({ title: "Break Started" });
         updatedBreaks = [...currentBreaks, { start: now }];
       }
@@ -350,7 +335,7 @@ export default function TechnicianJobDetailPage() {
         <p className="text-muted-foreground mt-2">
           The job you are looking for does not exist or could not be loaded.
         </p>
-        <Button variant="outline" onClick={() => router.back()} className="mt-6">
+        <Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6">
           <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
         </Button>
       </div>
@@ -363,8 +348,8 @@ export default function TechnicianJobDetailPage() {
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
+        <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Jobs List
         </Button>
         <Button variant="default" size="sm" onClick={handleNavigate}>
           <Navigation className="mr-2 h-4 w-4" /> Navigate to Job

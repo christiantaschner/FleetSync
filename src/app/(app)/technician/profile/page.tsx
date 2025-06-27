@@ -120,9 +120,11 @@ export default function TechnicianProfilePage() {
     );
   }
 
-  if (!technician) {
+  if (!technician || !firebaseUser) {
     return null;
   }
+  
+  const backUrl = `/technician/jobs/${firebaseUser.uid}`;
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -133,7 +135,7 @@ export default function TechnicianProfilePage() {
             allSkills={allSkills}
         />
         <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>
+            <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
             </Button>
             <Button variant="secondary" size="sm" onClick={() => setIsSuggestChangeOpen(true)}>

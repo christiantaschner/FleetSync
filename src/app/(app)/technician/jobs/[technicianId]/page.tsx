@@ -1,0 +1,275 @@
+
+"use client";
+
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
+import type { Job, Technician, JobPriority, JobStatus } from '@/types';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, doc, updateDoc, orderBy } from 'firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
+
+export default function TechnicianJobListPage() {
+  const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const params = useParams();
+  const router = useRouter();
+  const technicianId = params.technicianId as string;
+
+  const [technician, setTechnician] = useState<Technician | null>(null);
+  const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isInitialLoad = useRef(true);
+  const prevJobOrder = useRef<string>("");
+
+  const hasPermission = userProfile?.role === 'admin' || userProfile?.uid === technicianId;
+  const isViewingOwnPage = userProfile?.uid === technicianId;
+
+  useEffect(() => {
+    if (authLoading || !firebaseUser || !userProfile || !technicianId) return;
+
+    if (!hasPermission) {
+        setError("You don't have permission to view this page.");
+        setIsLoading(false);
+        return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    const techDocRef = doc(db, "technicians", technicianId);
+    const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
+        setTechnician(techData);
+
+        const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+        const jobsQuery = query(
+          collection(db, "jobs"),
+          where("companyId", "==", techData.companyId),
+          where("assignedTechnicianId", "==", technicianId),
+          where("status", "in", activeJobStatuses)
+        );
+
+        const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
+          const jobsForTech = querySnapshot.docs.map(doc => {
+              const data = doc.data();
+              for (const key in data) {
+                  if (data[key] && typeof data[key].toDate === 'function') {
+                      data[key] = data[key].toDate().toISOString();
+                  }
+              }
+              return { id: doc.id, ...data } as Job;
+          });
+          
+          jobsForTech.sort((a, b) => {
+            const aOrder = a.routeOrder ?? Infinity;
+            const bOrder = b.routeOrder ?? Infinity;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
+            if (priorityOrder[a.priority] !== priorityOrder[b.priority]) return priorityOrder[a.priority] - priorityOrder[b.priority];
+            return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
+          });
+
+          const currentJobOrder = jobsForTech.map(j => j.id).join(',');
+
+          if (isInitialLoad.current) {
+            prevJobOrder.current = currentJobOrder;
+            isInitialLoad.current = false;
+          } else if (isViewingOwnPage) {
+            if (prevJobOrder.current !== currentJobOrder) {
+               toast({
+                title: "Schedule Updated",
+                description: "Your job list has been changed. Please review the new order."
+              });
+            }
+            prevJobOrder.current = currentJobOrder;
+          }
+
+          setAssignedJobs(jobsForTech);
+          setIsLoading(false);
+        }, (err: any) => {
+          setError("Could not load assigned jobs.");
+          setIsLoading(false);
+        });
+        return () => unsubscribeJobs();
+      } else {
+        setError(`No technician profile found for this ID.`);
+        setTechnician(null);
+        setIsLoading(false);
+      }
+    }, (e) => {
+      setError("Could not load technician profile.");
+      setTechnician(null);
+      setIsLoading(false);
+    });
+    
+    return () => unsubscribeTech();
+  }, [firebaseUser, authLoading, userProfile, technicianId, hasPermission, toast, isViewingOwnPage]);
+
+  const handleUpdateLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive"});
+      return;
+    }
+    if (!isViewingOwnPage) {
+        toast({ title: "Action Not Allowed", description: "You can only update your own location.", variant: "destructive"});
+        return;
+    }
+    setIsUpdatingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        if (technician && db) {
+          const techDocRef = doc(db, "technicians", technician.id);
+          try {
+            await updateDoc(techDocRef, {
+              "location.latitude": latitude,
+              "location.longitude": longitude,
+            });
+            toast({ title: "Location Updated", description: "Your current location has been updated." });
+          } catch (error) {
+            toast({ title: "Update Failed", description: "Could not save your new location.", variant: "destructive" });
+          } finally {
+            setIsUpdatingLocation(false);
+          }
+        }
+      },
+      (error) => {
+        let message = "An unknown error occurred.";
+        if (error.code === error.PERMISSION_DENIED) message = "Please allow location access to update your position.";
+        else if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
+        toast({ title: "Geolocation Error", description: message, variant: "destructive" });
+        setIsUpdatingLocation(false);
+      }
+    );
+  };
+  
+  if (isLoading || authLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-muted-foreground">Loading technician jobs...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+     return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
+        <UserX className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold">Error</h2>
+        <p className="text-muted-foreground mt-2">{error}</p>
+        <Button variant="outline" onClick={() => router.back()} className="mt-6">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+        </Button>
+      </div>
+    );
+  }
+  
+  if (!technician) {
+     return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold">Technician Not Found</h2>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-4">
+      {userProfile?.role === 'admin' && (
+        <Button variant="outline" size="sm" onClick={() => router.push('/technician')} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician List
+        </Button>
+      )}
+      <Card className="mb-6 shadow-lg">
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait"/>
+            <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+          </Avatar>
+          <div>
+            <CardTitle className="text-2xl font-headline">{technician.name}</CardTitle>
+            <CardDescription>Currently assigned jobs.</CardDescription>
+          </div>
+        </CardHeader>
+        {isViewingOwnPage && (
+           <CardFooter className="bg-secondary/50 p-3 grid grid-cols-2 gap-2">
+             <Button onClick={handleUpdateLocation} disabled={isUpdatingLocation} className="w-full">
+              {isUpdatingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}
+              Update My Location
+            </Button>
+            <Link href="/technician/profile" className="w-full">
+                <Button variant="outline" className="w-full">
+                    <User className="mr-2 h-4 w-4" /> View My Profile
+                </Button>
+            </Link>
+          </CardFooter>
+        )}
+      </Card>
+
+      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 font-headline">
+        <ListChecks className="text-primary" /> Active Jobs ({assignedJobs.length})
+      </h2>
+      
+      {assignedJobs.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-center">
+            <p className="text-muted-foreground">{technician.name} has no active jobs assigned.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {assignedJobs.map(job => (
+            <Card key={job.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg font-headline">{job.title}</CardTitle>
+                  <Badge variant={job.priority === 'High' ? 'destructive' : job.priority === 'Medium' ? 'default' : 'secondary'}>
+                    {job.priority}
+                  </Badge>
+                </div>
+                <CardDescription className="flex items-center text-sm">
+                  <MapPin size={14} className="mr-1 text-muted-foreground" /> {job.location.address || `Lat: ${job.location.latitude}, Lon: ${job.location.longitude}`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="text-sm">
+                <p className="text-muted-foreground mb-2 line-clamp-2">{job.description}</p>
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                  <span className="flex items-center">
+                    <UserCircle size={14} className="mr-1" /> {job.customerName}
+                  </span>
+                  <span className="flex items-center">
+                    <Clock size={14} className="mr-1" /> Status: {job.status}
+                  </span>
+                </div>
+                 {job.scheduledTime && (
+                  <p className="text-xs text-muted-foreground">
+                    Scheduled: {new Date(job.scheduledTime).toLocaleString()}
+                  </p>
+                )}
+              </CardContent>
+              <CardFooter className="bg-secondary/50 p-3">
+                <Link href={`/technician/${job.id}`} className="w-full">
+                  <Button className="w-full" variant="default">
+                    View Details & Update Status
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

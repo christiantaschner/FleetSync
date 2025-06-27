@@ -53,8 +53,8 @@ const adminNavItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-const technicianNavItems = [
-  { href: "/technician", label: "My Active Jobs", icon: Smartphone },
+const getTechnicianNavItems = (uid: string) => [
+  { href: `/technician/jobs/${uid}`, label: "My Active Jobs", icon: Smartphone },
 ];
 
 const sharedNavItems = [
@@ -86,16 +86,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         if (pathname === '/onboarding') {
           router.replace('/dashboard');
         }
-        // Redirect technician to their view if they are not in it
+        // Redirect technician to their specific jobs page if they land somewhere else
+        // but allow them to visit their profile.
         if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
-          router.replace('/technician');
+            router.replace(`/technician/jobs/${user.uid}`);
         }
         return;
       }
     }
   }, [user, userProfile, loading, router, pathname]);
 
-  if (loading || !userProfile) {
+  if (loading || !userProfile || !user) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -103,7 +104,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // This handles the redirect away from onboarding
   if (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding') {
       return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -112,12 +112,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       );
   }
   
-  // This handles the user who has created an account but not a company yet.
   if (pathname === '/onboarding') {
       return <>{children}</>;
   }
   
-  // NEW: Handle "waiting room" for users without a companyId after onboarding phase
   if (userProfile.onboardingStatus === 'completed' && !userProfile.companyId) {
     return (
         <div className="flex h-screen w-screen flex-col items-center justify-center bg-muted p-4">
@@ -139,15 +137,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-
   const userInitial = user.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user.email || "User";
 
   const getNavItemsForRole = () => {
     if (userProfile?.role === 'technician') {
-      return [...technicianNavItems, ...sharedNavItems];
+      return [...getTechnicianNavItems(user.uid), ...sharedNavItems];
     }
-    // Default to admin/dispatcher view
     return [...adminNavItems, ...sharedNavItems];
   };
   
@@ -180,7 +176,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuItem>
             ))}
-            {/* Show link to technician view for admins */}
             {userProfile?.role === 'admin' && (
               <>
                 <SidebarSeparator />

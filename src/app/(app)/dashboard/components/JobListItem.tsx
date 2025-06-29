@@ -21,14 +21,13 @@ interface JobListItemProps {
   jobs: Job[];
   technicians: Technician[];
   allSkills: string[];
-  allParts: string[];
   onAssignWithAI: (job: Job) => void;
   onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
   onOpenChat: (job: Job) => void;
   onShareTracking: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, allParts, onAssignWithAI, onJobUpdated, onOpenChat, onShareTracking }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, onAssignWithAI, onJobUpdated, onOpenChat, onShareTracking }) => {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -93,17 +92,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
           </div>
         )}
         
-        {job.requiredParts && job.requiredParts.length > 0 && (
-          <div className="flex items-center gap-2">
-            <Package className="h-4 w-4 text-muted-foreground" />
-            <div className="flex flex-wrap gap-1">
-              {job.requiredParts.map(part => (
-                <Badge key={part} variant="outline" className="text-xs">{part}</Badge>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div>
             {job.scheduledTime && (
@@ -141,7 +129,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
           </Button>
         )}
-         <AddEditJobDialog job={job} jobs={jobs} technicians={technicians} allSkills={allSkills} allParts={allParts} onJobUpdated={onJobUpdated}>
+         <AddEditJobDialog job={job} jobs={jobs} technicians={technicians} allSkills={allSkills} onJobUpdated={onJobUpdated}>
             <Button variant="secondary" size="sm">
                 <Edit className="mr-1 h-3 w-3" /> Edit
             </Button>

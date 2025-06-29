@@ -134,12 +134,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Intelligent Parts & Van Stock Management",
-      description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. This is a key step towards reducing 'Kosten' and improving first-time fix rates.",
-      icon: Wrench,
-      status: "Completed",
-    },
-    {
       title: "AI-Powered Job Priority Suggestion",
       description: "When a dispatcher creates a new job, the AI analyzes the description to suggest a priority level (e.g., 'High' for 'emergency,' 'Low' for 'maintenance'). It will also provide a brief justification for the suggested priority, helping dispatchers make faster, more consistent decisions.",
       icon: Lightbulb,
@@ -231,6 +225,12 @@ const roadmapFeatures = {
     },
   ],
   planned: [
+    {
+      title: "Intelligent Parts & Van Stock Management",
+      description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. (Note: This feature is fully coded but has been temporarily disabled pending further review).",
+      icon: Wrench,
+      status: "Planned",
+    },
     {
       title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",
       description: "Ability to group technicians (e.g., a master craftsman and an apprentice) who are always scheduled for jobs together. The AI allocation engine will be updated to assign suitable jobs to a team, respecting their combined skills and availability.",

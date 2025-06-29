@@ -26,7 +26,6 @@ import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechnici
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
-import ManagePartsDialog from './components/ManagePartsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
@@ -66,9 +65,6 @@ export default function DashboardPage() {
   
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
-
-  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
-  const [allParts, setAllParts] = useState<string[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
@@ -112,25 +108,10 @@ export default function DashboardPage() {
       toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
     }
   }, [userProfile, toast]);
-
-  const fetchParts = useCallback(async () => {
-    if (!db || !userProfile?.companyId) return; // Safeguard
-    try {
-      const partsQuery = query(collection(db, "parts"), where("companyId", "==", userProfile.companyId));
-      const querySnapshot = await getDocs(partsQuery);
-      const partsData = querySnapshot.docs.map(doc => doc.data().name as string);
-      partsData.sort((a, b) => a.localeCompare(b));
-      setAllParts(partsData);
-    } catch (error) {
-      console.error("Error fetching parts: ", error);
-      toast({ title: "Error", description: "Could not fetch parts library.", variant: "destructive" });
-    }
-  }, [userProfile, toast]);
   
   const fetchAllData = useCallback(() => {
     fetchSkills();
-    fetchParts();
-  }, [fetchSkills, fetchParts]);
+  }, [fetchSkills]);
 
   // Data fetching
   useEffect(() => {
@@ -154,7 +135,6 @@ export default function DashboardPage() {
     }
 
     fetchSkills();
-    fetchParts();
 
     const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -214,7 +194,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [userProfile, toast, fetchSkills, fetchParts]);
+  }, [userProfile, toast, fetchSkills]);
   
   // Next Up Technician Prediction
   useEffect(() => {
@@ -683,7 +663,6 @@ export default function DashboardPage() {
                   <AddEditJobDialog 
                       technicians={technicians} 
                       allSkills={allSkills} 
-                      allParts={allParts} 
                       onJobAddedOrUpdated={handleJobAddedOrUpdated} 
                       jobs={jobs}
                   >
@@ -721,7 +700,7 @@ export default function DashboardPage() {
              <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
             </Button>
-             <AddEditJobDialog technicians={technicians} allSkills={allSkills} allParts={allParts} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
+             <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
               <Button>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
               </Button>
@@ -776,12 +755,6 @@ export default function DashboardPage() {
             isOpen={isManageSkillsOpen}
             setIsOpen={setIsManageSkillsOpen}
             onSkillsUpdated={fetchSkills}
-        />
-        
-        <ManagePartsDialog
-            isOpen={isManagePartsOpen}
-            setIsOpen={setIsManagePartsOpen}
-            onPartsUpdated={fetchParts}
         />
 
         <ImportJobsDialog
@@ -967,7 +940,6 @@ export default function DashboardPage() {
                     jobs={jobs}
                     technicians={technicians} 
                     allSkills={allSkills}
-                    allParts={allParts}
                     onAssignWithAI={openAIAssignDialogForJob}
                     onJobUpdated={handleJobAddedOrUpdated}
                     onOpenChat={handleOpenChat}
@@ -1001,10 +973,7 @@ export default function DashboardPage() {
                   <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
                     <Settings className="mr-2 h-4 w-4" /> Manage Skills
                   </Button>
-                   <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
-                    <Package className="mr-2 h-4 w-4" /> Manage Parts
-                  </Button>
-                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills} allParts={allParts}>
+                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
                     <Button variant="default">
                       <UserPlus className="mr-2 h-4 w-4" /> Add Technician
                     </Button>
@@ -1025,7 +994,6 @@ export default function DashboardPage() {
                         jobs={jobs} 
                         onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
                         allSkills={allSkills}
-                        allParts={allParts}
                         onMarkUnavailable={handleMarkTechnicianUnavailable}
                     />
                     ))}

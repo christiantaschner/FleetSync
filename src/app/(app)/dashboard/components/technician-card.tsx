@@ -27,12 +27,11 @@ interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
   allSkills: string[];
-  allParts: string[];
   onTechnicianUpdated: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, allParts, onTechnicianUpdated, onMarkUnavailable }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, onTechnicianUpdated, onMarkUnavailable }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
 
   return (
@@ -67,21 +66,6 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
               <p className="text-xs text-muted-foreground">No skills listed.</p>
             )}
           </div>
-        </div>
-
-         <div className="pt-1">
-          <p className="font-medium text-xs text-foreground mb-1.5 flex items-center gap-1"><Package className="h-3.5 w-3.5"/>Van Inventory:</p>
-          <ScrollArea className="h-16">
-            <div className="flex flex-wrap gap-1">
-                {technician.partsInventory && technician.partsInventory.length > 0 ? (
-                  technician.partsInventory.map(part => (
-                    <Badge key={part} variant="outline" className="font-normal">{part}</Badge>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">No parts in inventory.</p>
-                )}
-            </div>
-          </ScrollArea>
         </div>
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex justify-between items-center">
@@ -119,7 +103,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills} allParts={allParts}>
+          <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills}>
             <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
               <Edit className="h-3.5 w-3.5" />
               <span className="sr-only">Edit Technician</span>

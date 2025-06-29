@@ -29,11 +29,10 @@ interface AddEditTechnicianDialogProps {
   children: React.ReactNode;
   technician?: Technician;
   allSkills: string[];
-  allParts: string[];
   onTechnicianAddedOrUpdated?: (technician: Technician) => void;
 }
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, allSkills, allParts, onTechnicianAddedOrUpdated }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, allSkills, onTechnicianAddedOrUpdated }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +42,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedParts, setSelectedParts] = useState<string[]>([]);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -55,7 +53,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
     setEmail(technician?.email || '');
     setPhone(technician?.phone || '');
     setSelectedSkills(technician?.skills || []);
-    setSelectedParts(technician?.partsInventory || []);
     setAvatarUrl(technician?.avatarUrl || 'https://placehold.co/100x100.png');
     setLocationAddress(technician?.location.address || '');
     setLatitude(technician?.location.latitude || null);
@@ -74,14 +71,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       prevSkills.includes(skill) 
         ? prevSkills.filter(s => s !== skill) 
         : [...prevSkills, skill]
-    );
-  };
-
-  const handlePartChange = (part: string) => {
-    setSelectedParts(prevParts =>
-      prevParts.includes(part)
-        ? prevParts.filter(p => p !== part)
-        : [...prevParts, part]
     );
   };
   
@@ -109,7 +98,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       email: email || "", 
       phone: phone || "",
       skills: selectedSkills,
-      partsInventory: selectedParts,
+      partsInventory: [], // Temporarily disabled
       avatarUrl: avatarUrl || 'https://placehold.co/100x100.png',
       location: {
         latitude: latitude ?? 0, 
@@ -180,7 +169,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
               <Input id="techPhone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 555-123-4567" />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <div>
                   <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
                   <ScrollArea className="h-40 rounded-md border p-3 mt-1">
@@ -199,28 +188,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
                       ))}
                       {allSkills.length === 0 && (
                         <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
-                      )}
-                    </div>
-                  </ScrollArea>
-                </div>
-                <div>
-                  <Label><Package className="inline h-3.5 w-3.5 mr-1" />Parts Inventory</Label>
-                  <ScrollArea className="h-40 rounded-md border p-3 mt-1">
-                    <div className="space-y-2">
-                      {allParts.map(part => (
-                        <div key={part} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`part-inv-${part.replace(/\s+/g, '-')}`}
-                            checked={selectedParts.includes(part)}
-                            onCheckedChange={() => handlePartChange(part)}
-                          />
-                          <Label htmlFor={`part-inv-${part.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                            {part}
-                          </Label>
-                        </div>
-                      ))}
-                       {allParts.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-4">No parts defined.</p>
                       )}
                     </div>
                   </ScrollArea>

@@ -11,14 +11,25 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+interface DeveloperBrief {
+  coreFunctionality?: string[];
+  dataModels?: string[];
+  aiComponents?: string[];
+  uiUx?: string[];
+  integrationPoints?: string[];
+  technicalChallenges?: string[];
+  successMetrics?: string[];
+}
+
 interface RoadmapItemProps {
   title: string;
   description: string;
   icon: React.ElementType;
   status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision' | 'Completed';
+  developerBrief?: DeveloperBrief;
 }
 
-const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status }) => {
+const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status, developerBrief }) => {
   return (
     <Card className={cn(
         "hover:shadow-lg transition-shadow h-full flex flex-col",
@@ -42,6 +53,17 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-sm text-muted-foreground">{description}</p>
+        {developerBrief && (
+          <details className="mt-3 text-xs">
+            <summary className="cursor-pointer font-medium text-primary hover:underline">Dev Notes</summary>
+            <div className="mt-2 space-y-2 p-2 rounded-md border bg-secondary/50">
+              {developerBrief.coreFunctionality && <p><strong>Functionality:</strong> {developerBrief.coreFunctionality.join(' ')}</p>}
+              {developerBrief.dataModels && <p><strong>Data Models:</strong> {developerBrief.dataModels.join(' ')}</p>}
+              {developerBrief.aiComponents && <p><strong>AI:</strong> {developerBrief.aiComponents.join(' ')}</p>}
+              {developerBrief.uiUx && <p><strong>UI/UX:</strong> {developerBrief.uiUx.join(' ')}</p>}
+            </div>
+          </details>
+        )}
       </CardContent>
     </Card>
   );
@@ -230,6 +252,27 @@ const roadmapFeatures = {
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. (Note: This feature is fully coded but has been temporarily disabled pending further review).",
       icon: Wrench,
       status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Track required parts for a job (`Job.requiredParts`).",
+          "Track parts inventory carried by each technician (`Technician.partsInventory`).",
+          "Manage a central library of available parts.",
+        ],
+        dataModels: [
+          "A `parts` collection in Firestore to store the library of all possible parts.",
+          "`Technician.partsInventory`: An array of strings on the Technician document.",
+          "`Job.requiredParts`: An array of strings on the Job document.",
+        ],
+        aiComponents: [
+          "`suggestJobPartsFlow`: An AI flow that analyzes a job description and suggests required parts from the central library.",
+          "`allocateJobFlow`: The main job allocation AI was previously instructed to prioritize technicians who have the required parts in their van inventory.",
+        ],
+        uiUx: [
+          "`ManagePartsDialog`: A dialog for admins to add/remove parts from the central library.",
+          "`AddEditTechnicianDialog`: Included a section for assigning parts from the library to a technician's van stock.",
+          "`AddEditJobDialog`: Included a section to specify required parts, with AI suggestions.",
+        ],
+      },
     },
     {
       title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",
@@ -342,3 +385,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+    

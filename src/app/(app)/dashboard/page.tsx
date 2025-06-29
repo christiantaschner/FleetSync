@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Package } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -984,9 +984,6 @@ export default function DashboardPage() {
                   <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
-                    <Package className="mr-2 h-4 w-4" /> Manage Parts
-                  </Button>
                   <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
                     <Settings className="mr-2 h-4 w-4" /> Manage Skills
                   </Button>

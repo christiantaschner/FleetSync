@@ -60,6 +60,7 @@ const getTechnicianNavItems = (uid: string) => [
 
 const csrNavItems = [
   { href: "/dashboard", label: "Create Job", icon: PlusCircle },
+  { href: "/contracts", label: "Manage Contracts", icon: Repeat },
 ];
 
 const sharedNavItems = [

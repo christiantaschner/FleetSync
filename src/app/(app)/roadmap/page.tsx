@@ -138,12 +138,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "AI-Assisted Digital Protocols & Checklists",
-      description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
-      icon: ClipboardList,
-      status: "Completed",
-    },
-    {
       title: "Dynamic Skill Library Management",
       description: "Allows dispatchers to define and manage a central library of technician skills (e.g., specific certifications, equipment expertise). This list populates selection options when editing technicians and is used by AI for smarter job allocation. Ensures consistent skill terminology and makes skill-based assignment more robust.",
       icon: Cog, 
@@ -247,6 +241,31 @@ const roadmapFeatures = {
     },
   ],
   planned: [
+    {
+      title: "AI-Assisted Digital Protocols & Checklists",
+      description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
+      icon: ClipboardList,
+      status: "Planned",
+       developerBrief: {
+        coreFunctionality: [
+            "Technicians must complete a pre-work safety checklist before they can start a job.",
+            "The 'Start Job' button is disabled until the checklist is submitted.",
+            "Completed checklist data is saved to the `Job` document in Firestore."
+        ],
+        dataModels: [
+            "Job.checklistResults: An array of `ChecklistResult` objects.",
+            "`ChecklistResult` is defined as `{ item: string, checked: boolean }` in `src/types/index.ts`."
+        ],
+        aiComponents: [
+            "Future vision: AI could analyze checklist data to identify safety trends or automatically flag if a critical check is missed repeatedly across the company."
+        ],
+        uiUx: [
+            "`ChecklistCard.tsx`: Renders the checklist with checkboxes.",
+            "`technician/[jobId]/page.tsx`: Displays the `ChecklistCard` for jobs with 'Assigned' or 'En Route' status.",
+            "`status-update-actions.tsx`: Disables the 'Start Job' button based on checklist completion."
+        ],
+      }
+    },
     {
       title: "Intelligent Parts & Van Stock Management",
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. (Note: This feature is fully coded but has been temporarily disabled pending further review).",

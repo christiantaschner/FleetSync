@@ -10,10 +10,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface StatusUpdateActionsProps {
   currentStatus: JobStatus;
   onUpdateStatus: (newStatus: JobStatus) => void;
-  isChecklistComplete: boolean;
 }
 
-const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus, onUpdateStatus, isChecklistComplete }) => {
+const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus, onUpdateStatus }) => {
   const availableActions: { label: string; status: JobStatus; icon: React.ElementType, variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | null | undefined, disabled?: boolean, disabledTooltip?: string }[] = [];
 
   switch (currentStatus) {
@@ -26,8 +25,6 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
         status: 'In Progress',
         icon: Play,
         variant: "default",
-        disabled: !isChecklistComplete,
-        disabledTooltip: "Please complete the pre-work safety checklist first."
       });
       break;
     case 'In Progress':

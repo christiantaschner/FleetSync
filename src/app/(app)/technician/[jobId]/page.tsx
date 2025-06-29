@@ -22,7 +22,6 @@ import { Textarea } from '@/components/ui/textarea';
 import ChatCard from './components/ChatCard';
 import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
-import ChecklistCard from './components/ChecklistCard';
 import { calculateTravelMetricsAction } from '@/actions/fleet-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -287,26 +286,7 @@ export default function TechnicianJobDetailPage() {
       setIsUpdating(false);
     }
   };
-
-  const handleChecklistSubmit = async (results: ChecklistResult[]) => {
-    if (!job || !db || isUpdating) return;
-    setIsUpdating(true);
-    const jobDocRef = doc(db, "jobs", job.id);
-    try {
-      await updateDoc(jobDocRef, {
-        checklistResults: results,
-        updatedAt: serverTimestamp(),
-      });
-      setJob(prev => prev ? { ...prev, checklistResults: results, updatedAt: new Date().toISOString() } : null);
-      toast({ title: "Checklist Saved", description: "Pre-work safety checks are complete."});
-    } catch (error) {
-      console.error("Error submitting checklist:", error);
-      toast({ title: "Error", description: "Could not save checklist.", variant: "destructive" });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
+  
   const handleNavigate = () => {
     if (job?.location?.address) {
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`;
@@ -346,7 +326,6 @@ export default function TechnicianJobDetailPage() {
   const isViewingOwnPage = user?.uid === job.assignedTechnicianId;
   const isAdminView = userProfile?.role === 'admin' && !isViewingOwnPage;
   const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
-  const isChecklistComplete = !!job.checklistResults && job.checklistResults.length > 0;
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
@@ -384,8 +363,7 @@ export default function TechnicianJobDetailPage() {
               <CardContent className="flex flex-wrap gap-3 items-center">
                 <StatusUpdateActions 
                     currentStatus={job.status} 
-                    onUpdateStatus={handleStatusUpdate} 
-                    isChecklistComplete={isChecklistComplete} 
+                    onUpdateStatus={handleStatusUpdate}
                 />
                 {job.status === 'In Progress' && (
                   <Button
@@ -399,14 +377,6 @@ export default function TechnicianJobDetailPage() {
                 )}
               </CardContent>
             </Card>
-          )}
-
-          {job && (job.status === 'Assigned' || job.status === 'En Route') && (
-            <ChecklistCard 
-                job={job}
-                onSubmit={handleChecklistSubmit}
-                isUpdating={isUpdating}
-            />
           )}
 
           {job && technician && !isJobConcluded && (

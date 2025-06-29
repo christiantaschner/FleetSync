@@ -113,7 +113,7 @@ export default function ContractsPage() {
                 <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle className="font-headline flex items-center gap-2"><Repeat/> Recurring Service Contracts</CardTitle>
-                        <CardDescription>Manage recurring service agreements. Use the "Generate Jobs" button to create work orders from these contracts for a specific time period.</CardDescription>
+                        <CardDescription>Create and manage your recurring service agreements. These contracts act as templates. When you are ready to schedule, use the 'Generate Jobs' button to create all the necessary work orders for a specific time period.</CardDescription>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => setIsGenerateJobsOpen(true)}>

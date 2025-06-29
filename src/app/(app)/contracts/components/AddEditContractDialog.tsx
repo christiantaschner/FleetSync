@@ -121,7 +121,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 <DialogHeader>
                     <DialogTitle className="font-headline">{contract ? 'Edit Contract' : 'Create New Contract'}</DialogTitle>
                     <DialogDescription>
-                        {contract ? 'Update the details for this recurring service contract.' : 'Fill in the details for a new recurring service contract.'}
+                        {contract ? 'Update the details for this recurring service contract.' : 'Create a new contract template. This will be used to generate recurring jobs later.'}
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit(onSubmitForm)}>

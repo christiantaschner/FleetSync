@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Package } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -60,7 +60,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
-  const [requiredParts, setRequiredParts] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
@@ -73,7 +72,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     setDescription(job?.description || '');
     setPriority(job?.priority || 'Medium');
     setRequiredSkills(job?.requiredSkills || []);
-    setRequiredParts(job?.requiredParts || []);
     setCustomerName(job?.customerName || '');
     setCustomerPhone(job?.customerPhone || '');
     setLocationAddress(job?.location.address || '');
@@ -132,7 +130,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     }
   }, [description, isOpen, job, fetchAISkillSuggestion, fetchAIPrioritySuggestion]);
 
-  const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentRequiredParts: string[], currentScheduledTime?: Date) => {
+  const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
       setAiSuggestion(null);
       setSuggestedTechnicianDetails(null);
@@ -155,7 +153,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         technicianName: t.name,
         isAvailable: t.isAvailable,
         skills: t.skills as string[],
-        partsInventory: t.partsInventory || [],
         location: {
           latitude: t.location.latitude,
           longitude: t.location.longitude,
@@ -168,7 +165,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
       jobDescription: currentDescription,
       jobPriority: currentPriority,
       requiredSkills: currentRequiredSkills,
-      requiredParts: currentRequiredParts,
       technicianAvailability: aiTechnicians,
       scheduledTime: currentScheduledTime?.toISOString(),
     };
@@ -190,11 +186,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   useEffect(() => {
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
-        fetchAIAssignmentSuggestion(description, priority, requiredSkills, requiredParts, scheduledTime);
+        fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
       }, 1000); 
       return () => clearTimeout(timer);
     }
-  }, [description, priority, requiredSkills, requiredParts, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion]);
+  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);

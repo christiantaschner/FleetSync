@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, Package, MessageSquare, Share2, Shuffle, ArrowDownUp } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -26,6 +26,7 @@ import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechnici
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
+import ManagePartsDialog from './components/ManagePartsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +66,7 @@ export default function DashboardPage() {
   
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
+  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
@@ -95,23 +97,24 @@ export default function DashboardPage() {
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  const fetchSkills = useCallback(async () => {
-    if (!db || !userProfile?.companyId) return; // Safeguard
+  const fetchSkillsAndParts = useCallback(async () => {
+    if (!db || !userProfile?.companyId) return;
     try {
-      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
-      const querySnapshot = await getDocs(skillsQuery);
-      const skillsData = querySnapshot.docs.map(doc => doc.data().name as string);
-      skillsData.sort((a, b) => a.localeCompare(b));
-      setAllSkills(skillsData);
+        const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
+        const skillsSnapshot = await getDocs(skillsQuery);
+        const skillsData = skillsSnapshot.docs.map(doc => doc.data().name as string);
+        skillsData.sort((a, b) => a.localeCompare(b));
+        setAllSkills(skillsData);
+
     } catch (error) {
-      console.error("Error fetching skills: ", error);
-      toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+        console.error("Error fetching libraries: ", error);
+        toast({ title: "Error", description: "Could not fetch skills/parts libraries.", variant: "destructive" });
     }
-  }, [userProfile, toast]);
+}, [userProfile, toast]);
   
   const fetchAllData = useCallback(() => {
-    fetchSkills();
-  }, [fetchSkills]);
+    fetchSkillsAndParts();
+  }, [fetchSkillsAndParts]);
 
   // Data fetching
   useEffect(() => {
@@ -134,7 +137,7 @@ export default function DashboardPage() {
         }
     }
 
-    fetchSkills();
+    fetchSkillsAndParts();
 
     const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -194,7 +197,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [userProfile, toast, fetchSkills]);
+  }, [userProfile, toast, fetchSkillsAndParts]);
   
   // Next Up Technician Prediction
   useEffect(() => {
@@ -272,7 +275,6 @@ export default function DashboardPage() {
       technicianName: t.name,
       isAvailable: t.isAvailable,
       skills: t.skills as string[],
-      partsInventory: t.partsInventory || [],
       location: t.location,
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
         .map(j => ({
@@ -286,7 +288,6 @@ export default function DashboardPage() {
       jobDescription: job.description,
       jobPriority: job.priority,
       requiredSkills: job.requiredSkills || [],
-      requiredParts: job.requiredParts || [],
       scheduledTime: job.scheduledTime,
       technicianAvailability: aiTechnicians,
     };
@@ -490,7 +491,6 @@ export default function DashboardPage() {
             technicianName: t.name,
             isAvailable: t.isAvailable,
             skills: t.skills as string[],
-            partsInventory: t.partsInventory || [],
             location: t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
@@ -499,7 +499,6 @@ export default function DashboardPage() {
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
-            requiredParts: job.requiredParts || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
         };
@@ -707,6 +706,23 @@ export default function DashboardPage() {
             </AddEditJobDialog>
           </div>
         </div>
+        
+        <Card>
+            <CardHeader className="flex-row items-center justify-between gap-4 pb-4">
+                <div>
+                    <CardTitle className="font-headline">Daily Operations</CardTitle>
+                    <CardDescription>High-impact AI tools for managing your daily schedule.</CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => {}} disabled>
+                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
+                    </Button>
+                    <Button variant="outline" onClick={() => {}} disabled>
+                        <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
+                    </Button>
+                </div>
+            </CardHeader>
+        </Card>
 
         {riskAlerts.length > 0 && (
           <div className="space-y-2">
@@ -754,7 +770,13 @@ export default function DashboardPage() {
         <ManageSkillsDialog 
             isOpen={isManageSkillsOpen}
             setIsOpen={setIsManageSkillsOpen}
-            onSkillsUpdated={fetchSkills}
+            onSkillsUpdated={fetchSkillsAndParts}
+        />
+        
+        <ManagePartsDialog 
+            isOpen={isManagePartsOpen}
+            setIsOpen={setIsManagePartsOpen}
+            onPartsUpdated={fetchSkillsAndParts}
         />
 
         <ImportJobsDialog
@@ -970,6 +992,9 @@ export default function DashboardPage() {
                   <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
                 </div>
                  <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
+                    <Package className="mr-2 h-4 w-4" /> Manage Parts
+                  </Button>
                   <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
                     <Settings className="mr-2 h-4 w-4" /> Manage Skills
                   </Button>

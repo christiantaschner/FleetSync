@@ -36,10 +36,6 @@ const prompt = ai.definePrompt({
   CRITICAL: The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
   {{/if}}
 
-  {{#if requiredParts.length}}
-  CRITICAL: The job explicitly requires the following parts: {{#each requiredParts}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. A technician who already has these parts in their inventory is HIGHLY preferred.
-  {{/if}}
-
   Given the following job description and a list of technicians, suggest the most suitable technician for the job.
   Consider the job priority when making your suggestion.
   {{#if scheduledTime}}Crucially, the customer has requested a specific appointment time: {{{scheduledTime}}}. The suggested technician must be able to meet this appointment, considering their current location and other commitments. Factor this heavily into your decision.{{/if}}
@@ -51,7 +47,7 @@ const prompt = ai.definePrompt({
 
   Technician Availability:
   {{#each technicianAvailability}}
-  - Technician ID: {{{technicianId}}}, Name: {{{technicianName}}}, Available: {{{isAvailable}}}, Skills: {{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}, Location: (Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}}), Parts Inventory: {{#if partsInventory.length}}{{#each partsInventory}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
+  - Technician ID: {{{technicianId}}}, Name: {{{technicianName}}}, Available: {{{isAvailable}}}, Skills: {{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}, Location: (Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}})
     {{#if currentJobs.length}}
     Current Assigned Jobs:
     {{#each currentJobs}}

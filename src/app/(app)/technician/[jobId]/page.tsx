@@ -5,14 +5,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import type { Job, JobStatus, Technician, ChecklistResult } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/job-details-display';
 import StatusUpdateActions from './components/status-update-actions';
 import WorkDocumentationForm from './components/work-documentation-form';
 import { db, storage } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL, uploadBytes } from "firebase/storage";
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import { calculateTravelMetricsAction } from '@/actions/fleet-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import CustomerHistoryCard from './components/CustomerHistoryCard';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function TechnicianJobDetailPage() {
 
   const [job, setJob] = useState<Job | null>(null);
   const [technician, setTechnician] = useState<Technician | null>(null);
+  const [historyJobs, setHistoryJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   
@@ -64,7 +66,14 @@ export default function TechnicianJobDetailPage() {
           }
           const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
           
-          const techDocRef = doc(db, "technicians", fetchedJob.assignedTechnicianId!);
+          if (!fetchedJob.assignedTechnicianId) {
+            toast({ title: "Error", description: "This job is unassigned.", variant: "destructive" });
+            setError("Job is unassigned.");
+            setIsLoading(false);
+            return;
+          }
+
+          const techDocRef = doc(db, "technicians", fetchedJob.assignedTechnicianId);
           const techDocSnap = await getDoc(techDocRef);
           
           if (!techDocSnap.exists()) {
@@ -79,6 +88,30 @@ export default function TechnicianJobDetailPage() {
           
           if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
             setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
+          }
+          
+           // Fetch customer history
+          if (fetchedJob.customerPhone) {
+            const historyQuery = query(
+                collection(db, "jobs"),
+                where("companyId", "==", fetchedJob.companyId),
+                where("customerPhone", "==", fetchedJob.customerPhone),
+                where("status", "==", "Completed"),
+                where("createdAt", "<", fetchedJob.createdAt),
+                orderBy("createdAt", "desc"),
+                limit(3)
+            );
+            const historySnapshot = await getDocs(historyQuery);
+            const pastJobs = historySnapshot.docs.map(doc => {
+                const data = doc.data();
+                 for (const key in data) {
+                    if (data[key] && typeof data[key].toDate === 'function') {
+                        data[key] = data[key].toDate().toISOString();
+                    }
+                }
+                return { id: doc.id, ...data } as Job;
+            });
+            setHistoryJobs(pastJobs);
           }
 
         } else {
@@ -97,7 +130,7 @@ export default function TechnicianJobDetailPage() {
   }, [jobId, router, toast, user]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
-    if (!job || !db || isUpdating) return;
+    if (!job || !db || isUpdating || !technician) return;
     
     if (isBreakActive) {
       toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
@@ -105,6 +138,34 @@ export default function TechnicianJobDetailPage() {
     }
 
     setIsUpdating(true);
+    
+    // Auto-update location when starting job
+    if (newStatus === 'In Progress') {
+        try {
+             if (!navigator.geolocation) {
+                throw new Error("Geolocation is not supported by your browser.");
+            }
+            const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0,
+                });
+            });
+
+            const techDocRef = doc(db, "technicians", technician.id);
+            await updateDoc(techDocRef, {
+                "location.latitude": position.coords.latitude,
+                "location.longitude": position.coords.longitude,
+            });
+            toast({ title: "Location Updated", description: "Your arrival location was shared with the dispatcher." });
+        } catch (locationError: any) {
+            let message = locationError.message;
+            if (locationError.code === 1) message = "Please allow location access to update your position.";
+            toast({ title: "Location Error", description: `Could not update location: ${message}`, variant: "destructive" });
+        }
+    }
+    
     const jobDocRef = doc(db, "jobs", job.id);
     try {
       const updatePayload: any = {
@@ -351,6 +412,8 @@ export default function TechnicianJobDetailPage() {
       { isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div> }
 
       <JobDetailsDisplay job={job} />
+      
+      <CustomerHistoryCard jobs={historyJobs} />
 
       {/* Conditionally render all action cards based on if it's the technician's own view */}
       {isViewingOwnPage && (

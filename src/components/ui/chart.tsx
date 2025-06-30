@@ -3,7 +3,6 @@
 
 import * as React from "react"
 import { Legend, Tooltip } from "recharts"
-import { useResizeDetector } from "react-resize-detector"
 
 import { cn } from "@/lib/utils"
 
@@ -36,22 +35,51 @@ function useChart() {
   return context
 }
 
-// Custom ResponsiveContainer to bypass build issues with the one from recharts
+// Custom ResponsiveContainer using ResizeObserver API to avoid dependency issues
 const ResponsiveContainer = React.forwardRef<
   HTMLDivElement,
   { children: React.ReactElement }
 >(({ children }, ref) => {
-  const { width, height, ref: containerRef } = useResizeDetector()
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = React.useState<{ width: number; height: number } | null>(null);
+
+  React.useEffect(() => {
+    const observeTarget = containerRef.current;
+    if (!observeTarget) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      if (!Array.isArray(entries) || !entries.length) {
+        return;
+      }
+      const entry = entries[0];
+      setDimensions({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      });
+    });
+
+    resizeObserver.observe(observeTarget);
+
+    // Initial measurement in case the observer doesn't fire immediately
+    const { width, height } = observeTarget.getBoundingClientRect();
+    if (width > 0 && height > 0) {
+      setDimensions({ width, height });
+    }
+
+    return () => {
+      resizeObserver.unobserve(observeTarget);
+    };
+  }, []);
 
   const chart = React.useMemo(() => {
-    if (!width || !height) {
-        return null;
+    if (!dimensions) {
+        return null; // Don't render the chart until we have dimensions
     }
     return React.cloneElement(children, {
-      width,
-      height,
+      width: dimensions.width,
+      height: dimensions.height,
     })
-  }, [children, width, height])
+  }, [children, dimensions])
 
   return (
     <div

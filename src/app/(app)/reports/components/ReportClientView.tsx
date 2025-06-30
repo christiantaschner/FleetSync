@@ -40,15 +40,16 @@ import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-
-import { BarChart } from 'recharts/lib/chart/BarChart';
-import { PieChart } from 'recharts/lib/chart/PieChart';
-import { Bar } from 'recharts/lib/cartesian/Bar';
-import { XAxis } from 'recharts/lib/cartesian/XAxis';
-import { YAxis } from 'recharts/lib/cartesian/YAxis';
-import { CartesianGrid } from 'recharts/lib/cartesian/CartesianGrid';
-import { Pie } from 'recharts/lib/polar/Pie';
-import { Cell } from 'recharts/lib/component/Cell';
+import {
+  BarChart,
+  PieChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Pie,
+  Cell,
+} from 'recharts';
 
 
 const pieChartColors = [

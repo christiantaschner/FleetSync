@@ -34,6 +34,7 @@ import {
   SidebarTrigger,
   SidebarInset,
   SidebarSeparator,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/logo";
@@ -172,7 +173,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex items-center justify-between">
             <Logo />
@@ -272,6 +273,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarFooter>
+        <SidebarRail />
       </Sidebar>
       <SidebarInset>
         <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/20 bg-primary px-4 text-primary-foreground md:hidden">

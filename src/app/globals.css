@@ -35,14 +35,14 @@ body {
     --radius: 0.5rem;
 
     /* Sidebar specific colors */
-    --sidebar-background: 220 14% 10%; /* Darker, slightly blueish gray */
-    --sidebar-foreground: 210 20% 92%; /* Light Gray for text */
-    --sidebar-primary: 196 82% 43%; /* Saturated Blue */
-    --sidebar-primary-foreground: 0 0% 100%; /* White */
-    --sidebar-accent: 220 14% 20%; /* Slightly lighter dark gray for hover */
-    --sidebar-accent-foreground: 0 0% 100%; /* White text on hover */
-    --sidebar-border: 220 14% 15%; /* Border for separation */
-    --sidebar-ring: 196 82% 43%; /* Saturated Blue for rings */
+    --sidebar-background: 0 0% 100%; /* Card background */
+    --sidebar-foreground: 0 0% 3.9%;
+    --sidebar-primary: 196 82% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 13% 91%;
+    --sidebar-accent-foreground: 220 9% 32%;
+    --sidebar-border: 220 13% 85%;
+    --sidebar-ring: 196 82% 43%;
   }
   .dark {
     --background: 220 14% 10%;
@@ -70,14 +70,14 @@ body {
     --chart-4: 30 80% 70%;
     --chart-5: 210 40% 65%;
 
-    /* Dark Sidebar specific colors remain the same as the base dark theme */
+    /* Dark Sidebar specific colors */
     --sidebar-background: 220 14% 10%; 
-    --sidebar-foreground: 210 20% 92%; 
-    --sidebar-primary: 196 82% 53%; 
-    --sidebar-primary-foreground: 0 0% 100%; 
-    --sidebar-accent: 220 14% 20%; 
-    --sidebar-accent-foreground: 0 0% 100%; 
-    --sidebar-border: 220 14% 15%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 196 82% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 20%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 220 14% 25%;
     --sidebar-ring: 196 82% 53%;
   }
 }

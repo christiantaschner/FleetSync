@@ -300,7 +300,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </AlertTitle>
                     <AlertDescription>
                         Please{' '}
-                        <Link href="/settings" className="font-bold underline">
+                        <Link href="/settings?tab=billing" className="font-bold underline">
                             go to your billing settings
                         </Link>
                         {' '} to choose a plan and continue using all features.
@@ -312,7 +312,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
                     <AlertDescription className="text-primary/90">
                         You have {trialDaysLeft} days left. {' '}
-                        <Link href="/settings" className="font-semibold underline">
+                        <Link href="/settings?tab=billing" className="font-semibold underline">
                             Choose your plan
                         </Link>
                         {' '} to keep your service active.

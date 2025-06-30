@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import type { Company } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,9 +13,20 @@ import SubscriptionManagement from './components/SubscriptionManagement';
 
 export default function SettingsPage() {
     const { company, loading } = useAuth();
+    const searchParams = useSearchParams();
+    const [activeTab, setActiveTab] = useState('general');
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'billing') {
+            setActiveTab('billing');
+        } else {
+            setActiveTab('general');
+        }
+    }, [searchParams]);
     
     return (
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
                 <TabsTrigger value="general"><Building className="mr-2 h-4 w-4"/>General Settings</TabsTrigger>
                 <TabsTrigger value="billing"><CreditCard className="mr-2 h-4 w-4"/>Billing & Subscription</TabsTrigger>

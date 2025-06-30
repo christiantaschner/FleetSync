@@ -1,12 +1,9 @@
 
-import { config } from 'dotenv';
-config(); // Explicitly load variables from .env
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  transpilePackages: [],
+  transpilePackages: ['recharts'],
   typescript: {
     ignoreBuildErrors: true,
   },

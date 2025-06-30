@@ -243,7 +243,7 @@ const roadmapFeatures = {
   planned: [
     {
       title: "AI-Assisted Digital Protocols & Checklists",
-      description: "Enable technicians to complete job-specific digital checklists and protocols on their mobile device. This ensures standardized procedures, captures structured data for better analytics, and replaces paper forms.",
+      description: "Enable technicians to complete job-specific digital checklists on their mobile device. This ensures standardized procedures and captures structured data.",
       icon: ClipboardList,
       status: "Planned",
        developerBrief: {
@@ -292,6 +292,30 @@ const roadmapFeatures = {
           "`AddEditJobDialog`: Included a section to specify required parts, with AI suggestions.",
         ],
       },
+    },
+    {
+      title: "Exportable Time Tracking Reports",
+      description: "Enable dispatchers to export detailed time logs to a CSV file. This data, including travel, on-site, and break times, can be used for payroll and job costing.",
+      icon: FileSpreadsheet,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+            "Add an 'Export CSV' button to the Reporting page.",
+            "Generate a CSV file containing time log data based on the selected date range and technician filter.",
+            "The CSV should include columns: Technician Name, Job Title, Date, Travel Time, Work Time, Break Time, Total Time."
+        ],
+        dataModels: [
+            "Uses the same processed data as the Time Log table on the technician profile.",
+            "Relies on Job timestamps: enRouteAt, inProgressAt, completedAt, and the breaks array."
+        ],
+        aiComponents: [
+            "No direct AI component, but data quality relies on the AI-assisted scheduling being accurate."
+        ],
+        uiUx: [
+            "A new 'Export CSV' button on the /reports page.",
+            "The export process should be asynchronous, showing a loading state on the button."
+        ],
+      }
     },
     {
       title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",

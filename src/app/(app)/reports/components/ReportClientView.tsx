@@ -112,12 +112,18 @@ export default function ReportClientView() {
         ? dateFilteredJobs 
         : dateFilteredJobs.filter(job => job.assignedTechnicianId === selectedTechnicianId);
 
-    if (filteredJobs.length === 0) {
+    const technicianSummary = selectedTechnicianId !== 'all' 
+        ? technicians.find(t => t.id === selectedTechnicianId) 
+        : null;
+
+    if (dateFilteredJobs.length === 0) { // Base check on date-filtered, not fully-filtered
       return {
         kpis: { totalJobs: 0, completedJobs: 0, avgDuration: "N/A", avgTimeToAssign: "N/A", avgSatisfaction: "N/A", ftfr: "N/A", onTimeArrivalRate: "N/A", totalEmissions: 0 },
+        technicianSummary: technicianSummary ? { ...technicianSummary, completedJobs: 0, avgDuration: "N/A", ftfr: "N/A" } : null,
       };
     }
-
+    
+    // Calculate KPIs on the potentially filtered job list
     const completedJobs = filteredJobs.filter(j => j.status === "Completed");
 
     const completedJobsWithTime = completedJobs.filter(j => j.completedAt && j.inProgressAt);
@@ -164,6 +170,13 @@ export default function ReportClientView() {
     
     const totalEmissions = completedJobs.reduce((acc, j) => acc + (j.co2EmissionsKg || 0), 0);
 
+    const technicianSummaryData = technicianSummary ? {
+        ...technicianSummary,
+        completedJobs: completedJobs.length,
+        avgDuration: formatDuration(avgDurationMs),
+        ftfr: ftfrPercentage,
+    } : null;
+
     return {
       kpis: {
         totalJobs: filteredJobs.length,
@@ -175,6 +188,7 @@ export default function ReportClientView() {
         onTimeArrivalRate: onTimeArrivalRate,
         totalEmissions: parseFloat(totalEmissions.toFixed(2)),
       },
+      technicianSummary: technicianSummaryData,
     };
   }, [jobs, technicians, date, selectedTechnicianId]);
 
@@ -201,6 +215,35 @@ export default function ReportClientView() {
             <DateRangePicker date={date} setDate={setDate} />
           </div>
       </div>
+
+      {reportData.technicianSummary && (
+        <Card className="bg-primary/5 border-primary/20">
+            <CardHeader className="flex flex-row items-center gap-4">
+                 <Avatar className="h-16 w-16 border-2 border-primary/50">
+                    <AvatarImage src={reportData.technicianSummary.avatarUrl} alt={reportData.technicianSummary.name} />
+                    <AvatarFallback>{reportData.technicianSummary.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="text-sm text-muted-foreground">Performance Report For</p>
+                    <CardTitle className="font-headline text-2xl">{reportData.technicianSummary.name}</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
+                <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground">Completed Jobs</p>
+                    <p className="text-xl font-bold">{reportData.technicianSummary.completedJobs}</p>
+                </div>
+                 <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground">Avg. On-Site Duration</p>
+                    <p className="text-xl font-bold">{reportData.technicianSummary.avgDuration}</p>
+                </div>
+                 <div className="p-3 bg-background rounded-lg border">
+                    <p className="text-xs text-muted-foreground">First-Time-Fix Rate</p>
+                    <p className="text-xl font-bold">{reportData.technicianSummary.ftfr}%</p>
+                </div>
+            </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Jobs</CardTitle><Briefcase className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalJobs}</div><p className="text-xs text-muted-foreground">In selected period</p></CardContent></Card>

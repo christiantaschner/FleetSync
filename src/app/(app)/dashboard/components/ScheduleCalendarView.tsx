@@ -189,7 +189,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto border rounded-lg" ref={containerRef}>
+        <div className="w-full overflow-x-auto border rounded-lg" ref={containerRef}>
           <div className="relative" style={{ minWidth: '1200px' }}>
             <div className="sticky top-0 z-0 h-10 flex border-b bg-muted/50">
               <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>

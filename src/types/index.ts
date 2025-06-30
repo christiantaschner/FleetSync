@@ -14,8 +14,8 @@ export type TechnicianSkill = string;
 export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
-    companyId: z.string().optional(),
-    role: z.nativeEnum(['admin', 'dispatcher', 'technician', 'csr']).optional(),
+    companyId: z.string().nullable(),
+    role: z.enum(['admin', 'dispatcher', 'technician', 'csr', 'super_admin']).nullable(),
     onboardingStatus: z.nativeEnum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
@@ -39,7 +39,7 @@ export const CompanySchema = z.object({
     id: z.string(),
     name: z.string(),
     ownerId: z.string(),
-    createdAt: z.string(),
+    createdAt: z.string().optional(),
     settings: CompanySettingsSchema.optional(),
 
     // Stripe fields

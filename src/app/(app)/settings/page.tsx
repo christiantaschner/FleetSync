@@ -6,30 +6,36 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import type { Company } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Building, CreditCard } from 'lucide-react';
+import { Loader2, Building, CreditCard, Users } from 'lucide-react';
 import CompanySettingsForm from './components/CompanySettingsForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SubscriptionManagement from './components/SubscriptionManagement';
+import UserManagement from './components/UserManagement';
 
 export default function SettingsPage() {
-    const { company, loading } = useAuth();
+    const { userProfile, company, loading } = useAuth();
     const searchParams = useSearchParams();
     const [activeTab, setActiveTab] = useState('general');
 
     useEffect(() => {
         const tab = searchParams.get('tab');
-        if (tab === 'billing') {
-            setActiveTab('billing');
+        if (tab === 'billing' || tab === 'users') {
+            setActiveTab(tab);
         } else {
             setActiveTab('general');
         }
     }, [searchParams]);
+
+    const canManageUsers = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
     
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-                <TabsTrigger value="general"><Building className="mr-2 h-4 w-4"/>General Settings</TabsTrigger>
-                <TabsTrigger value="billing"><CreditCard className="mr-2 h-4 w-4"/>Billing & Subscription</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 max-w-xl">
+                <TabsTrigger value="general"><Building className="mr-2 h-4 w-4"/>General</TabsTrigger>
+                <TabsTrigger value="billing"><CreditCard className="mr-2 h-4 w-4"/>Billing</TabsTrigger>
+                {canManageUsers && (
+                    <TabsTrigger value="users"><Users className="mr-2 h-4 w-4"/>Users</TabsTrigger>
+                )}
             </TabsList>
             <TabsContent value="general">
                 <Card>
@@ -77,6 +83,28 @@ export default function SettingsPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
+            {canManageUsers && (
+                 <TabsContent value="users">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Users/> User Management</CardTitle>
+                            <CardDescription>
+                                Invite new users and manage roles for your company.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             {loading && (
+                                <div className="flex justify-center items-center py-10">
+                                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                </div>
+                            )}
+                            {!loading && userProfile?.companyId && (
+                                <UserManagement companyId={userProfile.companyId} />
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+            )}
         </Tabs>
     );
 }

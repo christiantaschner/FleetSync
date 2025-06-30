@@ -70,7 +70,7 @@ const csrNavItems = [
   { href: "/contracts", label: "Manage Contracts", icon: Repeat },
 ];
 
-const sharedNavItems = [
+const superAdminNavItems = [
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
@@ -170,12 +170,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const getNavItemsForRole = () => {
     switch (userProfile?.role) {
         case 'technician':
-            return [...getTechnicianNavItems(user.uid), ...sharedNavItems];
+            return getTechnicianNavItems(user.uid);
         case 'csr':
-            return [...csrNavItems];
+            return csrNavItems;
+        case 'super_admin':
+            return [...adminNavItems, ...superAdminNavItems];
         case 'admin':
         default:
-            return [...adminNavItems, ...sharedNavItems];
+            return adminNavItems;
     }
   };
   

@@ -59,9 +59,14 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
           <p className="font-medium text-xs text-foreground mb-1.5">Skills:</p>
           <div className="flex flex-wrap gap-1">
             {(technician.skills && technician.skills.length > 0) ? (
-              technician.skills.map(skill => (
-                <Badge key={skill} variant="secondary">{skill}</Badge>
-              ))
+              <>
+                {technician.skills.slice(0, 3).map(skill => (
+                  <Badge key={skill} variant="secondary">{skill}</Badge>
+                ))}
+                {technician.skills.length > 3 && (
+                  <Badge variant="outline">+{technician.skills.length - 3} more</Badge>
+                )}
+              </>
             ) : (
               <p className="text-xs text-muted-foreground">No skills listed.</p>
             )}

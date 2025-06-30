@@ -164,7 +164,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const handleToday = () => setCurrentDate(new Date());
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
@@ -191,7 +191,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       <CardContent>
         <div className="w-full overflow-x-auto border rounded-lg" ref={containerRef}>
           <div className="relative" style={{ minWidth: '1200px' }}>
-            <div className="sticky top-0 z-0 h-10 flex border-b bg-muted/50">
+            <div className="sticky top-0 z-10 h-10 flex border-b bg-muted/50">
               <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
               <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                 {hours.map((hour, index) => (

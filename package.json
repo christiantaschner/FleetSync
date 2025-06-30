@@ -41,10 +41,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
-    "dotenv": "^16.5.0",
     "firebase": "^11.9.1",
     "genkit": "^1.8.0",
-    "lodash-es": "^4.17.21",
+    "lodash.isequal": "^4.5.0",
     "lucide-react": "^0.475.0",
     "micro": "^10.0.1",
     "micro-cors": "^0.1.1",
@@ -63,7 +62,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/lodash-es": "^4.17.12",
+    "@types/lodash.isequal": "^4.5.0",
     "@types/micro-cors": "^0.1.5",
     "@types/node": "^20",
     "@types/papaparse": "^5.3.14",
@@ -74,10 +73,5 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
-  },
-  "overrides": {
-    "recharts": {
-      "lodash": "$lodash-es"
-    }
   }
 }

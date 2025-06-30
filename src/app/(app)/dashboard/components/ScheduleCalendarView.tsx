@@ -174,7 +174,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             <div className="flex items-center flex-wrap gap-2">
                  <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
                     <Button variant="accent" disabled={busyTechniciansCount === 0}>
-                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Route
+                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
                     </Button>
                 </OptimizeRouteDialog>
                  <Button variant="outline" onClick={onCheckScheduleHealth} disabled={busyTechniciansCount === 0 || isCheckingHealth}>
@@ -191,7 +191,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       <CardContent>
         <div className="overflow-x-auto border rounded-lg" ref={containerRef}>
           <div className="relative" style={{ minWidth: '1200px' }}>
-            <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
+            <div className="sticky top-0 z-0 h-10 flex border-b bg-muted/50">
               <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
               <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                 {hours.map((hour, index) => (

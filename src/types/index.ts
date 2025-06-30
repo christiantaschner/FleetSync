@@ -217,6 +217,20 @@ export const EquipmentSchema = z.object({
 });
 export type Equipment = z.infer<typeof EquipmentSchema>;
 
+export const StripeProductSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+    description: z.string().nullable(),
+    features: z.array(z.string()).optional(),
+    price: z.object({
+        id: z.string(),
+        amount: z.number().nullable(),
+        currency: z.string(),
+        interval: z.string().nullable(),
+    }),
+});
+export type StripeProduct = z.infer<typeof StripeProductSchema>;
+
 
 // --- AI Flow Schemas ---
 

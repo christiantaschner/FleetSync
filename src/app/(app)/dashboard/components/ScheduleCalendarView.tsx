@@ -164,7 +164,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const handleToday = () => setCurrentDate(new Date());
 
   return (
-    <Card className="min-w-0">
+    <Card>
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
@@ -188,27 +188,26 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="w-full overflow-x-auto border rounded-lg" ref={containerRef}>
-          <div className="relative" style={{ minWidth: '1200px' }}>
+      <CardContent className="overflow-x-auto" ref={containerRef}>
+        <div className="relative" style={{ minWidth: '1200px' }}>
             <div className="sticky top-0 z-10 h-10 flex border-b bg-muted/50">
-              <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
-              <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
+                <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                 {hours.map((hour, index) => (
-                  <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
+                    <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
                     {format(hour, 'ha')}
-                  </div>
+                    </div>
                 ))}
-              </div>
+                </div>
             </div>
 
             <div className="relative">
-              {technicians.length > 0 ? technicians.map(tech => (
+                {technicians.length > 0 ? technicians.map(tech => (
                 <div key={tech.id} className="flex h-20 items-center border-t">
-                  <div className="w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
+                    <div className="w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
                     <Avatar className="h-9 w-9">
-                       <AvatarImage src={tech.avatarUrl} alt={tech.name} />
-                       <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                        <AvatarImage src={tech.avatarUrl} alt={tech.name} />
+                        <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <div className="truncate">
                         <span className="font-medium text-sm truncate block">{tech.name}</span>
@@ -217,26 +216,25 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                             <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
                         </div>
                     </div>
-                  </div>
-                  <div className="flex-1 relative h-full">
-                     <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                    </div>
+                    <div className="flex-1 relative h-full">
+                        <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                         {hours.map((_, index) => (
                             <div key={index} className={cn("h-full bg-white", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
                         ))}
                     </div>
                     <div className="relative h-full p-1.5">
-                      {jobsByTechnician(tech.id).map(job => (
+                        {jobsByTechnician(tech.id).map(job => (
                         <JobBlock key={job.id} job={job} dayStart={dayStart} totalMinutes={totalMinutes} />
-                      ))}
+                        ))}
                     </div>
-                  </div>
+                    </div>
                 </div>
-              )) : (
-                 <div className="text-center py-16 text-muted-foreground">No technicians have been added yet.</div>
-              )}
-               <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
+                )) : (
+                    <div className="text-center py-16 text-muted-foreground">No technicians have been added yet.</div>
+                )}
+                <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
             </div>
-          </div>
         </div>
       </CardContent>
     </Card>

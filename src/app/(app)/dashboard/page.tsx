@@ -968,15 +968,13 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
            <TabsContent value="schedule">
-            <div className="min-w-0">
-                <ScheduleCalendarView
-                    jobs={jobs}
-                    technicians={technicians}
-                    onCheckScheduleHealth={handleCheckScheduleHealth}
-                    isCheckingHealth={isCheckingHealth}
-                    busyTechniciansCount={busyTechnicians.length}
-                />
-            </div>
+            <ScheduleCalendarView
+                jobs={jobs}
+                technicians={technicians}
+                onCheckScheduleHealth={handleCheckScheduleHealth}
+                isCheckingHealth={isCheckingHealth}
+                busyTechniciansCount={busyTechnicians.length}
+            />
           </TabsContent>
           <TabsContent value="technicians">
             <Card>
@@ -990,7 +988,7 @@ export default function DashboardPage() {
                     <Settings className="mr-2 h-4 w-4" /> Manage Skills
                   </Button>
                   <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
-                    <Button variant="default">
+                    <Button variant="accent">
                       <UserPlus className="mr-2 h-4 w-4" /> Add Technician
                     </Button>
                   </AddEditTechnicianDialog>

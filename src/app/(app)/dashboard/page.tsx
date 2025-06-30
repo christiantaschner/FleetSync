@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput, handleTechnicianUnavailabilityAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/fleet-actions";
+import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
@@ -46,7 +47,7 @@ const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route
 type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
 
 export default function DashboardPage() {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, company, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -195,6 +196,36 @@ export default function DashboardPage() {
       requestsUnsubscribe();
     };
   }, [userProfile, toast, fetchSkillsAndParts]);
+
+  const prevTechCount = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (isLoadingData) {
+      // Set the initial count once data is loaded
+      prevTechCount.current = technicians.length;
+      return;
+    }
+  
+    if (company?.subscriptionStatus !== 'active') {
+      return;
+    }
+    
+    // Check if the count has actually changed from the previously stored value
+    if (technicians.length !== prevTechCount.current) {
+      console.log(`Technician count changed from ${prevTechCount.current} to ${technicians.length}. Updating Stripe.`);
+      updateSubscriptionQuantityAction({ companyId: company.id, quantity: technicians.length })
+        .then(result => {
+          if (result.error) {
+            toast({ title: "Stripe Sync Error", description: `Could not update subscription: ${result.error}`, variant: "destructive" });
+          } else {
+            toast({ title: "Subscription Updated", description: `Seat count is now ${technicians.length}.` });
+          }
+        });
+      
+      // Update the ref to the new count *after* the action has been called
+      prevTechCount.current = technicians.length;
+    }
+  }, [technicians.length, company, isLoadingData, toast]);
   
   useEffect(() => {
     const predict = async () => {

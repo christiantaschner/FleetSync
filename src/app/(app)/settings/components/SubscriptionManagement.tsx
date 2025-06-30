@@ -128,7 +128,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                             title={product.name}
                             description={product.description || ''}
                             price={formatPrice(product.price)}
-                            frequency={product.price.interval ? `/ per ${product.price.interval}` : ''}
+                            frequency={product.price.interval ? `/ technician / ${product.price.interval}` : ''}
                             features={product.features || []}
                             cta={product.price.amount === null ? 'Contact Sales' : 'Choose Plan'}
                             onCtaClick={() => handleSubscribe(product.price.id || 'contact_sales')}

@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { stripe } from '@/lib/stripe';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Company, StripeProduct } from '@/types';
 import type Stripe from 'stripe';
 
@@ -46,6 +46,11 @@ export async function createCheckoutSessionAction(
       await updateDoc(companyDocRef, { stripeCustomerId });
     }
     
+    // Get the current number of technicians to set the initial quantity
+    const techQuery = query(collection(db, 'technicians'), where('companyId', '==', companyId));
+    const techSnapshot = await getDocs(techQuery);
+    const technicianCount = techSnapshot.size > 0 ? techSnapshot.size : 1; // Start with at least 1 seat
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set.');
 
@@ -55,8 +60,11 @@ export async function createCheckoutSessionAction(
       customer: stripeCustomerId,
       line_items: [{
         price: priceId,
-        quantity: 1,
+        quantity: technicianCount, // Set quantity based on number of technicians
       }],
+      subscription_data: {
+        proration_behavior: 'create_prorations', // Handle proration correctly
+      },
       success_url: `${appUrl}/settings?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/settings`,
     });
@@ -150,4 +158,49 @@ export async function getProductsAndPricesAction(): Promise<{ data: StripeProduc
     console.error('Error fetching products and prices:', e);
     return { data: null, error: `Failed to fetch products. ${errorMessage}` };
   }
+}
+
+const UpdateSubscriptionQuantityInputSchema = z.object({
+    companyId: z.string(),
+    quantity: z.number().min(0),
+});
+type UpdateSubscriptionQuantityInput = z.infer<typeof UpdateSubscriptionQuantityInputSchema>;
+
+export async function updateSubscriptionQuantityAction(
+  input: UpdateSubscriptionQuantityInput
+): Promise<{ error: string | null }> {
+    try {
+        const { companyId, quantity } = UpdateSubscriptionQuantityInputSchema.parse(input);
+
+        const companyDocRef = doc(db, 'companies', companyId);
+        const companyDocSnap = await getDoc(companyDocRef);
+        if (!companyDocSnap.exists()) {
+            throw new Error('Company not found.');
+        }
+
+        const company = companyDocSnap.data() as Company;
+        if (!company.subscriptionId || company.subscriptionStatus !== 'active') {
+            // Not subscribed or not active, so no need to update quantity
+            return { error: null };
+        }
+
+        const subscription = await stripe.subscriptions.retrieve(company.subscriptionId);
+        const subscriptionItemId = subscription.items.data[0]?.id;
+
+        if (!subscriptionItemId) {
+            throw new Error('No subscription item found to update.');
+        }
+        
+        // Update the quantity on the existing subscription item
+        await stripe.subscriptionItems.update(subscriptionItemId, {
+            quantity,
+            proration_behavior: 'create_prorations',
+        });
+        
+        return { error: null };
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error('Error updating subscription quantity:', e);
+        return { error: `Failed to update subscription. ${errorMessage}` };
+    }
 }

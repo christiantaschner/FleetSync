@@ -4,15 +4,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import type { Company } from '@/types';
-import { Button } from '@/components/ui/button';
-import { createCheckoutSessionAction, createPortalSessionAction } from '@/actions/stripe-actions';
+import { createCheckoutSessionAction } from '@/actions/stripe-actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ExternalLink, CheckCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import PricingCard from './PricingCard';
-import { differenceInDays, format } from 'date-fns';
+import StripePortal from './StripePortal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Sparkles } from 'lucide-react';
+import { differenceInDays } from 'date-fns';
 
 interface SubscriptionManagementProps {
   company: Company;
@@ -78,41 +78,15 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
         setIsLoading(null);
     };
 
-    const handleManageSubscription = async () => {
-        setIsLoading('portal');
-        const result = await createPortalSessionAction({ companyId: company.id });
-
-        if ('error' in result) {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
-        } else {
-            window.location.href = result.url;
-        }
-        setIsLoading(null);
-    };
-    
     const isSubscribed = company.subscriptionStatus === 'active';
     const isTrialing = company.subscriptionStatus === 'trialing';
     let trialDaysLeft = 0;
     if (isTrialing && company.trialEndsAt) {
       trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
     }
-
+    
     if (isSubscribed) {
-        return (
-            <div className="space-y-4">
-                 <Alert variant="default" className="border-green-600/50 bg-green-50/50">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertTitle className="text-green-800 font-semibold">You are subscribed!</AlertTitle>
-                    <AlertDescription className="text-green-700">
-                        Thank you for being a customer. You can manage your subscription, view invoices, and update payment details in the Stripe customer portal.
-                    </AlertDescription>
-                </Alert>
-                <Button onClick={handleManageSubscription} disabled={!!isLoading}>
-                    {isLoading === 'portal' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Manage Subscription & Billing <ExternalLink className="ml-2 h-4 w-4"/>
-                </Button>
-            </div>
-        )
+        return <StripePortal company={company} />;
     }
 
     return (
@@ -146,4 +120,3 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
 };
 
 export default SubscriptionManagement;
-

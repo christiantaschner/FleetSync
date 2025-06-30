@@ -2,7 +2,8 @@
 "use client"
 
 import * as React from "react"
-import { Legend, ResponsiveContainer, Tooltip } from "recharts"
+import { Legend, Tooltip } from "recharts"
+import { useResizeDetector } from "react-resize-detector"
 
 import { cn } from "@/lib/utils"
 
@@ -35,11 +36,43 @@ function useChart() {
   return context
 }
 
+// Custom ResponsiveContainer to bypass build issues with the one from recharts
+const ResponsiveContainer = React.forwardRef<
+  HTMLDivElement,
+  { children: React.ReactElement }
+>(({ children }, ref) => {
+  const { width, height, ref: containerRef } = useResizeDetector()
+
+  const chart = React.useMemo(() => {
+    if (!width || !height) {
+        return null;
+    }
+    return React.cloneElement(children, {
+      width,
+      height,
+    })
+  }, [children, width, height])
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        width: "100%",
+        height: "100%",
+      }}
+    >
+      {chart}
+    </div>
+  )
+})
+ResponsiveContainer.displayName = "ResponsiveContainer"
+
+
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     config: ChartConfig
-    children: React.ComponentProps<typeof ResponsiveContainer>["children"]
+    children: React.ReactElement
   }
 >(({ id, className, children, config, ...props }, ref) => {
   const uniqueId = React.useId()

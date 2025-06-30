@@ -293,50 +293,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
             {isSubscriptionExpired ? (
-                 <div className="flex h-[calc(100vh-12rem)] items-center justify-center">
-                    <Card className="w-full max-w-md text-center">
-                        <CardHeader>
-                            <CreditCard className="mx-auto h-12 w-12 text-primary opacity-80" />
-                            <CardTitle className="mt-4 font-headline text-2xl">
-                                {company?.subscriptionStatus === 'trialing' ? 'Your Trial Has Ended' : 'Subscription Required'}
-                            </CardTitle>
-                            <CardDescription>
-                                {company?.subscriptionStatus === 'trialing' ? 
-                                'Please choose a plan to continue using FleetSync AI.' :
-                                'Your subscription is inactive. Please update your billing information.'
-                                }
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <p className="text-sm text-muted-foreground mb-4">
-                                Your access to the dashboard is currently limited. Please update your subscription to restore full functionality.
-                            </p>
-                            <Link href="/settings">
-                                <Button className="w-full">
-                                    Go to Billing & Subscription
-                                </Button>
-                            </Link>
-                        </CardContent>
-                    </Card>
-                </div>
-            ) : (
-                <>
-                    {isTrialActive && trialDaysLeft !== null && (
-                        <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
-                            <Sparkles className="h-4 w-4" />
-                            <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
-                            <AlertDescription className="text-primary/90">
-                                You have {trialDaysLeft} days left. {' '}
-                                <Link href="/settings" className="font-semibold underline">
-                                    Choose your plan
-                                </Link>
-                                {' '} to keep your service active.
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    {children}
-                </>
-            )}
+                 <Alert variant="destructive" className="mb-6">
+                    <CreditCard className="h-4 w-4" />
+                    <AlertTitle>
+                        {company?.subscriptionStatus === 'trialing' ? 'Your Trial Has Ended' : 'Subscription Inactive'}
+                    </AlertTitle>
+                    <AlertDescription>
+                        Please{' '}
+                        <Link href="/settings" className="font-bold underline">
+                            go to your billing settings
+                        </Link>
+                        {' '} to choose a plan and continue using all features.
+                    </AlertDescription>
+                </Alert>
+            ) : isTrialActive && trialDaysLeft !== null ? (
+                <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                    <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
+                    <AlertDescription className="text-primary/90">
+                        You have {trialDaysLeft} days left. {' '}
+                        <Link href="/settings" className="font-semibold underline">
+                            Choose your plan
+                        </Link>
+                        {' '} to keep your service active.
+                    </AlertDescription>
+                </Alert>
+            ) : null}
+            
+            {children}
         </main>
       </SidebarInset>
     </SidebarProvider>

@@ -17,6 +17,7 @@ import {
   UserCog,
   PlusCircle,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -109,14 +110,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
   }
 
-  React.useEffect(() => {
-     if (!loading && company && !isSubscriptionActive && (trialDaysLeft === null || trialDaysLeft < 0)) {
-       if (!pathname.startsWith('/settings')) {
-           router.replace('/settings');
-       }
-    }
-  }, [loading, company, isSubscriptionActive, trialDaysLeft, pathname, router]);
-
+  const isSubscriptionExpired = company && !isSubscriptionActive && (trialDaysLeft === null || (trialDaysLeft !== null && trialDaysLeft < 0));
 
   if (loading || !userProfile || !user) {
     return (
@@ -296,6 +290,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             Choose your plan
                         </Link>
                         {' '} to keep your service active.
+                    </AlertDescription>
+                </Alert>
+            )}
+            {isSubscriptionExpired && !pathname.startsWith('/settings') && (
+                <Alert variant="destructive" className="mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Subscription Expired</AlertTitle>
+                    <AlertDescription>
+                        Your trial or subscription has ended. Please {' '}
+                        <Link href="/settings" className="font-semibold underline">
+                            update your billing information
+                        </Link>
+                        {' '} to restore full functionality.
                     </AlertDescription>
                 </Alert>
             )}

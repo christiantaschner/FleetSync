@@ -28,7 +28,38 @@ interface CompanySettingsFormProps {
   company: Company;
 }
 
-const timezones = Intl.supportedValuesOf('timeZone');
+const curatedTimezones = [
+  // North America
+  { value: 'America/New_York', label: 'New York (Eastern Time)' },
+  { value: 'America/Chicago', label: 'Chicago (Central Time)' },
+  { value: 'America/Denver', label: 'Denver (Mountain Time)' },
+  { value: 'America/Phoenix', label: 'Phoenix (Mountain Time, no DST)' },
+  { value: 'America/Los_Angeles', label: 'Los Angeles (Pacific Time)' },
+  { value: 'America/Anchorage', label: 'Anchorage (Alaska Time)' },
+  { value: 'America/Halifax', label: 'Halifax (Atlantic Time)' },
+  { value: 'America/Toronto', label: 'Toronto (Eastern Time)' },
+  { value: 'America/Vancouver', label: 'Vancouver (Pacific Time)' },
+  { value: 'America/Winnipeg', label: 'Winnipeg (Central Time)' },
+  { value: 'America/Regina', label: 'Regina (Central Time, no DST)' },
+  { value: 'America/Mexico_City', label: 'Mexico City (Central Time)' },
+  // Europe & UK
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Dublin', label: 'Dublin (GMT/IST)' },
+  { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
+  { value: 'Europe/Rome', label: 'Rome (CET/CEST)' },
+  { value: 'Europe/Madrid', label: 'Madrid (CET/CEST)' },
+  { value: 'Europe/Amsterdam', label: 'Amsterdam (CET/CEST)' },
+  { value: 'Europe/Zurich', label: 'Zurich (CET/CEST)' },
+  { value: 'Europe/Vienna', label: 'Vienna (CET/CEST)' },
+  { value: 'Europe/Stockholm', label: 'Stockholm (CET/CEST)' },
+  { value: 'Europe/Oslo', label: 'Oslo (CET/CEST)' },
+  { value: 'Europe/Copenhagen', label: 'Copenhagen (CET/CEST)' },
+  { value: 'Europe/Helsinki', label: 'Helsinki (EET/EEST)' },
+  { value: 'Europe/Athens', label: 'Athens (EET/EEST)' },
+  { value: 'Europe/Moscow', label: 'Moscow (MSK)' },
+  { value: 'Europe/Prague', label: 'Prague (CET/CEST)' },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) => {
   const { toast } = useToast();
@@ -96,7 +127,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                          <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <SelectTrigger id="timezone"><SelectValue placeholder="Select timezone" /></SelectTrigger>
                             <SelectContent>
-                                {timezones.map(tz => <SelectItem key={tz} value={tz}>{tz}</SelectItem>)}
+                                {curatedTimezones.map(tz => <SelectItem key={tz.value} value={tz.value}>{tz.label}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     )}

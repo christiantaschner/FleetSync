@@ -18,6 +18,7 @@ import {
   PlusCircle,
   Sparkles,
   AlertTriangle,
+  PieChart,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -115,7 +116,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const isPaidSubscriptionActive = company?.subscriptionStatus === 'active';
   const hasActiveSubscription = isTrialActive || isPaidSubscriptionActive;
 
-  const showExpiredBanner = company && !hasActiveSubscription && !pathname.startsWith('/settings');
+  if (company && !hasActiveSubscription && !pathname.startsWith('/settings')) {
+    router.replace('/settings');
+  }
 
   if (loading || !userProfile || !user) {
     return (
@@ -296,19 +299,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                             Choose your plan
                         </Link>
                         {' '} to keep your service active.
-                    </AlertDescription>
-                </Alert>
-            )}
-            {showExpiredBanner && (
-                <Alert variant="destructive" className="mb-6">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Subscription Expired</AlertTitle>
-                    <AlertDescription>
-                        Your trial or subscription has ended. Please {' '}
-                        <Link href="/settings" className="font-semibold underline">
-                            update your billing information
-                        </Link>
-                        {' '} to restore full functionality.
                     </AlertDescription>
                 </Alert>
             )}

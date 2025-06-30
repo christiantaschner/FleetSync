@@ -16,25 +16,12 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // Optional
 };
 
-let app: FirebaseApp;
-let auth;
-let db;
-let storage;
+// This pattern is more robust for Next.js environments and prevents re-initialization.
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
-if (firebaseConfig.apiKey && firebaseConfig.projectId) { // Basic check for config presence
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
-  }
-  auth = getAuth(app);
-  db = getFirestore(app);
-  storage = getStorage(app);
-} else {
-  console.warn("Firebase configuration is missing. Please check your .env file.");
-  // Fallback or throw error, depending on how critical Firebase is at init
-  // For now, we'll let 'app', 'auth', and 'db' be undefined and handle it in components using it
-}
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 
 // Optional: Initialize Analytics if needed and supported

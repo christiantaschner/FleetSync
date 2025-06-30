@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  PieChart,
   Smartphone,
   Users,
   Settings,
@@ -53,7 +52,6 @@ const adminNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/contracts", label: "Contracts", icon: Repeat },
   { href: "/customers", label: "Customers", icon: ClipboardList },
-  { href: "/reports", label: "Reports", icon: PieChart },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

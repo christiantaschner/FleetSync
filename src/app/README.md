@@ -22,6 +22,9 @@ Before you run the application, you need to configure your environment variables
     
     # Google Maps Configuration
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
+
+    # Genkit AI (Gemini) Configuration
+    GOOGLE_API_KEY="YOUR_GEMINI_API_KEY"
     
     # Stripe Configuration
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="YOUR_STRIPE_PUBLISHABLE_KEY"

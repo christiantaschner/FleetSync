@@ -113,12 +113,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const isTrialActive = company?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft >= 0;
-  const isPaidSubscriptionActive = company?.subscriptionStatus === 'active';
-  const hasActiveSubscription = isTrialActive || isPaidSubscriptionActive;
-
-  if (company && !hasActiveSubscription && !pathname.startsWith('/settings')) {
-    router.replace('/settings');
-  }
 
   if (loading || !userProfile || !user) {
     return (

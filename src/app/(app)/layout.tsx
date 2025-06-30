@@ -19,6 +19,7 @@ import {
   Sparkles,
   AlertTriangle,
   PieChart,
+  CreditCard,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { differenceInDays } from 'date-fns';
 
 const adminNavItems = [
@@ -113,6 +115,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const isTrialActive = company?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft >= 0;
+
+  const isSubscriptionExpired = 
+    company &&
+    pathname !== '/settings' && 
+    company.subscriptionStatus !== 'active' &&
+    !isTrialActive;
+
 
   if (loading || !userProfile || !user) {
     return (
@@ -283,20 +292,51 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
            <div className="w-7"/>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
-            {isTrialActive && trialDaysLeft !== null && (
-                <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
-                    <Sparkles className="h-4 w-4" />
-                    <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
-                    <AlertDescription className="text-primary/90">
-                        You have {trialDaysLeft} days left. {' '}
-                        <Link href="/settings" className="font-semibold underline">
-                            Choose your plan
-                        </Link>
-                        {' '} to keep your service active.
-                    </AlertDescription>
-                </Alert>
+            {isSubscriptionExpired ? (
+                 <div className="flex h-[calc(100vh-12rem)] items-center justify-center">
+                    <Card className="w-full max-w-md text-center">
+                        <CardHeader>
+                            <CreditCard className="mx-auto h-12 w-12 text-primary opacity-80" />
+                            <CardTitle className="mt-4 font-headline text-2xl">
+                                {company?.subscriptionStatus === 'trialing' ? 'Your Trial Has Ended' : 'Subscription Required'}
+                            </CardTitle>
+                            <CardDescription>
+                                {company?.subscriptionStatus === 'trialing' ? 
+                                'Please choose a plan to continue using FleetSync AI.' :
+                                'Your subscription is inactive. Please update your billing information.'
+                                }
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <p className="text-sm text-muted-foreground mb-4">
+                                Your access to the dashboard is currently limited. Please update your subscription to restore full functionality.
+                            </p>
+                            <Link href="/settings">
+                                <Button className="w-full">
+                                    Go to Billing & Subscription
+                                </Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
+                </div>
+            ) : (
+                <>
+                    {isTrialActive && trialDaysLeft !== null && (
+                        <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
+                            <Sparkles className="h-4 w-4" />
+                            <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
+                            <AlertDescription className="text-primary/90">
+                                You have {trialDaysLeft} days left. {' '}
+                                <Link href="/settings" className="font-semibold underline">
+                                    Choose your plan
+                                </Link>
+                                {' '} to keep your service active.
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {children}
+                </>
             )}
-            {children}
         </main>
       </SidebarInset>
     </SidebarProvider>

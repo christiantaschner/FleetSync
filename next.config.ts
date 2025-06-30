@@ -1,4 +1,7 @@
 
+import { config } from 'dotenv';
+config(); // Explicitly load variables from .env
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {

@@ -39,10 +39,14 @@ export const CompanySchema = z.object({
     id: z.string(),
     name: z.string(),
     ownerId: z.string(),
-    subscriptionTier: z.string().optional(), // e.g., 'free', 'pro'
-    subscriptionStatus: z.string().optional(), // e.g., 'active', 'past_due'
     createdAt: z.string(),
     settings: CompanySettingsSchema.optional(),
+
+    // Stripe fields
+    stripeCustomerId: z.string().optional(),
+    subscriptionId: z.string().optional(),
+    subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'canceled', 'unpaid']).optional(),
+    trialEndsAt: z.string().optional(), // ISO string
 });
 export type Company = z.infer<typeof CompanySchema>;
 

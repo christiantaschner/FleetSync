@@ -7,6 +7,7 @@ import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
+import { addDays } from 'date-fns';
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput
@@ -25,10 +26,14 @@ export async function completeOnboardingAction(
 
     // 1. Create the new company document
     const companyRef = doc(db, 'companies', companyId);
+    const trialEndsAt = addDays(new Date(), 30).toISOString(); // 30 day trial
+
     batch.set(companyRef, {
       name: companyName,
       ownerId: uid,
       createdAt: serverTimestamp(),
+      subscriptionStatus: 'trialing',
+      trialEndsAt: trialEndsAt,
     });
 
     // 2. Update the user's profile document

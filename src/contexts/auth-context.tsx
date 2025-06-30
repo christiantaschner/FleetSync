@@ -14,12 +14,13 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
 import { doc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { UserProfile } from "@/types";
+import type { UserProfile, Company } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";
 
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
+  company: Company | null;
   loading: boolean;
   login: (email_address: string, pass_word: string) => Promise<boolean>;
   signup: (email_address: string, pass_word: string) => Promise<boolean>;
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
@@ -42,44 +44,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    let unsubscribeProfile: (() => void) | null = null;
+    let unsubscribeCompany: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      // Clean up previous listeners
+      if (unsubscribeProfile) unsubscribeProfile();
+      if (unsubscribeCompany) unsubscribeCompany();
+
       if (currentUser) {
-        // As a replacement for a Cloud Function, we ensure the user document exists.
-        // This is idempotent, so it's safe to call on every auth state change.
         await ensureUserDocumentAction({ 
             uid: currentUser.uid, 
             email: currentUser.email! 
         });
 
         setUser(currentUser);
-        // User is logged in, listen to their profile document
         const userDocRef = doc(db, "users", currentUser.uid);
-        const unsubscribeProfile = onSnapshot(userDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setUserProfile(docSnap.data() as UserProfile);
+
+        unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
+          if (unsubscribeCompany) unsubscribeCompany(); // Unsub from old company listener if profile changes
+
+          if (userDocSnap.exists()) {
+            const profileData = userDocSnap.data() as UserProfile;
+            setUserProfile(profileData);
+
+            if (profileData.companyId) {
+              const companyDocRef = doc(db, "companies", profileData.companyId);
+              unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
+                if (companyDocSnap.exists()) {
+                  const companyData = companyDocSnap.data();
+                  for (const key in companyData) {
+                    if (companyData[key] && typeof companyData[key].toDate === 'function') {
+                      companyData[key] = companyData[key].toDate().toISOString();
+                    }
+                  }
+                  setCompany({ id: companyDocSnap.id, ...companyData } as Company);
+                } else {
+                  setCompany(null);
+                }
+                setLoading(false);
+              });
+            } else {
+              setCompany(null);
+              setLoading(false);
+            }
           } else {
-            // This case should now be less likely to be hit for long,
-            // as ensureUserDocumentAction will create it. But as a fallback:
-            setUserProfile({
-              uid: currentUser.uid,
-              email: currentUser.email!,
-              onboardingStatus: 'pending_creation',
-              companyId: undefined,
-              role: undefined
-            });
+            setUserProfile(null);
+            setCompany(null);
+            setLoading(false);
           }
-          setLoading(false);
         });
-        return unsubscribeProfile; // This will be called on cleanup
       } else {
         // User is logged out
         setUser(null);
         setUserProfile(null);
+        setCompany(null);
         setLoading(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+      if (unsubscribeCompany) unsubscribeCompany();
+    };
   }, []);
 
   const login = async (email_address: string, pass_word: string) => {
@@ -122,6 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     try {
       await signOut(auth);
+      setCompany(null);
       router.push("/login");
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -130,7 +159,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

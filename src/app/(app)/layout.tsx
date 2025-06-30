@@ -17,6 +17,7 @@ import {
   ClipboardList,
   UserCog,
   PlusCircle,
+  Sparkles,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -45,6 +46,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { differenceInDays } from 'date-fns';
 
 const adminNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -70,7 +73,7 @@ const sharedNavItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, userProfile, loading, logout } = useAuth();
+  const { user, userProfile, company, loading, logout } = useAuth();
   
   React.useEffect(() => {
     if (loading) return;
@@ -101,6 +104,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
     }
   }, [user, userProfile, loading, router, pathname]);
+
+  const isSubscriptionActive = company?.subscriptionStatus === 'active' || company?.subscriptionStatus === 'trialing';
+  let trialDaysLeft: number | null = null;
+  if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
+      trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
+  }
+
+  React.useEffect(() => {
+     if (!loading && company && !isSubscriptionActive && (trialDaysLeft === null || trialDaysLeft < 0)) {
+       if (!pathname.startsWith('/settings')) {
+           router.replace('/settings');
+       }
+    }
+  }, [loading, company, isSubscriptionActive, trialDaysLeft, pathname, router]);
+
 
   if (loading || !userProfile || !user) {
     return (
@@ -270,7 +288,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
            <div className="w-7"/>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
-          {children}
+            {trialDaysLeft !== null && trialDaysLeft >= 0 && (
+                <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
+                    <Sparkles className="h-4 w-4" />
+                    <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
+                    <AlertDescription className="text-primary/90">
+                        You have {trialDaysLeft} days left. {' '}
+                        <Link href="/settings" className="font-semibold underline">
+                            Choose your plan
+                        </Link>
+                        {' '} to keep your service active.
+                    </AlertDescription>
+                </Alert>
+            )}
+            {children}
         </main>
       </SidebarInset>
     </SidebarProvider>

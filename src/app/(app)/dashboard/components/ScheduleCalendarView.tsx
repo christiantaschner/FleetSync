@@ -2,17 +2,18 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import type { Job, Technician, JobStatus } from '@/types';
+import type { Job, Technician, JobStatus, Location } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, Clock, User, MapPin, Circle, ShieldQuestion, Shuffle } from 'lucide-react';
+import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore } from 'date-fns';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3 } from 'lucide-react';
 import OptimizeRouteDialog from './optimize-route-dialog';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-// Color mapping for job blocks based on status
 const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
       case 'Completed': return 'bg-green-100 border-l-4 border-green-500 text-green-800';
@@ -81,20 +82,14 @@ const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, tota
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
     useEffect(() => {
-      // Set initial time on client mount to avoid hydration mismatch
       setCurrentTime(new Date());
-
-      const timer = setInterval(() => {
-          setCurrentTime(new Date());
-      }, 60000); // Update every minute
+      const timer = setInterval(() => setCurrentTime(new Date()), 60000);
       return () => clearInterval(timer);
     }, []);
 
     if (!currentTime || !isSameDay(currentTime, dayStart)) return null;
-
     const offsetMinutes = (currentTime.getTime() - dayStart.getTime()) / 60000;
     const left = (offsetMinutes / totalMinutes) * 100;
-
     if (left < 0 || left > 100) return null;
 
     return (
@@ -102,7 +97,70 @@ const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, tota
             <div className="absolute -top-1 -translate-x-1/2 h-2 w-2 rounded-full bg-red-500"></div>
         </div>
     );
-}
+};
+
+const technicianColors = [ 'bg-sky-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500' ];
+const getTechnicianColor = (technicianId: string) => {
+    let hash = 0;
+    for (let i = 0; i < technicianId.length; i++) {
+        hash = technicianId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash % technicianColors.length);
+    return technicianColors[index];
+};
+
+const MonthView = ({ currentDate, jobs, technicians }: { currentDate: Date, jobs: Job[], technicians: Technician[] }) => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const firstDayOfMonth = getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1; 
+    const daysInMonth = eachDay({ start: monthStart, end: monthEnd });
+
+    const leadingEmptyDays = Array.from({ length: firstDayOfMonth }, (_, i) => <div key={`empty-${i}`} className="border-r border-b"></div>);
+
+    return (
+        <div className="flex flex-col border-t border-l">
+            <div className="grid grid-cols-7 text-center font-semibold text-sm">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                    <div key={day} className="py-2 border-r border-b bg-muted/50">{day}</div>
+                ))}
+            </div>
+            <div className="grid grid-cols-7">
+                {leadingEmptyDays}
+                {daysInMonth.map(day => {
+                    const jobsForDay = jobs.filter(job => job.scheduledTime && isSameDay(new Date(job.scheduledTime), day));
+                    return (
+                        <div key={day.toString()} className={cn("relative border-r border-b min-h-32 p-1.5", !isSameMonth(day, currentDate) && "bg-muted/30")}>
+                           <span className={cn("text-xs font-semibold", isToday(day) && "bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center")}>
+                                {format(day, 'd')}
+                            </span>
+                             <ScrollArea className="h-24 mt-1">
+                                <div className="space-y-1 pr-1">
+                                    {jobsForDay.map(job => (
+                                        <TooltipProvider key={job.id}>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge className={cn("w-full justify-start truncate text-white", getTechnicianColor(job.assignedTechnicianId!))}>
+                                                        {technicians.find(t => t.id === job.assignedTechnicianId)?.name.split(' ')[0]}: {job.title}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p className="font-bold">{job.title}</p>
+                                                    <p>{technicians.find(t => t.id === job.assignedTechnicianId)?.name}</p>
+                                                    <p>{format(new Date(job.scheduledTime!), 'p')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    ))}
+                                </div>
+                            </ScrollArea>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 
 interface ScheduleCalendarViewProps {
   jobs: Job[];
@@ -120,17 +178,18 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     busyTechniciansCount
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const containerRef = useRef<HTMLDivElement>(null);
 
   const dayStart = useMemo(() => {
     const d = startOfDay(currentDate);
-    d.setHours(7, 0, 0, 0); // View starts at 7:00 AM
+    d.setHours(7, 0, 0, 0);
     return d;
   }, [currentDate]);
 
   const dayEnd = useMemo(() => {
     const d = startOfDay(currentDate);
-    d.setHours(19, 0, 0, 0); // View ends at 7:00 PM (19:00)
+    d.setHours(19, 0, 0, 0);
     return d;
   }, [currentDate]);
 
@@ -138,14 +197,14 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const totalMinutes = useMemo(() => (dayEnd.getTime() - dayStart.getTime()) / 60000, [dayStart, dayEnd]);
 
   useEffect(() => {
-    if (containerRef.current && isSameDay(currentDate, new Date())) {
+    if (viewMode === 'day' && containerRef.current && isSameDay(currentDate, new Date())) {
         const now = new Date();
         const startHour = dayStart.getHours();
         const currentHour = now.getHours();
         const scrollPosition = (containerRef.current.scrollWidth / hours.length) * (currentHour - startHour - 1);
         containerRef.current.scrollLeft = scrollPosition > 0 ? scrollPosition : 0;
     }
-  }, [currentDate, dayStart, hours.length]);
+  }, [currentDate, dayStart, hours.length, viewMode]);
 
 
   const jobsByTechnician = (techId: string) => {
@@ -159,8 +218,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     );
   };
   
-  const handlePrevDay = () => setCurrentDate(subDays(currentDate, 1));
-  const handleNextDay = () => setCurrentDate(addDays(currentDate, 1));
+  const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
+  const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
   const handleToday = () => setCurrentDate(new Date());
 
   return (
@@ -172,26 +231,31 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 <CardDescription>Daily timeline view of technician assignments.</CardDescription>
             </div>
             <div className="flex items-center flex-wrap gap-2">
-                <Button variant="outline" onClick={onCheckScheduleHealth} disabled={busyTechniciansCount === 0 || isCheckingHealth} className="hover:bg-primary hover:text-primary-foreground">
-                    <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
-                </Button>
                  <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
                     <Button variant="accent" disabled={busyTechniciansCount === 0}>
                         <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
                     </Button>
                 </OptimizeRouteDialog>
-                <Button variant="outline" size="icon" onClick={handlePrevDay} aria-label="Previous day"><ChevronLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
-                    {format(currentDate, 'PPP')}
+                <Button variant="outline" onClick={onCheckScheduleHealth} disabled={busyTechniciansCount === 0 || isCheckingHealth} className="hover:bg-primary hover:text-primary-foreground">
+                    <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
                 </Button>
-                <Button variant="outline" size="icon" onClick={handleNextDay} aria-label="Next day"><ChevronRight className="h-4 w-4" /></Button>
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                    <Button size="icon" variant={viewMode === 'day' ? 'default' : 'ghost'} onClick={() => setViewMode('day')}><Grid3x3 className="h-4 w-4" /></Button>
+                    <Button size="icon" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}><Calendar className="h-4 w-4" /></Button>
+                </div>
+                <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Previous"><ChevronLeft className="h-4 w-4" /></Button>
+                <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
+                    {format(currentDate, viewMode === 'day' ? 'PPP' : 'MMMM yyyy')}
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-h-[500px]">
+        {viewMode === 'day' ? (
         <div className="overflow-x-auto" ref={containerRef}>
           <div className="relative" style={{ minWidth: '1200px' }}>
-              <div className="sticky top-0 z-10 h-10 flex border-b bg-muted/50">
+              <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                   <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                   {hours.map((hour, index) => (
@@ -221,7 +285,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                       <div className="flex-1 relative h-full">
                           <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                           {hours.map((_, index) => (
-                              <div key={index} className={cn("h-full bg-white", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
+                              <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
                           ))}
                       </div>
                       <div className="relative h-full p-1.5">
@@ -238,6 +302,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
               </div>
           </div>
         </div>
+         ) : (
+            <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} />
+         )}
       </CardContent>
     </Card>
   );

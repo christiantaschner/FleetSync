@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,7 +21,7 @@ body {
     --secondary-foreground: 220 9% 32%;
     --muted: 220 13% 91%;
     --muted-foreground: 220 9% 45%;
-    --accent: 30 100% 60%; /* Vivid Orange #FF9933 */
+    --accent: 142 71% 45%; /* Green for Accent */
     --accent-foreground: 0 0% 100%; /* White for contrast on Accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -57,7 +58,7 @@ body {
     --secondary-foreground: 0 0% 98%;
     --muted: 220 14% 20%;
     --muted-foreground: 220 9% 55%;
-    --accent: 30 100% 65%; /* Lighter orange for dark mode */
+    --accent: 142 61% 55%; /* Lighter green for dark mode */
     --accent-foreground: 0 0% 10%; 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;

@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useEffect } from 'react';
-import { Map, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
-import type { Job, Technician } from '@/types';
-import { User, Briefcase } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Map, AdvancedMarker, useMap, useMapsLibrary, Pin } from '@vis.gl/react-google-maps';
+import type { Job, Technician, Location } from '@/types';
+import { User, Briefcase, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // A separate component to hook into the map context
@@ -45,10 +45,8 @@ const FitBoundsControl = ({ technicians, jobs }: { technicians: Technician[], jo
       bounds.extend({ lat: job.location.latitude, lng: job.location.longitude });
     });
 
-    // Don't fit bounds if there's only one point, as it can zoom in too far.
-    // Instead, just center on it.
     if (technicians.length + jobs.length > 1) {
-      map.fitBounds(bounds, 100); // 100px padding
+      map.fitBounds(bounds, 100);
     } else if (technicians.length + jobs.length === 1) {
       const location = technicians[0]?.location || jobs[0]?.location;
       if (location) {
@@ -68,10 +66,19 @@ interface MapViewProps {
   technicians: Technician[];
   defaultCenter: { lat: number; lng: number };
   defaultZoom: number;
+  searchedLocation?: Location | null;
 }
 
-const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, defaultZoom }) => {
+const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, defaultZoom, searchedLocation }) => {
+  const map = useMap();
   const activeJobs = jobs.filter(job => job.status !== 'Completed' && job.status !== 'Cancelled');
+  
+  useEffect(() => {
+    if (map && searchedLocation) {
+        map.panTo({ lat: searchedLocation.latitude, lng: searchedLocation.longitude });
+        map.setZoom(15);
+    }
+  }, [map, searchedLocation]);
 
   return (
     <div style={{ height: '450px', width: '100%' }} className="rounded-md overflow-hidden border">
@@ -111,8 +118,21 @@ const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, def
             </div>
           </AdvancedMarker>
         ))}
+
+        {searchedLocation && (
+           <AdvancedMarker 
+              key="searched-location"
+              position={{ lat: searchedLocation.latitude, lng: searchedLocation.longitude }}
+              title={searchedLocation.address}
+           >
+             <Pin background={'#fbbf24'} borderColor={'#f59e0b'} glyphColor={'#fff'}>
+                <Search />
+             </Pin>
+          </AdvancedMarker>
+        )}
+
         <TrafficControl />
-        <FitBoundsControl technicians={technicians} jobs={activeJobs} />
+        {!searchedLocation && <FitBoundsControl technicians={technicians} jobs={activeJobs} />}
       </Map>
     </div>
   );

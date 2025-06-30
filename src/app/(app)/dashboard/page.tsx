@@ -1,13 +1,13 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest, Location } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import OptimizeRouteDialog from './components/optimize-route-dialog'; 
 import JobListItem from './components/JobListItem';
@@ -18,7 +18,7 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
-import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps'; // Renamed import
+import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
@@ -35,6 +35,7 @@ import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
 import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { isToday } from 'date-fns';
+import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -74,25 +75,23 @@ export default function DashboardPage() {
   const [isPredicting, setIsPredicting] = useState(false);
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
-  // For proactive AI suggestions
   const prevJobIdsRef = useRef<Set<string>>(new Set());
   const [proactiveSuggestion, setProactiveSuggestion] = useState<AssignmentSuggestion | null>(null);
   const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
   const [isProcessingProactive, setIsProcessingProactive] = useState(false);
 
-  // For Schedule Health Check
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
 
-  // For Chat
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatJob, setSelectedChatJob] = useState<Job | null>(null);
   
-  // For Tracking Link
   const [isTrackingDialogOpen, setIsTrackingDialogOpen] = useState(false);
   const [selectedJobForTracking, setSelectedJobForTracking] = useState<Job | null>(null);
+
+  const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -116,7 +115,6 @@ export default function DashboardPage() {
     fetchSkillsAndParts();
   }, [fetchSkillsAndParts]);
 
-  // Data fetching
   useEffect(() => {
     if (!db || !userProfile?.companyId) {
       if (userProfile && userProfile.onboardingStatus === 'completed') {
@@ -143,7 +141,6 @@ export default function DashboardPage() {
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        // Convert any Firebase Timestamp fields to ISO strings to make them serializable
         for (const key in data) {
             if (data[key] && typeof data[key].toDate === 'function') {
                 data[key] = data[key].toDate().toISOString();
@@ -163,7 +160,6 @@ export default function DashboardPage() {
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        // Convert any Firebase Timestamp fields to ISO strings to make them serializable
         for (const key in data) {
             if (data[key] && typeof data[key].toDate === 'function') {
                 data[key] = data[key].toDate().toISOString();
@@ -199,7 +195,6 @@ export default function DashboardPage() {
     };
   }, [userProfile, toast, fetchSkillsAndParts]);
   
-  // Next Up Technician Prediction
   useEffect(() => {
     const predict = async () => {
         const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
@@ -244,7 +239,6 @@ export default function DashboardPage() {
 
   }, [jobs, technicians, isLoadingData]);
   
-  // Proactive High-Priority Job Suggestion
   useEffect(() => {
     if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion || !userProfile?.companyId) {
       return;
@@ -309,40 +303,32 @@ export default function DashboardPage() {
     setIsFetchingProactiveSuggestion(false);
   }, [technicians, jobs, toast]);
   
-  // Proactive Health Check (Interval-based)
   useEffect(() => {
     const checkHealth = async () => {
-      // Avoid running if data is not ready
       if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
         return;
       }
       
       const result = await checkScheduleHealthAction({ technicians, jobs });
       if (result.data) {
-        // Filter for high-risk alerts to display proactively
         const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 15);
         
-        // This logic ensures we don't re-add alerts the user has dismissed
         setRiskAlerts(currentAlerts => {
           const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
           const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
           
-          // Also, remove alerts that are no longer high-risk by find-ing which of the current alerts are NOT in the new high risk list
           const stillValidAlerts = currentAlerts.filter(oldAlert => highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id));
 
           if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {
             return [...stillValidAlerts, ...newAlertsToAdd];
           }
-          return currentAlerts; // No change
+          return currentAlerts;
         });
       }
     };
     
-    // Run the check immediately on data change (debounced)
     const timer = setTimeout(checkHealth, 2000); 
-    
-    // And also run it periodically
-    const intervalId = setInterval(checkHealth, 600000); // Check every 10 minutes
+    const intervalId = setInterval(checkHealth, 600000);
 
     return () => {
       clearTimeout(timer);
@@ -360,7 +346,6 @@ export default function DashboardPage() {
 
     const batch = writeBatch(db);
     
-    // 1. Assign the new job
     const newJobRef = doc(db, "jobs", job.id);
     batch.update(newJobRef, { 
         status: 'Assigned', 
@@ -369,14 +354,12 @@ export default function DashboardPage() {
         assignedAt: serverTimestamp(),
     });
 
-    // 2. Update the technician
     const techDocRef = doc(db, "technicians", suggestedTechnicianDetails.id);
     batch.update(techDocRef, {
         isAvailable: false,
         currentJobId: job.id,
     });
     
-    // 3. Handle interruption
     if (isInterruption) {
         const oldJobRef = doc(db, "jobs", suggestedTechnicianDetails.currentJobId!);
         batch.update(oldJobRef, {
@@ -399,14 +382,8 @@ export default function DashboardPage() {
     }
   };
   
-
-  const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
-    // onSnapshot handles state updates
-  };
-
-  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
-     // onSnapshot handles state updates
-  };
+  const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {};
+  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {};
   
   const openAIAssignDialogForJob = (job: Job) => {
     setSelectedJobForAIAssign(job);
@@ -620,6 +597,19 @@ export default function DashboardPage() {
     jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
     [jobs]
   );
+  
+  const handleLocationSearch = (location: { address: string; lat: number; lng: number }) => {
+    setSearchedLocation({
+        address: location.address,
+        latitude: location.lat,
+        longitude: location.lng,
+    });
+    // Find the overview tab and switch to it
+    const overviewTrigger = document.querySelector('button[data-state][value="overview"]') as HTMLButtonElement | null;
+    if (overviewTrigger) {
+        overviewTrigger.click();
+    }
+  };
 
 
   if (isLoadingData && !googleMapsApiKey) { 
@@ -696,7 +686,7 @@ export default function DashboardPage() {
             {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
           </h1>
           <div className="flex flex-wrap gap-2">
-             <Button variant="outline" onClick={() => setIsImportJobsOpen(true)}>
+             <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
             </Button>
              <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
@@ -706,15 +696,6 @@ export default function DashboardPage() {
             </AddEditJobDialog>
           </div>
         </div>
-        
-        <Card>
-            <CardHeader className="flex-row items-center justify-between gap-4 pb-4">
-                <div>
-                    <CardTitle className="font-headline">Daily Operations</CardTitle>
-                    <CardDescription>High-impact AI tools for managing your daily schedule.</CardDescription>
-                </div>
-            </CardHeader>
-        </Card>
 
         {riskAlerts.length > 0 && (
           <div className="space-y-2">
@@ -743,7 +724,6 @@ export default function DashboardPage() {
             jobToAssign={selectedJobForAIAssign}
             technicians={technicians}
             onJobAssigned={(assignedJob, updatedTechnician) => {
-              // onSnapshot handles state updates
               setSelectedJobForAIAssign(null); 
             }}
           />
@@ -866,6 +846,7 @@ export default function DashboardPage() {
         <Tabs defaultValue="jobs" className="w-full">
           <div className="w-full overflow-x-auto sm:overflow-visible">
               <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-4">
+                  <TabsTrigger value="overview">Overview Map</TabsTrigger>
                   <TabsTrigger value="jobs">Job List</TabsTrigger>
                   <TabsTrigger value="schedule">Schedule</TabsTrigger>
                   <TabsTrigger value="technicians" className="relative">
@@ -874,9 +855,35 @@ export default function DashboardPage() {
                         <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="overview">Overview Map</TabsTrigger>
               </TabsList>
           </div>
+          <TabsContent value="overview">
+            <Card>
+              <CardHeader>
+                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                    <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
+                     <div className="pt-2">
+                        <AddressAutocompleteInput
+                            value={searchedLocation?.address || ''}
+                            onValueChange={(text) => {
+                                if (!text) setSearchedLocation(null);
+                            }}
+                            onLocationSelect={handleLocationSearch}
+                            placeholder="Search for an address to view on map..."
+                        />
+                    </div>
+              </CardHeader>
+              <CardContent>
+                <MapView 
+                  technicians={technicians} 
+                  jobs={jobs} 
+                  defaultCenter={defaultMapCenter}
+                  defaultZoom={4}
+                  searchedLocation={searchedLocation}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
           <TabsContent value="jobs">
             <Card>
                 <CardHeader className="flex flex-col gap-4">
@@ -984,7 +991,7 @@ export default function DashboardPage() {
                   <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
                 </div>
                  <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
+                  <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
                     <Settings className="mr-2 h-4 w-4" /> Manage Skills
                   </Button>
                   <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
@@ -1015,22 +1022,6 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
                     )}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="overview">
-            <Card>
-              <CardHeader>
-                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
-                    <CardDescription>Real-time overview of ongoing operations.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MapView 
-                  technicians={technicians} 
-                  jobs={jobs} 
-                  defaultCenter={defaultMapCenter}
-                  defaultZoom={4} 
-                />
               </CardContent>
             </Card>
           </TabsContent>

@@ -3,20 +3,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Technician, ProfileChangeRequest } from '@/types';
-import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History } from 'lucide-react';
+import type { Technician, ProfileChangeRequest, Job } from '@/types';
+import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SuggestChangeDialog from './components/SuggestChangeDialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import isEqual from 'lodash.isequal';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { format } from 'date-fns';
 
 const getStatusClass = (status: ProfileChangeRequest['status']) => {
     switch (status) {
@@ -30,12 +33,47 @@ const getStatusClass = (status: ProfileChangeRequest['status']) => {
     }
 };
 
+const formatDuration = (milliseconds: number): string => {
+    if (milliseconds <= 0 || isNaN(milliseconds) || !isFinite(milliseconds)) return "0m";
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    
+    let result = '';
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0 || hours === 0) result += `${minutes}m`;
+    
+    return result.trim() || '0m';
+}
+
+const calculateJobDurations = (job: Job) => {
+    const travelTime = (job.inProgressAt && job.enRouteAt) ? new Date(job.inProgressAt).getTime() - new Date(job.enRouteAt).getTime() : 0;
+    const onSiteTime = (job.completedAt && job.inProgressAt) ? new Date(job.completedAt).getTime() - new Date(job.inProgressAt).getTime() : 0;
+    const breakTime = job.breaks?.reduce((acc, b) => {
+        if (b.start && b.end) {
+            return acc + (new Date(b.end).getTime() - new Date(b.start).getTime());
+        }
+        return acc;
+    }, 0) || 0;
+    
+    const workTime = onSiteTime > breakTime ? onSiteTime - breakTime : onSiteTime;
+    const totalTime = travelTime + workTime;
+    
+    return {
+        travelTime: formatDuration(travelTime),
+        workTime: formatDuration(workTime),
+        breakTime: formatDuration(breakTime),
+        totalTime: formatDuration(totalTime),
+    };
+};
+
 export default function TechnicianProfilePage() {
   const router = useRouter();
   const { user: firebaseUser, loading: authLoading } = useAuth();
 
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [submittedRequests, setSubmittedRequests] = useState<ProfileChangeRequest[]>([]);
+  const [completedJobs, setCompletedJobs] = useState<Job[]>([]);
   const [allSkills, setAllSkills] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,33 +93,7 @@ export default function TechnicianProfilePage() {
         if (docSnap.exists()) {
           const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
           setTechnician(techData);
-
-          const skillsQuery = query(collection(db, "skills"), where("companyId", "==", techData.companyId), orderBy("name"));
-          getDocs(skillsQuery).then(querySnapshot => {
-            setAllSkills(querySnapshot.docs.map(doc => doc.data().name as string));
-          });
-          
-          const requestsQuery = query(
-            collection(db, "profileChangeRequests"),
-            where("companyId", "==", techData.companyId),
-            where("technicianId", "==", firebaseUser.uid)
-          );
-          const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
-              const requestsData = snapshot.docs.map(doc => {
-                  const data = doc.data();
-                  for (const key in data) {
-                      if (data[key] && typeof data[key].toDate === 'function') {
-                          data[key] = data[key].toDate().toISOString();
-                      }
-                  }
-                  return { id: doc.id, ...data } as ProfileChangeRequest
-              });
-              requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-              setSubmittedRequests(requestsData);
-          });
-          
-          setIsLoading(false);
-          return () => unsubscribeRequests(); // Nested cleanup
+          setIsLoading(false); 
         } else {
           setError("No technician profile found for your account.");
           setTechnician(null);
@@ -97,6 +109,66 @@ export default function TechnicianProfilePage() {
         unsubscribeTech();
     };
   }, [firebaseUser, authLoading]);
+
+  useEffect(() => {
+    if (!technician) return;
+    
+    const companyId = technician.companyId;
+
+    // Fetch Skills
+    const skillsQuery = query(collection(db, "skills"), where("companyId", "==", companyId), orderBy("name"));
+    const unsubscribeSkills = onSnapshot(skillsQuery, (snapshot) => {
+        setAllSkills(snapshot.docs.map(doc => doc.data().name as string));
+    });
+
+    // Fetch Change Requests
+    const requestsQuery = query(
+        collection(db, "profileChangeRequests"),
+        where("companyId", "==", companyId),
+        where("technicianId", "==", technician.id),
+        orderBy("createdAt", "desc")
+    );
+    const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+        const requestsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as ProfileChangeRequest
+        });
+        setSubmittedRequests(requestsData);
+    });
+    
+    // Fetch Completed Jobs
+    const jobsQuery = query(
+        collection(db, "jobs"),
+        where("companyId", "==", companyId),
+        where("assignedTechnicianId", "==", technician.id),
+        where("status", "==", "Completed"),
+        orderBy("completedAt", "desc"),
+        limit(20)
+    );
+    const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
+        const jobsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as Job;
+        });
+        setCompletedJobs(jobsData);
+    });
+
+    return () => {
+        unsubscribeSkills();
+        unsubscribeRequests();
+        unsubscribeJobs();
+    }
+  }, [technician]);
 
   if (isLoading || authLoading) {
     return (
@@ -127,7 +199,7 @@ export default function TechnicianProfilePage() {
   const backUrl = `/technician/jobs/${firebaseUser.uid}`;
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
         <SuggestChangeDialog
             isOpen={isSuggestChangeOpen}
             setIsOpen={setIsSuggestChangeOpen}
@@ -181,6 +253,49 @@ export default function TechnicianProfilePage() {
                     To update your profile details, you can suggest a change for dispatcher review.
                 </p>
             </CardFooter>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Clock/>Time Log Summary</CardTitle>
+                <CardDescription>A summary of your recently completed jobs. Contact dispatch if you see any discrepancies.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="max-h-96">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Job</TableHead>
+                                <TableHead className="text-right">Travel</TableHead>
+                                <TableHead className="text-right">Work</TableHead>
+                                <TableHead className="text-right">Break</TableHead>
+                                <TableHead className="text-right font-bold">Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {completedJobs.length > 0 ? completedJobs.map(job => {
+                                const durations = calculateJobDurations(job);
+                                return (
+                                    <TableRow key={job.id}>
+                                        <TableCell>
+                                            <p className="font-medium truncate max-w-xs">{job.title}</p>
+                                            <p className="text-xs text-muted-foreground">{format(new Date(job.completedAt!), 'PP')}</p>
+                                        </TableCell>
+                                        <TableCell className="text-right">{durations.travelTime}</TableCell>
+                                        <TableCell className="text-right">{durations.workTime}</TableCell>
+                                        <TableCell className="text-right">{durations.breakTime}</TableCell>
+                                        <TableCell className="text-right font-bold">{durations.totalTime}</TableCell>
+                                    </TableRow>
+                                )
+                            }) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center text-muted-foreground h-24">No completed jobs to display.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </CardContent>
         </Card>
 
          <Card>

@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/auth-context';
 import SuggestChangeDialog from './components/SuggestChangeDialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash.isequal';
 
 const getStatusClass = (status: ProfileChangeRequest['status']) => {
     switch (status) {

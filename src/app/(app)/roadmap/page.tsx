@@ -283,6 +283,39 @@ const roadmapFeatures = {
       },
     },
     {
+      title: "Tiered Feature Access & Subscription Logic",
+      description: "Implement logic to restrict access to features based on the customer's subscription plan (Starter, Professional, Enterprise). This will involve creating UI controls and backend checks to enforce plan limits.",
+      icon: CreditCard,
+      status: "Planned",
+      developerBrief: {
+        coreFunctionality: [
+          "Check user's company subscription status (from AuthContext).",
+          "Conditionally render UI elements or disable features based on the plan.",
+          "Enforce technician limits on the 'Add Technician' action.",
+        ],
+        dataModels: [
+          "The Company model needs a field to store the current plan (e.g., `subscriptionPlan: 'starter' | 'professional' | 'enterprise'`). This should be set by the Stripe webhook when a subscription is created."
+        ],
+        aiComponents: ["No direct AI component."],
+        uiUx: [
+          "Disable buttons for premium features with a tooltip explaining it requires a higher plan.",
+          "Show banners or alerts for plan limits (e.g., 'You have reached the maximum number of technicians for the Starter plan').",
+        ],
+        integrationPoints: [
+          "AuthContext to provide the user's current plan.",
+          "Stripe webhook handler to save the purchased plan to the Company document.",
+        ],
+        technicalChallenges: [
+          "Implementing checks consistently across the UI without cluttering the code.",
+          "Securing backend actions to prevent unauthorized use of premium features.",
+        ],
+        successMetrics: [
+          "Users on lower tiers are correctly blocked from accessing premium features.",
+          "Upgrade prompts are clearly visible when a user tries to access a restricted feature.",
+        ],
+      },
+    },
+    {
       title: "AI-Assisted Digital Protocols & Checklists",
       description: "Enable technicians to complete job-specific digital checklists on their mobile device. This ensures standardized procedures and captures structured data.",
       icon: ClipboardList,
@@ -469,5 +502,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-    

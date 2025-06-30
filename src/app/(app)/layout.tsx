@@ -54,6 +54,7 @@ const adminNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/contracts", label: "Contracts", icon: Repeat },
   { href: "/customers", label: "Customers", icon: ClipboardList },
+  { href: "/reports", label: "Reports", icon: PieChart },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -105,13 +106,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, userProfile, loading, router, pathname]);
 
-  const isSubscriptionActive = company?.subscriptionStatus === 'active' || company?.subscriptionStatus === 'trialing';
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
       trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
   }
 
-  const isSubscriptionExpired = company && !isSubscriptionActive && (trialDaysLeft === null || (trialDaysLeft !== null && trialDaysLeft < 0));
+  const isTrialActive = company?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft >= 0;
+  const isPaidSubscriptionActive = company?.subscriptionStatus === 'active';
+  const hasActiveSubscription = isTrialActive || isPaidSubscriptionActive;
+
+  const showExpiredBanner = company && !hasActiveSubscription && !pathname.startsWith('/settings');
 
   if (loading || !userProfile || !user) {
     return (
@@ -173,7 +177,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon">
+      <Sidebar collapsible="icon" className="peer">
         <SidebarHeader>
           <div className="flex items-center justify-between">
             <Logo />
@@ -282,7 +286,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
            <div className="w-7"/>
         </header>
         <main className="flex-1 p-4 md:p-6 lg:p-8">
-            {trialDaysLeft !== null && trialDaysLeft >= 0 && (
+            {isTrialActive && trialDaysLeft !== null && (
                 <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
                     <Sparkles className="h-4 w-4" />
                     <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
@@ -295,7 +299,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </AlertDescription>
                 </Alert>
             )}
-            {isSubscriptionExpired && !pathname.startsWith('/settings') && (
+            {showExpiredBanner && (
                 <Alert variant="destructive" className="mb-6">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Subscription Expired</AlertTitle>

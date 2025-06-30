@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -241,6 +241,47 @@ const roadmapFeatures = {
     },
   ],
   planned: [
+    {
+      title: "Stripe Subscription & Billing Integration",
+      description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes a customer portal for managing billing.",
+      icon: CreditCard,
+      status: "In Progress",
+      developerBrief: {
+        coreFunctionality: [
+          "Create Stripe customer when a new company is created.",
+          "Start a 30-day trial for new companies.",
+          "Provide a UI for users to select a plan and enter payment details via Stripe Checkout.",
+          "Handle Stripe webhooks to update subscription status in Firestore.",
+          "Redirect users to the Stripe Customer Portal to manage their subscription.",
+          "Restrict access to features based on subscription status after the trial ends.",
+        ],
+        dataModels: [
+          "Company model needs fields: stripeCustomerId, subscriptionId, subscriptionStatus ('trialing', 'active', 'past_due', 'canceled'), trialEndsAt.",
+        ],
+        aiComponents: ["No direct AI component."],
+        uiUx: [
+          "New /billing page or section in /settings.",
+          "UI components for displaying different plans (PricingCard).",
+          "A banner in the main layout showing trial status.",
+        ],
+        integrationPoints: [
+          "Stripe API (server-side actions).",
+          "New /api/stripe/webhook endpoint.",
+          "onboarding-actions.ts to create Stripe customer and set trial.",
+          "auth-context.tsx to check subscription status.",
+        ],
+        technicalChallenges: [
+          "Securely handling webhooks from Stripe.",
+          "Mapping Stripe plans to application features.",
+          "Gracefully handling subscription state changes (e.g., failed payments).",
+        ],
+        successMetrics: [
+          "Successful creation of subscriptions.",
+          "Correct reflection of subscription status in the app.",
+          "Low error rate on webhook handling.",
+        ],
+      },
+    },
     {
       title: "AI-Assisted Digital Protocols & Checklists",
       description: "Enable technicians to complete job-specific digital checklists on their mobile device. This ensures standardized procedures and captures structured data.",

@@ -92,6 +92,7 @@ export default function DashboardPage() {
   const [selectedJobForTracking, setSelectedJobForTracking] = useState<Job | null>(null);
 
   const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
+  const [searchAddressText, setSearchAddressText] = useState('');
 
 
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -599,6 +600,7 @@ export default function DashboardPage() {
   );
   
   const handleLocationSearch = (location: { address: string; lat: number; lng: number }) => {
+    setSearchAddressText(location.address);
     setSearchedLocation({
         address: location.address,
         latitude: location.lat,
@@ -845,8 +847,7 @@ export default function DashboardPage() {
         
         <Tabs defaultValue="jobs" className="w-full">
           <div className="w-full overflow-x-auto sm:overflow-visible">
-              <TabsList className="mb-4 sm:grid sm:w-full sm:grid-cols-4">
-                  <TabsTrigger value="overview">Overview Map</TabsTrigger>
+              <TabsList className="mb-4 grid w-full grid-cols-4">
                   <TabsTrigger value="jobs">Job List</TabsTrigger>
                   <TabsTrigger value="schedule">Schedule</TabsTrigger>
                   <TabsTrigger value="technicians" className="relative">
@@ -855,35 +856,9 @@ export default function DashboardPage() {
                         <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
                     )}
                   </TabsTrigger>
+                   <TabsTrigger value="overview">Overview Map</TabsTrigger>
               </TabsList>
           </div>
-          <TabsContent value="overview">
-            <Card>
-              <CardHeader>
-                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
-                    <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
-                     <div className="pt-2">
-                        <AddressAutocompleteInput
-                            value={searchedLocation?.address || ''}
-                            onValueChange={(text) => {
-                                if (!text) setSearchedLocation(null);
-                            }}
-                            onLocationSelect={handleLocationSearch}
-                            placeholder="Search for an address to view on map..."
-                        />
-                    </div>
-              </CardHeader>
-              <CardContent>
-                <MapView 
-                  technicians={technicians} 
-                  jobs={jobs} 
-                  defaultCenter={defaultMapCenter}
-                  defaultZoom={4}
-                  searchedLocation={searchedLocation}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
           <TabsContent value="jobs">
             <Card>
                 <CardHeader className="flex flex-col gap-4">
@@ -1022,6 +997,31 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
                     )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="overview">
+            <Card>
+              <CardHeader>
+                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                    <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
+                     <div className="pt-2">
+                        <AddressAutocompleteInput
+                            value={searchAddressText}
+                            onValueChange={setSearchAddressText}
+                            onLocationSelect={handleLocationSearch}
+                            placeholder="Search for an address to view on map..."
+                        />
+                    </div>
+              </CardHeader>
+              <CardContent>
+                <MapView 
+                  technicians={technicians} 
+                  jobs={jobs} 
+                  defaultCenter={defaultMapCenter}
+                  defaultZoom={4}
+                  searchedLocation={searchedLocation}
+                />
               </CardContent>
             </Card>
           </TabsContent>

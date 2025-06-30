@@ -968,13 +968,15 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
            <TabsContent value="schedule">
-             <ScheduleCalendarView
-                jobs={jobs}
-                technicians={technicians}
-                onCheckScheduleHealth={handleCheckScheduleHealth}
-                isCheckingHealth={isCheckingHealth}
-                busyTechniciansCount={busyTechnicians.length}
-             />
+            <div className="min-w-0">
+                <ScheduleCalendarView
+                    jobs={jobs}
+                    technicians={technicians}
+                    onCheckScheduleHealth={handleCheckScheduleHealth}
+                    isCheckingHealth={isCheckingHealth}
+                    busyTechniciansCount={busyTechnicians.length}
+                />
+            </div>
           </TabsContent>
           <TabsContent value="technicians">
             <Card>

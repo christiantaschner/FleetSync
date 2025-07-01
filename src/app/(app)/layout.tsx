@@ -173,7 +173,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             return getTechnicianNavItems(user.uid);
         case 'csr':
             return csrNavItems;
-        case 'super_admin':
+        case 'superAdmin':
             return [...adminNavItems, ...superAdminNavItems];
         case 'admin':
         default:
@@ -210,7 +210,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuItem>
             ))}
-            {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
+            {(userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && (
               <>
                 <SidebarSeparator />
                  <SidebarMenuItem>

@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest, Location } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
-import OptimizeRouteDialog from './components/optimize-route-dialog'; 
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';

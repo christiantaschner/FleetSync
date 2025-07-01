@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -246,155 +246,41 @@ const roadmapFeatures = {
       description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes a customer portal for managing billing.",
       icon: CreditCard,
       status: "In Progress",
-      developerBrief: {
-        coreFunctionality: [
-          "Create Stripe customer when a new company is created.",
-          "Start a 30-day trial for new companies.",
-          "Provide a UI for users to select a plan and enter payment details via Stripe Checkout.",
-          "Handle Stripe webhooks to update subscription status in Firestore.",
-          "Redirect users to the Stripe Customer Portal to manage their subscription.",
-          "Restrict access to features based on subscription status after the trial ends.",
-        ],
-        dataModels: [
-          "Company model needs fields: stripeCustomerId, subscriptionId, subscriptionStatus ('trialing', 'active', 'past_due', 'canceled'), trialEndsAt.",
-        ],
-        aiComponents: ["No direct AI component."],
-        uiUx: [
-          "New /billing page or section in /settings.",
-          "UI components for displaying different plans (PricingCard).",
-          "A banner in the main layout showing trial status.",
-        ],
-        integrationPoints: [
-          "Stripe API (server-side actions).",
-          "New /api/stripe/webhook endpoint.",
-          "onboarding-actions.ts to create Stripe customer and set trial.",
-          "auth-context.tsx to check subscription status.",
-        ],
-        technicalChallenges: [
-          "Securely handling webhooks from Stripe.",
-          "Mapping Stripe plans to application features.",
-          "Gracefully handling subscription state changes (e.g., failed payments).",
-        ],
-        successMetrics: [
-          "Successful creation of subscriptions.",
-          "Correct reflection of subscription status in the app.",
-          "Low error rate on webhook handling.",
-        ],
-      },
     },
     {
       title: "Tiered Feature Access & Subscription Logic",
       description: "Implement logic to restrict access to features based on the customer's subscription plan (Starter, Professional, Enterprise). This will involve creating UI controls and backend checks to enforce plan limits.",
       icon: CreditCard,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Check user's company subscription status (from AuthContext).",
-          "Conditionally render UI elements or disable features based on the plan.",
-          "Enforce technician limits on the 'Add Technician' action.",
-        ],
-        dataModels: [
-          "The Company model needs a field to store the current plan (e.g., `subscriptionPlan: 'starter' | 'professional' | 'enterprise'`). This should be set by the Stripe webhook when a subscription is created."
-        ],
-        aiComponents: ["No direct AI component."],
-        uiUx: [
-          "Disable buttons for premium features with a tooltip explaining it requires a higher plan.",
-          "Show banners or alerts for plan limits (e.g., 'You have reached the maximum number of technicians for the Starter plan').",
-        ],
-        integrationPoints: [
-          "AuthContext to provide the user's current plan.",
-          "Stripe webhook handler to save the purchased plan to the Company document.",
-        ],
-        technicalChallenges: [
-          "Implementing checks consistently across the UI without cluttering the code.",
-          "Securing backend actions to prevent unauthorized use of premium features.",
-        ],
-        successMetrics: [
-          "Users on lower tiers are correctly blocked from accessing premium features.",
-          "Upgrade prompts are clearly visible when a user tries to access a restricted feature.",
-        ],
-      },
     },
     {
       title: "AI-Assisted Digital Protocols & Checklists",
       description: "Enable technicians to complete job-specific digital checklists on their mobile device. This ensures standardized procedures and captures structured data.",
       icon: ClipboardList,
       status: "Planned",
-       developerBrief: {
-        coreFunctionality: [
-            "Technicians must complete a pre-work safety checklist before they can start a job.",
-            "The 'Start Job' button is disabled until the checklist is submitted.",
-            "Completed checklist data is saved to the `Job` document in Firestore."
-        ],
-        dataModels: [
-            "Job.checklistResults: An array of `ChecklistResult` objects.",
-            "`ChecklistResult` is defined as `{ item: string, checked: boolean }` in `src/types/index.ts`."
-        ],
-        aiComponents: [
-            "Future vision: AI could analyze checklist data to identify safety trends or automatically flag if a critical check is missed repeatedly across the company."
-        ],
-        uiUx: [
-            "`ChecklistCard.tsx`: Renders the checklist with checkboxes.",
-            "`technician/[jobId]/page.tsx`: Displays the `ChecklistCard` for jobs with 'Assigned' or 'En Route' status.",
-            "`status-update-actions.tsx`: Disables the 'Start Job' button based on checklist completion."
-        ],
-      }
     },
     {
       title: "Intelligent Parts & Van Stock Management",
       description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. (Note: This feature is fully coded but has been temporarily disabled pending further review).",
       icon: Wrench,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-          "Track required parts for a job (`Job.requiredParts`).",
-          "Track parts inventory carried by each technician (`Technician.partsInventory`).",
-          "Manage a central library of available parts.",
-        ],
-        dataModels: [
-          "A `parts` collection in Firestore to store the library of all possible parts.",
-          "`Technician.partsInventory`: An array of strings on the Technician document.",
-          "`Job.requiredParts`: An array of strings on the Job document.",
-        ],
-        aiComponents: [
-          "`suggestJobPartsFlow`: An AI flow that analyzes a job description and suggests required parts from the central library.",
-          "`allocateJobFlow`: The main job allocation AI was previously instructed to prioritize technicians who have the required parts in their van inventory.",
-        ],
-        uiUx: [
-          "`ManagePartsDialog`: A dialog for admins to add/remove parts from the central library.",
-          "`AddEditTechnicianDialog`: Included a section for assigning parts from the library to a technician's van stock.",
-          "`AddEditJobDialog`: Included a section to specify required parts, with AI suggestions.",
-        ],
-      },
     },
     {
       title: "Exportable Time Tracking Reports",
       description: "Enable dispatchers to export detailed time logs to a CSV file. This data, including travel, on-site, and break times, can be used for payroll and job costing.",
       icon: FileSpreadsheet,
       status: "Planned",
-      developerBrief: {
-        coreFunctionality: [
-            "Add an 'Export CSV' button to the Reporting page.",
-            "Generate a CSV file containing time log data based on the selected date range and technician filter.",
-            "The CSV should include columns: Technician Name, Job Title, Date, Travel Time, Work Time, Break Time, Total Time."
-        ],
-        dataModels: [
-            "Uses the same processed data as the Time Log table on the technician profile.",
-            "Relies on Job timestamps: enRouteAt, inProgressAt, completedAt, and the breaks array."
-        ],
-        aiComponents: [
-            "No direct AI component, but data quality relies on the AI-assisted scheduling being accurate."
-        ],
-        uiUx: [
-            "A new 'Export CSV' button on the /reports page.",
-            "The export process should be asynchronous, showing a loading state on the button."
-        ],
-      }
     },
     {
       title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",
       description: "Ability to group technicians (e.g., a master craftsman and an apprentice) who are always scheduled for jobs together. The AI allocation engine will be updated to assign suitable jobs to a team, respecting their combined skills and availability.",
       icon: Users2,
+      status: "Planned",
+    },
+    {
+      title: "Technician Profile Pictures",
+      description: "Allow users to upload profile pictures for technicians, replacing the default placeholder avatars. This adds a personal touch to the UI.",
+      icon: ImageIcon,
       status: "Planned",
     },
     {

@@ -83,6 +83,10 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       toast({ title: "Missing Information", description: "Please fill in Name and Location Address.", variant: "destructive" });
       return;
     }
+    if (latitude === null || longitude === null) {
+      toast({ title: "Invalid Address", description: "Please select a valid address from the dropdown suggestions to set the location.", variant: "destructive" });
+      return;
+    }
     if (!userProfile?.companyId) {
       toast({ title: "Authentication Error", description: "Company ID not found.", variant: "destructive" });
       return;

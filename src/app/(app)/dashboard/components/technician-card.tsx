@@ -37,10 +37,6 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
-        <Avatar className="h-12 w-12 border">
-          <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
-          <AvatarFallback>{technician.name ? technician.name.split(' ').map(n => n[0]).join('') : 'T'}</AvatarFallback>
-        </Avatar>
         <div className="flex-1">
           <CardTitle className="text-lg font-headline">{technician.name}</CardTitle>
           <CardDescription className="flex items-center gap-1 text-sm">

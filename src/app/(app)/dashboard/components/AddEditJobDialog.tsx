@@ -212,8 +212,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setAiSuggestion(null);
     } else if (result.data) {
       setAiSuggestion(result.data);
-      const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
-      setSuggestedTechnicianDetails(tech || null);
+      if (result.data.suggestedTechnicianId) {
+        const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
+        setSuggestedTechnicianDetails(tech || null);
+      }
     }
   }, [technicians, toast, jobs]);
 
@@ -245,6 +247,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const handleSubmit = async (assignTechId: string | null = null) => {
     if (!title.trim() || !description.trim() || !locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Address.", variant: "destructive" });
+      return;
+    }
+
+    if (latitude === null || longitude === null) {
+      toast({ title: "Invalid Address", description: "Please select a valid address from the dropdown suggestions to set the location.", variant: "destructive" });
       return;
     }
     
@@ -510,13 +517,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <span>AI is finding the best technician...</span>
                 </div>
               )}
-              {!isFetchingAISuggestion && aiSuggestion && suggestedTechnicianDetails && (
+              {!isFetchingAISuggestion && aiSuggestion && aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails && (
                 <div>
                   <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
                   <p className="text-sm">
                     Assign to: <strong>{suggestedTechnicianDetails.name}</strong> ({suggestedTechnicianDetails.isAvailable ? "Available" : "Unavailable"}, Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'})
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
+                </div>
+              )}
+               {!isFetchingAISuggestion && aiSuggestion && !aiSuggestion.suggestedTechnicianId && (
+                <div>
+                    <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
+                    <p className="text-sm text-muted-foreground">Could not find a suitable technician.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
                 </div>
               )}
               {!isFetchingAISuggestion && !aiSuggestion && (description.trim() && priority) && (

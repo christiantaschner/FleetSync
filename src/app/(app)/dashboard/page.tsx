@@ -687,6 +687,7 @@ export default function DashboardPage() {
                       allSkills={allSkills} 
                       onJobAddedOrUpdated={handleJobAddedOrUpdated} 
                       jobs={jobs}
+                      onManageSkills={() => setIsManageSkillsOpen(true)}
                   >
                       <Button size="lg">
                           <PlusCircle className="mr-2 h-5 w-5" /> Add New Job
@@ -721,7 +722,13 @@ export default function DashboardPage() {
            <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
           </Button>
-           <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
+           <AddEditJobDialog 
+             technicians={technicians} 
+             allSkills={allSkills} 
+             onJobAddedOrUpdated={handleJobAddedOrUpdated} 
+             jobs={jobs}
+             onManageSkills={() => setIsManageSkillsOpen(true)}
+           >
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
             </Button>
@@ -926,6 +933,7 @@ export default function DashboardPage() {
                   onJobUpdated={handleJobAddedOrUpdated}
                   onOpenChat={handleOpenChat}
                   onShareTracking={handleShareTracking}
+                  onManageSkills={() => setIsManageSkillsOpen(true)}
                 />
               )) : (
                 <p className="text-muted-foreground text-center py-10">
@@ -1015,5 +1023,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -41,9 +41,10 @@ interface AddEditJobDialogProps {
   technicians: Technician[];
   allSkills: string[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
+  onManageSkills: () => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, onJobAddedOrUpdated }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
@@ -403,19 +404,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                 </Label>
                 <ScrollArea className="h-40 rounded-md border p-3 mt-1">
                   <div className="space-y-2">
-                    {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
-                    {allSkills.map(skill => (
-                      <div key={skill} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`skill-${skill.replace(/\s+/g, '-')}`}
-                          checked={requiredSkills.includes(skill)}
-                          onCheckedChange={() => handleSkillChange(skill)}
-                        />
-                        <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                          {skill}
-                        </Label>
-                      </div>
-                    ))}
+                    {allSkills.length === 0 ? (
+                       <div className="text-center flex flex-col items-center justify-center h-full pt-8">
+                         <p className="text-sm text-muted-foreground">No skills defined in library.</p>
+                         <Button type="button" variant="link" className="mt-1" onClick={onManageSkills}>
+                           <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                         </Button>
+                       </div>
+                    ) : (
+                      allSkills.map(skill => (
+                        <div key={skill} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`skill-${skill.replace(/\s+/g, '-')}`}
+                            checked={requiredSkills.includes(skill)}
+                            onCheckedChange={() => handleSkillChange(skill)}
+                          />
+                          <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                            {skill}
+                          </Label>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
               </div>

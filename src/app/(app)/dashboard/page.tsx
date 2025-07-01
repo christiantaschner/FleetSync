@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -708,10 +708,6 @@ export default function DashboardPage() {
         latitude: location.lat,
         longitude: location.lng,
     });
-    const overviewTrigger = document.querySelector('button[data-state][value="overview"]') as HTMLButtonElement | null;
-    if (overviewTrigger) {
-        overviewTrigger.click();
-    }
   };
 
 
@@ -758,7 +754,7 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
        <AddEditJobDialog
             isOpen={isAddEditJobDialogOpen}
             onClose={handleCloseAddEditJobDialog}
@@ -1121,6 +1117,5 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>);
 }

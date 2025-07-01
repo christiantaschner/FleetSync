@@ -32,7 +32,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
   SidebarTrigger,
   SidebarInset,
   SidebarSeparator,
@@ -188,11 +187,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon" className="peer">
-        <SidebarHeader>
+        <SidebarHeader className="bg-primary text-primary-foreground border-b-primary-foreground/20">
           <div className="flex items-center justify-between">
             <Logo />
             <div className="md:hidden">
-              <SidebarTrigger />
+              <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
             </div>
           </div>
         </SidebarHeader>
@@ -290,8 +289,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary/20 bg-primary px-4 text-primary-foreground md:hidden">
-           <SidebarTrigger/>
+        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary-foreground/20 bg-primary px-4 text-primary-foreground md:hidden">
+           <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
            <Logo />
            <div className="w-7"/>
         </header>

@@ -134,7 +134,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
         <DialogHeader>
           <DialogTitle className="font-headline">Manage Skills Library</DialogTitle>
           <DialogDescription>
-            Add or remove skills available for assignment to technicians. This is a central library.
+            Add or remove skills available for assignment to technicians.
           </DialogDescription>
         </DialogHeader>
         

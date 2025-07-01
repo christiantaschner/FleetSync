@@ -218,7 +218,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     }
     setIsLoading(true);
 
-    const jobData: Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'assignedTechnicianId' | 'notes' | 'photos' | 'estimatedDurationMinutes'> & { companyId: string, scheduledTime?: string; requiredSkills?: string[]; requiredParts?: string[] } = {
+    const jobData: any = {
       companyId: userProfile.companyId,
       title,
       description,
@@ -232,7 +232,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
         longitude: longitude ?? 0,
         address: locationAddress 
       },
-      scheduledTime: scheduledTime?.toISOString(),
+      scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
     };
 
     try {

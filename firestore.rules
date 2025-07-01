@@ -1,128 +1,122 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helferfunktionen (OPTIMIERT: Nutzen Custom Claims) ---
-
-    // Prüft, ob der Benutzer authentifiziert ist.
+    // --- Helper Functions (OPTIMIZED: Using Custom Claims) ---
     function isSignedIn() {
       return request.auth != null;
     }
-
-    // Prüft, ob der Benutzer der Eigentümer des Dokuments ist.
+    function getCompanyId() {
+      return request.auth.token.companyId;
+    }
+    function getRole() {
+      return request.auth.token.role;
+    }
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-
-    // Holt die companyId aus den Custom Claims des Authentifizierungstokens.
-    function getCompanyIdFromToken() {
-      return request.auth.token.companyid;
-    }
-
-    // Holt die Rolle aus den Custom Claims des Authentifizierungstokens.
-    function getRoleFromToken() {
-      return request.auth.token.role;
-    }
-
-    // Prüft, ob der Benutzer ein Super-Admin ist.
     function isSuperAdmin() {
-      return isSignedIn() && getRoleFromToken() == 'superAdmin';
+      return isSignedIn() && getRole() == 'superAdmin';
+    }
+    function isCompanyAdmin() {
+      return isSignedIn() && getRole() == 'admin';
+    }
+    function isCompanyMember() {
+      return isSignedIn() && getCompanyId() != null;
+    }
+    function isRole(role) {
+      return isSignedIn() && getRole() == role;
     }
 
-    // Prüft, ob der Benutzer ein Admin der angegebenen Firma ist (oder ein Super-Admin).
-    function isCompanyAdmin(targetCompanyId) {
-      return isSignedIn() &&
-             (getRoleFromToken() == 'admin' || isSuperAdmin()) &&
-             getCompanyIdFromToken() == targetCompanyId;
-    }
+    // --- Collection-Specific Rules ---
 
-    // Prüft, ob der Benutzer ein Mitglied der angegebenen Firma ist.
-    function isCompanyMember(targetCompanyId) {
-      return isSignedIn() && getCompanyIdFromToken() == targetCompanyId;
-    }
-    
-    // --- Sammlungsregeln ---
-
-    // Regeln für die 'users' Collection
+    // USERS
+    // Admins can manage users in their own company. Users can read/update their own profile (but not change role/company).
     match /users/{userId} {
-      // READ:
-      // - Ein Benutzer kann sein eigenes Profil lesen.
-      // - Ein Super-Admin kann jedes Profil lesen.
-      // - Ein Firmen-Admin kann Profile von Benutzern in seiner eigenen Firma lesen.
-      allow get: if isOwner(userId) || isSuperAdmin() || (isCompanyAdmin(resource.data.companyId) && getCompanyIdFromToken() == resource.data.companyId);
-
-      // CREATE:
-      // - Jeder authentifizierte Benutzer kann sein eigenes Profil erstellen (uid muss übereinstimmen).
-      // - `companyId` und `role` dürfen bei der Erstellung nicht vom Benutzer selbst gesetzt werden, es sei denn, er ist bereits Admin DIESER Firma (unwahrscheinlicher Fall, aber sicher).
-      allow create: if isOwner(userId) && request.resource.data.uid == userId
-                    && (request.resource.data.companyId == null || isCompanyAdmin(request.resource.data.companyId))
-                    && (request.resource.data.role == null || isCompanyAdmin(request.resource.data.companyId))
-                    || isSuperAdmin();
-
-      // UPDATE:
-      // - Ein Benutzer kann sein eigenes Profil aktualisieren, aber NICHT sensible Felder (companyId, role, uid, email).
-      // - Ein Firmen-Admin kann Profile von Benutzern in seiner eigenen Firma aktualisieren (alle Felder).
-      // - Ein Super-Admin kann jedes Profil aktualisieren.
-      allow update: if (isOwner(userId) &&
-                        request.resource.data.uid == resource.data.uid &&
-                        request.resource.data.email == resource.data.email &&
-                        request.resource.data.companyId == resource.data.companyId &&
-                        request.resource.data.role == resource.data.role)
-                      || isSuperAdmin()
-                      || (isCompanyAdmin(resource.data.companyId) && getCompanyIdFromToken() == resource.data.companyId);
-
-      // LIST:
-      // - Admins und Super-Admins können Benutzer listen, aber NUR gefiltert nach ihrer eigenen companyId.
-      // - Die `request.query.where` Prüfung erzwingt, dass der Client die korrekte `where("companyId", "==", ...)` Klausel verwendet.
-      allow list: if isSuperAdmin() || (getRoleFromToken() == 'admin' && request.query.where.companyId == getCompanyIdFromToken());
+      allow get: if isOwner(userId) || isSuperAdmin() || (isCompanyAdmin() && resource.data.companyId == getCompanyId());
+      allow list: if isSuperAdmin() || isCompanyAdmin(); // Client query must filter by companyId
+      allow create: if isOwner(userId);
+      allow update: if
+        // User can update their non-sensitive fields
+        (isOwner(userId) && request.resource.data.role == resource.data.role && request.resource.data.companyId == resource.data.companyId) ||
+        // Admin can update users in their company
+        (isCompanyAdmin() && resource.data.companyId == getCompanyId()) ||
+        isSuperAdmin();
     }
 
-    // Regeln für die 'companies' Collection
+    // COMPANIES
+    // Company members can read their company doc, admins can update it.
     match /companies/{companyId} {
-      allow read: if isCompanyMember(companyId) || isSuperAdmin();
-      allow create, update: if isCompanyAdmin(companyId) || isSuperAdmin();
-      allow delete: if false; // Löschen von Firmen sollte nur über eine Backend-Funktion erfolgen.
+      allow read: if isCompanyMember() && companyId == getCompanyId();
+      allow update: if isCompanyAdmin() && companyId == getCompanyId();
+      allow create, delete: if isSuperAdmin(); // Only super admins can create/delete companies post-onboarding
+    }
+
+    // JOBS
+    // Staff can manage jobs, technicians can only update their assigned jobs.
+    match /jobs/{jobId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create: if isCompanyAdmin() || isRole('csr');
+      allow update: if
+        (request.resource.data.companyId == resource.data.companyId) && // companyId is immutable
+        (
+          (isCompanyAdmin() || isRole('csr')) ||
+          (isRole('technician') && resource.data.assignedTechnicianId == request.auth.uid)
+        );
+      allow delete: if isCompanyAdmin();
+    }
+
+    // TECHNICIANS
+    // Admins can manage technicians in their company.
+    match /technicians/{techId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create, update: if isCompanyAdmin() && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isCompanyAdmin();
     }
     
-    // Generische Regel für alle firmenspezifischen Dokumente
-    function isCompanyResource(collectionName) {
-      return collectionName in ['jobs', 'technicians', 'skills', 'parts', 'contracts', 'equipment', 'profileChangeRequests', 'chatMessages'];
+    // SKILLS & PARTS
+    // Admins manage the company's library of skills and parts.
+    match /skills/{skillId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create, delete: if isCompanyAdmin();
+      allow update: if false; // Skills are simple documents, just delete and re-create.
+    }
+    match /parts/{partId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create, delete: if isCompanyAdmin();
+      allow update: if false;
+    }
+    
+    // CONTRACTS & EQUIPMENT
+    // Staff can manage contracts and equipment for their company.
+    match /contracts/{contractId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create: if isCompanyAdmin() || isRole('csr');
+      allow update: if (isCompanyAdmin() || isRole('csr')) && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isCompanyAdmin();
+    }
+    match /equipment/{equipmentId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create: if isCompanyAdmin() || isRole('csr');
+      allow update: if (isCompanyAdmin() || isRole('csr')) && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if isCompanyAdmin();
     }
 
-    match /{collection}/{docId}
-      // Wenden Sie diese Regel nur auf die entsprechenden Sammlungen an.
-      if isCompanyResource(collection) {
-
-        // READ (get, list):
-        // Jeder, dessen Token-companyId mit der companyId des Dokuments übereinstimmt, kann lesen.
-        allow read: if isSignedIn() && (isCompanyMember(resource.data.companyId) || isSuperAdmin());
-
-        // WRITE (create, update, delete):
-        // Nur Mitglieder der Firma des Dokuments können schreiben.
-        allow write: if isSignedIn() && isCompanyMember(request.resource.data.companyId);
-
-        // --- Spezifischere Schreibregeln innerhalb von 'allow write' ---
-        
-        // CREATE:
-        // - Die companyId des neuen Dokuments muss mit der des Benutzers übereinstimmen.
-        // - Rolle muss admin, csr, superAdmin oder ein Techniker sein, der ein 'profileChangeRequest' erstellt.
-        allow create: if request.resource.data.companyId == getCompanyIdFromToken() &&
-                         (getRoleFromToken() in ['admin', 'csr', 'superAdmin'] ||
-                          (collection == 'profileChangeRequests' && getRoleFromToken() == 'technician' && request.resource.data.technicianId == request.auth.uid) ||
-                          (collection == 'chatMessages')); // Alle Mitglieder können chatten
-
-        // UPDATE:
-        // - Die companyId darf nicht geändert werden.
-        // - Admins/CSRs/SuperAdmins können die meisten Dinge aktualisieren.
-        // - Techniker dürfen nur Jobs aktualisieren, die ihnen zugewiesen sind.
-        allow update: if request.resource.data.companyId == resource.data.companyId &&
-                         (getRoleFromToken() in ['admin', 'csr', 'superAdmin'] ||
-                          (collection == 'jobs' && getRoleFromToken() == 'technician' && resource.data.assignedTechnicianId == request.auth.uid));
-
-        // DELETE:
-        // - Nur Admins und SuperAdmins können Dokumente löschen.
-        allow delete: if getRoleFromToken() in ['admin', 'superAdmin'];
+    // PROFILE CHANGE REQUESTS
+    // Technicians create their own requests, Admins approve/reject them.
+    match /profileChangeRequests/{reqId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create: if isRole('technician') && request.resource.data.technicianId == request.auth.uid;
+      allow update: if isCompanyAdmin() && request.resource.data.companyId == resource.data.companyId;
+      allow delete: if false;
+    }
+    
+    // CHAT MESSAGES
+    // All company members can read/write messages within their company.
+    match /chatMessages/{msgId} {
+      allow read, list: if isCompanyMember() && resource.data.companyId == getCompanyId();
+      allow create: if isCompanyMember() && request.resource.data.companyId == getCompanyId();
+      allow update, delete: if false; // Messages are immutable
     }
   }
 }

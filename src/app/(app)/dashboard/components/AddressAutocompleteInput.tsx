@@ -1,8 +1,8 @@
-
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
 import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Loader2, MapPin } from 'lucide-react';
 
@@ -24,33 +24,17 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
   const places = useMapsLibrary('places');
   const geocoding = useMapsLibrary('geocoding');
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (places) {
-      setAutocompleteService(new places.AutocompleteService());
-    }
-    if (geocoding) {
-      setGeocodingService(new geocoding.Geocoder());
-    }
+    if (places) setAutocompleteService(new places.AutocompleteService());
+    if (geocoding) setGeocodingService(new geocoding.Geocoder());
   }, [places, geocoding]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setShowPredictions(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onValueChange(newValue);
-    setShowPredictions(true);
 
     if (autocompleteService && newValue) {
+      setShowPredictions(true);
       setIsFetching(true);
       autocompleteService.getPlacePredictions(
         { input: newValue },
@@ -64,6 +48,7 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
         }
       );
     } else {
+      setShowPredictions(false);
       setPredictions([]);
     }
   };
@@ -86,17 +71,25 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
       });
     }
   };
+  
+  const shouldShowPopover = showPredictions && value.length > 0;
 
   return (
-    <div className="relative" ref={containerRef}>
-      <Input
-        {...props}
-        value={value}
-        onChange={handleInputChange}
-        onFocus={() => setShowPredictions(true)}
-      />
-      {showPredictions && (value.length > 2) && (
-        <div className="absolute z-50 w-full mt-1 bg-card border rounded-md shadow-lg max-h-60 overflow-y-auto">
+    <Popover open={shouldShowPopover} onOpenChange={setShowPredictions}>
+      <PopoverAnchor asChild>
+        <Input
+          {...props}
+          value={value}
+          onChange={handleInputChange}
+          onFocus={() => { if (value) setShowPredictions(true); }}
+        />
+      </PopoverAnchor>
+      <PopoverContent 
+        className="w-[--radix-popover-trigger-width] p-0" 
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        align="start"
+      >
+        <div className="max-h-60 overflow-y-auto">
           {isFetching && (
             <div className="p-3 text-sm text-muted-foreground flex items-center">
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -117,8 +110,8 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
             </div>
           ))}
         </div>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

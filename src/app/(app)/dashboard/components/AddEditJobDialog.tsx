@@ -43,6 +43,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/auth-context';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
 
 interface AddEditJobDialogProps {
   isOpen: boolean;
@@ -73,6 +74,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
+  const [status, setStatus] = useState<JobStatus>('Pending');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -85,6 +87,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setTitle(job?.title || '');
     setDescription(job?.description || '');
     setPriority(job?.priority || 'Medium');
+    setStatus(job?.status || 'Pending');
     setRequiredSkills(job?.requiredSkills || []);
     setCustomerName(job?.customerName || '');
     setCustomerPhone(job?.customerPhone || '');
@@ -307,17 +310,32 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       let finalJobDataForCallback: Job;
 
       if (job) { // EDITING A JOB
+        const batch = writeBatch(db);
         const jobDocRef = doc(db, "jobs", job.id);
-        const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
-        if (assignTechId && job.assignedTechnicianId !== assignTechId) {
-            updatePayload.assignedTechnicianId = assignTechId;
-            updatePayload.status = 'Assigned';
-            updatePayload.assignedAt = serverTimestamp();
+
+        const originalStatus = job.status;
+        const newStatus = status;
+
+        const updatePayload: any = { ...jobData, status: newStatus, updatedAt: serverTimestamp() };
+        batch.update(jobDocRef, updatePayload);
+        
+        const isNowCompletedOrCancelled = newStatus === 'Completed' || newStatus === 'Cancelled';
+        const wasInProgress = !['Completed', 'Cancelled'].includes(originalStatus);
+        const technicianIdToUpdate = job.assignedTechnicianId;
+        
+        if (isNowCompletedOrCancelled && wasInProgress && technicianIdToUpdate) {
+            const techDocRef = doc(db, "technicians", technicianIdToUpdate);
+            batch.update(techDocRef, {
+                isAvailable: true,
+                currentJobId: null
+            });
         }
-        await updateDoc(jobDocRef, updatePayload);
+        
+        await batch.commit();
+
         finalJobDataForCallback = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJobDataForCallback.title}" has been updated.` });
-        onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
+        onJobAddedOrUpdated?.(finalJobDataForCallback, null);
 
       } else { // CREATING A NEW JOB
         const techToAssign = assignTechId ? technicians.find(t => t.id === assignTechId) : null;
@@ -434,6 +452,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </div>
               )}
             </div>
+             {job ? (
+                <div>
+                    <Label htmlFor="jobStatus">Status</Label>
+                    <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}>
+                        <SelectTrigger id="jobStatus">
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+             ) : (
              <div>
                 <Label htmlFor="scheduledTime">Scheduled Time (Optional)</Label>
                 <Popover>
@@ -479,6 +510,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     </div>
                 )}
             </div>
+            )}
           </div>
            <div className="grid grid-cols-1">
              <div>

@@ -22,26 +22,7 @@ const prompt = ai.definePrompt({
   name: 'allocateJobPrompt',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
-  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, location, and job priority.
-
-**RULES FOR JOB ASSIGNMENT:**
-
-1.  **High-Priority (Emergency) Jobs:**
-    *   Your primary goal is to assign the job immediately to the most suitable technician.
-    *   An 'Available' technician who has the required skills is always the top choice. Their other scheduled jobs for later in the day should be ignored; assume the dispatcher will handle rescheduling.
-    *   If no skilled technician is 'Available', you MAY suggest interrupting a technician currently on a 'Low' priority job. This is an exception and should only be done if it provides a significant advantage (e.g., they are much closer).
-    *   You MUST NOT suggest interrupting a technician who is on a 'Medium' or 'High' priority job.
-
-2.  **Medium & Low-Priority Jobs:**
-    *   Prefer 'Available' technicians.
-    *   When evaluating a technician, consider their 'currentJobs' list to see if they can realistically accommodate this new job alongside their existing commitments.
-    *   If a specific \`scheduledTime\` is provided for the new job, the technician's ability to meet that appointment is a critical factor.
-
-{{#if requiredSkills.length}}
-**CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
-{{/if}}
-
----
+  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, and location.
 
 **TASK:**
 Given the following job and technician data, suggest the most suitable technician.
@@ -50,6 +31,10 @@ Given the following job and technician data, suggest the most suitable technicia
 - Description: {{{jobDescription}}}
 - Priority: {{{jobPriority}}}
 {{#if scheduledTime}}- Customer Requested Time: {{{scheduledTime}}}{{/if}}
+
+{{#if requiredSkills.length}}
+**CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
+{{/if}}
 
 **Technician Data:**
 {{#each technicianAvailability}}
@@ -67,12 +52,27 @@ Given the following job and technician data, suggest the most suitable technicia
 {{/each}}
 
 ---
+**DECISION-MAKING LOGIC:**
+
+Follow these rules in order:
+
+1.  **Skill Match:** The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
+2.  **Job Priority Logic:**
+    *   **If the job priority is 'High':**
+        *   **Rule 2a:** STRONGLY prefer any technician who is \`isAvailable: true\`. Their other \`currentJobs\` for later in the day do not matter for this decision. Choose the closest available and skilled technician.
+        *   **Rule 2b:** If NO technician is \`isAvailable: true\`, you MAY suggest a technician who is \`isAvailable: false\` BUT is currently working on a 'Low' priority job. This is an interruption.
+        *   **Rule 2c:** NEVER suggest interrupting a technician on a 'Medium' or 'High' priority job.
+    *   **If the job priority is 'Medium' or 'Low':**
+        *   Only consider technicians who are \`isAvailable: true\`.
+        *   Consider their \`currentJobs\` to ensure they have capacity.
+
+---
 
 **OUTPUT:**
 Suggest the most suitable technician ID and provide clear reasoning for your choice.
 - In your reasoning, refer to technicians by name, not ID.
-- If you suggest an interruption, state it clearly in your reasoning.
-- If no technician is suitable based on the constraints (especially skills), you MUST return a null value for 'suggestedTechnicianId' and explain why no one could be assigned.
+- If you suggest an interruption (Rule 2b), state it clearly.
+- If no technician is suitable based on the constraints, you MUST return a null value for 'suggestedTechnicianId' and explain why no one could be assigned (e.g., "No technicians have the required skill: X").
 `,
 });
 

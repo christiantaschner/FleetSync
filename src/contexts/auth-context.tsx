@@ -51,6 +51,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Clean up previous listeners
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
+      
+      setCompany(null); // Reset company on auth change
 
       if (currentUser) {
         await ensureUserDocumentAction({ 
@@ -82,17 +84,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 } else {
                   setCompany(null);
                 }
-                setLoading(false);
+              }, (error) => {
+                console.error("Error fetching company data:", error);
+                setCompany(null);
               });
             } else {
               setCompany(null);
-              setLoading(false);
             }
           } else {
             setUserProfile(null);
+          }
+          setLoading(false); // Set loading to false after profile is processed
+        }, (error) => {
+            console.error("Error fetching user profile:", error);
+            setUserProfile(null);
             setCompany(null);
             setLoading(false);
-          }
         });
       } else {
         // User is logged out

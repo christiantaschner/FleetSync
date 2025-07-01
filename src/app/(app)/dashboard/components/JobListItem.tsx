@@ -14,23 +14,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
-import AddEditJobDialog from './AddEditJobDialog';
 
 interface JobListItemProps {
   job: Job;
-  jobs: Job[];
-  technicians: Technician[];
-  allSkills: string[];
   onAssignWithAI: (job: Job) => void;
-  onJobUpdated: (job: Job, assignedTechnicianId?: string | null) => void;
   onOpenChat: (job: Job) => void;
   onShareTracking: (job: Job) => void;
-  onManageSkills: () => void;
+  onEdit: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSkills, onAssignWithAI, onJobUpdated, onOpenChat, onShareTracking, onManageSkills }) => {
-  const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
-
+const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenChat, onShareTracking, onEdit }) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -102,9 +95,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
             )}
           </div>
           <div>
-            {assignedTechnician ? (
+            {job.assignedTechnicianId ? (
               <span className="flex items-center gap-1">
-                <User className="h-3 w-3" /> {assignedTechnician.name}
+                <User className="h-3 w-3" /> {job.assignedTechnicianId}
               </span>
             ) : (
               <span className={cn("flex items-center gap-1", job.status === 'Pending' ? 'text-accent font-semibold' : 'text-muted-foreground')}>
@@ -130,14 +123,14 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, jobs, technicians, allSk
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
           </Button>
         )}
-         <AddEditJobDialog job={job} jobs={jobs} technicians={technicians} allSkills={allSkills} onJobUpdated={onJobUpdated} onManageSkills={onManageSkills}>
-            <Button variant="secondary" size="sm">
-                <Edit className="mr-1 h-3 w-3" /> Edit
-            </Button>
-        </AddEditJobDialog>
+         <Button variant="secondary" size="sm" onClick={() => onEdit(job)}>
+            <Edit className="mr-1 h-3 w-3" /> Edit
+        </Button>
       </CardFooter>
     </Card>
   );
 };
 
 export default JobListItem;
+
+    

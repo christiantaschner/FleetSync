@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search } from 'lucide-react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -94,6 +94,22 @@ export default function DashboardPage() {
 
   const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
   const [searchAddressText, setSearchAddressText] = useState('');
+
+  const [isAddEditJobDialogOpen, setIsAddEditJobDialogOpen] = useState(false);
+  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
+
+  const handleOpenAddJob = () => {
+    setSelectedJobForEdit(null);
+    setIsAddEditJobDialogOpen(true);
+  };
+  const handleOpenEditJob = (job: Job) => {
+    setSelectedJobForEdit(job);
+    setIsAddEditJobDialogOpen(true);
+  };
+  const handleCloseAddEditJobDialog = () => {
+    setIsAddEditJobDialogOpen(false);
+    setSelectedJobForEdit(null);
+  };
 
 
   const fetchSkillsAndParts = useCallback(async () => {
@@ -696,19 +712,21 @@ export default function DashboardPage() {
                   </CardDescription>
               </CardHeader>
               <CardContent>
-                  <AddEditJobDialog 
-                      technicians={technicians} 
-                      allSkills={allSkills} 
-                      onJobAddedOrUpdated={handleJobAddedOrUpdated} 
-                      jobs={jobs}
-                      onManageSkills={() => setIsManageSkillsOpen(true)}
-                  >
-                      <Button size="lg">
-                          <PlusCircle className="mr-2 h-5 w-5" /> Add New Job
-                      </Button>
-                  </AddEditJobDialog>
+                   <Button size="lg" onClick={handleOpenAddJob}>
+                      <PlusCircle className="mr-2 h-5 w-5" /> Add New Job
+                  </Button>
               </CardContent>
           </Card>
+           <AddEditJobDialog
+              isOpen={isAddEditJobDialogOpen}
+              onClose={handleCloseAddEditJobDialog}
+              job={selectedJobForEdit}
+              technicians={technicians}
+              allSkills={allSkills}
+              onJobAddedOrUpdated={handleJobAddedOrUpdated}
+              jobs={jobs}
+              onManageSkills={() => setIsManageSkillsOpen(true)}
+            />
       </div>
     );
   }
@@ -716,6 +734,16 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
+       <AddEditJobDialog
+            isOpen={isAddEditJobDialogOpen}
+            onClose={handleCloseAddEditJobDialog}
+            job={selectedJobForEdit}
+            technicians={technicians}
+            allSkills={allSkills}
+            onJobAddedOrUpdated={handleJobAddedOrUpdated}
+            jobs={jobs}
+            onManageSkills={() => setIsManageSkillsOpen(true)}
+        />
       <ShareTrackingDialog 
           isOpen={isTrackingDialogOpen}
           setIsOpen={setIsTrackingDialogOpen}
@@ -736,17 +764,9 @@ export default function DashboardPage() {
            <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
               <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
           </Button>
-           <AddEditJobDialog 
-             technicians={technicians} 
-             allSkills={allSkills} 
-             onJobAddedOrUpdated={handleJobAddedOrUpdated} 
-             jobs={jobs}
-             onManageSkills={() => setIsManageSkillsOpen(true)}
-           >
-            <Button>
+           <Button onClick={handleOpenAddJob}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
             </Button>
-          </AddEditJobDialog>
         </div>
       </div>
 
@@ -848,8 +868,18 @@ export default function DashboardPage() {
                           {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
                       </Button>
                   )}
-                   <Button size="sm" variant="outline" onClick={() => setProactiveSuggestion(null)}>
-                      Dismiss
+                   <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                        if (proactiveSuggestion?.job) {
+                            handleOpenEditJob(proactiveSuggestion.job);
+                        }
+                        setProactiveSuggestion(null);
+                    }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Go to Job
                   </Button>
               </div>
           </Alert>
@@ -950,15 +980,11 @@ export default function DashboardPage() {
               ) : sortedJobs.length > 0 ? sortedJobs.map(job => (
                 <JobListItem 
                   key={job.id} 
-                  job={job} 
-                  jobs={jobs}
-                  technicians={technicians} 
-                  allSkills={allSkills}
+                  job={job}
                   onAssignWithAI={openAIAssignDialogForJob}
-                  onJobUpdated={handleJobAddedOrUpdated}
                   onOpenChat={handleOpenChat}
                   onShareTracking={handleShareTracking}
-                  onManageSkills={() => setIsManageSkillsOpen(true)}
+                  onEdit={handleOpenEditJob}
                 />
               )) : (
                 <p className="text-muted-foreground text-center py-10">
@@ -1048,3 +1074,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

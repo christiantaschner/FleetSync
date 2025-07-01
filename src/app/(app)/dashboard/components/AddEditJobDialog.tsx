@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -35,8 +34,9 @@ import { useAuth } from '@/contexts/auth-context';
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
 interface AddEditJobDialogProps {
-  children: React.ReactNode;
-  job?: Job;
+  isOpen: boolean;
+  onClose: () => void;
+  job?: Job | null;
   jobs: Job[];
   technicians: Technician[];
   allSkills: string[];
@@ -44,10 +44,9 @@ interface AddEditJobDialogProps {
   onManageSkills: () => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs, technicians, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
@@ -349,7 +348,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 
         onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
       }
-      setIsOpen(false);
+      onClose();
     } catch (error) {
       console.error("Error saving job to Firestore: ", error);
       toast({ title: "Firestore Error", description: "Could not save job. Check console.", variant: "destructive" });
@@ -361,8 +360,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const isInterruptionSuggestion = aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails && !suggestedTechnicianDetails.isAvailable;
   
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
@@ -559,7 +557,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                     </Button>
                 </>
             )}
-            <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="sm:ml-auto">
+            <Button type="button" variant="ghost" onClick={onClose} className="sm:ml-auto">
               Close
             </Button>
           </DialogFooter>
@@ -570,3 +568,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
 };
 
 export default AddEditJobDialog;
+
+    

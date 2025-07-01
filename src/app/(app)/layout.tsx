@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -20,6 +19,7 @@ import {
   AlertTriangle,
   PieChart,
   CreditCard,
+  MapPin,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
+import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
 
 const adminNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -77,6 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userProfile, company, loading, logout } = useAuth();
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   
   React.useEffect(() => {
     if (loading) return;
@@ -185,148 +187,167 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = getNavItemsForRole();
   const canSeeAdminViews = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
-  return (
-    <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon" className="peer">
-        <SidebarHeader className="bg-primary text-primary-foreground border-b-primary-foreground/20">
-          <div className="flex items-center justify-between">
-            <Logo />
-            <div className="md:hidden">
-              <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
+  if (!googleMapsApiKey) {
+    return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
+            <div className="flex flex-col items-center justify-center h-full max-w-lg p-6 text-center border bg-card rounded-md shadow-lg">
+                <MapPin className="h-16 w-16 text-destructive opacity-70 mb-4" />
+                <h2 className="text-2xl font-bold text-destructive mb-2">Google Maps API Key Missing</h2>
+                <p className="text-muted-foreground mb-1">
+                The <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is not configured.
+                </p>
+                <p className="text-muted-foreground">
+                Please add it to your environment file to enable map features.
+                </p>
             </div>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
-                    className="w-full justify-start"
-                    tooltip={item.label}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-            ))}
-            {canSeeAdminViews && (
-              <>
-                <SidebarSeparator />
-                 <SidebarMenuItem>
-                    <Link href="/technician">
+        </div>
+    );
+  }
+
+  return (
+    <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
+      <SidebarProvider defaultOpen>
+        <Sidebar collapsible="icon" className="peer">
+          <SidebarHeader className="bg-primary text-primary-foreground border-b-primary-foreground/20">
+            <div className="flex items-center justify-between">
+              <Logo />
+              <div className="md:hidden">
+                <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
+              </div>
+            </div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <Link href={item.href}>
                     <SidebarMenuButton
-                        isActive={pathname.startsWith("/technician")}
-                        className="w-full justify-start"
-                        tooltip="Technician View"
+                      isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
+                      className="w-full justify-start"
+                      tooltip={item.label}
                     >
-                        <Smartphone className="h-4 w-4" />
-                        <span>Technician View</span>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
                     </SidebarMenuButton>
-                    </Link>
+                  </Link>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <Link href="/dashboard">
-                    <SidebarMenuButton
-                        className="w-full justify-start"
-                        tooltip="CSR View (Job Creation)"
-                    >
-                        <PlusCircle className="h-4 w-4" />
-                        <span>CSR View</span>
-                    </SidebarMenuButton>
-                    </Link>
-                </SidebarMenuItem>
-              </>
-            )}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
-                <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
-                  <AvatarFallback>{userInitial}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
-                  <span className="text-sm font-medium truncate max-w-[120px]">{userDisplayName}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-               {userProfile?.role === 'admin' && (
-                 <Link href="/technician/profile">
-                    <DropdownMenuItem>
-                        <UserCog className="mr-2 h-4 w-4" />
-                        <span>My Technician Profile</span>
-                    </DropdownMenuItem>
-                </Link>
-               )}
-                {userProfile?.role === 'technician' && (
-                    <Link href="/technician/profile">
-                        <DropdownMenuItem>
-                            <Users className="mr-2 h-4 w-4" />
-                            <span>My Profile</span>
-                        </DropdownMenuItem>
-                    </Link>
+              ))}
+              {canSeeAdminViews && (
+                <>
+                  <SidebarSeparator />
+                  <SidebarMenuItem>
+                      <Link href="/technician">
+                      <SidebarMenuButton
+                          isActive={pathname.startsWith("/technician")}
+                          className="w-full justify-start"
+                          tooltip="Technician View"
+                      >
+                          <Smartphone className="h-4 w-4" />
+                          <span>Technician View</span>
+                      </SidebarMenuButton>
+                      </Link>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                      <Link href="/dashboard">
+                      <SidebarMenuButton
+                          className="w-full justify-start"
+                          tooltip="CSR View (Job Creation)"
+                      >
+                          <PlusCircle className="h-4 w-4" />
+                          <span>CSR View</span>
+                      </SidebarMenuButton>
+                      </Link>
+                  </SidebarMenuItem>
+                </>
+              )}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
+                  <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
+                    <AvatarFallback>{userInitial}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
+                    <span className="text-sm font-medium truncate max-w-[120px]">{userDisplayName}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {userProfile?.role === 'admin' && (
+                  <Link href="/technician/profile">
+                      <DropdownMenuItem>
+                          <UserCog className="mr-2 h-4 w-4" />
+                          <span>My Technician Profile</span>
+                      </DropdownMenuItem>
+                  </Link>
                 )}
-              <Link href="/settings">
-                <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                  {userProfile?.role === 'technician' && (
+                      <Link href="/technician/profile">
+                          <DropdownMenuItem>
+                              <Users className="mr-2 h-4 w-4" />
+                              <span>My Profile</span>
+                          </DropdownMenuItem>
+                      </Link>
+                  )}
+                <Link href="/settings">
+                  <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
                 </DropdownMenuItem>
-              </Link>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary-foreground/20 bg-primary px-4 text-primary-foreground md:hidden">
-           <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
-           <Logo />
-           <div className="w-7"/>
-        </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-            {isSubscriptionExpired ? (
-                 <Alert variant="destructive" className="mb-6">
-                    <CreditCard className="h-4 w-4" />
-                    <AlertTitle>
-                        {company?.subscriptionStatus === 'trialing' ? 'Your Trial Has Ended' : 'Subscription Inactive'}
-                    </AlertTitle>
-                    <AlertDescription>
-                        Please{' '}
-                        <Link href="/settings?tab=billing" className="font-bold underline">
-                            go to your billing settings
-                        </Link>
-                        {' '} to choose a plan and continue using all features.
-                    </AlertDescription>
-                </Alert>
-            ) : isTrialActive ? (
-                <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
-                    <Sparkles className="h-4 w-4" />
-                    <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
-                    <AlertDescription className="text-primary/90">
-                        You have <strong>{trialDaysLeft} days left</strong>. {' '}
-                        <Link href="/settings?tab=billing" className="font-semibold underline">
-                            Choose a plan
-                        </Link>
-                        {' '} to keep your service active after the trial.
-                    </AlertDescription>
-                </Alert>
-            ) : null}
-            
-            {children}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarFooter>
+          <SidebarRail />
+        </Sidebar>
+        <SidebarInset>
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary-foreground/20 bg-primary px-4 text-primary-foreground md:hidden">
+            <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
+            <Logo />
+            <div className="w-7"/>
+          </header>
+          <main className="flex-1 p-4 md:p-6 lg:p-8">
+              {isSubscriptionExpired ? (
+                  <Alert variant="destructive" className="mb-6">
+                      <CreditCard className="h-4 w-4" />
+                      <AlertTitle>
+                          {company?.subscriptionStatus === 'trialing' ? 'Your Trial Has Ended' : 'Subscription Inactive'}
+                      </AlertTitle>
+                      <AlertDescription>
+                          Please{' '}
+                          <Link href="/settings?tab=billing" className="font-bold underline">
+                              go to your billing settings
+                          </Link>
+                          {' '} to choose a plan and continue using all features.
+                      </AlertDescription>
+                  </Alert>
+              ) : isTrialActive ? (
+                  <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
+                      <Sparkles className="h-4 w-4" />
+                      <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
+                      <AlertDescription className="text-primary/90">
+                          You have <strong>{trialDaysLeft} days left</strong>. {' '}
+                          <Link href="/settings?tab=billing" className="font-semibold underline">
+                              Choose a plan
+                          </Link>
+                          {' '} to keep your service active after the trial.
+                      </AlertDescription>
+                  </Alert>
+              ) : null}
+              
+              {children}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </GoogleMapsAPIProvider>
   );
 }

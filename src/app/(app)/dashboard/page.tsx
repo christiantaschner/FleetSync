@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search } from 'lucide-react';
@@ -18,7 +17,6 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
-import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
@@ -95,8 +93,6 @@ export default function DashboardPage() {
   const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
   const [searchAddressText, setSearchAddressText] = useState('');
 
-
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const fetchSkillsAndParts = useCallback(async () => {
     if (!db || !userProfile?.companyId) return;
@@ -645,25 +641,10 @@ export default function DashboardPage() {
   };
 
 
-  if (isLoadingData && !googleMapsApiKey) { 
+  if (isLoadingData) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
-  if (!googleMapsApiKey) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center border bg-card rounded-md shadow-lg">
-        <MapPin className="h-16 w-16 text-destructive opacity-70 mb-4" />
-        <h2 className="text-2xl font-bold text-destructive mb-2">Google Maps API Key Missing</h2>
-        <p className="text-muted-foreground mb-1">
-          The <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is not configured.
-        </p>
-        <p className="text-muted-foreground">
-          Please add it to your <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">.env</code> file to enable map features.
-        </p>
       </div>
     );
   }
@@ -700,364 +681,318 @@ export default function DashboardPage() {
 
 
   return (
-    <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
-      <div className="flex flex-col gap-6">
-        <ShareTrackingDialog 
-            isOpen={isTrackingDialogOpen}
-            setIsOpen={setIsTrackingDialogOpen}
-            job={selectedJobForTracking}
-        />
-        <ChatSheet 
-            isOpen={isChatOpen} 
-            setIsOpen={setIsChatOpen} 
-            job={selectedChatJob} 
-            technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
-        />
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
-            Dispatcher Dashboard
-            {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
-          </h1>
-          <div className="flex flex-wrap gap-2">
-             <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+    <div className="flex flex-col gap-6">
+      <ShareTrackingDialog 
+          isOpen={isTrackingDialogOpen}
+          setIsOpen={setIsTrackingDialogOpen}
+          job={selectedJobForTracking}
+      />
+      <ChatSheet 
+          isOpen={isChatOpen} 
+          setIsOpen={setIsChatOpen} 
+          job={selectedChatJob} 
+          technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
+      />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
+          Dispatcher Dashboard
+          {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+        </h1>
+        <div className="flex flex-wrap gap-2">
+           <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+          </Button>
+           <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
             </Button>
-             <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
-              </Button>
-            </AddEditJobDialog>
-          </div>
+          </AddEditJobDialog>
         </div>
-
-        {riskAlerts.length > 0 && (
-          <div className="space-y-2">
-            {riskAlerts.map(alert => (
-              <ScheduleRiskAlert 
-                key={alert.technician.id}
-                riskAlert={alert}
-                onDismiss={handleDismissRiskAlert}
-                technicians={technicians}
-                jobs={jobs}
-              />
-            ))}
-          </div>
-        )}
-
-        <ScheduleHealthDialog 
-            isOpen={isHealthDialogOpen}
-            setIsOpen={setIsHealthDialogOpen}
-            healthResults={healthResults}
-        />
-
-        {selectedJobForAIAssign && (
-          <SmartJobAllocationDialog
-            isOpen={isAIAssignDialogOpen}
-            setIsOpen={setIsAIAssignDialogOpen}
-            jobToAssign={selectedJobForAIAssign}
-            technicians={technicians}
-            onJobAssigned={(assignedJob, updatedTechnician) => {
-              setSelectedJobForAIAssign(null); 
-            }}
-          />
-        )}
-
-        {isBatchReviewDialogOpen && (
-            <BatchAssignmentReviewDialog
-                isOpen={isBatchReviewDialogOpen}
-                setIsOpen={setIsBatchReviewDialogOpen}
-                assignmentSuggestions={assignmentSuggestionsForReview}
-                onConfirmAssignments={handleConfirmBatchAssignments}
-                isLoadingConfirmation={isLoadingBatchConfirmation}
-            />
-        )}
-        
-        <ManageSkillsDialog 
-            isOpen={isManageSkillsOpen}
-            setIsOpen={setIsManageSkillsOpen}
-            onSkillsUpdated={fetchSkillsAndParts}
-        />
-        
-        <ManagePartsDialog 
-            isOpen={isManagePartsOpen}
-            setIsOpen={setIsManagePartsOpen}
-            onPartsUpdated={fetchSkillsAndParts}
-        />
-
-        <ImportJobsDialog
-            isOpen={isImportJobsOpen}
-            setIsOpen={setIsImportJobsOpen}
-            onJobsImported={fetchAllData}
-        />
-        
-        {proactiveSuggestion && proactiveSuggestion.job && proactiveSuggestion.suggestedTechnicianDetails && (
-            <Alert variant="default" className="border-primary/50 bg-primary/5">
-                 <Sparkles className="h-4 w-4 text-primary" />
-                <AlertTitle className="font-headline text-primary flex justify-between items-center">
-                  <span>Proactive AI Dispatch Suggestion</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setProactiveSuggestion(null)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </AlertTitle>
-                <AlertDescription>
-                   For new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>", the AI suggests assigning to <strong>{proactiveSuggestion.suggestedTechnicianDetails.name}</strong>.
-                   <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning}</p>
-                </AlertDescription>
-                <div className="mt-4 flex gap-2">
-                    <Button
-                        size="sm"
-                        onClick={() => handleProactiveAssign(proactiveSuggestion)}
-                        disabled={isProcessingProactive}
-                        variant={!proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? "destructive" : "default"}
-                    >
-                        {isProcessingProactive 
-                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                            : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable 
-                                ? <AlertTriangle className="mr-2 h-4 w-4" /> 
-                                : <UserCheck className="mr-2 h-4 w-4" />}
-                        {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
-                    </Button>
-                     <Button size="sm" variant="outline" onClick={() => setProactiveSuggestion(null)}>
-                        Dismiss
-                    </Button>
-                </div>
-            </Alert>
-        )}
-
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{highPriorityPendingCount}</div>
-              <p className="text-xs text-muted-foreground">
-                Urgent jobs needing assignment
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Jobs</CardTitle>
-              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingJobsCount}</div>
-              <p className="text-xs text-muted-foreground">
-                Total jobs awaiting assignment
-              </p>
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Available Technicians</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
-              <p className="text-xs text-muted-foreground">
-                Ready for assignments
-              </p>
-            </CardContent>
-          </Card>
-           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{jobsTodayCount}</div>
-                <p className="text-xs text-muted-foreground">
-                    Total appointments for the day
-                </p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <Tabs defaultValue="jobs" className="w-full">
-          <div className="w-full overflow-x-auto sm:overflow-visible">
-              <TabsList className="mb-4 grid w-full grid-cols-4">
-                  <TabsTrigger value="jobs">Job List</TabsTrigger>
-                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                  <TabsTrigger value="technicians" className="relative">
-                    Technicians
-                    {profileChangeRequests.length > 0 && (
-                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
-                    )}
-                  </TabsTrigger>
-                   <TabsTrigger value="overview">Overview Map</TabsTrigger>
-              </TabsList>
-          </div>
-          <TabsContent value="jobs">
-            <Card>
-                <CardHeader className="flex flex-col gap-4">
-                    <div>
-                        <CardTitle className="font-headline">Current Jobs</CardTitle>
-                        <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
-                        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-                            <div className="w-full sm:w-[160px]">
-                                <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
-                                <Select 
-                                    value={statusFilter} 
-                                    onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
-                                >
-                                    <SelectTrigger id="status-filter">
-                                        <SelectValue placeholder="Filter by Status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
-                                        <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                                        {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="w-full sm:w-[160px]">
-                                <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
-                                <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
-                                    <SelectTrigger id="priority-filter">
-                                        <SelectValue placeholder="Filter by Priority" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
-                                        {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="w-full sm:w-[160px]">
-                                <Label htmlFor="sort-order" className="sr-only">Sort by</Label>
-                                <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
-                                    <SelectTrigger id="sort-order">
-                                        <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" />
-                                        <SelectValue placeholder="Sort by..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="priority">Priority</SelectItem>
-                                        <SelectItem value="status">Status</SelectItem>
-                                        <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
-                                        <SelectItem value="technician">Technician</SelectItem>
-                                        <SelectItem value="customer">Customer Name</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                        <Button
-                            onClick={handleBatchAIAssign}
-                            disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
-                            variant="accent"
-                            className="w-full sm:w-auto"
-                        >
-                            {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                            AI Batch Assign
-                        </Button>
-                    </div>
-                </CardHeader>
-              <CardContent className="space-y-4">
-                {isLoadingData && jobs.length === 0 ? ( 
-                  <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : sortedJobs.length > 0 ? sortedJobs.map(job => (
-                  <JobListItem 
-                    key={job.id} 
-                    job={job} 
-                    jobs={jobs}
-                    technicians={technicians} 
-                    allSkills={allSkills}
-                    onAssignWithAI={openAIAssignDialogForJob}
-                    onJobUpdated={handleJobAddedOrUpdated}
-                    onOpenChat={handleOpenChat}
-                    onShareTracking={handleShareTracking}
-                  />
-                )) : (
-                  <p className="text-muted-foreground text-center py-10">
-                    {jobs.length === 0 ? "No jobs to display. Add some jobs." : "No jobs match the current filters."}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-           <TabsContent value="schedule">
-            <ScheduleCalendarView
-                jobs={jobs}
-                technicians={technicians}
-                onCheckScheduleHealth={handleCheckScheduleHealth}
-                isCheckingHealth={isCheckingHealth}
-                busyTechniciansCount={busyTechnicians.length}
-            />
-          </TabsContent>
-          <TabsContent value="technicians">
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div>
-                  <CardTitle className="font-headline">Technician Roster</CardTitle>
-                  <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
-                </div>
-                 <div className="flex flex-wrap gap-2">
-                  <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
-                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                  </Button>
-                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
-                    <Button variant="accent">
-                      <UserPlus className="mr-2 h-4 w-4" /> Add Technician
-                    </Button>
-                  </AddEditTechnicianDialog>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {isLoadingData && technicians.length === 0 ? (
-                    <div className="col-span-full flex justify-center items-center py-10">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                    ) : technicians.map(technician => (
-                    <TechnicianCard 
-                        key={technician.id} 
-                        technician={technician} 
-                        jobs={jobs} 
-                        onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
-                        allSkills={allSkills}
-                        onMarkUnavailable={handleMarkTechnicianUnavailable}
-                    />
-                    ))}
-                    {!isLoadingData && technicians.length === 0 && (
-                    <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
-                    )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="overview">
-            <Card>
-              <CardHeader>
-                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
-                    <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
-                     <div className="pt-2">
-                        <AddressAutocompleteInput
-                            value={searchAddressText}
-                            onValueChange={setSearchAddressText}
-                            onLocationSelect={handleLocationSearch}
-                            placeholder="Search for an address to view on map..."
-                        />
-                    </div>
-              </CardHeader>
-              <CardContent>
-                <MapView 
-                  technicians={technicians} 
-                  jobs={jobs} 
-                  defaultCenter={defaultMapCenter}
-                  defaultZoom={4}
-                  searchedLocation={searchedLocation}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
       </div>
-    </GoogleMapsAPIProvider>
+
+      {riskAlerts.length > 0 && (
+        <div className="space-y-2">
+          {riskAlerts.map(alert => (
+            <ScheduleRiskAlert 
+              key={alert.technician.id}
+              riskAlert={alert}
+              onDismiss={handleDismissRiskAlert}
+              technicians={technicians}
+              jobs={jobs}
+            />
+          ))}
+        </div>
+      )}
+
+      <ScheduleHealthDialog 
+          isOpen={isHealthDialogOpen}
+          setIsOpen={setIsHealthDialogOpen}
+          healthResults={healthResults}
+      />
+
+      {selectedJobForAIAssign && (
+        <SmartJobAllocationDialog
+          isOpen={isAIAssignDialogOpen}
+          setIsOpen={setIsAIAssignDialogOpen}
+          jobToAssign={selectedJobForAIAssign}
+          technicians={technicians}
+          onJobAssigned={(assignedJob, updatedTechnician) => {
+            setSelectedJobForAIAssign(null); 
+          }}
+        />
+      )}
+
+      {isBatchReviewDialogOpen && (
+          <BatchAssignmentReviewDialog
+              isOpen={isBatchReviewDialogOpen}
+              setIsOpen={setIsBatchReviewDialogOpen}
+              assignmentSuggestions={assignmentSuggestionsForReview}
+              onConfirmAssignments={handleConfirmBatchAssignments}
+              isLoadingConfirmation={isLoadingBatchConfirmation}
+          />
+      )}
+      
+      <ManageSkillsDialog 
+          isOpen={isManageSkillsOpen}
+          setIsOpen={setIsManageSkillsOpen}
+          onSkillsUpdated={fetchSkillsAndParts}
+      />
+      
+      <ManagePartsDialog 
+          isOpen={isManagePartsOpen}
+          setIsOpen={setIsManagePartsOpen}
+          onPartsUpdated={fetchSkillsAndParts}
+      />
+
+      <ImportJobsDialog
+          isOpen={isImportJobsOpen}
+          setIsOpen={setIsImportJobsOpen}
+          onJobsImported={fetchAllData}
+      />
+      
+      {proactiveSuggestion && proactiveSuggestion.job && proactiveSuggestion.suggestedTechnicianDetails && (
+          <Alert variant="default" className="border-primary/50 bg-primary/5">
+               <Sparkles className="h-4 w-4 text-primary" />
+              <AlertTitle className="font-headline text-primary flex justify-between items-center">
+                <span>Proactive AI Dispatch Suggestion</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setProactiveSuggestion(null)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </AlertTitle>
+              <AlertDescription>
+                 For new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>", the AI suggests assigning to <strong>{proactiveSuggestion.suggestedTechnicianDetails.name}</strong>.
+                 <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning}</p>
+              </AlertDescription>
+              <div className="mt-4 flex gap-2">
+                  <Button
+                      size="sm"
+                      onClick={() => handleProactiveAssign(proactiveSuggestion)}
+                      disabled={isProcessingProactive}
+                      variant={!proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? "destructive" : "default"}
+                  >
+                      {isProcessingProactive 
+                          ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                          : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable 
+                              ? <AlertTriangle className="mr-2 h-4 w-4" /> 
+                              : <UserCheck className="mr-2 h-4 w-4" />}
+                      {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
+                  </Button>
+                   <Button size="sm" variant="outline" onClick={() => setProactiveSuggestion(null)}>
+                      Dismiss
+                  </Button>
+              </div>
+          </Alert>
+      )}
+
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle><AlertTriangle className="h-4 w-4 text-destructive" /></CardHeader><CardContent><div className="text-2xl font-bold">{highPriorityPendingCount}</div><p className="text-xs text-muted-foreground">Urgent jobs needing assignment</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pending Jobs</CardTitle><SlidersHorizontal className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{pendingJobsCount}</div><p className="text-xs text-muted-foreground">Total jobs awaiting assignment</p></CardContent></Card>
+         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Available Technicians</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div><p className="text-xs text-muted-foreground">Ready for assignments</p></CardContent></Card>
+         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{jobsTodayCount}</div><p className="text-xs text-muted-foreground">Total appointments for the day</p></CardContent></Card>
+      </div>
+      
+      <Tabs defaultValue="jobs" className="w-full">
+        <div className="w-full overflow-x-auto sm:overflow-visible">
+            <TabsList className="mb-4 grid w-full grid-cols-4">
+                <TabsTrigger value="jobs">Job List</TabsTrigger>
+                <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                <TabsTrigger value="technicians" className="relative">
+                  Technicians
+                  {profileChangeRequests.length > 0 && (
+                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
+                  )}
+                </TabsTrigger>
+                 <TabsTrigger value="overview">Overview Map</TabsTrigger>
+            </TabsList>
+        </div>
+        <TabsContent value="jobs">
+          <Card>
+              <CardHeader className="flex flex-col gap-4">
+                  <div>
+                      <CardTitle className="font-headline">Current Jobs</CardTitle>
+                      <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
+                      <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                          <div className="w-full sm:w-[160px]">
+                              <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
+                              <Select 
+                                  value={statusFilter} 
+                                  onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
+                              >
+                                  <SelectTrigger id="status-filter">
+                                      <SelectValue placeholder="Filter by Status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
+                                      <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
+                                      {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div className="w-full sm:w-[160px]">
+                              <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
+                              <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
+                                  <SelectTrigger id="priority-filter">
+                                      <SelectValue placeholder="Filter by Priority" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
+                                      {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                           <div className="w-full sm:w-[160px]">
+                              <Label htmlFor="sort-order" className="sr-only">Sort by</Label>
+                              <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
+                                  <SelectTrigger id="sort-order">
+                                      <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" />
+                                      <SelectValue placeholder="Sort by..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="priority">Priority</SelectItem>
+                                      <SelectItem value="status">Status</SelectItem>
+                                      <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
+                                      <SelectItem value="technician">Technician</SelectItem>
+                                      <SelectItem value="customer">Customer Name</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                      </div>
+                      <Button
+                          onClick={handleBatchAIAssign}
+                          disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
+                          variant="accent"
+                          className="w-full sm:w-auto"
+                      >
+                          {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                          AI Batch Assign
+                      </Button>
+                  </div>
+              </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingData && jobs.length === 0 ? ( 
+                <div className="flex justify-center items-center py-10">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : sortedJobs.length > 0 ? sortedJobs.map(job => (
+                <JobListItem 
+                  key={job.id} 
+                  job={job} 
+                  jobs={jobs}
+                  technicians={technicians} 
+                  allSkills={allSkills}
+                  onAssignWithAI={openAIAssignDialogForJob}
+                  onJobUpdated={handleJobAddedOrUpdated}
+                  onOpenChat={handleOpenChat}
+                  onShareTracking={handleShareTracking}
+                />
+              )) : (
+                <p className="text-muted-foreground text-center py-10">
+                  {jobs.length === 0 ? "No jobs to display. Add some jobs." : "No jobs match the current filters."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+         <TabsContent value="schedule">
+          <ScheduleCalendarView
+              jobs={jobs}
+              technicians={technicians}
+              onCheckScheduleHealth={handleCheckScheduleHealth}
+              isCheckingHealth={isCheckingHealth}
+              busyTechniciansCount={busyTechnicians.length}
+          />
+        </TabsContent>
+        <TabsContent value="technicians">
+          <Card>
+            <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <div>
+                <CardTitle className="font-headline">Technician Roster</CardTitle>
+                <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
+              </div>
+               <div className="flex flex-wrap gap-2">
+                <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
+                  <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                </Button>
+                <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
+                  <Button variant="accent">
+                    <UserPlus className="mr-2 h-4 w-4" /> Add Technician
+                  </Button>
+                </AddEditTechnicianDialog>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {isLoadingData && technicians.length === 0 ? (
+                  <div className="col-span-full flex justify-center items-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                  ) : technicians.map(technician => (
+                  <TechnicianCard 
+                      key={technician.id} 
+                      technician={technician} 
+                      jobs={jobs} 
+                      onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
+                      allSkills={allSkills}
+                      onMarkUnavailable={handleMarkTechnicianUnavailable}
+                  />
+                  ))}
+                  {!isLoadingData && technicians.length === 0 && (
+                  <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
+                  )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+                  <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                  <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
+                   <div className="pt-2">
+                      <AddressAutocompleteInput
+                          value={searchAddressText}
+                          onValueChange={setSearchAddressText}
+                          onLocationSelect={handleLocationSearch}
+                          placeholder="Search for an address to view on map..."
+                      />
+                  </div>
+            </CardHeader>
+            <CardContent>
+              <MapView 
+                technicians={technicians} 
+                jobs={jobs} 
+                defaultCenter={defaultMapCenter}
+                defaultZoom={4}
+                searchedLocation={searchedLocation}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

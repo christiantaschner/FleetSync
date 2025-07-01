@@ -10,6 +10,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,24 +29,27 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Technician } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Package } from 'lucide-react';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Package, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { useAuth } from '@/contexts/auth-context';
+import { removeUserFromCompanyAction } from '@/actions/user-actions';
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
   onClose: () => void;
   technician?: Technician | null;
   allSkills: string[];
+  ownerId?: string;
   onTechnicianAddedOrUpdated?: (technician: Technician) => void;
 }
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, onTechnicianAddedOrUpdated }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, ownerId, onTechnicianAddedOrUpdated }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -75,6 +89,19 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     setLocationAddress(location.address);
     setLatitude(location.lat);
     setLongitude(location.lng);
+  };
+
+  const handleDeleteTechnician = async () => {
+    if (!technician) return;
+    setIsDeleting(true);
+    const result = await removeUserFromCompanyAction(technician.id);
+    if (result.error) {
+        toast({ title: "Error", description: `Failed to remove technician: ${result.error}`, variant: "destructive" });
+    } else {
+        toast({ title: "Success", description: `Technician "${technician.name}" has been removed from the company.` });
+        onClose();
+    }
+    setIsDeleting(false);
   };
 
   const handleSubmit = async () => {
@@ -211,14 +238,38 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
           </div>
           </ScrollArea>
           
-          <DialogFooter className="sm:justify-start gap-2 mt-4 pt-4 border-t">
-            <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {technician ? 'Save Changes' : 'Add Technician'}
-            </Button>
-            <Button type="button" variant="ghost" onClick={onClose} className="sm:ml-auto">
-              Close
-            </Button>
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-4 pt-4 border-t gap-2">
+            <div>
+                {technician && technician.id !== ownerId && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" variant="destructive" disabled={isDeleting}>
+                                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                                Delete Technician
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                This action cannot be undone. This will permanently remove the technician "{technician.name}" from your company and revoke their access.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDeleteTechnician} className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+            </div>
+            <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                <Button type="submit" disabled={isLoading}>
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {technician ? 'Save Changes' : 'Add Technician'}
+                </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

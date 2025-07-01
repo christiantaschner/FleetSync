@@ -10,6 +10,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,8 +30,8 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput } from "@/actions/fleet-actions";
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2 } from 'lucide-react';
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput, deleteJobAction } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -48,6 +59,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
   const [isFetchingPrioritySuggestion, setIsFetchingPrioritySuggestion] = useState(false);
@@ -244,6 +256,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     );
   };
   
+  const handleDeleteJob = async () => {
+    if (!job) return;
+    setIsDeleting(true);
+    const result = await deleteJobAction({ jobId: job.id });
+    if (result.error) {
+        toast({ title: "Error", description: `Failed to delete job: ${result.error}`, variant: "destructive" });
+    } else {
+        toast({ title: "Success", description: `Job "${job.title}" has been deleted.` });
+        onClose();
+    }
+    setIsDeleting(false);
+  };
+
   const handleSubmit = async (assignTechId: string | null = null) => {
     if (!title.trim() || !description.trim() || !locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Address.", variant: "destructive" });
@@ -539,41 +564,66 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             </div>
           )}
           
-          <DialogFooter className="sm:justify-start gap-2 mt-4 pt-4 border-t">
-            {job ? ( 
-              <Button type="submit" disabled={isLoading} className="flex-1">
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                Save Changes
-              </Button>
-            ) : (
-                <>
-                    {userProfile?.role !== 'csr' && (
-                        <Button
-                            type="button"
-                            onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
-                            disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                            variant={isInterruptionSuggestion ? "destructive" : "default"}
-                            className="flex-1"
-                            title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
-                        >
-                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                            {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
-                        </Button>
-                    )}
-                     <Button
-                        type="submit"
-                        disabled={isLoading}
-                        variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
-                        className="flex-1"
-                    >
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-4 pt-4 border-t gap-2">
+            <div>
+              {job && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button type="button" variant="destructive" disabled={isDeleting}>
+                      {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                      Delete Job
                     </Button>
-                </>
-            )}
-            <Button type="button" variant="ghost" onClick={onClose} className="sm:ml-auto">
-              Close
-            </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the job "{job.title}".
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDeleteJob} className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button type="button" variant="ghost" onClick={onClose}>
+                Close
+              </Button>
+              {job ? ( 
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Save Changes
+                </Button>
+              ) : (
+                  <>
+                      {userProfile?.role !== 'csr' && (
+                          <Button
+                              type="button"
+                              onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
+                              disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
+                              variant={isInterruptionSuggestion ? "destructive" : "default"}
+                              title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
+                          >
+                              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                              {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
+                          </Button>
+                      )}
+                       <Button
+                          type="submit"
+                          disabled={isLoading}
+                          variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
+                      >
+                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                          {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+                      </Button>
+                  </>
+              )}
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

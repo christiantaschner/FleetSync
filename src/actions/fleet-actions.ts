@@ -14,7 +14,7 @@ import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
 import { z } from "zod";
 import { db, storage } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
 import crypto from 'crypto';
@@ -858,4 +858,29 @@ export async function suggestScheduleTimeAction(
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { data: null, error: `Failed to suggest schedule time. ${errorMessage}` };
   }
+}
+
+const DeleteJobInputSchema = z.object({
+  jobId: z.string().min(1, "Job ID is required."),
+});
+
+export async function deleteJobAction(
+  input: z.infer<typeof DeleteJobInputSchema>
+): Promise<{ error: string | null }> {
+    try {
+        const { jobId } = DeleteJobInputSchema.parse(input);
+        if (!db) {
+            throw new Error("Firestore not initialized");
+        }
+        
+        const jobDocRef = doc(db, "jobs", jobId);
+        await deleteDoc(jobDocRef);
+        
+        return { error: null };
+
+    } catch(e) {
+        console.error("Error deleting job:", e);
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        return { error: `Failed to delete job. ${errorMessage}` };
+    }
 }

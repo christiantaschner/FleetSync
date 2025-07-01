@@ -101,8 +101,6 @@ export default function DashboardPage() {
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
   
-  const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
-
   const handleOpenAddJob = () => {
     setSelectedJobForEdit(null);
     setIsAddEditJobDialogOpen(true);
@@ -775,6 +773,7 @@ export default function DashboardPage() {
             onClose={handleCloseAddEditTechnicianDialog}
             technician={selectedTechnicianForEdit}
             allSkills={allSkills}
+            ownerId={company?.ownerId}
             onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}
         />
       <ShareTrackingDialog 

@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search } from 'lucide-react';
@@ -410,8 +411,26 @@ export default function DashboardPage() {
     }
   };
   
-  const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {};
-  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {};
+  const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
+    // This provides immediate UI feedback while the onSnapshot listener syncs from Firestore.
+    setJobs(prev => {
+        const exists = prev.some(j => j.id === updatedJob.id);
+        if (exists) {
+            return prev.map(j => j.id === updatedJob.id ? updatedJob : j);
+        }
+        return [...prev, updatedJob];
+    });
+  };
+  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
+    // This provides immediate UI feedback while the onSnapshot listener syncs from Firestore.
+    setTechnicians(prev => {
+        const exists = prev.some(t => t.id === updatedTechnician.id);
+        if (exists) {
+            return prev.map(t => t.id === updatedTechnician.id ? updatedTechnician : t);
+        }
+        return [...prev, updatedTechnician];
+    });
+  };
   
   const openAIAssignDialogForJob = (job: Job) => {
     setSelectedJobForAIAssign(job);
@@ -910,7 +929,7 @@ export default function DashboardPage() {
                 />
               )) : (
                 <p className="text-muted-foreground text-center py-10">
-                  {jobs.length === 0 ? "No jobs to display. Add some jobs." : "No jobs match the current filters."}
+                  {jobs.length === 0 ? "No jobs to display. Add your first job." : "No jobs match the current filters."}
                 </p>
               )}
             </CardContent>
@@ -961,7 +980,7 @@ export default function DashboardPage() {
                   />
                   ))}
                   {!isLoadingData && technicians.length === 0 && (
-                  <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
+                  <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add your first technician.</p>
                   )}
               </div>
             </CardContent>
@@ -996,3 +1015,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

@@ -314,7 +314,7 @@ export default function DashboardPage() {
       technicianId: t.id,
       technicianName: t.name,
       isAvailable: t.isAvailable,
-      skills: t.skills as string[],
+      skills: t.skills || [],
       location: {
         latitude: t.location.latitude,
         longitude: t.location.longitude,
@@ -1074,5 +1074,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

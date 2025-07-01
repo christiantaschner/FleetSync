@@ -187,7 +187,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         technicianId: t.id,
         technicianName: t.name,
         isAvailable: t.isAvailable,
-        skills: t.skills as string[],
+        skills: t.skills || [],
         location: {
           latitude: t.location.latitude,
           longitude: t.location.longitude,
@@ -568,5 +568,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-
-    

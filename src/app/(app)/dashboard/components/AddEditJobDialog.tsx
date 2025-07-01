@@ -21,7 +21,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
 import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput } from "@/actions/fleet-actions";
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -52,9 +52,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
   const [isFetchingPrioritySuggestion, setIsFetchingPrioritySuggestion] = useState(false);
+  const [isFetchingScheduleSuggestion, setIsFetchingScheduleSuggestion] = useState(false);
   
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
   const [aiPrioritySuggestion, setAiPrioritySuggestion] = useState<SuggestJobPriorityOutput | null>(null);
+  const [scheduleSuggestion, setScheduleSuggestion] = useState<{ time: string; reasoning: string } | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
 
   const [title, setTitle] = useState('');
@@ -81,6 +83,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
     setAiSuggestion(null);
     setAiPrioritySuggestion(null);
+    setScheduleSuggestion(null);
     setSuggestedTechnicianDetails(null);
   }, [job]);
 
@@ -120,6 +123,38 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     }
     setIsFetchingPrioritySuggestion(false);
   }, []);
+
+  const fetchScheduleSuggestion = useCallback(async (currentPriority: JobPriority) => {
+    if (!currentPriority || technicians.length === 0) {
+        setScheduleSuggestion(null);
+        return;
+    }
+    setIsFetchingScheduleSuggestion(true);
+    setScheduleSuggestion(null);
+
+    const techWithJobs = technicians.map(t => ({
+        id: t.id,
+        name: t.name,
+        jobs: jobs
+            .filter(j => j.assignedTechnicianId === t.id && j.scheduledTime)
+            .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! })),
+    }));
+
+    const input: SuggestScheduleTimeInput = {
+        jobPriority: currentPriority,
+        currentTime: new Date().toISOString(),
+        technicians: techWithJobs,
+    };
+
+    const result = await suggestScheduleTimeAction(input);
+    if (result.data) {
+        setScheduleSuggestion({
+            time: result.data.suggestedTime,
+            reasoning: result.data.reasoning,
+        });
+    }
+    setIsFetchingScheduleSuggestion(false);
+}, [technicians, jobs]);
 
   useEffect(() => {
     if (isOpen && !job && description.trim()) {
@@ -188,10 +223,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
         fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
+        fetchScheduleSuggestion(priority);
       }, 1000); 
       return () => clearTimeout(timer);
     }
-  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion]);
+  }, [description, priority, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion, fetchScheduleSuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -381,7 +417,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                         )}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                        {scheduledTime ? format(scheduledTime, "PPP p") : <span>Pick a date & time</span>}
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -393,6 +429,25 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ children, job, jobs
                     />
                     </PopoverContent>
                 </Popover>
+                 {isFetchingScheduleSuggestion && (
+                    <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
+                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is suggesting a time...
+                    </div>
+                )}
+                {!isFetchingScheduleSuggestion && scheduleSuggestion && !job && (
+                    <div className="text-xs mt-1.5 p-2 bg-secondary/50 rounded-md border">
+                        <p className="font-medium flex items-center gap-1.5"><Lightbulb className="h-3 w-3 text-primary"/> AI Suggestion:</p>
+                        <p className="text-muted-foreground italic">"{scheduleSuggestion.reasoning}"</p>
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="p-0 h-auto text-primary"
+                            onClick={() => setScheduledTime(new Date(scheduleSuggestion.time))}
+                        >
+                            Set time to {format(new Date(scheduleSuggestion.time), "PPP p")}
+                        </Button>
+                    </div>
+                )}
             </div>
           </div>
            <div className="grid grid-cols-1">

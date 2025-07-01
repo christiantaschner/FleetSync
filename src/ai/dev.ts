@@ -10,5 +10,6 @@ import '@/ai/flows/suggest-job-priority.ts';
 import '@/ai/flows/predict-schedule-risk.ts';
 import '@/ai/flows/generate-customer-notification-flow.ts';
 import '@/ai/flows/suggest-next-appointment-flow.ts';
+import '@/ai/flows/suggest-schedule-time.ts';
 import '@/ai/flows/troubleshoot-flow.ts';
 import '@/ai/flows/estimate-travel-distance-flow.ts';

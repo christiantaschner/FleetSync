@@ -86,7 +86,7 @@ export type Job = {
   location: Location;
   customerName: string;
   customerPhone: string;
-  scheduledTime?: string;
+  scheduledTime?: string | null;
   estimatedDurationMinutes?: number;
   createdAt: string;
   updatedAt: string;
@@ -136,7 +136,7 @@ export type AITask = {
     longitude: number;
   };
   priority: 'high' | 'medium' | 'low';
-  scheduledTime?: string;
+  scheduledTime?: string | null;
 };
 
 export type AITechnician = {
@@ -148,7 +148,7 @@ export type AITechnician = {
     latitude: number;
     longitude: number;
   };
-  currentJobs?: { jobId: string; scheduledTime?: string; priority: JobPriority; }[];
+  currentJobs?: { jobId: string; scheduledTime?: string | null; priority: JobPriority; }[];
 };
 
 export type ProfileChangeRequest = {
@@ -238,7 +238,7 @@ export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
-  scheduledTime: z.string().optional().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
+  scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
@@ -253,7 +253,7 @@ export const AllocateJobInputSchema = z.object({
         .describe('The current location of the technician.'),
       currentJobs: z.array(z.object({
         jobId: z.string(),
-        scheduledTime: z.string().optional(),
+        scheduledTime: z.string().optional().nullable(),
         priority: z.enum(['High', 'Medium', 'Low']),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
     })
@@ -287,7 +287,7 @@ export const OptimizeRoutesInputSchema = z.object({
           })
           .describe('The location of the task.'),
         priority: z.enum(['high', 'medium', 'low']).describe('The priority of the task.'),
-        scheduledTime: z.string().optional().describe('Optional specific requested appointment time for this task (ISO 8601 format). This is a strong constraint if provided.'),
+        scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time for this task (ISO 8601 format). This is a strong constraint if provided.'),
       })
     )
     .describe('The list of tasks to be performed.'),
@@ -433,7 +433,7 @@ export const PredictScheduleRiskInputSchema = z.object({
             latitude: z.number(),
             longitude: z.number(),
         }),
-        scheduledTime: z.string().optional().describe('ISO 8601 timestamp for the appointment.'),
+        scheduledTime: z.string().optional().nullable().describe('ISO 8601 timestamp for the appointment.'),
     }),
 });
 export type PredictScheduleRiskInput = z.infer<typeof PredictScheduleRiskInputSchema>;
@@ -536,3 +536,23 @@ export const CompleteOnboardingInputSchema = z.object({
   numberOfTechnicians: z.number().min(1, 'You must have at least one technician.'),
 });
 export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSchema>;
+
+export const SuggestScheduleTimeInputSchema = z.object({
+  jobPriority: z.enum(['High', 'Medium', 'Low']),
+  currentTime: z.string().describe("The current time in ISO 8601 format."),
+  technicians: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    jobs: z.array(z.object({
+      id: z.string(),
+      scheduledTime: z.string(),
+    })).describe("A list of jobs already scheduled for this technician."),
+  })),
+});
+export type SuggestScheduleTimeInput = z.infer<typeof SuggestScheduleTimeInputSchema>;
+
+export const SuggestScheduleTimeOutputSchema = z.object({
+  suggestedTime: z.string().describe("The suggested appointment time in ISO 8601 format."),
+  reasoning: z.string().describe("A brief explanation for the suggestion."),
+});
+export type SuggestScheduleTimeOutput = z.infer<typeof SuggestScheduleTimeOutputSchema>;

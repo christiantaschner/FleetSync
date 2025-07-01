@@ -11,6 +11,7 @@ import { generateCustomerNotification as generateCustomerNotificationFlow } from
 import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows/suggest-next-appointment-flow";
 import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/troubleshoot-flow";
 import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
+import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
 import { z } from "zod";
 import { db, storage } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy } from "firebase/firestore";
@@ -52,6 +53,9 @@ import {
   type TroubleshootEquipmentInput,
   type TroubleshootEquipmentOutput,
   CalculateTravelMetricsInputSchema,
+  SuggestScheduleTimeInputSchema,
+  type SuggestScheduleTimeInput,
+  type SuggestScheduleTimeOutput,
 } from "@/types";
 
 
@@ -73,8 +77,6 @@ export async function allocateJobAction(
     return { data: null, error: "Failed to allocate job. Please try again." };
   }
 }
-
-export type OptimizeRoutesActionInput = OptimizeRoutesInput;
 
 export async function optimizeRoutesAction(
   input: OptimizeRoutesActionInput
@@ -838,5 +840,22 @@ export async function calculateTravelMetricsAction(
     console.error("Error calculating travel metrics:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     return { error: `Failed to calculate metrics. ${errorMessage}` };
+  }
+}
+
+export async function suggestScheduleTimeAction(
+  input: SuggestScheduleTimeInput
+): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
+  try {
+    const validatedInput = SuggestScheduleTimeInputSchema.parse(input);
+    const result = await suggestScheduleTimeFlow(validatedInput);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in suggestScheduleTimeAction:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    return { data: null, error: `Failed to suggest schedule time. ${errorMessage}` };
   }
 }

@@ -152,8 +152,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} className="space-y-3 py-2">
-         <ScrollArea className="max-h-[calc(70vh-50px)] pr-3">
-          <div className="space-y-3">
+         <ScrollArea className="max-h-[calc(70vh-50px)]">
+          <div className="space-y-3 px-4">
             <div>
               <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
               <Input id="techName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., John Doe" required />

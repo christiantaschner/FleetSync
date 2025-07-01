@@ -108,8 +108,8 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
             Update your information below. Your changes will be sent to a dispatcher for approval.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh] pr-4">
-        <div className="space-y-4 py-2">
+        <ScrollArea className="max-h-[60vh]">
+        <div className="space-y-4 py-2 px-4">
             <div>
                 <Label htmlFor="change-name">Name</Label>
                 <Input id="change-name" value={name} onChange={(e) => setName(e.target.value)} />

@@ -36,6 +36,7 @@ import {
   SidebarInset,
   SidebarSeparator,
   SidebarRail,
+  SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/logo";

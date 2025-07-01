@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Map, AdvancedMarker, useMap, useMapsLibrary, Pin } from '@vis.gl/react-google-maps';
 import type { Job, Technician, Location } from '@/types';
 import { User, Briefcase, Search } from 'lucide-react';
@@ -67,9 +67,19 @@ interface MapViewProps {
   defaultCenter: { lat: number; lng: number };
   defaultZoom: number;
   searchedLocation?: Location | null;
+  onJobClick: (job: Job) => void;
+  onTechnicianClick: (technician: Technician) => void;
 }
 
-const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, defaultZoom, searchedLocation }) => {
+const MapView: React.FC<MapViewProps> = ({ 
+  jobs, 
+  technicians, 
+  defaultCenter, 
+  defaultZoom, 
+  searchedLocation,
+  onJobClick,
+  onTechnicianClick
+}) => {
   const map = useMap();
   const activeJobs = jobs.filter(job => job.status !== 'Completed' && job.status !== 'Cancelled');
   
@@ -94,9 +104,10 @@ const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, def
             key={`tech-${tech.id}`} 
             position={{ lat: tech.location.latitude, lng: tech.location.longitude }} 
             title={`${tech.name} (${tech.isAvailable ? 'Available' : 'Unavailable'})`}
+            onClick={() => onTechnicianClick(tech)}
           >
             <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md",
+              "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md cursor-pointer",
               tech.isAvailable ? 'bg-green-500' : 'bg-red-500'
             )}>
               <User className="h-4 w-4 text-white" />
@@ -109,9 +120,10 @@ const MapView: React.FC<MapViewProps> = ({ jobs, technicians, defaultCenter, def
               key={`job-${job.id}`} 
               position={{ lat: job.location.latitude, lng: job.location.longitude }} 
               title={`${job.title} (${job.priority} Priority)`}
+              onClick={() => onJobClick(job)}
            >
              <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md",
+                  "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md cursor-pointer",
                   job.priority === 'High' ? 'bg-destructive' : job.priority === 'Medium' ? 'bg-primary' : 'bg-yellow-500'
               )}>
               <Briefcase className="h-4 w-4 text-white" />

@@ -36,6 +36,7 @@ import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { isToday } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -97,6 +98,11 @@ export default function DashboardPage() {
   const [isAddEditJobDialogOpen, setIsAddEditJobDialogOpen] = useState(false);
   const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
 
+  const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
+  const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
+  
+  const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
+
   const handleOpenAddJob = () => {
     setSelectedJobForEdit(null);
     setIsAddEditJobDialogOpen(true);
@@ -108,6 +114,19 @@ export default function DashboardPage() {
   const handleCloseAddEditJobDialog = () => {
     setIsAddEditJobDialogOpen(false);
     setSelectedJobForEdit(null);
+  };
+  
+  const handleOpenAddTechnician = () => {
+    setSelectedTechnicianForEdit(null);
+    setIsAddEditTechnicianDialogOpen(true);
+  };
+  const handleOpenEditTechnician = (technician: Technician) => {
+    setSelectedTechnicianForEdit(technician);
+    setIsAddEditTechnicianDialogOpen(true);
+  };
+  const handleCloseAddEditTechnicianDialog = () => {
+    setIsAddEditTechnicianDialogOpen(false);
+    setSelectedTechnicianForEdit(null);
   };
 
 
@@ -214,7 +233,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isLoadingData) {
-      // Set the initial count once data is loaded
       prevTechCount.current = technicians.length;
       return;
     }
@@ -223,7 +241,6 @@ export default function DashboardPage() {
       return;
     }
     
-    // Check if the count has actually changed from the previously stored value
     if (technicians.length !== prevTechCount.current) {
       console.log(`Technician count changed from ${prevTechCount.current} to ${technicians.length}. Updating Stripe.`);
       updateSubscriptionQuantityAction({ companyId: company.id, quantity: technicians.length })
@@ -235,7 +252,6 @@ export default function DashboardPage() {
           }
         });
       
-      // Update the ref to the new count *after* the action has been called
       prevTechCount.current = technicians.length;
     }
   }, [technicians.length, company, isLoadingData, toast]);
@@ -438,7 +454,6 @@ export default function DashboardPage() {
   };
   
   const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
-    // This provides immediate UI feedback while the onSnapshot listener syncs from Firestore.
     setJobs(prev => {
         const exists = prev.some(j => j.id === updatedJob.id);
         if (exists) {
@@ -448,7 +463,6 @@ export default function DashboardPage() {
     });
   };
   const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
-    // This provides immediate UI feedback while the onSnapshot listener syncs from Firestore.
     setTechnicians(prev => {
         const exists = prev.some(t => t.id === updatedTechnician.id);
         if (exists) {
@@ -515,6 +529,20 @@ export default function DashboardPage() {
         }
     });
   }, [filteredJobs, sortOrder, technicians]);
+
+  const filteredTechnicians = useMemo(() => {
+    if (!technicianSearchTerm) {
+      return technicians;
+    }
+    const lowercasedTerm = technicianSearchTerm.toLowerCase();
+    return technicians.filter(tech => {
+      const isAvailableMatch = lowercasedTerm === 'available' && tech.isAvailable;
+      const isUnavailableMatch = (lowercasedTerm === 'unavailable' || lowercasedTerm === 'busy') && !tech.isAvailable;
+      const nameMatch = tech.name.toLowerCase().includes(lowercasedTerm);
+      const skillMatch = tech.skills?.some(skill => skill.toLowerCase().includes(lowercasedTerm));
+      return isAvailableMatch || isUnavailableMatch || nameMatch || skillMatch;
+    });
+  }, [technicians, technicianSearchTerm]);
 
   const pendingJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Pending'), [jobs]);
   const pendingJobsCount = pendingJobsForBatchAssign.length;
@@ -681,7 +709,6 @@ export default function DashboardPage() {
         latitude: location.lat,
         longitude: location.lng,
     });
-    // Find the overview tab and switch to it
     const overviewTrigger = document.querySelector('button[data-state][value="overview"]') as HTMLButtonElement | null;
     if (overviewTrigger) {
         overviewTrigger.click();
@@ -742,6 +769,13 @@ export default function DashboardPage() {
             onJobAddedOrUpdated={handleJobAddedOrUpdated}
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
+        />
+        <AddEditTechnicianDialog
+            isOpen={isAddEditTechnicianDialogOpen}
+            onClose={handleCloseAddEditTechnicianDialog}
+            technician={selectedTechnicianForEdit}
+            allSkills={allSkills}
+            onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}
         />
       <ShareTrackingDialog 
           isOpen={isTrackingDialogOpen}
@@ -1004,20 +1038,33 @@ export default function DashboardPage() {
         </TabsContent>
         <TabsContent value="technicians">
           <Card>
-            <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-              <div>
-                <CardTitle className="font-headline">Technician Roster</CardTitle>
-                <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
-              </div>
-               <div className="flex flex-wrap gap-2">
-                <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
-                  <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                </Button>
-                <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
-                  <Button variant="accent">
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <CardTitle className="font-headline">Technician Roster</CardTitle>
+                  <CardDescription>View technician status, skills, and current assignments.</CardDescription>
+                </div>
+                 <div className="flex flex-wrap gap-2">
+                  <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                  </Button>
+                  <Button variant="accent" onClick={handleOpenAddTechnician}>
                     <UserPlus className="mr-2 h-4 w-4" /> Add Technician
                   </Button>
-                </AddEditTechnicianDialog>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Label htmlFor="technician-search" className="sr-only">Search Technicians</Label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    id="technician-search"
+                    placeholder="Search by name, skill, or 'available'..."
+                    className="pl-8"
+                    value={technicianSearchTerm}
+                    onChange={e => setTechnicianSearchTerm(e.target.value)}
+                  />
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1027,16 +1074,18 @@ export default function DashboardPage() {
                   <div className="col-span-full flex justify-center items-center py-10">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                  ) : technicians.map(technician => (
+                  ) : filteredTechnicians.map(technician => (
                   <TechnicianCard 
                       key={technician.id} 
                       technician={technician} 
                       jobs={jobs} 
-                      onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
-                      allSkills={allSkills}
+                      onEdit={handleOpenEditTechnician}
                       onMarkUnavailable={handleMarkTechnicianUnavailable}
                   />
                   ))}
+                  {!isLoadingData && technicians.length > 0 && filteredTechnicians.length === 0 && (
+                    <p className="text-muted-foreground col-span-full text-center py-10">No technicians match your search.</p>
+                  )}
                   {!isLoadingData && technicians.length === 0 && (
                   <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add your first technician.</p>
                   )}
@@ -1065,6 +1114,8 @@ export default function DashboardPage() {
                 defaultCenter={defaultMapCenter}
                 defaultZoom={4}
                 searchedLocation={searchedLocation}
+                onJobClick={handleOpenEditJob}
+                onTechnicianClick={handleOpenEditTechnician}
               />
             </CardContent>
           </Card>

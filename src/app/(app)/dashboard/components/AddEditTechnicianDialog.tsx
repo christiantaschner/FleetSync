@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,16 +25,16 @@ import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { useAuth } from '@/contexts/auth-context';
 
 interface AddEditTechnicianDialogProps {
-  children: React.ReactNode;
-  technician?: Technician;
+  isOpen: boolean;
+  onClose: () => void;
+  technician?: Technician | null;
   allSkills: string[];
   onTechnicianAddedOrUpdated?: (technician: Technician) => void;
 }
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ children, technician, allSkills, onTechnicianAddedOrUpdated }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, onTechnicianAddedOrUpdated }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [name, setName] = useState('');
@@ -136,7 +135,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
         toast({ title: "Technician Added", description: `New technician "${finalTechnician.name}" created.` });
       }
       onTechnicianAddedOrUpdated?.(finalTechnician);
-      setIsOpen(false);
+      onClose();
     } catch (error) {
       console.error("Error saving technician to Firestore: ", error);
       toast({ title: "Firestore Error", description: "Could not save technician. Check console.", variant: "destructive" });
@@ -146,8 +145,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
   };
   
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-headline">{technician ? 'Edit Technician Details' : 'Add New Technician'}</DialogTitle>
@@ -218,7 +216,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {technician ? 'Save Changes' : 'Add Technician'}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="sm:ml-auto">
+            <Button type="button" variant="ghost" onClick={onClose} className="sm:ml-auto">
               Close
             </Button>
           </DialogFooter>

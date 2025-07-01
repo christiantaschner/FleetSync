@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Technician, Job } from '@/types';
 import { cn } from '@/lib/utils';
-import AddEditTechnicianDialog from './AddEditTechnicianDialog';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -26,12 +25,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
-  allSkills: string[];
-  onTechnicianUpdated: (technician: Technician) => void;
+  onEdit: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSkills, onTechnicianUpdated, onMarkUnavailable }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
 
   return (
@@ -104,12 +102,10 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allSk
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <AddEditTechnicianDialog technician={technician} onTechnicianAddedOrUpdated={onTechnicianUpdated} allSkills={allSkills}>
-            <Button variant="ghost" size="sm" className="px-2 py-1 h-auto">
+           <Button variant="ghost" size="sm" className="px-2 py-1 h-auto" onClick={() => onEdit(technician)}>
               <Edit className="h-3.5 w-3.5" />
               <span className="sr-only">Edit Technician</span>
             </Button>
-          </AddEditTechnicianDialog>
         </div>
       </CardFooter>
     </Card>

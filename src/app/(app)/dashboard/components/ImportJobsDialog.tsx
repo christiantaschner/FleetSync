@@ -44,7 +44,7 @@ const REQUIRED_HEADERS = [
 ];
 
 const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, onJobsImported }) => {
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [parsedJobs, setParsedJobs] = useState<ParsedJob[]>([]);
@@ -151,14 +151,14 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
       toast({ title: "No Valid Jobs", description: "There are no valid jobs to import.", variant: "destructive" });
       return;
     }
-     if (!user) {
+     if (!userProfile?.companyId) {
       toast({ title: "Authentication Error", description: "You must be logged in to import jobs.", variant: "destructive" });
       return;
     }
     setIsSubmitting(true);
     
     const result = await importJobsAction({
-        companyId: user.uid,
+        companyId: userProfile.companyId,
         jobs: parsedJobs.map(p => p.data),
     });
     

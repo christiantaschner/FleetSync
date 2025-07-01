@@ -33,7 +33,7 @@ interface ManageSkillsDialogProps {
 }
 
 const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOpen, onSkillsUpdated }) => {
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [newSkillName, setNewSkillName] = useState('');
@@ -42,10 +42,10 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
 
   const fetchSkills = async () => {
-    if (!db || !user) return;
+    if (!db || !userProfile?.companyId) return;
     setIsLoading(true);
     try {
-      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", user.uid), orderBy("name"));
+      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId), orderBy("name"));
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
       setSkills(skillsData);
@@ -62,11 +62,11 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     if (isOpen) {
       fetchSkills();
     }
-  }, [isOpen]);
+  }, [isOpen, userProfile]);
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSkillName.trim() || !db || !user) return;
+    if (!newSkillName.trim() || !db || !userProfile?.companyId) return;
     
     if (skills.some(skill => skill.name.toLowerCase() === newSkillName.trim().toLowerCase())) {
         toast({ title: "Duplicate Skill", description: "This skill already exists.", variant: "destructive"});
@@ -75,7 +75,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "skills"), { name: newSkillName.trim(), companyId: user.uid });
+      await addDoc(collection(db, "skills"), { name: newSkillName.trim(), companyId: userProfile.companyId });
       setNewSkillName('');
       toast({ title: "Success", description: `Skill "${newSkillName.trim()}" added.`});
       await fetchSkills(); 
@@ -105,7 +105,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   };
 
   const handleSeedSkills = async () => {
-    if (!db || !user) return;
+    if (!db || !userProfile?.companyId) return;
     setIsSubmitting(true);
     try {
         const batch = writeBatch(db);
@@ -113,7 +113,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
         
         PREDEFINED_SKILLS.forEach(skillName => {
             const docRef = doc(skillsCollectionRef);
-            batch.set(docRef, { name: skillName, companyId: user.uid });
+            batch.set(docRef, { name: skillName, companyId: userProfile.companyId });
         });
 
         await batch.commit();

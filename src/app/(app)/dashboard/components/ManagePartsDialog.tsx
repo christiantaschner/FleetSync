@@ -33,7 +33,7 @@ interface ManagePartsDialogProps {
 }
 
 const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen, onPartsUpdated }) => {
-  const { user } = useAuth();
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [parts, setParts] = useState<Part[]>([]);
   const [newPartName, setNewPartName] = useState('');
@@ -42,10 +42,10 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
 
   const fetchParts = async () => {
-    if (!db || !user) return;
+    if (!db || !userProfile?.companyId) return;
     setIsLoading(true);
     try {
-      const partsQuery = query(collection(db, "parts"), where("companyId", "==", user.uid), orderBy("name"));
+      const partsQuery = query(collection(db, "parts"), where("companyId", "==", userProfile.companyId), orderBy("name"));
       const querySnapshot = await getDocs(partsQuery);
       const partsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
       setParts(partsData);
@@ -62,11 +62,11 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
     if (isOpen) {
       fetchParts();
     }
-  }, [isOpen]);
+  }, [isOpen, userProfile]);
 
   const handleAddPart = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPartName.trim() || !db || !user) return;
+    if (!newPartName.trim() || !db || !userProfile?.companyId) return;
     
     if (parts.some(part => part.name.toLowerCase() === newPartName.trim().toLowerCase())) {
         toast({ title: "Duplicate Part", description: "This part already exists.", variant: "destructive"});
@@ -75,7 +75,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "parts"), { name: newPartName.trim(), companyId: user.uid });
+      await addDoc(collection(db, "parts"), { name: newPartName.trim(), companyId: userProfile.companyId });
       setNewPartName('');
       toast({ title: "Success", description: `Part "${newPartName.trim()}" added.`});
       await fetchParts(); 
@@ -105,7 +105,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   };
 
   const handleSeedParts = async () => {
-    if (!db || !user) return;
+    if (!db || !userProfile?.companyId) return;
     setIsSubmitting(true);
     try {
         const batch = writeBatch(db);
@@ -113,7 +113,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
         
         PREDEFINED_PARTS.forEach(partName => {
             const docRef = doc(partsCollectionRef);
-            batch.set(docRef, { name: partName, companyId: user.uid });
+            batch.set(docRef, { name: partName, companyId: userProfile.companyId });
         });
 
         await batch.commit();

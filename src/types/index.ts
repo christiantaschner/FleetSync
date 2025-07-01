@@ -538,10 +538,12 @@ export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSche
 
 export const SuggestScheduleTimeInputSchema = z.object({
   jobPriority: z.enum(['High', 'Medium', 'Low']),
+  requiredSkills: z.array(z.string()).describe("A list of skills required for the job."),
   currentTime: z.string().describe("The current time in ISO 8601 format."),
   technicians: z.array(z.object({
     id: z.string(),
     name: z.string(),
+    skills: z.array(z.string()).describe("The skills of the technician."),
     jobs: z.array(z.object({
       id: z.string(),
       scheduledTime: z.string(),
@@ -551,7 +553,9 @@ export const SuggestScheduleTimeInputSchema = z.object({
 export type SuggestScheduleTimeInput = z.infer<typeof SuggestScheduleTimeInputSchema>;
 
 export const SuggestScheduleTimeOutputSchema = z.object({
-  suggestedTime: z.string().describe("The suggested appointment time in ISO 8601 format."),
-  reasoning: z.string().describe("A brief explanation for the suggestion."),
+  suggestions: z.array(z.object({
+    time: z.string().describe("A suggested appointment time in ISO 8601 format."),
+    reasoning: z.string().describe("A brief explanation for why this time was suggested."),
+  })).describe("A list of up to 5 appointment suggestions.")
 });
 export type SuggestScheduleTimeOutput = z.infer<typeof SuggestScheduleTimeOutputSchema>;

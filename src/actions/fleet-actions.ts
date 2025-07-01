@@ -79,7 +79,7 @@ export async function allocateJobAction(
 }
 
 export async function optimizeRoutesAction(
-  input: OptimizeRoutesActionInput
+  input: OptimizeRoutesInput
 ): Promise<{ data: OptimizeRoutesOutput | null; error: string | null }> {
   try {
     const validatedInput = OptimizeRoutesInputSchema.parse(input);

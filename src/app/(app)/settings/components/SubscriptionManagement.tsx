@@ -58,7 +58,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     const handleCheckout = async (quantity: number) => {
         setIsCheckoutLoading(true);
 
-        const priceId = process.env[allInclusivePlan.priceIdEnvVar];
+        const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
         if (!priceId) {
             toast({ title: 'Configuration Error', description: `Stripe Price ID is not set. Please contact support.`, variant: 'destructive'});
             setIsCheckoutLoading(false);

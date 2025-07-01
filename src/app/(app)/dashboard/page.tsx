@@ -298,7 +298,10 @@ export default function DashboardPage() {
       technicianName: t.name,
       isAvailable: t.isAvailable,
       skills: t.skills as string[],
-      location: t.location,
+      location: {
+        latitude: t.location.latitude,
+        longitude: t.location.longitude,
+      },
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
         .map(j => ({
           jobId: j.id,
@@ -515,7 +518,10 @@ export default function DashboardPage() {
             technicianName: t.name,
             isAvailable: t.isAvailable,
             skills: t.skills as string[],
-            location: t.location,
+            location: {
+              latitude: t.location.latitude,
+              longitude: t.location.longitude,
+            },
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
 

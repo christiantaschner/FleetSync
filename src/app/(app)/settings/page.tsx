@@ -26,7 +26,7 @@ export default function SettingsPage() {
         }
     }, [searchParams]);
 
-    const canManageUsers = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+    const canManageUsers = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
     
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

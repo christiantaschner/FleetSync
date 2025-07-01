@@ -1,86 +1,70 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import type { Company, StripeProduct } from '@/types';
-import { createCheckoutSessionAction, getProductsAndPricesAction } from '@/actions/stripe-actions';
+import React, { useState } from 'react';
+import type { Company } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 import PricingCard from './PricingCard';
 import StripePortal from './StripePortal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
+
+const starterPlanUrl = process.env.NEXT_PUBLIC_STRIPE_STARTER_PLAN_URL || '';
+const proPlanUrl = process.env.NEXT_PUBLIC_STRIPE_PRO_PLAN_URL || '';
+const enterprisePlanUrl = process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PLAN_URL || '';
+
+const pricingTiers = [
+    {
+        title: 'Starter',
+        price: 'Custom',
+        frequency: '/ technician / month',
+        description: 'For small teams needing essential dispatching and scheduling.',
+        features: ['Up to 5 Technicians', 'Core Dispatching & Scheduling', 'Live Map View', 'Technician Mobile App', 'Basic Reporting'],
+        cta: 'Choose Plan',
+        url: starterPlanUrl
+    },
+    {
+        title: 'Professional',
+        price: 'Custom',
+        frequency: '/ technician / month',
+        description: 'Includes core AI features to boost efficiency.',
+        features: ['Everything in Starter, plus:', 'AI-Powered Job Allocation', 'AI Route Optimization', 'Recurring Service Contracts', 'Customer Tracking Links'],
+        cta: 'Choose Plan',
+        url: proPlanUrl,
+        className: "border-primary ring-2 ring-primary"
+    },
+    {
+        title: 'Enterprise',
+        price: 'Custom',
+        frequency: '',
+        description: 'For large operations needing advanced analytics and automation.',
+        features: ['Everything in Professional, plus:', 'Unlimited Technicians', 'Advanced Analytics & KPIs', 'Proactive Schedule Risk Alerts', 'CO2 Emission Tracking'],
+        cta: 'Contact Sales',
+        url: enterprisePlanUrl
+    }
+];
+
 
 interface SubscriptionManagementProps {
   company: Company;
 }
 
 const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company }) => {
-    const { user } = useAuth();
     const { toast } = useToast();
-    const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
-    const [products, setProducts] = useState<StripeProduct[]>([]);
-    const [productsLoading, setProductsLoading] = useState(true);
-
-    const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-    useEffect(() => {
-        const fetchProducts = async () => {
-            setProductsLoading(true);
-            const result = await getProductsAndPricesAction();
-            if (result.error) {
-                toast({ title: 'Error fetching plans', description: result.error, variant: 'destructive' });
-            } else if (result.data) {
-                setProducts(result.data);
-            }
-            setProductsLoading(false);
-        };
-
-        if (company.subscriptionStatus !== 'active') {
-            fetchProducts();
-        } else {
-            setProductsLoading(false);
-        }
-    }, [company.subscriptionStatus, toast]);
-
-    const handleSubscribe = async (priceId: string) => {
-        if (!user || !user.email) {
-            toast({ title: 'Error', description: 'You must be logged in to subscribe.', variant: 'destructive' });
+    const [isLoading, setIsLoading] = useState(false);
+    
+    const handleRedirect = (url: string) => {
+        if (!url || url.includes('YOUR_')) {
+            toast({
+                title: "Configuration Needed",
+                description: "This payment link has not been configured in the .env.local file.",
+                variant: "destructive"
+            });
             return;
         }
-
-        if (priceId === 'contact_sales') {
-            // In a real app, this would open a contact form or mailto link.
-            toast({ title: "Contact Sales", description: "Please get in touch with our sales team to discuss Enterprise options."});
-            return;
-        }
-
-        setCheckoutLoading(priceId);
-
-        const result = await createCheckoutSessionAction({
-            companyId: company.id,
-            uid: user.uid,
-            email: user.email,
-            priceId,
-        });
-
-        if ('error' in result) {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
-            setCheckoutLoading(null);
-            return;
-        }
-
-        const stripe = await stripePromise;
-        if (!stripe) {
-            toast({ title: 'Error', description: 'Stripe.js has not loaded yet.', variant: 'destructive' });
-            setCheckoutLoading(null);
-            return;
-        }
-        
-        await stripe.redirectToCheckout({ sessionId: result.sessionId });
-        setCheckoutLoading(null);
+        setIsLoading(true);
+        window.location.href = url;
     };
 
     const isSubscribed = company.subscriptionStatus === 'active';
@@ -93,16 +77,6 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     if (isSubscribed) {
         return <StripePortal company={company} />;
     }
-    
-    const formatPrice = (price: StripeProduct['price']) => {
-        if (price.amount === null || typeof price.amount === 'undefined') {
-            return "Custom";
-        }
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: price.currency,
-        }).format(price.amount / 100);
-    };
 
     return (
         <div className="space-y-6">
@@ -116,27 +90,25 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                 </Alert>
             )}
             
-            {productsLoading ? (
-                <div className="flex items-center justify-center p-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {products.map((product) => (
-                        <PricingCard
-                            key={product.id}
-                            title={product.name}
-                            description={product.description || ''}
-                            price={formatPrice(product.price)}
-                            frequency={product.price.interval ? `/ technician / ${product.price.interval}` : ''}
-                            features={product.features || []}
-                            cta={product.price.amount === null ? 'Contact Sales' : 'Choose Plan'}
-                            onCtaClick={() => handleSubscribe(product.price.id || 'contact_sales')}
-                            isLoading={checkoutLoading === product.price.id}
-                        />
-                    ))}
-                </div>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pricingTiers.map((tier) => (
+                    <PricingCard
+                        key={tier.title}
+                        title={tier.title}
+                        description={tier.description}
+                        price={tier.price}
+                        frequency={tier.frequency}
+                        features={tier.features}
+                        cta={tier.cta}
+                        onCtaClick={() => handleRedirect(tier.url)}
+                        isLoading={isLoading}
+                        className={tier.className}
+                    />
+                ))}
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+                Note: Pricing on these cards is for display. The actual price is determined by the Stripe Payment Link.
+            </p>
         </div>
     );
 };

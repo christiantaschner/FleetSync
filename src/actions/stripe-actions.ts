@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { stripe } from '@/lib/stripe';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import type { Company, StripeProduct } from '@/types';
+import type { Company } from '@/types';
 import type Stripe from 'stripe';
 
 const CreateCheckoutSessionInputSchema = z.object({
@@ -115,7 +115,7 @@ export async function createPortalSessionAction(
         
         const portalSession = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,
-            return_url: `${appUrl}/settings`,
+            return_url: `${appUrl}/settings?tab=billing`,
         });
 
         return { url: portalSession.url };
@@ -125,78 +125,6 @@ export async function createPortalSessionAction(
         console.error('Error creating portal session:', e);
         return { error: `Failed to create billing portal session. ${errorMessage}` };
     }
-}
-
-export async function getProductsAndPricesAction(): Promise<{ data: StripeProduct[] | null; error: string | null }> {
-  try {
-    const prices = await stripe.prices.list({
-      active: true,
-      expand: ['data.product'],
-      type: 'recurring',
-    });
-
-    const productData: StripeProduct[] = prices.data
-      .filter(price => 
-        (price.billing_scheme === 'per_unit' || price.billing_scheme === 'tiered') && 
-        price.product && 
-        typeof price.product === 'object' && 
-        !price.product.deleted
-      )
-      .map(price => {
-        const product = price.product as Stripe.Product;
-        
-        let amount: number | null = null;
-        if (price.billing_scheme === 'per_unit' && price.unit_amount !== null) {
-            amount = price.unit_amount;
-        } else if (price.billing_scheme === 'tiered' && price.tiers && price.tiers.length > 0 && price.tiers[0].unit_amount !== null) {
-            // For volume/tiered pricing, take the first tier's amount for display.
-            amount = price.tiers[0].unit_amount;
-        }
-
-        return {
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          features: product.metadata.features ? product.metadata.features.split(',').map(f => f.trim()) : [],
-          price: {
-            id: price.id,
-            amount: amount,
-            currency: price.currency,
-            interval: price.recurring?.interval ?? null,
-          }
-        };
-      })
-      // Post-filter to remove any plans that we couldn't determine a price for
-      .filter((p): p is StripeProduct => p.price.amount !== null);
-
-    // Also fetch "Contact Sales" type products (no price)
-    const allProducts = await stripe.products.list({ active: true });
-    const contactSalesProducts = allProducts.data
-      .filter(p => !p.default_price && p.metadata.contact_sales === 'true')
-      .map(product => ({
-         id: product.id,
-         name: product.name,
-         description: product.description,
-         features: product.metadata.features ? product.metadata.features.split(',').map(f => f.trim()) : [],
-         price: {
-            id: 'contact_sales',
-            amount: null,
-            currency: 'usd', // placeholder
-            interval: 'month', // placeholder
-         }
-      }));
-
-    const combinedData = [...productData, ...contactSalesProducts];
-    
-    // Sort to have priced plans first, then by amount
-    combinedData.sort((a, b) => (a.price.amount ?? Infinity) - (b.price.amount ?? Infinity));
-    
-    return { data: combinedData, error: null };
-  } catch (e) {
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error('Error fetching products and prices:', e);
-    return { data: null, error: `Failed to fetch products. ${errorMessage}` };
-  }
 }
 
 const UpdateSubscriptionQuantityInputSchema = z.object({
@@ -214,7 +142,8 @@ export async function updateSubscriptionQuantityAction(
         const companyDocRef = doc(db, 'companies', companyId);
         const companyDocSnap = await getDoc(companyDocRef);
         if (!companyDocSnap.exists()) {
-            throw new Error('Company not found.');
+            // Not an error, just means company doesn't exist to update.
+            return { error: null };
         }
 
         const company = companyDocSnap.data() as Company;
@@ -228,6 +157,11 @@ export async function updateSubscriptionQuantityAction(
 
         if (!subscriptionItemId) {
             throw new Error('No subscription item found to update.');
+        }
+        
+        if (subscription.items.data[0].quantity === quantity) {
+            // No change needed
+            return { error: null };
         }
         
         // Update the quantity on the existing subscription item

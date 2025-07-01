@@ -65,7 +65,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
             return;
         }
 
-        if (!user) {
+        if (!user || !user.email) {
              toast({ title: 'Authentication Error', description: `You must be logged in.`, variant: 'destructive'});
              setIsCheckoutLoading(false);
              return;
@@ -74,7 +74,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
         const result = await createCheckoutSessionAction({
             companyId: company.id,
             uid: user.uid,
-            email: user.email!,
+            email: user.email,
             priceId: priceId,
             quantity: quantity,
         });

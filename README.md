@@ -33,7 +33,7 @@ Before you run the application, you need to configure your environment variables
     STRIPE_WEBHOOK_SECRET="YOUR_STRIPE_WEBHOOK_SECRET"
     
     # Find this on your product's pricing page in the Stripe Dashboard. It looks like `price_...`
-    NEXT_PUBLIC_STRIPE_PRICE_ID="YOUR_STRIPE_PRICE_ID"
+    NEXT_PUBLIC_STRIPE_PRICE_ID="price_1Rfi8SP8F2lL122i70kFbb8c"
 
     # App URL (important for Stripe redirects)
     NEXT_PUBLIC_APP_URL="http://localhost:9002"

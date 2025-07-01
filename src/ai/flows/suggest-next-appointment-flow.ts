@@ -4,7 +4,7 @@
  * @fileOverview An AI agent that suggests the next appointment date for a recurring contract and drafts a notification.
  */
 
-import { defineFlow, definePrompt, generate } from 'genkit';
+import {ai} from '@/ai/genkit';
 import {
   SuggestNextAppointmentInputSchema,
   type SuggestNextAppointmentInput,
@@ -18,7 +18,7 @@ export async function suggestNextAppointment(input: SuggestNextAppointmentInput)
   return suggestNextAppointmentFlow(input);
 }
 
-const prompt = definePrompt({
+const prompt = ai.definePrompt({
     name: 'suggestNextAppointmentPrompt',
     input: { schema: z.object({
         customerName: z.string(),
@@ -45,7 +45,7 @@ const prompt = definePrompt({
     `,
 });
 
-const suggestNextAppointmentFlow = defineFlow(
+const suggestNextAppointmentFlow = ai.defineFlow(
   {
     name: 'suggestNextAppointmentFlow',
     inputSchema: SuggestNextAppointmentInputSchema,
@@ -74,20 +74,16 @@ const suggestNextAppointmentFlow = defineFlow(
     const suggestedDate = format(nextDate, 'PPPP'); // e.g., "Tuesday, March 15th, 2025"
 
     // 2. Call the AI to draft the message
-    const llmResponse = await generate({
-        prompt,
-        input: {
-            customerName: input.customerName,
-            jobTitle: input.jobTitle,
-            suggestedDate: suggestedDate,
-        },
+    const { output } = await prompt({
+        customerName: input.customerName,
+        jobTitle: input.jobTitle,
+        suggestedDate: suggestedDate,
     });
     
-    const output = await llmResponse.output();
     if (output) {
       output.suggestedDate = suggestedDate;
     }
     
-    return output;
+    return output!;
   }
 );

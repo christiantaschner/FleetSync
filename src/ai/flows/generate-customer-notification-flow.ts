@@ -6,7 +6,7 @@
  * - generateCustomerNotification - Generates a customer-friendly notification about a schedule delay.
  */
 
-import { defineFlow, definePrompt, generate } from 'genkit';
+import {ai} from '@/ai/genkit';
 import {
   GenerateCustomerNotificationInputSchema,
   type GenerateCustomerNotificationInput,
@@ -18,7 +18,7 @@ export async function generateCustomerNotification(input: GenerateCustomerNotifi
   return generateCustomerNotificationFlow(input);
 }
 
-const prompt = definePrompt({
+const prompt = ai.definePrompt({
     name: 'generateCustomerNotificationPrompt',
     input: {schema: GenerateCustomerNotificationInputSchema},
     output: {schema: GenerateCustomerNotificationOutputSchema},
@@ -61,17 +61,14 @@ const prompt = definePrompt({
     `,
 });
 
-const generateCustomerNotificationFlow = defineFlow(
+const generateCustomerNotificationFlow = ai.defineFlow(
   {
     name: 'generateCustomerNotificationFlow',
     inputSchema: GenerateCustomerNotificationInputSchema,
     outputSchema: GenerateCustomerNotificationOutputSchema,
   },
   async (input) => {
-    const llmResponse = await generate({
-      prompt,
-      input,
-    });
-    return llmResponse.output();
+    const { output } = await prompt(input);
+    return output!;
   }
 );

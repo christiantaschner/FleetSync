@@ -6,7 +6,7 @@
  * - predictScheduleRisk - A function that assesses schedule risk.
  */
 
-import { defineFlow, definePrompt, generate } from 'genkit';
+import {ai} from '@/ai/genkit';
 import {
   type PredictScheduleRiskInput,
   PredictScheduleRiskInputSchema,
@@ -19,7 +19,7 @@ export async function predictScheduleRisk(input: PredictScheduleRiskInput): Prom
   return predictScheduleRiskFlow(input);
 }
 
-const prompt = definePrompt({
+const prompt = ai.definePrompt({
     name: 'predictScheduleRiskPrompt',
     input: {schema: PredictScheduleRiskInputSchema},
     output: {schema: PredictScheduleRiskOutputSchema},
@@ -48,17 +48,14 @@ const prompt = definePrompt({
     `,
 });
 
-const predictScheduleRiskFlow = defineFlow(
+const predictScheduleRiskFlow = ai.defineFlow(
   {
     name: 'predictScheduleRiskFlow',
     inputSchema: PredictScheduleRiskInputSchema,
     outputSchema: PredictScheduleRiskOutputSchema,
   },
   async (input) => {
-    const llmResponse = await generate({
-      prompt,
-      input,
-    });
-    return llmResponse.output();
+    const { output } = await prompt(input);
+    return output!;
   }
 );

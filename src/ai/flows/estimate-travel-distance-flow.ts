@@ -4,7 +4,7 @@
  * @fileOverview An AI agent that estimates the driving distance between two points.
  */
 
-import { defineFlow, definePrompt, generate } from 'genkit';
+import {ai} from '@/ai/genkit';
 import {
   type EstimateTravelDistanceInput,
   EstimateTravelDistanceInputSchema,
@@ -12,7 +12,7 @@ import {
   EstimateTravelDistanceOutputSchema,
 } from '@/types';
 
-const prompt = definePrompt({
+const prompt = ai.definePrompt({
     name: 'estimateTravelDistancePrompt',
     input: { schema: EstimateTravelDistanceInputSchema },
     output: { schema: EstimateTravelDistanceOutputSchema },
@@ -27,18 +27,15 @@ const prompt = definePrompt({
     `,
 });
 
-const estimateTravelDistanceFlow = defineFlow(
+const estimateTravelDistanceFlow = ai.defineFlow(
   {
     name: 'estimateTravelDistanceFlow',
     inputSchema: EstimateTravelDistanceInputSchema,
     outputSchema: EstimateTravelDistanceOutputSchema,
   },
   async (input) => {
-    const llmResponse = await generate({
-      prompt,
-      input,
-    });
-    return llmResponse.output();
+    const { output } = await prompt(input);
+    return output!;
   }
 );
 

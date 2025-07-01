@@ -6,7 +6,7 @@
  * - predictNextAvailableTechnicians - Predicts the next available technicians.
  */
 
-import { defineFlow, definePrompt, generate } from 'genkit';
+import {ai} from '@/ai/genkit';
 import {
   type PredictNextAvailableTechniciansInput,
   PredictNextAvailableTechniciansInputSchema,
@@ -19,7 +19,7 @@ export async function predictNextAvailableTechnicians(input: PredictNextAvailabl
   return predictNextAvailableTechniciansFlow(input);
 }
 
-const prompt = definePrompt({
+const prompt = ai.definePrompt({
     name: 'predictNextAvailableTechniciansPrompt',
     input: {schema: PredictNextAvailableTechniciansInputSchema},
     output: {schema: PredictNextAvailableTechniciansOutputSchema},
@@ -47,7 +47,7 @@ const prompt = definePrompt({
     `,
 });
 
-const predictNextAvailableTechniciansFlow = defineFlow(
+const predictNextAvailableTechniciansFlow = ai.defineFlow(
   {
     name: 'predictNextAvailableTechniciansFlow',
     inputSchema: PredictNextAvailableTechniciansInputSchema,
@@ -57,11 +57,7 @@ const predictNextAvailableTechniciansFlow = defineFlow(
     if (input.busyTechnicians.length === 0) {
         return { predictions: [] };
     }
-    const llmResponse = await generate({
-      prompt,
-      input,
-    });
-    const output = await llmResponse.output();
+    const { output } = await prompt(input);
     if (!output) {
       return { predictions: [] };
     }

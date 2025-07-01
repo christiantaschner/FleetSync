@@ -710,6 +710,7 @@ export default function DashboardPage() {
     });
   };
 
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
   if (isLoadingData) { 
     return (
@@ -718,40 +719,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-  
-  if (userProfile?.role === 'csr') {
-    return (
-      <div className="space-y-6">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">
-              Customer Service Dashboard
-          </h1>
-          <Card>
-              <CardHeader>
-                  <CardTitle>Create a New Work Order</CardTitle>
-                  <CardDescription>
-                      Use the button below to open the form and create a new job. The job will then be sent to a dispatcher for assignment.
-                  </CardDescription>
-              </CardHeader>
-              <CardContent>
-                   <Button size="lg" onClick={handleOpenAddJob}>
-                      <PlusCircle className="mr-2 h-5 w-5" /> Add New Job
-                  </Button>
-              </CardContent>
-          </Card>
-           <AddEditJobDialog
-              isOpen={isAddEditJobDialogOpen}
-              onClose={handleCloseAddEditJobDialog}
-              job={selectedJobForEdit}
-              technicians={technicians}
-              allSkills={allSkills}
-              onJobAddedOrUpdated={handleJobAddedOrUpdated}
-              jobs={jobs}
-              onManageSkills={() => setIsManageSkillsOpen(true)}
-            />
-      </div>
-    );
-  }
-
 
   return (
       <div className="flex flex-col gap-6">
@@ -765,14 +732,16 @@ export default function DashboardPage() {
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
         />
-        <AddEditTechnicianDialog
-            isOpen={isAddEditTechnicianDialogOpen}
-            onClose={handleCloseAddEditTechnicianDialog}
-            technician={selectedTechnicianForEdit}
-            allSkills={allSkills}
-            ownerId={company?.ownerId}
-            onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}
-        />
+        {isAdmin && (
+            <AddEditTechnicianDialog
+                isOpen={isAddEditTechnicianDialogOpen}
+                onClose={handleCloseAddEditTechnicianDialog}
+                technician={selectedTechnicianForEdit}
+                allSkills={allSkills}
+                ownerId={company?.ownerId}
+                onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}
+            />
+        )}
       <ShareTrackingDialog 
           isOpen={isTrackingDialogOpen}
           setIsOpen={setIsTrackingDialogOpen}
@@ -786,13 +755,15 @@ export default function DashboardPage() {
       />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
-          Dispatcher Dashboard
+          {isAdmin ? "Dispatcher Dashboard" : "CSR Dashboard"}
           {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
         </h1>
         <div className="flex flex-wrap gap-2">
-           <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
-              <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
-          </Button>
+           {isAdmin && (
+            <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+            </Button>
+           )}
            <Button onClick={handleOpenAddJob}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
             </Button>
@@ -882,7 +853,7 @@ export default function DashboardPage() {
                 )}
               </AlertDescription>
               <div className="mt-4 flex gap-2">
-                  {proactiveSuggestion.suggestedTechnicianDetails && (
+                  {isAdmin && proactiveSuggestion.suggestedTechnicianDetails && (
                       <Button
                           size="sm"
                           onClick={() => handleProactiveAssign(proactiveSuggestion)}
@@ -924,16 +895,18 @@ export default function DashboardPage() {
       
       <Tabs defaultValue="jobs" className="w-full">
         <div className="w-full overflow-x-auto sm:overflow-visible">
-            <TabsList className="mb-4 grid w-full grid-cols-4">
+            <TabsList className={cn("mb-4 grid w-full", isAdmin ? "grid-cols-4" : "grid-cols-3")}>
                 <TabsTrigger value="jobs">Job List</TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                <TabsTrigger value="technicians" className="relative">
-                  Technicians
-                  {profileChangeRequests.length > 0 && (
-                      <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
-                  )}
-                </TabsTrigger>
-                 <TabsTrigger value="overview">Overview Map</TabsTrigger>
+                <TabsTrigger value="overview">Overview Map</TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger value="technicians" className="relative">
+                    Technicians
+                    {profileChangeRequests.length > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                )}
             </TabsList>
         </div>
         <TabsContent value="jobs">
@@ -941,7 +914,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-col gap-4">
                   <div>
                       <CardTitle className="font-headline">Current Jobs</CardTitle>
-                      <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
+                      <CardDescription>{isAdmin ? "Manage and track all ongoing and pending jobs. Use 'Assign (AI)' for individual pending jobs or batch assign all." : "View and manage all jobs."}</CardDescription>
                   </div>
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
                       <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
@@ -990,15 +963,17 @@ export default function DashboardPage() {
                               </Select>
                           </div>
                       </div>
-                      <Button
-                          onClick={handleBatchAIAssign}
-                          disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
-                          variant="accent"
-                          className="w-full sm:w-auto"
-                      >
-                          {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                          AI Batch Assign
-                      </Button>
+                      {isAdmin && (
+                        <Button
+                            onClick={handleBatchAIAssign}
+                            disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
+                            variant="accent"
+                            className="w-full sm:w-auto"
+                        >
+                            {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                            AI Batch Assign
+                        </Button>
+                      )}
                   </div>
               </CardHeader>
             <CardContent className="space-y-4">
@@ -1014,6 +989,7 @@ export default function DashboardPage() {
                   onOpenChat={handleOpenChat}
                   onShareTracking={handleShareTracking}
                   onEdit={handleOpenEditJob}
+                  canAssign={isAdmin}
                 />
               )) : (
                 <p className="text-muted-foreground text-center py-10">
@@ -1023,7 +999,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
-         <TabsContent value="schedule">
+        <TabsContent value="schedule">
           <ScheduleCalendarView
               jobs={jobs}
               technicians={technicians}
@@ -1031,63 +1007,6 @@ export default function DashboardPage() {
               isCheckingHealth={isCheckingHealth}
               busyTechniciansCount={busyTechnicians.length}
           />
-        </TabsContent>
-        <TabsContent value="technicians">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div>
-                  <CardTitle className="font-headline">Technician Roster</CardTitle>
-                  <CardDescription>View technician status, skills, and current assignments.</CardDescription>
-                </div>
-                 <div className="flex flex-wrap gap-2">
-                  <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
-                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                  </Button>
-                  <Button variant="accent" onClick={handleOpenAddTechnician}>
-                    <UserPlus className="mr-2 h-4 w-4" /> Add Technician
-                  </Button>
-                </div>
-              </div>
-              <div className="pt-4">
-                <Label htmlFor="technician-search" className="sr-only">Search Technicians</Label>
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    id="technician-search"
-                    placeholder="Search by name, skill, or 'available'..."
-                    className="pl-8"
-                    value={technicianSearchTerm}
-                    onChange={e => setTechnicianSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {isLoadingData && technicians.length === 0 ? (
-                  <div className="col-span-full flex justify-center items-center py-10">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                  ) : filteredTechnicians.map(technician => (
-                  <TechnicianCard 
-                      key={technician.id} 
-                      technician={technician} 
-                      jobs={jobs} 
-                      onEdit={handleOpenEditTechnician}
-                      onMarkUnavailable={handleMarkTechnicianUnavailable}
-                  />
-                  ))}
-                  {!isLoadingData && technicians.length > 0 && filteredTechnicians.length === 0 && (
-                    <p className="text-muted-foreground col-span-full text-center py-10">No technicians match your search.</p>
-                  )}
-                  {!isLoadingData && technicians.length === 0 && (
-                  <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add your first technician.</p>
-                  )}
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
         <TabsContent value="overview">
           <Card>
@@ -1116,6 +1035,65 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        {isAdmin && (
+            <TabsContent value="technicians">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                      <CardTitle className="font-headline">Technician Roster</CardTitle>
+                      <CardDescription>View technician status, skills, and current assignments.</CardDescription>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
+                        <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                      </Button>
+                      <Button variant="accent" onClick={handleOpenAddTechnician}>
+                        <UserPlus className="mr-2 h-4 w-4" /> Add Technician
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="pt-4">
+                    <Label htmlFor="technician-search" className="sr-only">Search Technicians</Label>
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="technician-search"
+                        placeholder="Search by name, skill, or 'available'..."
+                        className="pl-8"
+                        value={technicianSearchTerm}
+                        onChange={e => setTechnicianSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {isLoadingData && technicians.length === 0 ? (
+                      <div className="col-span-full flex justify-center items-center py-10">
+                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                      ) : filteredTechnicians.map(technician => (
+                      <TechnicianCard 
+                          key={technician.id} 
+                          technician={technician} 
+                          jobs={jobs} 
+                          onEdit={handleOpenEditTechnician}
+                          onMarkUnavailable={handleMarkTechnicianUnavailable}
+                      />
+                      ))}
+                      {!isLoadingData && technicians.length > 0 && filteredTechnicians.length === 0 && (
+                        <p className="text-muted-foreground col-span-full text-center py-10">No technicians match your search.</p>
+                      )}
+                      {!isLoadingData && technicians.length === 0 && (
+                      <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add your first technician.</p>
+                      )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+        )}
       </Tabs>
     </div>);
 }

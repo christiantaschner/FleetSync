@@ -21,9 +21,10 @@ interface JobListItemProps {
   onOpenChat: (job: Job) => void;
   onShareTracking: (job: Job) => void;
   onEdit: (job: Job) => void;
+  canAssign?: boolean;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenChat, onShareTracking, onEdit }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenChat, onShareTracking, onEdit, canAssign }) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -118,7 +119,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
                 <Share2 className="mr-1 h-3 w-3" /> Share Tracking
             </Button>
         )}
-        {job.status === 'Pending' && (
+        {canAssign && job.status === 'Pending' && (
           <Button variant="outline" size="sm" onClick={() => onAssignWithAI(job)}>
             <Users2 className="mr-1 h-3 w-3" /> Assign (AI)
           </Button>
@@ -133,4 +134,3 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
 
 export default JobListItem;
 
-    

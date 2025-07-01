@@ -1,4 +1,3 @@
-
 // src/lib/parts.ts
 
 export const PREDEFINED_PARTS: string[] = [
@@ -35,5 +34,3 @@ export const PREDEFINED_PARTS: string[] = [
 ];
 
 PREDEFINED_PARTS.sort();
-
-    

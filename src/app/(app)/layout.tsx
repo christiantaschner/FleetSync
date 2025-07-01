@@ -210,7 +210,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuItem>
             ))}
-            {userProfile?.role === 'admin' && (
+            {(userProfile?.role === 'admin' || userProfile?.role === 'super_admin') && (
               <>
                 <SidebarSeparator />
                  <SidebarMenuItem>

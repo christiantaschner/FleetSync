@@ -1,107 +1,121 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Helper Functions (Using Custom Claims) ---
-    function isSignedIn() { return request.auth != null; }
-    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
-    function getCompanyId() { return request.auth.token.companyId; }
-    function getRole() { return request.auth.token.role; }
-    function isSuperAdmin() { return getRole() == 'superAdmin'; }
-    function isAdmin() { return getRole() == 'admin'; }
-    function isCsr() { return getRole() == 'csr'; }
-    function isTechnician() { return getRole() == 'technician'; }
+    // --- Helper Functions (OPTIMIZED: Use Custom Claims) ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getCompanyIdFromToken() {
+      return request.auth.token.companyId;
+    }
+
+    function getRoleFromToken() {
+      return request.auth.token.role;
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && getRoleFromToken() == 'superAdmin';
+    }
+
+    function isCompanyAdmin(targetCompanyId) {
+      return isSignedIn() &&
+             (getRoleFromToken() == 'admin' || isSuperAdmin()) &&
+             getCompanyIdFromToken() == targetCompanyId;
+    }
+    
+    function isCompanyMember(targetCompanyId) {
+      return isSignedIn() && getCompanyIdFromToken() == targetCompanyId;
+    }
+    
+    function isRole(role) {
+      return isSignedIn() && getRoleFromToken() == role;
+    }
 
     // --- Collection Rules ---
 
-    // USERS
     match /users/{userId} {
-      allow get: if isOwner(userId) || (isAdmin() && resource.data.companyId == getCompanyId()) || isSuperAdmin();
-      allow list: if (isAdmin() && request.query.where.companyId == getCompanyId()) || isSuperAdmin();
+      allow get: if isOwner(userId) || isSuperAdmin() || (isCompanyAdmin(resource.data.companyId) && getCompanyIdFromToken() == resource.data.companyId);
+
+      allow list: if isSuperAdmin() || (isRole('admin') && request.query.where.companyId == getCompanyIdFromToken());
+      
       allow create: if isOwner(userId);
-      allow update: if (isAdmin() && resource.data.companyId == getCompanyId()) || isSuperAdmin() ||
-                       (isOwner(userId) && request.resource.data.companyId == resource.data.companyId && request.resource.data.role == resource.data.role);
+      
+      // Allow admins to update user roles/company, and users to update their own non-sensitive fields.
+      allow update: if (isOwner(userId) &&
+                          request.resource.data.uid == resource.data.uid &&
+                          request.resource.data.email == resource.data.email &&
+                          request.resource.data.companyId == resource.data.companyId &&
+                          request.resource.data.role == resource.data.role)
+                        || isCompanyAdmin(resource.data.companyId);
     }
 
-    // COMPANIES
     match /companies/{companyId} {
-      allow get: if companyId == getCompanyId() || isSuperAdmin();
-      allow update: if (isAdmin() && companyId == getCompanyId()) || isSuperAdmin();
-      allow create, delete: if false; // Only backend/admins can create/delete companies
+      allow read: if isCompanyMember(companyId) || isSuperAdmin();
+      allow create, update: if isCompanyAdmin(companyId) || isSuperAdmin();
+      // Deletion is highly destructive, reserve for Super Admin only for now.
+      allow delete: if isSuperAdmin();
+    }
+    
+    match /skills/{skillId} {
+      allow list, read: if isSignedIn(); // All signed-in users can read the skills list
+      allow create, delete: if isCompanyAdmin(request.resource.data.companyId);
+    }
+    
+    match /parts/{partId} {
+        allow list, read: if isSignedIn();
+        allow create, delete: if isCompanyAdmin(request.resource.data.companyId);
     }
 
-    // JOBS
     match /jobs/{jobId} {
-      allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-      allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-      allow create: if (isAdmin() || isCsr()) && request.resource.data.companyId == getCompanyId();
-      allow update: if (request.resource.data.companyId == resource.data.companyId) &&
-                       ( (isAdmin() || isCsr()) && resource.data.companyId == getCompanyId() ||
-                         (isTechnician() && resource.data.assignedTechnicianId == request.auth.uid) );
-      allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
+      allow list, read: if isCompanyMember(resource.data.companyId);
+      
+      allow create: if isCompanyMember(request.resource.data.companyId) && (isRole('admin') || isRole('csr'));
+
+      // Admins/CSRs can edit. Technicians can edit jobs assigned to them.
+      allow update: if (isCompanyMember(resource.data.companyId) && (isRole('admin') || isRole('csr'))) || 
+                       (isRole('technician') && resource.data.assignedTechnicianId == request.auth.uid);
+                       
+      allow delete: if isCompanyAdmin(resource.data.companyId);
     }
     
-    // TECHNICIANS
-    match /technicians/{docId} {
-      allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-      allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-      allow create: if isAdmin() && request.resource.data.companyId == getCompanyId();
-      allow update: if isAdmin() && resource.data.companyId == getCompanyId() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
+    match /technicians/{technicianId} {
+        allow read, list: if isCompanyMember(resource.data.companyId);
+        allow create, update, delete: if isCompanyAdmin(resource.data.companyId);
+    }
+    
+     match /contracts/{contractId} {
+        allow read, list: if isCompanyMember(resource.data.companyId);
+        allow create, update, delete: if isCompanyAdmin(resource.data.companyId);
+    }
+    
+    match /equipment/{equipmentId} {
+        allow read, list: if isCompanyMember(resource.data.companyId);
+        allow create, update, delete: if isCompanyAdmin(resource.data.companyId);
+    }
+    
+    match /chatMessages/{messageId} {
+        allow read, list, create: if isCompanyMember(request.resource.data.companyId) || isCompanyMember(resource.data.companyId);
+        allow update, delete: if false; // Messages are immutable
     }
 
-    // SKILLS
-    match /skills/{docId} {
-      allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-      allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-      allow create: if isAdmin() && request.resource.data.companyId == getCompanyId();
-      allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
-      allow update: if false; // Skills are just names, no updates needed.
-    }
-    
-    // PARTS
-    match /parts/{docId} {
-      allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-      allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-      allow create: if isAdmin() && request.resource.data.companyId == getCompanyId();
-      allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
-      allow update: if false;
-    }
-
-    // CONTRACTS
-    match /contracts/{docId} {
-      allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-      allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-      allow create: if (isAdmin() || isCsr()) && request.resource.data.companyId == getCompanyId();
-      allow update: if (isAdmin() || isCsr()) && resource.data.companyId == getCompanyId() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
-    }
-    
-    // EQUIPMENT
-    match /equipment/{docId} {
-      allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-      allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-      allow create: if (isAdmin() || isCsr()) && request.resource.data.companyId == getCompanyId();
-      allow update: if isAdmin() && resource.data.companyId == getCompanyId() && request.resource.data.companyId == resource.data.companyId;
-      allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
-    }
-    
-    // PROFILE CHANGE REQUESTS
-    match /profileChangeRequests/{docId} {
-        allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-        allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-        allow create: if isTechnician() && request.resource.data.technicianId == request.auth.uid;
-        allow update: if isAdmin() && resource.data.companyId == getCompanyId() && request.resource.data.companyId == resource.data.companyId;
-        allow delete: if isAdmin() && resource.data.companyId == getCompanyId();
-    }
-    
-    // CHAT MESSAGES
-    match /chatMessages/{docId} {
-        allow get: if resource.data.companyId == getCompanyId() || isSuperAdmin();
-        allow list: if request.query.where.companyId == getCompanyId() || isSuperAdmin();
-        allow create: if request.resource.data.companyId == getCompanyId(); // anyone in company can create
-        allow update, delete: if false; // can't edit chat history
+    match /profileChangeRequests/{requestId} {
+      // Techs can create requests for their own company.
+      allow create: if isCompanyMember(request.resource.data.companyId) && 
+                       request.resource.data.technicianId == request.auth.uid;
+      
+      // Admins can read/update/delete requests for their company.
+      // Techs can read their own requests.
+      allow read, list: if isCompanyAdmin(resource.data.companyId) ||
+                           (isRole('technician') && resource.data.technicianId == request.auth.uid);
+                           
+      allow update, delete: if isCompanyAdmin(resource.data.companyId);
     }
   }
 }

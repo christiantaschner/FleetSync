@@ -137,13 +137,22 @@ export async function getProductsAndPricesAction(): Promise<{ data: StripeProduc
 
     const productData: StripeProduct[] = prices.data
       .filter(price => 
-        price.billing_scheme === 'per_unit' && 
+        (price.billing_scheme === 'per_unit' || price.billing_scheme === 'tiered') && 
         price.product && 
         typeof price.product === 'object' && 
         !price.product.deleted
       )
       .map(price => {
         const product = price.product as Stripe.Product;
+        
+        let amount: number | null = null;
+        if (price.billing_scheme === 'per_unit' && price.unit_amount !== null) {
+            amount = price.unit_amount;
+        } else if (price.billing_scheme === 'tiered' && price.tiers && price.tiers.length > 0 && price.tiers[0].unit_amount !== null) {
+            // For volume/tiered pricing, take the first tier's amount for display.
+            amount = price.tiers[0].unit_amount;
+        }
+
         return {
           id: product.id,
           name: product.name,
@@ -151,12 +160,14 @@ export async function getProductsAndPricesAction(): Promise<{ data: StripeProduc
           features: product.metadata.features ? product.metadata.features.split(',').map(f => f.trim()) : [],
           price: {
             id: price.id,
-            amount: price.unit_amount,
+            amount: amount,
             currency: price.currency,
             interval: price.recurring?.interval ?? null,
           }
         };
-      });
+      })
+      // Post-filter to remove any plans that we couldn't determine a price for
+      .filter((p): p is StripeProduct => p.price.amount !== null);
 
     // Also fetch "Contact Sales" type products (no price)
     const allProducts = await stripe.products.list({ active: true });

@@ -1,81 +1,82 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import type { Company } from '@/types';
-import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
 import PricingCard from './PricingCard';
 import StripePortal from './StripePortal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
-import { createCheckoutSessionAction, getStripeProductsAction } from '@/actions/stripe-actions';
-import { loadStripe } from '@stripe/stripe-js';
-import type { StripeProduct } from '@/types';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+import { useRouter } from 'next/navigation';
 
 interface SubscriptionManagementProps {
   company: Company;
 }
 
+const pricingPlans = [
+    {
+        title: "Starter",
+        price: 2900, // in cents
+        features: [
+            "Up to 5 Technicians",
+            "Core Dispatching & Scheduling",
+            "Live Map View",
+            "Technician Mobile App",
+            "Basic Reporting"
+        ],
+        envVar: 'NEXT_PUBLIC_STRIPE_STARTER_PLAN_LINK',
+    },
+    {
+        title: "Professional",
+        isPopular: true,
+        price: 4900,
+        features: [
+            "Everything in Starter, plus:",
+            "AI-Powered Job Allocation",
+            "AI Route Optimization",
+            "Recurring Service Contracts",
+            "In-App Chat & Photo Sharing",
+            "Customer Tracking Links"
+        ],
+        envVar: 'NEXT_PUBLIC_STRIPE_PROFESSIONAL_PLAN_LINK',
+    },
+    {
+        title: "Enterprise",
+        price: null,
+        features: [
+            "Everything in Professional, plus:",
+            "Unlimited Technicians",
+            "Advanced Analytics & KPIs",
+            "CSV Data Import",
+            "Proactive Schedule Risk Alerts",
+            "CO2 Emission Tracking"
+        ],
+        envVar: 'NEXT_PUBLIC_STRIPE_ENTERPRISE_PLAN_LINK',
+    }
+]
+
 const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company }) => {
-    const { user } = useAuth();
     const { toast } = useToast();
-    const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
-    const [products, setProducts] = useState<StripeProduct[]>([]);
-    const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-
-     useEffect(() => {
-        const fetchProducts = async () => {
-            setIsLoadingProducts(true);
-            const result = await getStripeProductsAction();
-            if (result.error) {
-                toast({ title: 'Error', description: `Could not load pricing plans: ${result.error}`, variant: 'destructive' });
-            } else if (result.data) {
-                setProducts(result.data);
-            }
-            setIsLoadingProducts(false);
-        };
-
-        fetchProducts();
-    }, [toast]);
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
     
-    const handleSubscribe = async (priceId: string) => {
-        if (!user || !company) {
-            toast({ title: "Error", description: "User or company information is missing.", variant: "destructive" });
+    const handleCtaClick = (plan: typeof pricingPlans[number]) => {
+        setIsLoading(true);
+        const paymentLink = process.env[plan.envVar];
+
+        if (!paymentLink) {
+             toast({
+                title: 'Configuration Error',
+                description: `The payment link for the ${plan.title} plan is not set up. Please contact support.`,
+                variant: 'destructive',
+            });
+            setIsLoading(false);
             return;
         }
-
-        setLoadingPriceId(priceId);
-
-        const result = await createCheckoutSessionAction({
-            companyId: company.id,
-            uid: user.uid,
-            email: user.email!,
-            priceId: priceId,
-        });
-        
-        if ('error' in result) {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
-            setLoadingPriceId(null);
-            return;
-        }
-
-        const stripe = await stripePromise;
-        if (!stripe) {
-            toast({ title: 'Stripe Error', description: "Stripe.js has not loaded yet.", variant: 'destructive' });
-            setLoadingPriceId(null);
-            return;
-        }
-
-        const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-        if (error) {
-            toast({ title: 'Checkout Error', description: error.message ?? "An unknown error occurred", variant: 'destructive' });
-            setLoadingPriceId(null);
-        }
-    };
+        router.push(paymentLink);
+    }
     
     const isSubscribed = company.subscriptionStatus === 'active';
     const isTrialing = company.subscriptionStatus === 'trialing';
@@ -86,14 +87,6 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     
     if (isSubscribed) {
         return <StripePortal company={company} />;
-    }
-
-    if (isLoadingProducts) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
     }
     
     return (
@@ -108,37 +101,25 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                 </Alert>
             )}
             
-            {products.length === 0 && !isLoadingProducts ? (
-                <Alert variant="destructive">
-                    <AlertTitle>No Pricing Plans Found</AlertTitle>
-                    <AlertDescription>
-                        Could not find any active products in your Stripe account. Please ensure you have at least one active Product with a default Price configured.
-                    </AlertDescription>
-                </Alert>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map((product) => (
-                        <PricingCard
-                            key={product.id}
-                            title={product.name}
-                            description={product.description || ''}
-                            price={product.price.amount}
-                            currency={product.price.currency}
-                            interval={product.price.interval}
-                            features={product.features || []}
-                            cta="Choose Plan"
-                            onCtaClick={() => handleSubscribe(product.price.id)}
-                            isLoading={loadingPriceId === product.price.id}
-                            isPopular={product.name.toLowerCase().includes('professional')}
-                        />
-                    ))}
-                </div>
-            )}
-             
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {pricingPlans.map((plan) => (
+                    <PricingCard
+                        key={plan.title}
+                        title={plan.title}
+                        description="" // Description can be derived or left empty
+                        price={plan.price}
+                        currency="EUR"
+                        interval="month"
+                        features={plan.features}
+                        cta={plan.price === null ? "Contact Us" : "Choose Plan"}
+                        onCtaClick={() => handleCtaClick(plan)}
+                        isLoading={isLoading}
+                        isPopular={plan.isPopular}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
 
 export default SubscriptionManagement;
-
-    

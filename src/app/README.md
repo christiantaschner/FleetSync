@@ -32,6 +32,11 @@ Before you run the application, you need to configure your environment variables
     STRIPE_SECRET_KEY="YOUR_STRIPE_SECRET_KEY"
     STRIPE_WEBHOOK_SECRET="YOUR_STRIPE_WEBHOOK_SECRET"
     
+    # Stripe Payment Links (Create these in your Stripe Dashboard)
+    NEXT_PUBLIC_STRIPE_STARTER_PLAN_LINK="https://buy.stripe.com/..."
+    NEXT_PUBLIC_STRIPE_PROFESSIONAL_PLAN_LINK="https://buy.stripe.com/..."
+    NEXT_PUBLIC_STRIPE_ENTERPRISE_PLAN_LINK="https://buy.stripe.com/..."
+
     # App URL (important for Stripe redirects)
     NEXT_PUBLIC_APP_URL="http://localhost:9002"
     ```
@@ -43,5 +48,3 @@ Before you run the application, you need to configure your environment variables
     ```
 
 This will start the app on `http://localhost:9002`. Your environment variables from `.env.local` will now be available to the application.
-
-    

@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Technician } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, ImageIcon, MapPin, Package } from 'lucide-react';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Package } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
@@ -42,7 +42,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [avatarUrl, setAvatarUrl] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
@@ -53,7 +52,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
     setEmail(technician?.email || '');
     setPhone(technician?.phone || '');
     setSelectedSkills(technician?.skills || []);
-    setAvatarUrl(technician?.avatarUrl || 'https://placehold.co/100x100.png');
     setLocationAddress(technician?.location.address || '');
     setLatitude(technician?.location.latitude || null);
     setLongitude(technician?.location.longitude || null);
@@ -99,7 +97,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
       phone: phone || "",
       skills: selectedSkills,
       partsInventory: [], // Temporarily disabled
-      avatarUrl: avatarUrl || 'https://placehold.co/100x100.png',
+      avatarUrl: 'https://placehold.co/100x100.png',
       location: {
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0,
@@ -194,10 +192,6 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
                 </div>
             </div>
 
-            <div>
-              <Label htmlFor="techAvatarUrl"><ImageIcon className="inline h-3.5 w-3.5 mr-1" />Avatar URL</Label>
-              <Input id="techAvatarUrl" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="e.g., https://placehold.co/100x100.png" />
-            </div>
             <div>
               <Label htmlFor="techLocationAddress"><MapPin className="inline h-3.5 w-3.5 mr-1" />Location (Address) *</Label>
               <AddressAutocompleteInput 

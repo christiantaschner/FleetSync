@@ -69,6 +69,7 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
   };
 
   const handleSuggestionClick = (prediction: google.maps.places.AutocompletePrediction) => {
+    onValueChange(prediction.description);
     setPredictions([]);
     setShowPredictions(false);
 

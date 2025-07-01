@@ -5,15 +5,16 @@ import React, { useState } from 'react';
 import type { Company } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles } from 'lucide-react';
-import PricingCard from './PricingCard';
-import StripePortal from './StripePortal';
+import { Sparkles, Loader2, CreditCard } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { createPortalSessionAction } from '@/actions/stripe-actions';
+import { Button } from '@/components/ui/button';
+import { loadStripe } from '@stripe/stripe-js';
+import PricingCard from './PricingCard';
 import QuantityDialog from './QuantityDialog';
 import { createCheckoutSessionAction } from '@/actions/stripe-actions';
-import { loadStripe } from '@stripe/stripe-js';
 
 interface SubscriptionManagementProps {
   company: Company;
@@ -45,7 +46,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     const { toast } = useToast();
     const router = useRouter();
     const { user } = useAuth();
-    const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
     
     const isSubscribed = company.subscriptionStatus === 'active';
@@ -55,20 +56,25 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
       trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
     }
 
-    const handleCheckout = async (quantity: number) => {
-        setIsCheckoutLoading(true);
+    const handleOpenPortal = async () => {
+        setIsLoading(true);
+        const result = await createPortalSessionAction({ companyId: company.id });
+        if ('url' in result) {
+            window.location.href = result.url;
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+            setIsLoading(false);
+        }
+    };
+
+     const handleNewSubscription = async (quantity: number) => {
+        setIsLoading(true);
 
         const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
-        if (!priceId) {
-            toast({ title: 'Configuration Error', description: `Stripe Price ID is not set. Please contact support.`, variant: 'destructive'});
-            setIsCheckoutLoading(false);
+        if (!priceId || !user || !user.email) {
+            toast({ title: 'Error', description: `Configuration or user error.`, variant: 'destructive'});
+            setIsLoading(false);
             return;
-        }
-
-        if (!user || !user.email) {
-             toast({ title: 'Authentication Error', description: `You must be logged in.`, variant: 'destructive'});
-             setIsCheckoutLoading(false);
-             return;
         }
 
         const result = await createCheckoutSessionAction({
@@ -81,17 +87,30 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
 
         if ('error' in result) {
             toast({ title: 'Checkout Error', description: result.error, variant: 'destructive'});
-            setIsCheckoutLoading(false);
+            setIsLoading(false);
         } else if (stripePromise) {
             const stripe = await stripePromise;
             await stripe?.redirectToCheckout({ sessionId: result.sessionId });
-            // If redirectToCheckout fails, it will throw an error. The user will stay on this page.
-             setIsCheckoutLoading(false); // Only runs if redirect fails
+            setIsLoading(false);
         }
     };
     
     if (isSubscribed) {
-        return <StripePortal company={company} />;
+        return (
+             <div className="space-y-6">
+                 <Alert variant="default" className="border-green-600/50 bg-green-50/50 text-green-800">
+                    <Sparkles className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="text-green-700 font-semibold">You have an active subscription!</AlertTitle>
+                    <AlertDescription className="text-green-700/90">
+                        The number of technicians is automatically synced with your billing. To manage your payment method or cancel your subscription, use the portal.
+                    </AlertDescription>
+                </Alert>
+                <Button onClick={handleOpenPortal} disabled={isLoading} className="w-full sm:w-auto">
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
+                    Manage Billing & Subscription
+                </Button>
+             </div>
+        );
     }
     
     return (
@@ -99,8 +118,8 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
             <QuantityDialog
                 isOpen={isQuantityDialogOpen}
                 setIsOpen={setIsQuantityDialogOpen}
-                onConfirm={handleCheckout}
-                isLoading={isCheckoutLoading}
+                onConfirm={handleNewSubscription}
+                isLoading={isLoading}
             />
 
             {isTrialing && trialDaysLeft >= 0 && (
@@ -125,7 +144,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                         features={allInclusivePlan.features}
                         cta={"Choose Plan"}
                         onCtaClick={() => setIsQuantityDialogOpen(true)}
-                        isLoading={isCheckoutLoading}
+                        isLoading={isLoading}
                         isPopular={true}
                     />
                 </div>

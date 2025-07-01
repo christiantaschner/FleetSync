@@ -1,0 +1,1066 @@
+
+"use client";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { PlusCircle, MapPin, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest, Location } from '@/types';
+import AddEditJobDialog from './components/AddEditJobDialog';
+import OptimizeRouteDialog from './components/optimize-route-dialog'; 
+import JobListItem from './components/JobListItem';
+import TechnicianCard from './components/technician-card';
+import MapView from './components/map-view';
+import ScheduleCalendarView from './components/ScheduleCalendarView';
+import { db } from '@/lib/firebase';
+import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where } from 'firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
+import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
+import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
+import { Label } from '@/components/ui/label';
+import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
+import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
+import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput, handleTechnicianUnavailabilityAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/fleet-actions";
+import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
+import type { PredictNextAvailableTechniciansOutput } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import ManageSkillsDialog from './components/ManageSkillsDialog';
+import ManagePartsDialog from './components/ManagePartsDialog';
+import ImportJobsDialog from './components/ImportJobsDialog';
+import ProfileChangeRequests from './components/ProfileChangeRequests';
+import { Badge } from '@/components/ui/badge';
+import ScheduleHealthDialog from './components/ScheduleHealthDialog';
+import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
+import ChatSheet from './components/ChatSheet';
+import ShareTrackingDialog from './components/ShareTrackingDialog';
+import { isToday } from 'date-fns';
+import AddressAutocompleteInput from './components/AddressAutocompleteInput';
+
+
+const ALL_STATUSES = "all_statuses";
+const ALL_PRIORITIES = "all_priorities";
+const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+
+type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
+
+export default function DashboardPage() {
+  const { user, userProfile, company, loading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  
+  const [selectedJobForAIAssign, setSelectedJobForAIAssign] = useState<Job | null>(null);
+  const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
+  
+  const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
+  const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
+
+  const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
+  const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
+  const [isBatchLoading, setIsBatchLoading] = useState(false);
+  const [isLoadingBatchConfirmation, setIsLoadingBatchConfirmation] = useState(false);
+  
+  const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
+  const [allSkills, setAllSkills] = useState<string[]>([]);
+  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
+
+  const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
+
+  const [nextUpPredictions, setNextUpPredictions] = useState<PredictNextAvailableTechniciansOutput['predictions']>([]);
+  const [isPredicting, setIsPredicting] = useState(false);
+  const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
+
+  const prevJobIdsRef = useRef<Set<string>>(new Set());
+  const [proactiveSuggestion, setProactiveSuggestion] = useState<AssignmentSuggestion | null>(null);
+  const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
+  const [isProcessingProactive, setIsProcessingProactive] = useState(false);
+
+  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
+  const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
+  const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
+  const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
+
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedChatJob, setSelectedChatJob] = useState<Job | null>(null);
+  
+  const [isTrackingDialogOpen, setIsTrackingDialogOpen] = useState(false);
+  const [selectedJobForTracking, setSelectedJobForTracking] = useState<Job | null>(null);
+
+  const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
+  const [searchAddressText, setSearchAddressText] = useState('');
+
+
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const fetchSkillsAndParts = useCallback(async () => {
+    if (!db || !userProfile?.companyId) return;
+    try {
+        const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
+        const skillsSnapshot = await getDocs(skillsQuery);
+        const skillsData = skillsSnapshot.docs.map(doc => doc.data().name as string);
+        skillsData.sort((a, b) => a.localeCompare(b));
+        setAllSkills(skillsData);
+
+    } catch (error) {
+        console.error("Error fetching libraries: ", error);
+        toast({ title: "Error", description: "Could not fetch skills/parts libraries.", variant: "destructive" });
+    }
+}, [userProfile, toast]);
+  
+  const fetchAllData = useCallback(() => {
+    fetchSkillsAndParts();
+  }, [fetchSkillsAndParts]);
+
+  useEffect(() => {
+    if (!db || !userProfile?.companyId) {
+      if (userProfile && userProfile.onboardingStatus === 'completed') {
+          setIsLoadingData(false);
+      }
+      return;
+    }
+    
+    setIsLoadingData(true);
+    let activeListeners = 0;
+    const requiredListeners = 3;
+    const companyId = userProfile.companyId;
+
+    const onListenerLoaded = () => {
+        activeListeners++;
+        if (activeListeners === requiredListeners) {
+            setIsLoadingData(false);
+        }
+    }
+
+    fetchSkillsAndParts();
+
+    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
+    const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
+      const jobsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        return { id: doc.id, ...data } as Job;
+      });
+      setJobs(jobsData);
+      onListenerLoaded();
+    }, (error) => {
+      console.error("Error fetching jobs: ", error);
+      toast({ title: "Error fetching jobs", description: error.message, variant: "destructive"});
+      onListenerLoaded();
+    });
+
+    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId));
+    const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
+      const techniciansData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        return { id: doc.id, ...data } as Technician;
+      });
+      techniciansData.sort((a, b) => a.name.localeCompare(b.name));
+      setTechnicians(techniciansData);
+      onListenerLoaded();
+    }, (error) => {
+      console.error("Error fetching technicians: ", error);
+      toast({ title: "Error fetching technicians", description: error.message, variant: "destructive"});
+      onListenerLoaded();
+    });
+    
+    const requestsQuery = query(collection(db, "profileChangeRequests"), where("companyId", "==", companyId), where("status", "==", "pending"));
+    const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
+        const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
+        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProfileChangeRequests(requestsData);
+        onListenerLoaded();
+    }, (error) => {
+        console.error("Error fetching profile change requests: ", error);
+        toast({ title: "Error fetching requests", description: error.message, variant: "destructive"});
+        onListenerLoaded();
+    });
+    
+    return () => {
+      jobsUnsubscribe();
+      techniciansUnsubscribe();
+      requestsUnsubscribe();
+    };
+  }, [userProfile, toast, fetchSkillsAndParts]);
+
+  const prevTechCount = useRef<number | null>(null);
+
+  useEffect(() => {
+    // Don't run on initial load or if there's no company/subscription info
+    if (authLoading || !company || company.subscriptionStatus !== 'active') {
+      return;
+    }
+
+    // Set initial count after first load
+    if (prevTechCount.current === null) {
+      prevTechCount.current = technicians.length;
+      return;
+    }
+  
+    // Check if the count has actually changed from the previously stored value
+    if (technicians.length !== prevTechCount.current) {
+      console.log(`Technician count changed from ${prevTechCount.current} to ${technicians.length}. Updating Stripe.`);
+      
+      // Update the Stripe subscription quantity
+      updateSubscriptionQuantityAction({ companyId: company.id, quantity: technicians.length })
+        .then(result => {
+          if (result.error) {
+            toast({ title: "Stripe Sync Error", description: `Could not update subscription: ${result.error}`, variant: "destructive" });
+          } else {
+            toast({ title: "Subscription Updated", description: `Your plan has been updated to ${technicians.length} seats.` });
+          }
+        });
+      
+      // Update the ref to the new count *after* the action has been called
+      prevTechCount.current = technicians.length;
+    }
+  }, [technicians.length, company, authLoading, toast]);
+  
+  useEffect(() => {
+    const predict = async () => {
+        const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
+        if (busyTechnicians.length === 0) {
+            setNextUpPredictions([]);
+            return;
+        }
+
+        setIsPredicting(true);
+        const activeJobsForPrediction = jobs.filter(j => busyTechnicians.some(t => t.currentJobId === j.id));
+
+        const input: PredictNextAvailableTechniciansActionInput = {
+            activeJobs: activeJobsForPrediction.map(job => ({
+                jobId: job.id,
+                title: job.title,
+                assignedTechnicianId: job.assignedTechnicianId!,
+                estimatedDurationMinutes: job.estimatedDurationMinutes,
+                startedAt: job.status === 'In Progress' ? job.updatedAt : undefined, 
+            })),
+            busyTechnicians: busyTechnicians.map(tech => ({
+                technicianId: tech.id,
+                technicianName: tech.name,
+                currentLocation: tech.location,
+                currentJobId: tech.currentJobId!,
+            })),
+            currentTime: new Date().toISOString(),
+        };
+
+        const result = await predictNextAvailableTechniciansAction(input);
+        if (result.data) {
+            setNextUpPredictions(result.data.predictions);
+        } else if (result.error) {
+            console.error("Prediction error:", result.error);
+            setNextUpPredictions([]);
+        }
+        setIsPredicting(false);
+    };
+
+    if (!isLoadingData && jobs.length > 0 && technicians.length > 0) {
+        predict();
+    }
+
+  }, [jobs, technicians, isLoadingData]);
+  
+  useEffect(() => {
+    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion || !userProfile?.companyId) {
+      return;
+    }
+
+    const currentJobIds = new Set(jobs.map(j => j.id));
+    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id) && j.companyId === userProfile.companyId);
+    prevJobIdsRef.current = currentJobIds;
+    
+    if (newJobs.length === 0) {
+      return;
+    }
+
+    const highPriorityPendingJob = newJobs.find(
+      j => j.priority === 'High' && j.status === 'Pending'
+    );
+    
+    if (highPriorityPendingJob) {
+      fetchProactiveSuggestion(highPriorityPendingJob);
+    }
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile]);
+
+  const fetchProactiveSuggestion = useCallback(async (job: Job) => {
+    setIsFetchingProactiveSuggestion(true);
+
+    const aiTechnicians: AITechnician[] = technicians.map(t => ({
+      technicianId: t.id,
+      technicianName: t.name,
+      isAvailable: t.isAvailable,
+      skills: t.skills as string[],
+      location: t.location,
+      currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+        .map(j => ({
+          jobId: j.id,
+          scheduledTime: j.scheduledTime,
+          priority: j.priority,
+        }))
+    }));
+    
+    const input: AllocateJobActionInput = {
+      jobDescription: job.description,
+      jobPriority: job.priority,
+      requiredSkills: job.requiredSkills || [],
+      scheduledTime: job.scheduledTime,
+      technicianAvailability: aiTechnicians,
+    };
+    
+    const result = await allocateJobAction(input);
+    
+    if (result.data) {
+      const techDetails = technicians.find(t => t.id === result.data!.suggestedTechnicianId) || null;
+      setProactiveSuggestion({
+        job: job,
+        suggestion: result.data,
+        suggestedTechnicianDetails: techDetails,
+        error: null,
+      });
+    } else {
+      toast({ title: "Proactive AI", description: `Could not find a suggestion for ${job.title}. ${result.error || ''}`, variant: "destructive" });
+    }
+    
+    setIsFetchingProactiveSuggestion(false);
+  }, [technicians, jobs, toast]);
+  
+  useEffect(() => {
+    const checkHealth = async () => {
+      if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
+        return;
+      }
+      
+      const result = await checkScheduleHealthAction({ technicians, jobs });
+      if (result.data) {
+        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 15);
+        
+        setRiskAlerts(currentAlerts => {
+          const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
+          const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
+          
+          const stillValidAlerts = currentAlerts.filter(oldAlert => highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id));
+
+          if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {
+            return [...stillValidAlerts, ...newAlertsToAdd];
+          }
+          return currentAlerts;
+        });
+      }
+    };
+    
+    const timer = setTimeout(checkHealth, 2000); 
+    const intervalId = setInterval(checkHealth, 600000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(intervalId);
+    };
+  }, [jobs, technicians, isLoadingData]);
+  
+  const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
+    if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db) return;
+    
+    setIsProcessingProactive(true);
+    
+    const { job, suggestedTechnicianDetails } = suggestion;
+    const isInterruption = !suggestedTechnicianDetails.isAvailable && suggestedTechnicianDetails.currentJobId;
+
+    const batch = writeBatch(db);
+    
+    const newJobRef = doc(db, "jobs", job.id);
+    batch.update(newJobRef, { 
+        status: 'Assigned', 
+        assignedTechnicianId: suggestedTechnicianDetails.id,
+        updatedAt: serverTimestamp(),
+        assignedAt: serverTimestamp(),
+    });
+
+    const techDocRef = doc(db, "technicians", suggestedTechnicianDetails.id);
+    batch.update(techDocRef, {
+        isAvailable: false,
+        currentJobId: job.id,
+    });
+    
+    if (isInterruption) {
+        const oldJobRef = doc(db, "jobs", suggestedTechnicianDetails.currentJobId!);
+        batch.update(oldJobRef, {
+            status: 'Pending',
+            assignedTechnicianId: null,
+            notes: `This job was unassigned due to a higher priority interruption for job: ${job.title}.`,
+            updatedAt: serverTimestamp(),
+        });
+    }
+
+    try {
+        await batch.commit();
+        toast({ title: "Job Assigned!", description: `${job.title} assigned to ${suggestedTechnicianDetails.name}.` });
+        setProactiveSuggestion(null);
+    } catch (error: any) {
+        console.error("Error processing proactive assignment:", error);
+        toast({ title: "Assignment Failed", description: error.message, variant: "destructive" });
+    } finally {
+        setIsProcessingProactive(false);
+    }
+  };
+  
+  const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {};
+  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {};
+  
+  const openAIAssignDialogForJob = (job: Job) => {
+    setSelectedJobForAIAssign(job);
+    setIsAIAssignDialogOpen(true);
+  };
+  
+  const handleOpenChat = (job: Job) => {
+    setSelectedChatJob(job);
+    setIsChatOpen(true);
+  };
+  
+  const handleShareTracking = (job: Job) => {
+    setSelectedJobForTracking(job);
+    setIsTrackingDialogOpen(true);
+  };
+
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      let statusMatch = false;
+      if (statusFilter === ALL_STATUSES) {
+        statusMatch = true;
+      } else if (statusFilter === UNCOMPLETED_JOBS_FILTER) {
+        statusMatch = UNCOMPLETED_STATUSES_LIST.includes(job.status);
+      } else {
+        statusMatch = job.status === statusFilter;
+      }
+      
+      const priorityMatch = priorityFilter === ALL_PRIORITIES || job.priority === priorityFilter;
+      return statusMatch && priorityMatch;
+    });
+  }, [jobs, statusFilter, priorityFilter]);
+
+  const sortedJobs = useMemo(() => {
+    const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
+    const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
+    const statusOrder = { 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Cancelled': 6 } as Record<JobStatus, number>;
+
+    return [...filteredJobs].sort((a, b) => {
+        switch (sortOrder) {
+            case 'priority':
+                return priorityOrder[a.priority] - priorityOrder[b.priority] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'status':
+                return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'technician':
+                const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz'; // Unassigned at end
+                const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
+                return techA.localeCompare(techB) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'customer':
+                return a.customerName.localeCompare(b.customerName) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'scheduledTime':
+                const timeA = a.scheduledTime ? new Date(a.scheduledTime).getTime() : Infinity;
+                const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
+                return timeA - timeB || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            default:
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+    });
+  }, [filteredJobs, sortOrder, technicians]);
+
+  const pendingJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Pending'), [jobs]);
+  const pendingJobsCount = pendingJobsForBatchAssign.length;
+  const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
+  
+  const defaultMapCenter = technicians.length > 0 && technicians[0].location
+    ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
+    : { lat: 39.8283, lng: -98.5795 }; 
+
+  const handleBatchAIAssign = useCallback(async () => {
+    const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
+    if (currentPendingJobs.length === 0 || technicians.length === 0) {
+      toast({ title: "Batch Assignment", description: "No pending jobs or no technicians available for assignment.", variant: "default" });
+      return;
+    }
+    setIsBatchLoading(true);
+    setAssignmentSuggestionsForReview([]);
+    
+    let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
+
+    const suggestions = await Promise.all(currentPendingJobs.map(async (job) => {
+        const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => ({
+            technicianId: t.id,
+            technicianName: t.name,
+            isAvailable: t.isAvailable,
+            skills: t.skills as string[],
+            location: t.location,
+            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
+        }));
+
+        const input: AllocateJobActionInput = {
+            jobDescription: job.description,
+            jobPriority: job.priority,
+            requiredSkills: job.requiredSkills || [],
+            scheduledTime: job.scheduledTime,
+            technicianAvailability: aiTechnicians,
+        };
+
+        const result = await allocateJobAction(input);
+        let techDetails: Technician | null = null;
+        if (result.data) {
+            techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null;
+            if (techDetails && techDetails.isAvailable) {
+                tempTechnicianPool = tempTechnicianPool.map((t: Technician) => t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t);
+            }
+        }
+        return { job, suggestion: result.data, suggestedTechnicianDetails: techDetails, error: result.error };
+    }));
+
+    setAssignmentSuggestionsForReview(suggestions);
+    setIsBatchReviewDialogOpen(true);
+    setIsBatchLoading(false);
+  }, [jobs, technicians, toast]);
+
+  const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
+    if (!db) {
+        toast({ title: "Database Error", description: "Firestore instance not available.", variant: "destructive" });
+        return;
+    }
+    setIsLoadingBatchConfirmation(true);
+    const batch = writeBatch(db);
+    let assignmentsMade = 0;
+
+    const originalTechnicianStates = new Map(technicians.map(t => [t.id, t]));
+
+    for (const { job, suggestion, suggestedTechnicianDetails } of assignmentsToConfirm) {
+        const originalTech = originalTechnicianStates.get(suggestedTechnicianDetails!.id);
+        if (job && suggestion && suggestedTechnicianDetails && originalTech && originalTech.isAvailable) {
+            const jobDocRef = doc(db, "jobs", job.id);
+            batch.update(jobDocRef, {
+                assignedTechnicianId: suggestion.suggestedTechnicianId,
+                status: 'Assigned' as JobStatus,
+                updatedAt: serverTimestamp(),
+                assignedAt: serverTimestamp(),
+            });
+
+            const techDocRef = doc(db, "technicians", suggestion.suggestedTechnicianId);
+            batch.update(techDocRef, {
+                isAvailable: false,
+                currentJobId: job.id,
+            });
+            originalTechnicianStates.set(originalTech.id, {...originalTech, isAvailable: false, currentJobId: job.id});
+            assignmentsMade++;
+        }
+    }
+
+    try {
+        await batch.commit();
+        if (assignmentsMade > 0) {
+          toast({ title: "Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
+        } else {
+          toast({ title: "No Assignments Made", description: "No valid jobs could be assigned in this batch.", variant: "default" });
+        }
+    } catch (error: any) {
+        console.error("Error committing batch assignments: ", error);
+        toast({ title: "Batch Assignment Error", description: error.message || "Could not assign jobs.", variant: "destructive" });
+    } finally {
+        setIsLoadingBatchConfirmation(false);
+        setIsBatchReviewDialogOpen(false);
+        setAssignmentSuggestionsForReview([]); 
+    }
+  };
+  
+  const handleMarkTechnicianUnavailable = async (technicianId: string) => {
+    if (!userProfile?.companyId) return;
+    setIsHandlingUnavailability(true);
+    const result = await handleTechnicianUnavailabilityAction({ companyId: userProfile.companyId, technicianId });
+
+    if (result.error) {
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
+      setIsHandlingUnavailability(false);
+      return;
+    }
+    
+    toast({
+      title: "Technician Marked Unavailable",
+      description: "Their active jobs are now pending and ready for reassignment.",
+    });
+    
+    setTimeout(() => {
+        handleBatchAIAssign();
+        setIsHandlingUnavailability(false);
+    }, 1500);
+  };
+
+  const handleCheckScheduleHealth = async () => {
+    setIsCheckingHealth(true);
+    setHealthResults([]);
+    const result = await checkScheduleHealthAction({ technicians, jobs });
+    if (result.error) {
+        toast({ title: "Health Check Failed", description: result.error, variant: "destructive" });
+    } else if (result.data) {
+        setHealthResults(result.data);
+        setIsHealthDialogOpen(true);
+    }
+    setIsCheckingHealth(false);
+  };
+
+  const handleDismissRiskAlert = (technicianId: string) => {
+    setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
+  };
+  
+  const highPriorityPendingCount = useMemo(() => 
+    jobs.filter(j => j.status === 'Pending' && j.priority === 'High').length, 
+    [jobs]
+  );
+
+  const jobsTodayCount = useMemo(() => 
+    jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
+    [jobs]
+  );
+  
+  const handleLocationSearch = (location: { address: string; lat: number; lng: number }) => {
+    setSearchAddressText(location.address);
+    setSearchedLocation({
+        address: location.address,
+        latitude: location.lat,
+        longitude: location.lng,
+    });
+    // Find the overview tab and switch to it
+    const overviewTrigger = document.querySelector('button[data-state][value="overview"]') as HTMLButtonElement | null;
+    if (overviewTrigger) {
+        overviewTrigger.click();
+    }
+  };
+
+
+  if (isLoadingData && !googleMapsApiKey) { 
+    return (
+      <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (!googleMapsApiKey) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center border bg-card rounded-md shadow-lg">
+        <MapPin className="h-16 w-16 text-destructive opacity-70 mb-4" />
+        <h2 className="text-2xl font-bold text-destructive mb-2">Google Maps API Key Missing</h2>
+        <p className="text-muted-foreground mb-1">
+          The <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is not configured.
+        </p>
+        <p className="text-muted-foreground">
+          Please add it to your <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">.env</code> file to enable map features.
+        </p>
+      </div>
+    );
+  }
+  
+  if (userProfile?.role === 'csr') {
+    return (
+      <div className="space-y-6">
+          <h1 className="text-3xl font-bold tracking-tight font-headline">
+              Customer Service Dashboard
+          </h1>
+          <Card>
+              <CardHeader>
+                  <CardTitle>Create a New Work Order</CardTitle>
+                  <CardDescription>
+                      Use the button below to open the form and create a new job. The job will then be sent to a dispatcher for assignment.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <AddEditJobDialog 
+                      technicians={technicians} 
+                      allSkills={allSkills} 
+                      onJobAddedOrUpdated={handleJobAddedOrUpdated} 
+                      jobs={jobs}
+                  >
+                      <Button size="lg">
+                          <PlusCircle className="mr-2 h-5 w-5" /> Add New Job
+                      </Button>
+                  </AddEditJobDialog>
+              </CardContent>
+          </Card>
+      </div>
+    );
+  }
+
+
+  return (
+    <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
+      <div className="flex flex-col gap-6">
+        <ShareTrackingDialog 
+            isOpen={isTrackingDialogOpen}
+            setIsOpen={setIsTrackingDialogOpen}
+            job={selectedJobForTracking}
+        />
+        <ChatSheet 
+            isOpen={isChatOpen} 
+            setIsOpen={setIsChatOpen} 
+            job={selectedChatJob} 
+            technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
+        />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
+            Dispatcher Dashboard
+            {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
+          </h1>
+          <div className="flex flex-wrap gap-2">
+             <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+            </Button>
+             <AddEditJobDialog technicians={technicians} allSkills={allSkills} onJobAddedOrUpdated={handleJobAddedOrUpdated} jobs={jobs}>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
+              </Button>
+            </AddEditJobDialog>
+          </div>
+        </div>
+
+        {riskAlerts.length > 0 && (
+          <div className="space-y-2">
+            {riskAlerts.map(alert => (
+              <ScheduleRiskAlert 
+                key={alert.technician.id}
+                riskAlert={alert}
+                onDismiss={handleDismissRiskAlert}
+                technicians={technicians}
+                jobs={jobs}
+              />
+            ))}
+          </div>
+        )}
+
+        <ScheduleHealthDialog 
+            isOpen={isHealthDialogOpen}
+            setIsOpen={setIsHealthDialogOpen}
+            healthResults={healthResults}
+        />
+
+        {selectedJobForAIAssign && (
+          <SmartJobAllocationDialog
+            isOpen={isAIAssignDialogOpen}
+            setIsOpen={setIsAIAssignDialogOpen}
+            jobToAssign={selectedJobForAIAssign}
+            technicians={technicians}
+            onJobAssigned={(assignedJob, updatedTechnician) => {
+              setSelectedJobForAIAssign(null); 
+            }}
+          />
+        )}
+
+        {isBatchReviewDialogOpen && (
+            <BatchAssignmentReviewDialog
+                isOpen={isBatchReviewDialogOpen}
+                setIsOpen={setIsBatchReviewDialogOpen}
+                assignmentSuggestions={assignmentSuggestionsForReview}
+                onConfirmAssignments={handleConfirmBatchAssignments}
+                isLoadingConfirmation={isLoadingBatchConfirmation}
+            />
+        )}
+        
+        <ManageSkillsDialog 
+            isOpen={isManageSkillsOpen}
+            setIsOpen={setIsManageSkillsOpen}
+            onSkillsUpdated={fetchSkillsAndParts}
+        />
+        
+        <ManagePartsDialog 
+            isOpen={isManagePartsOpen}
+            setIsOpen={setIsManagePartsOpen}
+            onPartsUpdated={fetchSkillsAndParts}
+        />
+
+        <ImportJobsDialog
+            isOpen={isImportJobsOpen}
+            setIsOpen={setIsImportJobsOpen}
+            onJobsImported={fetchAllData}
+        />
+        
+        {proactiveSuggestion && proactiveSuggestion.job && proactiveSuggestion.suggestedTechnicianDetails && (
+            <Alert variant="default" className="border-primary/50 bg-primary/5">
+                 <Sparkles className="h-4 w-4 text-primary" />
+                <AlertTitle className="font-headline text-primary flex justify-between items-center">
+                  <span>Proactive AI Dispatch Suggestion</span>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setProactiveSuggestion(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </AlertTitle>
+                <AlertDescription>
+                   For new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>", the AI suggests assigning to <strong>{proactiveSuggestion.suggestedTechnicianDetails.name}</strong>.
+                   <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning}</p>
+                </AlertDescription>
+                <div className="mt-4 flex gap-2">
+                    <Button
+                        size="sm"
+                        onClick={() => handleProactiveAssign(proactiveSuggestion)}
+                        disabled={isProcessingProactive}
+                        variant={!proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? "destructive" : "default"}
+                    >
+                        {isProcessingProactive 
+                            ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                            : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable 
+                                ? <AlertTriangle className="mr-2 h-4 w-4" /> 
+                                : <UserCheck className="mr-2 h-4 w-4" />}
+                        {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
+                    </Button>
+                     <Button size="sm" variant="outline" onClick={() => setProactiveSuggestion(null)}>
+                        Dismiss
+                    </Button>
+                </div>
+            </Alert>
+        )}
+
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{highPriorityPendingCount}</div>
+              <p className="text-xs text-muted-foreground">
+                Urgent jobs needing assignment
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Jobs</CardTitle>
+              <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingJobsCount}</div>
+              <p className="text-xs text-muted-foreground">
+                Total jobs awaiting assignment
+              </p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Available Technicians</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Ready for assignments
+              </p>
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{jobsTodayCount}</div>
+                <p className="text-xs text-muted-foreground">
+                    Total appointments for the day
+                </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <Tabs defaultValue="jobs" className="w-full">
+          <div className="w-full overflow-x-auto sm:overflow-visible">
+              <TabsList className="mb-4 grid w-full grid-cols-4">
+                  <TabsTrigger value="jobs">Job List</TabsTrigger>
+                  <TabsTrigger value="schedule">Schedule</TabsTrigger>
+                  <TabsTrigger value="technicians" className="relative">
+                    Technicians
+                    {profileChangeRequests.length > 0 && (
+                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                   <TabsTrigger value="overview">Overview Map</TabsTrigger>
+              </TabsList>
+          </div>
+          <TabsContent value="jobs">
+            <Card>
+                <CardHeader className="flex flex-col gap-4">
+                    <div>
+                        <CardTitle className="font-headline">Current Jobs</CardTitle>
+                        <CardDescription>Manage and track all ongoing and pending jobs. Use "Assign (AI)" for individual pending jobs or batch assign all.</CardDescription>
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
+                        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                            <div className="w-full sm:w-[160px]">
+                                <Label htmlFor="status-filter" className="sr-only">Filter by Status</Label>
+                                <Select 
+                                    value={statusFilter} 
+                                    onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
+                                >
+                                    <SelectTrigger id="status-filter">
+                                        <SelectValue placeholder="Filter by Status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
+                                        <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
+                                        {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="w-full sm:w-[160px]">
+                                <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
+                                <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
+                                    <SelectTrigger id="priority-filter">
+                                        <SelectValue placeholder="Filter by Priority" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
+                                        {(['High', 'Medium', 'Low'] as JobPriority[]).map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="w-full sm:w-[160px]">
+                                <Label htmlFor="sort-order" className="sr-only">Sort by</Label>
+                                <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
+                                    <SelectTrigger id="sort-order">
+                                        <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" />
+                                        <SelectValue placeholder="Sort by..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="priority">Priority</SelectItem>
+                                        <SelectItem value="status">Status</SelectItem>
+                                        <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
+                                        <SelectItem value="technician">Technician</SelectItem>
+                                        <SelectItem value="customer">Customer Name</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <Button
+                            onClick={handleBatchAIAssign}
+                            disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
+                            variant="accent"
+                            className="w-full sm:w-auto"
+                        >
+                            {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                            AI Batch Assign
+                        </Button>
+                    </div>
+                </CardHeader>
+              <CardContent className="space-y-4">
+                {isLoadingData && jobs.length === 0 ? ( 
+                  <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : sortedJobs.length > 0 ? sortedJobs.map(job => (
+                  <JobListItem 
+                    key={job.id} 
+                    job={job} 
+                    jobs={jobs}
+                    technicians={technicians} 
+                    allSkills={allSkills}
+                    onAssignWithAI={openAIAssignDialogForJob}
+                    onJobUpdated={handleJobAddedOrUpdated}
+                    onOpenChat={handleOpenChat}
+                    onShareTracking={handleShareTracking}
+                  />
+                )) : (
+                  <p className="text-muted-foreground text-center py-10">
+                    {jobs.length === 0 ? "No jobs to display. Add some jobs." : "No jobs match the current filters."}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+           <TabsContent value="schedule">
+            <ScheduleCalendarView
+                jobs={jobs}
+                technicians={technicians}
+                onCheckScheduleHealth={handleCheckScheduleHealth}
+                isCheckingHealth={isCheckingHealth}
+                busyTechniciansCount={busyTechnicians.length}
+            />
+          </TabsContent>
+          <TabsContent value="technicians">
+            <Card>
+              <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                  <CardTitle className="font-headline">Technician Roster</CardTitle>
+                  <CardDescription>View technician status, skills, and current assignments. Click a card to edit.</CardDescription>
+                </div>
+                 <div className="flex flex-wrap gap-2">
+                  <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
+                    <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                  </Button>
+                  <AddEditTechnicianDialog onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated} allSkills={allSkills}>
+                    <Button variant="accent">
+                      <UserPlus className="mr-2 h-4 w-4" /> Add Technician
+                    </Button>
+                  </AddEditTechnicianDialog>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {isLoadingData && technicians.length === 0 ? (
+                    <div className="col-span-full flex justify-center items-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                    ) : technicians.map(technician => (
+                    <TechnicianCard 
+                        key={technician.id} 
+                        technician={technician} 
+                        jobs={jobs} 
+                        onTechnicianUpdated={handleTechnicianAddedOrUpdated} 
+                        allSkills={allSkills}
+                        onMarkUnavailable={handleMarkTechnicianUnavailable}
+                    />
+                    ))}
+                    {!isLoadingData && technicians.length === 0 && (
+                    <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add some technicians to Firestore.</p>
+                    )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="overview">
+            <Card>
+              <CardHeader>
+                    <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                    <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
+                     <div className="pt-2">
+                        <AddressAutocompleteInput
+                            value={searchAddressText}
+                            onValueChange={setSearchAddressText}
+                            onLocationSelect={handleLocationSearch}
+                            placeholder="Search for an address to view on map..."
+                        />
+                    </div>
+              </CardHeader>
+              <CardContent>
+                <MapView 
+                  technicians={technicians} 
+                  jobs={jobs} 
+                  defaultCenter={defaultMapCenter}
+                  defaultZoom={4}
+                  searchedLocation={searchedLocation}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </GoogleMapsAPIProvider>
+  );
+}

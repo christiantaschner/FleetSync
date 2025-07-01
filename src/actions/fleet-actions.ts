@@ -758,7 +758,7 @@ export async function generateTrackingLinkAction(
             trackingTokenExpiresAt: expiresAt.toISOString(),
         });
         
-        const trackingUrl = `/public/track/${token}`;
+        const trackingUrl = `/track/${token}`;
 
         return { data: { trackingUrl }, error: null };
 

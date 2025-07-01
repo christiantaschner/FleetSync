@@ -102,8 +102,8 @@ export async function completeOnboardingAction(
         subscription_data: {
             trial_end: Math.floor(trialEndsAt.getTime() / 1000), // Stripe needs Unix timestamp in seconds
         },
-        success_url: `${appUrl}/app/dashboard?onboarding_success=true`,
-        cancel_url: `${appUrl}/app/onboarding`,
+        success_url: `${appUrl}/dashboard?onboarding_success=true`,
+        cancel_url: `${appUrl}/onboarding`,
     });
 
     if (!checkoutSession.id) {

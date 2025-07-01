@@ -129,30 +129,58 @@ export async function createPortalSessionAction(
 
 export async function getProductsAndPricesAction(): Promise<{ data: StripeProduct[] | null; error: string | null }> {
   try {
-    const products = await stripe.products.list({
+    const prices = await stripe.prices.list({
       active: true,
-      expand: ['data.default_price'],
+      expand: ['data.product'],
+      type: 'recurring',
     });
 
-    const productData = products.data
-      .filter(product => product.default_price)
-      .map((product) => {
-        const price = product.default_price as Stripe.Price;
+    const productData: StripeProduct[] = prices.data
+      .filter(price => 
+        price.billing_scheme === 'per_unit' && 
+        price.product && 
+        typeof price.product === 'object' && 
+        !price.product.deleted
+      )
+      .map(price => {
+        const product = price.product as Stripe.Product;
         return {
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            features: product.metadata.features ? product.metadata.features.split(',').map(f => f.trim()) : [],
-            price: {
-                id: price.id,
-                amount: price.unit_amount,
-                currency: price.currency,
-                interval: price.recurring?.interval ?? null,
-            }
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          features: product.metadata.features ? product.metadata.features.split(',').map(f => f.trim()) : [],
+          price: {
+            id: price.id,
+            amount: price.unit_amount,
+            currency: price.currency,
+            interval: price.recurring?.interval ?? null,
+          }
         };
-    });
+      });
 
-    return { data: productData, error: null };
+    // Also fetch "Contact Sales" type products (no price)
+    const allProducts = await stripe.products.list({ active: true });
+    const contactSalesProducts = allProducts.data
+      .filter(p => !p.default_price && p.metadata.contact_sales === 'true')
+      .map(product => ({
+         id: product.id,
+         name: product.name,
+         description: product.description,
+         features: product.metadata.features ? product.metadata.features.split(',').map(f => f.trim()) : [],
+         price: {
+            id: 'contact_sales',
+            amount: null,
+            currency: 'usd', // placeholder
+            interval: 'month', // placeholder
+         }
+      }));
+
+    const combinedData = [...productData, ...contactSalesProducts];
+    
+    // Sort to have priced plans first, then by amount
+    combinedData.sort((a, b) => (a.price.amount ?? Infinity) - (b.price.amount ?? Infinity));
+    
+    return { data: combinedData, error: null };
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     console.error('Error fetching products and prices:', e);

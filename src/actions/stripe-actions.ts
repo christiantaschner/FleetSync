@@ -13,6 +13,7 @@ const CreateCheckoutSessionInputSchema = z.object({
   uid: z.string(),
   email: z.string(),
   priceId: z.string(),
+  quantity: z.number().min(1, 'Quantity must be at least 1.'),
 });
 type CreateCheckoutSessionInput = z.infer<typeof CreateCheckoutSessionInputSchema>;
 
@@ -21,7 +22,7 @@ export async function createCheckoutSessionAction(
 ): Promise<{ sessionId: string } | { error: string }> {
   try {
     const validatedInput = CreateCheckoutSessionInputSchema.parse(input);
-    const { companyId, uid, email, priceId } = validatedInput;
+    const { companyId, uid, email, priceId, quantity } = validatedInput;
 
     const companyDocRef = doc(db, 'companies', companyId);
     const companyDocSnap = await getDoc(companyDocRef);
@@ -46,11 +47,6 @@ export async function createCheckoutSessionAction(
       await updateDoc(companyDocRef, { stripeCustomerId });
     }
     
-    // Get the current number of technicians to set the initial quantity
-    const techQuery = query(collection(db, 'technicians'), where('companyId', '==', companyId));
-    const techSnapshot = await getDocs(techQuery);
-    const technicianCount = techSnapshot.size > 0 ? techSnapshot.size : 1; // Start with at least 1 seat
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set.');
 
@@ -60,13 +56,13 @@ export async function createCheckoutSessionAction(
       customer: stripeCustomerId,
       line_items: [{
         price: priceId,
-        quantity: technicianCount, // Set quantity based on number of technicians
+        quantity: quantity,
       }],
       subscription_data: {
-        proration_behavior: 'create_prorations', // Handle proration correctly
+        proration_behavior: 'create_prorations',
       },
       success_url: `${appUrl}/settings?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/settings`,
+      cancel_url: `${appUrl}/settings?tab=billing`,
     });
 
     if (!checkoutSession.id) {
@@ -183,20 +179,21 @@ export async function getStripeProductsAction(): Promise<{
   error: string | null;
 }> {
   try {
-    const products = await stripe.products.list({
+    const prices = await stripe.prices.list({
       active: true,
-      expand: ['data.default_price'],
+      expand: ['data.product'],
+      type: 'recurring',
     });
 
-    if (!products.data) {
+    if (!prices.data) {
       return { data: [], error: null };
     }
 
-    const productsWithPrices = products.data
-      .map((product): StripeProduct | null => {
-        const price = product.default_price as Stripe.Price | null;
-        if (!price) {
-          return null;
+    const productsWithPrices = prices.data
+      .map((price): StripeProduct | null => {
+        const product = price.product as Stripe.Product;
+        if (!product || !product.active) {
+            return null;
         }
 
         let unitAmount: number | null = null;
@@ -204,10 +201,18 @@ export async function getStripeProductsAction(): Promise<{
             unitAmount = price.unit_amount;
         } else if (price.billing_scheme === 'tiered' && price.tiers && price.tiers.length > 0 && price.tiers[0].unit_amount !== null) {
             unitAmount = price.tiers[0].unit_amount;
+        } else if (price.billing_scheme === 'tiered' && !price.tiers) {
+            // This can happen, tiers might be null
+             unitAmount = null; // or handle as needed
         }
 
-        if (unitAmount === null) {
-            return null;
+        if (unitAmount === null && price.billing_scheme !== 'tiered') {
+             return null;
+        }
+        
+        // Handle tiered pricing where we just show the base price
+        if(price.billing_scheme === 'tiered' && price.tiers && price.tiers[0].unit_amount) {
+            unitAmount = price.tiers[0].unit_amount;
         }
 
         return {
@@ -234,5 +239,3 @@ export async function getStripeProductsAction(): Promise<{
     return { data: null, error: `Failed to fetch products. ${errorMessage}` };
   }
 }
-
-    

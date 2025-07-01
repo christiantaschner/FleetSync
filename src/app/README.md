@@ -32,9 +32,8 @@ Before you run the application, you need to configure your environment variables
     STRIPE_SECRET_KEY="YOUR_STRIPE_SECRET_KEY"
     STRIPE_WEBHOOK_SECRET="YOUR_STRIPE_WEBHOOK_SECRET"
     
-    # Stripe Payment Link (Create this in your Stripe Dashboard)
-    # Ensure you enable "Let customers adjust quantity" on this link.
-    NEXT_PUBLIC_STRIPE_PAYMENT_LINK="https://buy.stripe.com/..."
+    # Find this on your product's pricing page in the Stripe Dashboard. It looks like `price_...`
+    NEXT_PUBLIC_STRIPE_PRICE_ID="YOUR_STRIPE_PRICE_ID"
 
     # App URL (important for Stripe redirects)
     NEXT_PUBLIC_APP_URL="http://localhost:9002"

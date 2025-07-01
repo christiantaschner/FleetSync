@@ -13,10 +13,15 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
-import { Loader2, Building, Sparkles } from 'lucide-react';
+import { Loader2, Building, Sparkles, Users } from 'lucide-react';
 import { Logo } from '@/components/common/logo';
+import { loadStripe } from '@stripe/stripe-js';
 
-type OnboardingFormValues = Pick<CompleteOnboardingInput, 'companyName'>;
+type OnboardingFormValues = Omit<CompleteOnboardingInput, 'uid'>;
+
+const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
+    ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+    : null;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -33,6 +38,9 @@ export default function OnboardingPage() {
   
   const { register, handleSubmit, formState: { errors } } = useForm<OnboardingFormValues>({
     resolver: zodResolver(CompleteOnboardingInputSchema.omit({ uid: true })),
+    defaultValues: {
+        numberOfTechnicians: 1,
+    }
   });
   
   const onSubmit = async (data: OnboardingFormValues) => {
@@ -53,22 +61,32 @@ export default function OnboardingPage() {
         uid: user.uid
     });
 
-    if (result.error) {
+    if (result.error || !result.sessionId) {
       toast({
         title: "Onboarding Failed",
-        description: result.error,
+        description: result.error || "Could not create a checkout session.",
         variant: "destructive"
       });
       setIsSubmitting(false);
     } else {
       toast({
-        title: "Welcome to FleetSync AI!",
-        description: "Your company has been set up. Redirecting you to the dashboard...",
+        title: "Company Setup Complete!",
+        description: "Redirecting you to checkout to start your trial...",
       });
-      // The auth context listener will handle the redirect automatically
-      // once the user profile is updated.
-      // We can also force a redirect as a fallback.
-      setTimeout(() => router.push('/dashboard'), 1000);
+      
+      if (!stripePromise) {
+        toast({ title: 'Stripe Error', description: 'Stripe is not configured correctly.', variant: 'destructive' });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const stripe = await stripePromise;
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
+
+      if (stripeError) {
+        toast({ title: 'Redirect Failed', description: stripeError.message, variant: 'destructive' });
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -94,14 +112,11 @@ export default function OnboardingPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="companyName" className="flex items-center gap-2 text-md">
                 <Building className="h-4 w-4" /> Company Name
               </Label>
-              <p className="text-sm text-muted-foreground">
-                This will be the name of your workspace. You can't change this later.
-              </p>
               <Input
                 id="companyName"
                 placeholder="e.g., Acme Plumbing & HVAC"
@@ -112,11 +127,29 @@ export default function OnboardingPage() {
                 <p className="text-sm text-destructive">{errors.companyName.message}</p>
               )}
             </div>
+            <div className="space-y-2">
+                <Label htmlFor="numberOfTechnicians" className="flex items-center gap-2 text-md">
+                    <Users className="h-4 w-4" /> Number of Technicians
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                    How many technicians will you be managing? You can change this later.
+                </p>
+                <Input
+                    id="numberOfTechnicians"
+                    type="number"
+                    min="1"
+                    {...register('numberOfTechnicians', { valueAsNumber: true })}
+                    disabled={isSubmitting}
+                />
+                {errors.numberOfTechnicians && (
+                    <p className="text-sm text-destructive">{errors.numberOfTechnicians.message}</p>
+                )}
+            </div>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Complete Setup & Go to Dashboard
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4"/>}
+              Complete Setup & Start Free Trial
             </Button>
           </CardFooter>
         </form>

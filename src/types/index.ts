@@ -16,7 +16,7 @@ export const UserProfileSchema = z.object({
     email: z.string(),
     companyId: z.string().nullable(),
     role: z.enum(['admin', 'dispatcher', 'technician', 'csr', 'superAdmin']).nullable(),
-    onboardingStatus: z.nativeEnum(['pending_creation', 'pending_onboarding', 'completed']),
+    onboardingStatus: z.enum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
@@ -533,7 +533,6 @@ export type CalculateTravelMetricsInput = z.infer<typeof CalculateTravelMetricsI
 export const CompleteOnboardingInputSchema = z.object({
   uid: z.string().min(1, "UID is required"),
   companyName: z.string().min(2, 'Company name must be at least 2 characters.'),
+  numberOfTechnicians: z.number().min(1, 'You must have at least one technician.'),
 });
 export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSchema>;
-
-    

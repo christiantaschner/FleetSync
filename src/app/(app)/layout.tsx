@@ -50,7 +50,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { differenceInDays } from 'date-fns';
 
 const adminNavItems = [
@@ -111,7 +110,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
-      trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
+      const days = differenceInDays(new Date(company.trialEndsAt), new Date());
+      // Ensure we don't show a negative number if the trial just ended.
+      trialDaysLeft = Math.max(0, days);
   }
 
   const isTrialActive = company?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft >= 0;
@@ -182,6 +183,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
   
   const navItems = getNavItemsForRole();
+  const canSeeAdminViews = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
   return (
     <SidebarProvider defaultOpen>
@@ -210,7 +212,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuItem>
             ))}
-            {(userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && (
+            {canSeeAdminViews && (
               <>
                 <SidebarSeparator />
                  <SidebarMenuItem>
@@ -308,16 +310,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         {' '} to choose a plan and continue using all features.
                     </AlertDescription>
                 </Alert>
-            ) : isTrialActive && trialDaysLeft !== null ? (
+            ) : isTrialActive ? (
                 <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
                     <Sparkles className="h-4 w-4" />
                     <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
                     <AlertDescription className="text-primary/90">
-                        You have {trialDaysLeft} days left. {' '}
+                        You have <strong>{trialDaysLeft} days left</strong>. {' '}
                         <Link href="/settings?tab=billing" className="font-semibold underline">
-                            Choose your plan
+                            Choose a plan
                         </Link>
-                        {' '} to keep your service active.
+                        {' '} to keep your service active after the trial.
                     </AlertDescription>
                 </Alert>
             ) : null}

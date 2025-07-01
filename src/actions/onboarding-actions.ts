@@ -8,67 +8,116 @@ import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
 import { addDays } from 'date-fns';
+import { stripe } from '@/lib/stripe';
+import type { Company } from '@/types';
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput
-): Promise<{ error: string | null }> {
+): Promise<{ sessionId: string | null; error: string | null }> {
   try {
     const validatedInput = CompleteOnboardingInputSchema.parse(input);
     
     if (!db) {
         throw new Error('Firestore not initialized.');
     }
+     if (!stripe) {
+        throw new Error('Stripe not initialized.');
+    }
 
-    const { companyName, uid } = validatedInput;
+    const { companyName, uid, numberOfTechnicians } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
 
     const batch = writeBatch(db);
 
-    // 1. Create the new company document
+    // 1. Create a Stripe Customer first
+    const userDocRef = doc(db, 'users', uid);
+    const userSnap = await doc(db, 'users', uid).get();
+    if (!userSnap.exists()) {
+        throw new Error('User document does not exist.');
+    }
+    const userEmail = userSnap.data()?.email;
+    if (!userEmail) {
+        throw new Error('User email is missing.');
+    }
+    
+    const customer = await stripe.customers.create({
+        email: userEmail,
+        name: companyName,
+        metadata: {
+          companyId: companyId,
+          firebaseUID: uid,
+        },
+    });
+    const stripeCustomerId = customer.id;
+    
+    // 2. Prepare Firestore documents
     const companyRef = doc(db, 'companies', companyId);
-    const trialEndsAt = addDays(new Date(), 30).toISOString(); // 30 day trial
+    const trialEndsAt = addDays(new Date(), 30);
 
     batch.set(companyRef, {
       name: companyName,
       ownerId: uid,
       createdAt: serverTimestamp(),
       subscriptionStatus: 'trialing',
-      trialEndsAt: trialEndsAt,
+      trialEndsAt: trialEndsAt.toISOString(),
+      stripeCustomerId: stripeCustomerId,
     });
-
-    // 2. Update the user's profile document
-    const userRef = doc(db, 'users', uid);
-    batch.update(userRef, {
+    
+    batch.update(userDocRef, {
       companyId: companyId,
-      role: 'admin', // Assign the 'admin' role to the creator
+      role: 'admin',
       onboardingStatus: 'completed',
     });
-
-    // 3. Seed initial skills for the new company
+    
     const skillsCollectionRef = collection(db, 'skills');
     PREDEFINED_SKILLS.forEach(skillName => {
         const newSkillRef = doc(skillsCollectionRef);
         batch.set(newSkillRef, { name: skillName, companyId: companyId });
     });
-
-    // 4. Seed initial parts for the new company
+    
     const partsCollectionRef = collection(db, 'parts');
     PREDEFINED_PARTS.forEach(partName => {
         const newPartRef = doc(partsCollectionRef);
         batch.set(newPartRef, { name: partName, companyId: companyId });
     });
     
-    // Commit all operations atomically
+    // 3. Commit all Firestore operations atomically
     await batch.commit();
+    
+    // 4. Create the Stripe Checkout Session with a trial
+    const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
+    if (!priceId) throw new Error('Stripe Price ID is not configured.');
 
-    return { error: null };
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set.');
+
+    const checkoutSession = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'subscription',
+        customer: stripeCustomerId,
+        line_items: [{
+            price: priceId,
+            quantity: numberOfTechnicians,
+        }],
+        subscription_data: {
+            trial_end: Math.floor(trialEndsAt.getTime() / 1000), // Stripe needs Unix timestamp in seconds
+        },
+        success_url: `${appUrl}/dashboard?onboarding_success=true`,
+        cancel_url: `${appUrl}/onboarding`,
+    });
+
+    if (!checkoutSession.id) {
+        throw new Error('Could not create Stripe Checkout Session.');
+    }
+
+    return { sessionId: checkoutSession.id, error: null };
 
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return { error: e.errors.map((err) => err.message).join(', ') };
+      return { sessionId: null, error: e.errors.map((err) => err.message).join(', ') };
     }
     console.error('Error in completeOnboardingAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    return { error: `Failed to complete onboarding. ${errorMessage}` };
+    return { sessionId: null, error: `Failed to complete onboarding. ${errorMessage}` };
   }
 }

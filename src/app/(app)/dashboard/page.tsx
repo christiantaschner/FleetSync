@@ -94,6 +94,7 @@ export default function DashboardPage() {
 
   const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
   const [searchAddressText, setSearchAddressText] = useState('');
+  const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
 
   const [isAddEditJobDialogOpen, setIsAddEditJobDialogOpen] = useState(false);
   const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);

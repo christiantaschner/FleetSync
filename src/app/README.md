@@ -1,3 +1,4 @@
+
 # FleetSync AI
 
 This is a Next.js application built with Firebase Studio.
@@ -31,15 +32,7 @@ Before you run the application, you need to configure your environment variables
     STRIPE_SECRET_KEY="YOUR_STRIPE_SECRET_KEY"
     STRIPE_WEBHOOK_SECRET="YOUR_STRIPE_WEBHOOK_SECRET"
     
-    # Stripe Price IDs (Find these in your Stripe Dashboard under Product > Pricing)
-    # Example: NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID="price_1P..."
-    NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID="YOUR_STARTER_PLAN_PRICE_ID"
-    NEXT_PUBLIC_STRIPE_PRO_PRICE_ID="YOUR_PRO_PLAN_PRICE_ID"
-    # For enterprise plans, you might link to a contact page instead.
-    NEXT_PUBLIC_STRIPE_ENTERPRISE_CONTACT_URL="YOUR_CONTACT_US_PAGE_OR_LINK"
-
-
-    # App URL
+    # App URL (important for Stripe redirects)
     NEXT_PUBLIC_APP_URL="http://localhost:9002"
     ```
 
@@ -50,3 +43,5 @@ Before you run the application, you need to configure your environment variables
     ```
 
 This will start the app on `http://localhost:9002`. Your environment variables from `.env.local` will now be available to the application.
+
+    

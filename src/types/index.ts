@@ -15,7 +15,7 @@ export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
     companyId: z.string().nullable(),
-    role: z.enum(['admin', 'dispatcher', 'technician', 'csr', 'super_admin']).nullable(),
+    role: z.enum(['admin', 'dispatcher', 'technician', 'csr', 'superAdmin']).nullable(),
     onboardingStatus: z.nativeEnum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
@@ -535,3 +535,5 @@ export const CompleteOnboardingInputSchema = z.object({
   companyName: z.string().min(2, 'Company name must be at least 2 characters.'),
 });
 export type CompleteOnboardingInput = z.infer<typeof CompleteOnboardingInputSchema>;
+
+    

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { stripe } from '@/lib/stripe';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import type { Company } from '@/types';
+import type { Company, StripeProduct } from '@/types';
 import type Stripe from 'stripe';
 
 const CreateCheckoutSessionInputSchema = z.object({
@@ -177,3 +177,62 @@ export async function updateSubscriptionQuantityAction(
         return { error: `Failed to update subscription. ${errorMessage}` };
     }
 }
+
+export async function getStripeProductsAction(): Promise<{
+  data: StripeProduct[] | null;
+  error: string | null;
+}> {
+  try {
+    const products = await stripe.products.list({
+      active: true,
+      expand: ['data.default_price'],
+    });
+
+    if (!products.data) {
+      return { data: [], error: null };
+    }
+
+    const productsWithPrices = products.data
+      .map((product): StripeProduct | null => {
+        const price = product.default_price as Stripe.Price | null;
+        if (!price) {
+          return null;
+        }
+
+        let unitAmount: number | null = null;
+        if (price.billing_scheme === 'per_unit' && price.unit_amount !== null) {
+            unitAmount = price.unit_amount;
+        } else if (price.billing_scheme === 'tiered' && price.tiers && price.tiers.length > 0 && price.tiers[0].unit_amount !== null) {
+            unitAmount = price.tiers[0].unit_amount;
+        }
+
+        if (unitAmount === null) {
+            return null;
+        }
+
+        return {
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          features: (product.metadata.features || "").split(',').map(f => f.trim()).filter(f => f),
+          price: {
+            id: price.id,
+            amount: unitAmount,
+            currency: price.currency,
+            interval: price.recurring?.interval ?? null,
+          },
+        };
+      })
+      .filter((p): p is StripeProduct => p !== null);
+      
+    productsWithPrices.sort((a, b) => (a.price.amount || 0) - (b.price.amount || 0));
+
+    return { data: productsWithPrices, error: null };
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error('Error fetching Stripe products:', e);
+    return { data: null, error: `Failed to fetch products. ${errorMessage}` };
+  }
+}
+
+    

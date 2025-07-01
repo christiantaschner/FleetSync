@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useState } from 'react';
-import type { Company, UserProfile } from '@/types';
+import React, { useState, useEffect } from 'react';
+import type { Company } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -10,14 +10,9 @@ import PricingCard from './PricingCard';
 import StripePortal from './StripePortal';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
-import { createCheckoutSessionAction } from '@/actions/stripe-actions';
+import { createCheckoutSessionAction, getStripeProductsAction } from '@/actions/stripe-actions';
 import { loadStripe } from '@stripe/stripe-js';
-
-const starterPriceId = process.env.NEXT_PUBLIC_STRIPE_STARTER_PRICE_ID || '';
-const proPriceId = process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || '';
-// Enterprise might have a "Contact Us" link instead of a price ID
-const enterpriseContactUrl = process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_CONTACT_URL || '#';
-
+import type { StripeProduct } from '@/types';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
@@ -29,14 +24,27 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     const { user } = useAuth();
     const { toast } = useToast();
     const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+    const [products, setProducts] = useState<StripeProduct[]>([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+     useEffect(() => {
+        const fetchProducts = async () => {
+            setIsLoadingProducts(true);
+            const result = await getStripeProductsAction();
+            if (result.error) {
+                toast({ title: 'Error', description: `Could not load pricing plans: ${result.error}`, variant: 'destructive' });
+            } else if (result.data) {
+                setProducts(result.data);
+            }
+            setIsLoadingProducts(false);
+        };
+
+        fetchProducts();
+    }, [toast]);
     
     const handleSubscribe = async (priceId: string) => {
         if (!user || !company) {
             toast({ title: "Error", description: "User or company information is missing.", variant: "destructive" });
-            return;
-        }
-        if (!priceId || priceId.includes('YOUR_')) {
-             toast({ title: "Configuration Needed", description: "This plan's Price ID has not been configured in the .env.local file.", variant: "destructive"});
             return;
         }
 
@@ -64,42 +72,11 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
 
         const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
         if (error) {
-            toast({ title: 'Checkout Error', description: error.message, variant: 'destructive' });
+            toast({ title: 'Checkout Error', description: error.message ?? "An unknown error occurred", variant: 'destructive' });
             setLoadingPriceId(null);
         }
     };
     
-    const pricingTiers = [
-        {
-            title: 'Starter',
-            price: 'Custom',
-            frequency: '/ technician / month',
-            description: 'For small teams needing essential dispatching and scheduling.',
-            features: ['Up to 5 Technicians', 'Core Dispatching & Scheduling', 'Live Map View', 'Technician Mobile App', 'Basic Reporting'],
-            cta: 'Choose Plan',
-            priceId: starterPriceId,
-        },
-        {
-            title: 'Professional',
-            price: 'Custom',
-            frequency: '/ technician / month',
-            description: 'Includes core AI features to boost efficiency.',
-            features: ['Everything in Starter, plus:', 'AI-Powered Job Allocation', 'AI Route Optimization', 'Recurring Service Contracts', 'Customer Tracking Links'],
-            cta: 'Choose Plan',
-            priceId: proPriceId,
-            className: "border-primary ring-2 ring-primary"
-        },
-        {
-            title: 'Enterprise',
-            price: 'Custom',
-            frequency: '',
-            description: 'For large operations needing advanced analytics and automation.',
-            features: ['Everything in Professional, plus:', 'Unlimited Technicians', 'Advanced Analytics & KPIs', 'Proactive Schedule Risk Alerts', 'CO2 Emission Tracking'],
-            cta: 'Contact Sales',
-            priceId: enterpriseContactUrl, // This is a URL
-        }
-    ];
-
     const isSubscribed = company.subscriptionStatus === 'active';
     const isTrialing = company.subscriptionStatus === 'trialing';
     let trialDaysLeft = 0;
@@ -111,6 +88,14 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
         return <StripePortal company={company} />;
     }
 
+    if (isLoadingProducts) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
     return (
         <div className="space-y-6">
             {isTrialing && trialDaysLeft >= 0 && (
@@ -123,33 +108,37 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                 </Alert>
             )}
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {pricingTiers.map((tier) => (
-                    <PricingCard
-                        key={tier.title}
-                        title={tier.title}
-                        description={tier.description}
-                        price={tier.price}
-                        frequency={tier.frequency}
-                        features={tier.features}
-                        cta={tier.cta}
-                        onCtaClick={() => {
-                            if (tier.title === 'Enterprise') {
-                                window.location.href = tier.priceId;
-                            } else {
-                                handleSubscribe(tier.priceId);
-                            }
-                        }}
-                        isLoading={loadingPriceId === tier.priceId}
-                        className={tier.className}
-                    />
-                ))}
-            </div>
-             <p className="text-xs text-muted-foreground text-center">
-                Note: The price displayed is a placeholder. The actual price is determined by your Stripe product configuration.
-            </p>
+            {products.length === 0 && !isLoadingProducts ? (
+                <Alert variant="destructive">
+                    <AlertTitle>No Pricing Plans Found</AlertTitle>
+                    <AlertDescription>
+                        Could not find any active products in your Stripe account. Please ensure you have at least one active Product with a default Price configured.
+                    </AlertDescription>
+                </Alert>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {products.map((product) => (
+                        <PricingCard
+                            key={product.id}
+                            title={product.name}
+                            description={product.description || ''}
+                            price={product.price.amount}
+                            currency={product.price.currency}
+                            interval={product.price.interval}
+                            features={product.features || []}
+                            cta="Choose Plan"
+                            onCtaClick={() => handleSubscribe(product.price.id)}
+                            isLoading={loadingPriceId === product.price.id}
+                            isPopular={product.name.toLowerCase().includes('professional')}
+                        />
+                    ))}
+                </div>
+            )}
+             
         </div>
     );
 };
 
 export default SubscriptionManagement;
+
+    

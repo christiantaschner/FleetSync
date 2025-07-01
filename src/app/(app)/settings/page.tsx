@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import type { Company } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import UserManagement from './components/UserManagement';
 export default function SettingsPage() {
     const { userProfile, company, loading } = useAuth();
     const searchParams = useSearchParams();
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState('general');
 
     useEffect(() => {
@@ -27,6 +28,24 @@ export default function SettingsPage() {
     }, [searchParams]);
 
     const canManageUsers = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
+    
+    // Route protection
+    useEffect(() => {
+        if (loading) return; // Wait until auth state is confirmed
+        if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin')) {
+            router.replace('/dashboard');
+        }
+    }, [userProfile, loading, router]);
+
+
+    // Loading state for the whole page until role is confirmed
+    if (loading || !userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin')) {
+        return (
+            <div className="flex h-[50vh] w-full items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
+    }
     
     return (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -98,8 +117,8 @@ export default function SettingsPage() {
                                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                 </div>
                             )}
-                            {!loading && userProfile?.companyId && (
-                                <UserManagement companyId={userProfile.companyId} />
+                            {!loading && userProfile?.companyId && company && (
+                                <UserManagement companyId={userProfile.companyId} ownerId={company.ownerId} />
                             )}
                         </CardContent>
                     </Card>

@@ -26,9 +26,10 @@ type InviteUserFormValues = z.infer<typeof InviteUserSchema>;
 
 interface UserManagementProps {
     companyId: string;
+    ownerId: string;
 }
 
-const UserManagement: React.FC<UserManagementProps> = ({ companyId }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) => {
     const { toast } = useToast();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +158,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId }) => {
                             ) : users.length === 0 ? (
                                  <TableRow>
                                     <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
-                                        No other users in this company.
+                                        This company has no users.
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -168,7 +169,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId }) => {
                                              <Select 
                                                 value={user.role ?? ''} 
                                                 onValueChange={(value) => handleRoleChange(user.uid, value as any)}
-                                                disabled={isUpdatingRole === user.uid}
+                                                disabled={isUpdatingRole === user.uid || user.uid === ownerId}
                                             >
                                                 <SelectTrigger className="w-[180px]">
                                                     <SelectValue placeholder="Select role" />
@@ -181,27 +182,29 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId }) => {
                                             </Select>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                             <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            This will remove <strong>{user.email}</strong> from your company. They will lose all access. This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleRemoveUser(user.uid)} className="bg-destructive hover:bg-destructive/90">
-                                                            Confirm Removal
-                                                        </AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
+                                            {user.uid !== ownerId && (
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This will remove <strong>{user.email}</strong> from your company. They will lose all access. This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleRemoveUser(user.uid)} className="bg-destructive hover:bg-destructive/90">
+                                                                Confirm Removal
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))

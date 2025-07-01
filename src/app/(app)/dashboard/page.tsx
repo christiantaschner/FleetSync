@@ -36,6 +36,7 @@ import ChatSheet from './components/ChatSheet';
 import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { isToday } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
+import { cn } from '@/lib/utils';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -319,21 +320,28 @@ export default function DashboardPage() {
     };
     
     const result = await allocateJobAction(input);
-    
+
     if (result.data) {
-      const techDetails = technicians.find(t => t.id === result.data!.suggestedTechnicianId) || null;
+      const techDetails = result.data.suggestedTechnicianId 
+        ? technicians.find(t => t.id === result.data.suggestedTechnicianId) 
+        : null;
       setProactiveSuggestion({
         job: job,
         suggestion: result.data,
         suggestedTechnicianDetails: techDetails,
-        error: null,
+        error: !result.data.suggestedTechnicianId ? result.data.reasoning : null,
       });
     } else {
-      toast({ title: "Proactive AI", description: `Could not find a suggestion for ${job.title}. ${result.error || ''}`, variant: "destructive" });
+        setProactiveSuggestion({
+            job: job,
+            suggestion: null,
+            suggestedTechnicianDetails: null,
+            error: result.error || "An unknown error occurred while trying to find a suggestion.",
+        });
     }
     
     setIsFetchingProactiveSuggestion(false);
-  }, [technicians, jobs, toast]);
+  }, [technicians, jobs]);
   
   useEffect(() => {
     const checkHealth = async () => {
@@ -802,33 +810,44 @@ export default function DashboardPage() {
           onJobsImported={fetchAllData}
       />
       
-      {proactiveSuggestion && proactiveSuggestion.job && proactiveSuggestion.suggestedTechnicianDetails && (
-          <Alert variant="default" className="border-primary/50 bg-primary/5">
-               <Sparkles className="h-4 w-4 text-primary" />
-              <AlertTitle className="font-headline text-primary flex justify-between items-center">
-                <span>Proactive AI Dispatch Suggestion</span>
+      {proactiveSuggestion && proactiveSuggestion.job && (
+          <Alert variant={proactiveSuggestion.suggestedTechnicianDetails ? "default" : "destructive"} className={proactiveSuggestion.suggestedTechnicianDetails ? "border-primary/50 bg-primary/5" : ""}>
+               {proactiveSuggestion.suggestedTechnicianDetails ? <Sparkles className="h-4 w-4 text-primary" /> : <AlertTriangle className="h-4 w-4" />}
+              <AlertTitle className={cn("font-headline flex justify-between items-center", proactiveSuggestion.suggestedTechnicianDetails ? "text-primary" : "text-destructive")}>
+                <span>Proactive AI Suggestion</span>
                 <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setProactiveSuggestion(null)}>
                   <X className="h-4 w-4" />
                 </Button>
               </AlertTitle>
               <AlertDescription>
-                 For new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>", the AI suggests assigning to <strong>{proactiveSuggestion.suggestedTechnicianDetails.name}</strong>.
-                 <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning}</p>
+                {proactiveSuggestion.suggestedTechnicianDetails ? (
+                    <>
+                    For new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>", the AI suggests assigning to <strong>{proactiveSuggestion.suggestedTechnicianDetails.name}</strong>.
+                    <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning}</p>
+                    </>
+                ) : (
+                    <>
+                    Could not find a suggestion for "<strong>{proactiveSuggestion.job.title}</strong>".
+                    <p className="text-xs text-muted-foreground mt-1">Reason: {proactiveSuggestion.suggestion?.reasoning || proactiveSuggestion.error}</p>
+                    </>
+                )}
               </AlertDescription>
               <div className="mt-4 flex gap-2">
-                  <Button
-                      size="sm"
-                      onClick={() => handleProactiveAssign(proactiveSuggestion)}
-                      disabled={isProcessingProactive}
-                      variant={!proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? "destructive" : "default"}
-                  >
-                      {isProcessingProactive 
-                          ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                          : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable 
-                              ? <AlertTriangle className="mr-2 h-4 w-4" /> 
-                              : <UserCheck className="mr-2 h-4 w-4" />}
-                      {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
-                  </Button>
+                  {proactiveSuggestion.suggestedTechnicianDetails && (
+                      <Button
+                          size="sm"
+                          onClick={() => handleProactiveAssign(proactiveSuggestion)}
+                          disabled={isProcessingProactive}
+                          variant={!proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? "destructive" : "default"}
+                      >
+                          {isProcessingProactive 
+                              ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                              : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable 
+                                  ? <AlertTriangle className="mr-2 h-4 w-4" /> 
+                                  : <UserCheck className="mr-2 h-4 w-4" />}
+                          {isProcessingProactive ? 'Assigning...' : !proactiveSuggestion.suggestedTechnicianDetails.isAvailable ? 'Interrupt & Assign' : 'Confirm Assignment'}
+                      </Button>
+                  )}
                    <Button size="sm" variant="outline" onClick={() => setProactiveSuggestion(null)}>
                       Dismiss
                   </Button>

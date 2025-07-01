@@ -58,7 +58,8 @@ const prompt = ai.definePrompt({
 
   Suggest the most suitable technician ID and explain your reasoning.
   In your reasoning, refer to technicians by their name (e.g., "Technician Alice Smith is available...") instead of their ID.
-  Ensure that the outputted suggestedTechnicianId exists in the technicianAvailability array.
+  If you suggest a technician, ensure that the outputted suggestedTechnicianId exists in the technicianAvailability array.
+  If no technician is suitable based on the constraints (especially required skills), you MUST return a null value for 'suggestedTechnicianId' and provide a clear reasoning why no technician could be assigned.
   `,
 });
 
@@ -70,6 +71,12 @@ const allocateJobFlow = ai.defineFlow(
   },
   async input => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      return {
+        suggestedTechnicianId: null,
+        reasoning: "The AI model could not determine a suitable technician based on the provided constraints (e.g., skills, availability).",
+      };
+    }
+    return output;
   }
 );

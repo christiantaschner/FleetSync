@@ -58,7 +58,6 @@ export type Technician = {
   isAvailable: boolean;
   skills: string[]; 
   partsInventory?: string[];
-  location: Location;
   avatarUrl?: string;
   currentJobId?: string | null;
   phone?: string;
@@ -262,8 +261,8 @@ export const AllocateJobInputSchema = z.object({
 export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
 
 export const AllocateJobOutputSchema = z.object({
-  suggestedTechnicianId: z.string().describe('The ID of the most suitable technician for the job.'),
-  reasoning: z.string().describe('The reasoning behind the technician suggestion.'),
+  suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
+  reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
 });
 export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 

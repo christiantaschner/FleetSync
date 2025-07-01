@@ -61,8 +61,8 @@ export async function createCheckoutSessionAction(
       subscription_data: {
         proration_behavior: 'create_prorations',
       },
-      success_url: `${appUrl}/settings?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/settings?tab=billing`,
+      success_url: `${appUrl}/app/settings?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/app/settings?tab=billing`,
     });
 
     if (!checkoutSession.id) {
@@ -111,7 +111,7 @@ export async function createPortalSessionAction(
         
         const portalSession = await stripe.billingPortal.sessions.create({
             customer: stripeCustomerId,
-            return_url: `${appUrl}/settings?tab=billing`,
+            return_url: `${appUrl}/app/settings?tab=billing`,
         });
 
         return { url: portalSession.url };

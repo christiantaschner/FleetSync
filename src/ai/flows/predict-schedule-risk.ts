@@ -6,7 +6,7 @@
  * - predictScheduleRisk - A function that assesses schedule risk.
  */
 
-import {ai} from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
   type PredictScheduleRiskInput,
   PredictScheduleRiskInputSchema,
@@ -19,7 +19,7 @@ export async function predictScheduleRisk(input: PredictScheduleRiskInput): Prom
   return predictScheduleRiskFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
     name: 'predictScheduleRiskPrompt',
     input: {schema: PredictScheduleRiskInputSchema},
     output: {schema: PredictScheduleRiskOutputSchema},
@@ -44,18 +44,21 @@ const prompt = ai.definePrompt({
     3.  Calculate the estimated arrival time at the next job.
     4.  Compare the estimated arrival time with the scheduled time for the next job (if one exists).
 
-    Based on this analysis, calculate the predicted delay in minutes. A negative number or zero means they are on time. Provide a brief reasoning for your prediction, mentioning the key factors (remaining work time, travel time).
+    Based on this analysis, calculate the predicted delay in minutes. A negative number or zero means on time. Provide a brief reasoning for your prediction, mentioning the key factors (remaining work time, travel time).
     `,
 });
 
-const predictScheduleRiskFlow = ai.defineFlow(
+const predictScheduleRiskFlow = defineFlow(
   {
     name: 'predictScheduleRiskFlow',
     inputSchema: PredictScheduleRiskInputSchema,
     outputSchema: PredictScheduleRiskOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+      prompt,
+      input,
+    });
+    return llmResponse.output();
   }
 );

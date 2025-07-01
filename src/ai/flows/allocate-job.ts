@@ -7,7 +7,7 @@
  * - allocateJob - A function that suggests the most suitable technician for a new job.
  */
 
-import {ai} from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
   type AllocateJobInput,
   AllocateJobInputSchema,
@@ -19,7 +19,7 @@ export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobO
   return allocateJobFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
   name: 'allocateJobPrompt',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
@@ -62,16 +62,17 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const allocateJobFlow = ai.defineFlow(
+const allocateJobFlow = defineFlow(
   {
     name: 'allocateJobFlow',
     inputSchema: AllocateJobInputSchema,
     outputSchema: AllocateJobOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+      prompt,
+      input,
+    });
+    return llmResponse.output();
   }
 );
-
-    

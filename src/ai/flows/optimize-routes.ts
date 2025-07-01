@@ -7,7 +7,7 @@
  * - optimizeRoutes - A function that handles the route optimization process.
  */
 
-import {ai} from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
   type OptimizeRoutesInput,
   OptimizeRoutesInputSchema,
@@ -20,7 +20,7 @@ export async function optimizeRoutes(input: OptimizeRoutesInput): Promise<Optimi
   return optimizeRoutesFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
   name: 'optimizeRoutesPrompt',
   input: {schema: OptimizeRoutesInputSchema},
   output: {schema: OptimizeRoutesOutputSchema},
@@ -57,14 +57,17 @@ const prompt = ai.definePrompt({
 `,
 });
 
-const optimizeRoutesFlow = ai.defineFlow(
+const optimizeRoutesFlow = defineFlow(
   {
     name: 'optimizeRoutesFlow',
     inputSchema: OptimizeRoutesInputSchema,
     outputSchema: OptimizeRoutesOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+      prompt,
+      input,
+    });
+    return llmResponse.output();
   }
 );

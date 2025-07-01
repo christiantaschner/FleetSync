@@ -6,7 +6,7 @@
  * - suggestJobPriority - A function that suggests a priority based on a job description.
  */
 
-import {ai} from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
   type SuggestJobPriorityInput,
   SuggestJobPriorityInputSchema,
@@ -19,7 +19,7 @@ export async function suggestJobPriority(input: SuggestJobPriorityInput): Promis
   return suggestJobPriorityFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
     name: 'suggestJobPriorityPrompt',
     input: {schema: SuggestJobPriorityInputSchema},
     output: {schema: SuggestJobPriorityOutputSchema},
@@ -36,14 +36,17 @@ const prompt = ai.definePrompt({
     Return a JSON object with a "suggestedPriority" ('High', 'Medium', or 'Low') and a "reasoning" string.`,
 });
 
-const suggestJobPriorityFlow = ai.defineFlow(
+const suggestJobPriorityFlow = defineFlow(
   {
     name: 'suggestJobPriorityFlow',
     inputSchema: SuggestJobPriorityInputSchema,
     outputSchema: SuggestJobPriorityOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+      prompt,
+      input,
+    });
+    return llmResponse.output();
   }
 );

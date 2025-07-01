@@ -4,7 +4,7 @@
  * @fileOverview An AI agent that suggests the next appointment date for a recurring contract and drafts a notification.
  */
 
-import { ai } from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
   SuggestNextAppointmentInputSchema,
   type SuggestNextAppointmentInput,
@@ -18,7 +18,7 @@ export async function suggestNextAppointment(input: SuggestNextAppointmentInput)
   return suggestNextAppointmentFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
     name: 'suggestNextAppointmentPrompt',
     input: { schema: z.object({
         customerName: z.string(),
@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
     `,
 });
 
-const suggestNextAppointmentFlow = ai.defineFlow(
+const suggestNextAppointmentFlow = defineFlow(
   {
     name: 'suggestNextAppointmentFlow',
     inputSchema: SuggestNextAppointmentInputSchema,
@@ -74,18 +74,20 @@ const suggestNextAppointmentFlow = ai.defineFlow(
     const suggestedDate = format(nextDate, 'PPPP'); // e.g., "Tuesday, March 15th, 2025"
 
     // 2. Call the AI to draft the message
-    const { output } = await prompt({
-        customerName: input.customerName,
-        jobTitle: input.jobTitle,
-        suggestedDate: suggestedDate,
+    const llmResponse = await generate({
+        prompt,
+        input: {
+            customerName: input.customerName,
+            jobTitle: input.jobTitle,
+            suggestedDate: suggestedDate,
+        },
     });
     
-    // The prompt now returns the full output object, but we need to ensure the suggestedDate is part of it.
-    // Since the prompt doesn't know the date, we add it back to the final output.
+    const output = await llmResponse.output();
     if (output) {
       output.suggestedDate = suggestedDate;
     }
     
-    return output!;
+    return output;
   }
 );

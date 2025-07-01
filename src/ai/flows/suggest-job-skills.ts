@@ -6,7 +6,7 @@
  * - suggestJobSkills - A function that suggests skills based on a job description and a list of available skills.
  */
 
-import {ai} from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
   type SuggestJobSkillsInput,
   SuggestJobSkillsInputSchema,
@@ -19,7 +19,7 @@ export async function suggestJobSkills(input: SuggestJobSkillsInput): Promise<Su
   return suggestJobSkillsFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
     name: 'suggestJobSkillsPrompt',
     input: {schema: SuggestJobSkillsInputSchema},
     output: {schema: SuggestJobSkillsOutputSchema},
@@ -39,14 +39,17 @@ const prompt = ai.definePrompt({
     Return a JSON object with a "suggestedSkills" array containing the names of the skills you identified. If no specific skills seem necessary, return an empty array.`,
 });
 
-const suggestJobSkillsFlow = ai.defineFlow(
+const suggestJobSkillsFlow = defineFlow(
   {
     name: 'suggestJobSkillsFlow',
     inputSchema: SuggestJobSkillsInputSchema,
     outputSchema: SuggestJobSkillsOutputSchema,
   },
   async (input) => {
-    const {output} = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+      prompt,
+      input,
+    });
+    return llmResponse.output();
   }
 );

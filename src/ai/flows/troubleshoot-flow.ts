@@ -4,7 +4,7 @@
  * @fileOverview An AI agent that provides troubleshooting steps for equipment issues.
  */
 
-import { ai } from '@/ai/genkit';
+import { defineFlow, definePrompt, generate } from 'genkit';
 import {
     TroubleshootEquipmentInputSchema,
     type TroubleshootEquipmentInput,
@@ -16,7 +16,7 @@ export async function troubleshootEquipment(input: TroubleshootEquipmentInput): 
   return troubleshootEquipmentFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const prompt = definePrompt({
     name: 'troubleshootEquipmentPrompt',
     input: { schema: TroubleshootEquipmentInputSchema },
     output: { schema: TroubleshootEquipmentOutputSchema },
@@ -46,14 +46,17 @@ The disclaimer should always remind the technician to follow all standard safety
 `,
 });
 
-const troubleshootEquipmentFlow = ai.defineFlow(
+const troubleshootEquipmentFlow = defineFlow(
   {
     name: 'troubleshootEquipmentFlow',
     inputSchema: TroubleshootEquipmentInputSchema,
     outputSchema: TroubleshootEquipmentOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    const llmResponse = await generate({
+        prompt,
+        input,
+    });
+    return llmResponse.output();
   }
 );

@@ -23,11 +23,12 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Contract, ContractSchema, JobPriority } from '@/types';
-import { Loader2, Save, Calendar as CalendarIcon, Repeat, User, Phone, MapPin, Briefcase, Info, ListChecks, Package, CircleDollarSign, Switch } from 'lucide-react';
+import { Loader2, Save, Calendar as CalendarIcon, Repeat, User, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
+import { Switch } from '@/components/ui/switch';
 
 interface AddEditContractDialogProps {
     isOpen: boolean;

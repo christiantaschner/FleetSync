@@ -198,7 +198,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ child
                   value={locationAddress}
                   onValueChange={setLocationAddress}
                   onLocationSelect={handleLocationSelect}
-                  placeholder="Start typing technician address..."
+                  placeholder="Start typing technician base address..."
                   required
               />
             </div>

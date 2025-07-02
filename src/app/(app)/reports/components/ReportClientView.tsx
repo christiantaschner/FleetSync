@@ -110,16 +110,9 @@ export default function ReportClientView() {
         ? technicians.find(t => t.id === selectedTechnicianId) 
         : null;
 
-    if (dateFilteredJobs.length === 0) { // Base check on date-filtered, not fully-filtered
-      return {
-        kpis: { totalJobs: 0, completedJobs: 0, avgDuration: "N/A", avgTimeToAssign: "N/A", avgSatisfaction: "N/A", ftfr: "N/A", onTimeArrivalRate: "N/A", totalEmissions: 0 },
-        technicianSummary: technicianSummary ? { ...technicianSummary, completedJobs: 0, avgDuration: "N/A", ftfr: "N/A" } : null,
-      };
-    }
-    
-    // Calculate KPIs on the potentially filtered job list
     const completedJobs = filteredJobs.filter(j => j.status === "Completed");
 
+    // KPI Calculations
     const completedJobsWithTime = completedJobs.filter(j => j.completedAt && j.inProgressAt);
     const totalDurationMs = completedJobsWithTime.reduce((acc, j) => {
         const start = new Date(j.inProgressAt!).getTime();
@@ -143,11 +136,11 @@ export default function ReportClientView() {
     
     const jobsWithSatisfaction = completedJobs.filter(j => typeof j.customerSatisfactionScore === 'number');
     const totalSatisfactionScore = jobsWithSatisfaction.reduce((acc, j) => acc + j.customerSatisfactionScore!, 0);
-    const avgSatisfaction = jobsWithSatisfaction.length > 0 ? (totalSatisfactionScore / jobsWithSatisfaction.length).toFixed(2) : "N/A";
+    const avgSatisfaction = jobsWithSatisfaction.length > 0 ? (totalSatisfactionScore / jobsWithSatisfaction.length).toFixed(2) : "0.00";
     
     const ftfrJobs = completedJobs.filter(j => typeof j.isFirstTimeFix === 'boolean');
     const firstTimeFixes = ftfrJobs.filter(j => j.isFirstTimeFix).length;
-    const ftfrPercentage = ftfrJobs.length > 0 ? ((firstTimeFixes / ftfrJobs.length) * 100).toFixed(1) : "N/A";
+    const ftfrPercentage = ftfrJobs.length > 0 ? ((firstTimeFixes / ftfrJobs.length) * 100).toFixed(1) : "0";
 
     const jobsWithPunctualityData = completedJobs.filter(j => j.scheduledTime && j.inProgressAt);
     const punctuality = { early: 0, onTime: 0, late: 0 };
@@ -160,7 +153,7 @@ export default function ReportClientView() {
         else punctuality.onTime++;
     });
     const totalPunctualityJobs = jobsWithPunctualityData.length;
-    const onTimeArrivalRate = totalPunctualityJobs > 0 ? (((punctuality.early + punctuality.onTime) / totalPunctualityJobs) * 100).toFixed(1) : "N/A";
+    const onTimeArrivalRate = totalPunctualityJobs > 0 ? (((punctuality.early + punctuality.onTime) / totalPunctualityJobs) * 100).toFixed(1) : "0";
     
     const totalEmissions = completedJobs.reduce((acc, j) => acc + (j.co2EmissionsKg || 0), 0);
 

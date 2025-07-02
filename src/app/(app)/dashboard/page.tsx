@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest, Location } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest, Location, Customer } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
@@ -127,6 +127,24 @@ export default function DashboardPage() {
     setIsAddEditTechnicianDialogOpen(false);
     setSelectedTechnicianForEdit(null);
   };
+
+  const customers = useMemo(() => {
+    const customerMap = new Map<string, Customer>();
+    jobs.forEach(job => {
+        const key = (job.customerPhone || job.customerName).toLowerCase().trim();
+        if (!key || !job.customerName) return; 
+        
+        if (!customerMap.has(key)) {
+            customerMap.set(key, {
+                id: key,
+                name: job.customerName,
+                phone: job.customerPhone || '',
+                address: job.location.address || '',
+            });
+        }
+    });
+    return Array.from(customerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [jobs]);
 
 
   const fetchSkillsAndParts = useCallback(async () => {
@@ -728,6 +746,7 @@ export default function DashboardPage() {
             job={selectedJobForEdit}
             technicians={technicians}
             allSkills={allSkills}
+            customers={customers}
             onJobAddedOrUpdated={handleJobAddedOrUpdated}
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}

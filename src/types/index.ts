@@ -113,6 +113,14 @@ export type Job = {
   co2EmissionsKg?: number;
 };
 
+export const CustomerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  phone: z.string(),
+  address: z.string(),
+});
+export type Customer = z.infer<typeof CustomerSchema>;
+
 export type PublicTrackingInfo = {
     jobStatus: JobStatus;
     jobLocation: Location;
@@ -164,7 +172,7 @@ export type ProfileChangeRequest = {
     reviewerId?: string;
     approvedChanges?: Record<string, any>;
     reviewNotes?: string;
-};
+}
 
 export type ChatMessage = {
     id: string;

@@ -29,11 +29,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, AITechnician } from '@/types';
+import type { Job, JobPriority, JobStatus, Technician, AITechnician, Customer } from '@/types';
 import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2 } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput, deleteJobAction } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -51,12 +51,13 @@ interface AddEditJobDialogProps {
   job?: Job | null;
   jobs: Job[];
   technicians: Technician[];
+  customers: Customer[];
   allSkills: string[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
   onManageSkills: () => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, customers, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +84,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
 
+  const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
+  const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
+
   const resetForm = useCallback(() => {
     setTitle(job?.title || '');
     setDescription(job?.description || '');
@@ -99,6 +103,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setAiPrioritySuggestion(null);
     setScheduleSuggestions(null);
     setSuggestedTechnicianDetails(null);
+    setCustomerSuggestions([]);
+    setIsCustomerPopoverOpen(false);
   }, [job]);
 
   useEffect(() => {
@@ -107,6 +113,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
   }, [job, isOpen, resetForm]);
   
+  const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCustomerName(value);
+    if (value.length > 1) {
+        const filtered = customers.filter(c => c.name.toLowerCase().includes(value.toLowerCase()));
+        setCustomerSuggestions(filtered);
+        setIsCustomerPopoverOpen(filtered.length > 0);
+    } else {
+        setCustomerSuggestions([]);
+        setIsCustomerPopoverOpen(false);
+    }
+  };
+
+  const handleSelectCustomer = (customer: Customer) => {
+      setCustomerName(customer.name);
+      setCustomerPhone(customer.phone);
+      setLocationAddress(customer.address);
+      setIsCustomerPopoverOpen(false);
+      setCustomerSuggestions([]);
+  };
+
   const fetchAISkillSuggestion = useCallback(async (currentDescription: string) => {
     if (!currentDescription.trim() || allSkills.length === 0) {
       return;
@@ -552,9 +579,37 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     )}
                 </div>
             )}
-          <div>
-            <Label htmlFor="customerName">Customer Name</Label>
-            <Input id="customerName" name="customerName" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g., John Doe" />
+           <div>
+              <Label htmlFor="customerName">Customer Name</Label>
+              <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                  <PopoverAnchor>
+                      <Input 
+                          id="customerName" 
+                          name="customerName" 
+                          value={customerName} 
+                          onChange={handleCustomerNameChange} 
+                          placeholder="e.g., John Doe" 
+                          autoComplete="off"
+                      />
+                  </PopoverAnchor>
+                  <PopoverContent 
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                  >
+                      <div className="max-h-60 overflow-y-auto">
+                          {customerSuggestions.map((customer) => (
+                              <div
+                                  key={customer.id}
+                                  className="p-3 text-sm cursor-pointer hover:bg-accent"
+                                  onClick={() => handleSelectCustomer(customer)}
+                              >
+                                  <p className="font-semibold">{customer.name}</p>
+                                  <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                              </div>
+                          ))}
+                      </div>
+                  </PopoverContent>
+              </Popover>
           </div>
           <div>
             <Label htmlFor="customerPhone">Customer Phone</Label>

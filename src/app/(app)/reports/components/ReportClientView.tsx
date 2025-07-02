@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -17,6 +18,7 @@ import {
   Leaf,
   Route,
   Coffee,
+  Info,
 } from "lucide-react";
 import {
   Card,
@@ -31,7 +33,8 @@ import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -255,7 +258,7 @@ export default function ReportClientView() {
       title: "Avg. Travel Time",
       value: reportData.kpis.avgTravelTime,
       desc: "Per job, from en route to start",
-      icon: Timer,
+      icon: Route,
       tooltip: {
         desc: "The average time a technician spends driving to a job site. This is non-billable time that impacts efficiency.",
         action: "A high average travel time is a strong indicator to use the 'Re-Optimize Route' feature more frequently, especially when schedules change."
@@ -342,31 +345,45 @@ export default function ReportClientView() {
           </div>
       </div>
 
-      <TooltipProvider>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {kpiCards.map(kpi => (
-              <Tooltip key={kpi.title}>
-                <TooltipTrigger asChild>
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                      <kpi.icon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{kpi.value}</div>
-                      <p className="text-xs text-muted-foreground">{kpi.desc}</p>
-                    </CardContent>
-                  </Card>
-                </TooltipTrigger>
-                 <TooltipContent className="max-w-xs">
-                    <p className="font-bold text-sm mb-1">{kpi.title}</p>
-                    <p className="text-xs mb-2">{kpi.tooltip.desc}</p>
-                    <p className="text-xs"><strong className="font-semibold">Actionable Insight:</strong> {kpi.tooltip.action}</p>
-                </TooltipContent>
-              </Tooltip>
+              <Dialog key={kpi.title}>
+                <Card>
+                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-5 w-5 -mt-1 -mr-2 text-muted-foreground hover:bg-secondary">
+                            <Info className="h-4 w-4" />
+                            <span className="sr-only">More Info</span>
+                        </Button>
+                    </DialogTrigger>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{kpi.value}</div>
+                    <p className="text-xs text-muted-foreground">{kpi.desc}</p>
+                  </CardContent>
+                </Card>
+                <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2 text-lg">
+                        <kpi.icon className="h-5 w-5 text-primary" />
+                        {kpi.title}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div>
+                            <h4 className="font-semibold text-base">What it means</h4>
+                            <p className="text-sm text-muted-foreground">{kpi.tooltip.desc}</p>
+                        </div>
+                         <div className="p-3 bg-secondary/50 rounded-md border border-primary/20">
+                            <h4 className="font-semibold text-base text-primary">Actionable Insight</h4>
+                            <p className="text-sm text-muted-foreground">{kpi.tooltip.action}</p>
+                        </div>
+                    </div>
+                </DialogContent>
+              </Dialog>
             ))}
         </div>
-      </TooltipProvider>
     </div>
   );
 }

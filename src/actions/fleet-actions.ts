@@ -15,7 +15,7 @@ import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/sugge
 import { z } from "zod";
 import { db, storage } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location } from "@/types";
+import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
 import crypto from 'crypto';
 
@@ -774,7 +774,7 @@ export async function generateTrackingLinkAction(
     }
 }
 
-const AVERAGE_EMISSIONS_KG_PER_KM = 0.192; // Avg for a light commercial vehicle
+const DEFAULT_EMISSIONS_KG_PER_KM = 0.192; // Avg for a light commercial vehicle
 
 export async function calculateTravelMetricsAction(
   input: z.infer<typeof CalculateTravelMetricsInputSchema>
@@ -788,6 +788,12 @@ export async function calculateTravelMetricsAction(
     if (!jobSnap.exists()) throw new Error("Completed job not found.");
     const completedJob = jobSnap.data() as Job;
     if (!completedJob.completedAt) throw new Error("Job is not yet completed.");
+
+    // Fetch company settings to get the custom emission factor
+    const companyDocRef = doc(db, "companies", companyId);
+    const companySnap = await getDoc(companyDocRef);
+    const companyData = companySnap.data() as Company;
+    const emissionFactor = companyData?.settings?.co2EmissionFactorKgPerKm ?? DEFAULT_EMISSIONS_KG_PER_KM;
 
     // Find the previously completed job for this technician on the same day
     const completedDate = new Date(completedJob.completedAt);
@@ -827,7 +833,7 @@ export async function calculateTravelMetricsAction(
 
     if (distanceResult) {
         const distanceKm = distanceResult.distanceKm;
-        const co2EmissionsKg = distanceKm * AVERAGE_EMISSIONS_KG_PER_KM;
+        const co2EmissionsKg = distanceKm * emissionFactor;
 
         await updateDoc(jobDocRef, {
             travelDistanceKm: distanceKm,

@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const FormSchema = z.object({
@@ -85,6 +85,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         businessHours: company.settings?.businessHours && company.settings.businessHours.length === 7 
             ? company.settings.businessHours 
             : defaultBusinessHours,
+        co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? undefined,
       },
     },
   });
@@ -134,6 +135,25 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                 />
             </div>
         </div>
+      
+      <Separator />
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><Leaf/> Environmental Settings</h3>
+        <div className="space-y-2">
+            <Label htmlFor="co2EmissionFactorKgPerKm">CO₂ Emission Factor (kg/km)</Label>
+            <Input
+                id="co2EmissionFactorKgPerKm"
+                type="number"
+                step="0.001"
+                placeholder="e.g., 0.192 for diesel, 0 for electric"
+                {...register('settings.co2EmissionFactorKgPerKm', { valueAsNumber: true })}
+            />
+            <p className="text-sm text-muted-foreground">
+                Enter your fleet's average CO₂ emission factor. For electric vehicles, enter 0.
+            </p>
+        </div>
+      </div>
 
       <Separator />
 

@@ -31,6 +31,7 @@ export const CompanySettingsSchema = z.object({
   address: z.string().optional(),
   timezone: z.string().optional(),
   businessHours: z.array(BusinessDaySchema).length(7).optional(),
+  co2EmissionFactorKgPerKm: z.number().optional().describe("Custom CO2 emission factor in kg per km. Set to 0 for electric fleets."),
 });
 export type CompanySettings = z.infer<typeof CompanySettingsSchema>;
 

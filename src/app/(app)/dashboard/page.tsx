@@ -41,7 +41,7 @@ import { Input } from '@/components/ui/input';
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
 const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
-const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
 type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
 
@@ -523,7 +523,7 @@ export default function DashboardPage() {
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
     const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
-    const statusOrder = { 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Cancelled': 6 } as Record<JobStatus, number>;
+    const statusOrder = { 'Draft': 0, 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Cancelled': 6 } as Record<JobStatus, number>;
 
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
@@ -943,7 +943,7 @@ export default function DashboardPage() {
                                   <SelectContent>
                                       <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
                                       <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                                      {(['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                      {(['Draft', 'Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'] as JobStatus[]).map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                                   </SelectContent>
                               </Select>
                           </div>
@@ -967,8 +967,8 @@ export default function DashboardPage() {
                                       <SelectValue placeholder="Sort by..." />
                                   </SelectTrigger>
                                   <SelectContent>
-                                      <SelectItem value="priority">Priority</SelectItem>
                                       <SelectItem value="status">Status</SelectItem>
+                                      <SelectItem value="priority">Priority</SelectItem>
                                       <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
                                       <SelectItem value="technician">Technician</SelectItem>
                                       <SelectItem value="customer">Customer Name</SelectItem>

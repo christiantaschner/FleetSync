@@ -68,7 +68,7 @@ export type Technician = {
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
-export type JobStatus = 'Pending' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Cancelled';
+export type JobStatus = 'Pending' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Cancelled' | 'Draft';
 
 export type ChecklistResult = {
     item: string;

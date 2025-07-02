@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician, Customer } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2, FilePenLine } from 'lucide-react';
 import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestJobPriorityAction, SuggestJobPriorityActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput, deleteJobAction } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, SuggestJobPriorityOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
@@ -41,9 +41,10 @@ import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/auth-context';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
-const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
-const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Draft'];
 
 interface AddEditJobDialogProps {
   isOpen: boolean;
@@ -88,6 +89,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
 
+  const submittedRef = useRef(false);
+  const wasOpenRef = useRef(false);
+
   const resetForm = useCallback(() => {
     setTitle(job?.title || '');
     setDescription(job?.description || '');
@@ -107,6 +111,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
+    submittedRef.current = false;
   }, [job]);
 
   useEffect(() => {
@@ -114,6 +119,47 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       resetForm();
     }
   }, [job, isOpen, resetForm]);
+
+  const handleSaveDraft = useCallback(async () => {
+    if (submittedRef.current || job || !userProfile?.companyId) return;
+
+    if (title.trim() || description.trim()) {
+        const draftPayload = {
+            companyId: userProfile.companyId,
+            title: title.trim() || "Untitled Draft",
+            description: description.trim(),
+            priority,
+            requiredSkills,
+            customerName: customerName.trim(),
+            customerPhone: customerPhone.trim(),
+            location: {
+                latitude: latitude ?? 0,
+                longitude: longitude ?? 0,
+                address: locationAddress.trim(),
+            },
+            scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
+            status: 'Draft' as JobStatus,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            assignedTechnicianId: null,
+            notes: 'This job was saved as a draft.',
+        };
+        try {
+            await addDoc(collection(db, "jobs"), draftPayload);
+            toast({ title: "Draft Saved", description: "The job has been saved as a draft for later." });
+        } catch (error) {
+            console.error("Error saving draft:", error);
+            toast({ title: "Error", description: "Could not save job draft.", variant: "destructive" });
+        }
+    }
+  }, [job, userProfile, title, description, priority, requiredSkills, customerName, customerPhone, locationAddress, latitude, longitude, scheduledTime, toast]);
+
+  useEffect(() => {
+      if (wasOpenRef.current && !isOpen) {
+          handleSaveDraft();
+      }
+      wasOpenRef.current = isOpen;
+  }, [isOpen, handleSaveDraft]);
   
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -425,6 +471,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
         onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
       }
+      submittedRef.current = true;
       onClose();
     } catch (error) {
       console.error("Error saving job to Firestore: ", error);
@@ -437,9 +484,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const isInterruptionSuggestion = aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails && !suggestedTechnicianDetails.isAvailable;
   
   const filteredSkills = allSkills.filter(skill => skill.toLowerCase().includes(skillSearchTerm.toLowerCase()));
+  const isEditingDraft = job?.status === 'Draft';
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        if (!open) {
+            handleSaveDraft();
+        }
+        onClose();
+    }}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
@@ -449,6 +502,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}}>
         <ScrollArea className="max-h-[70vh] p-4">
+        {isEditingDraft && (
+            <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
+                <FilePenLine className="h-4 w-4" />
+                <AlertTitle className="font-semibold">Editing Draft</AlertTitle>
+                <AlertDescription>
+                    This is a draft job. Please complete all required fields and set a status to "Pending" to activate it.
+                </AlertDescription>
+            </Alert>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
           <div className="space-y-4">
               <div>
@@ -492,7 +554,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
-                                {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                {ALL_JOB_STATUSES.filter(s => s !== 'Draft').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>

@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, Star, ListChecks, MessageSquare, Share2, Truck, XCircle } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, Star, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -39,21 +39,27 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
       case 'In Progress': return <Clock className="text-blue-500" />;
       case 'Completed': return <CheckCircle className="text-green-500" />;
       case 'Cancelled': return <XCircle className="text-destructive" />;
+      case 'Draft': return <FilePenLine className="text-gray-500" />;
       default: return <Briefcase />;
     }
   };
 
   const isHighPriorityPending = job.priority === 'High' && job.status === 'Pending';
   const canShareTracking = job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress';
+  const isDraft = job.status === 'Draft';
 
   return (
     <Card className={cn(
       "hover:shadow-lg transition-shadow duration-200 ease-in-out",
-      isHighPriorityPending && "border-destructive border-2 ring-2 ring-destructive/50 bg-destructive/5"
+      isHighPriorityPending && "border-destructive border-2 ring-2 ring-destructive/50 bg-destructive/5",
+      isDraft && "border-dashed border-gray-400 bg-gray-50/50"
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className={cn("text-lg font-headline flex items-center gap-2", isHighPriorityPending && "text-destructive")}>
+          <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
+            isHighPriorityPending && "text-destructive",
+            isDraft && "text-gray-600"
+          )}>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -111,7 +117,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
-        {job.status !== 'Pending' && job.assignedTechnicianId && (
+        {job.status !== 'Pending' && job.assignedTechnicianId && job.status !== 'Draft' && (
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
                 <MessageSquare className="mr-1 h-3 w-3" /> Chat
             </Button>
@@ -127,7 +133,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
           </Button>
         )}
          <Button variant="secondary" size="sm" onClick={() => onEdit(job)}>
-            <Edit className="mr-1 h-3 w-3" /> Edit
+            <Edit className="mr-1 h-3 w-3" /> {isDraft ? 'Complete Draft' : 'Edit'}
         </Button>
       </CardFooter>
     </Card>

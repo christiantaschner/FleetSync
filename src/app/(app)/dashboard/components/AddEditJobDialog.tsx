@@ -90,7 +90,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
 
   const submittedRef = useRef(false);
-  const wasOpenRef = useRef(false);
 
   const resetForm = useCallback(() => {
     setTitle(job?.title || '');
@@ -153,13 +152,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         }
     }
   }, [job, userProfile, title, description, priority, requiredSkills, customerName, customerPhone, locationAddress, latitude, longitude, scheduledTime, toast]);
-
-  useEffect(() => {
-      if (wasOpenRef.current && !isOpen) {
-          handleSaveDraft();
-      }
-      wasOpenRef.current = isOpen;
-  }, [isOpen, handleSaveDraft]);
   
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -488,10 +480,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-        if (!open) {
-            handleSaveDraft();
-        }
-        onClose();
+      if (!open) {
+        handleSaveDraft();
+      }
+      onClose();
     }}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>

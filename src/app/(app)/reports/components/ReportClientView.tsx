@@ -5,8 +5,6 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Job, Technician } from "@/types";
 import {
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
   CheckCircle,
   Clock,
   Briefcase,
@@ -26,31 +24,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import { BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis, Bar } from "recharts";
-
-
-const pieChartColors = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
-  "#FBBF24", // yellow-400
-];
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "N/A";
@@ -134,10 +113,6 @@ export default function ReportClientView() {
     if (dateFilteredJobs.length === 0) { // Base check on date-filtered, not fully-filtered
       return {
         kpis: { totalJobs: 0, completedJobs: 0, avgDuration: "N/A", avgTimeToAssign: "N/A", avgSatisfaction: "N/A", ftfr: "N/A", onTimeArrivalRate: "N/A", totalEmissions: 0 },
-        jobsByStatus: [],
-        jobsPerTechnician: [],
-        punctualityChartData: [],
-        emissionsPerTechnician: [],
         technicianSummary: technicianSummary ? { ...technicianSummary, completedJobs: 0, avgDuration: "N/A", ftfr: "N/A" } : null,
       };
     }
@@ -196,40 +171,6 @@ export default function ReportClientView() {
         ftfr: ftfrPercentage,
     } : null;
 
-    // Chart data
-    const jobsByStatus = filteredJobs.reduce((acc, job) => {
-      acc[job.status] = (acc[job.status] || 0) + 1;
-      return acc;
-    }, {} as Record<Job["status"], number>);
-    const pieData = Object.entries(jobsByStatus).map(([name, value]) => ({
-      name,
-      value,
-      fill: `var(--color-${name.toLowerCase().replace(" ", "")})`,
-    }));
-
-    // This chart data should use all date-filtered jobs, not technician-filtered jobs
-    const jobsPerTechnician = technicians.map((tech) => ({
-      name: tech.name,
-      completed: dateFilteredJobs.filter(
-        (j) => j.assignedTechnicianId === tech.id && j.status === 'Completed'
-      ).length,
-    }));
-    
-    const punctualityChartData = [
-        { name: 'Early', value: punctuality.early, fill: 'hsl(var(--chart-2))' },
-        { name: 'On Time', value: punctuality.onTime, fill: 'hsl(var(--chart-1))' },
-        { name: 'Late', value: punctuality.late, fill: 'hsl(var(--destructive))' },
-    ].filter(d => d.value > 0);
-    
-    const emissionsPerTechnician = technicians.map(tech => {
-        const techJobs = dateFilteredJobs.filter(j => j.assignedTechnicianId === tech.id && j.status === 'Completed');
-        const totalTechEmissions = techJobs.reduce((acc, j) => acc + (j.co2EmissionsKg || 0), 0);
-        return {
-            name: tech.name,
-            emissions: parseFloat(totalTechEmissions.toFixed(2)),
-        };
-    });
-
     return {
       kpis: {
         totalJobs: filteredJobs.length,
@@ -241,44 +182,9 @@ export default function ReportClientView() {
         onTimeArrivalRate: onTimeArrivalRate,
         totalEmissions: parseFloat(totalEmissions.toFixed(2)),
       },
-      jobsByStatus: pieData,
-      jobsPerTechnician: jobsPerTechnician.filter(t => t.completed > 0),
-      punctualityChartData,
-      emissionsPerTechnician: emissionsPerTechnician.filter(t => t.emissions > 0),
       technicianSummary: technicianSummaryData,
     };
   }, [jobs, technicians, date, selectedTechnicianId]);
-
-  const jobsByStatusChartConfig = useMemo(() => {
-    const config: ChartConfig = {};
-    reportData.jobsByStatus.forEach((item) => {
-      config[item.name.toLowerCase().replace(" ", "")] = {
-        label: item.name,
-      };
-    });
-    return config;
-  }, [reportData.jobsByStatus]);
-
-  const jobsPerTechnicianChartConfig = {
-      completed: {
-        label: "Completed Jobs",
-        color: "hsl(var(--chart-1))",
-      },
-  } satisfies ChartConfig;
-  
-  const punctualityChartConfig = {
-    'Early': { label: 'Early' },
-    'On Time': { label: 'On Time' },
-    'Late': { label: 'Late' },
-  } satisfies ChartConfig;
-  
-  const emissionsChartConfig = {
-      emissions: {
-        label: "CO2 Emissions (kg)",
-        color: "hsl(var(--chart-2))",
-      },
-  } satisfies ChartConfig;
-
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
@@ -340,156 +246,6 @@ export default function ReportClientView() {
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. Satisfaction</CardTitle><Smile className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgSatisfaction} / 5</div><p className="text-xs text-muted-foreground">Across all rated jobs</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">First-Time-Fix Rate</CardTitle><ThumbsUp className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.ftfr}%</div><p className="text-xs text-muted-foreground">Of jobs resolved in one visit</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total CO2 Emissions</CardTitle><Leaf className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalEmissions} kg</div><p className="text-xs text-muted-foreground">Est. from travel distance</p></CardContent></Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <Card><CardHeader><CardTitle className="font-headline flex items-center gap-2"><PieChartIcon /> Jobs by Status</CardTitle></CardHeader><CardContent>
-            {reportData.jobsByStatus.length > 0 ? (
-            <ChartContainer config={jobsByStatusChartConfig} className="min-h-[300px] w-full">
-              <PieChart>
-                <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                <Pie
-                  data={reportData.jobsByStatus}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={110}
-                  labelLine={false}
-                  label={({
-                    cx,
-                    cy,
-                    midAngle,
-                    innerRadius,
-                    outerRadius,
-                    percent,
-                  }) => {
-                    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                    return (
-                      <text
-                        x={x}
-                        y={y}
-                        fill="white"
-                        textAnchor={x > cx ? "start" : "end"}
-                        dominantBaseline="central"
-                        className="text-xs font-bold"
-                      >
-                        {`${(percent * 100).toFixed(0)}%`}
-                      </text>
-                    );
-                  }}
-                >
-                  {reportData.jobsByStatus.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={pieChartColors[index % pieChartColors.length]} />
-                  ))}
-                </Pie>
-                <ChartLegend content={<ChartLegendContent />} />
-              </PieChart>
-            </ChartContainer>
-            ) : (
-                <p className="text-muted-foreground text-center py-10">No job data available for this chart.</p>
-            )}
-        </CardContent></Card>
-        <Card><CardHeader><CardTitle className="font-headline flex items-center gap-2"><BarChartIcon /> Completed Jobs per Technician</CardTitle><CardDescription>This chart shows all technicians, regardless of the filter above.</CardDescription></CardHeader><CardContent>
-             {reportData.jobsPerTechnician.length > 0 ? (
-            <ChartContainer config={jobsPerTechnicianChartConfig} className="min-h-[300px] w-full">
-                <BarChart data={reportData.jobsPerTechnician}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                        dataKey="name"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                        className="text-xs"
-                    />
-                     <YAxis allowDecimals={false} />
-                    <ChartTooltip
-                        cursor={false}
-                        content={<ChartTooltipContent indicator="dot" />}
-                    />
-                    <Bar dataKey="completed" fill="hsl(var(--chart-1))" radius={4} />
-                </BarChart>
-            </ChartContainer>
-             ) : (
-                <p className="text-muted-foreground text-center py-10">No completed jobs to display.</p>
-            )}
-        </CardContent></Card>
-        <Card><CardHeader><CardTitle className="font-headline flex items-center gap-2"><PieChartIcon /> Arrival Punctuality</CardTitle><CardDescription>Breakdown of on-time, early, and late arrivals for scheduled jobs.</CardDescription></CardHeader><CardContent>
-                {reportData.punctualityChartData.length > 0 ? (
-                <ChartContainer config={punctualityChartConfig} className="min-h-[300px] w-full">
-                <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
-                  <Pie
-                      data={reportData.punctualityChartData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={110}
-                      labelLine={false}
-                      label={({
-                      cx,
-                      cy,
-                      midAngle,
-                      innerRadius,
-                      outerRadius,
-                      percent,
-                      }) => {
-                      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-                      const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
-                      const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-                      return (
-                          <text
-                          x={x}
-                          y={y}
-                          fill="white"
-                          textAnchor={x > cx ? "start" : "end"}
-                          dominantBaseline="central"
-                          className="text-xs font-bold"
-                          >
-                          {`${(percent * 100).toFixed(0)}%`}
-                          </text>
-                      );
-                      }}
-                  >
-                      {reportData.punctualityChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                  </Pie>
-                  <ChartLegend content={<ChartLegendContent nameKey="name" />} />
-                </PieChart>
-                </ChartContainer>
-                ) : (
-                    <p className="text-muted-foreground text-center py-10">No punctuality data available for this chart.</p>
-                )}
-        </CardContent></Card>
-        <Card><CardHeader><CardTitle className="font-headline flex items-center gap-2"><BarChartIcon /> CO2 Emissions by Technician</CardTitle><CardDescription>Estimated CO2 emissions (in kg) from travel. This chart shows all technicians, regardless of the filter above.</CardDescription></CardHeader><CardContent>
-            {reportData.emissionsPerTechnician.length > 0 ? (
-            <ChartContainer config={emissionsChartConfig} className="min-h-[300px] w-full">
-                <BarChart data={reportData.emissionsPerTechnician}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                        dataKey="name"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                        className="text-xs"
-                    />
-                    <YAxis unit=" kg" />
-                    <ChartTooltip
-                        cursor={false}
-                        content={<ChartTooltipContent indicator="dot" />}
-                    />
-                    <ChartLegend content={<ChartLegendContent />} />
-                    <Bar dataKey="emissions" fill="hsl(var(--chart-2))" radius={4} />
-                </BarChart>
-            </ChartContainer>
-            ) : (
-                <p className="text-muted-foreground text-center py-10">No emissions data available to display.</p>
-            )}
-        </CardContent></Card>
       </div>
     </div>
   );

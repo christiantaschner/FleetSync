@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -17,6 +16,7 @@ import {
   User,
   Leaf,
   Route,
+  Coffee,
 } from "lucide-react";
 import {
   Card,
@@ -31,6 +31,7 @@ import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -107,10 +108,6 @@ export default function ReportClientView() {
         ? dateFilteredJobs 
         : dateFilteredJobs.filter(job => job.assignedTechnicianId === selectedTechnicianId);
 
-    const technicianSummary = selectedTechnicianId !== 'all' 
-        ? technicians.find(t => t.id === selectedTechnicianId) 
-        : null;
-
     const completedJobs = filteredJobs.filter(j => j.status === "Completed");
 
     // KPI Calculations
@@ -168,12 +165,18 @@ export default function ReportClientView() {
     }, 0);
     const avgTravelTimeMs = jobsWithTravelTime.length > 0 ? totalTravelTimeMs / jobsWithTravelTime.length : 0;
 
-    const technicianSummaryData = technicianSummary ? {
-        ...technicianSummary,
-        completedJobs: completedJobs.length,
-        avgDuration: formatDuration(avgDurationMs),
-        ftfr: ftfrPercentage,
-    } : null;
+    const jobsWithBreaks = completedJobs.filter(j => j.breaks && j.breaks.length > 0);
+    const totalBreakTimeMs = jobsWithBreaks.reduce((acc, j) => {
+        return acc + (j.breaks?.reduce((breakAcc, breakItem) => {
+            if (breakItem.start && breakItem.end) return breakAcc + (new Date(breakItem.end).getTime() - new Date(breakItem.start).getTime());
+            return breakAcc;
+        }, 0) || 0);
+    }, 0);
+    const avgBreakTimeMs = jobsWithBreaks.length > 0 ? totalBreakTimeMs / jobsWithBreaks.length : 0;
+
+    const assignedTechnicianIds = new Set(completedJobs.map(j => j.assignedTechnicianId).filter(Boolean));
+    const technicianCountInPeriod = assignedTechnicianIds.size;
+    const avgJobsPerTech = technicianCountInPeriod > 0 ? (completedJobs.length / technicianCountInPeriod).toFixed(1) : "0.0";
 
     return {
       kpis: {
@@ -187,14 +190,139 @@ export default function ReportClientView() {
         totalEmissions: parseFloat(totalEmissions.toFixed(2)),
         totalTravelDistance: parseFloat(totalTravelDistance.toFixed(2)),
         avgTravelTime: formatDuration(avgTravelTimeMs),
+        avgBreakTime: formatDuration(avgBreakTimeMs),
+        avgJobsPerTech,
       },
-      technicianSummary: technicianSummaryData,
     };
   }, [jobs, technicians, date, selectedTechnicianId]);
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
   }
+
+  const kpiCards = [
+    {
+      title: "Total Jobs",
+      value: reportData.kpis.totalJobs,
+      desc: "In selected period",
+      icon: Briefcase,
+      tooltip: {
+        desc: "A count of all jobs created within the selected date range, regardless of their status.",
+        action: "This is an informational metric. Trends can indicate business growth or seasonality."
+      }
+    },
+    {
+      title: "Completed Jobs",
+      value: reportData.kpis.completedJobs,
+      desc: "In selected period",
+      icon: CheckCircle,
+      tooltip: {
+        desc: "A count of all jobs marked as 'Completed' within the date range.",
+        action: "Comparing this to 'Total Jobs' gives a rough idea of your completion rate."
+      }
+    },
+    {
+      title: "On-Time Arrival Rate",
+      value: `${reportData.kpis.onTimeArrivalRate}%`,
+      desc: "Within 15min of schedule",
+      icon: CalendarClock,
+      tooltip: {
+        desc: "Measures the percentage of jobs where the technician arrived within 15 minutes of the scheduled time. High rates lead to better customer satisfaction.",
+        action: "If this rate is low, use the 'Find Schedule Risks' feature on the Schedule page to proactively identify and address potential delays before they happen."
+      }
+    },
+    {
+      title: "Avg. On-Site Duration",
+      value: reportData.kpis.avgDuration,
+      desc: "From start to completion",
+      icon: Clock,
+      tooltip: {
+        desc: "The average time a technician spends actively working on a job, excluding travel and breaks.",
+        action: "Consistently high durations for specific job types may indicate a need for better training or more accurate initial time estimates."
+      }
+    },
+    {
+      title: "Avg. Time to Assign",
+      value: reportData.kpis.avgTimeToAssign,
+      desc: "From creation to assignment",
+      icon: Timer,
+      tooltip: {
+        desc: "The average time a new job waits before being assigned to a technician. A direct measure of dispatcher responsiveness.",
+        action: "If this number is high, use the 'AI Batch Assign' feature on the Dashboard to quickly clear the pending queue."
+      }
+    },
+    {
+      title: "Avg. Travel Time",
+      value: reportData.kpis.avgTravelTime,
+      desc: "Per job, from en route to start",
+      icon: Timer,
+      tooltip: {
+        desc: "The average time a technician spends driving to a job site. This is non-billable time that impacts efficiency.",
+        action: "A high average travel time is a strong indicator to use the 'Re-Optimize Route' feature more frequently, especially when schedules change."
+      }
+    },
+    {
+      title: "Avg. Satisfaction",
+      value: `${reportData.kpis.avgSatisfaction} / 5`,
+      desc: "Across all rated jobs",
+      icon: Smile,
+      tooltip: {
+        desc: "The average customer satisfaction rating (1-5 stars) collected by technicians after job completion.",
+        action: "Low scores for a particular technician or job type can highlight areas for customer service training or process improvement."
+      }
+    },
+    {
+      title: "First-Time-Fix Rate",
+      value: `${reportData.kpis.ftfr}%`,
+      desc: "Of jobs resolved in one visit",
+      icon: ThumbsUp,
+      tooltip: {
+        desc: "The percentage of jobs resolved in a single visit without needing a follow-up. A critical efficiency metric.",
+        action: "If low, check the technicians' 'Reason for Follow-up' notes. This often reveals needs for specific skills training or better initial parts allocation."
+      }
+    },
+    {
+      title: "Avg. Jobs per Technician",
+      value: reportData.kpis.avgJobsPerTech,
+      desc: "Completed in period",
+      icon: Users,
+      tooltip: {
+        desc: "The average number of jobs each technician completes. Helps in balancing workload and identifying high-performers.",
+        action: "Filter the report by technician to dive deeper into individual performance."
+      }
+    },
+     {
+      title: "Avg. Break Time",
+      value: reportData.kpis.avgBreakTime,
+      desc: "Per job with breaks logged",
+      icon: Coffee,
+      tooltip: {
+        desc: "The average time technicians take for breaks during a job.",
+        action: "Monitoring this helps ensure accurate job costing and schedule planning."
+      }
+    },
+     {
+      title: "Total Travel Distance",
+      value: `${reportData.kpis.totalTravelDistance} km`,
+      desc: "Across all completed jobs",
+      icon: Route,
+      tooltip: {
+        desc: "The sum of the estimated distance driven for all completed jobs in the selected period.",
+        action: "High travel distances suggest opportunities for better geographical batching of jobs or route optimization to increase efficiency."
+      }
+    },
+    {
+      title: "Total CO2 Emissions",
+      value: `${reportData.kpis.totalEmissions} kg`,
+      desc: "Est. from travel distance",
+      icon: Leaf,
+      tooltip: {
+        desc: "An estimate of the fleet's carbon footprint based on total travel distance and the emission factor set in your company settings.",
+        action: "Reducing travel time through route optimization directly lowers this value, saving fuel costs and improving your company's environmental impact."
+      }
+    },
+  ];
+
 
   return (
     <div className="space-y-6">
@@ -214,47 +342,31 @@ export default function ReportClientView() {
           </div>
       </div>
 
-      {reportData.technicianSummary && (
-        <Card className="bg-primary/5 border-primary/20">
-            <CardHeader className="flex flex-row items-center gap-4">
-                 <Avatar className="h-16 w-16 border-2 border-primary/50">
-                    <AvatarImage src={reportData.technicianSummary.avatarUrl} alt={reportData.technicianSummary.name} />
-                    <AvatarFallback>{reportData.technicianSummary.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div>
-                    <p className="text-sm text-muted-foreground">Performance Report For</p>
-                    <CardTitle className="font-headline text-2xl">{reportData.technicianSummary.name}</CardTitle>
-                </div>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-left">
-                <div className="p-3 bg-background rounded-lg border">
-                    <p className="text-xs text-muted-foreground">Completed Jobs</p>
-                    <p className="text-xl font-bold">{reportData.technicianSummary.completedJobs}</p>
-                </div>
-                 <div className="p-3 bg-background rounded-lg border">
-                    <p className="text-xs text-muted-foreground">Avg. On-Site Duration</p>
-                    <p className="text-xl font-bold">{reportData.technicianSummary.avgDuration}</p>
-                </div>
-                 <div className="p-3 bg-background rounded-lg border">
-                    <p className="text-xs text-muted-foreground">First-Time-Fix Rate</p>
-                    <p className="text-xl font-bold">{reportData.technicianSummary.ftfr}%</p>
-                </div>
-            </CardContent>
-        </Card>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Jobs</CardTitle><Briefcase className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalJobs}</div><p className="text-xs text-muted-foreground">In selected period</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Completed Jobs</CardTitle><CheckCircle className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.completedJobs}</div><p className="text-xs text-muted-foreground">In selected period</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">On-Time Arrival Rate</CardTitle><CalendarClock className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.onTimeArrivalRate}%</div><p className="text-xs text-muted-foreground">Within 15min of schedule</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. On-Site Duration</CardTitle><Clock className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgDuration}</div><p className="text-xs text-muted-foreground">From start to completion</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. Time to Assign</CardTitle><Timer className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgTimeToAssign}</div><p className="text-xs text-muted-foreground">From creation to assignment</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. Satisfaction</CardTitle><Smile className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgSatisfaction} / 5</div><p className="text-xs text-muted-foreground">Across all rated jobs</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">First-Time-Fix Rate</CardTitle><ThumbsUp className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.ftfr}%</div><p className="text-xs text-muted-foreground">Of jobs resolved in one visit</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total CO2 Emissions</CardTitle><Leaf className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalEmissions} kg</div><p className="text-xs text-muted-foreground">Est. from travel distance</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Travel Distance</CardTitle><Route className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalTravelDistance} km</div><p className="text-xs text-muted-foreground">Across all completed jobs</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. Travel Time</CardTitle><Timer className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgTravelTime}</div><p className="text-xs text-muted-foreground">Per job, from en route to start</p></CardContent></Card>
-      </div>
+      <TooltipProvider>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {kpiCards.map(kpi => (
+              <Tooltip key={kpi.title}>
+                <TooltipTrigger asChild>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                      <kpi.icon className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{kpi.value}</div>
+                      <p className="text-xs text-muted-foreground">{kpi.desc}</p>
+                    </CardContent>
+                  </Card>
+                </TooltipTrigger>
+                 <TooltipContent className="max-w-xs">
+                    <p className="font-bold text-sm mb-1">{kpi.title}</p>
+                    <p className="text-xs mb-2">{kpi.tooltip.desc}</p>
+                    <p className="text-xs"><strong className="font-semibold">Actionable Insight:</strong> {kpi.tooltip.action}</p>
+                </TooltipContent>
+              </Tooltip>
+            ))}
+        </div>
+      </TooltipProvider>
     </div>
   );
 }

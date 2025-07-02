@@ -1,8 +1,9 @@
+
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   LayoutDashboard,
   Smartphone,
@@ -76,6 +77,7 @@ const superAdminNavItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, userProfile, company, loading, logout } = useAuth();
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -218,20 +220,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <Link href={item.href}>
-                    <SidebarMenuButton
-                      isActive={pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))}
-                      className="w-full justify-start"
-                      tooltip={item.label}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map((item) => {
+                 const isActive = item.href === '/dashboard' 
+                    ? pathname === '/dashboard' && !searchParams.get('view')
+                    : pathname.startsWith(item.href);
+                 
+                 return (
+                    <SidebarMenuItem key={item.href}>
+                    <Link href={item.href}>
+                        <SidebarMenuButton
+                        isActive={isActive}
+                        className="w-full justify-start"
+                        tooltip={item.label}
+                        >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                        </SidebarMenuButton>
+                    </Link>
+                    </SidebarMenuItem>
+                );
+              })}
               {canSeeAdminViews && (
                 <>
                   <SidebarSeparator />
@@ -248,8 +256,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </Link>
                   </SidebarMenuItem>
                   <SidebarMenuItem>
-                      <Link href="/dashboard">
+                      <Link href="/dashboard?view=csr">
                       <SidebarMenuButton
+                          isActive={pathname === "/dashboard" && searchParams.get('view') === 'csr'}
                           className="w-full justify-start"
                           tooltip="CSR View (Job Creation)"
                       >

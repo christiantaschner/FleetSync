@@ -36,6 +36,7 @@ import { isToday } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { useSearchParams } from 'next/navigation';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -48,6 +49,7 @@ type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledT
 export default function DashboardPage() {
   const { user, userProfile, company, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
@@ -728,7 +730,8 @@ export default function DashboardPage() {
     });
   };
 
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
+  const isCsrView = searchParams.get('view') === 'csr';
+  const isAdmin = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isCsrView;
 
   if (isLoadingData) { 
     return (
@@ -789,7 +792,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {riskAlerts.length > 0 && (
+      {riskAlerts.length > 0 && isAdmin && (
         <div className="space-y-2">
           {riskAlerts.map(alert => (
             <ScheduleRiskAlert 
@@ -843,7 +846,7 @@ export default function DashboardPage() {
           onJobsImported={fetchAllData}
       />
       
-      {proactiveSuggestion && proactiveSuggestion.job && (
+      {proactiveSuggestion && proactiveSuggestion.job && isAdmin && (
           <Alert variant={proactiveSuggestion.suggestedTechnicianDetails ? "default" : "destructive"} className={proactiveSuggestion.suggestedTechnicianDetails ? "border-primary/50 bg-primary/5" : ""}>
                {proactiveSuggestion.suggestedTechnicianDetails ? <Sparkles className="h-4 w-4 text-primary" /> : <AlertTriangle className="h-4 w-4" />}
               <AlertTitle className={cn("font-headline flex justify-between items-center", proactiveSuggestion.suggestedTechnicianDetails ? "text-primary" : "text-destructive")}>
@@ -861,7 +864,7 @@ export default function DashboardPage() {
                 ) : (
                     <>
                     Could not find a suggestion for "<strong>{proactiveSuggestion.job.title}</strong>".
-                    <p className="text-xs text-muted-foreground mt-1">Reason: {proactiveSuggestion.suggestion?.reasoning || proactiveSuggestion.error}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{proactiveSuggestion.suggestion?.reasoning || proactiveSuggestion.error}</p>
                     </>
                 )}
               </AlertDescription>

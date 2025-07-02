@@ -56,7 +56,6 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 priority: 'Medium',
                 estimatedDurationMinutes: 60,
                 requiredSkills: [],
-                requiredParts: [],
             }
         };
 
@@ -81,7 +80,6 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                     priority: 'Medium',
                     estimatedDurationMinutes: 60,
                     requiredSkills: [],
-                    requiredParts: [],
                 }
             };
             reset(newDefaultValues);

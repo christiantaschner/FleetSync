@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature, Package, ThumbsUp, Smile, Star, Timer } from 'lucide-react';
+import { MapPin, UserCircle, Phone, Clock, AlertTriangle, Edit, Info, CalendarDays, Users, FileSignature, ThumbsUp, Smile, Star, Timer } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -80,20 +80,6 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
             </div>
           </div>
         </div>
-
-        {job.requiredParts && job.requiredParts.length > 0 && (
-            <>
-                <Separator />
-                <div>
-                    <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><Package />Required Parts</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {job.requiredParts.map((part, index) => (
-                            <Badge key={index} variant="secondary" className="text-base">{part}</Badge>
-                        ))}
-                    </div>
-                </div>
-            </>
-        )}
 
         {job.notes && (
           <>
@@ -188,5 +174,3 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
 };
 
 export default JobDetailsDisplay;
-
-    

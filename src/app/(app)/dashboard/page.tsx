@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, Package } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -25,7 +25,6 @@ import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
-import ManagePartsDialog from './components/ManagePartsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
@@ -68,8 +67,6 @@ export default function DashboardPage() {
   
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
-  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
-  const [allParts, setAllParts] = useState<string[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
@@ -148,7 +145,7 @@ export default function DashboardPage() {
   }, [jobs]);
 
 
-  const fetchSkillsAndParts = useCallback(async () => {
+  const fetchSkills = useCallback(async () => {
     if (!db || !userProfile?.companyId) return;
     try {
         const companyId = userProfile.companyId;
@@ -159,21 +156,15 @@ export default function DashboardPage() {
         skillsData.sort((a, b) => a.localeCompare(b));
         setAllSkills(skillsData);
 
-        const partsQuery = query(collection(db, "parts"), where("companyId", "==", companyId));
-        const partsSnapshot = await getDocs(partsQuery);
-        const partsData = partsSnapshot.docs.map(doc => doc.data().name as string);
-        partsData.sort((a, b) => a.localeCompare(b));
-        setAllParts(partsData);
-
     } catch (error) {
-        console.error("Error fetching libraries: ", error);
-        toast({ title: "Error", description: "Could not fetch skills/parts libraries.", variant: "destructive" });
+        console.error("Error fetching skills: ", error);
+        toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
     }
 }, [userProfile, toast]);
   
   const fetchAllData = useCallback(() => {
-    fetchSkillsAndParts();
-  }, [fetchSkillsAndParts]);
+    fetchSkills();
+  }, [fetchSkills]);
 
   useEffect(() => {
     if (!db || !userProfile?.companyId) {
@@ -195,7 +186,7 @@ export default function DashboardPage() {
         }
     }
 
-    fetchSkillsAndParts();
+    fetchSkills();
 
     const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -253,7 +244,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [userProfile, toast, fetchSkillsAndParts]);
+  }, [userProfile, toast, fetchSkills]);
 
   const prevTechCount = useRef<number | null>(null);
 
@@ -594,7 +585,7 @@ export default function DashboardPage() {
             technicianId: t.id,
             technicianName: t.name,
             isAvailable: t.isAvailable,
-            skills: t.skills as string[],
+            skills: t.skills || [],
             location: {
               latitude: t.location.latitude,
               longitude: t.location.longitude,
@@ -755,7 +746,6 @@ export default function DashboardPage() {
             job={selectedJobForEdit}
             technicians={technicians}
             allSkills={allSkills}
-            allParts={allParts}
             customers={customers}
             onJobAddedOrUpdated={handleJobAddedOrUpdated}
             jobs={jobs}
@@ -844,15 +834,9 @@ export default function DashboardPage() {
       <ManageSkillsDialog 
           isOpen={isManageSkillsOpen}
           setIsOpen={setIsManageSkillsOpen}
-          onSkillsUpdated={fetchSkillsAndParts}
+          onSkillsUpdated={fetchSkills}
       />
       
-      <ManagePartsDialog 
-          isOpen={isManagePartsOpen}
-          setIsOpen={setIsManagePartsOpen}
-          onPartsUpdated={fetchSkillsAndParts}
-      />
-
       <ImportJobsDialog
           isOpen={isImportJobsOpen}
           setIsOpen={setIsImportJobsOpen}
@@ -1076,9 +1060,6 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap gap-2">
                       <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
                         <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                      </Button>
-                      <Button variant="ghost" onClick={() => setIsManagePartsOpen(true)}>
-                        <Package className="mr-2 h-4 w-4" /> Manage Parts
                       </Button>
                       <Button variant="accent" onClick={handleOpenAddTechnician}>
                         <UserPlus className="mr-2 h-4 w-4" /> Add Technician

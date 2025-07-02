@@ -1,7 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<string[]>([]);
   const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
+  const [allParts, setAllParts] = useState<string[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
@@ -150,11 +151,19 @@ export default function DashboardPage() {
   const fetchSkillsAndParts = useCallback(async () => {
     if (!db || !userProfile?.companyId) return;
     try {
-        const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
+        const companyId = userProfile.companyId;
+
+        const skillsQuery = query(collection(db, "skills"), where("companyId", "==", companyId));
         const skillsSnapshot = await getDocs(skillsQuery);
         const skillsData = skillsSnapshot.docs.map(doc => doc.data().name as string);
         skillsData.sort((a, b) => a.localeCompare(b));
         setAllSkills(skillsData);
+
+        const partsQuery = query(collection(db, "parts"), where("companyId", "==", companyId));
+        const partsSnapshot = await getDocs(partsQuery);
+        const partsData = partsSnapshot.docs.map(doc => doc.data().name as string);
+        partsData.sort((a, b) => a.localeCompare(b));
+        setAllParts(partsData);
 
     } catch (error) {
         console.error("Error fetching libraries: ", error);
@@ -746,6 +755,7 @@ export default function DashboardPage() {
             job={selectedJobForEdit}
             technicians={technicians}
             allSkills={allSkills}
+            allParts={allParts}
             customers={customers}
             onJobAddedOrUpdated={handleJobAddedOrUpdated}
             jobs={jobs}
@@ -1066,6 +1076,9 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap gap-2">
                       <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
                         <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                      </Button>
+                      <Button variant="ghost" onClick={() => setIsManagePartsOpen(true)}>
+                        <Package className="mr-2 h-4 w-4" /> Manage Parts
                       </Button>
                       <Button variant="accent" onClick={handleOpenAddTechnician}>
                         <UserPlus className="mr-2 h-4 w-4" /> Add Technician

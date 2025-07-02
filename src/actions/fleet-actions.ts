@@ -12,6 +12,7 @@ import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows
 import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/troubleshoot-flow";
 import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
+import { suggestJobParts as suggestJobPartsFlow } from "@/ai/flows/suggest-job-parts";
 import { z } from "zod";
 import { db, storage } from "@/lib/firebase";
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc } from "firebase/firestore";
@@ -30,6 +31,9 @@ import {
   SuggestJobSkillsInputSchema,
   type SuggestJobSkillsInput,
   type SuggestJobSkillsOutput,
+  SuggestJobPartsInputSchema,
+  type SuggestJobPartsInput,
+  type SuggestJobPartsOutput,
   PredictNextAvailableTechniciansInputSchema,
   type PredictNextAvailableTechniciansInput,
   type PredictNextAvailableTechniciansOutput,
@@ -109,6 +113,24 @@ export async function suggestJobSkillsAction(
     }
     console.error("Error in suggestJobSkillsAction:", e);
     return { data: null, error: "Failed to suggest skills. Please try again." };
+  }
+}
+
+export type SuggestJobPartsActionInput = SuggestJobPartsInput;
+
+export async function suggestJobPartsAction(
+  input: SuggestJobPartsActionInput
+): Promise<{ data: SuggestJobPartsOutput | null; error: string | null }> {
+  try {
+    const validatedInput = SuggestJobPartsInputSchema.parse(input);
+    const result = await suggestJobPartsFlow(validatedInput);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    console.error("Error in suggestJobPartsAction:", e);
+    return { data: null, error: "Failed to suggest parts. Please try again." };
   }
 }
 
@@ -766,7 +788,7 @@ export async function generateTrackingLinkAction(
 
     } catch (e) {
         if (e instanceof z.ZodError) {
-            return { data: null, error: e.errors.map(err => err.message).join(", ") };
+            return { data: null, error: e.errors.map(err => err.message).join(', ') };
         }
         console.error("Error generating tracking link:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";

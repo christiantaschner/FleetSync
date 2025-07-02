@@ -76,18 +76,31 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
       <CardContent className="space-y-3 text-sm pb-3">
         <p className="text-muted-foreground line-clamp-2">{job.description}</p>
         
-        {job.requiredSkills && job.requiredSkills.length > 0 && (
-          <div className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4 text-muted-foreground" />
-            <div className="flex flex-wrap gap-1">
-              {job.requiredSkills.map(skill => (
-                <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-              ))}
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {job.requiredSkills && job.requiredSkills.length > 0 && (
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-wrap gap-1">
+                {job.requiredSkills.map(skill => (
+                  <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          
+          {job.requiredParts && job.requiredParts.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-wrap gap-1">
+                {job.requiredParts.map(part => (
+                  <Badge key={part} variant="outline" className="text-xs">{part}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
           <div>
             {job.scheduledTime && (
               <span className="flex items-center gap-1">
@@ -133,4 +146,3 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onAssignWithAI, onOpenCh
 };
 
 export default JobListItem;
-

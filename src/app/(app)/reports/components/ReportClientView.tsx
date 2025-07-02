@@ -16,6 +16,7 @@ import {
   CalendarClock,
   User,
   Leaf,
+  Route,
 } from "lucide-react";
 import {
   Card,
@@ -32,7 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 
 const formatDuration = (milliseconds: number): string => {
-    if (milliseconds < 0 || isNaN(milliseconds)) return "N/A";
+    if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -156,6 +157,16 @@ export default function ReportClientView() {
     const onTimeArrivalRate = totalPunctualityJobs > 0 ? (((punctuality.early + punctuality.onTime) / totalPunctualityJobs) * 100).toFixed(1) : "0";
     
     const totalEmissions = completedJobs.reduce((acc, j) => acc + (j.co2EmissionsKg || 0), 0);
+    
+    const totalTravelDistance = completedJobs.reduce((acc, j) => acc + (j.travelDistanceKm || 0), 0);
+
+    const jobsWithTravelTime = completedJobs.filter(j => j.enRouteAt && j.inProgressAt);
+    const totalTravelTimeMs = jobsWithTravelTime.reduce((acc, j) => {
+        const start = new Date(j.enRouteAt!).getTime();
+        const end = new Date(j.inProgressAt!).getTime();
+        return acc + (end - start);
+    }, 0);
+    const avgTravelTimeMs = jobsWithTravelTime.length > 0 ? totalTravelTimeMs / jobsWithTravelTime.length : 0;
 
     const technicianSummaryData = technicianSummary ? {
         ...technicianSummary,
@@ -174,6 +185,8 @@ export default function ReportClientView() {
         ftfr: ftfrPercentage,
         onTimeArrivalRate: onTimeArrivalRate,
         totalEmissions: parseFloat(totalEmissions.toFixed(2)),
+        totalTravelDistance: parseFloat(totalTravelDistance.toFixed(2)),
+        avgTravelTime: formatDuration(avgTravelTimeMs),
       },
       technicianSummary: technicianSummaryData,
     };
@@ -239,6 +252,8 @@ export default function ReportClientView() {
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. Satisfaction</CardTitle><Smile className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgSatisfaction} / 5</div><p className="text-xs text-muted-foreground">Across all rated jobs</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">First-Time-Fix Rate</CardTitle><ThumbsUp className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.ftfr}%</div><p className="text-xs text-muted-foreground">Of jobs resolved in one visit</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total CO2 Emissions</CardTitle><Leaf className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalEmissions} kg</div><p className="text-xs text-muted-foreground">Est. from travel distance</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total Travel Distance</CardTitle><Route className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.totalTravelDistance} km</div><p className="text-xs text-muted-foreground">Across all completed jobs</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Avg. Travel Time</CardTitle><Timer className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{reportData.kpis.avgTravelTime}</div><p className="text-xs text-muted-foreground">Per job, from en route to start</p></CardContent></Card>
       </div>
     </div>
   );

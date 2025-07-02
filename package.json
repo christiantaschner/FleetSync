@@ -50,6 +50,7 @@
     "papaparse": "^5.4.1",
     "patch-package": "^8.0.0",
     "react": "rc",
+    "react-day-picker": "^8.10.1",
     "react-dom": "rc",
     "react-hook-form": "^7.54.2",
     "react-signature-canvas": "^1.0.6",

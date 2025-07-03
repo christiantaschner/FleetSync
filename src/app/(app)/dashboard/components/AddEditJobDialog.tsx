@@ -510,276 +510,271 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       onClose();
     }}>
       <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
-        <DialogHeader className="px-6 pt-6 flex-shrink-0">
-          <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
-          <DialogDescription>
-            {job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.'}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}} id="add-edit-job-form" className="flex-1 flex flex-col overflow-y-hidden">
-        <ScrollArea className="flex-1 px-6">
-        <div className="py-4">
-        {isEditingDraft && (
-            <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
-                <FilePenLine className="h-4 w-4" />
-                <AlertTitle className="font-semibold">Editing Draft</AlertTitle>
-                <AlertDescription>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="flex-1 flex flex-col overflow-y-hidden">
+          <DialogHeader className="px-6 pt-6 flex-shrink-0">
+            <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
+            <DialogDescription>
+              {job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.'}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="flex-1 px-6">
+            <div className="py-4">
+              {isEditingDraft && (
+                <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
+                  <FilePenLine className="h-4 w-4" />
+                  <AlertTitle className="font-semibold">Editing Draft</AlertTitle>
+                  <AlertDescription>
                     This is a draft job. Please complete all required fields and set a status to "Pending" to activate it.
-                </AlertDescription>
-            </Alert>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          <div className="space-y-4">
-              <div>
-                <Label htmlFor="jobTitle">Job Title *</Label>
-                <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
-              </div>
-              <div>
-                <Label htmlFor="jobDescription">Job Description *</Label>
-                <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3}/>
-              </div>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="jobPriority">Job Priority *</Label>
-                  <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
-                    <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {isFetchingPrioritySuggestion && !job && (
-                    <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
-                        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is analyzing...
-                    </div>
-                  )}
-                  {!isFetchingPrioritySuggestion && aiPrioritySuggestion && !job && (
-                    <div className="text-xs mt-1.5 p-2 bg-secondary/50 rounded-md border">
-                        <p className="font-medium flex items-center gap-1.5"><Lightbulb className="h-3 w-3 text-primary"/> AI Suggests: <strong className="text-primary">{aiPrioritySuggestion.suggestedPriority}</strong></p>
-                        <p className="text-muted-foreground italic">"{aiPrioritySuggestion.reasoning}"</p>
-                    </div>
-                  )}
-                </div>
-                 {job && (
-                     <div className="grid grid-cols-1 gap-4">
-                        <div>
-                            <Label htmlFor="jobStatus">Status</Label>
-                            <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
-                                disabled={manualTechnicianId !== (job.assignedTechnicianId || '')}
-                            >
-                                <SelectTrigger id="jobStatus">
-                                    <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ALL_JOB_STATUSES.filter(s => s !== 'Draft').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
+                  </AlertDescription>
+                </Alert>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="jobTitle">Job Title *</Label>
+                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="jobDescription">Job Description *</Label>
+                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="jobPriority">Job Priority *</Label>
+                      <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
+                        <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="High">High</SelectItem>
+                          <SelectItem value="Medium">Medium</SelectItem>
+                          <SelectItem value="Low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {isFetchingPrioritySuggestion && !job && (
+                        <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
+                          <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is analyzing...
                         </div>
+                      )}
+                      {!isFetchingPrioritySuggestion && aiPrioritySuggestion && !job && (
+                        <div className="text-xs mt-1.5 p-2 bg-secondary/50 rounded-md border">
+                          <p className="font-medium flex items-center gap-1.5"><Lightbulb className="h-3 w-3 text-primary" /> AI Suggests: <strong className="text-primary">{aiPrioritySuggestion.suggestedPriority}</strong></p>
+                          <p className="text-muted-foreground italic">"{aiPrioritySuggestion.reasoning}"</p>
+                        </div>
+                      )}
                     </div>
-                 )}
-              </div>
-              
-              <div>
-                <Label htmlFor="customerName">Customer Name</Label>
-                <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
-                    <PopoverAnchor>
-                        <Input 
-                            id="customerName" 
-                            name="customerName" 
-                            value={customerName} 
-                            onChange={handleCustomerNameChange} 
-                            placeholder="e.g., John Doe" 
-                            autoComplete="off"
+                    {job && (
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label htmlFor="jobStatus">Status</Label>
+                          <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
+                            disabled={manualTechnicianId !== (job.assignedTechnicianId || '')}
+                          >
+                            <SelectTrigger id="jobStatus">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ALL_JOB_STATUSES.filter(s => s !== 'Draft').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="customerName">Customer Name</Label>
+                    <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                      <PopoverAnchor>
+                        <Input
+                          id="customerName"
+                          name="customerName"
+                          value={customerName}
+                          onChange={handleCustomerNameChange}
+                          placeholder="e.g., John Doe"
+                          autoComplete="off"
                         />
-                    </PopoverAnchor>
-                    <PopoverContent 
+                      </PopoverAnchor>
+                      <PopoverContent
                         className="w-[--radix-popover-trigger-width] p-0"
                         onOpenAutoFocus={(e) => e.preventDefault()}
-                    >
+                      >
                         <div className="max-h-60 overflow-y-auto">
-                            {customerSuggestions.map((customer) => (
-                                <div
-                                    key={customer.id}
-                                    className="p-3 text-sm cursor-pointer hover:bg-accent"
-                                    onClick={() => handleSelectCustomer(customer)}
-                                >
-                                    <p className="font-semibold">{customer.name}</p>
-                                    <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                                </div>
-                            ))}
+                          {customerSuggestions.map((customer) => (
+                            <div
+                              key={customer.id}
+                              className="p-3 text-sm cursor-pointer hover:bg-accent"
+                              onClick={() => handleSelectCustomer(customer)}
+                            >
+                              <p className="font-semibold">{customer.name}</p>
+                              <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                            </div>
+                          ))}
                         </div>
-                    </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label htmlFor="customerPhone">Customer Phone</Label>
-                <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
-              </div>
-              
-              <div>
-                <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-                <AddressAutocompleteInput
-                    value={locationAddress}
-                    onValueChange={setLocationAddress}
-                    onLocationSelect={handleLocationSelect}
-                    placeholder="Start typing job address..."
-                    required
-                />
-              </div>
-
-               {!job && (
-                 <div>
-                    <Label htmlFor="scheduledTime">Scheduled Time (Optional)</Label>
-                    <Popover>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div>
+                    <Label htmlFor="customerPhone">Customer Phone</Label>
+                    <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                  </div>
+                  <div>
+                    <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
+                    <AddressAutocompleteInput
+                      value={locationAddress}
+                      onValueChange={setLocationAddress}
+                      onLocationSelect={handleLocationSelect}
+                      placeholder="Start typing job address..."
+                      required
+                    />
+                  </div>
+                  {!job && (
+                    <div>
+                      <Label htmlFor="scheduledTime">Scheduled Time (Optional)</Label>
+                      <Popover>
                         <PopoverTrigger asChild>
-                        <Button
+                          <Button
                             id="scheduledTime"
                             variant={"outline"}
                             className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !scheduledTime && "text-muted-foreground"
+                              "w-full justify-start text-left font-normal",
+                              !scheduledTime && "text-muted-foreground"
                             )}
-                        >
+                          >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {scheduledTime ? format(scheduledTime, "PPP p") : <span>Pick a date & time</span>}
-                        </Button>
+                          </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
-                        <Calendar
+                          <Calendar
                             mode="single"
                             selected={scheduledTime}
                             onSelect={setScheduledTime}
                             initialFocus
-                        />
+                          />
                         </PopoverContent>
-                    </Popover>
-                    {isFetchingScheduleSuggestion && (
+                      </Popover>
+                      {isFetchingScheduleSuggestion && (
                         <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
-                            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is suggesting a time...
+                          <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is suggesting a time...
                         </div>
-                    )}
-                    {!isFetchingScheduleSuggestion && scheduleSuggestions && scheduleSuggestions.length > 0 && !job && (
+                      )}
+                      {!isFetchingScheduleSuggestion && scheduleSuggestions && scheduleSuggestions.length > 0 && !job && (
                         <div className="space-y-1 mt-2">
-                            <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Lightbulb className="h-3 w-3 text-primary"/>AI Time Suggestions</Label>
-                            <Select onValueChange={(value) => setScheduledTime(new Date(value))}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a suggested time..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {scheduleSuggestions.map((suggestion, index) => (
-                                        <SelectItem key={index} value={suggestion.time}>
-                                            <div className="flex flex-col text-left">
-                                                <span className="font-semibold">{format(new Date(suggestion.time), "EEE, PPP 'at' p")}</span>
-                                                <span className="text-xs text-muted-foreground">{suggestion.reasoning}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                          <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Lightbulb className="h-3 w-3 text-primary" />AI Time Suggestions</Label>
+                          <Select onValueChange={(value) => setScheduledTime(new Date(value))}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a suggested time..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {scheduleSuggestions.map((suggestion, index) => (
+                                <SelectItem key={index} value={suggestion.time}>
+                                  <div className="flex flex-col text-left">
+                                    <span className="font-semibold">{format(new Date(suggestion.time), "EEE, PPP 'at' p")}</span>
+                                    <span className="text-xs text-muted-foreground">{suggestion.reasoning}</span>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                    )}
-                </div>
-            )}
-            {job && (
-                 <div>
-                    <Label htmlFor="assign-technician">Assigned Technician</Label>
-                    <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
+                      )}
+                    </div>
+                  )}
+                  {job && (
+                    <div>
+                      <Label htmlFor="assign-technician">Assigned Technician</Label>
+                      <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
                         <SelectTrigger id="assign-technician">
-                            <SelectValue placeholder="Unassigned" />
+                          <SelectValue placeholder="Unassigned" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">-- Unassigned --</SelectItem>
-                            {technicians.map(tech => (
-                                <SelectItem key={tech.id} value={tech.id}>
-                                    {tech.name}
-                                </SelectItem>
-                            ))}
+                          <SelectItem value="">-- Unassigned --</SelectItem>
+                          {technicians.map(tech => (
+                            <SelectItem key={tech.id} value={tech.id}>
+                              {tech.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
-                    </Select>
-                 </div>
-            )}
-            </div>
-
-            <div className="space-y-4">
-               <div>
-                  <Label className="flex items-center gap-2">
-                    <ListChecks className="h-3.5 w-3.5" />
-                    Required Skills
-                    {isFetchingSkillSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
-                  </Label>
-                  <Input
-                    placeholder="Search skills..."
-                    value={skillSearchTerm}
-                    onChange={(e) => setSkillSearchTerm(e.target.value)}
-                    className="mt-1 mb-2 h-8"
-                  />
-                  <ScrollArea className="h-32 rounded-md border p-3">
-                    <div className="space-y-2">
-                      {allSkills.length === 0 ? (
-                         <div className="text-center flex flex-col items-center justify-center h-full pt-8">
-                           <p className="text-sm text-muted-foreground">No skills defined in library.</p>
-                           <Button type="button" variant="link" className="mt-1" onClick={onManageSkills}>
-                             <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                           </Button>
-                         </div>
-                      ) : (
-                        filteredSkills.map(skill => (
-                          <div key={skill} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`skill-${skill.replace(/\s+/g, '-')}`}
-                              checked={requiredSkills.includes(skill)}
-                              onCheckedChange={() => handleSkillChange(skill)}
-                            />
-                            <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                              {skill}
-                            </Label>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <ListChecks className="h-3.5 w-3.5" />
+                      Required Skills
+                      {isFetchingSkillSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
+                    </Label>
+                    <Input
+                      placeholder="Search skills..."
+                      value={skillSearchTerm}
+                      onChange={(e) => setSkillSearchTerm(e.target.value)}
+                      className="mt-1 mb-2 h-8"
+                    />
+                    <ScrollArea className="h-32 rounded-md border p-3">
+                      <div className="space-y-2">
+                        {allSkills.length === 0 ? (
+                          <div className="text-center flex flex-col items-center justify-center h-full pt-8">
+                            <p className="text-sm text-muted-foreground">No skills defined in library.</p>
+                            <Button type="button" variant="link" className="mt-1" onClick={onManageSkills}>
+                              <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                            </Button>
                           </div>
-                        ))
+                        ) : (
+                          filteredSkills.map(skill => (
+                            <div key={skill} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`skill-${skill.replace(/\s+/g, '-')}`}
+                                checked={requiredSkills.includes(skill)}
+                                onCheckedChange={() => handleSkillChange(skill)}
+                              />
+                              <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                                {skill}
+                              </Label>
+                            </div>
+                          ))
+                        )}
+                        {filteredSkills.length === 0 && allSkills.length > 0 && (
+                          <p className="text-sm text-muted-foreground text-center">No skills match your search.</p>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                  {userProfile?.role !== 'csr' && !job && technicians.length > 0 && (description.trim() || priority) && (
+                    <div className="p-3 my-2 border rounded-md bg-secondary/50">
+                      {isFetchingAISuggestion && (
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <span>AI is finding the best technician...</span>
+                        </div>
                       )}
-                      {filteredSkills.length === 0 && allSkills.length > 0 && (
-                        <p className="text-sm text-muted-foreground text-center">No skills match your search.</p>
+                      {!isFetchingAISuggestion && aiSuggestion && aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
+                          <p className="text-sm">
+                            Assign to: <strong>{suggestedTechnicianDetails.name}</strong> ({suggestedTechnicianDetails.isAvailable ? "Available" : "Unavailable"}, Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'})
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
+                        </div>
+                      )}
+                      {!isFetchingAISuggestion && aiSuggestion && !aiSuggestion.suggestedTechnicianId && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
+                          <p className="text-sm text-muted-foreground">Could not find a suitable technician.</p>
+                          <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
+                        </div>
+                      )}
+                      {!isFetchingAISuggestion && !aiSuggestion && (description.trim() && priority) && (
+                        <p className="text-sm text-muted-foreground">Enter job details for AI assignment suggestion.</p>
                       )}
                     </div>
-                  </ScrollArea>
-                </div>
-
-                {userProfile?.role !== 'csr' && !job && technicians.length > 0 && (description.trim() || priority) && (
-                <div className="p-3 my-2 border rounded-md bg-secondary/50">
-                  {isFetchingAISuggestion && (
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      <span>AI is finding the best technician...</span>
-                    </div>
-                  )}
-                  {!isFetchingAISuggestion && aiSuggestion && aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails && (
-                    <div>
-                      <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
-                      <p className="text-sm">
-                        Assign to: <strong>{suggestedTechnicianDetails.name}</strong> ({suggestedTechnicianDetails.isAvailable ? "Available" : "Unavailable"}, Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'})
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
-                    </div>
-                  )}
-                   {!isFetchingAISuggestion && aiSuggestion && !aiSuggestion.suggestedTechnicianId && (
-                    <div>
-                        <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
-                        <p className="text-sm text-muted-foreground">Could not find a suitable technician.</p>
-                        <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
-                    </div>
-                  )}
-                  {!isFetchingAISuggestion && !aiSuggestion && (description.trim() && priority) && (
-                    <p className="text-sm text-muted-foreground">Enter job details for AI assignment suggestion.</p>
                   )}
                 </div>
-              )}
-          </div>
-        </div>
-        </ScrollArea>
-        </form>
-        <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
+              </div>
+            </div>
+          </ScrollArea>
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
             <div>
               {job && (
                 <AlertDialog>
@@ -804,43 +799,42 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </AlertDialog>
               )}
             </div>
-
             <div className="flex flex-col sm:flex-row gap-2">
               <Button type="button" variant="ghost" onClick={onClose}>
                 Close
               </Button>
-              {job ? ( 
-                <Button type="submit" form="add-edit-job-form" disabled={isLoading}>
+              {job ? (
+                <Button type="submit" disabled={isLoading}>
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Save Changes
                 </Button>
               ) : (
-                  <>
-                      {userProfile?.role !== 'csr' && (
-                          <Button
-                              type="button"
-                              onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
-                              disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                              variant={isInterruptionSuggestion ? "destructive" : "default"}
-                              title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
-                          >
-                              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                              {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
-                          </Button>
-                      )}
-                       <Button
-                          type="submit"
-                          form="add-edit-job-form"
-                          disabled={isLoading}
-                          variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
-                      >
-                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                          {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
-                      </Button>
-                  </>
+                <>
+                  {userProfile?.role !== 'csr' && (
+                    <Button
+                      type="button"
+                      onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
+                      disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
+                      variant={isInterruptionSuggestion ? "destructive" : "default"}
+                      title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
+                    >
+                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                      {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
+                    </Button>
+                  )}
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
+                  >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+                  </Button>
+                </>
               )}
             </div>
           </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

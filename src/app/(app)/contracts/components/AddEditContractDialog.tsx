@@ -123,9 +123,9 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                         {contract ? 'Update the details for this recurring service contract.' : 'Create a new contract template. This will be used to generate recurring jobs later.'}
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmitForm)} className="flex-grow flex flex-col min-h-0">
-                    <ScrollArea className="flex-grow pr-6 -mr-6">
-                        <div className="space-y-4">
+                <form onSubmit={handleSubmit(onSubmitForm)} className="flex-1 flex flex-col overflow-hidden">
+                    <ScrollArea className="flex-1 px-1">
+                        <div className="space-y-4 px-5">
                             <h3 className="text-lg font-semibold flex items-center gap-2"><User/>Customer Info</h3>
                             <div>
                                 <Label htmlFor="customerName">Customer Name *</Label>

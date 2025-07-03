@@ -36,7 +36,7 @@ import { isToday } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -50,6 +50,8 @@ export default function DashboardPage() {
   const { user, userProfile, company, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
@@ -101,6 +103,21 @@ export default function DashboardPage() {
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
+
+  const jobFilterId = searchParams.get('jobFilter');
+  const isCsrView = searchParams.get('view') === 'csr';
+  const isAdmin = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isCsrView;
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'jobs' : 'jobs');
+
+  useEffect(() => {
+    if (jobFilterId) {
+        setActiveTab('jobs');
+    } else if(isCsrView) {
+        setActiveTab('jobs');
+    } else if (isAdmin) {
+        setActiveTab('overview');
+    }
+  }, [jobFilterId, isCsrView, isAdmin]);
   
   const handleOpenAddJob = () => {
     setSelectedJobForEdit(null);
@@ -507,6 +524,9 @@ export default function DashboardPage() {
   };
 
   const filteredJobs = useMemo(() => {
+    if (jobFilterId) {
+        return jobs.filter(job => job.id === jobFilterId);
+    }
     return jobs.filter(job => {
       let statusMatch = false;
       if (statusFilter === ALL_STATUSES) {
@@ -520,7 +540,7 @@ export default function DashboardPage() {
       const priorityMatch = priorityFilter === ALL_PRIORITIES || job.priority === priorityFilter;
       return statusMatch && priorityMatch;
     });
-  }, [jobs, statusFilter, priorityFilter]);
+  }, [jobs, statusFilter, priorityFilter, jobFilterId]);
 
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
@@ -730,9 +750,6 @@ export default function DashboardPage() {
     });
   };
 
-  const isCsrView = searchParams.get('view') === 'csr';
-  const isAdmin = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isCsrView;
-
   if (isLoadingData) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
@@ -889,13 +906,13 @@ export default function DashboardPage() {
                     variant="outline"
                     onClick={() => {
                         if (proactiveSuggestion?.job) {
-                            handleOpenEditJob(proactiveSuggestion.job);
+                            router.push(`/dashboard?jobFilter=${proactiveSuggestion.job.id}`);
                         }
                         setProactiveSuggestion(null);
                     }}
                     >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Go to Job
+                      <Search className="mr-2 h-4 w-4" />
+                      View Job in List
                   </Button>
               </div>
           </Alert>
@@ -909,7 +926,7 @@ export default function DashboardPage() {
          <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{jobsTodayCount}</div><p className="text-xs text-muted-foreground">Total appointments for the day</p></CardContent></Card>
       </div>
       
-      <Tabs defaultValue="jobs" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="w-full overflow-x-auto sm:overflow-visible">
             <TabsList className={cn("mb-4 grid w-full", isAdmin ? "grid-cols-4" : "grid-cols-3")}>
                 <TabsTrigger value="jobs">Job List</TabsTrigger>
@@ -932,6 +949,17 @@ export default function DashboardPage() {
                       <CardTitle className="font-headline">Current Jobs</CardTitle>
                       <CardDescription>{isAdmin ? "Manage and track all ongoing and pending jobs. Use 'Assign (AI)' for individual pending jobs or batch assign all." : "View and manage all jobs."}</CardDescription>
                   </div>
+                  {jobFilterId && (
+                    <Alert variant="default" className="flex items-center justify-between">
+                        <div>
+                            <AlertTitle className="font-semibold">Filtered View</AlertTitle>
+                            <AlertDescription>Showing a single job. Clear the filter to see all jobs.</AlertDescription>
+                        </div>
+                        <Button variant="ghost" onClick={() => router.push('/dashboard')}>
+                            <X className="mr-2 h-4 w-4" /> Clear Filter
+                        </Button>
+                    </Alert>
+                  )}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-2 w-full">
                       <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                           <div className="w-full sm:w-[160px]">
@@ -939,6 +967,7 @@ export default function DashboardPage() {
                               <Select 
                                   value={statusFilter} 
                                   onValueChange={(value) => setStatusFilter(value as JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER)}
+                                  disabled={!!jobFilterId}
                               >
                                   <SelectTrigger id="status-filter">
                                       <SelectValue placeholder="Filter by Status" />
@@ -952,7 +981,11 @@ export default function DashboardPage() {
                           </div>
                           <div className="w-full sm:w-[160px]">
                               <Label htmlFor="priority-filter" className="sr-only">Filter by Priority</Label>
-                              <Select value={priorityFilter} onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}>
+                              <Select 
+                                value={priorityFilter} 
+                                onValueChange={(value) => setPriorityFilter(value as JobPriority | typeof ALL_PRIORITIES)}
+                                disabled={!!jobFilterId}
+                               >
                                   <SelectTrigger id="priority-filter">
                                       <SelectValue placeholder="Filter by Priority" />
                                   </SelectTrigger>
@@ -964,7 +997,11 @@ export default function DashboardPage() {
                           </div>
                            <div className="w-full sm:w-[160px]">
                               <Label htmlFor="sort-order" className="sr-only">Sort by</Label>
-                              <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
+                              <Select 
+                                value={sortOrder} 
+                                onValueChange={(value) => setSortOrder(value as SortOrder)}
+                                disabled={!!jobFilterId}
+                              >
                                   <SelectTrigger id="sort-order">
                                       <ArrowDownUp className="mr-2 h-4 w-4 shrink-0" />
                                       <SelectValue placeholder="Sort by..." />
@@ -982,7 +1019,7 @@ export default function DashboardPage() {
                       {isAdmin && (
                         <Button
                             onClick={handleBatchAIAssign}
-                            disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0}
+                            disabled={pendingJobsForBatchAssign.length === 0 || isBatchLoading || technicians.length === 0 || !!jobFilterId}
                             variant="accent"
                             className="w-full sm:w-auto"
                         >

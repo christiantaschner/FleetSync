@@ -273,7 +273,7 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
           </div>
         </div>
 
-        <DialogFooter className="sm:justify-between items-center pt-4 border-t px-6 pb-6 flex-shrink-0">
+        <DialogFooter className="flex-shrink-0 sm:justify-between items-center pt-4 border-t px-6 pb-6">
             <p className="text-sm text-muted-foreground">Ready to import: {parsedJobs.length} jobs.</p>
             <div>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="mr-2">Cancel</Button>

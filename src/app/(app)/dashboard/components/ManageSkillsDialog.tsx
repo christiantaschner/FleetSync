@@ -130,15 +130,15 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh] p-0">
+        <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline">Manage Skills Library</DialogTitle>
           <DialogDescription>
             Add or remove skills available for assignment to technicians.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden px-6">
             <form onSubmit={handleAddSkill} className="flex items-center gap-2 py-2 flex-shrink-0">
                 <Label htmlFor="new-skill-name" className="sr-only">New Skill Name</Label>
                 <Input 
@@ -155,43 +155,45 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
             </form>
 
             <h3 className="text-sm font-medium text-muted-foreground pt-2 flex-shrink-0">Existing Skills</h3>
-            <ScrollArea className="flex-1 rounded-md border mt-2">
-                <div className="p-2">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center p-4">
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                        </div>
-                    ) : skills.length > 0 ? (
-                        skills.map(skill => (
-                            <div key={skill.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
-                                <span className="text-sm">{skill.name}</span>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => handleDeleteSkill(skill.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Delete {skill.name}</span>
+            <div className="flex-1 overflow-y-auto -mx-6 mt-2">
+                <ScrollArea className="h-full px-6">
+                    <div className="p-2">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center p-4">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            </div>
+                        ) : skills.length > 0 ? (
+                            skills.map(skill => (
+                                <div key={skill.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
+                                    <span className="text-sm">{skill.name}</span>
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon"
+                                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        onClick={() => handleDeleteSkill(skill.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Delete {skill.name}</span>
+                                    </Button>
+                                </div>
+                            ))
+                        ) : isLibraryEmpty ? (
+                            <div className="text-center p-4">
+                                <p className="text-sm text-muted-foreground">Your skills library is empty.</p>
+                                <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedSkills} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                                Seed with Common Skills
                                 </Button>
                             </div>
-                        ))
-                    ) : isLibraryEmpty ? (
-                        <div className="text-center p-4">
-                            <p className="text-sm text-muted-foreground">Your skills library is empty.</p>
-                            <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedSkills} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
-                            Seed with Common Skills
-                            </Button>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground text-center p-4">No skills in the library. Add one above.</p>
-                    )}
-                </div>
-            </ScrollArea>
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center p-4">No skills in the library. Add one above.</p>
+                        )}
+                    </div>
+                </ScrollArea>
+            </div>
         </div>
 
-        <DialogFooter className="sm:justify-start mt-4 flex-shrink-0">
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>

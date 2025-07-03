@@ -504,21 +504,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
+      if (!open && !submittedRef.current) {
         handleSaveDraft();
       }
       onClose();
     }}>
       <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="flex-1 flex flex-col overflow-y-hidden">
           <DialogHeader className="px-6 pt-6 flex-shrink-0">
             <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
             <DialogDescription>
               {job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.'}
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 px-6">
-            <div className="py-4">
+          <div className="flex-1 overflow-y-auto px-6">
+            <form id="job-form" onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="py-4">
               {isEditingDraft && (
                 <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
                   <FilePenLine className="h-4 w-4" />
@@ -772,8 +771,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   )}
                 </div>
               </div>
-            </div>
-          </ScrollArea>
+            </form>
+          </div>
           <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
             <div>
               {job && (
@@ -804,7 +803,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 Close
               </Button>
               {job ? (
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" form="job-form" disabled={isLoading}>
                   {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Save Changes
                 </Button>
@@ -824,6 +823,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   )}
                   <Button
                     type="submit"
+                    form="job-form"
                     disabled={isLoading}
                     variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
                   >
@@ -834,7 +834,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               )}
             </div>
           </DialogFooter>
-        </form>
       </DialogContent>
     </Dialog>
   );

@@ -130,15 +130,15 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh] p-0">
+        <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline flex items-center gap-2"><Package /> Manage Parts Library</DialogTitle>
           <DialogDescription>
             Add or remove parts available in your inventory. This is a central library.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden px-6">
           <form onSubmit={handleAddPart} className="flex items-center gap-2 py-2 flex-shrink-0">
               <Label htmlFor="new-part-name" className="sr-only">New Part Name</Label>
               <Input 
@@ -155,7 +155,8 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
           </form>
 
           <h3 className="text-sm font-medium text-muted-foreground pt-2 flex-shrink-0">Existing Parts</h3>
-          <ScrollArea className="flex-1 rounded-md border mt-2">
+          <div className="flex-1 overflow-y-auto -mx-6 mt-2">
+            <ScrollArea className="h-full px-6">
               <div className="p-2">
                   {isLoading ? (
                       <div className="flex items-center justify-center p-4">
@@ -188,10 +189,11 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
                       <p className="text-sm text-muted-foreground text-center p-4">No parts in the library. Add one above.</p>
                   )}
               </div>
-          </ScrollArea>
+            </ScrollArea>
+          </div>
         </div>
 
-        <DialogFooter className="sm:justify-start mt-4 flex-shrink-0">
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>

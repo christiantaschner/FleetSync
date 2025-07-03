@@ -104,7 +104,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     setIsDeleting(false);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!name.trim() || !locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Name and Location Address.", variant: "destructive" });
       return;
@@ -180,65 +181,63 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             {technician ? 'Update the details for this technician.' : 'Fill in the details for the new technician.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} id="add-edit-tech-form" className="flex-1 flex flex-col overflow-y-hidden">
-         <ScrollArea className="flex-1 px-6">
-          <div className="space-y-3 py-4">
-            <div>
-              <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
-              <Input id="techName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., John Doe" required />
-            </div>
-            <div>
-              <Label htmlFor="techEmail"><Mail className="inline h-3.5 w-3.5 mr-1" />Email</Label>
-              <Input id="techEmail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g., john.doe@example.com" />
-            </div>
-            <div>
-              <Label htmlFor="techPhone"><Phone className="inline h-3.5 w-3.5 mr-1" />Phone</Label>
-              <Input id="techPhone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 555-123-4567" />
-            </div>
-            
-            <div className="grid grid-cols-1 gap-4">
+        <div className="flex-1 overflow-y-auto px-6">
+            <form id="add-edit-tech-form" onSubmit={handleSubmit} className="py-4 space-y-3">
                 <div>
-                  <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
-                  <ScrollArea className="h-40 rounded-md border p-3 mt-1">
-                    <div className="space-y-2">
-                      {allSkills.map(skill => (
-                        <div key={skill} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`skill-${skill.replace(/\s+/g, '-')}`}
-                            checked={selectedSkills.includes(skill)}
-                            onCheckedChange={() => handleSkillChange(skill)}
-                          />
-                          <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                            {skill}
-                          </Label>
-                        </div>
-                      ))}
-                      {allSkills.length === 0 && (
-                        <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
-                      )}
-                    </div>
-                  </ScrollArea>
+                  <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
+                  <Input id="techName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., John Doe" required />
                 </div>
-            </div>
+                <div>
+                  <Label htmlFor="techEmail"><Mail className="inline h-3.5 w-3.5 mr-1" />Email</Label>
+                  <Input id="techEmail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g., john.doe@example.com" />
+                </div>
+                <div>
+                  <Label htmlFor="techPhone"><Phone className="inline h-3.5 w-3.5 mr-1" />Phone</Label>
+                  <Input id="techPhone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 555-123-4567" />
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
+                      <ScrollArea className="h-40 rounded-md border p-3 mt-1">
+                        <div className="space-y-2">
+                          {allSkills.map(skill => (
+                            <div key={skill} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`skill-${skill.replace(/\s+/g, '-')}`}
+                                checked={selectedSkills.includes(skill)}
+                                onCheckedChange={() => handleSkillChange(skill)}
+                              />
+                              <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                                {skill}
+                              </Label>
+                            </div>
+                          ))}
+                          {allSkills.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                </div>
 
-            <div>
-              <Label htmlFor="techLocationAddress"><MapPin className="inline h-3.5 w-3.5 mr-1" />Location (Address) *</Label>
-              <AddressAutocompleteInput 
-                  value={locationAddress}
-                  onValueChange={setLocationAddress}
-                  onLocationSelect={handleLocationSelect}
-                  placeholder="Start typing technician base address..."
-                  required
-              />
-            </div>
-            <div className="flex items-center space-x-2 pt-1">
-              <Switch id="techIsAvailable" checked={isAvailable} onCheckedChange={setIsAvailable} />
-              <Label htmlFor="techIsAvailable">Is Available</Label>
-            </div>
-          </div>
-          </ScrollArea>
-        </form>
-        <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
+                <div>
+                  <Label htmlFor="techLocationAddress"><MapPin className="inline h-3.5 w-3.5 mr-1" />Location (Address) *</Label>
+                  <AddressAutocompleteInput 
+                      value={locationAddress}
+                      onValueChange={setLocationAddress}
+                      onLocationSelect={handleLocationSelect}
+                      placeholder="Start typing technician base address..."
+                      required
+                  />
+                </div>
+                <div className="flex items-center space-x-2 pt-1">
+                  <Switch id="techIsAvailable" checked={isAvailable} onCheckedChange={setIsAvailable} />
+                  <Label htmlFor="techIsAvailable">Is Available</Label>
+                </div>
+            </form>
+        </div>
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-col sm:flex-row sm:justify-between items-center gap-2">
             <div>
                 {technician && technician.id !== ownerId && (
                     <AlertDialog>

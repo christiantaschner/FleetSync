@@ -84,6 +84,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
+  const [manualTechnicianId, setManualTechnicianId] = useState<string>('');
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
@@ -103,6 +104,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLatitude(job?.location.latitude || null);
     setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
+    setManualTechnicianId(job?.assignedTechnicianId || '');
     setAiSuggestion(null);
     setAiPrioritySuggestion(null);
     setScheduleSuggestions(null);
@@ -377,30 +379,52 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       if (job) { // EDITING A JOB
         const batch = writeBatch(db);
         const jobDocRef = doc(db, "jobs", job.id);
+        const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
 
-        const originalStatus = job.status;
-        const newStatus = status;
+        const technicianHasChanged = manualTechnicianId !== (job.assignedTechnicianId || '');
+        
+        if (technicianHasChanged) {
+            if (!manualTechnicianId) { // Un-assigning
+                updatePayload.assignedTechnicianId = null;
+                updatePayload.status = 'Pending';
+                if(job.assignedTechnicianId) {
+                    const oldTechDocRef = doc(db, "technicians", job.assignedTechnicianId);
+                    batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
+                }
+            } else { // Assigning or Re-assigning
+                updatePayload.assignedTechnicianId = manualTechnicianId;
+                updatePayload.status = 'Assigned';
+                updatePayload.assignedAt = serverTimestamp();
+                
+                const newTechDocRef = doc(db, "technicians", manualTechnicianId);
+                batch.update(newTechDocRef, { isAvailable: false, currentJobId: job.id });
+                
+                if (job.assignedTechnicianId) {
+                    const oldTechDocRef = doc(db, "technicians", job.assignedTechnicianId);
+                    batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
+                }
+            }
+        } else {
+            // No technician change, just respect the status dropdown from the UI
+            updatePayload.status = status;
+        }
 
-        const updatePayload: any = { ...jobData, status: newStatus, updatedAt: serverTimestamp() };
-        batch.update(jobDocRef, updatePayload);
+        const finalStatus = updatePayload.status || job.status;
+        const wasCompletedOrCancelled = job.status === 'Completed' || job.status === 'Cancelled';
+        const isNowCompletedOrCancelled = finalStatus === 'Completed' || finalStatus === 'Cancelled';
         
-        const isNowCompletedOrCancelled = newStatus === 'Completed' || newStatus === 'Cancelled';
-        const wasInProgress = !['Completed', 'Cancelled'].includes(originalStatus);
-        const technicianIdToUpdate = job.assignedTechnicianId;
-        
-        if (isNowCompletedOrCancelled && wasInProgress && technicianIdToUpdate) {
-            const techDocRef = doc(db, "technicians", technicianIdToUpdate);
-            batch.update(techDocRef, {
-                isAvailable: true,
-                currentJobId: null
-            });
+        if (!wasCompletedOrCancelled && isNowCompletedOrCancelled && job.assignedTechnicianId) {
+            const techToFree = job.assignedTechnicianId;
+            const techDocRef = doc(db, "technicians", techToFree);
+            batch.update(techDocRef, { isAvailable: true, currentJobId: null });
         }
         
+        batch.update(jobDocRef, updatePayload);
         await batch.commit();
 
         finalJobDataForCallback = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJobDataForCallback.title}" has been updated.` });
-        onJobAddedOrUpdated?.(finalJobDataForCallback, null);
+        onJobAddedOrUpdated?.(finalJobDataForCallback, manualTechnicianId || null);
 
       } else { // CREATING A NEW JOB
         const techToAssign = assignTechId ? technicians.find(t => t.id === assignTechId) : null;
@@ -539,16 +563,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   )}
                 </div>
                  {job && (
-                    <div>
-                        <Label htmlFor="jobStatus">Status</Label>
-                        <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}>
-                            <SelectTrigger id="jobStatus">
-                                <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {ALL_JOB_STATUSES.filter(s => s !== 'Draft').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                     <div className="grid grid-cols-1 gap-4">
+                        <div>
+                            <Label htmlFor="jobStatus">Status</Label>
+                            <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
+                                disabled={manualTechnicianId !== (job.assignedTechnicianId || '')}
+                            >
+                                <SelectTrigger id="jobStatus">
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ALL_JOB_STATUSES.filter(s => s !== 'Draft').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                  )}
               </div>
@@ -653,6 +681,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </div>
                     )}
                 </div>
+            )}
+            {job && (
+                 <div>
+                    <Label htmlFor="assign-technician">Assigned Technician</Label>
+                    <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
+                        <SelectTrigger id="assign-technician">
+                            <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">-- Unassigned --</SelectItem>
+                            {technicians.map(tech => (
+                                <SelectItem key={tech.id} value={tech.id}>
+                                    {tech.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
             )}
             </div>
 

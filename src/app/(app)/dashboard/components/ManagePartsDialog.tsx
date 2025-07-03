@@ -130,7 +130,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2"><Package /> Manage Parts Library</DialogTitle>
           <DialogDescription>
@@ -138,58 +138,60 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleAddPart} className="flex items-center gap-2 py-2">
-            <Label htmlFor="new-part-name" className="sr-only">New Part Name</Label>
-            <Input 
-                id="new-part-name"
-                value={newPartName}
-                onChange={(e) => setNewPartName(e.target.value)}
-                placeholder="e.g., Compressor"
-                disabled={isSubmitting}
-            />
-            <Button type="submit" size="icon" disabled={isSubmitting || !newPartName.trim()}>
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                <span className="sr-only">Add Part</span>
-            </Button>
-        </form>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <form onSubmit={handleAddPart} className="flex items-center gap-2 py-2 flex-shrink-0">
+              <Label htmlFor="new-part-name" className="sr-only">New Part Name</Label>
+              <Input 
+                  id="new-part-name"
+                  value={newPartName}
+                  onChange={(e) => setNewPartName(e.target.value)}
+                  placeholder="e.g., Compressor"
+                  disabled={isSubmitting}
+              />
+              <Button type="submit" size="icon" disabled={isSubmitting || !newPartName.trim()}>
+                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                  <span className="sr-only">Add Part</span>
+              </Button>
+          </form>
 
-        <h3 className="text-sm font-medium text-muted-foreground pt-2">Existing Parts</h3>
-        <ScrollArea className="h-60 rounded-md border">
-            <div className="p-2">
-                {isLoading ? (
-                    <div className="flex items-center justify-center p-4">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                    </div>
-                ) : parts.length > 0 ? (
-                    parts.map(part => (
-                        <div key={part.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
-                            <span className="text-sm">{part.name}</span>
-                            <Button 
-                                variant="ghost" 
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeletePart(part.id)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete {part.name}</span>
-                            </Button>
-                        </div>
-                    ))
-                ) : isLibraryEmpty ? (
-                    <div className="text-center p-4">
-                        <p className="text-sm text-muted-foreground">Your parts library is empty.</p>
-                        <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedParts} disabled={isSubmitting}>
-                           {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
-                           Seed with Common Parts
-                        </Button>
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center p-4">No parts in the library. Add one above.</p>
-                )}
-            </div>
-        </ScrollArea>
+          <h3 className="text-sm font-medium text-muted-foreground pt-2 flex-shrink-0">Existing Parts</h3>
+          <ScrollArea className="flex-1 rounded-md border mt-2">
+              <div className="p-2">
+                  {isLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                      </div>
+                  ) : parts.length > 0 ? (
+                      parts.map(part => (
+                          <div key={part.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
+                              <span className="text-sm">{part.name}</span>
+                              <Button 
+                                  variant="ghost" 
+                                  size="icon"
+                                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleDeletePart(part.id)}
+                              >
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Delete {part.name}</span>
+                              </Button>
+                          </div>
+                      ))
+                  ) : isLibraryEmpty ? (
+                      <div className="text-center p-4">
+                          <p className="text-sm text-muted-foreground">Your parts library is empty.</p>
+                          <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedParts} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                            Seed with Common Parts
+                          </Button>
+                      </div>
+                  ) : (
+                      <p className="text-sm text-muted-foreground text-center p-4">No parts in the library. Add one above.</p>
+                  )}
+              </div>
+          </ScrollArea>
+        </div>
 
-        <DialogFooter className="sm:justify-start mt-4">
+        <DialogFooter className="sm:justify-start mt-4 flex-shrink-0">
           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>

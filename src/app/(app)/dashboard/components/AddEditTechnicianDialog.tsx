@@ -173,16 +173,16 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90vh]">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="font-headline">{technician ? 'Edit Technician Details' : 'Add New Technician'}</DialogTitle>
           <DialogDescription>
             {technician ? 'Update the details for this technician.' : 'Fill in the details for the new technician.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} className="space-y-3 py-2">
-         <ScrollArea className="max-h-[calc(70vh-50px)]">
-          <div className="space-y-3 px-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} className="flex-1 flex flex-col overflow-hidden">
+         <ScrollArea className="flex-1 px-6">
+          <div className="space-y-3 py-4">
             <div>
               <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
               <Input id="techName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., John Doe" required />
@@ -238,7 +238,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
           </div>
           </ScrollArea>
           
-          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-4 pt-4 border-t gap-2">
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-auto pt-4 border-t gap-2 px-6 pb-6">
             <div>
                 {technician && technician.id !== ownerId && (
                     <AlertDialog>

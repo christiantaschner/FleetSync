@@ -178,99 +178,102 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
         setIsOpen(open);
         if(!open) resetState();
     }}>
-      <DialogContent className="sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh]">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="font-headline flex items-center gap-2"><FileSpreadsheet /> Import Jobs from CSV</DialogTitle>
           <DialogDescription>
             Upload a CSV file to batch-create pending jobs. Download the template for the required format.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            <div className="space-y-2">
-                <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700">
-                    Upload CSV File
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md border-input">
-                    <div className="space-y-1 text-center">
-                        <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <div className="flex text-sm text-muted-foreground">
-                        <label
-                            htmlFor="csv-upload"
-                            className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
-                        >
-                            <span>{file ? 'Replace file' : 'Upload a file'}</span>
-                            <input id="csv-upload" name="csv-upload" type="file" className="sr-only" accept=".csv" onChange={handleFileChange} />
-                        </label>
+        <ScrollArea className="flex-1 px-6">
+          <div className="py-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700">
+                        Upload CSV File
+                    </label>
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md border-input">
+                        <div className="space-y-1 text-center">
+                            <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <div className="flex text-sm text-muted-foreground">
+                            <label
+                                htmlFor="csv-upload"
+                                className="relative cursor-pointer rounded-md font-medium text-primary hover:text-primary/80"
+                            >
+                                <span>{file ? 'Replace file' : 'Upload a file'}</span>
+                                <input id="csv-upload" name="csv-upload" type="file" className="sr-only" accept=".csv" onChange={handleFileChange} />
+                            </label>
+                            </div>
+                            <p className="text-xs text-muted-foreground">{file ? file.name : 'CSV files up to 5MB'}</p>
                         </div>
-                        <p className="text-xs text-muted-foreground">{file ? file.name : 'CSV files up to 5MB'}</p>
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <p className="block text-sm font-medium text-gray-700">Instructions</p>
+                    <div className="p-4 border rounded-md bg-secondary/50 h-full flex flex-col justify-center">
+                        <p className="text-sm text-muted-foreground mb-3">
+                            Ensure your CSV file matches the template's headers and format.
+                            Required fields are: <strong>title, description, priority, address</strong>.
+                        </p>
+                        <a href="/jobs_template.csv" download>
+                            <Button variant="outline" className="w-full">
+                                <Download className="mr-2 h-4 w-4" /> Download CSV Template
+                            </Button>
+                        </a>
                     </div>
                 </div>
             </div>
-             <div className="space-y-2">
-                 <p className="block text-sm font-medium text-gray-700">Instructions</p>
-                <div className="p-4 border rounded-md bg-secondary/50 h-full flex flex-col justify-center">
-                    <p className="text-sm text-muted-foreground mb-3">
-                        Ensure your CSV file matches the template's headers and format.
-                        Required fields are: <strong>title, description, priority, address</strong>.
-                    </p>
-                    <a href="/jobs_template.csv" download>
-                        <Button variant="outline" className="w-full">
-                            <Download className="mr-2 h-4 w-4" /> Download CSV Template
-                        </Button>
-                    </a>
-                </div>
-            </div>
-        </div>
 
-        {isParsing && (
-            <div className="flex items-center justify-center p-4"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Parsing file...</div>
-        )}
+            {isParsing && (
+                <div className="flex items-center justify-center p-4"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Parsing file...</div>
+            )}
 
-        {errors.length > 0 && (
-            <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Import Errors</AlertTitle>
-                <AlertDescription>
-                    <ScrollArea className="h-24">
-                        <ul className="list-disc pl-5">
-                            {errors.map((err, i) => (
-                                <li key={i}>Row {err.rowIndex}: {err.message}</li>
-                            ))}
-                        </ul>
-                    </ScrollArea>
-                </AlertDescription>
-            </Alert>
-        )}
-        
-        {parsedJobs.length > 0 && (
-          <div>
-            <h3 className="text-sm font-medium mb-2">Preview of Valid Jobs ({parsedJobs.length})</h3>
-            <ScrollArea className="h-64 border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Address</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {parsedJobs.map(({ data, rowIndex }) => (
-                    <TableRow key={rowIndex}>
-                      <TableCell>{data.title}</TableCell>
-                      <TableCell>{data.priority}</TableCell>
-                      <TableCell>{data.address}</TableCell>
+            {errors.length > 0 && (
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Import Errors</AlertTitle>
+                    <AlertDescription>
+                        <ScrollArea className="h-24">
+                            <ul className="list-disc pl-5">
+                                {errors.map((err, i) => (
+                                    <li key={i}>Row {err.rowIndex}: {err.message}</li>
+                                ))}
+                            </ul>
+                        </ScrollArea>
+                    </AlertDescription>
+                </Alert>
+            )}
+            
+            {parsedJobs.length > 0 && (
+            <div>
+                <h3 className="text-sm font-medium mb-2">Preview of Valid Jobs ({parsedJobs.length})</h3>
+                <ScrollArea className="h-64 border rounded-md">
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Priority</TableHead>
+                        <TableHead>Address</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </ScrollArea>
+                    </TableHeader>
+                    <TableBody>
+                    {parsedJobs.map(({ data, rowIndex }) => (
+                        <TableRow key={rowIndex}>
+                        <TableCell>{data.title}</TableCell>
+                        <TableCell>{data.priority}</TableCell>
+                        <TableCell>{data.address}</TableCell>
+                        </TableRow>
+                    ))}
+                    </TableBody>
+                </Table>
+                </ScrollArea>
+            </div>
+            )}
           </div>
-        )}
+        </ScrollArea>
 
-
-        <DialogFooter className="sm:justify-between items-center mt-4">
+        <DialogFooter className="sm:justify-between items-center mt-auto pt-4 border-t px-6 pb-6">
             <p className="text-sm text-muted-foreground">Ready to import: {parsedJobs.length} jobs.</p>
             <div>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="mr-2">Cancel</Button>

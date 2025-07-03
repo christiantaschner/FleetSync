@@ -101,59 +101,59 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh]">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="font-headline">Suggest Profile Changes</DialogTitle>
           <DialogDescription>
             Update your information below. Your changes will be sent to a dispatcher for approval.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh]">
-        <div className="space-y-4 py-2 px-4">
-            <div>
-                <Label htmlFor="change-name">Name</Label>
-                <Input id="change-name" value={name} onChange={(e) => setName(e.target.value)} />
+        <ScrollArea className="flex-1 px-6">
+            <div className="space-y-4 py-4">
+                <div>
+                    <Label htmlFor="change-name">Name</Label>
+                    <Input id="change-name" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div>
+                    <Label htmlFor="change-email">Email</Label>
+                    <Input id="change-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div>
+                    <Label htmlFor="change-phone">Phone</Label>
+                    <Input id="change-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </div>
+                <div>
+                    <Label className="flex items-center gap-2"><ListChecks /> Skills</Label>
+                    <ScrollArea className="h-40 rounded-md border p-3 mt-1">
+                    <div className="space-y-2">
+                        {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
+                        {allSkills.map(skill => (
+                        <div key={skill} className="flex items-center space-x-2">
+                            <Checkbox
+                            id={`skill-req-${skill.replace(/\s+/g, '-')}`}
+                            checked={selectedSkills.includes(skill)}
+                            onCheckedChange={() => handleSkillChange(skill)}
+                            />
+                            <Label htmlFor={`skill-req-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
+                            {skill}
+                            </Label>
+                        </div>
+                        ))}
+                    </div>
+                    </ScrollArea>
+                </div>
+                <div>
+                    <Label htmlFor="change-notes">Notes for Dispatcher (Optional)</Label>
+                    <Textarea 
+                        id="change-notes"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        placeholder="Use this area to request other changes not listed above."
+                    />
+                </div>
             </div>
-             <div>
-                <Label htmlFor="change-email">Email</Label>
-                <Input id="change-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-             <div>
-                <Label htmlFor="change-phone">Phone</Label>
-                <Input id="change-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-            </div>
-             <div>
-                <Label className="flex items-center gap-2"><ListChecks /> Skills</Label>
-                 <ScrollArea className="h-40 rounded-md border p-3 mt-1">
-                  <div className="space-y-2">
-                    {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
-                    {allSkills.map(skill => (
-                      <div key={skill} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`skill-req-${skill.replace(/\s+/g, '-')}`}
-                          checked={selectedSkills.includes(skill)}
-                          onCheckedChange={() => handleSkillChange(skill)}
-                        />
-                        <Label htmlFor={`skill-req-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                          {skill}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-            </div>
-            <div>
-                <Label htmlFor="change-notes">Notes for Dispatcher (Optional)</Label>
-                <Textarea 
-                    id="change-notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Use this area to request other changes not listed above."
-                />
-            </div>
-        </div>
         </ScrollArea>
-        <DialogFooter>
+        <DialogFooter className="px-6 pb-6 pt-4 border-t">
           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}

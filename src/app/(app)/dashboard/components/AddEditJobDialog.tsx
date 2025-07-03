@@ -509,15 +509,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       }
       onClose();
     }}>
-      <DialogContent className="sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh]">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
           <DialogDescription>
             {job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}}>
-        <ScrollArea className="max-h-[70vh] p-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(null);}} className="flex-1 flex flex-col overflow-hidden">
+        <ScrollArea className="flex-1 px-6">
+        <div className="py-4">
         {isEditingDraft && (
             <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
                 <FilePenLine className="h-4 w-4" />
@@ -775,11 +776,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </div>
               )}
           </div>
-
+        </div>
         </div>
         </ScrollArea>
           
-          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-4 pt-4 border-t gap-2">
+          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-auto pt-4 border-t gap-2 px-6 pb-6">
             <div>
               {job && (
                 <AlertDialog>

@@ -130,7 +130,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh]">
         <DialogHeader>
           <DialogTitle className="font-headline">Manage Skills Library</DialogTitle>
           <DialogDescription>
@@ -138,58 +138,60 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleAddSkill} className="flex items-center gap-2 py-2">
-            <Label htmlFor="new-skill-name" className="sr-only">New Skill Name</Label>
-            <Input 
-                id="new-skill-name"
-                value={newSkillName}
-                onChange={(e) => setNewSkillName(e.target.value)}
-                placeholder="e.g., HVAC Certification"
-                disabled={isSubmitting}
-            />
-            <Button type="submit" size="icon" disabled={isSubmitting || !newSkillName.trim()}>
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                <span className="sr-only">Add Skill</span>
-            </Button>
-        </form>
+        <div className="flex-1 flex flex-col overflow-hidden">
+            <form onSubmit={handleAddSkill} className="flex items-center gap-2 py-2 flex-shrink-0">
+                <Label htmlFor="new-skill-name" className="sr-only">New Skill Name</Label>
+                <Input 
+                    id="new-skill-name"
+                    value={newSkillName}
+                    onChange={(e) => setNewSkillName(e.target.value)}
+                    placeholder="e.g., HVAC Certification"
+                    disabled={isSubmitting}
+                />
+                <Button type="submit" size="icon" disabled={isSubmitting || !newSkillName.trim()}>
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                    <span className="sr-only">Add Skill</span>
+                </Button>
+            </form>
 
-        <h3 className="text-sm font-medium text-muted-foreground pt-2">Existing Skills</h3>
-        <ScrollArea className="h-60 rounded-md border">
-            <div className="p-2">
-                {isLoading ? (
-                    <div className="flex items-center justify-center p-4">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                    </div>
-                ) : skills.length > 0 ? (
-                    skills.map(skill => (
-                        <div key={skill.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
-                            <span className="text-sm">{skill.name}</span>
-                            <Button 
-                                variant="ghost" 
-                                size="icon"
-                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                onClick={() => handleDeleteSkill(skill.id)}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Delete {skill.name}</span>
+            <h3 className="text-sm font-medium text-muted-foreground pt-2 flex-shrink-0">Existing Skills</h3>
+            <ScrollArea className="flex-1 rounded-md border mt-2">
+                <div className="p-2">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        </div>
+                    ) : skills.length > 0 ? (
+                        skills.map(skill => (
+                            <div key={skill.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
+                                <span className="text-sm">{skill.name}</span>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => handleDeleteSkill(skill.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete {skill.name}</span>
+                                </Button>
+                            </div>
+                        ))
+                    ) : isLibraryEmpty ? (
+                        <div className="text-center p-4">
+                            <p className="text-sm text-muted-foreground">Your skills library is empty.</p>
+                            <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedSkills} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
+                            Seed with Common Skills
                             </Button>
                         </div>
-                    ))
-                ) : isLibraryEmpty ? (
-                    <div className="text-center p-4">
-                        <p className="text-sm text-muted-foreground">Your skills library is empty.</p>
-                        <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedSkills} disabled={isSubmitting}>
-                           {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin"/> : <Sparkles className="h-4 w-4 mr-2" />}
-                           Seed with Common Skills
-                        </Button>
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground text-center p-4">No skills in the library. Add one above.</p>
-                )}
-            </div>
-        </ScrollArea>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">No skills in the library. Add one above.</p>
+                    )}
+                </div>
+            </ScrollArea>
+        </div>
 
-        <DialogFooter className="sm:justify-start mt-4">
+        <DialogFooter className="sm:justify-start mt-4 flex-shrink-0">
           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
             <X className="mr-2 h-4 w-4" /> Close
           </Button>

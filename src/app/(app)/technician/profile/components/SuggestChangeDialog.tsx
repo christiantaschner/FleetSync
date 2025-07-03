@@ -101,14 +101,14 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh]">
-        <DialogHeader className="px-6 pt-6">
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh] p-0">
+        <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline">Suggest Profile Changes</DialogTitle>
           <DialogDescription>
             Update your information below. Your changes will be sent to a dispatcher for approval.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="flex-1 px-6">
+        <div className="flex-1 overflow-y-auto px-6">
             <div className="space-y-4 py-4">
                 <div>
                     <Label htmlFor="change-name">Name</Label>
@@ -152,8 +152,8 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
                     />
                 </div>
             </div>
-        </ScrollArea>
-        <DialogFooter className="px-6 pb-6 pt-4 border-t">
+        </div>
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}

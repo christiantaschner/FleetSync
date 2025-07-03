@@ -178,15 +178,15 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
         setIsOpen(open);
         if(!open) resetState();
     }}>
-      <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh]">
-        <DialogHeader className="px-6 pt-6">
+      <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
+        <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline flex items-center gap-2"><FileSpreadsheet /> Import Jobs from CSV</DialogTitle>
           <DialogDescription>
             Upload a CSV file to batch-create pending jobs. Download the template for the required format.
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 px-6">
+        <div className="flex-1 overflow-y-auto px-6">
           <div className="py-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -271,9 +271,9 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
             </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="sm:justify-between items-center mt-auto pt-4 border-t px-6 pb-6">
+        <DialogFooter className="sm:justify-between items-center pt-4 border-t px-6 pb-6 flex-shrink-0">
             <p className="text-sm text-muted-foreground">Ready to import: {parsedJobs.length} jobs.</p>
             <div>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="mr-2">Cancel</Button>

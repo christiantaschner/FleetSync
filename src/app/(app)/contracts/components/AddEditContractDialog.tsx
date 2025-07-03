@@ -116,14 +116,14 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90vh]">
-                <DialogHeader className="px-6 pt-6">
+            <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90dvh] p-0">
+                <DialogHeader className="px-6 pt-6 flex-shrink-0">
                     <DialogTitle className="font-headline">{contract ? 'Edit Contract' : 'Create New Contract'}</DialogTitle>
                     <DialogDescription>
                         {contract ? 'Update the details for this recurring service contract.' : 'Create a new contract template. This will be used to generate recurring jobs later.'}
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit(onSubmitForm)} className="flex-1 flex flex-col overflow-hidden">
+                <form onSubmit={handleSubmit(onSubmitForm)} className="flex-1 flex flex-col overflow-y-hidden">
                     <ScrollArea className="flex-1 px-6">
                         <div className="space-y-4 py-4">
                             <h3 className="text-lg font-semibold flex items-center gap-2"><User/>Customer Info</h3>
@@ -229,7 +229,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                             </div>
                         </div>
                     </ScrollArea>
-                    <DialogFooter className="pt-4 border-t flex-shrink-0 px-6 pb-6">
+                    <DialogFooter className="px-6 py-4 border-t flex-shrink-0">
                         <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

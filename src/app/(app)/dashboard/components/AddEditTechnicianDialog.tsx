@@ -173,14 +173,14 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90vh]">
-        <DialogHeader className="px-6 pt-6">
+      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh] p-0">
+        <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline">{technician ? 'Edit Technician Details' : 'Add New Technician'}</DialogTitle>
           <DialogDescription>
             {technician ? 'Update the details for this technician.' : 'Fill in the details for the new technician.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} className="flex-1 flex flex-col overflow-hidden">
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit();}} id="add-edit-tech-form" className="flex-1 flex flex-col overflow-y-hidden">
          <ScrollArea className="flex-1 px-6">
           <div className="space-y-3 py-4">
             <div>
@@ -237,8 +237,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             </div>
           </div>
           </ScrollArea>
-          
-          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center mt-auto pt-4 border-t gap-2 px-6 pb-6">
+        </form>
+        <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
             <div>
                 {technician && technician.id !== ownerId && (
                     <AlertDialog>
@@ -265,13 +265,12 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             </div>
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" form="add-edit-tech-form" disabled={isLoading}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {technician ? 'Save Changes' : 'Add Technician'}
                 </Button>
             </div>
           </DialogFooter>
-        </form>
       </DialogContent>
     </Dialog>
   );

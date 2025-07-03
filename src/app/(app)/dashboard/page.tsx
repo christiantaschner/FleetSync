@@ -564,7 +564,7 @@ export default function DashboardPage() {
                 const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
                 return timeA - timeB || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             default:
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                return new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime();
         }
     });
   }, [filteredJobs, sortOrder, technicians]);
@@ -688,10 +688,10 @@ export default function DashboardPage() {
     }
   };
   
-  const handleMarkTechnicianUnavailable = async (technicianId: string) => {
+  const handleMarkTechnicianUnavailable = async (technicianId: string, reason?: string, unavailableUntil?: string) => {
     if (!userProfile?.companyId) return;
     setIsHandlingUnavailability(true);
-    const result = await handleTechnicianUnavailabilityAction({ companyId: userProfile.companyId, technicianId });
+    const result = await handleTechnicianUnavailabilityAction({ companyId: userProfile.companyId, technicianId, reason, unavailableUntil });
 
     if (result.error) {
       toast({

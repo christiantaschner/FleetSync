@@ -1,8 +1,8 @@
 
 "use client";
 
-import React from 'react';
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package } from 'lucide-react';
+import React, { useState } from 'react';
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -20,17 +20,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
 
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
   onEdit: (technician: Technician) => void;
-  onMarkUnavailable: (technicianId: string) => void;
+  onMarkUnavailable: (technicianId: string, reason?: string, unavailableUntil?: string) => void;
 }
 
 const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
+  const [reason, setReason] = useState('');
+  const [unavailableUntil, setUnavailableUntil] = useState<Date | undefined>();
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
@@ -67,44 +73,55 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
           </div>
         </div>
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex justify-between items-center">
-        <div>
-          {currentJob ? (
-            <div className="flex items-center gap-2">
-              <Briefcase className="h-4 w-4 text-primary" />
-              <span>On Job: {currentJob.title}</span>
-            </div>
-          ) : (
-            <span>{technician.isAvailable ? 'Awaiting assignment' : 'Currently idle'}</span>
-          )}
+      <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex flex-col items-stretch gap-2">
+        <div className="flex items-center justify-between">
+            <p className="font-medium text-foreground">Current Job:</p>
+            <span>{currentJob ? currentJob.title : (technician.isAvailable ? 'Awaiting assignment' : 'Idle')}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="px-2 py-1 h-auto text-destructive hover:bg-destructive/10 hover:text-destructive" title="Mark unavailable and reassign jobs">
-                  <AlertOctagon className="h-3.5 w-3.5" />
-                  <span className="sr-only">Mark Unavailable</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will mark <strong>{technician.name}</strong> as unavailable and unassign all their active jobs.
-                  The system will then help you reassign these jobs. This action cannot be undone immediately from this screen.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onMarkUnavailable(technician.id)} className="bg-destructive hover:bg-destructive/90">
-                  Confirm
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-           <Button variant="ghost" size="sm" className="px-2 py-1 h-auto" onClick={() => onEdit(technician)}>
-              <Edit className="h-3.5 w-3.5" />
-              <span className="sr-only">Edit Technician</span>
+        <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="w-full">
+                      <AlertOctagon className="mr-2 h-4 w-4" />
+                      Set Unavailability
+                  </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Mark {technician.name} as Unavailable?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will unassign all their active jobs. You can provide a reason and an end date for their unavailability.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                 <div className="py-4 space-y-4">
+                    <div>
+                        <Label htmlFor="unavailability-reason">Reason (Optional)</Label>
+                        <Textarea id="unavailability-reason" value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g., On vacation, sick leave" />
+                    </div>
+                    <div>
+                        <Label>Unavailable Until (Optional)</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !unavailableUntil && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {unavailableUntil ? format(unavailableUntil, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={unavailableUntil} onSelect={setUnavailableUntil} initialFocus /></PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => { setReason(''); setUnavailableUntil(undefined); }}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onMarkUnavailable(technician.id, reason, unavailableUntil?.toISOString())}>
+                    Confirm & Unassign Jobs
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+           <Button variant="secondary" size="sm" className="w-full" onClick={() => onEdit(technician)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Profile
             </Button>
         </div>
       </CardFooter>

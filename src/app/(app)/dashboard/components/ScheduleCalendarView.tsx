@@ -251,9 +251,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="min-h-[500px]">
+      <CardContent className="min-h-[500px] p-0 sm:p-6">
         {viewMode === 'day' ? (
-        <div className="overflow-x-auto" ref={containerRef}>
+        <div className="w-full overflow-x-auto" ref={containerRef}>
           <div className="relative" style={{ minWidth: '1200px' }}>
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>

@@ -65,6 +65,8 @@ export type Technician = {
   email: string; // Email is required for a technician
   createdAt?: string;
   updatedAt?: string;
+  unavailabilityReason?: string;
+  unavailableUntil?: string;
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';

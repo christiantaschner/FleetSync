@@ -229,13 +229,15 @@ export async function predictNextAvailableTechniciansAction(
 const HandleTechnicianUnavailabilityInputSchema = z.object({
   companyId: z.string(),
   technicianId: z.string().min(1, "Technician ID is required."),
+  reason: z.string().optional(),
+  unavailableUntil: z.string().optional(),
 });
 
 export async function handleTechnicianUnavailabilityAction(
   input: z.infer<typeof HandleTechnicianUnavailabilityInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { companyId, technicianId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
+    const { companyId, technicianId, reason, unavailableUntil } = HandleTechnicianUnavailabilityInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
@@ -244,7 +246,12 @@ export async function handleTechnicianUnavailabilityAction(
     
     // 1. Mark technician as unavailable
     const techDocRef = doc(db, "technicians", technicianId);
-    batch.update(techDocRef, { isAvailable: false, currentJobId: null });
+    batch.update(techDocRef, {
+        isAvailable: false,
+        currentJobId: null,
+        unavailabilityReason: reason || null,
+        unavailableUntil: unavailableUntil || null,
+    });
 
     // 2. Find and unassign active jobs for that company
     const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];

@@ -931,7 +931,6 @@ export default function DashboardPage() {
             <TabsList className={cn("mb-4 grid w-full", isAdmin ? "grid-cols-4" : "grid-cols-3")}>
                 <TabsTrigger value="jobs">Job List</TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
-                <TabsTrigger value="overview">Overview Map</TabsTrigger>
                 {isAdmin && (
                   <TabsTrigger value="technicians" className="relative">
                     Technicians
@@ -940,6 +939,7 @@ export default function DashboardPage() {
                     )}
                   </TabsTrigger>
                 )}
+                <TabsTrigger value="overview">Overview Map</TabsTrigger>
             </TabsList>
         </div>
         <TabsContent value="jobs">
@@ -1061,33 +1061,6 @@ export default function DashboardPage() {
               busyTechniciansCount={busyTechnicians.length}
           />
         </TabsContent>
-        <TabsContent value="overview">
-          <Card>
-            <CardHeader>
-                  <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
-                  <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
-                   <div className="pt-2">
-                      <AddressAutocompleteInput
-                          value={searchAddressText}
-                          onValueChange={setSearchAddressText}
-                          onLocationSelect={handleLocationSearch}
-                          placeholder="Search for an address to view on map..."
-                      />
-                  </div>
-            </CardHeader>
-            <CardContent>
-              <MapView 
-                technicians={technicians} 
-                jobs={jobs} 
-                defaultCenter={defaultMapCenter}
-                defaultZoom={4}
-                searchedLocation={searchedLocation}
-                onJobClick={handleOpenEditJob}
-                onTechnicianClick={handleOpenEditTechnician}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
         {isAdmin && (
             <TabsContent value="technicians">
               <Card>
@@ -1147,6 +1120,33 @@ export default function DashboardPage() {
               </Card>
             </TabsContent>
         )}
+        <TabsContent value="overview">
+          <Card>
+            <CardHeader>
+                  <CardTitle className="font-headline">Technician &amp; Job Locations</CardTitle>
+                  <CardDescription>Real-time overview of ongoing operations. Use the search below to find a specific address on the map.</CardDescription>
+                   <div className="pt-2">
+                      <AddressAutocompleteInput
+                          value={searchAddressText}
+                          onValueChange={setSearchAddressText}
+                          onLocationSelect={handleLocationSearch}
+                          placeholder="Search for an address to view on map..."
+                      />
+                  </div>
+            </CardHeader>
+            <CardContent>
+              <MapView 
+                technicians={technicians} 
+                jobs={jobs} 
+                defaultCenter={defaultMapCenter}
+                defaultZoom={4}
+                searchedLocation={searchedLocation}
+                onJobClick={handleOpenEditJob}
+                onTechnicianClick={handleOpenEditTechnician}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </div>);
 }

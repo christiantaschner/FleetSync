@@ -51,8 +51,12 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
       </CardHeader>
       <CardContent className="flex-grow space-y-2 text-sm">
         <div className="flex items-start gap-2 text-muted-foreground">
-          <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-          <span>{technician.location.address || `Lat: ${technician.location.latitude.toFixed(2)}, Lon: ${technician.location.longitude.toFixed(2)}`}</span>
+          <Mail className="h-4 w-4 mt-0.5 shrink-0" />
+          <span className="truncate">{technician.email || 'No email'}</span>
+        </div>
+        <div className="flex items-start gap-2 text-muted-foreground">
+          <Phone className="h-4 w-4 mt-0.5 shrink-0" />
+          <span>{technician.phone || 'No phone'}</span>
         </div>
         
         <div className="pt-1">
@@ -76,12 +80,12 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
       <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex flex-col items-stretch gap-2">
         <div className="flex items-center justify-between">
             <p className="font-medium text-foreground">Current Job:</p>
-            <span>{currentJob ? currentJob.title : (technician.isAvailable ? 'Awaiting assignment' : 'Idle')}</span>
+            <span className="truncate ml-2">{currentJob ? currentJob.title : (technician.isAvailable ? 'Awaiting assignment' : 'Idle')}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="w-full">
+                  <Button variant="destructive" size="sm" className="flex-1">
                       <AlertOctagon className="mr-2 h-4 w-4" />
                       Set Unavailability
                   </Button>
@@ -119,7 +123,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-           <Button variant="secondary" size="sm" className="w-full" onClick={() => onEdit(technician)}>
+           <Button variant="secondary" size="sm" className="flex-1" onClick={() => onEdit(technician)}>
               <Edit className="mr-2 h-4 w-4" />
               Edit Profile
             </Button>

@@ -93,8 +93,8 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
     setIsLoading(true); 
     try {
       await deleteDoc(doc(db, "parts", partId));
+      setParts(prevParts => prevParts.filter(part => part.id !== partId));
       toast({ title: "Success", description: "Part deleted."});
-      await fetchParts(); 
       onPartsUpdated(); 
     } catch (error) {
       console.error("Error deleting part: ", error);

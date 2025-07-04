@@ -94,8 +94,8 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     setIsLoading(true); 
     try {
       await deleteDoc(doc(db, "skills", skillId));
+      setSkills(prevSkills => prevSkills.filter(skill => skill.id !== skillId));
       toast({ title: "Success", description: "Skill deleted."});
-      await fetchSkills(); 
       onSkillsUpdated(); 
     } catch (error) {
       console.error("Error deleting skill: ", error);

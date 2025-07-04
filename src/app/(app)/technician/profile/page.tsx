@@ -116,9 +116,11 @@ export default function TechnicianProfilePage() {
     const companyId = technician.companyId;
 
     // Fetch Skills
-    const skillsQuery = query(collection(db, "skills"), where("companyId", "==", companyId), orderBy("name"));
+    const skillsQuery = query(collection(db, "skills"), where("companyId", "==", companyId));
     const unsubscribeSkills = onSnapshot(skillsQuery, (snapshot) => {
-        setAllSkills(snapshot.docs.map(doc => doc.data().name as string));
+        const skillsData = snapshot.docs.map(doc => doc.data().name as string);
+        skillsData.sort((a,b) => a.localeCompare(b));
+        setAllSkills(skillsData);
     });
 
     // Fetch Change Requests
@@ -279,7 +281,7 @@ export default function TechnicianProfilePage() {
                                     <TableRow key={job.id}>
                                         <TableCell>
                                             <p className="font-medium truncate max-w-xs">{job.title}</p>
-                                            <p className="text-xs text-muted-foreground">{format(new Date(job.completedAt!), 'PP')}</p>
+                                            <p className="text-xs text-muted-foreground">{job.completedAt ? format(new Date(job.completedAt), 'PP') : ''}</p>
                                         </TableCell>
                                         <TableCell className="text-right">{durations.travelTime}</TableCell>
                                         <TableCell className="text-right">{durations.workTime}</TableCell>

@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, writeBatch, where } from 'firebase/firestore';
-import { Loader2, PlusCircle, Trash2, X, Sparkles } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { useAuth } from '@/contexts/auth-context';
@@ -45,9 +45,10 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     if (!db || !userProfile?.companyId) return;
     setIsLoading(true);
     try {
-      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId), orderBy("name"));
+      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
+      skillsData.sort((a, b) => a.name.localeCompare(b.name));
       setSkills(skillsData);
       setIsLibraryEmpty(skillsData.length === 0);
     } catch (error) {
@@ -89,7 +90,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   };
 
   const handleDeleteSkill = async (skillId: string) => {
-    if (!db) return;
+    if (!db || !userProfile?.companyId) return;
     setIsLoading(true); 
     try {
       await deleteDoc(doc(db, "skills", skillId));
@@ -132,7 +133,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh] p-0">
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
-          <DialogTitle className="font-headline">Manage Skills Library</DialogTitle>
+          <DialogTitle className="font-headline flex items-center gap-2"><Settings className="h-5 w-5" /> Manage Skills Library</DialogTitle>
           <DialogDescription>
             Add or remove skills available for assignment to technicians.
           </DialogDescription>

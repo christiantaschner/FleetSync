@@ -24,12 +24,13 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: SuggestJobSkillsInputSchema},
     output: {schema: SuggestJobSkillsOutputSchema},
-    prompt: `You are an expert at analyzing job descriptions to determine the necessary skills.
+    prompt: `You are an expert at analyzing job titles and descriptions to determine the necessary skills.
     
-    Based on the job description below, identify the skills required to complete the job.
+    Based on the job title and description below, identify the skills required to complete the job.
     
     You MUST only choose from the following list of available skills. Do not invent new skills.
     
+    {{#if jobTitle}}Job Title: {{{jobTitle}}}{{/if}}
     Job Description: {{{jobDescription}}}
     
     Available Skills:

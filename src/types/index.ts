@@ -366,6 +366,7 @@ export type PredictNextAvailableTechniciansOutput = z.infer<typeof PredictNextAv
 
 
 export const SuggestJobSkillsInputSchema = z.object({
+  jobTitle: z.string().optional().describe('The title of the job.'),
   jobDescription: z.string().describe('The description of the job.'),
   availableSkills: z.array(z.string()).describe('The list of all possible skills in the system.'),
 });

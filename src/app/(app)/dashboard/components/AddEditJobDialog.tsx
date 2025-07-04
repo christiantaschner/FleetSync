@@ -175,7 +175,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setCustomerSuggestions([]);
   };
 
-  const fetchAISkillSuggestion = useCallback(async (currentDescription: string) => {
+  const fetchAISkillSuggestion = useCallback(async (currentTitle: string, currentDescription: string) => {
     if (!currentDescription.trim() || allSkills.length === 0) {
       toast({
         title: "Cannot Suggest Skills",
@@ -187,6 +187,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingSkillSuggestion(true);
     setSkillSuggestionReasoning(null);
     const input: SuggestJobSkillsActionInput = {
+      jobTitle: currentTitle,
       jobDescription: currentDescription,
       availableSkills: allSkills,
     };
@@ -293,15 +294,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
 
   useEffect(() => {
-    // Only fetch AI assignment suggestions automatically when we have enough info
-    if (isOpen && !job && description.trim() && priority && locationAddress.trim() && latitude !== null && longitude !== null) {
+    if (isOpen && !job && title.trim() && description.trim() && locationAddress.trim() && latitude !== null && longitude !== null) {
       const timer = setTimeout(() => {
         fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
         fetchScheduleSuggestion(priority, requiredSkills);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [description, priority, locationAddress, latitude, longitude, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion, fetchScheduleSuggestion]);
+  }, [title, description, priority, locationAddress, latitude, longitude, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion, fetchScheduleSuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -333,9 +333,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const timeValue = e.target.value;
-    if (!timeValue || !scheduledTime) return;
+    if (!timeValue) return;
+
+    const baseDate = scheduledTime || new Date();
     const [hours, minutes] = timeValue.split(':').map(Number);
-    const newDateTime = new Date(scheduledTime);
+    const newDateTime = new Date(baseDate);
     newDateTime.setHours(hours);
     newDateTime.setMinutes(minutes);
     setScheduledTime(newDateTime);
@@ -631,69 +633,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       required
                     />
                   </div>
-                  {!job && (
-                    <div>
-                      <Label htmlFor="scheduledTime">Scheduled Time (Optional)</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            id="scheduledTime"
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !scheduledTime && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {scheduledTime ? format(scheduledTime, "PPP p") : <span>Pick a date & time</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={scheduledTime}
-                            onSelect={handleDateSelect}
-                            initialFocus
-                          />
-                          <div className="p-3 border-t border-border">
-                              <Label htmlFor="time-input" className="text-sm">Time</Label>
-                              <Input
-                                  id="time-input"
-                                  type="time"
-                                  onChange={handleTimeChange}
-                                  value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                                  disabled={!scheduledTime}
-                              />
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      {isFetchingScheduleSuggestion && (
-                        <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
-                          <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is suggesting a time...
-                        </div>
-                      )}
-                      {!isFetchingScheduleSuggestion && scheduleSuggestions && scheduleSuggestions.length > 0 && !job && (
-                        <div className="space-y-1 mt-2">
-                          <Label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><Lightbulb className="h-3 w-3 text-primary" />AI Time Suggestions</Label>
-                          <Select onValueChange={(value) => setScheduledTime(new Date(value))}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a suggested time..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {scheduleSuggestions.map((suggestion, index) => (
-                                <SelectItem key={index} value={suggestion.time}>
-                                  <div className="flex flex-col text-left">
-                                    <span className="font-semibold">{format(new Date(suggestion.time), "EEE, PPP 'at' p")}</span>
-                                    <span className="text-xs text-muted-foreground">{suggestion.reasoning}</span>
-                                  </div>
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                  )}
                   {job && (
                     <div>
                       <Label htmlFor="assign-technician">Assigned Technician</Label>
@@ -725,7 +664,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => fetchAISkillSuggestion(description)}
+                                onClick={() => fetchAISkillSuggestion(title, description)}
                                 disabled={isFetchingSkillSuggestion || !description.trim()}
                             >
                                 {isFetchingSkillSuggestion ? (
@@ -778,32 +717,84 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     </ScrollArea>
                   </div>
                   {userProfile?.role !== 'csr' && !job && (
-                    <div className="p-3 my-2 border rounded-md bg-secondary/50">
+                    <div className="space-y-4">
                       {isFetchingAISuggestion && (
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          <span>AI is finding the best technician...</span>
+                        <Alert>
+                           <Loader2 className="h-4 w-4 animate-spin"/>
+                           <AlertTitle>Finding Technician</AlertTitle>
+                           <AlertDescription>AI is finding the best technician...</AlertDescription>
+                        </Alert>
+                      )}
+                      {!isFetchingAISuggestion && aiSuggestion && (
+                         <Alert className="border-primary/50 bg-primary/5">
+                           <Sparkles className="h-4 w-4 text-primary" />
+                           <AlertTitle className="text-primary font-semibold">AI Technician Suggestion</AlertTitle>
+                           <AlertDescription>
+                             {aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails ? (
+                                <>
+                                  Assign to: <strong>{suggestedTechnicianDetails.name}</strong>
+                                  <p className="text-xs text-primary/80 mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
+                                </>
+                             ) : (
+                                <>
+                                  Could not find a suitable technician.
+                                  <p className="text-xs text-primary/80 mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
+                                </>
+                             )}
+                           </AlertDescription>
+                         </Alert>
+                      )}
+                      
+                      <div>
+                        <Label>Schedule Time</Label>
+                        <div className="flex gap-2">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                id="scheduledTime"
+                                variant={"outline"}
+                                className={cn(
+                                  "flex-1 justify-start text-left font-normal",
+                                  !scheduledTime && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                              <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
+                            </PopoverContent>
+                          </Popover>
+                          <Input
+                              type="time"
+                              onChange={handleTimeChange}
+                              value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                              className="w-32"
+                          />
                         </div>
-                      )}
-                      {!isFetchingAISuggestion && aiSuggestion && aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
-                          <p className="text-sm">
-                            Assign to: <strong>{suggestedTechnicianDetails.name}</strong> ({suggestedTechnicianDetails.isAvailable ? "Available" : "Unavailable"}, Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'})
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
-                        </div>
-                      )}
-                      {!isFetchingAISuggestion && aiSuggestion && !aiSuggestion.suggestedTechnicianId && (
-                        <div>
-                          <h4 className="text-sm font-semibold mb-1 flex items-center"><Sparkles className="h-4 w-4 mr-1 text-primary" /> AI Suggestion:</h4>
-                          <p className="text-sm text-muted-foreground">Could not find a suitable technician.</p>
-                          <p className="text-xs text-muted-foreground mt-1">Reason: {aiSuggestion.reasoning}</p>
-                        </div>
-                      )}
-                      {!isFetchingAISuggestion && !aiSuggestion && (
-                        <p className="text-sm text-muted-foreground">Enter job details and a valid address for an AI assignment suggestion.</p>
-                      )}
+                        {isFetchingScheduleSuggestion && (
+                            <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
+                            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is suggesting optimal times...
+                            </div>
+                        )}
+                        {!isFetchingScheduleSuggestion && scheduleSuggestions && scheduleSuggestions.length > 0 && (
+                            <div className="space-y-1 mt-2">
+                                <Select onValueChange={(value) => setScheduledTime(new Date(value))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Or select an AI suggested time..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {scheduleSuggestions.map((suggestion, index) => (
+                                    <SelectItem key={index} value={suggestion.time}>
+                                        {format(new Date(suggestion.time), "EEE, PPP 'at' p")}
+                                    </SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

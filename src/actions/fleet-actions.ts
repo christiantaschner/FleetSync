@@ -975,13 +975,14 @@ const DeleteSkillInputSchema = z.object({
   skillId: z.string().min(1, "Skill ID is required."),
   skillName: z.string().min(1, "Skill name is required."),
   companyId: z.string().min(1, "Company ID is required."),
+  appId: z.string().min(1, "App ID is required."),
 });
 
 export async function deleteSkillAction(
   input: z.infer<typeof DeleteSkillInputSchema>
 ): Promise<{ error: string | null }> {
     try {
-        const { skillId, skillName, companyId } = DeleteSkillInputSchema.parse(input);
+        const { skillId, skillName, companyId, appId } = DeleteSkillInputSchema.parse(input);
         if (!db) {
             throw new Error("Firestore not initialized");
         }
@@ -989,7 +990,7 @@ export async function deleteSkillAction(
         const batch = writeBatch(db);
 
         // Find all technicians with this skill
-        const techniciansRef = collection(db, "technicians");
+        const techniciansRef = collection(db, `artifacts/${appId}/public/data/technicians`);
         const q = query(techniciansRef, where("companyId", "==", companyId), where("skills", "array-contains", skillName));
         const querySnapshot = await getDocs(q);
 
@@ -1001,11 +1002,12 @@ export async function deleteSkillAction(
         });
 
         // Delete the skill from the skills library
-        const skillDocRef = doc(db, "skills", skillId);
+        const skillDocRef = doc(db, `artifacts/${appId}/public/data/skills`, skillId);
         const skillSnap = await getDoc(skillDocRef);
         if (skillSnap.exists() && skillSnap.data().companyId === companyId) {
              batch.delete(skillDocRef);
         } else {
+            // This case should ideally not be hit if called from a trusted client, but it's good practice.
             throw new Error("Skill not found or you do not have permission to delete it.");
         }
         
@@ -1015,6 +1017,9 @@ export async function deleteSkillAction(
 
     } catch(e) {
         console.error("Error deleting skill:", e);
+        if (e instanceof Error && e.message.includes('permission-denied')) {
+            return { error: 'Failed to delete skill. Missing or insufficient permissions.' };
+        }
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         return { error: `Failed to delete skill. ${errorMessage}` };
     }

@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, doc, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, doc, where, writeBatch } from 'firebase/firestore';
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
@@ -44,9 +44,16 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   const fetchSkills = useCallback(async () => {
     if (!db || !userProfile?.companyId) return;
+    
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "Cannot fetch skills library.", variant: "destructive"});
+        return;
+    }
+
     setIsLoading(true);
     try {
-      const skillsQuery = query(collection(db, "skills"), where("companyId", "==", userProfile.companyId));
+      const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", userProfile.companyId));
       const querySnapshot = await getDocs(skillsQuery);
       const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
       skillsData.sort((a, b) => a.name.localeCompare(b.name));
@@ -70,6 +77,12 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     e.preventDefault();
     if (!newSkillName.trim() || !db || !userProfile?.companyId) return;
     
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "Cannot add skill.", variant: "destructive"});
+        return;
+    }
+
     if (skills.some(skill => skill.name.toLowerCase() === newSkillName.trim().toLowerCase())) {
         toast({ title: "Duplicate Skill", description: "This skill already exists.", variant: "destructive"});
         return;
@@ -77,7 +90,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, "skills"), { name: newSkillName.trim(), companyId: userProfile.companyId });
+      await addDoc(collection(db, `artifacts/${appId}/public/data/skills`), { name: newSkillName.trim(), companyId: userProfile.companyId });
       setNewSkillName('');
       toast({ title: "Success", description: `Skill "${newSkillName.trim()}" added.`});
       await fetchSkills(); 
@@ -93,6 +106,12 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   const handleDeleteSkill = async (skillId: string, skillName: string) => {
     if (!userProfile?.companyId) return;
 
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "Cannot delete skill.", variant: "destructive"});
+        return;
+    }
+
     // Optimistic UI update: Remove the skill from the local state immediately.
     const originalSkills = [...skills];
     setSkills(prev => prev.filter(s => s.id !== skillId));
@@ -101,6 +120,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
       skillId,
       skillName,
       companyId: userProfile.companyId,
+      appId,
     });
 
     if (result.error) {
@@ -124,10 +144,17 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   const handleSeedSkills = async () => {
     if (!db || !userProfile?.companyId) return;
+
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "Cannot seed skills.", variant: "destructive"});
+        return;
+    }
+
     setIsSubmitting(true);
     try {
         const batch = writeBatch(db);
-        const skillsCollectionRef = collection(db, "skills");
+        const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
         
         PREDEFINED_SKILLS.forEach(skillName => {
             const docRef = doc(skillsCollectionRef);

@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Job } from '@/types';
 import { generateTrackingLinkAction } from '@/actions/fleet-actions';
 import { Loader2, Copy, Link as LinkIcon, RefreshCw, Check } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 interface ShareTrackingDialogProps {
   isOpen: boolean;
@@ -25,17 +26,22 @@ interface ShareTrackingDialogProps {
 }
 
 const ShareTrackingDialog: React.FC<ShareTrackingDialogProps> = ({ isOpen, setIsOpen, job }) => {
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [trackingUrl, setTrackingUrl] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   
   const generateLink = async (currentJob: Job) => {
+    if (!userProfile?.companyId) {
+        toast({ title: "Error", description: "Company information not available.", variant: "destructive"});
+        return;
+    }
     setIsLoading(true);
     setTrackingUrl('');
     setIsCopied(false);
 
-    const result = await generateTrackingLinkAction({ jobId: currentJob.id });
+    const result = await generateTrackingLinkAction({ jobId: currentJob.id, companyId: userProfile.companyId });
     setIsLoading(false);
 
     if (result.error) {

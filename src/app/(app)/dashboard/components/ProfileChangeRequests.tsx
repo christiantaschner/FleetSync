@@ -17,6 +17,7 @@ import { Check, X, Loader2, UserCog, History, ListChecks } from 'lucide-react';
 import { approveProfileChangeRequestAction, rejectProfileChangeRequestAction } from '@/actions/fleet-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/auth-context';
 
 interface ProfileChangeRequestsProps {
   requests: ProfileChangeRequest[];
@@ -24,6 +25,7 @@ interface ProfileChangeRequestsProps {
 }
 
 const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests, onAction }) => {
+  const { userProfile } = useAuth();
   const { toast } = useToast();
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
@@ -36,9 +38,11 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
   };
 
   const handleApprove = async (request: ProfileChangeRequest) => {
+    if (!userProfile?.companyId) return;
     setProcessingId(request.id);
     
     const result = await approveProfileChangeRequestAction({
+      companyId: userProfile.companyId,
       requestId: request.id,
       technicianId: request.technicianId,
       // Pass the original requested changes for approval
@@ -56,9 +60,11 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
   };
 
   const handleReject = async (requestId: string) => {
+    if (!userProfile?.companyId) return;
     setProcessingId(requestId);
 
-    const result = await rejectProfileChangeRequestAction({ 
+    const result = await rejectProfileChangeRequestAction({
+        companyId: userProfile.companyId,
         requestId, 
         reviewNotes: reviewNotes[requestId] || '' 
     });

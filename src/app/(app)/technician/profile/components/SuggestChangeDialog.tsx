@@ -31,7 +31,7 @@ interface SuggestChangeDialogProps {
 }
 
 const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIsOpen, technician, allSkills }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(technician.name);
@@ -60,8 +60,8 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
 
   const handleSubmit = async () => {
-    if (!user) {
-        toast({ title: "Not Authenticated", description: "You must be logged in to submit a change.", variant: "destructive" });
+    if (!user || !userProfile?.companyId) {
+        toast({ title: "Not Authenticated", description: "You must be logged in and part of a company to submit a change.", variant: "destructive" });
         return;
     }
 
@@ -83,7 +83,7 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
     setIsSubmitting(true);
     const result = await requestProfileChangeAction({
-        companyId: technician.companyId,
+        companyId: userProfile.companyId,
         technicianId: technician.id,
         technicianName: technician.name,
         requestedChanges,

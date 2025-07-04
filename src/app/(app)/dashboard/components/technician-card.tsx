@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/auth-context';
 
 interface TechnicianCardProps {
   technician: Technician;
@@ -34,9 +35,16 @@ interface TechnicianCardProps {
 }
 
 const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
+  const { userProfile } = useAuth();
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
   const [reason, setReason] = useState('');
   const [unavailableUntil, setUnavailableUntil] = useState<Date | undefined>();
+
+  const handleMarkUnavailable = () => {
+    if (userProfile?.companyId) {
+      onMarkUnavailable(technician.id, reason, unavailableUntil?.toISOString());
+    }
+  };
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
@@ -113,7 +121,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 </div>
                 <AlertDialogFooter>
                   <AlertDialogCancel onClick={() => { setReason(''); setUnavailableUntil(undefined); }}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onMarkUnavailable(technician.id, reason, unavailableUntil?.toISOString())}>
+                  <AlertDialogAction onClick={handleMarkUnavailable}>
                     Confirm & Unassign Jobs
                   </AlertDialogAction>
                 </AlertDialogFooter>

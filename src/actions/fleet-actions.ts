@@ -246,6 +246,11 @@ export async function handleTechnicianUnavailabilityAction(
     
     // 1. Mark technician as unavailable
     const techDocRef = doc(db, "technicians", technicianId);
+    const techSnap = await getDoc(techDocRef);
+    if (!techSnap.exists() || techSnap.data().companyId !== companyId) {
+        return { error: "Technician not found or does not belong to your company." };
+    }
+
     batch.update(techDocRef, {
         isAvailable: false,
         currentJobId: null,
@@ -286,6 +291,7 @@ export async function handleTechnicianUnavailabilityAction(
 
 
 const ConfirmOptimizedRouteInputSchema = z.object({
+  companyId: z.string(),
   technicianId: z.string().min(1, "Technician ID is required."),
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
   jobsNotInRoute: z.array(z.string()).describe("A list of job IDs that were assigned to the tech but not included in this optimization, to have their routeOrder cleared."),
@@ -295,12 +301,22 @@ export async function confirmOptimizedRouteAction(
   input: z.infer<typeof ConfirmOptimizedRouteInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { optimizedRoute, jobsNotInRoute } = ConfirmOptimizedRouteInputSchema.parse(input);
+    const { companyId, optimizedRoute, jobsNotInRoute } = ConfirmOptimizedRouteInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
 
     const batch = writeBatch(db);
+
+    // Verify all jobs belong to the company before updating
+    const allJobIds = [...optimizedRoute.map(step => step.taskId), ...jobsNotInRoute];
+    for (const jobId of allJobIds) {
+        const jobDocRef = doc(db, "jobs", jobId);
+        const jobSnap = await getDoc(jobDocRef);
+        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+            return { error: `Job ${jobId} not found or does not belong to your company.` };
+        }
+    }
 
     // Set new route order for optimized jobs
     optimizedRoute.forEach((step, index) => {
@@ -332,12 +348,22 @@ export async function confirmManualRescheduleAction(
   input: z.infer<typeof ConfirmManualRescheduleInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { movedJobId, newScheduledTime, optimizedRoute } = ConfirmManualRescheduleInputSchema.parse(input);
+    const { companyId, movedJobId, newScheduledTime, optimizedRoute } = ConfirmManualRescheduleInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
 
     const batch = writeBatch(db);
+
+    // Verify all jobs belong to the company
+    const allJobIds = [movedJobId, ...optimizedRoute.map(step => step.taskId)];
+     for (const jobId of allJobIds) {
+        const jobDocRef = doc(db, "jobs", jobId);
+        const jobSnap = await getDoc(jobDocRef);
+        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+            return { error: `Job ${jobId} not found or does not belong to your company.` };
+        }
+    }
 
     // Update the moved job with its new time
     const movedJobRef = doc(db, "jobs", movedJobId);
@@ -416,9 +442,15 @@ export async function approveProfileChangeRequestAction(
   input: z.infer<typeof ApproveProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { requestId, technicianId, approvedChanges, reviewNotes } = ApproveProfileChangeRequestInputSchema.parse(input);
+    const { companyId, requestId, technicianId, approvedChanges, reviewNotes } = ApproveProfileChangeRequestInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
+    }
+
+    const requestDocRef = doc(db, "profileChangeRequests", requestId);
+    const requestSnap = await getDoc(requestDocRef);
+    if (!requestSnap.exists() || requestSnap.data().companyId !== companyId) {
+        return { error: "Request not found or you do not have permission to modify it." };
     }
     
     const batch = writeBatch(db);
@@ -433,7 +465,6 @@ export async function approveProfileChangeRequestAction(
     }
 
     // 2. Update the request's status
-    const requestDocRef = doc(db, "profileChangeRequests", requestId);
     batch.update(requestDocRef, {
       status: 'approved',
       reviewedAt: new Date().toISOString(),
@@ -458,12 +489,17 @@ export async function rejectProfileChangeRequestAction(
   input: z.infer<typeof RejectProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { requestId, reviewNotes } = RejectProfileChangeRequestInputSchema.parse(input);
+    const { companyId, requestId, reviewNotes } = RejectProfileChangeRequestInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
 
     const requestDocRef = doc(db, "profileChangeRequests", requestId);
+    const requestSnap = await getDoc(requestDocRef);
+    if (!requestSnap.exists() || requestSnap.data().companyId !== companyId) {
+        return { error: "Request not found or you do not have permission to modify it." };
+    }
+
     await updateDoc(requestDocRef, {
       status: 'rejected',
       reviewedAt: new Date().toISOString(),
@@ -750,6 +786,7 @@ export async function troubleshootEquipmentAction(
 
 const GenerateTrackingLinkInputSchema = z.object({
     jobId: z.string(),
+    companyId: z.string(),
 });
 export type GenerateTrackingLinkInput = z.infer<typeof GenerateTrackingLinkInputSchema>;
 
@@ -757,13 +794,19 @@ export async function generateTrackingLinkAction(
     input: GenerateTrackingLinkInput
 ): Promise<{ data: { trackingUrl: string } | null; error: string | null }> {
     try {
-        const { jobId } = GenerateTrackingLinkInputSchema.parse(input);
+        const { jobId, companyId } = GenerateTrackingLinkInputSchema.parse(input);
         if (!db) throw new Error("Firestore not initialized");
 
         const token = crypto.randomUUID();
         const expiresAt = addHours(new Date(), 4); // Link is valid for 4 hours
 
         const jobDocRef = doc(db, "jobs", jobId);
+        
+        const jobSnap = await getDoc(jobDocRef);
+        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+            return { data: null, error: "Job not found or you do not have permission to modify it." };
+        }
+
         await updateDoc(jobDocRef, {
             trackingToken: token,
             trackingTokenExpiresAt: expiresAt.toISOString(),
@@ -794,7 +837,9 @@ export async function calculateTravelMetricsAction(
 
     const jobDocRef = doc(db, "jobs", jobId);
     const jobSnap = await getDoc(jobDocRef);
-    if (!jobSnap.exists()) throw new Error("Completed job not found.");
+    if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+        return { error: "Job not found or you do not have permission to modify it." };
+    }
     const completedJob = jobSnap.data() as Job;
     if (!completedJob.completedAt) throw new Error("Job is not yet completed.");
 

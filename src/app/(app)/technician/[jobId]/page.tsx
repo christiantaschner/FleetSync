@@ -25,6 +25,7 @@ import TroubleshootingCard from './components/TroubleshootingCard';
 import { calculateTravelMetricsAction } from '@/actions/fleet-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
+import ChecklistCard from './components/ChecklistCard';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -68,7 +69,7 @@ export default function TechnicianJobDetailPage() {
           
           if (!fetchedJob.assignedTechnicianId) {
             toast({ title: "Error", description: "This job is unassigned.", variant: "destructive" });
-            setError("Job is unassigned.");
+            router.push('/dashboard');
             setIsLoading(false);
             return;
           }
@@ -136,6 +137,11 @@ export default function TechnicianJobDetailPage() {
       toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
       return;
     }
+    
+    if (newStatus === 'In Progress' && (!job.checklistResults || job.checklistResults.length === 0)) {
+        toast({ title: "Checklist Required", description: "Please complete the pre-work safety checklist before starting the job.", variant: "destructive" });
+        return;
+    }
 
     setIsUpdating(true);
     
@@ -201,10 +207,10 @@ export default function TechnicianJobDetailPage() {
       setJob(prevJob => prevJob ? { ...prevJob, ...updatedJobState } : null);
       toast({ title: "Status Updated", description: `Job status set to ${newStatus}.`});
 
-      if (newStatus === 'Completed' && job.assignedTechnicianId) {
+      if (newStatus === 'Completed' && job.assignedTechnicianId && userProfile) {
         // Fire-and-forget metric calculation
         calculateTravelMetricsAction({ 
-            companyId: job.companyId,
+            companyId: userProfile.companyId!,
             jobId: job.id, 
             technicianId: job.assignedTechnicianId 
         }).catch(err => {
@@ -359,6 +365,25 @@ export default function TechnicianJobDetailPage() {
         toast({ title: "Navigation Error", description: "No address or coordinates available for this job.", variant: "destructive"});
     }
   };
+
+  const handleChecklistSubmit = async (results: ChecklistResult[]) => {
+      if (!job || !db || isUpdating) return;
+      setIsUpdating(true);
+      const jobDocRef = doc(db, "jobs", job.id);
+      try {
+        await updateDoc(jobDocRef, {
+            checklistResults: results,
+            updatedAt: serverTimestamp(),
+        });
+        setJob(prevJob => prevJob ? { ...prevJob, checklistResults: results, updatedAt: new Date().toISOString() } : null);
+        toast({ title: "Checklist Saved", description: "You are now cleared to start the job." });
+      } catch (error) {
+        console.error("Error saving checklist:", error);
+        toast({ title: "Error", description: "Could not save checklist.", variant: "destructive" });
+      } finally {
+        setIsUpdating(false);
+      }
+  };
   
   if (isLoading) {
     return (
@@ -419,27 +444,31 @@ export default function TechnicianJobDetailPage() {
       {isViewingOwnPage && (
         <>
           {!isJobConcluded && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-3 items-center">
-                <StatusUpdateActions 
-                    currentStatus={job.status} 
-                    onUpdateStatus={handleStatusUpdate}
-                />
-                {job.status === 'In Progress' && (
-                  <Button
-                    variant={isBreakActive ? "destructive" : "outline"}
-                    onClick={handleToggleBreak}
-                    disabled={isUpdating}
-                  >
-                    {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
-                    {isBreakActive ? 'End Break' : 'Start Break'}
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
+            <>
+              <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-headline flex items-center gap-2"><ListChecks /> Update Status</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-3 items-center">
+                  <StatusUpdateActions 
+                      currentStatus={job.status} 
+                      onUpdateStatus={handleStatusUpdate}
+                  />
+                  {job.status === 'In Progress' && (
+                    <Button
+                      variant={isBreakActive ? "destructive" : "outline"}
+                      onClick={handleToggleBreak}
+                      disabled={isUpdating}
+                    >
+                      {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+                      {isBreakActive ? 'End Break' : 'Start Break'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </>
           )}
 
           {job && technician && !isJobConcluded && (
@@ -450,7 +479,7 @@ export default function TechnicianJobDetailPage() {
             <TroubleshootingCard jobTitle={job.title} />
           )}
           
-          {job.status === 'In Progress' && (
+          {(job.status === 'In Progress' || job.status === 'Completed') && (
             <Card>
               <CardHeader>
                 <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work &amp; Get Signature</CardTitle>

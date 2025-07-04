@@ -103,7 +103,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
         switch (role) {
             case 'admin': return <ShieldCheck className="h-4 w-4 text-green-600" />;
             case 'technician': return <Wrench className="h-4 w-4 text-blue-600" />;
-            case 'csr': return <User className="h-4 w-4 text-purple-600" />;
             default: return null;
         }
     }
@@ -224,3 +223,5 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 }
 
 export default UserManagement;
+
+    

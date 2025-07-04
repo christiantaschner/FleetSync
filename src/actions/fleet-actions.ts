@@ -145,6 +145,7 @@ const JobImportSchema = z.object({
 
 const ImportJobsActionInputSchema = z.object({
   companyId: z.string(),
+  appId: z.string().min(1),
   jobs: z.array(JobImportSchema),
 });
 
@@ -152,15 +153,13 @@ const ImportJobsActionInputSchema = z.object({
 export type ImportJobsActionInput = z.infer<typeof ImportJobsActionInputSchema>;
 
 export async function importJobsAction(
-  input: ImportJobsActionInput,
-  appId: string
+  input: ImportJobsActionInput
 ): Promise<{ data: { successCount: number }; error: string | null }> {
     try {
-        const { companyId, jobs } = ImportJobsActionInputSchema.parse(input);
+        const { companyId, jobs, appId } = ImportJobsActionInputSchema.parse(input);
         if (!db) {
             throw new Error("Firestore not initialized");
         }
-        if (!appId) throw new Error("App ID is required.");
 
         const batch = writeBatch(db);
         let successCount = 0;
@@ -299,10 +298,10 @@ export async function handleTechnicianUnavailabilityAction(
 
 const ConfirmOptimizedRouteInputSchema = z.object({
   companyId: z.string(),
+  appId: z.string().min(1),
   technicianId: z.string().min(1, "Technician ID is required."),
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
   jobsNotInRoute: z.array(z.string()).describe("A list of job IDs that were assigned to the tech but not included in this optimization, to have their routeOrder cleared."),
-  appId: z.string().min(1),
 });
 
 export async function confirmOptimizedRouteAction(
@@ -405,11 +404,11 @@ export async function confirmManualRescheduleAction(
 
 const RequestProfileChangeInputSchema = z.object({
   companyId: z.string(),
+  appId: z.string().min(1),
   technicianId: z.string().min(1),
   technicianName: z.string().min(1),
   requestedChanges: z.record(z.any()), // Simple object for changes
   notes: z.string().optional(),
-  appId: z.string().min(1),
 });
 
 export async function requestProfileChangeAction(
@@ -824,7 +823,7 @@ export async function generateTrackingLinkAction(
             trackingTokenExpiresAt: expiresAt.toISOString(),
         });
         
-        const trackingUrl = `/track/${token}`;
+        const trackingUrl = `/track/${token}?appId=${appId}`;
 
         return { data: { trackingUrl }, error: null };
 
@@ -1037,3 +1036,5 @@ export async function deleteSkillAction(
         return { error: `Failed to delete skill. ${errorMessage}` };
     }
 }
+
+    

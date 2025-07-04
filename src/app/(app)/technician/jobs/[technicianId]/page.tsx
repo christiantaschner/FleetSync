@@ -32,7 +32,7 @@ export default function TechnicianJobListPage() {
   const isInitialLoad = useRef(true);
   const prevJobOrder = useRef<string>("");
 
-  const hasPermission = userProfile?.role === 'admin' || userProfile?.uid === technicianId;
+  const hasPermission = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin' || userProfile?.uid === technicianId;
   const isViewingOwnPage = userProfile?.uid === technicianId;
 
   useEffect(() => {
@@ -44,10 +44,17 @@ export default function TechnicianJobListPage() {
         return;
     }
 
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        setError("Application not configured correctly.");
+        setIsLoading(false);
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
 
-    const techDocRef = doc(db, "technicians", technicianId);
+    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technicianId);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
@@ -55,7 +62,7 @@ export default function TechnicianJobListPage() {
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
         const jobsQuery = query(
-          collection(db, "jobs"),
+          collection(db, `artifacts/${appId}/public/data/jobs`),
           where("companyId", "==", techData.companyId),
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses)
@@ -117,7 +124,7 @@ export default function TechnicianJobListPage() {
     return () => unsubscribeTech();
   }, [firebaseUser, authLoading, userProfile, technicianId, hasPermission, toast, isViewingOwnPage]);
 
-  const handleUpdateLocation = () => {
+  const handleUpdateLocation = async () => {
     if (!navigator.geolocation) {
       toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive"});
       return;
@@ -126,33 +133,36 @@ export default function TechnicianJobListPage() {
         toast({ title: "Action Not Allowed", description: "You can only update your own location.", variant: "destructive"});
         return;
     }
+     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+     if (!appId) return;
+
     setIsUpdatingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0,
+            });
+        });
+
         const { latitude, longitude } = position.coords;
         if (technician && db) {
-          const techDocRef = doc(db, "technicians", technician.id);
-          try {
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technician.id);
             await updateDoc(techDocRef, {
-              "location.latitude": latitude,
-              "location.longitude": longitude,
+            "location.latitude": latitude,
+            "location.longitude": longitude,
             });
             toast({ title: "Location Updated", description: "Your current location has been updated." });
-          } catch (error) {
-            toast({ title: "Update Failed", description: "Could not save your new location.", variant: "destructive" });
-          } finally {
-            setIsUpdatingLocation(false);
-          }
         }
-      },
-      (error) => {
+    } catch (locationError: any) {
         let message = "An unknown error occurred.";
-        if (error.code === error.PERMISSION_DENIED) message = "Please allow location access to update your position.";
-        else if (error.code === error.POSITION_UNAVAILABLE) message = "Location information is unavailable.";
+        if (locationError.code === 1) message = "Please allow location access to update your position.";
+        if (locationError.code === 2) message = "Location information is unavailable.";
         toast({ title: "Geolocation Error", description: message, variant: "destructive" });
+    } finally {
         setIsUpdatingLocation(false);
-      }
-    );
+    }
   };
   
   if (isLoading || authLoading) {
@@ -188,13 +198,13 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      {userProfile?.role === 'admin' && (
-        <Button variant="outline" size="sm" onClick={() => router.push('/technician')} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician List
+      {(userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && (
+        <Button variant="outline" size="sm" onClick={() => router.push('/dashboard?tab=technicians')} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician Roster
         </Button>
       )}
 
-      {userProfile?.role === 'admin' && !isViewingOwnPage && (
+      {!isViewingOwnPage && (
         <Alert className="mb-6">
             <Eye className="h-4 w-4" />
             <AlertTitle className="font-semibold">Administrator View</AlertTitle>

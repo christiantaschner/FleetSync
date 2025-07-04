@@ -27,9 +27,10 @@ interface ChatSheetProps {
     setIsOpen: (isOpen: boolean) => void;
     job: Job | null;
     technician: Technician | null;
+    appId: string;
 }
 
-const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technician }) => {
+const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technician, appId }) => {
     const { user, userProfile } = useAuth();
     const { toast } = useToast();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -41,10 +42,10 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (isOpen && job) {
+        if (isOpen && job && appId) {
             setIsLoading(true);
             const q = query(
-                collection(db, 'chatMessages'),
+                collection(db, `artifacts/${appId}/public/data/chatMessages`),
                 where('companyId', '==', job.companyId),
                 where('jobId', '==', job.id),
                 orderBy('timestamp', 'asc')
@@ -69,7 +70,7 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
 
             return () => unsubscribe();
         }
-    }, [isOpen, job, toast]);
+    }, [isOpen, job, toast, appId]);
 
     useEffect(() => {
         // Scroll to bottom when messages change
@@ -80,7 +81,7 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if ((!newMessage.trim() && !attachment) || !job || !user || !technician || !userProfile) return;
+        if ((!newMessage.trim() && !attachment) || !job || !user || !technician || !userProfile || !appId) return;
         
         setIsSending(true);
 
@@ -92,6 +93,7 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
             receiverId: technician.id,
             text: newMessage.trim(),
             attachment,
+            appId,
         });
         
         setIsSending(false);
@@ -147,7 +149,7 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
                                             )}
                                             <p className="whitespace-pre-wrap">{msg.text}</p>
                                             <p className="text-xs opacity-70 mt-1 text-right">
-                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(msg.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>
                                     </div>

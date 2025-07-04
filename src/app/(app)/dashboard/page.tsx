@@ -14,7 +14,7 @@ import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
 import ScheduleCalendarView from './components/ScheduleCalendarView';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import { Label } from '@/components/ui/label';
@@ -108,6 +108,8 @@ export default function DashboardPage() {
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
   const [activeTab, setActiveTab] = useState('jobs');
   
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
   useEffect(() => {
     if (jobFilterId) {
         setActiveTab('jobs');
@@ -160,9 +162,7 @@ export default function DashboardPage() {
 
 
   const fetchSkills = useCallback(async () => {
-    if (!db || !userProfile?.companyId) return;
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) return;
+    if (!db || !userProfile?.companyId || !appId) return;
     try {
         const companyId = userProfile.companyId;
         const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", companyId));
@@ -175,7 +175,7 @@ export default function DashboardPage() {
         console.error("Error fetching skills: ", error);
         toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
     }
-}, [userProfile, toast]);
+}, [userProfile, toast, appId]);
   
   const fetchAllData = useCallback(() => {
     fetchSkills();
@@ -193,7 +193,6 @@ export default function DashboardPage() {
       return;
     }
     
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     if (!appId) {
         console.error("Firebase Project ID not found in environment variables.");
         toast({ title: "Configuration Error", description: "Application cannot function without a Firebase Project ID.", variant: "destructive" });
@@ -271,7 +270,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [authLoading, userProfile, toast, fetchSkills]);
+  }, [authLoading, userProfile, toast, fetchSkills, appId]);
 
   const prevTechCount = useRef<number | null>(null);
 
@@ -281,11 +280,11 @@ export default function DashboardPage() {
       return;
     }
   
-    if (company?.subscriptionStatus !== 'active') {
+    if (company?.subscriptionStatus !== 'active' || !company.id) {
       return;
     }
     
-    if (technicians.length !== prevTechCount.current) {
+    if (technicians.length !== prevTechCount.current && prevTechCount.current !== null) {
       console.log(`Technician count changed from ${prevTechCount.current} to ${technicians.length}. Updating Stripe.`);
       updateSubscriptionQuantityAction({ companyId: company.id, quantity: technicians.length })
         .then(result => {
@@ -295,10 +294,11 @@ export default function DashboardPage() {
             toast({ title: "Subscription Updated", description: `Seat count is now ${technicians.length}.` });
           }
         });
-      
-      prevTechCount.current = technicians.length;
     }
-  }, [technicians.length, company, isLoadingData, toast]);
+      
+    prevTechCount.current = technicians.length;
+    
+  }, [technicians, company, isLoadingData, toast]);
   
   useEffect(() => {
     const predict = async () => {
@@ -419,11 +419,11 @@ export default function DashboardPage() {
   }, [technicians, jobs]);
   
   useEffect(() => {
+    if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
+      return;
+    }
+    
     const checkHealth = async () => {
-      if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
-        return;
-      }
-      
       const result = await checkScheduleHealthAction({ technicians, jobs });
       if (result.data) {
         const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 15);
@@ -452,11 +452,8 @@ export default function DashboardPage() {
   }, [jobs, technicians, isLoadingData]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
-    if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId) return;
+    if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId || !appId) return;
     
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) return;
-
     setIsProcessingProactive(true);
     
     const { job, suggestedTechnicianDetails } = suggestion;
@@ -483,7 +480,7 @@ export default function DashboardPage() {
         batch.update(oldJobRef, {
             status: 'Pending',
             assignedTechnicianId: null,
-            notes: arrayUnion(`This job was unassigned due to a higher priority interruption for job: ${job.title}.`),
+            notes: arrayUnion(`(Auto-Reassigned: Technician interrupted for high-priority job ${job.title})`),
             updatedAt: serverTimestamp(),
         });
     }
@@ -591,6 +588,7 @@ export default function DashboardPage() {
     : { lat: 39.8283, lng: -98.5795 }; 
 
   const handleBatchAIAssign = useCallback(async () => {
+    if (!appId) return;
     const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
     if (currentPendingJobs.length === 0 || technicians.length === 0) {
       toast({ title: "Batch Assignment", description: "No pending jobs or no technicians available for assignment.", variant: "default" });
@@ -636,16 +634,13 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast]);
+  }, [jobs, technicians, toast, appId]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
-    if (!db || !userProfile?.companyId) {
+    if (!db || !userProfile?.companyId || !appId) {
         toast({ title: "Database Error", description: "Firestore instance not available.", variant: "destructive" });
         return;
     }
-
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) return;
 
     setIsLoadingBatchConfirmation(true);
     const batch = writeBatch(db);
@@ -664,7 +659,7 @@ export default function DashboardPage() {
                 assignedAt: serverTimestamp(),
             });
 
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestion.suggestedTechnicianId);
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestion.suggestedTechnicianId!);
             batch.update(techDocRef, {
                 isAvailable: false,
                 currentJobId: job.id,
@@ -692,9 +687,7 @@ export default function DashboardPage() {
   };
   
   const handleMarkTechnicianUnavailable = async (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => {
-    if (!userProfile?.companyId) return;
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) return;
+    if (!userProfile?.companyId || !appId) return;
 
     setIsHandlingUnavailability(true);
     const result = await handleTechnicianUnavailabilityAction({ 
@@ -799,12 +792,13 @@ export default function DashboardPage() {
           setIsOpen={setIsTrackingDialogOpen}
           job={selectedJobForTracking}
       />
-      <ChatSheet 
+      {appId && <ChatSheet 
           isOpen={isChatOpen} 
           setIsOpen={setIsChatOpen} 
           job={selectedChatJob} 
           technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
-      />
+          appId={appId}
+      />}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
           Dashboard

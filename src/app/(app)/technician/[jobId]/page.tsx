@@ -14,7 +14,7 @@ import WorkDocumentationForm from './components/work-documentation-form';
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL, uploadBytes } from "firebase/storage";
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -45,9 +45,11 @@ export default function TechnicianJobDetailPage() {
 
   const isBreakActive = job?.status === 'In Progress' && job.breaks?.some(b => !b.end);
   const backUrl = job?.assignedTechnicianId ? `/technician/jobs/${job.assignedTechnicianId}` : '/dashboard';
+  
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
-    if (!jobId || !db || !user) {
+    if (!jobId || !db || !user || !appId) {
       setIsLoading(false);
       return;
     }
@@ -55,7 +57,7 @@ export default function TechnicianJobDetailPage() {
     
     const fetchJobAndTechnician = async () => {
       try {
-        const jobDocRef = doc(db, "jobs", jobId);
+        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
         const jobDocSnap = await getDoc(jobDocRef);
 
         if (jobDocSnap.exists()) {
@@ -74,7 +76,7 @@ export default function TechnicianJobDetailPage() {
             return;
           }
 
-          const techDocRef = doc(db, "technicians", fetchedJob.assignedTechnicianId);
+          const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
           const techDocSnap = await getDoc(techDocRef);
           
           if (!techDocSnap.exists()) {
@@ -94,7 +96,7 @@ export default function TechnicianJobDetailPage() {
            // Fetch customer history
           if (fetchedJob.customerPhone) {
             const historyQuery = query(
-                collection(db, "jobs"),
+                collection(db, `artifacts/${appId}/public/data/jobs`),
                 where("companyId", "==", fetchedJob.companyId),
                 where("customerPhone", "==", fetchedJob.customerPhone),
                 where("status", "==", "Completed"),
@@ -128,10 +130,10 @@ export default function TechnicianJobDetailPage() {
     };
 
     fetchJobAndTechnician();
-  }, [jobId, router, toast, user]);
+  }, [jobId, router, toast, user, appId]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
-    if (!job || !db || isUpdating || !technician) return;
+    if (!job || !db || isUpdating || !technician || !appId) return;
     
     if (isBreakActive) {
       toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
@@ -159,7 +161,7 @@ export default function TechnicianJobDetailPage() {
                 });
             });
 
-            const techDocRef = doc(db, "technicians", technician.id);
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technician.id);
             await updateDoc(techDocRef, {
                 "location.latitude": position.coords.latitude,
                 "location.longitude": position.coords.longitude,
@@ -172,7 +174,7 @@ export default function TechnicianJobDetailPage() {
         }
     }
     
-    const jobDocRef = doc(db, "jobs", job.id);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     try {
       const updatePayload: any = {
         status: newStatus,
@@ -197,7 +199,7 @@ export default function TechnicianJobDetailPage() {
       await updateDoc(jobDocRef, updatePayload);
       
       if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
-        const techDocRef = doc(db, "technicians", job.assignedTechnicianId);
+        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
         await updateDoc(techDocRef, {
           isAvailable: true,
           currentJobId: null,
@@ -212,7 +214,8 @@ export default function TechnicianJobDetailPage() {
         calculateTravelMetricsAction({ 
             companyId: userProfile.companyId!,
             jobId: job.id, 
-            technicianId: job.assignedTechnicianId 
+            technicianId: job.assignedTechnicianId,
+            appId,
         }).catch(err => {
             console.error("Failed to trigger travel metrics calculation:", err);
         });
@@ -227,10 +230,10 @@ export default function TechnicianJobDetailPage() {
   };
 
   const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => {
-    if (!job || !db || !storage || isUpdating) return;
+    if (!job || !db || !storage || isUpdating || !appId) return;
 
     setIsUpdating(true);
-    const jobDocRef = doc(db, "jobs", job.id);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     let newPhotoUrls: string[] = [];
     let newSignatureUrl: string | null = null;
 
@@ -292,14 +295,14 @@ export default function TechnicianJobDetailPage() {
   };
   
    const handleFtfrSubmit = async () => {
-    if (!job || !db || isUpdating || isFirstTimeFix === null) return;
+    if (!job || !db || isUpdating || isFirstTimeFix === null || !appId) return;
     if (isFirstTimeFix === false && !reasonForFollowUp.trim()) {
       toast({ title: "Reason Required", description: "Please provide a reason for the follow-up.", variant: "destructive"});
       return;
     }
 
     setIsUpdating(true);
-    const jobDocRef = doc(db, "jobs", job.id);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     try {
       await updateDoc(jobDocRef, {
         isFirstTimeFix: isFirstTimeFix,
@@ -317,10 +320,10 @@ export default function TechnicianJobDetailPage() {
   };
 
   const handleToggleBreak = async () => {
-    if (!job || !db || isUpdating) return;
+    if (!job || !db || isUpdating || !appId) return;
 
     setIsUpdating(true);
-    const jobDocRef = doc(db, "jobs", job.id);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     const now = new Date().toISOString();
     const currentBreaks = job.breaks || [];
 
@@ -367,9 +370,9 @@ export default function TechnicianJobDetailPage() {
   };
 
   const handleChecklistSubmit = async (results: ChecklistResult[]) => {
-      if (!job || !db || isUpdating) return;
+      if (!job || !db || isUpdating || !appId) return;
       setIsUpdating(true);
-      const jobDocRef = doc(db, "jobs", job.id);
+      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
       try {
         await updateDoc(jobDocRef, {
             checklistResults: results,
@@ -410,7 +413,7 @@ export default function TechnicianJobDetailPage() {
   }
 
   const isViewingOwnPage = user?.uid === job.assignedTechnicianId;
-  const isAdminView = userProfile?.role === 'admin' && !isViewingOwnPage;
+  const isAdminView = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isViewingOwnPage;
   const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
 
   return (
@@ -471,8 +474,8 @@ export default function TechnicianJobDetailPage() {
             </>
           )}
 
-          {job && technician && !isJobConcluded && (
-            <ChatCard job={job} technician={technician} />
+          {job && technician && !isJobConcluded && appId && (
+            <ChatCard job={job} technician={technician} appId={appId} />
           )}
 
           {(job.status === 'In Progress' || job.status === 'Completed') && (

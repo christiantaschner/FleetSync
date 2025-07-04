@@ -18,9 +18,10 @@ import { cn } from '@/lib/utils';
 interface ChatCardProps {
     job: Job;
     technician: Technician;
+    appId: string;
 }
 
-const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
+const ChatCard: React.FC<ChatCardProps> = ({ job, technician, appId }) => {
     const { user } = useAuth();
     const { toast } = useToast();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -35,7 +36,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
         if (job) {
             setIsLoading(true);
             const q = query(
-                collection(db, 'chatMessages'),
+                collection(db, `artifacts/${appId}/public/data/chatMessages`),
                 where('companyId', '==', job.companyId),
                 where('jobId', '==', job.id),
                 orderBy('timestamp', 'asc')
@@ -60,7 +61,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
 
             return () => unsubscribe();
         }
-    }, [job, toast]);
+    }, [job, toast, appId]);
     
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -83,6 +84,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
             receiverId: "dispatcher_admin",
             text: newMessage.trim(),
             attachment,
+            appId,
         });
         
         setIsSending(false);
@@ -138,7 +140,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician }) => {
                                             )}
                                             <p className="whitespace-pre-wrap">{msg.text}</p>
                                             <p className="text-xs opacity-70 mt-1 text-right">
-                                                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(msg.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>
                                     </div>

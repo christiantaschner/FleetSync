@@ -8,9 +8,11 @@ import type { Job, Contract, Equipment } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
+    const { toast } = useToast();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -26,6 +28,13 @@ export default function CustomersPage() {
             setIsLoading(false);
             return;
         }
+        
+        const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        if (!appId) {
+            toast({ title: "Configuration Error", description: "Cannot fetch customer data.", variant: "destructive" });
+            setIsLoading(false);
+            return;
+        }
 
         let loadedCount = 0;
         const totalCollections = 3;
@@ -38,7 +47,7 @@ export default function CustomersPage() {
             }
         }
 
-        const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
+        const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
         const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
             const jobsData = snapshot.docs.map(doc => {
                 const data = doc.data();
@@ -57,7 +66,7 @@ export default function CustomersPage() {
             updateLoadingState();
         });
 
-        const contractsQuery = query(collection(db, "contracts"), where("companyId", "==", companyId));
+        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId));
         const unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -76,7 +85,7 @@ export default function CustomersPage() {
             updateLoadingState();
         });
         
-        const equipmentQuery = query(collection(db, "equipment"), where("companyId", "==", companyId));
+        const equipmentQuery = query(collection(db, `artifacts/${appId}/public/data/equipment`), where("companyId", "==", companyId));
         const unsubscribeEquipment = onSnapshot(equipmentQuery, (snapshot) => {
             const equipmentData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -101,7 +110,7 @@ export default function CustomersPage() {
             unsubscribeContracts();
             unsubscribeEquipment();
         };
-    }, [authLoading, userProfile]);
+    }, [authLoading, userProfile, toast]);
 
     if (authLoading || isLoading) {
         return (

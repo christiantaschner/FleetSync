@@ -32,10 +32,17 @@ export default function ContractsPage() {
             setIsLoading(false);
             return;
         }
+        
+        const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        if (!appId) {
+            toast({ title: "Configuration Error", description: "Cannot fetch contracts.", variant: "destructive" });
+            setIsLoading(false);
+            return;
+        }
 
         setIsLoading(true);
         const contractsQuery = query(
-            collection(db, "contracts"), 
+            collection(db, `artifacts/${appId}/public/data/contracts`), 
             where("companyId", "==", userProfile.companyId)
         );
         const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {

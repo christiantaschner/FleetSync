@@ -22,7 +22,7 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
   const [isFetching, setIsFetching] = useState(false);
   const [showPredictions, setShowPredictions] = useState(false);
 
-  const places = useMapsLibrary('places.autocomplete');
+  const places = useMapsLibrary('places');
   const geocoding = useMapsLibrary('geocoding');
 
   useEffect(() => {

@@ -223,7 +223,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const handleToday = () => setCurrentDate(new Date());
 
   return (
-    <Card className="overflow-hidden">
+    <Card>
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>

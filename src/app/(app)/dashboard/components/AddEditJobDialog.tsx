@@ -45,6 +45,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Draft'];
+const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
 
 interface AddEditJobDialogProps {
   isOpen: boolean;
@@ -84,13 +85,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
-  const [manualTechnicianId, setManualTechnicianId] = useState<string>('');
+  const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
 
-  const submittedRef = useRef(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const resetForm = useCallback(() => {
     setTitle(job?.title || '');
@@ -104,7 +105,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLatitude(job?.location.latitude || null);
     setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
-    setManualTechnicianId(job?.assignedTechnicianId || '');
+    setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
     setAiSuggestion(null);
     setAiPrioritySuggestion(null);
     setScheduleSuggestions(null);
@@ -112,7 +113,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
-    submittedRef.current = false;
   }, [job]);
 
   useEffect(() => {
@@ -122,7 +122,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   }, [job, isOpen, resetForm]);
 
   const handleSaveDraft = useCallback(async () => {
-    if (submittedRef.current || job || !userProfile?.companyId) return;
+    if (job || !userProfile?.companyId) return;
 
     if (title.trim() || description.trim()) {
         const draftPayload = {
@@ -381,10 +381,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         const jobDocRef = doc(db, "jobs", job.id);
         const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
 
-        const technicianHasChanged = manualTechnicianId !== (job.assignedTechnicianId || '');
+        const newAssignedTechId = manualTechnicianId === UNASSIGNED_VALUE ? null : manualTechnicianId;
+        const currentAssignedId = job.assignedTechnicianId || null;
+        const technicianHasChanged = newAssignedTechId !== currentAssignedId;
         
         if (technicianHasChanged) {
-            if (!manualTechnicianId) { // Un-assigning
+            if (newAssignedTechId === null) { // Un-assigning
                 updatePayload.assignedTechnicianId = null;
                 updatePayload.status = 'Pending';
                 if(job.assignedTechnicianId) {
@@ -392,11 +394,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
                 }
             } else { // Assigning or Re-assigning
-                updatePayload.assignedTechnicianId = manualTechnicianId;
+                updatePayload.assignedTechnicianId = newAssignedTechId;
                 updatePayload.status = 'Assigned';
                 updatePayload.assignedAt = serverTimestamp();
                 
-                const newTechDocRef = doc(db, "technicians", manualTechnicianId);
+                const newTechDocRef = doc(db, "technicians", newAssignedTechId);
                 batch.update(newTechDocRef, { isAvailable: false, currentJobId: job.id });
                 
                 if (job.assignedTechnicianId) {
@@ -424,7 +426,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
         finalJobDataForCallback = { ...job, ...updatePayload, updatedAt: new Date().toISOString() };
         toast({ title: "Job Updated", description: `Job "${finalJobDataForCallback.title}" has been updated.` });
-        onJobAddedOrUpdated?.(finalJobDataForCallback, manualTechnicianId || null);
+        onJobAddedOrUpdated?.(finalJobDataForCallback, newAssignedTechId || null);
 
       } else { // CREATING A NEW JOB
         const techToAssign = assignTechId ? technicians.find(t => t.id === assignTechId) : null;
@@ -487,7 +489,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
         onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
       }
-      submittedRef.current = true;
       onClose();
     } catch (error) {
       console.error("Error saving job to Firestore: ", error);
@@ -499,16 +500,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   const isInterruptionSuggestion = aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails && !suggestedTechnicianDetails.isAvailable;
   
-  const filteredSkills = allSkills.filter(skill => skill.toLowerCase().includes(skillSearchTerm.toLowerCase()));
   const isEditingDraft = job?.status === 'Draft';
+  
+  const handleDialogClose = (open: boolean) => {
+    if (!open && !job && !isLoading) { // Don't save draft if dialog was submitted or is loading
+      handleSaveDraft();
+    }
+    onClose();
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open && !submittedRef.current) {
-        handleSaveDraft();
-      }
-      onClose();
-    }}>
+    <Dialog open={isOpen} onOpenChange={handleDialogClose}>
       <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
           <DialogHeader className="px-6 pt-6 flex-shrink-0">
             <DialogTitle className="font-headline">{job ? 'Edit Job Details' : 'Add New Job'}</DialogTitle>
@@ -516,8 +518,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               {job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-6">
-            <form id="job-form" onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="py-4">
+          <form id="job-form" ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="flex-1 min-h-0 flex flex-col">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
               {isEditingDraft && (
                 <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
                   <FilePenLine className="h-4 w-4" />
@@ -567,7 +569,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         <div>
                           <Label htmlFor="jobStatus">Status</Label>
                           <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
-                            disabled={manualTechnicianId !== (job.assignedTechnicianId || '')}
+                            disabled={manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
                           >
                             <SelectTrigger id="jobStatus">
                               <SelectValue placeholder="Select status" />
@@ -687,7 +689,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <SelectValue placeholder="Unassigned" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">-- Unassigned --</SelectItem>
+                          <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
                           {technicians.map(tech => (
                             <SelectItem key={tech.id} value={tech.id}>
                               {tech.name}
@@ -721,7 +723,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             </Button>
                           </div>
                         ) : (
-                          filteredSkills.map(skill => (
+                          allSkills.filter(skill => skill.toLowerCase().includes(skillSearchTerm.toLowerCase())).map(skill => (
                             <div key={skill} className="flex items-center space-x-2">
                               <Checkbox
                                 id={`skill-${skill.replace(/\s+/g, '-')}`}
@@ -734,7 +736,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             </div>
                           ))
                         )}
-                        {filteredSkills.length === 0 && allSkills.length > 0 && (
+                        {allSkills.filter(skill => skill.toLowerCase().includes(skillSearchTerm.toLowerCase())).length === 0 && allSkills.length > 0 && (
                           <p className="text-sm text-muted-foreground text-center">No skills match your search.</p>
                         )}
                       </div>
@@ -771,69 +773,68 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   )}
                 </div>
               </div>
-            </form>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
-            <div>
-              {job && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button type="button" variant="destructive" disabled={isDeleting}>
-                      {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                      Delete Job
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the job "{job.title}".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDeleteJob} className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button type="button" variant="ghost" onClick={onClose}>
-                Close
-              </Button>
-              {job ? (
-                <Button type="submit" form="job-form" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  Save Changes
+            <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
+              <div>
+                {job && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button type="button" variant="destructive" disabled={isDeleting}>
+                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Delete Job
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the job "{job.title}".
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteJob} className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="button" variant="ghost" onClick={onClose}>
+                  Close
                 </Button>
-              ) : (
-                <>
-                  {userProfile?.role !== 'csr' && (
-                    <Button
-                      type="button"
-                      onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
-                      disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                      variant={isInterruptionSuggestion ? "destructive" : "default"}
-                      title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
-                    >
-                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                      {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
-                    </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    form="job-form"
-                    disabled={isLoading}
-                    variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
-                  >
+                {job ? (
+                  <Button type="submit" disabled={isLoading}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+                    Save Changes
                   </Button>
-                </>
-              )}
-            </div>
-          </DialogFooter>
+                ) : (
+                  <>
+                    {userProfile?.role !== 'csr' && (
+                      <Button
+                        type="button"
+                        onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
+                        disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
+                        variant={isInterruptionSuggestion ? "destructive" : "default"}
+                        title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
+                      >
+                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                        {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
+                    >
+                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </DialogFooter>
+          </form>
       </DialogContent>
     </Dialog>
   );

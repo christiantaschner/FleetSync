@@ -772,7 +772,7 @@ export async function generateTrackingLinkAction(
 
     } catch (e) {
         if (e instanceof z.ZodError) {
-            return { data: null, error: e.errors.map(err => err.message).join(', ') };
+            return { data: null, error: e.errors.map((err) => err.message).join(', ') };
         }
         console.error("Error generating tracking link:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
@@ -885,8 +885,31 @@ export async function deleteJobAction(
             throw new Error("Firestore not initialized");
         }
         
+        const batch = writeBatch(db);
         const jobDocRef = doc(db, "jobs", jobId);
-        await deleteDoc(jobDocRef);
+
+        // First, get the job data to see if a technician is assigned.
+        const jobSnap = await getDoc(jobDocRef);
+        if (jobSnap.exists()) {
+            const jobData = jobSnap.data() as Job;
+            // If a technician was assigned, we need to update their status.
+            if (jobData.assignedTechnicianId) {
+                const techDocRef = doc(db, "technicians", jobData.assignedTechnicianId);
+                // Only update the technician if this deleted job was their *current* job.
+                const techSnap = await getDoc(techDocRef);
+                if (techSnap.exists() && techSnap.data().currentJobId === jobId) {
+                    batch.update(techDocRef, {
+                        isAvailable: true,
+                        currentJobId: null,
+                    });
+                }
+            }
+        }
+        
+        // Delete the job itself.
+        batch.delete(jobDocRef);
+        
+        await batch.commit();
         
         return { error: null };
 

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
 
-  const fetchSkills = async () => {
+  const fetchSkills = useCallback(async () => {
     if (!db || !userProfile?.companyId) return;
     setIsLoading(true);
     try {
@@ -56,13 +56,13 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userProfile, toast]);
 
   useEffect(() => {
     if (isOpen) {
       fetchSkills();
     }
-  }, [isOpen, userProfile]);
+  }, [isOpen, fetchSkills]);
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();

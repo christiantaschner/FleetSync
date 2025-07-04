@@ -255,18 +255,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       </SidebarMenuButton>
                       </Link>
                   </SidebarMenuItem>
-                  <SidebarMenuItem>
-                      <Link href="/dashboard?view=csr">
-                      <SidebarMenuButton
-                          isActive={pathname === "/dashboard" && searchParams.get('view') === 'csr'}
-                          className="w-full justify-start"
-                          tooltip="CSR View (Job Creation)"
-                      >
-                          <PlusCircle className="h-4 w-4" />
-                          <span>CSR View</span>
-                      </SidebarMenuButton>
-                      </Link>
-                  </SidebarMenuItem>
                 </>
               )}
             </SidebarMenu>

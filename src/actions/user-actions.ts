@@ -93,7 +93,7 @@ export async function getCompanyUsersAction(
 
 const InviteUserInputSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['admin', 'technician', 'csr']),
+  role: z.enum(['admin', 'technician']),
   companyId: z.string(),
 });
 export type InviteUserInput = z.infer<typeof InviteUserInputSchema>;
@@ -135,7 +135,7 @@ export async function inviteUserAction(
 const ManageUserRoleInputSchema = z.object({
     userId: z.string(),
     companyId: z.string(),
-    newRole: z.enum(['admin', 'technician', 'csr']),
+    newRole: z.enum(['admin', 'technician']),
 });
 export type ManageUserRoleInput = z.infer<typeof ManageUserRoleInputSchema>;
 

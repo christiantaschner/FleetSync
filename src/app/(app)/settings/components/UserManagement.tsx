@@ -20,7 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const InviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  role: z.enum(['admin', 'technician', 'csr']),
+  role: z.enum(['admin', 'technician']),
 });
 type InviteUserFormValues = z.infer<typeof InviteUserSchema>;
 
@@ -69,7 +69,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
         setIsSubmitting(false);
     };
 
-    const handleRoleChange = async (userId: string, newRole: 'admin' | 'technician' | 'csr') => {
+    const handleRoleChange = async (userId: string, newRole: 'admin' | 'technician') => {
         setIsUpdatingRole(userId);
         const result = await updateUserRoleAction({ userId, companyId, newRole });
          if (result.error) {
@@ -125,7 +125,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="technician">Technician</SelectItem>
-                                <SelectItem value="csr">CSR</SelectItem>
                                 <SelectItem value="admin">Admin</SelectItem>
                             </SelectContent>
                         </Select>
@@ -177,7 +176,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                                                 <SelectContent>
                                                     <SelectItem value="admin"><div className="flex items-center gap-1"><ShieldCheck className="h-4 w-4"/>Admin</div></SelectItem>
                                                     <SelectItem value="technician"><div className="flex items-center gap-1"><Wrench className="h-4 w-4"/>Technician</div></SelectItem>
-                                                    <SelectItem value="csr"><div className="flex items-center gap-1"><User className="h-4 w-4"/>CSR</div></SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>

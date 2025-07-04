@@ -48,7 +48,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
-      <CardHeader className="flex flex-row items-start gap-4 space-y-0 pb-3">
+      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex-1">
           <CardTitle className="text-lg font-headline">{technician.name}</CardTitle>
           <CardDescription className="flex items-center gap-1 text-sm">
@@ -56,6 +56,10 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
             {technician.isAvailable ? 'Available' : 'Unavailable'}
           </CardDescription>
         </div>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(technician)}>
+            <Edit className="h-4 w-4" />
+            <span className="sr-only">Edit Technician</span>
+        </Button>
       </CardHeader>
       <CardContent className="flex-grow space-y-2 text-sm">
         <div className="flex items-start gap-2 text-muted-foreground">
@@ -91,7 +95,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
                       <AlertOctagon className="mr-2 h-4 w-4" />
-                      Unavailable
+                      Mark Unavailable
                   </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -127,10 +131,6 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-           <Button variant="secondary" size="sm" onClick={() => onEdit(technician)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
         </div>
       </CardFooter>
     </Card>

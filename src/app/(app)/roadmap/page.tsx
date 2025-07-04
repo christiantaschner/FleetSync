@@ -295,6 +295,12 @@ const roadmapFeatures = {
       icon: Zap,
       status: "Planned",
     },
+    {
+      title: "Customer Service Representative (CSR) Role",
+      description: "A limited-access role for CSRs to create job tickets and manage contracts, without seeing all dispatcher functions.",
+      icon: User,
+      status: "Planned",
+    },
   ],
   vision: [
      {

@@ -2,17 +2,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { getTrackingInfoAction } from '@/actions/public-actions';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getTrackingInfoAction } from '@/actions/customer-actions';
 import type { PublicTrackingInfo } from '@/types';
 import { Loader2, AlertTriangle, User, MapPin, Navigation, Waypoints } from 'lucide-react';
 import TrackingMap from './components/TrackingMap';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Logo } from '@/components/common/logo';
+import { format } from 'date-fns';
 
 export default function TrackingPage() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const token = params.token as string;
+    const appId = searchParams.get('appId');
     
     const [trackingInfo, setTrackingInfo] = useState<PublicTrackingInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -25,34 +29,38 @@ export default function TrackingPage() {
             setIsLoading(false);
             return;
         }
+        if (!appId) {
+            setError("Tracking link is invalid (missing App ID).");
+            setIsLoading(false);
+            return;
+        }
 
-        const result = await getTrackingInfoAction({ token });
+        const result = await getTrackingInfoAction({ token, appId });
         if (result.error) {
             setError(result.error);
         } else {
             setTrackingInfo(result.data);
             setError(null);
         }
-        setIsLoading(false);
+        if(showLoading) setIsLoading(false);
     };
 
     useEffect(() => {
-        fetchTrackingInfo(true);
+        fetchTrackingInfo(true); // Initial fetch with loading indicator
 
         const interval = setInterval(() => {
-            fetchTrackingInfo(false);
-        }, 20000); // Poll every 20 seconds
+            fetchTrackingInfo(false); // Subsequent polls without loading indicator
+        }, 30000); // Poll every 30 seconds
 
         return () => clearInterval(interval);
-    }, [token]);
+    }, [token, appId]);
 
 
     return (
         <main className="min-h-screen bg-muted flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-2xl">
                 <div className="flex items-center gap-2 mb-4">
-                    <Waypoints className="h-8 w-8 text-primary" />
-                    <span className="text-2xl font-bold font-logo text-foreground">FleetSync AI</span>
+                    <Logo />
                 </div>
 
                 <Card className="shadow-2xl">
@@ -69,7 +77,7 @@ export default function TrackingPage() {
                                 <p className="text-muted-foreground">Loading tracking information...</p>
                             </div>
                         )}
-                        {error && (
+                        {error && !isLoading && (
                             <div className="flex flex-col items-center justify-center h-96 gap-4 text-center">
                                 <AlertTriangle className="h-10 w-10 text-destructive" />
                                 <p className="font-semibold text-lg text-destructive">Tracking Unavailable</p>
@@ -94,9 +102,14 @@ export default function TrackingPage() {
                                         </div>
                                    </div>
                                </div>
+                               {trackingInfo.scheduledStartTime && (
+                                    <div className="text-center text-sm text-muted-foreground">
+                                        Scheduled Appointment Time: <strong>{format(new Date(trackingInfo.scheduledStartTime), 'PPp')}</strong>
+                                    </div>
+                                )}
                                 <div className="h-80 w-full rounded-md overflow-hidden border">
                                     <TrackingMap 
-                                        technicianLocation={trackingInfo.technicianLocation}
+                                        technicianLocation={trackingInfo.currentTechnicianLocation!}
                                         jobLocation={trackingInfo.jobLocation}
                                     />
                                 </div>
@@ -105,7 +118,7 @@ export default function TrackingPage() {
                     </CardContent>
                 </Card>
                  <footer className="text-center mt-6 text-xs text-muted-foreground">
-                    <p>This tracking link is valid for a limited time.</p>
+                    <p>This tracking link is valid for a limited time. Location updates periodically.</p>
                 </footer>
             </div>
         </main>

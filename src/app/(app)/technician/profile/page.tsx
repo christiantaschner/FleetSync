@@ -69,7 +69,7 @@ const calculateJobDurations = (job: Job) => {
 
 export default function TechnicianProfilePage() {
   const router = useRouter();
-  const { user: firebaseUser, loading: authLoading } = useAuth();
+  const { user: firebaseUser, loading: authLoading, userProfile } = useAuth();
 
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [submittedRequests, setSubmittedRequests] = useState<ProfileChangeRequest[]>([]);
@@ -118,9 +118,9 @@ export default function TechnicianProfilePage() {
   }, [firebaseUser, authLoading]);
 
   useEffect(() => {
-    if (!technician) return;
+    if (!technician || !userProfile?.companyId) return;
     
-    const companyId = technician.companyId;
+    const companyId = userProfile.companyId;
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
      if (!appId) {
         setError("Firebase Project ID not configured.");
@@ -182,7 +182,7 @@ export default function TechnicianProfilePage() {
         unsubscribeRequests();
         unsubscribeJobs();
     }
-  }, [technician]);
+  }, [technician, userProfile]);
 
   if (isLoading || authLoading) {
     return (
@@ -398,5 +398,3 @@ export default function TechnicianProfilePage() {
     </div>
   );
 }
-
-    

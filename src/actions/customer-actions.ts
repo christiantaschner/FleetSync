@@ -75,50 +75,57 @@ export async function getTrackingInfoAction(
       throw new Error('Firestore not initialized');
     }
 
-    // Query for the job using the tracking token in the correct path
     const jobsQuery = query(
       collection(db, `artifacts/${appId}/public/data/jobs`),
       where('trackingToken', '==', token),
       limit(1)
     );
 
-    const jobsSnapshot: QuerySnapshot = await getDocs(jobsQuery);
+    const jobSnapshot: QuerySnapshot = await getDocs(jobsQuery);
 
-    if (jobsSnapshot.empty) {
-      return { data: null, error: 'No job found with this tracking token.' };
+    if (jobSnapshot.empty) {
+        return { data: null, error: "Tracking link is invalid or has expired." };
     }
-
-    const jobDoc = jobsSnapshot.docs[0];
+    
+    const jobDoc = jobSnapshot.docs[0];
     const job = { id: jobDoc.id, ...(jobDoc.data() as Job) };
 
-    if (!job.assignedTechnicianId) {
-      return { data: null, error: 'A technician has not yet been assigned to this job. Please check back later.' };
+    if (job.trackingTokenExpiresAt && new Date(job.trackingTokenExpiresAt) < new Date()) {
+        return { data: null, error: "Tracking link is invalid or has expired." };
     }
 
-    // Directly fetch the technician by ID using the correct path
+    if (job.status === 'Completed' || job.status === 'Cancelled') {
+        return { data: null, error: `This job is now ${job.status.toLowerCase()}. Tracking is no longer available.` };
+    }
+
+    if (!job.assignedTechnicianId) {
+        return { data: null, error: "A technician has not yet been assigned to this job. Please check back later." };
+    }
+
     const technicianDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
     const technicianDocSnap: DocumentSnapshot = await getDoc(technicianDocRef);
 
     if (!technicianDocSnap.exists()) {
-      console.warn(`Job ${job.id} references non-existent technician ID ${job.assignedTechnicianId}`);
-      return { data: null, error: 'Could not retrieve technician details.' };
+        console.warn(`Job ${job.id} references non-existent technician ID ${job.assignedTechnicianId}`);
+        return { data: null, error: "Could not retrieve technician details." };
     }
 
     const technician = technicianDocSnap.data() as Technician;
 
-    // Construct the public tracking info
     const publicTrackingInfo: PublicTrackingInfo = {
-      jobTitle: job.title,
-      jobStatus: job.status,
-      scheduledStartTime: job.scheduledStartTime instanceof Timestamp ? job.scheduledStartTime.toDate().toISOString() : null,
-      scheduledEndTime: job.scheduledEndTime instanceof Timestamp ? job.scheduledEndTime.toDate().toISOString() : null,
-      actualStartTime: job.actualStartTime instanceof Timestamp ? job.actualStartTime.toDate().toISOString() : null,
-      actualEndTime: job.actualEndTime instanceof Timestamp ? job.actualEndTime.toDate().toISOString() : null,
-      technicianName: technician.name,
-      technicianPhotoUrl: technician.photoUrl || null,
-      technicianPhoneNumber: technician.phoneNumber || null,
-      currentTechnicianLocation: technician.currentLocation || null, // Assuming currentLocation is stored on technician
-      etaToJob: null, // You would need to calculate ETA dynamically or store it
+        jobTitle: job.title,
+        jobStatus: job.status,
+        jobLocation: job.location,
+        scheduledStartTime: job.scheduledTime instanceof Timestamp ? job.scheduledTime.toDate().toISOString() : null,
+        scheduledEndTime: null, // This can be calculated if needed: scheduledTime + estimatedDuration
+        actualStartTime: job.actualStartTime instanceof Timestamp ? job.actualStartTime.toDate().toISOString() : null,
+        actualEndTime: job.actualEndTime instanceof Timestamp ? job.actualEndTime.toDate().toISOString() : null,
+        technicianName: technician.name,
+        technicianPhotoUrl: technician.avatarUrl || null,
+        technicianPhoneNumber: technician.phone || null,
+        currentTechnicianLocation: technician.location || null,
+        etaToJob: null, // This would need a dynamic calculation (e.g. Google Maps API call)
+        customerName: job.customerName,
     };
 
     return { data: publicTrackingInfo, error: null };

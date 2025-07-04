@@ -55,12 +55,18 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
-        <div className="flex-1">
-          <CardTitle className="text-lg font-headline">{technician.name}</CardTitle>
-          <CardDescription className="flex items-center gap-1 text-sm">
-            <Circle className={cn("h-2.5 w-2.5 fill-current", technician.isAvailable ? "text-green-500" : "text-red-500")} />
-            {technician.isAvailable ? 'Available' : 'Unavailable'}
-          </CardDescription>
+        <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
+              <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <CardTitle className="text-lg font-headline">{technician.name}</CardTitle>
+              <CardDescription className="flex items-center gap-1 text-sm">
+                <Circle className={cn("h-2.5 w-2.5 fill-current", technician.isAvailable ? "text-green-500" : "text-red-500")} />
+                {technician.isAvailable ? 'Available' : 'Unavailable'}
+              </CardDescription>
+            </div>
         </div>
         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(technician)}>
             <Edit className="h-4 w-4" />

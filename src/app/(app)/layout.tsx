@@ -66,11 +66,6 @@ const getTechnicianNavItems = (uid: string) => [
   { href: `/technician/jobs/${uid}`, label: "My Active Jobs", icon: Smartphone },
 ];
 
-const csrNavItems = [
-  { href: "/dashboard", label: "Create Job", icon: PlusCircle },
-  { href: "/contracts", label: "Manage Contracts", icon: Repeat },
-];
-
 const superAdminNavItems = [
   { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
@@ -176,8 +171,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     switch (userProfile?.role) {
         case 'technician':
             return getTechnicianNavItems(user.uid);
-        case 'csr':
-            return csrNavItems;
         case 'superAdmin':
             return [...adminNavItems, ...superAdminNavItems];
         case 'admin':
@@ -274,11 +267,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent side="right" align="start" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {userProfile?.role === 'admin' && (
+                {canSeeAdminViews && (
                   <Link href="/technician/profile">
                       <DropdownMenuItem>
                           <UserCog className="mr-2 h-4 w-4" />
-                          <span>My Technician Profile</span>
+                          <span>My Admin Profile</span>
                       </DropdownMenuItem>
                   </Link>
                 )}

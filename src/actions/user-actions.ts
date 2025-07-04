@@ -165,12 +165,15 @@ const RemoveUserFromCompanyInputSchema = z.object({
     companyId: z.string(),
     appId: z.string().min(1),
 });
+export type RemoveUserFromCompanyInput = z.infer<typeof RemoveUserFromCompanyInputSchema>;
 
 export async function removeUserFromCompanyAction(
-  input: z.infer<typeof RemoveUserFromCompanyInputSchema>
+  input: RemoveUserFromCompanyInput
 ): Promise<{ error: string | null }> {
     try {
         const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
+        if (!db) throw new Error("Firestore not initialized");
+
         const userDocRef = doc(db, "users", userId);
         const userSnap = await getDoc(userDocRef);
 

@@ -1,88 +1,93 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
     
     // --- Helper Functions ---
-
-    function isAuthenticated() {
-      return request.auth != null;
+    function isSuperAdmin() {
+      // Check if the user is authenticated and their role is 'super_admin'.
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'super_admin';
+    }
+    
+    function getUserData() {
+        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isSuperAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superAdmin';
+    function isCompanyAdmin(companyId) {
+      let userData = getUserData();
+      return userData.companyId == companyId && userData.role == 'admin';
     }
     
     function isCompanyMember(companyId) {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
-    }
-    
-    function hasCompanyRole(companyId, role) {
-      return isCompanyMember(companyId) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
-    }
-    
-    function isCompanyOwner(companyId) {
-        return isAuthenticated() && get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId == request.auth.uid;
-    }
-    
-    function isAdmin(companyId) {
-        return hasCompanyRole(companyId, 'admin');
+       return getUserData().companyId == companyId;
     }
 
-    // --- Collections Rules ---
+    // --- Collection Rules ---
 
+    // USERS: Users can manage their own profile. Admins can read users in their company.
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId || isAdmin(resource.data.companyId) || isSuperAdmin();
-      allow create: if isAuthenticated();
+      allow read, write: if request.auth.uid == userId || isSuperAdmin();
+      allow get: if isCompanyMember(get(/databases/$(database)/documents/users/$(userId)).data.companyId);
     }
-    
+
+    // COMPANIES: Members can read, admins can update.
     match /companies/{companyId} {
-      allow read: if isCompanyMember(companyId) || isSuperAdmin();
-      allow update: if isCompanyOwner(companyId) || isAdmin(companyId) || isSuperAdmin();
-      allow create: if isAuthenticated(); 
+      allow get: if isCompanyMember(companyId) || isSuperAdmin();
+      allow update: if isCompanyAdmin(companyId) || isSuperAdmin();
+      allow create: if isSuperAdmin(); // Or based on your app's logic for company creation
     }
 
+    // JOBS: Most permissive access for super admins, then role-based access.
     match /jobs/{jobId} {
-      allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-      allow create: if hasCompanyRole(request.resource.data.companyId, 'admin') || hasCompanyRole(request.resource.data.companyId, 'csr') || isSuperAdmin();
-      allow update: if isAdmin(resource.data.companyId) || isSuperAdmin() || (isCompanyMember(resource.data.companyId) && request.auth.uid == resource.data.assignedTechnicianId);
-      allow delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
-    }
+      function getJobData() {
+        return get(/databases/$(database)/documents/jobs/$(jobId)).data;
+      }
+      
+      // Admins and Super Admins have broad permissions on jobs within the correct company.
+      // DELETE rule is the key fix here.
+      allow read, create, update, delete: if isSuperAdmin() || isCompanyAdmin(request.method == 'create' ? request.resource.data.companyId : getJobData().companyId);
 
-    match /technicians/{technicianId} {
-      allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-      allow create, update, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
-    }
-
-    match /profileChangeRequests/{requestId} {
-        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-        allow create: if isCompanyMember(request.resource.data.companyId);
-        allow update: if isAdmin(resource.data.companyId) || isSuperAdmin();
+      // Allow any company member to read.
+      allow get, list: if isCompanyMember(getJobData().companyId);
+      
+      // Allow assigned technicians to update their job.
+      allow update: if request.auth.uid == getJobData().assignedTechnicianId;
     }
     
-    match /skills/{skillId} {
-        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-        allow create, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
-    }
-    
-    match /parts/{partId} {
-        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-        allow create, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
+    // TECHNICIANS: Read by company, write by admin/self.
+    match /technicians/{techId} {
+        function getTechData() {
+            return get(/databases/$(database)/documents/technicians/$(techId)).data;
+        }
+
+        allow read: if isCompanyMember(getTechData().companyId) || isSuperAdmin();
+        allow create: if isCompanyAdmin(request.resource.data.companyId) || isSuperAdmin();
+        allow update: if request.auth.uid == techId || isCompanyAdmin(getTechData().companyId) || isSuperAdmin();
+        allow delete: if isCompanyAdmin(getTechData().companyId) || isSuperAdmin();
     }
 
-    match /chatMessages/{messageId} {
-        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-        allow create: if isCompanyMember(request.resource.data.companyId);
-    }
-
-    match /contracts/{contractId} {
-        allow read, create, update, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
+    // OTHER COLLECTIONS: General rules for company-scoped data.
+    match /contracts/{docId} | /skills/{docId} | /parts/{docId} {
+        function getDocData() { return get(/databases/$(database)/documents/{collection}/$(docId)).data; }
+        allow read, write: if isCompanyAdmin(request.method == 'create' ? request.resource.data.companyId : getDocData().companyId) || isSuperAdmin();
     }
     
-    match /equipment/{equipmentId} {
-        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
-        allow create: if hasCompanyRole(request.resource.data.companyId, 'admin') || hasCompanyRole(request.resource.data.companyId, 'csr') || isSuperAdmin();
+    match /equipment/{docId} {
+        function getDocData() { return get(/databases/$(database)/documents/equipment/$(docId)).data; }
+        allow read, write: if isCompanyMember(request.method == 'create' ? request.resource.data.companyId : getDocData().companyId) || isSuperAdmin();
+    }
+    
+    match /profileChangeRequests/{reqId} {
+        function getReqData() { return get(/databases/$(database)/documents/profileChangeRequests/$(reqId)).data; }
+        function isRequestOwner() { return request.auth.uid == (request.method == 'create' ? request.resource.data.technicianId : getReqData().technicianId); }
+        function reqCompanyId() { return (request.method == 'create' ? request.resource.data.companyId : getReqData().companyId); }
+
+        allow read, write: if isRequestOwner() || isCompanyAdmin(reqCompanyId()) || isSuperAdmin();
+    }
+
+    match /chatMessages/{msgId} {
+        function getMsgData() { return get(/databases/$(database)/documents/chatMessages/$(msgId)).data; }
+        allow read, write: if isCompanyMember(request.method == 'create' ? request.resource.data.companyId : getMsgData().companyId) || isSuperAdmin();
     }
   }
 }

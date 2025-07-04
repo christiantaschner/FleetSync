@@ -105,17 +105,14 @@ export default function DashboardPage() {
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
 
   const jobFilterId = searchParams.get('jobFilter');
-  const isCsrView = searchParams.get('view') === 'csr';
-  const isAdmin = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isCsrView;
+  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
   const [activeTab, setActiveTab] = useState('jobs');
   
   useEffect(() => {
     if (jobFilterId) {
         setActiveTab('jobs');
-    } else if(isCsrView) {
-        setActiveTab('jobs');
     }
-  }, [jobFilterId, isCsrView]);
+  }, [jobFilterId]);
   
   const handleOpenAddJob = () => {
     setSelectedJobForEdit(null);
@@ -164,10 +161,11 @@ export default function DashboardPage() {
 
   const fetchSkills = useCallback(async () => {
     if (!db || !userProfile?.companyId) return;
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) return;
     try {
         const companyId = userProfile.companyId;
-
-        const skillsQuery = query(collection(db, "skills"), where("companyId", "==", companyId));
+        const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", companyId));
         const skillsSnapshot = await getDocs(skillsQuery);
         const skillsData = skillsSnapshot.docs.map(doc => doc.data().name as string);
         skillsData.sort((a, b) => a.localeCompare(b));
@@ -195,6 +193,14 @@ export default function DashboardPage() {
       return;
     }
     
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        console.error("Firebase Project ID not found in environment variables.");
+        toast({ title: "Configuration Error", description: "Application cannot function without a Firebase Project ID.", variant: "destructive" });
+        setIsLoadingData(false);
+        return;
+    }
+    
     setIsLoadingData(true);
     let activeListeners = 0;
     const requiredListeners = 3;
@@ -209,7 +215,7 @@ export default function DashboardPage() {
 
     fetchSkills();
 
-    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
+    const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
     const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
       const jobsData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -228,7 +234,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
 
-    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId));
+    const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
     const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
       const techniciansData = querySnapshot.docs.map(doc => {
         const data = doc.data();
@@ -248,7 +254,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, "profileChangeRequests"), where("companyId", "==", companyId), where("status", "==", "pending"));
+    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId), where("status", "==", "pending"));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
         const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
         requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -446,8 +452,11 @@ export default function DashboardPage() {
   }, [jobs, technicians, isLoadingData]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
-    if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db) return;
+    if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId) return;
     
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) return;
+
     setIsProcessingProactive(true);
     
     const { job, suggestedTechnicianDetails } = suggestion;
@@ -455,7 +464,7 @@ export default function DashboardPage() {
 
     const batch = writeBatch(db);
     
-    const newJobRef = doc(db, "jobs", job.id);
+    const newJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     batch.update(newJobRef, { 
         status: 'Assigned', 
         assignedTechnicianId: suggestedTechnicianDetails.id,
@@ -463,18 +472,18 @@ export default function DashboardPage() {
         assignedAt: serverTimestamp(),
     });
 
-    const techDocRef = doc(db, "technicians", suggestedTechnicianDetails.id);
+    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestedTechnicianDetails.id);
     batch.update(techDocRef, {
         isAvailable: false,
         currentJobId: job.id,
     });
     
     if (isInterruption) {
-        const oldJobRef = doc(db, "jobs", suggestedTechnicianDetails.currentJobId!);
+        const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, suggestedTechnicianDetails.currentJobId!);
         batch.update(oldJobRef, {
             status: 'Pending',
             assignedTechnicianId: null,
-            notes: `This job was unassigned due to a higher priority interruption for job: ${job.title}.`,
+            notes: arrayUnion(`This job was unassigned due to a higher priority interruption for job: ${job.title}.`),
             updatedAt: serverTimestamp(),
         });
     }
@@ -492,22 +501,10 @@ export default function DashboardPage() {
   };
   
   const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
-    setJobs(prev => {
-        const exists = prev.some(j => j.id === updatedJob.id);
-        if (exists) {
-            return prev.map(j => j.id === updatedJob.id ? updatedJob : j);
-        }
-        return [...prev, updatedJob];
-    });
+    // onSnapshot handles this
   };
   const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
-    setTechnicians(prev => {
-        const exists = prev.some(t => t.id === updatedTechnician.id);
-        if (exists) {
-            return prev.map(t => t.id === updatedTechnician.id ? updatedTechnician : t);
-        }
-        return [...prev, updatedTechnician];
-    });
+    // onSnapshot handles this
   };
   
   const openAIAssignDialogForJob = (job: Job) => {
@@ -642,10 +639,14 @@ export default function DashboardPage() {
   }, [jobs, technicians, toast]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
-    if (!db) {
+    if (!db || !userProfile?.companyId) {
         toast({ title: "Database Error", description: "Firestore instance not available.", variant: "destructive" });
         return;
     }
+
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) return;
+
     setIsLoadingBatchConfirmation(true);
     const batch = writeBatch(db);
     let assignmentsMade = 0;
@@ -655,7 +656,7 @@ export default function DashboardPage() {
     for (const { job, suggestion, suggestedTechnicianDetails } of assignmentsToConfirm) {
         const originalTech = originalTechnicianStates.get(suggestedTechnicianDetails!.id);
         if (job && suggestion && suggestedTechnicianDetails && originalTech && originalTech.isAvailable) {
-            const jobDocRef = doc(db, "jobs", job.id);
+            const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
             batch.update(jobDocRef, {
                 assignedTechnicianId: suggestion.suggestedTechnicianId,
                 status: 'Assigned' as JobStatus,
@@ -663,7 +664,7 @@ export default function DashboardPage() {
                 assignedAt: serverTimestamp(),
             });
 
-            const techDocRef = doc(db, "technicians", suggestion.suggestedTechnicianId);
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestion.suggestedTechnicianId);
             batch.update(techDocRef, {
                 isAvailable: false,
                 currentJobId: job.id,
@@ -690,10 +691,20 @@ export default function DashboardPage() {
     }
   };
   
-  const handleMarkTechnicianUnavailable = async (technicianId: string, reason?: string, unavailableUntil?: string) => {
+  const handleMarkTechnicianUnavailable = async (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => {
     if (!userProfile?.companyId) return;
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) return;
+
     setIsHandlingUnavailability(true);
-    const result = await handleTechnicianUnavailabilityAction({ companyId: userProfile.companyId, technicianId, reason, unavailableUntil });
+    const result = await handleTechnicianUnavailabilityAction({ 
+        companyId: userProfile.companyId, 
+        technicianId, 
+        reason, 
+        unavailableFrom, 
+        unavailableUntil, 
+        appId 
+    });
 
     if (result.error) {
       toast({
@@ -796,7 +807,7 @@ export default function DashboardPage() {
       />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
-          {isAdmin ? "Dispatcher Dashboard" : "CSR Dashboard"}
+          Dashboard
           {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
         </h1>
         <div className="flex flex-wrap gap-2">

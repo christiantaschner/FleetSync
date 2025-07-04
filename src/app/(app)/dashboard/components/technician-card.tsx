@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, CalendarIcon } from 'lucide-react';
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -31,18 +31,24 @@ interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
   onEdit: (technician: Technician) => void;
-  onMarkUnavailable: (technicianId: string, reason?: string, unavailableUntil?: string) => void;
+  onMarkUnavailable: (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => void;
 }
 
 const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
   const { userProfile } = useAuth();
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
   const [reason, setReason] = useState('');
+  const [unavailableFrom, setUnavailableFrom] = useState<Date | undefined>(new Date());
   const [unavailableUntil, setUnavailableUntil] = useState<Date | undefined>();
 
   const handleMarkUnavailable = () => {
     if (userProfile?.companyId) {
-      onMarkUnavailable(technician.id, reason, unavailableUntil?.toISOString());
+      onMarkUnavailable(
+        technician.id, 
+        reason, 
+        unavailableFrom?.toISOString(), 
+        unavailableUntil?.toISOString()
+      );
     }
   };
 
@@ -102,7 +108,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 <AlertDialogHeader>
                   <AlertDialogTitle>Mark {technician.name} as Unavailable?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will unassign all their active jobs. You can provide a reason and an end date for their unavailability.
+                    This will unassign all their active jobs. You can provide a reason and an unavailability period.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                  <div className="py-4 space-y-4">
@@ -110,21 +116,35 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                         <Label htmlFor="unavailability-reason">Reason (Optional)</Label>
                         <Textarea id="unavailability-reason" value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g., On vacation, sick leave" />
                     </div>
-                    <div>
-                        <Label>Unavailable Until (Optional)</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !unavailableUntil && "text-muted-foreground")}>
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {unavailableUntil ? format(unavailableUntil, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={unavailableUntil} onSelect={setUnavailableUntil} initialFocus /></PopoverContent>
-                        </Popover>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <Label>Unavailable From</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !unavailableFrom && "text-muted-foreground")}>
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {unavailableFrom ? format(unavailableFrom, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={unavailableFrom} onSelect={setUnavailableFrom} initialFocus /></PopoverContent>
+                            </Popover>
+                        </div>
+                        <div>
+                            <Label>Unavailable Until (Optional)</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !unavailableUntil && "text-muted-foreground")}>
+                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                        {unavailableUntil ? format(unavailableUntil, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={unavailableUntil} onSelect={setUnavailableUntil} initialFocus /></PopoverContent>
+                            </Popover>
+                        </div>
                     </div>
                 </div>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => { setReason(''); setUnavailableUntil(undefined); }}>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel onClick={() => { setReason(''); setUnavailableFrom(new Date()); setUnavailableUntil(undefined); }}>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleMarkUnavailable}>
                     Confirm & Unassign Jobs
                   </AlertDialogAction>

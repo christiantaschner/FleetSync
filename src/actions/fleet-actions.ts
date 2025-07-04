@@ -233,6 +233,7 @@ const HandleTechnicianUnavailabilityInputSchema = z.object({
   companyId: z.string(),
   technicianId: z.string().min(1, "Technician ID is required."),
   reason: z.string().optional(),
+  unavailableFrom: z.string().optional(),
   unavailableUntil: z.string().optional(),
   appId: z.string().min(1),
 });
@@ -241,7 +242,7 @@ export async function handleTechnicianUnavailabilityAction(
   input: z.infer<typeof HandleTechnicianUnavailabilityInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { companyId, technicianId, reason, unavailableUntil, appId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
+    const { companyId, technicianId, reason, unavailableFrom, unavailableUntil, appId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
@@ -259,6 +260,7 @@ export async function handleTechnicianUnavailabilityAction(
         isAvailable: false,
         currentJobId: null,
         unavailabilityReason: reason || null,
+        unavailableFrom: unavailableFrom || null,
         unavailableUntil: unavailableUntil || null,
     });
 
@@ -276,6 +278,7 @@ export async function handleTechnicianUnavailabilityAction(
       batch.update(jobDoc.ref, {
         status: "Pending" as JobStatus,
         assignedTechnicianId: null,
+        notes: arrayUnion(`(Reassigned: Technician marked as unavailable${reason ? `: ${reason}` : ''})`)
       });
     });
 

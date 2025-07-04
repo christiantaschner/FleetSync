@@ -15,7 +15,7 @@ export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
     companyId: z.string().nullable(),
-    role: z.enum(['admin', 'dispatcher', 'technician', 'csr', 'superAdmin']).nullable(),
+    role: z.enum(['admin', 'dispatcher', 'technician', 'superAdmin']).nullable(),
     onboardingStatus: z.enum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
@@ -66,6 +66,7 @@ export type Technician = {
   createdAt?: string;
   updatedAt?: string;
   unavailabilityReason?: string;
+  unavailableFrom?: string;
   unavailableUntil?: string;
 };
 
@@ -124,11 +125,17 @@ export const CustomerSchema = z.object({
 export type Customer = z.infer<typeof CustomerSchema>;
 
 export type PublicTrackingInfo = {
+    jobTitle: string;
     jobStatus: JobStatus;
-    jobLocation: Location;
+    scheduledStartTime: string | null;
+    scheduledEndTime: string | null;
+    actualStartTime: string | null;
+    actualEndTime: string | null;
     technicianName: string;
-    technicianLocation: Location;
-    customerName: string;
+    technicianPhotoUrl: string | null;
+    technicianPhoneNumber: string | null;
+    currentTechnicianLocation: Location | null;
+    etaToJob: number | null; // in minutes
 };
 
 export type Task = {
@@ -401,14 +408,18 @@ export const SuggestJobPriorityOutputSchema = z.object({
 export type SuggestJobPriorityOutput = z.infer<typeof SuggestJobPriorityOutputSchema>;
 
 export const ConfirmManualRescheduleInputSchema = z.object({
+  companyId: z.string(),
+  appId: z.string(),
   technicianId: z.string().describe("The ID of the technician whose route is being updated."),
   movedJobId: z.string().describe("The ID of the job that was manually moved."),
   newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
 });
-export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInput>;
+export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;
 
 export const ApproveProfileChangeRequestInputSchema = z.object({
+    companyId: z.string(),
+    appId: z.string(),
     requestId: z.string(),
     technicianId: z.string(),
     approvedChanges: z.record(z.any()),
@@ -416,6 +427,8 @@ export const ApproveProfileChangeRequestInputSchema = z.object({
 });
 
 export const RejectProfileChangeRequestInputSchema = z.object({
+    companyId: z.string(),
+    appId: z.string(),
     requestId: z.string(),
     reviewNotes: z.string().optional(),
 });
@@ -484,6 +497,8 @@ export type GenerateCustomerNotificationOutput = z.infer<typeof GenerateCustomer
 
 
 export const ReassignJobInputSchema = z.object({
+    companyId: z.string(),
+    appId: z.string(),
     jobId: z.string(),
     newTechnicianId: z.string(),
     reason: z.string().optional(),
@@ -537,6 +552,7 @@ export type EstimateTravelDistanceOutput = z.infer<typeof EstimateTravelDistance
 
 export const CalculateTravelMetricsInputSchema = z.object({
     companyId: z.string(),
+    appId: z.string(),
     jobId: z.string(),
     technicianId: z.string(),
 });

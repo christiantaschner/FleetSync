@@ -51,7 +51,7 @@ const formatDuration = (milliseconds: number): string => {
 
 
 export default function ReportClientView() {
-  const { userProfile } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +62,8 @@ export default function ReportClientView() {
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("all");
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!db || !userProfile?.companyId) {
       setIsLoading(false);
       return;
@@ -96,7 +98,7 @@ export default function ReportClientView() {
       unsubscribeJobs();
       unsubscribeTechnicians();
     };
-  }, [userProfile]);
+  }, [authLoading, userProfile]);
 
   const reportData = useMemo(() => {
     const dateFilteredJobs = jobs.filter(job => {
@@ -199,7 +201,7 @@ export default function ReportClientView() {
     };
   }, [jobs, technicians, date, selectedTechnicianId]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
   }
 

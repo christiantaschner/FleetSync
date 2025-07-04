@@ -186,6 +186,10 @@ export default function DashboardPage() {
   }, [fetchSkills]);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     if (!db || !userProfile?.companyId) {
       if (userProfile && userProfile.onboardingStatus === 'completed') {
           setIsLoadingData(false);
@@ -263,7 +267,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [userProfile, toast, fetchSkills]);
+  }, [authLoading, userProfile, toast, fetchSkills]);
 
   const prevTechCount = useRef<number | null>(null);
 
@@ -750,7 +754,7 @@ export default function DashboardPage() {
     });
   };
 
-  if (isLoadingData) { 
+  if (authLoading || isLoadingData) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

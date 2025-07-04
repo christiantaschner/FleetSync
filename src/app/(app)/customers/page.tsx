@@ -10,7 +10,7 @@ import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function CustomersPage() {
-    const { user, userProfile } = useAuth();
+    const { user, userProfile, loading: authLoading } = useAuth();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -18,6 +18,10 @@ export default function CustomersPage() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        if (authLoading) {
+            return;
+        }
+
         if (!db || !userProfile?.companyId) {
             setIsLoading(false);
             return;
@@ -97,9 +101,9 @@ export default function CustomersPage() {
             unsubscribeContracts();
             unsubscribeEquipment();
         };
-    }, [userProfile]);
+    }, [authLoading, userProfile]);
 
-    if (isLoading) {
+    if (authLoading || isLoading) {
         return (
             <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />

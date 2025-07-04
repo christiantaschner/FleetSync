@@ -16,7 +16,7 @@ import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function ContractsPage() {
-    const { user, userProfile } = useAuth();
+    const { user, userProfile, loading: authLoading } = useAuth();
     const { toast } = useToast();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +28,11 @@ export default function ContractsPage() {
     const [isSuggestAppointmentOpen, setIsSuggestAppointmentOpen] = useState(false);
 
     const fetchContracts = useCallback(() => {
-        if (!db || !userProfile?.companyId) return;
+        if (!db || !userProfile?.companyId) {
+            setIsLoading(false);
+            return;
+        }
+
         setIsLoading(true);
         const contractsQuery = query(
             collection(db, "contracts"), 
@@ -57,9 +61,12 @@ export default function ContractsPage() {
     }, [userProfile, toast]);
 
     useEffect(() => {
+        if (authLoading) {
+            return;
+        }
         const unsubscribe = fetchContracts();
         return () => unsubscribe?.();
-    }, [fetchContracts]);
+    }, [authLoading, fetchContracts]);
 
     const handleEditContract = (contract: Contract) => {
         setSelectedContract(contract);
@@ -86,6 +93,14 @@ export default function ContractsPage() {
         setSelectedContract(null);
     }
     
+    if (authLoading || isLoading) {
+      return (
+        <div className="flex h-[50vh] w-full items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      )
+    }
+
     return (
         <div className="space-y-6">
             {userProfile?.companyId && (
@@ -129,11 +144,7 @@ export default function ContractsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? (
-                        <div className="flex justify-center items-center py-10">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    ) : contracts.length > 0 ? (
+                    {contracts.length > 0 ? (
                         <div className="space-y-4">
                             {contracts.map(contract => (
                                 <ContractListItem 

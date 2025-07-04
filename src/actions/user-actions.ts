@@ -41,7 +41,7 @@ export async function ensureUserDocumentAction(
       uid: uid,
       email: email,
       onboardingStatus: isSuperAdmin ? 'completed' : 'pending_onboarding',
-      role: isSuperAdmin ? 'super_admin' : null,
+      role: isSuperAdmin ? 'superAdmin' : null,
       companyId: isSuperAdmin ? 'fleetsync_ai_dev' : null, // Assign a dev company for super admin
     });
     
@@ -75,6 +75,9 @@ export async function getCompanyUsersAction(
 ): Promise<{ data: UserProfile[] | null; error: string | null }> {
     try {
         if (!db) throw new Error("Firestore not initialized");
+        if (!companyId) {
+            return { data: [], error: null };
+        }
 
         const usersQuery = query(collection(db, "users"), where("companyId", "==", companyId));
         const querySnapshot = await getDocs(usersQuery);

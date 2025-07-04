@@ -21,6 +21,7 @@ export async function suggestJobSkills(input: SuggestJobSkillsInput): Promise<Su
 
 const prompt = ai.definePrompt({
     name: 'suggestJobSkillsPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: SuggestJobSkillsInputSchema},
     output: {schema: SuggestJobSkillsOutputSchema},
     prompt: `You are an expert at analyzing job descriptions to determine the necessary skills.

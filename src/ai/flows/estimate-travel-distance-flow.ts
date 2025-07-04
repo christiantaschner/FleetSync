@@ -14,6 +14,7 @@ import {
 
 const prompt = ai.definePrompt({
     name: 'estimateTravelDistancePrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: EstimateTravelDistanceInputSchema },
     output: { schema: EstimateTravelDistanceOutputSchema },
     prompt: `You are a mapping expert who provides driving distance estimations.

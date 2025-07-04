@@ -20,6 +20,7 @@ export async function generateCustomerNotification(input: GenerateCustomerNotifi
 
 const prompt = ai.definePrompt({
     name: 'generateCustomerNotificationPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: GenerateCustomerNotificationInputSchema},
     output: {schema: GenerateCustomerNotificationOutputSchema},
     prompt: `You are a helpful customer service assistant for a field service company.

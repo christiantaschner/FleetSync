@@ -18,6 +18,7 @@ export async function troubleshootEquipment(input: TroubleshootEquipmentInput): 
 
 const prompt = ai.definePrompt({
     name: 'troubleshootEquipmentPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: TroubleshootEquipmentInputSchema },
     output: { schema: TroubleshootEquipmentOutputSchema },
     prompt: `You are an AI assistant providing expert technical guidance to a field service technician.

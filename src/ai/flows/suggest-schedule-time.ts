@@ -19,6 +19,7 @@ export async function suggestScheduleTime(input: SuggestScheduleTimeInput): Prom
 
 const prompt = ai.definePrompt({
   name: 'suggestScheduleTimePrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: SuggestScheduleTimeInputSchema},
   output: {schema: SuggestScheduleTimeOutputSchema},
   prompt: `You are an intelligent scheduling assistant for a field service company. Your task is to suggest up to 5 optimal start times for a new job based on its priority, required skills, and technician availability.

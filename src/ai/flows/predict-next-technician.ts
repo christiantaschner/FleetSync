@@ -21,6 +21,7 @@ export async function predictNextAvailableTechnicians(input: PredictNextAvailabl
 
 const prompt = ai.definePrompt({
     name: 'predictNextAvailableTechniciansPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: PredictNextAvailableTechniciansInputSchema},
     output: {schema: PredictNextAvailableTechniciansOutputSchema},
     prompt: `You are an AI assistant that predicts when field technicians will become available.

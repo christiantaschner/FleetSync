@@ -21,6 +21,7 @@ export async function suggestJobParts(input: SuggestJobPartsInput): Promise<Sugg
 
 const prompt = ai.definePrompt({
     name: 'suggestJobPartsPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: SuggestJobPartsInputSchema},
     output: {schema: SuggestJobPartsOutputSchema},
     prompt: `You are an expert at analyzing job descriptions to determine the necessary parts and materials.
@@ -50,5 +51,3 @@ const suggestJobPartsFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that predicts the risk of a technician being late for their next job.
@@ -35,6 +36,7 @@ export async function predictScheduleRisk(input: PredictScheduleRiskInput): Prom
 
 const prompt = ai.definePrompt({
     name: 'predictScheduleRiskPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: PredictScheduleRiskInputSchema},
     output: {schema: PredictScheduleRiskOutputSchema},
     tools: [getDrivingDistance],

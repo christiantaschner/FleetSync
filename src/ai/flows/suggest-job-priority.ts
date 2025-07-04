@@ -21,6 +21,7 @@ export async function suggestJobPriority(input: SuggestJobPriorityInput): Promis
 
 const prompt = ai.definePrompt({
     name: 'suggestJobPriorityPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: {schema: SuggestJobPriorityInputSchema},
     output: {schema: SuggestJobPriorityOutputSchema},
     prompt: `You are an expert dispatcher analyzing job descriptions to determine the correct priority.

@@ -20,6 +20,7 @@ export async function suggestNextAppointment(input: SuggestNextAppointmentInput)
 
 const prompt = ai.definePrompt({
     name: 'suggestNextAppointmentPrompt',
+    model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: z.object({
         customerName: z.string(),
         jobTitle: z.string(),

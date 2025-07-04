@@ -21,6 +21,7 @@ export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobO
 
 const prompt = ai.definePrompt({
   name: 'allocateJobPrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
   prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, and location.
@@ -77,13 +78,20 @@ const allocateJobFlow = ai.defineFlow(
     outputSchema: AllocateJobOutputSchema,
   },
   async input => {
-    const { output } = await prompt(input);
-    if (!output) {
+    try {
+      const { output } = await prompt(input);
+      if (!output) {
+        return {
+          suggestedTechnicianId: null,
+          reasoning: "The AI model could not determine a suitable technician based on the provided constraints (e.g., skills, availability) or generated an invalid response.",
+        };
+      }
+      return output;
+    } catch (error) {
       return {
         suggestedTechnicianId: null,
-        reasoning: "The AI model could not determine a suitable technician based on the provided constraints (e.g., skills, availability).",
+        reasoning: `The AI model encountered an error during processing: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
-    return output;
   }
 );

@@ -48,42 +48,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let unsubscribeCompany: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
-      // Clean up previous listeners
+      // Clean up previous listeners to prevent memory leaks on user change
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
       
+      // Reset state
       setUserProfile(null);
       setCompany(null);
+      setUser(currentUser); // Set the Firebase user object immediately
 
       if (currentUser) {
-        // Set user immediately
-        setUser(currentUser);
-
         try {
-            // First, ensure a document for this user exists in Firestore.
-            // This is crucial for storing non-claim data like onboardingStatus.
+            // Ensure a user document exists in Firestore.
             await ensureUserDocumentAction({ 
                 uid: currentUser.uid, 
                 email: currentUser.email! 
             });
 
-            // Force a token refresh to get the latest custom claims from the backend.
+            // Force a token refresh to get the latest custom claims.
             const idTokenResult = await currentUser.getIdTokenResult(true);
             const claims = idTokenResult.claims;
-
-            // The user's role and companyId are now authoritatively sourced from claims.
+            
+            // Log claims for debugging, as requested.
+            console.log("--- Firebase Auth Custom Claims ---");
+            console.log("Gesamte Claims:", idTokenResult.claims);
+            console.log("companyId aus Claims:", idTokenResult.claims.companyId); // Beachten Sie die Groß-/Kleinschreibung
+            console.log("role aus Claims:", idTokenResult.claims.role);
+            console.log("-----------------------------------");
+            
+            // Claims are the source of truth for role and companyId.
             const roleFromClaims = (claims.role as UserProfile['role']) || null;
             const companyIdFromClaims = (claims.companyId as string) || null;
             
-            // We still need to listen to the user's Firestore document for reactive
-            // UI changes, like their onboarding status.
+            // Listen to the user's Firestore document for non-critical, reactive UI data.
             const userDocRef = doc(db, "users", currentUser.uid);
 
             unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
                 const firestoreData = userDocSnap.exists() ? userDocSnap.data() : {};
                 
-                // Combine claims and Firestore data to create the complete user profile.
-                // Claims are the source of truth for role and companyId.
+                // Combine claims and Firestore data.
                 const finalProfile: UserProfile = {
                     uid: currentUser.uid,
                     email: currentUser.email!,
@@ -93,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 };
                 setUserProfile(finalProfile);
 
-                // Clean up previous company listener before creating a new one
+                // Clean up any old company listener before creating a new one
                 if (unsubscribeCompany) unsubscribeCompany();
 
                 if (finalProfile.companyId) {
@@ -101,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
                         if (companyDocSnap.exists()) {
                             const companyData = companyDocSnap.data();
+                            // Ensure timestamps are serializable
                             for (const key in companyData) {
                                 if (companyData[key] && typeof companyData[key].toDate === 'function') {
                                     companyData[key] = companyData[key].toDate().toISOString();
@@ -110,15 +114,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         } else {
                             setCompany(null);
                         }
-                        setLoading(false); // Done loading once company data is resolved
+                        setLoading(false); // Auth is ready only AFTER company data is fetched
                     }, (error) => {
                         console.error("Error fetching company data:", error);
                         setCompany(null);
                         setLoading(false);
                     });
                 } else {
+                    // If no companyId, we are done loading.
                     setCompany(null);
-                    setLoading(false); // Done loading if there's no company
+                    setLoading(false);
                 }
 
             }, (error) => {
@@ -136,33 +141,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
       } else {
-        // User is logged out
+        // User is logged out, clear all data and stop loading.
         setUser(null);
         setLoading(false);
       }
     });
 
+    // Cleanup function for the main auth listener
     return () => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
     };
-  }, [toast]);
+  }, [toast]); // `toast` is stable and won't cause re-runs
 
   const login = async (email_address: string, pass_word: string) => {
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
     }
-    setLoading(true); // Set loading on login attempt
+    setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email_address, pass_word);
-      // Redirection is now handled by the useEffect in the AppLayout
+      // Redirection is handled by layout component based on profile status
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
       toast({ title: "Login Failed", description: error.message || "Invalid credentials.", variant: "destructive" });
-      setLoading(false); // Reset loading on failure
+      setLoading(false);
       return false;
     }
   };
@@ -172,16 +178,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
     }
-    setLoading(true); // Set loading on signup attempt
+    setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email_address, pass_word);
-      // Redirection is now handled by the useEffect in the AppLayout
-      // The client-side action will create the user document in Firestore.
+      // Redirect handled by layout
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);
       toast({ title: "Signup Failed", description: error.message || "Could not create account.", variant: "destructive" });
-      setLoading(false); // Reset loading on failure
+      setLoading(false);
       return false;
     }
   };

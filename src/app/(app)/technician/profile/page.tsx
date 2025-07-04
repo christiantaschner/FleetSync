@@ -87,8 +87,15 @@ export default function TechnicianProfilePage() {
       setError("Database service not available.");
       return;
     }
+    
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        setError("Firebase Project ID not configured.");
+        setIsLoading(false);
+        return;
+    }
 
-    const techDocRef = doc(db, "technicians", firebaseUser.uid);
+    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, firebaseUser.uid);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
@@ -114,9 +121,14 @@ export default function TechnicianProfilePage() {
     if (!technician) return;
     
     const companyId = technician.companyId;
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+     if (!appId) {
+        setError("Firebase Project ID not configured.");
+        return;
+    }
 
     // Fetch Skills
-    const skillsQuery = query(collection(db, "skills"), where("companyId", "==", companyId));
+    const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", companyId));
     const unsubscribeSkills = onSnapshot(skillsQuery, (snapshot) => {
         const skillsData = snapshot.docs.map(doc => doc.data().name as string);
         skillsData.sort((a,b) => a.localeCompare(b));
@@ -125,7 +137,7 @@ export default function TechnicianProfilePage() {
 
     // Fetch Change Requests
     const requestsQuery = query(
-        collection(db, "profileChangeRequests"),
+        collection(db, `artifacts/${appId}/public/data/profileChangeRequests`),
         where("companyId", "==", companyId),
         where("technicianId", "==", technician.id),
         orderBy("createdAt", "desc")
@@ -145,7 +157,7 @@ export default function TechnicianProfilePage() {
     
     // Fetch Completed Jobs
     const jobsQuery = query(
-        collection(db, "jobs"),
+        collection(db, `artifacts/${appId}/public/data/jobs`),
         where("companyId", "==", companyId),
         where("assignedTechnicianId", "==", technician.id),
         where("status", "==", "Completed"),
@@ -386,3 +398,5 @@ export default function TechnicianProfilePage() {
     </div>
   );
 }
+
+    

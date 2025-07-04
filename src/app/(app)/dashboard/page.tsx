@@ -107,17 +107,15 @@ export default function DashboardPage() {
   const jobFilterId = searchParams.get('jobFilter');
   const isCsrView = searchParams.get('view') === 'csr';
   const isAdmin = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isCsrView;
-  const [activeTab, setActiveTab] = useState(isAdmin ? 'jobs' : 'jobs');
-
+  const [activeTab, setActiveTab] = useState('jobs');
+  
   useEffect(() => {
     if (jobFilterId) {
         setActiveTab('jobs');
     } else if(isCsrView) {
         setActiveTab('jobs');
-    } else if (isAdmin) {
-        setActiveTab('overview');
     }
-  }, [jobFilterId, isCsrView, isAdmin]);
+  }, [jobFilterId, isCsrView]);
   
   const handleOpenAddJob = () => {
     setSelectedJobForEdit(null);

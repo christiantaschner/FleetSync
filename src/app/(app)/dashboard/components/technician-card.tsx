@@ -83,7 +83,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
                       <AlertOctagon className="mr-2 h-4 w-4" />
-                      Set Unavailability
+                      Unavailable
                   </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -119,9 +119,9 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-           <Button variant="secondary" size="icon" onClick={() => onEdit(technician)}>
-              <Edit className="h-4 w-4" />
-              <span className="sr-only">Edit Profile</span>
+           <Button variant="secondary" size="sm" onClick={() => onEdit(technician)}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
             </Button>
         </div>
       </CardFooter>

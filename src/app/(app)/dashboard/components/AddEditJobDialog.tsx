@@ -326,6 +326,30 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         : [...prevSkills, skill]
     );
   };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    const hours = scheduledTime ? scheduledTime.getHours() : 9;
+    const minutes = scheduledTime ? scheduledTime.getMinutes() : 0;
+    const newDateTime = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        hours,
+        minutes
+    );
+    setScheduledTime(newDateTime);
+  };
+
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const timeValue = e.target.value;
+    if (!timeValue || !scheduledTime) return;
+    const [hours, minutes] = timeValue.split(':').map(Number);
+    const newDateTime = new Date(scheduledTime);
+    newDateTime.setHours(hours);
+    newDateTime.setMinutes(minutes);
+    setScheduledTime(newDateTime);
+  };
   
   const handleDeleteJob = async () => {
     if (!job) return;
@@ -649,9 +673,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Calendar
                             mode="single"
                             selected={scheduledTime}
-                            onSelect={setScheduledTime}
+                            onSelect={handleDateSelect}
                             initialFocus
                           />
+                          <div className="p-3 border-t border-border">
+                              <Label htmlFor="time-input" className="text-sm">Time</Label>
+                              <Input
+                                  id="time-input"
+                                  type="time"
+                                  onChange={handleTimeChange}
+                                  value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                                  disabled={!scheduledTime}
+                              />
+                          </div>
                         </PopoverContent>
                       </Popover>
                       {isFetchingScheduleSuggestion && (

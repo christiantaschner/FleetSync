@@ -14,7 +14,7 @@ import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
 import { z } from "zod";
 import { db, storage } from "@/lib/firebase";
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
 import crypto from 'crypto';
@@ -968,5 +968,54 @@ export async function deleteJobAction(
         console.error("Error deleting job:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         return { error: `Failed to delete job. ${errorMessage}` };
+    }
+}
+
+const DeleteSkillInputSchema = z.object({
+  skillId: z.string().min(1, "Skill ID is required."),
+  skillName: z.string().min(1, "Skill name is required."),
+  companyId: z.string().min(1, "Company ID is required."),
+});
+
+export async function deleteSkillAction(
+  input: z.infer<typeof DeleteSkillInputSchema>
+): Promise<{ error: string | null }> {
+    try {
+        const { skillId, skillName, companyId } = DeleteSkillInputSchema.parse(input);
+        if (!db) {
+            throw new Error("Firestore not initialized");
+        }
+        
+        const batch = writeBatch(db);
+
+        // Find all technicians with this skill
+        const techniciansRef = collection(db, "technicians");
+        const q = query(techniciansRef, where("companyId", "==", companyId), where("skills", "array-contains", skillName));
+        const querySnapshot = await getDocs(q);
+
+        // For each technician, remove the skill from their skills array
+        querySnapshot.forEach((technicianDoc) => {
+            batch.update(technicianDoc.ref, {
+                skills: arrayRemove(skillName)
+            });
+        });
+
+        // Delete the skill from the skills library
+        const skillDocRef = doc(db, "skills", skillId);
+        const skillSnap = await getDoc(skillDocRef);
+        if (skillSnap.exists() && skillSnap.data().companyId === companyId) {
+             batch.delete(skillDocRef);
+        } else {
+            throw new Error("Skill not found or you do not have permission to delete it.");
+        }
+        
+        await batch.commit();
+        
+        return { error: null };
+
+    } catch(e) {
+        console.error("Error deleting skill:", e);
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        return { error: `Failed to delete skill. ${errorMessage}` };
     }
 }

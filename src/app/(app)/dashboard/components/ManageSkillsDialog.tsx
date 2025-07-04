@@ -15,11 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, writeBatch, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, doc, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { useAuth } from '@/contexts/auth-context';
+import { deleteSkillAction } from '@/actions/fleet-actions';
 
 interface Skill {
   id: string;
@@ -89,21 +90,37 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     }
   };
 
-  const handleDeleteSkill = async (skillId: string) => {
-    if (!db || !userProfile?.companyId) return;
-    setIsLoading(true); 
-    try {
-      await deleteDoc(doc(db, "skills", skillId));
-      setSkills(prevSkills => prevSkills.filter(skill => skill.id !== skillId));
-      toast({ title: "Success", description: "Skill deleted."});
-      onSkillsUpdated(); 
-    } catch (error) {
-      console.error("Error deleting skill: ", error);
-      toast({ title: "Error", description: "Could not delete skill. It might be in use.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
+  const handleDeleteSkill = async (skillId: string, skillName: string) => {
+    if (!userProfile?.companyId) return;
+
+    // Optimistic UI update: Remove the skill from the local state immediately.
+    const originalSkills = [...skills];
+    setSkills(prev => prev.filter(s => s.id !== skillId));
+
+    const result = await deleteSkillAction({
+      skillId,
+      skillName,
+      companyId: userProfile.companyId,
+    });
+
+    if (result.error) {
+      toast({
+        title: "Deletion Failed",
+        description: result.error,
+        variant: "destructive",
+      });
+      // On error, revert the optimistic UI update.
+      setSkills(originalSkills);
+    } else {
+      toast({
+        title: "Skill Deleted",
+        description: `"${skillName}" was removed from the library and all technicians.`,
+      });
+      // Trigger a refetch in the parent component to ensure data consistency across the app.
+      onSkillsUpdated();
     }
   };
+
 
   const handleSeedSkills = async () => {
     if (!db || !userProfile?.companyId) return;
@@ -171,7 +188,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                                         variant="ghost" 
                                         size="icon"
                                         className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleDeleteSkill(skill.id)}
+                                        onClick={() => handleDeleteSkill(skill.id, skill.name)}
                                     >
                                         <Trash2 className="h-4 w-4" />
                                         <span className="sr-only">Delete {skill.name}</span>

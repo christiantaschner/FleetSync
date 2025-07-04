@@ -37,12 +37,12 @@ interface AddEditContractDialogProps {
 }
 
 const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, onClose, contract, onContractUpdated }) => {
-    const { user } = useAuth();
+    const { userProfile } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const defaultValues = contract || {
-            companyId: user?.uid || '',
+            companyId: userProfile?.companyId || '',
             customerName: '',
             customerPhone: '',
             customerAddress: '',
@@ -66,7 +66,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
     useEffect(() => {
         if (isOpen) {
              const newDefaultValues = contract || {
-                companyId: user?.uid || '',
+                companyId: userProfile?.companyId || '',
                 customerName: '',
                 customerPhone: '',
                 customerAddress: '',
@@ -83,7 +83,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
             };
             reset(newDefaultValues);
         }
-    }, [isOpen, contract, reset, user]);
+    }, [isOpen, contract, reset, userProfile]);
     
     const frequencies: Contract['frequency'][] = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually'];
     const priorities: JobPriority[] = ['Low', 'Medium', 'High'];
@@ -96,10 +96,10 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 await updateDoc(contractRef, { ...data, updatedAt: serverTimestamp() });
                 toast({ title: "Success", description: "Contract updated successfully." });
             } else {
-                 if (!user?.uid) {
-                    throw new Error("User not authenticated.");
+                 if (!userProfile?.companyId) {
+                    throw new Error("User not associated with a company.");
                 }
-                await addDoc(collection(db, "contracts"), { ...data, companyId: user.uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+                await addDoc(collection(db, "contracts"), { ...data, companyId: userProfile.companyId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
                 toast({ title: "Success", description: "Contract created successfully." });
             }
             onContractUpdated();

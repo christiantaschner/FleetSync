@@ -12,7 +12,8 @@ import { stripe } from '@/lib/stripe';
 import type { Company } from '@/types';
 
 export async function completeOnboardingAction(
-  input: CompleteOnboardingInput
+  input: CompleteOnboardingInput,
+  appId: string,
 ): Promise<{ sessionId: string | null; error: string | null }> {
   try {
     const validatedInput = CompleteOnboardingInputSchema.parse(input);
@@ -23,6 +24,7 @@ export async function completeOnboardingAction(
      if (!stripe) {
         throw new Error('Stripe not initialized.');
     }
+    if (!appId) throw new Error("App ID is required.");
 
     const { companyName, uid, numberOfTechnicians } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
@@ -69,13 +71,13 @@ export async function completeOnboardingAction(
       onboardingStatus: 'completed',
     });
     
-    const skillsCollectionRef = collection(db, 'skills');
+    const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
     PREDEFINED_SKILLS.forEach(skillName => {
         const newSkillRef = doc(skillsCollectionRef);
         batch.set(newSkillRef, { name: skillName, companyId: companyId });
     });
     
-    const partsCollectionRef = collection(db, 'parts');
+    const partsCollectionRef = collection(db, `artifacts/${appId}/public/data/parts`);
     PREDEFINED_PARTS.forEach(partName => {
         const newPartRef = doc(partsCollectionRef);
         batch.set(newPartRef, { name: partName, companyId: companyId });

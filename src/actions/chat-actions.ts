@@ -14,7 +14,7 @@ const SendChatMessageInputSchema = z.object({
     receiverId: z.string(),
     text: z.string(),
     attachment: z.instanceof(File).optional(),
- appId: z.string().min(1, 'App ID is required.'),
+    appId: z.string().min(1, 'App ID is required.'),
 });
 
 type SendChatMessageInput = {
@@ -25,21 +25,21 @@ type SendChatMessageInput = {
     receiverId: string;
     text: string;
     attachment?: File;
- appId: string;
+    appId: string;
 };
 
 export async function sendChatMessageAction(
   input: SendChatMessageInput
 ): Promise<{ error: string | null }> {
     try {
-        const { appId, ...messageInput } = input;
- if (!db || !storage) throw new Error("Firebase not initialized");
+        const { appId, ...messageInput } = SendChatMessageInputSchema.parse(input);
+        if (!db || !storage) throw new Error("Firebase not initialized");
 
         let imageUrl: string | null = null;
 
         if (input.attachment) {
             const attachmentRef = ref(storage, `chat-attachments/${messageInput.jobId}/${Date.now()}-${messageInput.attachment.name}`);
- await uploadBytes(attachmentRef, messageInput.attachment);
+            await uploadBytes(attachmentRef, input.attachment);
             imageUrl = await getDownloadURL(attachmentRef);
         }
 
@@ -55,10 +55,13 @@ export async function sendChatMessageAction(
             isRead: false,
         };
 
- await addDoc(collection(db, `artifacts/${appId}/public/data/chatMessages`), messageData);
+        await addDoc(collection(db, `artifacts/${appId}/public/data/chatMessages`), messageData);
         
         return { error: null };
     } catch (e) {
+        if (e instanceof z.ZodError) {
+          return { error: e.errors.map((err) => err.message).join(', ') };
+        }
         console.error("Error sending chat message:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         return { error: `Failed to send message. ${errorMessage}` };

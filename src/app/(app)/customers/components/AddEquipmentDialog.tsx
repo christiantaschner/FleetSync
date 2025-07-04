@@ -33,12 +33,15 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddEquipmentInput>({
     resolver: zodResolver(AddEquipmentInputSchema),
     defaultValues: {
       customerId,
       customerName,
       companyId,
+      appId,
       name: '',
       model: '',
       serialNumber: '',
@@ -52,8 +55,12 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
         toast({ title: "Authentication Error", description: "Company ID is missing.", variant: "destructive" });
         return;
     }
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "App ID is missing.", variant: "destructive" });
+        return;
+    }
     setIsSubmitting(true);
-    const result = await addEquipmentAction({ ...data, companyId, customerId, customerName });
+    const result = await addEquipmentAction({ ...data, companyId, customerId, customerName, appId });
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else {
@@ -68,7 +75,7 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
         if (!open) {
-            reset({ customerId, customerName, companyId, name: '', model: '', serialNumber: '', installDate: '', notes: '' });
+            reset({ customerId, customerName, companyId, appId, name: '', model: '', serialNumber: '', installDate: '', notes: '' });
         }
         setIsOpen(open);
     }}>

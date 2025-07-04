@@ -9,8 +9,7 @@ export const AddEquipmentInputSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required.'),
   customerName: z.string().min(1, 'Customer name is required.'),
   companyId: z.string().min(1, 'Company ID is required.'),
-  // NEU: appId hinzufügen, da es für den Pfad benötigt wird
-  appId: z.string().min(1, 'App ID is required.'), // <-- NEU
+  appId: z.string().min(1, 'App ID is required.'),
   name: z.string().min(1, 'Equipment name is required.'),
   model: z.string().optional(),
   serialNumber: z.string().optional(),
@@ -24,14 +23,14 @@ export async function addEquipmentAction(
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
     const validatedInput = AddEquipmentInputSchema.parse(input);
-    const { appId, ...equipmentData } = validatedInput; // Destrukturieren, um appId zu extrahieren
+    const { appId, ...equipmentData } = validatedInput; 
     if (!db) {
       throw new Error('Firestore not initialized');
     }
 
-    const equipmentCollectionRef = collection(db, 'equipment');
+    const equipmentCollectionRef = collection(db, `artifacts/${appId}/public/data/equipment`);
     const docRef = await addDoc(equipmentCollectionRef, {
-      ...equipmentData, // Restliche Daten
+      ...equipmentData,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -62,7 +61,7 @@ import { Job, Technician, PublicTrackingInfo } from '@/types';
 
 const GetTrackingInfoInputSchema = z.object({
   token: z.string().min(1, 'A tracking token is required.'),
-  appId: z.string().min(1, 'App ID is required for tracking info.'), // <-- NEU
+  appId: z.string().min(1, 'App ID is required for tracking info.'),
 });
 
 export type GetTrackingInfoInput = z.infer<typeof GetTrackingInfoInputSchema>;
@@ -71,14 +70,14 @@ export async function getTrackingInfoAction(
   input: GetTrackingInfoInput
 ): Promise<{ data: PublicTrackingInfo | null; error: string | null }> {
   try {
-    const { token, appId } = GetTrackingInfoInputSchema.parse(input); // <-- NEU
+    const { token, appId } = GetTrackingInfoInputSchema.parse(input);
     if (!db) {
       throw new Error('Firestore not initialized');
     }
 
     // Query for the job using the tracking token in the correct path
     const jobsQuery = query(
-      collection(db, `artifacts/${appId}/public/data/jobs`), // <-- GEÄNDERT
+      collection(db, `artifacts/${appId}/public/data/jobs`),
       where('trackingToken', '==', token),
       limit(1)
     );
@@ -97,11 +96,10 @@ export async function getTrackingInfoAction(
     }
 
     // Directly fetch the technician by ID using the correct path
-    const technicianDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId); // <-- GEÄNDERT
+    const technicianDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
     const technicianDocSnap: DocumentSnapshot = await getDoc(technicianDocRef);
 
     if (!technicianDocSnap.exists()) {
-      // This is a potential data inconsistency if a job references a non-existent technician
       console.warn(`Job ${job.id} references non-existent technician ID ${job.assignedTechnicianId}`);
       return { data: null, error: 'Could not retrieve technician details.' };
     }

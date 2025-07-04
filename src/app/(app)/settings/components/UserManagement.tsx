@@ -82,7 +82,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     };
     
     const handleRemoveUser = async (userId: string) => {
-        const result = await removeUserFromCompanyAction({ userId, companyId });
+        const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        if (!appId) {
+            toast({ title: 'Configuration Error', description: 'App ID is missing.', variant: 'destructive' });
+            return;
+        }
+
+        const result = await removeUserFromCompanyAction({ userId, companyId, appId });
         if (result.error) {
             toast({ title: 'Removal Failed', description: result.error, variant: 'destructive' });
         } else {

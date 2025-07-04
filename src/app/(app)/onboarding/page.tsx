@@ -55,11 +55,18 @@ export default function OnboardingPage() {
         setIsSubmitting(false);
         return;
     }
+
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "App ID is not configured.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
     
     const result = await completeOnboardingAction({
         ...data,
         uid: user.uid
-    });
+    }, appId);
 
     if (result.error || !result.sessionId) {
       toast({

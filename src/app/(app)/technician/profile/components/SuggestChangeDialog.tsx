@@ -64,6 +64,11 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
         toast({ title: "Not Authenticated", description: "You must be logged in and part of a company to submit a change.", variant: "destructive" });
         return;
     }
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "App ID is missing.", variant: "destructive" });
+        return;
+    }
 
     const requestedChanges: any = {};
     if (name !== technician.name) requestedChanges.name = name;
@@ -88,6 +93,7 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
         technicianName: technician.name,
         requestedChanges,
         notes: notes.trim(),
+        appId,
     });
     setIsSubmitting(false);
 

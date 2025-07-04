@@ -155,12 +155,18 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
       toast({ title: "Authentication Error", description: "You must be logged in to import jobs.", variant: "destructive" });
       return;
     }
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+      toast({ title: "Configuration Error", description: "Firebase Project ID not found.", variant: "destructive"});
+      return;
+    }
+
     setIsSubmitting(true);
     
     const result = await importJobsAction({
         companyId: userProfile.companyId,
         jobs: parsedJobs.map(p => p.data),
-    });
+    }, appId);
     
     setIsSubmitting(false);
 

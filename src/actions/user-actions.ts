@@ -163,13 +163,14 @@ export async function updateUserRoleAction(
 const RemoveUserFromCompanyInputSchema = z.object({
     userId: z.string(),
     companyId: z.string(),
+    appId: z.string().min(1),
 });
 
 export async function removeUserFromCompanyAction(
   input: z.infer<typeof RemoveUserFromCompanyInputSchema>
 ): Promise<{ error: string | null }> {
     try {
-        const { userId, companyId } = RemoveUserFromCompanyInputSchema.parse(input);
+        const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
         const userDocRef = doc(db, "users", userId);
         const userSnap = await getDoc(userDocRef);
 
@@ -188,7 +189,7 @@ export async function removeUserFromCompanyAction(
         
         // Also unassign this user from any technician profile they might have
         // Note: The technician document ID is the same as the user ID.
-        const techDocRef = doc(db, "technicians", userId);
+        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userId);
         const techDocSnap = await getDoc(techDocRef);
         if (techDocSnap.exists() && techDocSnap.data().companyId === companyId) {
             batch.delete(techDocRef);

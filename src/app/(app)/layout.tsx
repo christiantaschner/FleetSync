@@ -207,7 +207,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places']}>
+    <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places.autocomplete', 'geocoding']}>
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
           <SidebarHeader className="bg-primary text-primary-foreground border-b-primary-foreground/20">

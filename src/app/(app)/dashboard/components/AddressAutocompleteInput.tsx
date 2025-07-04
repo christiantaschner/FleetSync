@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -21,7 +22,7 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
   const [isFetching, setIsFetching] = useState(false);
   const [showPredictions, setShowPredictions] = useState(false);
 
-  const places = useMapsLibrary('places');
+  const places = useMapsLibrary('places.autocomplete');
   const geocoding = useMapsLibrary('geocoding');
 
   useEffect(() => {

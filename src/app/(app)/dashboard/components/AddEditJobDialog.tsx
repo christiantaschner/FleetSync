@@ -71,6 +71,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
   const [aiPrioritySuggestion, setAiPrioritySuggestion] = useState<SuggestJobPriorityOutput | null>(null);
+  const [skillSuggestionReasoning, setSkillSuggestionReasoning] = useState<string | null>(null);
   const [scheduleSuggestions, setScheduleSuggestions] = useState<{ time: string; reasoning: string }[] | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
 
@@ -108,6 +109,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
     setAiSuggestion(null);
     setAiPrioritySuggestion(null);
+    setSkillSuggestionReasoning(null);
     setScheduleSuggestions(null);
     setSuggestedTechnicianDetails(null);
     setCustomerSuggestions([]);
@@ -178,23 +180,42 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   const fetchAISkillSuggestion = useCallback(async (currentDescription: string) => {
     if (!currentDescription.trim() || allSkills.length === 0) {
+      toast({
+        title: "Cannot Suggest Skills",
+        description: "Please enter a job description first.",
+        variant: "default",
+      });
       return;
     }
     setIsFetchingSkillSuggestion(true);
+    setSkillSuggestionReasoning(null);
     const input: SuggestJobSkillsActionInput = {
       jobDescription: currentDescription,
       availableSkills: allSkills,
     };
     const result = await suggestJobSkillsAction(input);
-    if(result.data?.suggestedSkills) {
-      setRequiredSkills(result.data.suggestedSkills);
+    if (result.data) {
+        if (result.data.suggestedSkills && result.data.suggestedSkills.length > 0) {
+            setRequiredSkills(result.data.suggestedSkills);
+            toast({ title: "Skills Suggested", description: "AI has suggested skills based on the description." });
+        } else {
+            setRequiredSkills([]); // Clear existing skills if none are suggested
+            const reasoning = result.data.reasoning || "No specific skills from the library seem to match the job description.";
+            setSkillSuggestionReasoning(reasoning);
+        }
+    } else {
+       setSkillSuggestionReasoning(result.error || "An error occurred while suggesting skills.");
     }
     setIsFetchingSkillSuggestion(false);
-  }, [allSkills]);
+  }, [allSkills, toast]);
 
   const fetchAIPrioritySuggestion = useCallback(async (currentDescription: string) => {
     if (!currentDescription.trim()) {
-      setAiPrioritySuggestion(null);
+      toast({
+        title: "Cannot Suggest Priority",
+        description: "Please enter a job description first.",
+        variant: "default",
+      });
       return;
     }
     setIsFetchingPrioritySuggestion(true);
@@ -205,7 +226,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         setAiPrioritySuggestion(result.data);
     }
     setIsFetchingPrioritySuggestion(false);
-  }, []);
+  }, [toast]);
 
   const fetchScheduleSuggestion = useCallback(async (currentPriority: JobPriority, currentRequiredSkills: string[]) => {
     if (!currentPriority || technicians.length === 0) {
@@ -237,16 +258,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
     setIsFetchingScheduleSuggestion(false);
 }, [technicians, jobs]);
-
-  useEffect(() => {
-    if (isOpen && !job && description.trim()) {
-        const timer = setTimeout(() => {
-            fetchAISkillSuggestion(description);
-            fetchAIPrioritySuggestion(description);
-        }, 1000); // Debounce
-        return () => clearTimeout(timer);
-    }
-  }, [description, isOpen, job, fetchAISkillSuggestion, fetchAIPrioritySuggestion]);
 
   const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
     if (!currentDescription || !currentPriority || technicians.length === 0) {
@@ -304,6 +315,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
 
   useEffect(() => {
+    // Only fetch AI assignment suggestions automatically now
     if (isOpen && !job && description.trim() && priority) { 
       const timer = setTimeout(() => {
         fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
@@ -565,7 +577,25 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="jobPriority">Job Priority *</Label>
+                        <div className="flex justify-between items-center mb-1">
+                            <Label htmlFor="jobPriority">Job Priority *</Label>
+                            {!job && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => fetchAIPrioritySuggestion(description)}
+                                    disabled={isFetchingPrioritySuggestion || !description.trim()}
+                                >
+                                    {isFetchingPrioritySuggestion ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                    )}
+                                    Suggest
+                                </Button>
+                            )}
+                        </div>
                       <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
                         <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
                           <SelectValue placeholder="Select priority" />
@@ -576,11 +606,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <SelectItem value="Low">Low</SelectItem>
                         </SelectContent>
                       </Select>
-                      {isFetchingPrioritySuggestion && !job && (
-                        <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
-                          <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is analyzing...
-                        </div>
-                      )}
                       {!isFetchingPrioritySuggestion && aiPrioritySuggestion && !job && (
                         <div className="text-xs mt-1.5 p-2 bg-secondary/50 rounded-md border">
                           <p className="font-medium flex items-center gap-1.5"><Lightbulb className="h-3 w-3 text-primary" /> AI Suggests: <strong className="text-primary">{aiPrioritySuggestion.suggestedPriority}</strong></p>
@@ -736,17 +761,39 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <Label className="flex items-center gap-2">
-                      <ListChecks className="h-3.5 w-3.5" />
-                      Required Skills
-                      {isFetchingSkillSuggestion && <Loader2 className="h-4 w-4 animate-spin" />}
-                    </Label>
+                    <div className="flex justify-between items-center mb-1">
+                        <Label className="flex items-center gap-2">
+                            <ListChecks className="h-3.5 w-3.5" />
+                            Required Skills
+                        </Label>
+                        {!job && (
+                           <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => fetchAISkillSuggestion(description)}
+                                disabled={isFetchingSkillSuggestion || !description.trim()}
+                            >
+                                {isFetchingSkillSuggestion ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Sparkles className="mr-2 h-4 w-4" />
+                                )}
+                                Suggest Skills
+                            </Button>
+                        )}
+                    </div>
                     <Input
                       placeholder="Search skills..."
                       value={skillSearchTerm}
                       onChange={(e) => setSkillSearchTerm(e.target.value)}
-                      className="mt-1 mb-2 h-8"
+                      className="mb-2 h-8"
                     />
+                    {skillSuggestionReasoning && !isFetchingSkillSuggestion && (
+                        <div className="text-xs text-muted-foreground p-2 bg-secondary rounded-md mb-2">
+                            {skillSuggestionReasoning}
+                        </div>
+                    )}
                     <ScrollArea className="h-32 rounded-md border p-3">
                       <div className="space-y-2">
                         {allSkills.length === 0 ? (

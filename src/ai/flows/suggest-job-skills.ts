@@ -36,7 +36,9 @@ const prompt = ai.definePrompt({
     - {{{this}}}
     {{/each}}
     
-    Return a JSON object with a "suggestedSkills" array containing the names of the skills you identified. If no specific skills seem necessary, return an empty array.`,
+    Return a JSON object with a "suggestedSkills" array containing the names of the skills you identified.
+    If no specific skills seem necessary from the list, return an empty array.
+    If the job description is too vague or short to make a meaningful suggestion, return an empty array for "suggestedSkills" and provide a reason in the "reasoning" field, for example: "Job description is too vague for a skill suggestion."`,
 });
 
 const suggestJobSkillsFlow = ai.defineFlow(
@@ -47,6 +49,12 @@ const suggestJobSkillsFlow = ai.defineFlow(
   },
   async (input) => {
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      return {
+        suggestedSkills: [],
+        reasoning: 'The AI model could not process the request.',
+      };
+    }
+    return output;
   }
 );

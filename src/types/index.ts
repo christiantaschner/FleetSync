@@ -373,6 +373,7 @@ export type SuggestJobSkillsInput = z.infer<typeof SuggestJobSkillsInputSchema>;
 
 export const SuggestJobSkillsOutputSchema = z.object({
   suggestedSkills: z.array(z.string()).describe('An array of skill names suggested for the job, drawn exclusively from the availableSkills list.'),
+  reasoning: z.string().optional().describe('A brief explanation of why these skills were chosen, or why no skills could be suggested if the list is empty.'),
 });
 export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;
 

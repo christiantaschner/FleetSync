@@ -14,6 +14,7 @@ const SendChatMessageInputSchema = z.object({
     receiverId: z.string(),
     text: z.string(),
     attachment: z.instanceof(File).optional(),
+ appId: z.string().min(1, 'App ID is required.'),
 });
 
 type SendChatMessageInput = {
@@ -24,27 +25,29 @@ type SendChatMessageInput = {
     receiverId: string;
     text: string;
     attachment?: File;
+ appId: string;
 };
 
 export async function sendChatMessageAction(
   input: SendChatMessageInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!db || !storage) throw new Error("Firebase not initialized");
+        const { appId, ...messageInput } = input;
+ if (!db || !storage) throw new Error("Firebase not initialized");
 
         let imageUrl: string | null = null;
 
         if (input.attachment) {
-            const attachmentRef = ref(storage, `chat-attachments/${input.jobId}/${Date.now()}-${input.attachment.name}`);
-            await uploadBytes(attachmentRef, input.attachment);
+            const attachmentRef = ref(storage, `chat-attachments/${messageInput.jobId}/${Date.now()}-${messageInput.attachment.name}`);
+ await uploadBytes(attachmentRef, messageInput.attachment);
             imageUrl = await getDownloadURL(attachmentRef);
         }
 
         const messageData = {
-            jobId: input.jobId,
-            companyId: input.companyId,
-            senderId: input.senderId,
-            senderName: input.senderName,
+            jobId: messageInput.jobId,
+            companyId: messageInput.companyId,
+            senderId: messageInput.senderId,
+            senderName: messageInput.senderName,
             receiverId: input.receiverId,
             text: input.text,
             imageUrl: imageUrl,
@@ -52,7 +55,7 @@ export async function sendChatMessageAction(
             isRead: false,
         };
 
-        await addDoc(collection(db, "chatMessages"), messageData);
+ await addDoc(collection(db, `artifacts/${appId}/public/data/chatMessages`), messageData);
         
         return { error: null };
     } catch (e) {

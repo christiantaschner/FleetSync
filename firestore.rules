@@ -5,95 +5,84 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // --- Helper Functions ---
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-    
-    function isSignedIn() {
+
+    function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isSuperAdmin() {
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superAdmin';
     }
     
     function isCompanyMember(companyId) {
-      return isSignedIn() && getUserData(request.auth.uid).companyId == companyId;
-    }
-
-    function isCompanyAdmin(companyId) {
-      let userData = getUserData(request.auth.uid);
-      return isCompanyMember(companyId) && (userData.role == 'admin' || userData.role == 'superAdmin');
-    }
-
-    function isCompanyCsr(companyId) {
-      let userData = getUserData(request.auth.uid);
-      return isCompanyMember(companyId) && userData.role == 'csr';
+      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
     }
     
-    function isDispatcher(companyId) {
-        return isCompanyAdmin(companyId) || isCompanyCsr(companyId);
+    function hasCompanyRole(companyId, role) {
+      return isCompanyMember(companyId) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    function isCompanyOwner(companyId) {
+        return isAuthenticated() && get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId == request.auth.uid;
+    }
+    
+    function isAdmin(companyId) {
+        return hasCompanyRole(companyId, 'admin');
     }
 
+    // --- Collections Rules ---
 
-    // --- Collection Rules ---
     match /users/{userId} {
-      allow read, update: if isUser(userId) || isCompanyAdmin(resource.data.companyId);
-      allow create: if isSignedIn();
+      allow read, update: if request.auth.uid == userId || isAdmin(resource.data.companyId) || isSuperAdmin();
+      allow create: if isAuthenticated();
+    }
+    
+    match /companies/{companyId} {
+      allow read: if isCompanyMember(companyId) || isSuperAdmin();
+      allow update: if isCompanyOwner(companyId) || isAdmin(companyId) || isSuperAdmin();
+      allow create: if isAuthenticated(); 
     }
 
-    match /companies/{companyId} {
-      allow read: if isCompanyMember(companyId);
-      allow update: if isCompanyAdmin(companyId);
-      allow create: if isUser(request.resource.data.ownerId);
+    match /jobs/{jobId} {
+      allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+      allow create: if hasCompanyRole(request.resource.data.companyId, 'admin') || hasCompanyRole(request.resource.data.companyId, 'csr') || isSuperAdmin();
+      allow update: if isAdmin(resource.data.companyId) || isSuperAdmin() || (isCompanyMember(resource.data.companyId) && request.auth.uid == resource.data.assignedTechnicianId);
+      allow delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
     }
 
     match /technicians/{technicianId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create, delete: if isCompanyAdmin(request.resource.data.companyId);
-        allow update: if isCompanyAdmin(resource.data.companyId) || isUser(technicianId);
-    }
-    
-    match /jobs/{jobId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create: if isDispatcher(request.resource.data.companyId);
-        allow update: if isDispatcher(resource.data.companyId) || isUser(resource.data.assignedTechnicianId);
-        allow delete: if isCompanyAdmin(resource.data.companyId);
+      allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+      allow create, update, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
     }
 
     match /profileChangeRequests/{requestId} {
-        allow create: if isUser(request.resource.data.technicianId);
-        allow read: if isUser(resource.data.technicianId) || isCompanyAdmin(resource.data.companyId);
-        allow update: if isCompanyAdmin(resource.data.companyId);
-    }
-    
-    match /chatMessages/{messageId} {
-        function isChatParticipant() {
-            let job = get(/databases/$(database)/documents/jobs/$(request.resource.data.jobId)).data;
-            return isUser(job.assignedTechnicianId) || isDispatcher(job.companyId);
-        }
-        
-        allow read, create: if isCompanyMember(request.resource.data.companyId) && isChatParticipant();
-        allow update, delete: if false; // immutable
-    }
-
-    match /contracts/{contractId} {
-        allow read, create, update, delete: if isDispatcher(request.resource.data.companyId);
-    }
-    
-    match /equipment/{equipmentId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create, update, delete: if isDispatcher(request.resource.data.companyId);
+        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+        allow create: if isCompanyMember(request.resource.data.companyId);
+        allow update: if isAdmin(resource.data.companyId) || isSuperAdmin();
     }
     
     match /skills/{skillId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isCompanyAdmin(request.resource.data.companyId);
+        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+        allow create, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
+    }
+    
+    match /parts/{partId} {
+        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+        allow create, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
     }
 
-    match /parts/{partId} {
-        allow read: if isSignedIn();
-        allow create, update, delete: if isCompanyAdmin(request.resource.data.companyId);
+    match /chatMessages/{messageId} {
+        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+        allow create: if isCompanyMember(request.resource.data.companyId);
+    }
+
+    match /contracts/{contractId} {
+        allow read, create, update, delete: if isAdmin(resource.data.companyId) || isSuperAdmin();
+    }
+    
+    match /equipment/{equipmentId} {
+        allow read: if isCompanyMember(resource.data.companyId) || isSuperAdmin();
+        allow create: if hasCompanyRole(request.resource.data.companyId, 'admin') || hasCompanyRole(request.resource.data.companyId, 'csr') || isSuperAdmin();
     }
   }
 }

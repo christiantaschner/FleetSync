@@ -1,8 +1,9 @@
+
 'use server';
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 
 const EnsureUserDocumentInputSchema = z.object({
@@ -130,6 +131,7 @@ export async function inviteUserAction(
 
 const ManageUserRoleInputSchema = z.object({
     userId: z.string(),
+    companyId: z.string(),
     newRole: z.enum(['admin', 'technician', 'csr']),
 });
 export type ManageUserRoleInput = z.infer<typeof ManageUserRoleInputSchema>;
@@ -138,8 +140,15 @@ export async function updateUserRoleAction(
   input: ManageUserRoleInput
 ): Promise<{ error: string | null }> {
     try {
-        const { userId, newRole } = ManageUserRoleInputSchema.parse(input);
-        await updateDoc(doc(db, "users", userId), { role: newRole });
+        const { userId, companyId, newRole } = ManageUserRoleInputSchema.parse(input);
+        const userDocRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userDocRef);
+
+        if (!userSnap.exists() || userSnap.data().companyId !== companyId) {
+            return { error: "User not found in this company." };
+        }
+
+        await updateDoc(userDocRef, { role: newRole });
         return { error: null };
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
@@ -148,11 +157,23 @@ export async function updateUserRoleAction(
 }
 
 
+const RemoveUserFromCompanyInputSchema = z.object({
+    userId: z.string(),
+    companyId: z.string(),
+});
+
 export async function removeUserFromCompanyAction(
-  userId: string
+  input: z.infer<typeof RemoveUserFromCompanyInputSchema>
 ): Promise<{ error: string | null }> {
     try {
+        const { userId, companyId } = RemoveUserFromCompanyInputSchema.parse(input);
         const userDocRef = doc(db, "users", userId);
+        const userSnap = await getDoc(userDocRef);
+
+        if (!userSnap.exists() || userSnap.data().companyId !== companyId) {
+            return { error: "User not found in this company." };
+        }
+
         const batch = writeBatch(db);
 
         // Reset user's company-related fields
@@ -163,9 +184,10 @@ export async function removeUserFromCompanyAction(
         });
         
         // Also unassign this user from any technician profile they might have
+        // Note: The technician document ID is the same as the user ID.
         const techDocRef = doc(db, "technicians", userId);
         const techDocSnap = await getDoc(techDocRef);
-        if (techDocSnap.exists()) {
+        if (techDocSnap.exists() && techDocSnap.data().companyId === companyId) {
             batch.delete(techDocRef);
         }
 

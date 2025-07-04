@@ -589,15 +589,19 @@ export async function reassignJobAction(
   input: z.infer<typeof ReassignJobInputSchema>
 ): Promise<{ error: string | null }> {
   try {
-    const { jobId, newTechnicianId, reason } = ReassignJobInputSchema.parse(input);
+    const { companyId, jobId, newTechnicianId, reason } = ReassignJobInputSchema.parse(input);
     if (!db) {
       throw new Error("Firestore not initialized");
     }
 
     const batch = writeBatch(db);
 
-    // 1. Update the job to point to the new technician
     const jobDocRef = doc(db, "jobs", jobId);
+    const jobSnap = await getDoc(jobDocRef);
+    if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+        return { error: "Job not found or you do not have permission to modify it." };
+    }
+    
     const updatePayload: any = {
       assignedTechnicianId: newTechnicianId,
       status: "Assigned" as JobStatus,
@@ -612,7 +616,6 @@ export async function reassignJobAction(
 
     batch.update(jobDocRef, updatePayload);
 
-    // 2. Mark the new technician as unavailable, as they now have an assigned job.
     const newTechDocRef = doc(db, "technicians", newTechnicianId);
     batch.update(newTechDocRef, {
         isAvailable: false
@@ -874,13 +877,14 @@ export async function suggestScheduleTimeAction(
 
 const DeleteJobInputSchema = z.object({
   jobId: z.string().min(1, "Job ID is required."),
+  companyId: z.string().min(1, "Company ID is required."),
 });
 
 export async function deleteJobAction(
   input: z.infer<typeof DeleteJobInputSchema>
 ): Promise<{ error: string | null }> {
     try {
-        const { jobId } = DeleteJobInputSchema.parse(input);
+        const { jobId, companyId } = DeleteJobInputSchema.parse(input);
         if (!db) {
             throw new Error("Firestore not initialized");
         }
@@ -888,21 +892,23 @@ export async function deleteJobAction(
         const batch = writeBatch(db);
         const jobDocRef = doc(db, "jobs", jobId);
 
-        // First, get the job data to see if a technician is assigned.
         const jobSnap = await getDoc(jobDocRef);
-        if (jobSnap.exists()) {
-            const jobData = jobSnap.data() as Job;
-            // If a technician was assigned, we need to update their status.
-            if (jobData.assignedTechnicianId) {
-                const techDocRef = doc(db, "technicians", jobData.assignedTechnicianId);
-                // Only update the technician if this deleted job was their *current* job.
-                const techSnap = await getDoc(techDocRef);
-                if (techSnap.exists() && techSnap.data().currentJobId === jobId) {
-                    batch.update(techDocRef, {
-                        isAvailable: true,
-                        currentJobId: null,
-                    });
-                }
+        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+            return { error: "Job not found or you do not have permission to delete it." };
+        }
+        
+        const jobData = jobSnap.data() as Job;
+        
+        // If a technician was assigned, update their status to be available again.
+        if (jobData.assignedTechnicianId) {
+            const techDocRef = doc(db, "technicians", jobData.assignedTechnicianId);
+            const techSnap = await getDoc(techDocRef);
+            // Only update the technician if this deleted job was their *current* job.
+            if (techSnap.exists() && techSnap.data().currentJobId === jobId) {
+                batch.update(techDocRef, {
+                    isAvailable: true,
+                    currentJobId: null,
+                });
             }
         }
         

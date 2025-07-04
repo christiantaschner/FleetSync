@@ -342,9 +342,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
   
   const handleDeleteJob = async () => {
-    if (!job) return;
+    if (!job || !userProfile?.companyId) return;
     setIsDeleting(true);
-    const result = await deleteJobAction({ jobId: job.id });
+    const result = await deleteJobAction({ jobId: job.id, companyId: userProfile.companyId });
     if (result.error) {
         toast({ title: "Error", description: `Failed to delete job: ${result.error}`, variant: "destructive" });
     } else {

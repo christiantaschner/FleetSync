@@ -71,7 +71,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 
     const handleRoleChange = async (userId: string, newRole: 'admin' | 'technician' | 'csr') => {
         setIsUpdatingRole(userId);
-        const result = await updateUserRoleAction({ userId, newRole });
+        const result = await updateUserRoleAction({ userId, companyId, newRole });
          if (result.error) {
             toast({ title: 'Update Failed', description: result.error, variant: 'destructive' });
         } else {
@@ -82,7 +82,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     };
     
     const handleRemoveUser = async (userId: string) => {
-        const result = await removeUserFromCompanyAction(userId);
+        const result = await removeUserFromCompanyAction({ userId, companyId });
         if (result.error) {
             toast({ title: 'Removal Failed', description: result.error, variant: 'destructive' });
         } else {

@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction, type AllocateJobActionInput, reassignJobAction } from "@/actions/fleet-actions";
 import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Loader2, Sparkles, UserCheck, AlertTriangle } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
@@ -35,6 +36,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     technicians, 
     onReassignmentComplete 
 }) => {
+    const { userProfile } = useAuth();
     const { toast } = useToast();
     const [isLoadingAI, setIsLoadingAI] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
@@ -95,10 +97,11 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     }, [isOpen, getSuggestion]);
 
     const handleConfirm = async () => {
-        if (!suggestedTech) return;
+        if (!suggestedTech || !userProfile?.companyId) return;
         setIsConfirming(true);
 
         const result = await reassignJobAction({
+            companyId: userProfile.companyId,
             jobId: jobToReassign.id,
             newTechnicianId: suggestedTech.id,
             reason: `Job at risk of delay. Reassigned from another technician.`

@@ -253,11 +253,20 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId), where("status", "==", "pending"));
+    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
-        const requestsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ProfileChangeRequest));
-        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setProfileChangeRequests(requestsData);
+        const allRequests = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+             for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as ProfileChangeRequest
+        });
+        const pendingRequests = allRequests.filter(r => r.status === 'pending');
+        pendingRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProfileChangeRequests(pendingRequests);
         onListenerLoaded();
     }, (error) => {
         console.error("Error fetching profile change requests: ", error);
@@ -1157,3 +1166,5 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
+
+

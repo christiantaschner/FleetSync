@@ -42,8 +42,9 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     if (!userProfile?.companyId || !appId) return;
 
     setIsLoading(true);
-    const result = await getSkillsAction({ companyId: userProfile.companyId });
+    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if(result.error) {
+        // Do not show a toast for a fetch error, just show an empty state.
         console.error("Could not fetch skills library:", result.error);
         setSkills([]);
     } else {
@@ -67,10 +68,10 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
     if (result.error) {
         toast({ title: "Error Adding Skill", description: result.error, variant: "destructive" });
-    } else {
+    } else if (result.data) {
         setNewSkillName('');
-        toast({ title: "Success", description: `Skill "${newSkillName.trim()}" added.`});
-        setSkills(prev => [...prev, {id: result.data!.id, name: newSkillName.trim() }].sort((a,b) => a.name.localeCompare(b.name)));
+        toast({ title: "Success", description: `Skill "${result.data.name}" added.`});
+        setSkills(prev => [...prev, result.data!].sort((a,b) => a.name.localeCompare(b.name)));
         onSkillsUpdated(); 
     }
     setIsSubmitting(false);

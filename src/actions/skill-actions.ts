@@ -8,6 +8,7 @@ import { collection, addDoc, getDocs, query, orderBy, doc, where, writeBatch, ar
 // --- Get Skills ---
 const GetSkillsInputSchema = z.object({
   companyId: z.string().min(1),
+  appId: z.string().min(1),
 });
 export type GetSkillsInput = z.infer<typeof GetSkillsInputSchema>;
 
@@ -17,9 +18,9 @@ export type Skill = {
 };
 export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Skill[] | null; error: string | null; }> {
     try {
-        const { companyId } = GetSkillsInputSchema.parse(input);
+        const { companyId, appId } = GetSkillsInputSchema.parse(input);
         const skillsQuery = query(
-            collection(db, "skills"),
+            collection(db, `artifacts/${appId}/public/data/skills`),
             where("companyId", "==", companyId),
             orderBy("name")
         );
@@ -41,7 +42,7 @@ const AddSkillInputSchema = z.object({
 });
 export type AddSkillInput = z.infer<typeof AddSkillInputSchema>;
 
-export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id: string } | null; error: string | null; }> {
+export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id: string; name: string; } | null; error: string | null; }> {
     try {
         const { name, companyId, appId } = AddSkillInputSchema.parse(input);
         const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
@@ -53,7 +54,7 @@ export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id
         }
 
         const docRef = await addDoc(skillsCollectionRef, { name: name.trim(), companyId });
-        return { data: { id: result.data!.id, name: newSkillName.trim() }, error: null };
+        return { data: { id: docRef.id, name: name.trim() }, error: null };
     } catch (e) {
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map((err) => err.message).join(', ') };

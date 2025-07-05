@@ -165,6 +165,8 @@ export default function DashboardPage() {
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if (result.data) {
         setAllSkills(result.data?.map(s => s.name) || []);
+    } else {
+        console.error("Could not fetch skills library:", result.error);
     }
 }, [userProfile, appId]);
   

@@ -302,7 +302,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                         <Alert className="m-4 border-primary/30 bg-primary/5">
                             <UserPlus className="h-4 w-4 text-primary" />
                             <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
-                            <AlertDescription className="text-primary/90">
+                            <AlertDescription>
                                 The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
                             </AlertDescription>
                             <div className="mt-4">
@@ -327,7 +327,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     <Alert className="m-4 border-primary/30 bg-primary/5">
                         <UserPlus className="h-4 w-4 text-primary" />
                         <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
-                        <AlertDescription className="text-primary/90">
+                        <AlertDescription>
                             The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
                         </AlertDescription>
                         <div className="mt-4">

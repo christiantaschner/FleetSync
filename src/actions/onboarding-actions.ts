@@ -3,6 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
+import { authAdmin } from '@/lib/firebase-admin';
 import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';
@@ -85,8 +86,22 @@ export async function completeOnboardingAction(
     
     // 3. Commit all Firestore operations atomically
     await batch.commit();
+
+    // 4. Set Custom Auth Claims for the new admin
+    try {
+      await authAdmin.setCustomUserClaims(uid, {
+        companyId: companyId,
+        role: 'admin',
+      });
+      console.log(`Custom claims set for new company admin: ${uid}`);
+    } catch(claimError) {
+        console.error("Critical Error: Failed to set custom claims for new admin.", claimError);
+        // This is a critical failure. The user won't be able to access their company.
+        // In a production app, you might want to roll back the Firestore changes or queue a retry.
+        return { sessionId: null, error: `Your company was created, but there was an error setting your permissions. Please contact support.` };
+    }
     
-    // 4. Create the Stripe Checkout Session with a trial
+    // 5. Create the Stripe Checkout Session with a trial
     const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
     if (!priceId) throw new Error('Stripe Price ID is not configured.');
 

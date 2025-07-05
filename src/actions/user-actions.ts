@@ -3,7 +3,8 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit } from 'firebase/firestore';
+import { authAdmin } from '@/lib/firebase-admin';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit, serverTimestamp } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 
 const EnsureUserDocumentInputSchema = z.object({
@@ -13,7 +14,7 @@ const EnsureUserDocumentInputSchema = z.object({
 type EnsureUserDocumentInput = z.infer<typeof EnsureUserDocumentInputSchema>;
 
 /**
- * Ensures a user document exists in Firestore. Assigns super_admin role if applicable.
+ * Ensures a user document exists in Firestore. Assigns superAdmin role and sets Custom Claims if applicable.
  */
 export async function ensureUserDocumentAction(
   input: EnsureUserDocumentInput
@@ -29,35 +30,71 @@ export async function ensureUserDocumentAction(
     const userDocRef = doc(db, 'users', uid);
     const docSnap = await getDoc(userDocRef);
 
-    if (docSnap.exists()) {
-      // Document already exists, do nothing.
-      return { error: null };
-    }
-
-    const isSuperAdmin = email === 'christian.taschner.ek@gmail.com';
-
-    // Document does not exist, create it.
-    await setDoc(userDocRef, {
-      uid: uid,
-      email: email,
-      onboardingStatus: isSuperAdmin ? 'completed' : 'pending_onboarding',
-      role: isSuperAdmin ? 'superAdmin' : null,
-      companyId: isSuperAdmin ? 'fleetsync_ai_dev' : null, // Assign a dev company for super admin
-    });
+    let currentRole: string | null = null;
+    let currentCompanyId: string | null = null;
     
-    // If super admin, ensure dev company exists
-    if(isSuperAdmin) {
-        const companyRef = doc(db, 'companies', 'fleetsync_ai_dev');
-        const companySnap = await getDoc(companyRef);
-        if(!companySnap.exists()) {
-            await setDoc(companyRef, {
-                name: "FleetSync AI (Dev)",
-                ownerId: uid,
-                subscriptionStatus: 'active'
-            });
-        }
+    if (!docSnap.exists()) {
+      // Document does not exist, create it.
+      const isSuperAdmin = email === 'christian.taschner.ek@gmail.com';
+      currentRole = isSuperAdmin ? 'superAdmin' : null;
+      currentCompanyId = isSuperAdmin ? 'fleetsync_ai_dev' : null;
+
+      await setDoc(userDocRef, {
+        uid: uid,
+        email: email,
+        onboardingStatus: isSuperAdmin ? 'completed' : 'pending_creation',
+        role: currentRole,
+        companyId: currentCompanyId,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      
+      // If super admin, ensure dev company exists
+      if(isSuperAdmin) {
+          const companyRef = doc(db, 'companies', 'fleetsync_ai_dev');
+          const companySnap = await getDoc(companyRef);
+          if(!companySnap.exists()) {
+              await setDoc(companyRef, {
+                  name: "FleetSync AI (Dev)",
+                  ownerId: uid,
+                  subscriptionStatus: 'active',
+                  createdAt: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
+              });
+          }
+      }
     }
 
+    // --- CRITICAL: Sync Firestore state with Auth Custom Claims ---
+    // This ensures Security Rules have access to role and companyId.
+    const currentUser = await authAdmin.getUser(uid);
+    const existingClaims = currentUser.customClaims || {};
+
+    const userProfileFromDb = (await getDoc(userDocRef)).data() as UserProfile;
+    const roleFromDb = userProfileFromDb.role || null;
+    const companyIdFromDb = userProfileFromDb.companyId || null;
+    
+    const claimsToSet: { [key: string]: any } = {};
+    let claimsChanged = false;
+
+    if (existingClaims.role !== roleFromDb) {
+      claimsToSet.role = roleFromDb;
+      claimsChanged = true;
+    }
+
+    if (existingClaims.companyId !== companyIdFromDb) {
+      claimsToSet.companyId = companyIdFromDb;
+      claimsChanged = true;
+    }
+
+    if (claimsChanged) {
+      await authAdmin.setCustomUserClaims(uid, {
+        ...existingClaims, 
+        ...claimsToSet,
+      });
+      console.log(`Custom claims for user ${uid} synchronized:`, claimsToSet);
+    }
+    // --- END CRITICAL PART ---
 
     return { error: null };
   } catch (e) {
@@ -116,7 +153,7 @@ export async function inviteUserAction(
     const userProfile = userDoc.data() as UserProfile;
 
     if (userProfile.companyId) {
-      return { error: `User is already a member of another company (${userProfile.companyId}).`};
+      return { error: `User is already a member of another company.`};
     }
     
     await updateDoc(doc(db, "users", userProfile.uid), {
@@ -124,6 +161,15 @@ export async function inviteUserAction(
         role,
         onboardingStatus: 'completed'
     });
+
+    // Set custom claims after updating Firestore
+    const user = await authAdmin.getUser(userProfile.uid);
+    await authAdmin.setCustomUserClaims(userProfile.uid, {
+        ...user.customClaims,
+        companyId,
+        role,
+    });
+    console.log(`Custom claims set for invited user ${userProfile.uid}`);
     
     return { error: null };
   } catch (e) {
@@ -152,6 +198,15 @@ export async function updateUserRoleAction(
         }
 
         await updateDoc(userDocRef, { role: newRole });
+
+        // Update custom claims after updating Firestore
+        const user = await authAdmin.getUser(userId);
+        await authAdmin.setCustomUserClaims(userId, {
+            ...user.customClaims,
+            role: newRole,
+        });
+        console.log(`Custom claims updated for user ${userId}`);
+
         return { error: null };
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
@@ -183,15 +238,14 @@ export async function removeUserFromCompanyAction(
 
         const batch = writeBatch(db);
 
-        // Reset user's company-related fields
+        // Reset user's company-related fields in Firestore
         batch.update(userDocRef, {
             companyId: null,
             role: null,
-            onboardingStatus: 'pending_onboarding',
+            onboardingStatus: 'pending_creation',
         });
         
         // Also unassign this user from any technician profile they might have
-        // Note: The technician document ID is the same as the user ID.
         const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userId);
         const techDocSnap = await getDoc(techDocRef);
         if (techDocSnap.exists() && techDocSnap.data().companyId === companyId) {
@@ -200,11 +254,18 @@ export async function removeUserFromCompanyAction(
 
         await batch.commit();
 
+        // Nullify custom claims after updating Firestore
+        const user = await authAdmin.getUser(userId);
+        await authAdmin.setCustomUserClaims(userId, {
+            ...user.customClaims,
+            companyId: null,
+            role: null,
+        });
+        console.log(`Custom claims nullified for removed user ${userId}`);
+
         return { error: null };
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
         return { error: `Failed to remove user. ${errorMessage}` };
     }
 }
-
-    

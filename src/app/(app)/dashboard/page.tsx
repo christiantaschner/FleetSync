@@ -1,6 +1,7 @@
 
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -244,9 +245,9 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
+    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId), where("status", "==", "pending"));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
-        const allRequests = querySnapshot.docs.map(doc => {
+        const requestsData = querySnapshot.docs.map(doc => {
             const data = doc.data();
              for (const key in data) {
                 if (data[key] && typeof data[key].toDate === 'function') {
@@ -255,9 +256,8 @@ export default function DashboardPage() {
             }
             return { id: doc.id, ...data } as ProfileChangeRequest
         });
-        const pendingRequests = allRequests.filter(r => r.status === 'pending');
-        pendingRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setProfileChangeRequests(pendingRequests);
+        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProfileChangeRequests(requestsData);
         onListenerLoaded();
     }, (error) => {
         console.error("Error fetching profile change requests: ", error);
@@ -1098,6 +1098,17 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <Alert variant="default" className="border-primary/30 bg-primary/5">
+                    <UserPlus className="h-4 w-4 text-primary" />
+                    <AlertTitle className="font-semibold text-primary">How to Add a New Technician</AlertTitle>
+                    <AlertDescription>
+                      New technicians are added by inviting them as a new user with the 'Technician' role. Go to{' '}
+                      <Link href="/settings?tab=users" className="font-bold underline">
+                        Settings &gt; User Management
+                      </Link>
+                      {' '}to send an invite.
+                    </AlertDescription>
+                  </Alert>
                   <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {isLoadingData && technicians.length === 0 ? (

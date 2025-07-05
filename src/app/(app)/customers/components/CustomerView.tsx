@@ -1,134 +1,169 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
-import type { Job, Contract, Equipment } from '@/types';
+import React, { useState, useMemo, useCallback } from 'react';
+import type { Job, Contract, Equipment, CustomerData } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, MapPin, Briefcase, Repeat, Circle, Package, PackagePlus } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, Repeat, Circle, Package, PackagePlus, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import AddEquipmentDialog from './AddEquipmentDialog';
 import { Button } from '@/components/ui/button';
+import AddCustomerDialog from './AddCustomerDialog';
 
 interface CustomerViewProps {
+    customers: CustomerData[];
     jobs: Job[];
     contracts: Contract[];
     equipment: Equipment[];
     companyId?: string;
 }
 
-interface Customer {
-    id: string; // A unique identifier for the customer
+interface DisplayCustomer {
+    id: string; // Will be real doc ID or derived key
     name: string;
     phone: string;
     address: string;
     jobCount: number;
     lastActivity: string;
     contractCount: number;
+    isReal: boolean; // Flag to identify if it's from customers collection
 }
 
-export default function CustomerView({ jobs, contracts, equipment, companyId }: CustomerViewProps) {
+export default function CustomerView({ customers, jobs, contracts, equipment, companyId }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
     const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
+    const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
 
-    const customers = useMemo(() => {
-        const customerMap = new Map<string, Customer & { jobs: Job[]; contracts: Contract[]; equipment: Equipment[] }>();
+    const processedCustomers = useMemo(() => {
+        const customerMap = new Map<string, DisplayCustomer>();
 
-        const processRecord = (key: string, record: { name: string; phone: string; address: string; date: string }) => {
-            if (!customerMap.has(key)) {
-                customerMap.set(key, {
+        const getKey = (name: string, phone?: string | null) => (phone || name).toLowerCase().trim();
+
+        // 1. Add "real" customers from the new collection first.
+        customers.forEach(customer => {
+            const key = getKey(customer.name, customer.phone);
+            if (!key) return;
+
+            customerMap.set(key, {
+                id: customer.id, // Use the real document ID
+                name: customer.name,
+                phone: customer.phone || 'N/A',
+                address: customer.address || 'N/A',
+                jobCount: 0,
+                contractCount: 0,
+                lastActivity: customer.createdAt,
+                isReal: true,
+            });
+        });
+
+        // 2. Process jobs and either augment existing customers or add derived ones
+        jobs.forEach(job => {
+            const key = getKey(job.customerName, job.customerPhone);
+            if (!key) return;
+            
+            let customer = customerMap.get(key);
+            
+            if (!customer) {
+                customer = {
                     id: key,
-                    name: record.name,
-                    phone: record.phone,
-                    address: record.address,
+                    name: job.customerName,
+                    phone: job.customerPhone || "N/A",
+                    address: job.location.address || "N/A",
                     jobCount: 0,
                     contractCount: 0,
-                    lastActivity: '1970-01-01T00:00:00.000Z',
-                    jobs: [],
-                    contracts: [],
-                    equipment: [],
-                });
+                    lastActivity: job.createdAt,
+                    isReal: false,
+                };
+                customerMap.set(key, customer);
             }
-            const customer = customerMap.get(key)!;
-            if (new Date(record.date) > new Date(customer.lastActivity)) {
-                customer.lastActivity = record.date;
-                customer.address = record.address || customer.address;
-            }
-            return customer;
-        }
-        
-        jobs.forEach(job => {
-            const key = job.customerPhone || job.customerName.toLowerCase();
-            if (!key) return;
-            const customer = processRecord(key, {
-                name: job.customerName,
-                phone: job.customerPhone,
-                address: job.location.address || 'N/A',
-                date: job.createdAt
-            });
+            
             customer.jobCount++;
-            customer.jobs.push(job);
+            if (new Date(job.createdAt) > new Date(customer.lastActivity)) {
+                customer.lastActivity = job.createdAt;
+            }
         });
-
+        
+        // 3. Process contracts similarly
         contracts.forEach(contract => {
-            const key = contract.customerPhone || contract.customerName.toLowerCase();
+            const key = getKey(contract.customerName, contract.customerPhone);
             if (!key) return;
-            const customer = processRecord(key, {
-                name: contract.customerName,
-                phone: contract.customerPhone || 'N/A',
-                address: contract.customerAddress,
-                date: contract.createdAt || '1970-01-01T00:00:00.000Z'
-            });
+            
+            let customer = customerMap.get(key);
+            
+             if (!customer) {
+                customer = {
+                    id: key,
+                    name: contract.customerName,
+                    phone: contract.customerPhone || "N/A",
+                    address: contract.customerAddress || "N/A",
+                    jobCount: 0,
+                    contractCount: 0,
+                    lastActivity: contract.createdAt || '1970-01-01T00:00:00.000Z',
+                    isReal: false,
+                };
+                customerMap.set(key, customer);
+            }
+            
             customer.contractCount++;
-            customer.contracts.push(contract);
-        });
-
-        equipment.forEach(item => {
-            const key = item.customerId;
-            if (customerMap.has(key)) {
-                customerMap.get(key)!.equipment.push(item);
+             if (new Date(contract.createdAt || 0) > new Date(customer.lastActivity)) {
+                customer.lastActivity = contract.createdAt!;
             }
         });
 
-        const sortedCustomers = Array.from(customerMap.values()).sort((a, b) => 
+        return Array.from(customerMap.values()).sort((a, b) => 
             new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
         );
-        
-        return sortedCustomers;
 
-    }, [jobs, contracts, equipment]);
+    }, [customers, jobs, contracts]);
 
     const filteredCustomers = useMemo(() => {
-        if (!searchTerm) return customers;
-        return customers.filter(c => 
+        if (!searchTerm) return processedCustomers;
+        return processedCustomers.filter(c => 
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.phone.includes(searchTerm)
         );
-    }, [customers, searchTerm]);
+    }, [processedCustomers, searchTerm]);
 
     const selectedCustomerData = useMemo(() => {
         if (!selectedCustomer) return null;
-        const customerData = customers.find(c => c.id === selectedCustomer.id);
-        if (!customerData) return null;
+        
+        const customerJobs = jobs.filter(j => 
+            j.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() ||
+            (j.customerPhone && selectedCustomer.phone && j.customerPhone === selectedCustomer.phone)
+        );
+        
+        const customerContracts = contracts.filter(c => 
+            c.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() ||
+            (c.customerPhone && selectedCustomer.phone && c.customerPhone === selectedCustomer.phone)
+        );
 
+        const customerEquipment = selectedCustomer.isReal 
+            ? equipment.filter(e => e.customerId === selectedCustomer.id)
+            : [];
+        
         return {
-            jobs: customerData.jobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-            contracts: customerData.contracts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
-            equipment: customerData.equipment.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
+            jobs: customerJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+            contracts: customerContracts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
+            equipment: customerEquipment.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
         };
-    }, [selectedCustomer, customers]);
+    }, [selectedCustomer, jobs, contracts, equipment]);
 
-    const handleEquipmentAdded = () => {
-        // The onSnapshot listener in the parent will handle the data refresh.
-    };
+    const handleCustomerAdded = useCallback(() => {}, []);
+    const handleEquipmentAdded = useCallback(() => {}, []);
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+             <AddCustomerDialog
+                isOpen={isAddCustomerOpen}
+                setIsOpen={setIsAddCustomerOpen}
+                onCustomerAdded={handleCustomerAdded}
+            />
             {selectedCustomer && companyId && (
                  <AddEquipmentDialog
                     isOpen={isAddEquipmentOpen}
@@ -141,8 +176,15 @@ export default function CustomerView({ jobs, contracts, equipment, companyId }: 
             )}
             <Card className="lg:col-span-1">
                 <CardHeader>
-                    <CardTitle>All Customers</CardTitle>
-                    <CardDescription>Select a customer to view their details.</CardDescription>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <CardTitle>All Customers</CardTitle>
+                            <CardDescription>Select a customer to view their details.</CardDescription>
+                        </div>
+                        <Button variant="accent" size="sm" onClick={() => setIsAddCustomerOpen(true)}>
+                            <UserPlus className="mr-2 h-4 w-4" /> Add
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                      <Input 
@@ -183,7 +225,7 @@ export default function CustomerView({ jobs, contracts, equipment, companyId }: 
                                         <p className="flex items-center gap-1 mt-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)} disabled={!companyId}>
+                                <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)} disabled={!companyId || !selectedCustomer.isReal} title={!selectedCustomer.isReal ? "Create a customer record first to add equipment" : ""}>
                                     <PackagePlus className="mr-2 h-4 w-4" /> Add Equipment
                                 </Button>
                             </div>

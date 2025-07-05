@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db, auth } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where, or } from 'firebase/firestore';
 
 export const AddEquipmentInputSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required.'),
@@ -47,17 +47,14 @@ export async function addEquipmentAction(
 }
 
 import {
-  query,
-  where,
   limit,
-  getDocs,
   getDoc,
   doc,
-  QuerySnapshot,
-  DocumentSnapshot,
-  Timestamp,
+  type QuerySnapshot,
+  type DocumentSnapshot,
+  type Timestamp,
 } from 'firebase/firestore';
-import { Job, Technician, PublicTrackingInfo } from '@/types';
+import { type Job, type Technician, type PublicTrackingInfo } from '@/types';
 
 const GetTrackingInfoInputSchema = z.object({
   token: z.string().min(1, 'A tracking token is required.'),
@@ -135,5 +132,70 @@ export async function getTrackingInfoAction(
     }
     console.error('Error in getTrackingInfoAction:', e);
     return { data: null, error: 'Failed to retrieve tracking information.' };
+  }
+}
+
+export const AddCustomerInputSchema = z.object({
+  companyId: z.string().min(1, 'Company ID is required.'),
+  appId: z.string().min(1, 'App ID is required.'),
+  name: z.string().min(1, 'Customer name is required.'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
+
+export async function addCustomerAction(
+  input: AddCustomerInput
+): Promise<{ data: { id: string } | null; error: string | null }> {
+  try {
+    const validatedInput = AddCustomerInputSchema.parse(input);
+    const { appId, companyId, ...customerData } = validatedInput;
+    if (!db) {
+      throw new Error('Firestore not initialized');
+    }
+
+    const customersCollectionRef = collection(db, `artifacts/${appId}/public/data/customers`);
+    
+    // Check for existing customer with the same name or phone to avoid duplicates
+    if (customerData.phone) {
+        const q = query(
+          customersCollectionRef,
+          where("companyId", "==", companyId),
+          or(
+              where("name", "==", customerData.name),
+              where("phone", "==", customerData.phone)
+          )
+        );
+         const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            return { data: null, error: 'A customer with this name or phone number already exists.' };
+        }
+    } else {
+        const q = query(
+            customersCollectionRef,
+            where("companyId", "==", companyId),
+            where("name", "==", customerData.name)
+        );
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+            return { data: null, error: 'A customer with this name already exists.' };
+        }
+    }
+
+    const docRef = await addDoc(customersCollectionRef, {
+      ...customerData,
+      companyId: companyId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return { data: { id: docRef.id }, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map((err) => err.message).join(', ') };
+    }
+    console.error('Error in addCustomerAction:', e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    return { data: null, error: `Failed to add customer. ${errorMessage}` };
   }
 }

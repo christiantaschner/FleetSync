@@ -15,7 +15,7 @@ export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
     companyId: z.string().nullable(),
-    role: z.enum(['admin', 'dispatcher', 'technician', 'superAdmin']).nullable(),
+    role: z.enum(['admin', 'technician', 'superAdmin']).nullable(),
     onboardingStatus: z.enum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
@@ -127,6 +127,7 @@ export type Customer = z.infer<typeof CustomerSchema>;
 export type PublicTrackingInfo = {
     jobTitle: string;
     jobStatus: JobStatus;
+    jobLocation: Location;
     scheduledStartTime: string | null;
     scheduledEndTime: string | null;
     actualStartTime: string | null;
@@ -136,6 +137,7 @@ export type PublicTrackingInfo = {
     technicianPhoneNumber: string | null;
     currentTechnicianLocation: Location | null;
     etaToJob: number | null; // in minutes
+    customerName: string;
 };
 
 export type Task = {
@@ -247,6 +249,16 @@ export const StripeProductSchema = z.object({
     }),
 });
 export type StripeProduct = z.infer<typeof StripeProductSchema>;
+
+export const CustomerDataSchema = z.object({
+  id: z.string(),
+  companyId: z.string(),
+  name: z.string().min(1, 'Customer name is required.'),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  createdAt: z.string(),
+});
+export type CustomerData = z.infer<typeof CustomerDataSchema>;
 
 
 // --- AI Flow Schemas ---

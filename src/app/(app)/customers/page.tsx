@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Job, Contract, Equipment } from '@/types';
+import type { Job, Contract, Equipment, CustomerData } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
@@ -16,6 +16,7 @@ export default function CustomersPage() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
+    const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +38,7 @@ export default function CustomersPage() {
         }
 
         let loadedCount = 0;
-        const totalCollections = 3;
+        const totalCollections = 4;
         const companyId = userProfile.companyId;
 
         const updateLoadingState = () => {
@@ -98,9 +99,24 @@ export default function CustomersPage() {
             });
             setEquipment(equipmentData);
             updateLoadingState();
+        });
+
+        const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", companyId));
+        const unsubscribeCustomers = onSnapshot(customersQuery, (snapshot) => {
+            const customersData = snapshot.docs.map(doc => {
+                 const data = doc.data();
+                 for (const key in data) {
+                    if (data[key] && typeof data[key].toDate === 'function') {
+                        data[key] = data[key].toDate().toISOString();
+                    }
+                }
+                return { id: doc.id, ...data } as CustomerData;
+            });
+            setCustomers(customersData);
+            updateLoadingState();
         }, (err) => {
-            console.error("Error fetching equipment for customer view:", err);
-            setError("Could not fetch equipment data.");
+            console.error("Error fetching customers:", err);
+            setError("Could not fetch customer records.");
             updateLoadingState();
         });
 
@@ -109,6 +125,7 @@ export default function CustomersPage() {
             unsubscribeJobs();
             unsubscribeContracts();
             unsubscribeEquipment();
+            unsubscribeCustomers();
         };
     }, [authLoading, userProfile, toast]);
 
@@ -120,5 +137,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} />;
+    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} />;
 }

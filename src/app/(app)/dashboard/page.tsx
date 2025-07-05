@@ -130,10 +130,6 @@ export default function DashboardPage() {
     setSelectedJobForEdit(null);
   };
   
-  const handleOpenAddTechnician = () => {
-    setSelectedTechnicianForEdit(null);
-    setIsAddEditTechnicianDialogOpen(true);
-  };
   const handleOpenEditTechnician = (technician: Technician) => {
     setSelectedTechnicianForEdit(technician);
     setIsAddEditTechnicianDialogOpen(true);
@@ -1085,9 +1081,6 @@ export default function DashboardPage() {
                       <Button variant="ghost" onClick={() => setIsManageSkillsOpen(true)}>
                         <Settings className="mr-2 h-4 w-4" /> Manage Skills
                       </Button>
-                      <Button variant="accent" onClick={handleOpenAddTechnician}>
-                        <UserPlus className="mr-2 h-4 w-4" /> Add Technician
-                      </Button>
                     </div>
                   </div>
                   <div className="pt-4">
@@ -1124,7 +1117,7 @@ export default function DashboardPage() {
                         <p className="text-muted-foreground col-span-full text-center py-10">No technicians match your search.</p>
                       )}
                       {!isLoadingData && technicians.length === 0 && (
-                      <p className="text-muted-foreground col-span-full text-center py-10">No technicians to display. Add your first technician.</p>
+                      <p className="text-muted-foreground col-span-full text-center py-10">No technicians have been invited yet.</p>
                       )}
                   </div>
                 </CardContent>

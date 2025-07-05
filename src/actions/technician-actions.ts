@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 // Base schema for technician data, omitting fields managed by the server
 const TechnicianDataSchema = z.object({
@@ -20,45 +20,6 @@ const TechnicianDataSchema = z.object({
   }),
   avatarUrl: z.string().url().optional(),
 });
-
-// Schema for adding a new technician
-const AddTechnicianInputSchema = TechnicianDataSchema;
-export type AddTechnicianInput = z.infer<typeof AddTechnicianInputSchema>;
-
-export async function addTechnicianAction(
-  input: AddTechnicianInput,
-  appId: string
-): Promise<{ data: { id: string } | null; error: string | null }> {
-  try {
-    const validatedInput = AddTechnicianInputSchema.parse(input);
-    if (!db) {
-      throw new Error('Firestore not initialized');
-    }
-     if (!appId) {
-      throw new Error('App ID is required');
-    }
-
-    const techCollectionRef = collection(db, `artifacts/${appId}/public/data/technicians`);
-    
-    const newTechnicianPayload = {
-      ...validatedInput,
-      currentJobId: null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    };
-
-    const docRef = await addDoc(techCollectionRef, newTechnicianPayload);
-
-    return { data: { id: docRef.id }, error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map((err) => err.message).join(', ') };
-    }
-    console.error('Error in addTechnicianAction:', e);
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    return { data: null, error: `Failed to add technician. ${errorMessage}` };
-  }
-}
 
 // Schema for updating an existing technician
 const UpdateTechnicianInputSchema = TechnicianDataSchema.extend({

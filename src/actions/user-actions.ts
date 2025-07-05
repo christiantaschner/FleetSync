@@ -132,6 +132,7 @@ const InviteUserInputSchema = z.object({
   email: z.string().email(),
   role: z.enum(['admin', 'technician']),
   companyId: z.string(),
+  appId: z.string().min(1),
 });
 export type InviteUserInput = z.infer<typeof InviteUserInputSchema>;
 
@@ -139,7 +140,7 @@ export async function inviteUserAction(
   input: InviteUserInput
 ): Promise<{ error: string | null }> {
   try {
-    const { email, role, companyId } = InviteUserInputSchema.parse(input);
+    const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
     if (!db) throw new Error("Firestore not initialized");
 
     const usersQuery = query(collection(db, "users"), where("email", "==", email), limit(1));
@@ -156,11 +157,39 @@ export async function inviteUserAction(
       return { error: `User is already a member of another company.`};
     }
     
-    await updateDoc(doc(db, "users", userProfile.uid), {
+    const batch = writeBatch(db);
+
+    const userDocRef = doc(db, "users", userProfile.uid);
+    batch.update(userDocRef, {
         companyId,
         role,
         onboardingStatus: 'completed'
     });
+
+    // If the invited user is a technician, create a technician profile for them
+    if (role === 'technician') {
+        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userProfile.uid);
+        const techDocSnap = await getDoc(techDocRef);
+        // Only create if one doesn't already exist for this UID
+        if (!techDocSnap.exists()) {
+            batch.set(techDocRef, {
+                companyId: companyId,
+                name: userProfile.email.split('@')[0], // Default name to email prefix
+                email: userProfile.email,
+                isAvailable: true,
+                skills: [],
+                location: {
+                    latitude: 0,
+                    longitude: 0,
+                    address: "Not set",
+                },
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
+        }
+    }
+
+    await batch.commit();
 
     // Set custom claims after updating Firestore
     const user = await authAdmin.getUser(userProfile.uid);
@@ -173,6 +202,9 @@ export async function inviteUserAction(
     
     return { error: null };
   } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map((err) => err.message).join(", ") };
+    }
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     return { error: `Failed to invite user. ${errorMessage}` };
   }

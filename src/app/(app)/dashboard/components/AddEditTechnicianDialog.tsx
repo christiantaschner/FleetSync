@@ -27,13 +27,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
 import type { Technician } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Package, Trash2 } from 'lucide-react';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { useAuth } from '@/contexts/auth-context';
 import { removeUserFromCompanyAction } from '@/actions/user-actions';
-import { addTechnicianAction, updateTechnicianAction } from '@/actions/technician-actions';
+import { updateTechnicianAction } from '@/actions/technician-actions';
 
 
 interface AddEditTechnicianDialogProps {
@@ -92,9 +92,9 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   };
 
   const handleDeleteTechnician = async () => {
-    if (!technician || !appId) return;
+    if (!technician || !appId || !userProfile?.companyId) return;
     setIsDeleting(true);
-    const result = await removeUserFromCompanyAction({ userId: technician.id, companyId: technician.companyId, appId });
+    const result = await removeUserFromCompanyAction({ userId: technician.id, companyId: userProfile.companyId, appId });
     if (result.error) {
         toast({ title: "Error", description: `Failed to remove technician: ${result.error}`, variant: "destructive" });
     } else {
@@ -106,6 +106,10 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!technician) {
+      toast({ title: "Cannot Save", description: "No technician selected to update.", variant: "destructive" });
+      return;
+    }
     if (!name.trim() || !locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Name and Location Address.", variant: "destructive" });
       return;
@@ -122,13 +126,12 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     setIsLoading(true);
 
     const technicianData = {
+      id: technician.id,
       companyId: userProfile.companyId,
       name,
       email: email || "", 
       phone: phone || "",
       skills: selectedSkills,
-      partsInventory: [], 
-      avatarUrl: 'https://placehold.co/100x100.png',
       location: {
         latitude: latitude ?? 0, 
         longitude: longitude ?? 0,
@@ -137,18 +140,11 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       isAvailable,
     };
 
-
     try {
-      if (technician) { 
-        const result = await updateTechnicianAction({ id: technician.id, ...technicianData }, appId);
+        const result = await updateTechnicianAction(technicianData, appId);
         if(result.error) throw new Error(result.error);
         toast({ title: "Technician Updated", description: `Technician "${technician.name}" has been updated.` });
-      } else { 
-        const result = await addTechnicianAction(technicianData, appId);
-        if(result.error) throw new Error(result.error);
-        toast({ title: "Technician Added", description: `New technician "${technicianData.name}" created.` });
-      }
-      onClose();
+        onClose();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Could not save technician.";
       toast({ title: "Firestore Error", description: errorMessage, variant: "destructive" });
@@ -161,13 +157,13 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh] p-0">
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
-          <DialogTitle className="font-headline">{technician ? 'Edit Technician Details' : 'Add New Technician'}</DialogTitle>
+          <DialogTitle className="font-headline">Edit Technician Details</DialogTitle>
           <DialogDescription>
-            {technician ? 'Update the details for this technician.' : 'Fill in the details for the new technician.'}
+            Update the details for this technician. New technicians should be added via the User Management settings.
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto px-6">
-            <form id="add-edit-tech-form" onSubmit={handleSubmit} className="py-4 space-y-3">
+            <form id="edit-tech-form" onSubmit={handleSubmit} className="py-4 space-y-3">
                 <div>
                   <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
                   <Input id="techName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., John Doe" required />
@@ -249,9 +245,9 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             </div>
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit" form="add-edit-tech-form" disabled={isLoading}>
+                <Button type="submit" form="edit-tech-form" disabled={isLoading}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {technician ? 'Save Changes' : 'Add Technician'}
+                    Save Changes
                 </Button>
             </div>
           </DialogFooter>

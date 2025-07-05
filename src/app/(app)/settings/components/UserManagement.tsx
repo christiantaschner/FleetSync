@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useAuth } from '@/contexts/auth-context';
 
 
 const InviteUserSchema = z.object({
@@ -31,10 +32,13 @@ interface UserManagementProps {
 
 const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) => {
     const { toast } = useToast();
+    const { userProfile } = useAuth();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUpdatingRole, setIsUpdatingRole] = useState<string | null>(null);
+    
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<InviteUserFormValues>({
         resolver: zodResolver(InviteUserSchema),
@@ -57,8 +61,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     }, [fetchUsers]);
     
     const onInviteSubmit = async (data: InviteUserFormValues) => {
+        if (!appId) {
+            toast({ title: 'Configuration Error', description: 'App ID is missing.', variant: 'destructive'});
+            return;
+        }
         setIsSubmitting(true);
-        const result = await inviteUserAction({ ...data, companyId });
+        const result = await inviteUserAction({ ...data, companyId, appId });
         if (result.error) {
             toast({ title: 'Invite Failed', description: result.error, variant: 'destructive' });
         } else {
@@ -82,7 +90,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     };
     
     const handleRemoveUser = async (userId: string) => {
-        const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         if (!appId) {
             toast({ title: 'Configuration Error', description: 'App ID is missing.', variant: 'destructive' });
             return;
@@ -97,15 +104,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
         }
     };
 
-    const getRoleIcon = (role: UserProfile['role']) => {
-        switch (role) {
-            case 'admin': return <ShieldCheck className="h-4 w-4 text-green-600" />;
-            case 'technician': return <Wrench className="h-4 w-4 text-blue-600" />;
-            case 'csr': return <User className="h-4 w-4 text-purple-600" />;
-            default: return null;
-        }
-    }
-
     return (
         <div className="space-y-6">
             <form onSubmit={handleSubmit(onInviteSubmit)} className="space-y-4 p-4 border rounded-lg bg-secondary/50">
@@ -114,7 +112,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                     <Mail className="h-4 w-4"/>
                     <AlertTitle>How Invites Work</AlertTitle>
                     <AlertDescription>
-                        The user must first <a href="/signup" target="_blank" className="font-semibold underline">create a free account</a>. Once their account exists, you can invite them to your company using their email address here.
+                        The user must first <a href="/signup" target="_blank" className="font-semibold underline">create a free account</a>. Once their account exists, you can invite them to your company using their email address here. Inviting someone with the 'Technician' role will automatically create their technician profile.
                     </AlertDescription>
                  </Alert>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -197,7 +195,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                This will remove <strong>{user.email}</strong> from your company. They will lose all access. This action cannot be undone.
+                                                                This will remove <strong>{user.email}</strong> from your company and also delete their associated Technician profile. They will lose all access. This action cannot be undone.
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>

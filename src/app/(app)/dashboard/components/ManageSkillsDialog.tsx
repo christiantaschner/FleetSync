@@ -14,18 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, orderBy, doc, where, writeBatch } from 'firebase/firestore';
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { useAuth } from '@/contexts/auth-context';
-import { deleteSkillAction } from '@/actions/fleet-actions';
-
-interface Skill {
-  id: string;
-  name: string;
-}
+import { getSkillsAction, addSkillAction, deleteSkillAction, type Skill } from '@/actions/skill-actions';
+import { writeBatch, collection, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ManageSkillsDialogProps {
   isOpen: boolean;
@@ -40,32 +35,21 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   const [newSkillName, setNewSkillName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
+
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const fetchSkills = useCallback(async () => {
-    if (!db || !userProfile?.companyId) return;
-    
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) {
-        toast({ title: "Configuration Error", description: "Cannot fetch skills library.", variant: "destructive"});
-        return;
-    }
+    if (!userProfile?.companyId || !appId) return;
 
     setIsLoading(true);
-    try {
-      const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", userProfile.companyId));
-      const querySnapshot = await getDocs(skillsQuery);
-      const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
-      skillsData.sort((a, b) => a.name.localeCompare(b.name));
-      setSkills(skillsData);
-      setIsLibraryEmpty(skillsData.length === 0);
-    } catch (error) {
-      console.error("Error fetching skills: ", error);
-      toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
+    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
+    if(result.error) {
+        toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+    } else {
+        setSkills(result.data || []);
     }
-  }, [userProfile, toast]);
+    setIsLoading(false);
+  }, [userProfile, toast, appId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -75,50 +59,31 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSkillName.trim() || !db || !userProfile?.companyId) return;
-    
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) {
-        toast({ title: "Configuration Error", description: "Cannot add skill.", variant: "destructive"});
-        return;
-    }
-
-    if (skills.some(skill => skill.name.toLowerCase() === newSkillName.trim().toLowerCase())) {
-        toast({ title: "Duplicate Skill", description: "This skill already exists.", variant: "destructive"});
-        return;
-    }
+    if (!newSkillName.trim() || !userProfile?.companyId || !appId) return;
 
     setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, `artifacts/${appId}/public/data/skills`), { name: newSkillName.trim(), companyId: userProfile.companyId });
-      setNewSkillName('');
-      toast({ title: "Success", description: `Skill "${newSkillName.trim()}" added.`});
-      await fetchSkills(); 
-      onSkillsUpdated(); 
-    } catch (error) {
-      console.error("Error adding skill: ", error);
-      toast({ title: "Error", description: "Could not add skill.", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
+    const result = await addSkillAction({ name: newSkillName.trim(), companyId: userProfile.companyId, appId });
+
+    if (result.error) {
+        toast({ title: "Error Adding Skill", description: result.error, variant: "destructive" });
+    } else {
+        setNewSkillName('');
+        toast({ title: "Success", description: `Skill "${newSkillName.trim()}" added.`});
+        setSkills(prev => [...prev, {id: result.data!.id, name: newSkillName.trim() }].sort((a,b) => a.name.localeCompare(b.name)));
+        onSkillsUpdated(); 
     }
+    setIsSubmitting(false);
   };
 
-  const handleDeleteSkill = async (skillId: string, skillName: string) => {
-    if (!userProfile?.companyId) return;
+  const handleDeleteSkill = async (skill: Skill) => {
+    if (!userProfile?.companyId || !appId) return;
 
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) {
-        toast({ title: "Configuration Error", description: "Cannot delete skill.", variant: "destructive"});
-        return;
-    }
-
-    // Optimistic UI update: Remove the skill from the local state immediately.
     const originalSkills = [...skills];
-    setSkills(prev => prev.filter(s => s.id !== skillId));
+    setSkills(prev => prev.filter(s => s.id !== skill.id));
 
     const result = await deleteSkillAction({
-      skillId,
-      skillName,
+      skillId: skill.id,
+      skillName: skill.name,
       companyId: userProfile.companyId,
       appId,
     });
@@ -129,27 +94,19 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
         description: result.error,
         variant: "destructive",
       });
-      // On error, revert the optimistic UI update.
       setSkills(originalSkills);
     } else {
       toast({
         title: "Skill Deleted",
-        description: `"${skillName}" was removed from the library and all technicians.`,
+        description: `"${skill.name}" was removed from the library and all technicians.`,
       });
-      // Trigger a refetch in the parent component to ensure data consistency across the app.
       onSkillsUpdated();
     }
   };
 
 
   const handleSeedSkills = async () => {
-    if (!db || !userProfile?.companyId) return;
-
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) {
-        toast({ title: "Configuration Error", description: "Cannot seed skills.", variant: "destructive"});
-        return;
-    }
+    if (!db || !userProfile?.companyId || !appId) return;
 
     setIsSubmitting(true);
     try {
@@ -215,14 +172,14 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                                         variant="ghost" 
                                         size="icon"
                                         className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleDeleteSkill(skill.id, skill.name)}
+                                        onClick={() => handleDeleteSkill(skill)}
                                     >
                                         <Trash2 className="h-4 w-4" />
                                         <span className="sr-only">Delete {skill.name}</span>
                                     </Button>
                                 </div>
                             ))
-                        ) : isLibraryEmpty ? (
+                        ) : (
                             <div className="text-center p-4">
                                 <p className="text-sm text-muted-foreground">Your skills library is empty.</p>
                                 <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedSkills} disabled={isSubmitting}>
@@ -230,8 +187,6 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                                 Seed with Common Skills
                                 </Button>
                             </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center p-4">No skills in the library. Add one above.</p>
                         )}
                     </div>
                 </ScrollArea>

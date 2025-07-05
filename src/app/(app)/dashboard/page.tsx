@@ -37,6 +37,7 @@ import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getSkillsAction } from '@/actions/skill-actions';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -162,18 +163,12 @@ export default function DashboardPage() {
 
 
   const fetchSkills = useCallback(async () => {
-    if (!db || !userProfile?.companyId || !appId) return;
-    try {
-        const companyId = userProfile.companyId;
-        const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", companyId));
-        const skillsSnapshot = await getDocs(skillsQuery);
-        const skillsData = skillsSnapshot.docs.map(doc => doc.data().name as string);
-        skillsData.sort((a, b) => a.localeCompare(b));
-        setAllSkills(skillsData);
-
-    } catch (error) {
-        console.error("Error fetching skills: ", error);
+    if (!userProfile?.companyId || !appId) return;
+    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
+    if (result.error) {
         toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+    } else {
+        setAllSkills(result.data?.map(s => s.name) || []);
     }
 }, [userProfile, toast, appId]);
   

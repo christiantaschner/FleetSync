@@ -14,17 +14,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { db } from '@/lib/firebase';
-import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, writeBatch, where } from 'firebase/firestore';
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Package } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_PARTS } from '@/lib/parts';
 import { useAuth } from '@/contexts/auth-context';
-
-interface Part {
-  id: string;
-  name: string;
-}
+import { getPartsAction, addPartAction, deletePartAction, type Part } from '@/actions/part-actions';
+import { writeBatch, collection, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface ManagePartsDialogProps {
   isOpen: boolean;
@@ -39,23 +35,19 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   const [newPartName, setNewPartName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLibraryEmpty, setIsLibraryEmpty] = useState(false);
+  
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const fetchParts = async () => {
-    if (!db || !userProfile?.companyId) return;
+    if (!userProfile?.companyId || !appId) return;
     setIsLoading(true);
-    try {
-      const partsQuery = query(collection(db, "parts"), where("companyId", "==", userProfile.companyId), orderBy("name"));
-      const querySnapshot = await getDocs(partsQuery);
-      const partsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
-      setParts(partsData);
-      setIsLibraryEmpty(partsData.length === 0);
-    } catch (error) {
-      console.error("Error fetching parts: ", error);
-      toast({ title: "Error", description: "Could not fetch parts library.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
+    const result = await getPartsAction({ companyId: userProfile.companyId, appId });
+    if (result.error) {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+        setParts(result.data || []);
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -66,50 +58,43 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
 
   const handleAddPart = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPartName.trim() || !db || !userProfile?.companyId) return;
+    if (!newPartName.trim() || !userProfile?.companyId || !appId) return;
     
-    if (parts.some(part => part.name.toLowerCase() === newPartName.trim().toLowerCase())) {
-        toast({ title: "Duplicate Part", description: "This part already exists.", variant: "destructive"});
-        return;
-    }
-
     setIsSubmitting(true);
-    try {
-      await addDoc(collection(db, "parts"), { name: newPartName.trim(), companyId: userProfile.companyId });
-      setNewPartName('');
-      toast({ title: "Success", description: `Part "${newPartName.trim()}" added.`});
-      await fetchParts(); 
-      onPartsUpdated(); 
-    } catch (error) {
-      console.error("Error adding part: ", error);
-      toast({ title: "Error", description: "Could not add part.", variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
+    const result = await addPartAction({ name: newPartName, companyId: userProfile.companyId, appId });
+    if (result.error) {
+        toast({ title: "Error adding part", description: result.error, variant: "destructive" });
+    } else {
+        setNewPartName('');
+        toast({ title: "Success", description: `Part "${newPartName.trim()}" added.`});
+        setParts(prev => [...prev, { id: result.data!.id, name: newPartName.trim() }].sort((a,b) => a.name.localeCompare(b.name)));
+        onPartsUpdated();
     }
+    setIsSubmitting(false);
   };
 
   const handleDeletePart = async (partId: string) => {
-    if (!db) return;
-    setIsLoading(true); 
-    try {
-      await deleteDoc(doc(db, "parts", partId));
-      setParts(prevParts => prevParts.filter(part => part.id !== partId));
+    if (!userProfile?.companyId || !appId) return;
+
+    setParts(prevParts => prevParts.filter(part => part.id !== partId));
+    
+    const result = await deletePartAction({ partId, companyId: userProfile.companyId, appId });
+
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+      fetchParts(); // Re-fetch to restore state on error
+    } else {
       toast({ title: "Success", description: "Part deleted."});
-      onPartsUpdated(); 
-    } catch (error) {
-      console.error("Error deleting part: ", error);
-      toast({ title: "Error", description: "Could not delete part. It might be in use.", variant: "destructive" });
-    } finally {
-      setIsLoading(false);
+      onPartsUpdated();
     }
   };
 
   const handleSeedParts = async () => {
-    if (!db || !userProfile?.companyId) return;
+    if (!db || !userProfile?.companyId || !appId) return;
     setIsSubmitting(true);
     try {
         const batch = writeBatch(db);
-        const partsCollectionRef = collection(db, "parts");
+        const partsCollectionRef = collection(db, `artifacts/${appId}/public/data/parts`);
         
         PREDEFINED_PARTS.forEach(partName => {
             const docRef = doc(partsCollectionRef);
@@ -177,7 +162,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
                               </Button>
                           </div>
                       ))
-                  ) : isLibraryEmpty ? (
+                  ) : (
                       <div className="text-center p-4">
                           <p className="text-sm text-muted-foreground">Your parts library is empty.</p>
                           <Button variant="accent" size="sm" className="mt-3" onClick={handleSeedParts} disabled={isSubmitting}>
@@ -185,8 +170,6 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
                             Seed with Common Parts
                           </Button>
                       </div>
-                  ) : (
-                      <p className="text-sm text-muted-foreground text-center p-4">No parts in the library. Add one above.</p>
                   )}
               </div>
             </ScrollArea>

@@ -20,6 +20,7 @@ import { isEqual } from 'lodash';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { getSkillsAction } from '@/actions/skill-actions';
 
 const getStatusClass = (status: ProfileChangeRequest['status']) => {
     switch (status) {
@@ -78,6 +79,8 @@ export default function TechnicianProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSuggestChangeOpen, setIsSuggestChangeOpen] = useState(false);
+  
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
     if (authLoading || !firebaseUser) return;
@@ -88,7 +91,6 @@ export default function TechnicianProfilePage() {
       return;
     }
     
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
     if (!appId) {
         setError("Firebase Project ID not configured.");
         setIsLoading(false);
@@ -115,25 +117,21 @@ export default function TechnicianProfilePage() {
     return () => {
         unsubscribeTech();
     };
-  }, [firebaseUser, authLoading]);
+  }, [firebaseUser, authLoading, appId]);
 
   useEffect(() => {
-    if (!technician || !userProfile?.companyId) return;
+    if (!technician || !userProfile?.companyId || !appId) return;
     
     const companyId = userProfile.companyId;
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-     if (!appId) {
-        setError("Firebase Project ID not configured.");
-        return;
-    }
 
     // Fetch Skills
-    const skillsQuery = query(collection(db, `artifacts/${appId}/public/data/skills`), where("companyId", "==", companyId));
-    const unsubscribeSkills = onSnapshot(skillsQuery, (snapshot) => {
-        const skillsData = snapshot.docs.map(doc => doc.data().name as string);
-        skillsData.sort((a,b) => a.localeCompare(b));
-        setAllSkills(skillsData);
-    });
+    const fetchSkills = async () => {
+        const result = await getSkillsAction({ companyId, appId });
+        if(result.data) {
+            setAllSkills(result.data.map(s => s.name));
+        }
+    }
+    fetchSkills();
 
     // Fetch Change Requests
     const requestsQuery = query(
@@ -178,11 +176,10 @@ export default function TechnicianProfilePage() {
     });
 
     return () => {
-        unsubscribeSkills();
         unsubscribeRequests();
         unsubscribeJobs();
     }
-  }, [technician, userProfile]);
+  }, [technician, userProfile, appId]);
 
   if (isLoading || authLoading) {
     return (

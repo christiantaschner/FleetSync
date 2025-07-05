@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/firebase';
 import { authAdmin } from '@/lib/firebase-admin';
 import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore';
-import { PREDEFINED_SKILLS } from '@/lib/skills';
+import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
 import { addDays } from 'date-fns';
@@ -27,7 +27,7 @@ export async function completeOnboardingAction(
     }
     if (!appId) throw new Error("App ID is required.");
 
-    const { companyName, uid, numberOfTechnicians } = validatedInput;
+    const { companyName, uid, numberOfTechnicians, companySpecialties } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
 
     const batch = writeBatch(db);
@@ -73,7 +73,15 @@ export async function completeOnboardingAction(
     });
     
     const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
-    PREDEFINED_SKILLS.forEach(skillName => {
+    const skillsToSeed = new Set<string>();
+    companySpecialties.forEach(specialty => {
+        const skillsForSpecialty = SKILLS_BY_SPECIALTY[specialty];
+        if (skillsForSpecialty) {
+            skillsForSpecialty.forEach(skill => skillsToSeed.add(skill));
+        }
+    });
+
+    skillsToSeed.forEach(skillName => {
         const newSkillRef = doc(skillsCollectionRef);
         batch.set(newSkillRef, { name: skillName, companyId: companyId });
     });

@@ -41,9 +41,10 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   const fetchParts = async () => {
     if (!userProfile?.companyId || !appId) return;
     setIsLoading(true);
-    const result = await getPartsAction({ companyId: userProfile.companyId });
+    const result = await getPartsAction({ companyId: userProfile.companyId, appId });
     if (result.error) {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
+        console.error("Could not fetch parts library:", result.error);
+        setParts([]);
     } else {
         setParts(result.data || []);
     }

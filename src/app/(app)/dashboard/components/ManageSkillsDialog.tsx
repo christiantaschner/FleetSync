@@ -44,12 +44,13 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     setIsLoading(true);
     const result = await getSkillsAction({ companyId: userProfile.companyId });
     if(result.error) {
-        toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+        console.error("Could not fetch skills library:", result.error);
+        setSkills([]);
     } else {
         setSkills(result.data || []);
     }
     setIsLoading(false);
-  }, [userProfile, toast, appId]);
+  }, [userProfile, appId]);
 
   useEffect(() => {
     if (isOpen) {

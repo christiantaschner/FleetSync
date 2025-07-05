@@ -8,6 +8,7 @@ import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, where, get
 // --- Get Parts ---
 const GetPartsInputSchema = z.object({
   companyId: z.string().min(1),
+  appId: z.string().min(1),
 });
 export type GetPartsInput = z.infer<typeof GetPartsInputSchema>;
 
@@ -17,10 +18,9 @@ export type Part = {
 };
 export async function getPartsAction(input: GetPartsInput): Promise<{ data: Part[] | null; error: string | null; }> {
     try {
-        const { companyId } = GetPartsInputSchema.parse(input);
+        const { companyId, appId } = GetPartsInputSchema.parse(input);
         const partsQuery = query(
-            // Corrected path to point to a general parts collection, not multi-tenant
-            collection(db, "parts"),
+            collection(db, `artifacts/${appId}/public/data/parts`),
             where("companyId", "==", companyId),
             orderBy("name")
         );

@@ -3,25 +3,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
-import { Loader2, Building, Sparkles, Users } from 'lucide-react';
+import { Loader2, Building, Sparkles, Users, ListChecks } from 'lucide-react';
 import { Logo } from '@/components/common/logo';
 import { loadStripe } from '@stripe/stripe-js';
+import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 
 type OnboardingFormValues = Omit<CompleteOnboardingInput, 'uid'>;
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
     ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
     : null;
+
+const specialties = Object.keys(SKILLS_BY_SPECIALTY);
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -30,16 +34,16 @@ export default function OnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // If user profile is loaded and onboarding is complete, redirect to dashboard
     if (!loading && userProfile && userProfile.onboardingStatus === 'completed') {
       router.replace('/dashboard');
     }
   }, [userProfile, loading, router]);
   
-  const { register, handleSubmit, formState: { errors } } = useForm<OnboardingFormValues>({
+  const { control, register, handleSubmit, formState: { errors } } = useForm<OnboardingFormValues>({
     resolver: zodResolver(CompleteOnboardingInputSchema.omit({ uid: true })),
     defaultValues: {
         numberOfTechnicians: 1,
+        companySpecialties: [],
     }
   });
   
@@ -134,6 +138,45 @@ export default function OnboardingPage() {
                 <p className="text-sm text-destructive">{errors.companyName.message}</p>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-md">
+                <ListChecks className="h-4 w-4" /> Company Specialties
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Select all that apply. This will seed your account with relevant skills.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-4">
+                  {specialties.map((item) => (
+                      <Controller
+                          key={item}
+                          name="companySpecialties"
+                          control={control}
+                          render={({ field }) => {
+                              return (
+                                  <div className="flex items-center space-x-2">
+                                      <Checkbox
+                                          id={item}
+                                          checked={field.value?.includes(item)}
+                                          onCheckedChange={(checked) => {
+                                              return checked
+                                                  ? field.onChange([...(field.value || []), item])
+                                                  : field.onChange(field.value?.filter((value) => value !== item));
+                                          }}
+                                          disabled={isSubmitting}
+                                      />
+                                      <Label htmlFor={item} className="font-normal">{item}</Label>
+                                  </div>
+                              );
+                          }}
+                      />
+                  ))}
+              </div>
+              {errors.companySpecialties && (
+                  <p className="text-sm text-destructive">{errors.companySpecialties.message}</p>
+              )}
+            </div>
+
             <div className="space-y-2">
                 <Label htmlFor="numberOfTechnicians" className="flex items-center gap-2 text-md">
                     <Users className="h-4 w-4" /> Number of Technicians

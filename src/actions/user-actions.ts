@@ -2,9 +2,9 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { authAdmin } from '@/lib/firebase-admin';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit, serverTimestamp, orderBy } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 
 const EnsureUserDocumentInputSchema = z.object({
@@ -116,7 +116,7 @@ export async function getCompanyUsersAction(
             return { data: [], error: null };
         }
 
-        const usersQuery = query(collection(db, "users"), where("companyId", "==", companyId));
+        const usersQuery = query(collection(db, "users"), where("companyId", "==", companyId), orderBy("email"));
         const querySnapshot = await getDocs(usersQuery);
         const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
 
@@ -301,3 +301,5 @@ export async function removeUserFromCompanyAction(
         return { error: `Failed to remove user. ${errorMessage}` };
     }
 }
+
+    

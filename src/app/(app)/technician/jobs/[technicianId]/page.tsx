@@ -65,7 +65,9 @@ export default function TechnicianJobListPage() {
           collection(db, `artifacts/${appId}/public/data/jobs`),
           where("companyId", "==", techData.companyId),
           where("assignedTechnicianId", "==", technicianId),
-          where("status", "in", activeJobStatuses)
+          where("status", "in", activeJobStatuses),
+          orderBy("routeOrder"),
+          orderBy("scheduledTime")
         );
 
         const unsubscribeJobs = onSnapshot(jobsQuery, (querySnapshot) => {
@@ -79,15 +81,6 @@ export default function TechnicianJobListPage() {
               return { id: doc.id, ...data } as Job;
           });
           
-          jobsForTech.sort((a, b) => {
-            const aOrder = a.routeOrder ?? Infinity;
-            const bOrder = b.routeOrder ?? Infinity;
-            if (aOrder !== bOrder) return aOrder - bOrder;
-            const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
-            if (priorityOrder[a.priority] !== priorityOrder[b.priority]) return priorityOrder[a.priority] - priorityOrder[b.priority];
-            return (a.scheduledTime && b.scheduledTime) ? new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime() : 0;
-          });
-
           const currentJobOrder = jobsForTech.map(j => j.id).join(',');
 
           if (isInitialLoad.current) {
@@ -118,7 +111,7 @@ export default function TechnicianJobListPage() {
       }
     }, (e) => {
       console.error("Could not load technician profile:", e);
-      setError("Could not load technician profile.");
+      setError("Could not load your profile.");
       setTechnician(null);
       setIsLoading(false);
     });
@@ -297,3 +290,5 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
+
+    

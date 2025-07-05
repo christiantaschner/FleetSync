@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
 import type { Contract } from '@/types';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
 import AddEditContractDialog from './components/AddEditContractDialog';
 import ContractListItem from './components/ContractListItem';
 import GenerateJobsDialog from './components/GenerateJobsDialog';
@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function ContractsPage() {
-    const { user, userProfile, loading: authLoading } = useAuth();
+    const { userProfile, loading: authLoading } = useAuth();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -36,7 +36,8 @@ export default function ContractsPage() {
         setIsLoading(true);
         const contractsQuery = query(
             collection(db, `artifacts/${appId}/public/data/contracts`), 
-            where("companyId", "==", userProfile.companyId)
+            where("companyId", "==", userProfile.companyId),
+            orderBy("customerName")
         );
         const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
@@ -48,7 +49,6 @@ export default function ContractsPage() {
                 }
                 return { id: doc.id, ...data } as Contract;
             });
-            contractsData.sort((a, b) => a.customerName.localeCompare(b.customerName));
             setContracts(contractsData);
             setIsLoading(false);
         }, (error) => {
@@ -115,7 +115,6 @@ export default function ContractsPage() {
                     isOpen={isGenerateJobsOpen}
                     setIsOpen={setIsGenerateJobsOpen}
                     companyId={userProfile.companyId}
-                    appId={appId}
                 />
              )}
             <SuggestAppointmentDialog
@@ -174,3 +173,5 @@ export default function ContractsPage() {
         </div>
     );
 }
+
+    

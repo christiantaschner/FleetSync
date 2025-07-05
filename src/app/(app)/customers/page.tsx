@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Job, Contract, Equipment, CustomerData } from '@/types';
 import { Loader2 } from 'lucide-react';
@@ -46,7 +46,7 @@ export default function CustomersPage() {
             }
         }
 
-        const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
+        const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
         const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
             const jobsData = snapshot.docs.map(doc => {
                 const data = doc.data();
@@ -61,11 +61,10 @@ export default function CustomersPage() {
             updateLoadingState();
         }, (err) => {
             console.error("Error fetching jobs for customer view:", err);
-            setError("Could not fetch job data.");
             updateLoadingState();
         });
 
-        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId));
+        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
         const unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
             const contractsData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -80,11 +79,10 @@ export default function CustomersPage() {
             updateLoadingState();
         }, (err) => {
             console.error("Error fetching contracts for customer view:", err);
-            setError("Could not fetch contract data.");
             updateLoadingState();
         });
         
-        const equipmentQuery = query(collection(db, `artifacts/${appId}/public/data/equipment`), where("companyId", "==", companyId));
+        const equipmentQuery = query(collection(db, `artifacts/${appId}/public/data/equipment`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
         const unsubscribeEquipment = onSnapshot(equipmentQuery, (snapshot) => {
             const equipmentData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -99,7 +97,7 @@ export default function CustomersPage() {
             updateLoadingState();
         });
 
-        const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", companyId));
+        const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
         const unsubscribeCustomers = onSnapshot(customersQuery, (snapshot) => {
             const customersData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -114,7 +112,6 @@ export default function CustomersPage() {
             updateLoadingState();
         }, (err) => {
             console.error("Error fetching customers:", err);
-            setError("Could not fetch customer records.");
             updateLoadingState();
         });
 
@@ -137,3 +134,5 @@ export default function CustomersPage() {
     
     return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} />;
 }
+
+    

@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -163,9 +163,7 @@ export default function DashboardPage() {
   const fetchSkills = useCallback(async () => {
     if (!userProfile?.companyId || !appId) return;
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
-    if (result.error) {
-        console.error("Error fetching skills: ", result.error);
-    } else {
+    if (result.data) {
         setAllSkills(result.data?.map(s => s.name) || []);
     }
 }, [userProfile, appId]);
@@ -217,6 +215,7 @@ export default function DashboardPage() {
         }
         return { id: doc.id, ...data } as Job;
       });
+      jobsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setJobs(jobsData);
       onListenerLoaded();
     }, (error) => {
@@ -243,7 +242,7 @@ export default function DashboardPage() {
       onListenerLoaded();
     });
     
-    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId), where("status", "==", "pending"));
+    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
     const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
         const requestsData = querySnapshot.docs.map(doc => {
             const data = doc.data();
@@ -254,8 +253,9 @@ export default function DashboardPage() {
             }
             return { id: doc.id, ...data } as ProfileChangeRequest
         });
-        requestsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setProfileChangeRequests(requestsData);
+        const pendingRequests = requestsData.filter(r => r.status === 'pending');
+        pendingRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProfileChangeRequests(pendingRequests);
         onListenerLoaded();
     }, (error) => {
         console.error("Error fetching profile change requests: ", error);
@@ -722,7 +722,6 @@ export default function DashboardPage() {
     setHealthResults([]);
     const result = await checkScheduleHealthAction({ technicians, jobs });
     if (result.error) {
-        toast({ title: "Health Check Failed", description: result.error, variant: "destructive" });
     } else if (result.data) {
         setHealthResults(result.data);
         setIsHealthDialogOpen(true);
@@ -1109,41 +1108,40 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {isLoadingData && technicians.length === 0 ? (
-                      <div className="col-span-full flex justify-center items-center py-10">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  {technicians.length === 0 ? (
+                    <Alert className="border-primary/30 bg-primary/5">
+                      <UserPlus className="h-4 w-4 text-primary" />
+                      <AlertTitle className="font-semibold text-primary">No Technicians Added</AlertTitle>
+                      <AlertDescription>
+                        The technician roster is empty. New technicians can be added from the User Management section in your settings.
+                      </AlertDescription>
+                      <div className="mt-4">
+                          <Link href="/settings?tab=users">
+                              <Button variant="default">
+                                  <Users className="mr-2 h-4 w-4" /> Go to User Management
+                              </Button>
+                          </Link>
                       </div>
-                      ) : filteredTechnicians.length > 0 ? filteredTechnicians.map(technician => (
-                      <TechnicianCard 
-                          key={technician.id} 
-                          technician={technician} 
-                          jobs={jobs} 
-                          onEdit={handleOpenEditTechnician}
-                          onMarkUnavailable={handleMarkTechnicianUnavailable}
-                      />
-                      )) : (
-                        <div className="col-span-full">
-                           <Alert className="border-primary/30 bg-primary/5">
-                                <UserPlus className="h-4 w-4 text-primary" />
-                                <AlertTitle className="text-primary">No Technicians Found</AlertTitle>
-                                <AlertDescription>
-                                    {technicians.length === 0 ? "No technicians have been added to your company yet." : "No technicians match your search criteria."}
-                                    <p className="mt-2">You can add new technicians from the User Management section in your settings.</p>
-                                </AlertDescription>
-                                {technicians.length === 0 && (
-                                <div className="mt-4">
-                                    <Link href="/settings?tab=users">
-                                        <Button variant="default">
-                                            <Users className="mr-2 h-4 w-4" /> Go to User Management
-                                        </Button>
-                                    </Link>
-                                </div>
-                                )}
-                            </Alert>
-                        </div>
-                      )}
-                  </div>
+                   </Alert>
+                  ) : filteredTechnicians.length === 0 ? (
+                    <Alert>
+                        <UserX className="h-4 w-4" />
+                        <AlertTitle>No Technicians Found</AlertTitle>
+                        <AlertDescription>No technicians match your search criteria.</AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {filteredTechnicians.map(technician => (
+                        <TechnicianCard 
+                            key={technician.id} 
+                            technician={technician} 
+                            jobs={jobs} 
+                            onEdit={handleOpenEditTechnician}
+                            onMarkUnavailable={handleMarkTechnicianUnavailable}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

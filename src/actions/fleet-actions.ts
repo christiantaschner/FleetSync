@@ -13,7 +13,7 @@ import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/t
 import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
 import { z } from "zod";
-import { db, storage } from "@/lib/firebase";
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
@@ -693,7 +693,7 @@ export async function generateRecurringJobsAction(
 
     if (!db) throw new Error("Firestore not initialized");
 
-    const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), where("isActive", "==", true));
+    const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), where("isActive", "==", true), orderBy("customerName"));
     const querySnapshot = await getDocs(contractsQuery);
     
     const contracts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
@@ -870,15 +870,15 @@ export async function calculateTravelMetricsAction(
       where("assignedTechnicianId", "==", technicianId),
       where("status", "==", "Completed"),
       where("completedAt", ">=", startOfDay),
-      where("completedAt", "<", completedJob.completedAt) // Jobs completed *before* this one
+      where("completedAt", "<", completedJob.completedAt),
+      orderBy("completedAt", "desc"),
+      limit(1)
     );
     const prevJobsSnap = await getDocs(q);
     
     let startLocation: Location;
     if (!prevJobsSnap.empty) {
-      const prevJobs = prevJobsSnap.docs.map(doc => doc.data() as Job);
-      prevJobs.sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
-      const prevJob = prevJobs[0];
+      const prevJob = prevJobsSnap.docs[0].data() as Job;
       startLocation = prevJob.location;
     } else {
       // First job of the day, use technician's home base
@@ -982,4 +982,6 @@ export async function deleteJobAction(
         return { error: `Failed to delete job. ${errorMessage}` };
     }
 }
+    
+
     

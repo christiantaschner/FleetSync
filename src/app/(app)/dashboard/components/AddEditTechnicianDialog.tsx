@@ -26,8 +26,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
-import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import type { Technician } from '@/types';
 import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Package, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -35,18 +33,20 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { useAuth } from '@/contexts/auth-context';
 import { removeUserFromCompanyAction } from '@/actions/user-actions';
+import { addTechnicianAction, updateTechnicianAction } from '@/actions/technician-actions';
+
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
   onClose: () => void;
   technician?: Technician | null;
   allSkills: string[];
-  ownerId?: string;
+  appId: string;
   onTechnicianAddedOrUpdated?: (technician: Technician) => void;
 }
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, ownerId, onTechnicianAddedOrUpdated }) => {
-  const { userProfile } = useAuth();
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, appId, onTechnicianAddedOrUpdated }) => {
+  const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -92,9 +92,9 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   };
 
   const handleDeleteTechnician = async () => {
-    if (!technician) return;
+    if (!technician || !appId) return;
     setIsDeleting(true);
-    const result = await removeUserFromCompanyAction(technician.id);
+    const result = await removeUserFromCompanyAction({ userId: technician.id, companyId: technician.companyId, appId });
     if (result.error) {
         toast({ title: "Error", description: `Failed to remove technician: ${result.error}`, variant: "destructive" });
     } else {
@@ -114,20 +114,20 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       toast({ title: "Invalid Address", description: "Please select a valid address from the dropdown suggestions to set the location.", variant: "destructive" });
       return;
     }
-    if (!userProfile?.companyId) {
-      toast({ title: "Authentication Error", description: "Company ID not found.", variant: "destructive" });
+    if (!userProfile?.companyId || !appId) {
+      toast({ title: "Authentication Error", description: "Company ID or App ID not found.", variant: "destructive" });
       return;
     }
     
     setIsLoading(true);
 
-    const technicianData: Omit<Technician, 'id' | 'currentJobId'> & { companyId: string, updatedAt?: any, createdAt?: any } = {
+    const technicianData = {
       companyId: userProfile.companyId,
       name,
       email: email || "", 
       phone: phone || "",
       skills: selectedSkills,
-      partsInventory: [], // Temporarily disabled
+      partsInventory: [], 
       avatarUrl: 'https://placehold.co/100x100.png',
       location: {
         latitude: latitude ?? 0, 
@@ -139,34 +139,19 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
 
 
     try {
-      let finalTechnician: Technician;
       if (technician) { 
-        const techDocRef = doc(db, "technicians", technician.id);
-        const updatePayload = { ...technicianData, updatedAt: serverTimestamp() };
-        await updateDoc(techDocRef, updatePayload);
-        finalTechnician = { ...technician, ...updatePayload, updatedAt: new Date().toISOString() };
-        toast({ title: "Technician Updated", description: `Technician "${finalTechnician.name}" has been updated.` });
+        const result = await updateTechnicianAction({ id: technician.id, ...technicianData }, appId);
+        if(result.error) throw new Error(result.error);
+        toast({ title: "Technician Updated", description: `Technician "${technician.name}" has been updated.` });
       } else { 
-        const newTechnicianPayload = {
-          ...technicianData,
-          currentJobId: null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        };
-        const docRef = await addDoc(collection(db, "technicians"), newTechnicianPayload);
-        finalTechnician = {
-            ...newTechnicianPayload,
-            id: docRef.id,
-            createdAt: new Date().toISOString(), 
-            updatedAt: new Date().toISOString()  
-        };
-        toast({ title: "Technician Added", description: `New technician "${finalTechnician.name}" created.` });
+        const result = await addTechnicianAction(technicianData, appId);
+        if(result.error) throw new Error(result.error);
+        toast({ title: "Technician Added", description: `New technician "${technicianData.name}" created.` });
       }
-      onTechnicianAddedOrUpdated?.(finalTechnician);
       onClose();
     } catch (error) {
-      console.error("Error saving technician to Firestore: ", error);
-      toast({ title: "Firestore Error", description: "Could not save technician. Check console.", variant: "destructive" });
+      const errorMessage = error instanceof Error ? error.message : "Could not save technician.";
+      toast({ title: "Firestore Error", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -239,7 +224,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
         </div>
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-col sm:flex-row sm:justify-between items-center gap-2">
             <div>
-                {technician && technician.id !== ownerId && (
+                {technician && technician.id !== company?.ownerId && (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button type="button" variant="destructive" disabled={isDeleting}>

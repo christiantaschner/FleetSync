@@ -786,13 +786,13 @@ export default function DashboardPage() {
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
         />
-        {isAdmin && (
+        {isAdmin && appId && (
             <AddEditTechnicianDialog
                 isOpen={isAddEditTechnicianDialogOpen}
                 onClose={handleCloseAddEditTechnicianDialog}
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills}
-                ownerId={company?.ownerId}
+                appId={appId}
                 onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}
             />
         )}
@@ -1166,5 +1166,3 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
-
-

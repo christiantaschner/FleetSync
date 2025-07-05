@@ -91,6 +91,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
 
   const formRef = useRef<HTMLFormElement>(null);
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const resetForm = useCallback(() => {
     setTitle(job?.title || '');
@@ -121,7 +122,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   }, [job, isOpen, resetForm]);
 
   const handleSaveDraft = useCallback(async () => {
-    if (job || !userProfile?.companyId) return;
+    if (job || !userProfile?.companyId || !appId) return;
 
     if (title.trim() || description.trim()) {
         const draftPayload = {
@@ -145,14 +146,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             notes: 'This job was saved as a draft.',
         };
         try {
-            await addDoc(collection(db, "jobs"), draftPayload);
+            await addDoc(collection(db, `artifacts/${appId}/public/data/jobs`), draftPayload);
             toast({ title: "Draft Saved", description: "The job has been saved as a draft for later." });
         } catch (error) {
             console.error("Error saving draft:", error);
             toast({ title: "Error", description: "Could not save job draft.", variant: "destructive" });
         }
     }
-  }, [job, userProfile, title, description, priority, requiredSkills, customerName, customerPhone, locationAddress, latitude, longitude, scheduledTime, toast]);
+  }, [job, userProfile, title, description, priority, requiredSkills, customerName, customerPhone, locationAddress, latitude, longitude, scheduledTime, toast, appId]);
   
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -344,9 +345,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
   
   const handleDeleteJob = async () => {
-    if (!job || !userProfile?.companyId) return;
+    if (!job || !userProfile?.companyId || !appId) return;
     setIsDeleting(true);
-    const result = await deleteJobAction({ jobId: job.id, companyId: userProfile.companyId });
+    const result = await deleteJobAction({ jobId: job.id, companyId: userProfile.companyId, appId });
     if (result.error) {
         toast({ title: "Error", description: `Failed to delete job: ${result.error}`, variant: "destructive" });
     } else {
@@ -367,7 +368,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       return;
     }
     
-    if (!userProfile?.companyId) {
+    if (!userProfile?.companyId || !appId) {
       toast({ title: "Authentication Error", description: "Company ID not found.", variant: "destructive" });
       return;
     }
@@ -394,7 +395,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
       if (job) { // EDITING A JOB
         const batch = writeBatch(db);
-        const jobDocRef = doc(db, "jobs", job.id);
+        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
         const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
 
         const newAssignedTechId = manualTechnicianId === UNASSIGNED_VALUE ? null : manualTechnicianId;
@@ -406,7 +407,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 updatePayload.assignedTechnicianId = null;
                 updatePayload.status = 'Pending';
                 if(job.assignedTechnicianId) {
-                    const oldTechDocRef = doc(db, "technicians", job.assignedTechnicianId);
+                    const oldTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
                 }
             } else { // Assigning or Re-assigning
@@ -414,11 +415,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 updatePayload.status = 'Assigned';
                 updatePayload.assignedAt = serverTimestamp();
                 
-                const newTechDocRef = doc(db, "technicians", newAssignedTechId);
+                const newTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, newAssignedTechId);
                 batch.update(newTechDocRef, { isAvailable: false, currentJobId: job.id });
                 
                 if (job.assignedTechnicianId) {
-                    const oldTechDocRef = doc(db, "technicians", job.assignedTechnicianId);
+                    const oldTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
                 }
             }
@@ -433,7 +434,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         
         if (!wasCompletedOrCancelled && isNowCompletedOrCancelled && job.assignedTechnicianId) {
             const techToFree = job.assignedTechnicianId;
-            const techDocRef = doc(db, "technicians", techToFree);
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, techToFree);
             batch.update(techDocRef, { isAvailable: true, currentJobId: null });
         }
         
@@ -450,7 +451,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
         const batch = writeBatch(db);
 
-        const newJobRef = doc(collection(db, "jobs"));
+        const newJobRef = doc(collection(db, `artifacts/${appId}/public/data/jobs`));
         
         const newJobPayload: any = {
           ...jobData,
@@ -470,14 +471,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         batch.set(newJobRef, newJobPayload);
 
         if (assignTechId && techToAssign) {
-          const techDocRef = doc(db, "technicians", assignTechId);
+          const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, assignTechId);
           batch.update(techDocRef, {
               isAvailable: false, // Tech will be busy with the new job
               currentJobId: newJobRef.id,
           });
 
           if (isInterruption) {
-              const oldJobRef = doc(db, "jobs", techToAssign.currentJobId!);
+              const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, techToAssign.currentJobId!);
               batch.update(oldJobRef, {
                   status: 'Pending' as JobStatus,
                   assignedTechnicianId: null,
@@ -726,19 +727,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </Alert>
                       )}
                       {!isFetchingAISuggestion && aiSuggestion && (
-                         <Alert className="border-primary/50 bg-primary/5">
-                           <Sparkles className="h-4 w-4 text-primary" />
-                           <AlertTitle className="text-primary font-semibold">AI Technician Suggestion</AlertTitle>
-                           <AlertDescription>
+                        <Alert className={cn(aiSuggestion.suggestedTechnicianId ? "border-primary/50 bg-primary/5" : "border-destructive/50 bg-destructive/5")}>
+                          <Sparkles className={cn("h-4 w-4", aiSuggestion.suggestedTechnicianId ? "text-primary" : "text-destructive")} />
+                          <AlertTitle className={cn("font-semibold", aiSuggestion.suggestedTechnicianId ? "text-primary" : "text-destructive")}>AI Suggestion</AlertTitle>
+                           <AlertDescription className={cn(aiSuggestion.suggestedTechnicianId ? "" : "text-destructive")}>
                              {aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails ? (
                                 <>
                                   Assign to: <strong>{suggestedTechnicianDetails.name}</strong>
-                                  <p className="text-xs text-primary/80 mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
+                                  <p className="text-xs mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
                                 </>
                              ) : (
                                 <>
-                                  Could not find a suitable technician.
-                                  <p className="text-xs text-primary/80 mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
+                                  <strong>Could not find a suitable technician.</strong>
+                                  <p className="text-xs mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
                                 </>
                              )}
                            </AlertDescription>

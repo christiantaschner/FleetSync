@@ -1,7 +1,8 @@
+
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-admin';
 import { collection, addDoc, getDocs, query, orderBy, doc, where, writeBatch, arrayRemove, getDoc } from 'firebase/firestore';
 
 // --- Get Skills ---
@@ -20,11 +21,11 @@ export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Sk
         const { companyId, appId } = GetSkillsInputSchema.parse(input);
         const skillsQuery = query(
             collection(db, `artifacts/${appId}/public/data/skills`),
-            where("companyId", "==", companyId)
+            where("companyId", "==", companyId),
+            orderBy("name")
         );
         const querySnapshot = await getDocs(skillsQuery);
         const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
-        skillsData.sort((a,b) => a.name.localeCompare(b.name));
         return { data: skillsData, error: null };
     } catch (e) {
         console.error("Error fetching skills:", e);

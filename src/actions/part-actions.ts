@@ -1,7 +1,8 @@
+
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase-admin';
 import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, where, getDoc } from 'firebase/firestore';
 
 // --- Get Parts ---

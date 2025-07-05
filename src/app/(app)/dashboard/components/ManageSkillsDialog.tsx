@@ -42,7 +42,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     if (!userProfile?.companyId || !appId) return;
 
     setIsLoading(true);
-    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
+    const result = await getSkillsAction({ companyId: userProfile.companyId });
     if(result.error) {
         toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
     } else {

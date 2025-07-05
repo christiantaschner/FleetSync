@@ -2,13 +2,12 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase-admin';
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { collection, addDoc, getDocs, query, orderBy, doc, where, writeBatch, arrayRemove, getDoc } from 'firebase/firestore';
 
 // --- Get Skills ---
 const GetSkillsInputSchema = z.object({
   companyId: z.string().min(1),
-  appId: z.string().min(1),
 });
 export type GetSkillsInput = z.infer<typeof GetSkillsInputSchema>;
 
@@ -18,9 +17,9 @@ export type Skill = {
 };
 export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Skill[] | null; error: string | null; }> {
     try {
-        const { companyId, appId } = GetSkillsInputSchema.parse(input);
+        const { companyId } = GetSkillsInputSchema.parse(input);
         const skillsQuery = query(
-            collection(db, `artifacts/${appId}/public/data/skills`),
+            collection(db, "skills"),
             where("companyId", "==", companyId),
             orderBy("name")
         );
@@ -54,7 +53,7 @@ export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id
         }
 
         const docRef = await addDoc(skillsCollectionRef, { name: name.trim(), companyId });
-        return { data: { id: docRef.id }, error: null };
+        return { data: { id: result.data!.id, name: newSkillName.trim() }, error: null };
     } catch (e) {
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map((err) => err.message).join(', ') };

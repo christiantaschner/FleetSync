@@ -41,6 +41,7 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
     defaultValues: {
       name: '',
       phone: '',
+      email: '',
       address: '',
     },
   });
@@ -85,11 +86,18 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
             <Input id="name" {...register('name')} placeholder="e.g., Jane Smith" />
             {errors.name && <p className="text-destructive text-sm mt-1">{errors.name.message}</p>}
           </div>
-           <div>
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" {...register('phone')} placeholder="e.g., 555-123-4567" />
-               {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone.message}</p>}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" {...register('email')} placeholder="e.g., jane@example.com" />
+                {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" {...register('phone')} placeholder="e.g., 555-123-4567" />
+                 {errors.phone && <p className="text-destructive text-sm mt-1">{errors.phone.message}</p>}
+              </div>
+          </div>
             <div>
               <Label htmlFor="address">Address</Label>
               <Input id="address" {...register('address')} placeholder="e.g., 456 Oak Avenue, Anytown, USA" />

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, MapPin, Briefcase, Repeat, Circle, Package, PackagePlus, UserPlus } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, Repeat, Circle, Package, PackagePlus, UserPlus, Mail } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -26,6 +26,7 @@ interface CustomerViewProps {
 interface DisplayCustomer {
     id: string; // Will be real doc ID or derived key
     name: string;
+    email: string;
     phone: string;
     address: string;
     jobCount: number;
@@ -43,16 +44,17 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
     const processedCustomers = useMemo(() => {
         const customerMap = new Map<string, DisplayCustomer>();
 
-        const getKey = (name: string, phone?: string | null) => (phone || name).toLowerCase().trim();
+        const getKey = (name: string, phone?: string | null, email?: string | null) => (email || phone || name).toLowerCase().trim();
 
         // 1. Add "real" customers from the new collection first.
         customers.forEach(customer => {
-            const key = getKey(customer.name, customer.phone);
+            const key = getKey(customer.name, customer.phone, customer.email);
             if (!key) return;
 
             customerMap.set(key, {
                 id: customer.id, // Use the real document ID
                 name: customer.name,
+                email: customer.email || 'N/A',
                 phone: customer.phone || 'N/A',
                 address: customer.address || 'N/A',
                 jobCount: 0,
@@ -64,7 +66,7 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
 
         // 2. Process jobs and either augment existing customers or add derived ones
         jobs.forEach(job => {
-            const key = getKey(job.customerName, job.customerPhone);
+            const key = getKey(job.customerName, job.customerPhone, job.customerEmail);
             if (!key) return;
             
             let customer = customerMap.get(key);
@@ -73,6 +75,7 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
                 customer = {
                     id: key,
                     name: job.customerName,
+                    email: job.customerEmail || 'N/A',
                     phone: job.customerPhone || "N/A",
                     address: job.location.address || "N/A",
                     jobCount: 0,
@@ -100,6 +103,7 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
                 customer = {
                     id: key,
                     name: contract.customerName,
+                    email: "N/A",
                     phone: contract.customerPhone || "N/A",
                     address: contract.customerAddress || "N/A",
                     jobCount: 0,
@@ -126,7 +130,8 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
         if (!searchTerm) return processedCustomers;
         return processedCustomers.filter(c => 
             c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.phone.includes(searchTerm)
+            c.phone.includes(searchTerm) ||
+            c.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [processedCustomers, searchTerm]);
 
@@ -134,12 +139,12 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
         if (!selectedCustomer) return null;
         
         const customerJobs = jobs.filter(j => 
-            j.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() ||
-            (j.customerPhone && selectedCustomer.phone && j.customerPhone === selectedCustomer.phone)
+            j.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() &&
+            (j.customerPhone === selectedCustomer.phone || j.customerEmail === selectedCustomer.email)
         );
         
         const customerContracts = contracts.filter(c => 
-            c.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() ||
+            c.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() &&
             (c.customerPhone && selectedCustomer.phone && c.customerPhone === selectedCustomer.phone)
         );
 
@@ -188,7 +193,7 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
                      <Input 
-                        placeholder="Search by name or phone..."
+                        placeholder="Search by name, email or phone..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -201,7 +206,7 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
                                     className={`w-full p-3 rounded-lg text-left transition-colors ${selectedCustomer?.id === customer.id ? 'bg-primary text-primary-foreground' : 'bg-secondary hover:bg-secondary/80'}`}
                                 >
                                     <p className="font-semibold">{customer.name}</p>
-                                    <p className="text-sm opacity-80 flex items-center gap-1"><Phone size={12}/>{customer.phone || 'No phone'}</p>
+                                    <p className="text-sm opacity-80 flex items-center gap-1"><Mail size={12}/>{customer.email || 'No email'}</p>
                                     <div className="flex justify-between items-center text-xs opacity-70 mt-1">
                                        <span>{customer.jobCount} job(s) / {customer.contractCount} contract(s)</span>
                                        <span>Last active: {new Date(customer.lastActivity).toLocaleDateString()}</span>
@@ -220,9 +225,10 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
                             <div className="flex justify-between items-start">
                                 <div>
                                     <CardTitle className="flex items-center gap-2"><User />{selectedCustomer.name}</CardTitle>
-                                    <CardDescription>
+                                    <CardDescription className="space-y-1 mt-1">
+                                        <p className="flex items-center gap-1"><Mail size={14}/>{selectedCustomer.email || 'No email'}</p>
                                         <p className="flex items-center gap-1"><Phone size={14}/>{selectedCustomer.phone || 'No phone'}</p>
-                                        <p className="flex items-center gap-1 mt-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
+                                        <p className="flex items-center gap-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
                                 <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)} disabled={!companyId || !selectedCustomer.isReal} title={!selectedCustomer.isReal ? "Create a customer record first to add equipment" : ""}>

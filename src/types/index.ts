@@ -88,6 +88,7 @@ export type Job = {
   assignedTechnicianId?: string | null;
   location: Location;
   customerName: string;
+  customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
   estimatedDurationMinutes?: number;
@@ -119,6 +120,7 @@ export type Job = {
 export const CustomerSchema = z.object({
   id: z.string(),
   name: z.string(),
+  email: z.string().optional(),
   phone: z.string(),
   address: z.string(),
 });
@@ -254,6 +256,7 @@ export const CustomerDataSchema = z.object({
   id: z.string(),
   companyId: z.string(),
   name: z.string().min(1, 'Customer name is required.'),
+  email: z.string().email().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
   createdAt: z.string(),

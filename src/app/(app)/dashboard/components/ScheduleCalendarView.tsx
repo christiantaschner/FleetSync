@@ -9,10 +9,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus } from 'lucide-react';
 import OptimizeRouteDialog from './optimize-route-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
 
 const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
@@ -296,14 +298,38 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                       </div>
                   </div>
                   )) : (
-                      <div className="text-center py-16 text-muted-foreground">No technicians have been added yet.</div>
+                    <Alert variant="default" className="m-4">
+                        <UserPlus className="h-4 w-4" />
+                        <AlertTitle className="font-semibold">No Technicians Found</AlertTitle>
+                        <AlertDescription>
+                            Your schedule is empty because no technicians have been created yet. Technicians are added by inviting them as a new user with the 'Technician' role. Go to{' '}
+                            <Link href="/settings?tab=users" className="font-bold underline">
+                                Settings &gt; User Management
+                            </Link>
+                            {' '}to send an invite.
+                        </AlertDescription>
+                    </Alert>
                   )}
                   <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
               </div>
           </div>
         </div>
          ) : (
-            <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} />
+            technicians.length > 0 ? (
+                <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} />
+            ) : (
+                <Alert variant="default" className="m-4">
+                    <UserPlus className="h-4 w-4" />
+                    <AlertTitle className="font-semibold">No Technicians Found</AlertTitle>
+                    <AlertDescription>
+                        Your schedule is empty because no technicians have been created yet. Technicians are added by inviting them as a new user with the 'Technician' role. Go to{' '}
+                        <Link href="/settings?tab=users" className="font-bold underline">
+                            Settings &gt; User Management
+                        </Link>
+                        {' '}to send an invite.
+                    </AlertDescription>
+                </Alert>
+            )
          )}
       </CardContent>
     </Card>

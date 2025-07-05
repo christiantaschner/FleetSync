@@ -79,6 +79,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [status, setStatus] = useState<JobStatus>('Pending');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [locationAddress, setLocationAddress] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -100,6 +101,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setStatus(job?.status || 'Pending');
     setRequiredSkills(job?.requiredSkills || []);
     setCustomerName(job?.customerName || '');
+    setCustomerEmail(job?.customerEmail || '');
     setCustomerPhone(job?.customerPhone || '');
     setLocationAddress(job?.location.address || '');
     setLatitude(job?.location.latitude || null);
@@ -132,6 +134,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             priority,
             requiredSkills,
             customerName: customerName.trim(),
+            customerEmail: customerEmail.trim(),
             customerPhone: customerPhone.trim(),
             location: {
                 latitude: latitude ?? 0,
@@ -153,7 +156,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             toast({ title: "Error", description: "Could not save job draft.", variant: "destructive" });
         }
     }
-  }, [job, userProfile, title, description, priority, requiredSkills, customerName, customerPhone, locationAddress, latitude, longitude, scheduledTime, toast, appId]);
+  }, [job, userProfile, title, description, priority, requiredSkills, customerName, customerEmail, customerPhone, locationAddress, latitude, longitude, scheduledTime, toast, appId]);
   
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -170,8 +173,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   const handleSelectCustomer = (customer: Customer) => {
       setCustomerName(customer.name);
-      setCustomerPhone(customer.phone);
-      setLocationAddress(customer.address);
+      setCustomerEmail(customer.email || '');
+      setCustomerPhone(customer.phone || '');
+      setLocationAddress(customer.address || '');
       setIsCustomerPopoverOpen(false);
       setCustomerSuggestions([]);
   };
@@ -381,6 +385,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       priority,
       requiredSkills,
       customerName: customerName || "N/A",
+      customerEmail: customerEmail || "N/A",
       customerPhone: customerPhone || "N/A",
       location: {
         latitude: latitude ?? 0, 
@@ -620,9 +625,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </PopoverContent>
                     </Popover>
                   </div>
-                  <div>
-                    <Label htmlFor="customerPhone">Customer Phone</Label>
-                    <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="customerEmail">Customer Email</Label>
+                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
+                    </div>
+                    <div>
+                        <Label htmlFor="customerPhone">Customer Phone</Label>
+                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>

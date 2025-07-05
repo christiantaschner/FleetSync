@@ -143,13 +143,14 @@ export default function DashboardPage() {
   const customers = useMemo(() => {
     const customerMap = new Map<string, Customer>();
     jobs.forEach(job => {
-        const key = (job.customerPhone || job.customerName).toLowerCase().trim();
+        const key = (job.customerEmail || job.customerPhone || job.customerName).toLowerCase().trim();
         if (!key || !job.customerName) return; 
         
         if (!customerMap.has(key)) {
             customerMap.set(key, {
                 id: key,
                 name: job.customerName,
+                email: job.customerEmail || '',
                 phone: job.customerPhone || '',
                 address: job.location.address || '',
             });
@@ -1052,9 +1053,20 @@ export default function DashboardPage() {
                   canAssign={isAdmin}
                 />
               )) : (
-                <p className="text-muted-foreground text-center py-10">
-                  {jobs.length === 0 ? "No jobs to display. Add your first job." : "No jobs match the current filters."}
-                </p>
+                 <Alert>
+                    <Briefcase className="h-4 w-4" />
+                    <AlertTitle>No Jobs Found</AlertTitle>
+                    <AlertDescription>
+                        {jobs.length === 0 ? "Your job list is empty." : "No jobs match the current filter criteria."}
+                    </AlertDescription>
+                    {jobs.length === 0 && (
+                        <div className="mt-4">
+                            <Button onClick={handleOpenAddJob}>
+                                <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Job
+                            </Button>
+                        </div>
+                    )}
+                </Alert>
               )}
             </CardContent>
           </Card>

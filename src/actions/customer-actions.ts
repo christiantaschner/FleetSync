@@ -140,6 +140,7 @@ export const AddCustomerInputSchema = z.object({
   appId: z.string().min(1, 'App ID is required.'),
   name: z.string().min(1, 'Customer name is required.'),
   phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
   address: z.string().optional(),
 });
 export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
@@ -156,30 +157,23 @@ export async function addCustomerAction(
 
     const customersCollectionRef = collection(db, `artifacts/${appId}/public/data/customers`);
     
-    // Check for existing customer with the same name or phone to avoid duplicates
+    // Check for existing customer with the same name, phone, or email to avoid duplicates
+    const duplicateChecks = [where("name", "==", customerData.name)];
     if (customerData.phone) {
-        const q = query(
-          customersCollectionRef,
-          where("companyId", "==", companyId),
-          or(
-              where("name", "==", customerData.name),
-              where("phone", "==", customerData.phone)
-          )
-        );
-         const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            return { data: null, error: 'A customer with this name or phone number already exists.' };
-        }
-    } else {
-        const q = query(
-            customersCollectionRef,
-            where("companyId", "==", companyId),
-            where("name", "==", customerData.name)
-        );
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            return { data: null, error: 'A customer with this name already exists.' };
-        }
+      duplicateChecks.push(where("phone", "==", customerData.phone));
+    }
+    if (customerData.email) {
+        duplicateChecks.push(where("email", "==", customerData.email));
+    }
+    
+    const q = query(
+        customersCollectionRef,
+        where("companyId", "==", companyId),
+        or(...duplicateChecks)
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        return { data: null, error: 'A customer with this name, phone, or email already exists.' };
     }
 
     const docRef = await addDoc(customersCollectionRef, {

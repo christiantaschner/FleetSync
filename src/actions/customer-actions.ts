@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db, auth } from '@/lib/firebase';
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp, getDocs, query, where, or } from 'firebase/firestore';
 
 export const AddEquipmentInputSchema = z.object({

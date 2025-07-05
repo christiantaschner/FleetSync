@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { CompanySettingsSchema } from '@/types';
 
@@ -31,6 +31,7 @@ export async function updateCompanyAction(
             address: validatedInput.settings.address,
             timezone: validatedInput.settings.timezone,
             businessHours: validatedInput.settings.businessHours,
+            co2EmissionFactorKgPerKm: validatedInput.settings.co2EmissionFactorKgPerKm,
         },
         updatedAt: serverTimestamp(),
     };

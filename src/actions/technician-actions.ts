@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 // Base schema for technician data, omitting fields managed by the server

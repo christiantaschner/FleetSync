@@ -2,8 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
-import { authAdmin } from '@/lib/firebase-admin';
+import { dbAdmin as db, authAdmin } from '@/lib/firebase-admin';
 import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';

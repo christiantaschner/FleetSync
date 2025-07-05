@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/firebase';
+import { dbAdmin as db } from '@/lib/firebase-admin';
 import { stripe } from '@/lib/stripe';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Company, StripeProduct } from '@/types';

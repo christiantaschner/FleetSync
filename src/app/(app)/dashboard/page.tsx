@@ -164,11 +164,11 @@ export default function DashboardPage() {
     if (!userProfile?.companyId || !appId) return;
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if (result.error) {
-        toast({ title: "Error", description: "Could not fetch skills library.", variant: "destructive" });
+        console.error("Error fetching skills: ", result.error);
     } else {
         setAllSkills(result.data?.map(s => s.name) || []);
     }
-}, [userProfile, toast, appId]);
+}, [userProfile, appId]);
   
   const fetchAllData = useCallback(() => {
     fetchSkills();
@@ -188,7 +188,6 @@ export default function DashboardPage() {
     
     if (!appId) {
         console.error("Firebase Project ID not found in environment variables.");
-        toast({ title: "Configuration Error", description: "Application cannot function without a Firebase Project ID.", variant: "destructive" });
         setIsLoadingData(false);
         return;
     }
@@ -222,7 +221,6 @@ export default function DashboardPage() {
       onListenerLoaded();
     }, (error) => {
       console.error("Error fetching jobs: ", error);
-      toast({ title: "Error fetching jobs", description: error.message, variant: "destructive"});
       onListenerLoaded();
     });
 
@@ -242,7 +240,6 @@ export default function DashboardPage() {
       onListenerLoaded();
     }, (error) => {
       console.error("Error fetching technicians: ", error);
-      toast({ title: "Error fetching technicians", description: error.message, variant: "destructive"});
       onListenerLoaded();
     });
     
@@ -262,7 +259,6 @@ export default function DashboardPage() {
         onListenerLoaded();
     }, (error) => {
         console.error("Error fetching profile change requests: ", error);
-        toast({ title: "Error fetching requests", description: error.message, variant: "destructive"});
         onListenerLoaded();
     });
     
@@ -271,7 +267,7 @@ export default function DashboardPage() {
       techniciansUnsubscribe();
       requestsUnsubscribe();
     };
-  }, [authLoading, userProfile, toast, fetchSkills, appId]);
+  }, [authLoading, userProfile, fetchSkills, appId]);
 
   const prevTechCount = useRef<number | null>(null);
 
@@ -865,11 +861,13 @@ export default function DashboardPage() {
           onSkillsUpdated={fetchSkills}
       />
       
-      <ImportJobsDialog
-          isOpen={isImportJobsOpen}
-          setIsOpen={setIsImportJobsOpen}
-          onJobsImported={fetchAllData}
-      />
+      {appId && (
+        <ImportJobsDialog
+            isOpen={isImportJobsOpen}
+            setIsOpen={setIsImportJobsOpen}
+            onJobsImported={fetchAllData}
+        />
+      )}
       
       {proactiveSuggestion && proactiveSuggestion.job && isAdmin && (
           <Alert variant={proactiveSuggestion.suggestedTechnicianDetails ? "default" : "destructive"} className={proactiveSuggestion.suggestedTechnicianDetails ? "border-primary/50 bg-primary/5" : ""}>
@@ -1053,11 +1051,11 @@ export default function DashboardPage() {
                   canAssign={isAdmin}
                 />
               )) : (
-                 <Alert>
-                    <Briefcase className="h-4 w-4" />
-                    <AlertTitle>No Jobs Found</AlertTitle>
+                 <Alert className="border-primary/30 bg-primary/5">
+                    <Briefcase className="h-4 w-4 text-primary" />
+                    <AlertTitle className="text-primary">No Jobs Found</AlertTitle>
                     <AlertDescription>
-                        {jobs.length === 0 ? "Your job list is empty." : "No jobs match the current filter criteria."}
+                        {jobs.length === 0 ? "You haven't created any jobs yet." : "No jobs match your current filters."}
                     </AlertDescription>
                     {jobs.length === 0 && (
                         <div className="mt-4">
@@ -1110,24 +1108,13 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Alert variant="default" className="border-primary/30 bg-primary/5">
-                    <UserPlus className="h-4 w-4 text-primary" />
-                    <AlertTitle className="font-semibold text-primary">How to Add a New Technician</AlertTitle>
-                    <AlertDescription>
-                      New technicians are added by inviting them as a new user with the 'Technician' role. Go to{' '}
-                      <Link href="/settings?tab=users" className="font-bold underline">
-                        Settings &gt; User Management
-                      </Link>
-                      {' '}to send an invite.
-                    </AlertDescription>
-                  </Alert>
                   <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData} />
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       {isLoadingData && technicians.length === 0 ? (
                       <div className="col-span-full flex justify-center items-center py-10">
                           <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
-                      ) : filteredTechnicians.map(technician => (
+                      ) : filteredTechnicians.length > 0 ? filteredTechnicians.map(technician => (
                       <TechnicianCard 
                           key={technician.id} 
                           technician={technician} 
@@ -1135,12 +1122,26 @@ export default function DashboardPage() {
                           onEdit={handleOpenEditTechnician}
                           onMarkUnavailable={handleMarkTechnicianUnavailable}
                       />
-                      ))}
-                      {!isLoadingData && technicians.length > 0 && filteredTechnicians.length === 0 && (
-                        <p className="text-muted-foreground col-span-full text-center py-10">No technicians match your search.</p>
-                      )}
-                      {!isLoadingData && technicians.length === 0 && (
-                      <p className="text-muted-foreground col-span-full text-center py-10">No technicians have been invited yet.</p>
+                      )) : (
+                        <div className="col-span-full">
+                           <Alert className="border-primary/30 bg-primary/5">
+                                <UserPlus className="h-4 w-4 text-primary" />
+                                <AlertTitle className="text-primary">No Technicians Found</AlertTitle>
+                                <AlertDescription>
+                                    {technicians.length === 0 ? "No technicians have been added to your company yet." : "No technicians match your search criteria."}
+                                    <p className="mt-2">You can add new technicians from the User Management section in your settings.</p>
+                                </AlertDescription>
+                                {technicians.length === 0 && (
+                                <div className="mt-4">
+                                    <Link href="/settings?tab=users">
+                                        <Button variant="default">
+                                            <Users className="mr-2 h-4 w-4" /> Go to User Management
+                                        </Button>
+                                    </Link>
+                                </div>
+                                )}
+                            </Alert>
+                        </div>
                       )}
                   </div>
                 </CardContent>

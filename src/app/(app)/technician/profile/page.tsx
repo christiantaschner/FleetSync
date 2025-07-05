@@ -129,6 +129,8 @@ export default function TechnicianProfilePage() {
         const result = await getSkillsAction({ companyId, appId });
         if(result.data) {
             setAllSkills(result.data.map(s => s.name));
+        } else if (result.error) {
+            console.error("Error fetching skills:", result.error);
         }
     }
     fetchSkills();
@@ -151,6 +153,8 @@ export default function TechnicianProfilePage() {
             return { id: doc.id, ...data } as ProfileChangeRequest
         });
         setSubmittedRequests(requestsData);
+    }, (err) => {
+        console.error("Error fetching change requests:", err);
     });
     
     // Fetch Completed Jobs
@@ -173,6 +177,8 @@ export default function TechnicianProfilePage() {
             return { id: doc.id, ...data } as Job;
         });
         setCompletedJobs(jobsData);
+    }, (err) => {
+        console.error("Error fetching completed jobs:", err);
     });
 
     return () => {

@@ -134,7 +134,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             });
         } catch (err) {
             console.error("Error during auth state processing:", err);
-            toast({ title: "Authentication Error", description: "Could not retrieve your user profile or permissions.", variant: "destructive" });
             setUser(null);
             setUserProfile(null);
             setCompany(null);
@@ -153,7 +152,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
     };
-  }, [toast]); // `toast` is stable and won't cause re-runs
+  }, []); // Removed toast dependency as it's stable
 
   const login = async (email_address: string, pass_word: string) => {
     if (!auth) {

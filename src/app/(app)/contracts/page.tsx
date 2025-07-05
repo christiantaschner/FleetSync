@@ -8,16 +8,15 @@ import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
 import type { Contract } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
 import AddEditContractDialog from './components/AddEditContractDialog';
 import ContractListItem from './components/ContractListItem';
 import GenerateJobsDialog from './components/GenerateJobsDialog';
 import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export default function ContractsPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
-    const { toast } = useToast();
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -26,16 +25,10 @@ export default function ContractsPage() {
 
     const [isGenerateJobsOpen, setIsGenerateJobsOpen] = useState(false);
     const [isSuggestAppointmentOpen, setIsSuggestAppointmentOpen] = useState(false);
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const fetchContracts = useCallback(() => {
-        if (!db || !userProfile?.companyId) {
-            setIsLoading(false);
-            return;
-        }
-        
-        const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-        if (!appId) {
-            toast({ title: "Configuration Error", description: "Cannot fetch contracts.", variant: "destructive" });
+        if (!db || !userProfile?.companyId || !appId) {
             setIsLoading(false);
             return;
         }
@@ -60,12 +53,11 @@ export default function ContractsPage() {
             setIsLoading(false);
         }, (error) => {
             console.error("Error fetching contracts:", error);
-            toast({ title: "Error", description: "Could not fetch contracts.", variant: "destructive" });
             setIsLoading(false);
         });
 
         return unsubscribe;
-    }, [userProfile, toast]);
+    }, [userProfile, appId]);
 
     useEffect(() => {
         if (authLoading) {
@@ -118,11 +110,12 @@ export default function ContractsPage() {
                     onContractUpdated={fetchContracts}
                 />
             )}
-             {userProfile?.companyId && userProfile.role === 'admin' && (
+             {userProfile?.companyId && userProfile.role === 'admin' && appId && (
                 <GenerateJobsDialog
                     isOpen={isGenerateJobsOpen}
                     setIsOpen={setIsGenerateJobsOpen}
                     companyId={userProfile.companyId}
+                    appId={appId}
                 />
              )}
             <SuggestAppointmentDialog
@@ -163,7 +156,18 @@ export default function ContractsPage() {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-muted-foreground text-center py-10">No contracts found. Add one to get started.</p>
+                        <Alert className="border-primary/30 bg-primary/5">
+                            <Repeat className="h-4 w-4 text-primary" />
+                            <AlertTitle className="text-primary">No Contracts Yet</AlertTitle>
+                            <AlertDescription>
+                              Create your first recurring service contract to start generating jobs automatically.
+                            </AlertDescription>
+                            <div className="mt-4">
+                                <Button onClick={handleAddNewContract}>
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Contract
+                                </Button>
+                            </div>
+                        </Alert>
                     )}
                 </CardContent>
             </Card>

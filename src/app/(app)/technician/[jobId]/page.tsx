@@ -70,7 +70,6 @@ export default function TechnicianJobDetailPage() {
           const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
           
           if (!fetchedJob.assignedTechnicianId) {
-            toast({ title: "Error", description: "This job is unassigned.", variant: "destructive" });
             router.push('/dashboard');
             setIsLoading(false);
             return;
@@ -80,7 +79,6 @@ export default function TechnicianJobDetailPage() {
           const techDocSnap = await getDoc(techDocRef);
           
           if (!techDocSnap.exists()) {
-             toast({ title: "Error", description: "Assigned technician profile not found.", variant: "destructive" });
              setTechnician(null);
           } else {
             const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
@@ -118,19 +116,17 @@ export default function TechnicianJobDetailPage() {
           }
 
         } else {
-          toast({ title: "Error", description: "Job not found.", variant: "destructive" });
           router.push('/technician');
         }
       } catch (error) {
         console.error("Error fetching job details:", error);
-        toast({ title: "Error", description: "Could not fetch job details.", variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchJobAndTechnician();
-  }, [jobId, router, toast, user, appId]);
+  }, [jobId, router, user, appId]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (!job || !db || isUpdating || !technician || !appId) return;

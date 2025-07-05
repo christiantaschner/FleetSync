@@ -106,6 +106,7 @@ export default function TechnicianJobListPage() {
           setAssignedJobs(jobsForTech);
           setIsLoading(false);
         }, (err: any) => {
+          console.error("Could not load assigned jobs:", err);
           setError("Could not load assigned jobs.");
           setIsLoading(false);
         });
@@ -116,6 +117,7 @@ export default function TechnicianJobListPage() {
         setIsLoading(false);
       }
     }, (e) => {
+      console.error("Could not load technician profile:", e);
       setError("Could not load technician profile.");
       setTechnician(null);
       setIsLoading(false);

@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users } from 'lucide-react';
 import OptimizeRouteDialog from './optimize-route-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -298,17 +298,22 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                       </div>
                   </div>
                   )) : (
-                    <Alert variant="default" className="m-4">
-                        <UserPlus className="h-4 w-4" />
-                        <AlertTitle className="font-semibold">No Technicians Found</AlertTitle>
-                        <AlertDescription>
-                            Your schedule is empty because no technicians have been created yet. Technicians are added by inviting them as a new user with the 'Technician' role. Go to{' '}
-                            <Link href="/settings?tab=users" className="font-bold underline">
-                                Settings &gt; User Management
-                            </Link>
-                            {' '}to send an invite.
-                        </AlertDescription>
-                    </Alert>
+                     <div className="pt-6">
+                        <Alert className="m-4 border-primary/30 bg-primary/5">
+                            <UserPlus className="h-4 w-4 text-primary" />
+                            <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
+                            <AlertDescription className="text-primary/90">
+                                The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
+                            </AlertDescription>
+                            <div className="mt-4">
+                                <Link href="/settings?tab=users">
+                                    <Button variant="default" size="sm">
+                                        <Users className="mr-2 h-4 w-4" /> Go to User Management
+                                    </Button>
+                                </Link>
+                            </div>
+                        </Alert>
+                    </div>
                   )}
                   <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
               </div>
@@ -318,17 +323,22 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             technicians.length > 0 ? (
                 <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} />
             ) : (
-                <Alert variant="default" className="m-4">
-                    <UserPlus className="h-4 w-4" />
-                    <AlertTitle className="font-semibold">No Technicians Found</AlertTitle>
-                    <AlertDescription>
-                        Your schedule is empty because no technicians have been created yet. Technicians are added by inviting them as a new user with the 'Technician' role. Go to{' '}
-                        <Link href="/settings?tab=users" className="font-bold underline">
-                            Settings &gt; User Management
-                        </Link>
-                        {' '}to send an invite.
-                    </AlertDescription>
-                </Alert>
+                <div className="pt-6">
+                    <Alert className="m-4 border-primary/30 bg-primary/5">
+                        <UserPlus className="h-4 w-4 text-primary" />
+                        <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
+                        <AlertDescription className="text-primary/90">
+                            The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
+                        </AlertDescription>
+                        <div className="mt-4">
+                            <Link href="/settings?tab=users">
+                                <Button variant="default" size="sm">
+                                    <Users className="mr-2 h-4 w-4" /> Go to User Management
+                                </Button>
+                            </Link>
+                        </div>
+                    </Alert>
+                </div>
             )
          )}
       </CardContent>

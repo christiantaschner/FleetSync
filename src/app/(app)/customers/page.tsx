@@ -8,11 +8,9 @@ import type { Job, Contract, Equipment, CustomerData } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
-import { useToast } from '@/hooks/use-toast';
 
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
-    const { toast } = useToast();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -32,7 +30,7 @@ export default function CustomersPage() {
         
         const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         if (!appId) {
-            toast({ title: "Configuration Error", description: "Cannot fetch customer data.", variant: "destructive" });
+            setError("Configuration Error: Cannot fetch customer data.");
             setIsLoading(false);
             return;
         }
@@ -127,7 +125,7 @@ export default function CustomersPage() {
             unsubscribeEquipment();
             unsubscribeCustomers();
         };
-    }, [authLoading, userProfile, toast]);
+    }, [authLoading, userProfile]);
 
     if (authLoading || isLoading) {
         return (

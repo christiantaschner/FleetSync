@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Job, Technician } from "@/types";
+import type { Job, Technician, SummarizeFtfrOutput } from "@/types";
 import {
   CheckCircle,
   Clock,
@@ -19,6 +19,7 @@ import {
   Route,
   Coffee,
   Info,
+  Sparkles,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +27,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
@@ -35,6 +37,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { summarizeFtfrAction } from "@/actions/report-actions";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -52,6 +58,7 @@ const formatDuration = (milliseconds: number): string => {
 
 export default function ReportClientView() {
   const { userProfile, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +67,9 @@ export default function ReportClientView() {
     to: new Date(),
   });
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("all");
+  
+  const [ftfrSummary, setFtfrSummary] = useState<SummarizeFtfrOutput | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -70,9 +80,15 @@ export default function ReportClientView() {
     }
     
     const companyId = userProfile.companyId;
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-    const jobsQuery = query(collection(db, "jobs"), where("companyId", "==", companyId));
-    const techniciansQuery = query(collection(db, "technicians"), where("companyId", "==", companyId));
+    if (!appId) {
+      setIsLoading(false);
+      return;
+    }
+
+    const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
+    const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
       const jobsData = snapshot.docs.map((doc) => {
@@ -100,19 +116,44 @@ export default function ReportClientView() {
     };
   }, [authLoading, userProfile]);
 
-  const reportData = useMemo(() => {
-    const dateFilteredJobs = jobs.filter(job => {
+  const dateFilteredJobs = useMemo(() => {
+    return jobs.filter(job => {
         if (!date || !date.from) return true;
         const jobDate = new Date(job.createdAt);
         const fromDate = date.from;
         const toDate = date.to ? new Date(new Date(date.to).setHours(23, 59, 59, 999)) : new Date();
         return jobDate >= fromDate && jobDate <= toDate;
     });
+  }, [jobs, date]);
 
-    const filteredJobs = selectedTechnicianId === 'all' 
-        ? dateFilteredJobs 
-        : dateFilteredJobs.filter(job => job.assignedTechnicianId === selectedTechnicianId);
+  const filteredJobs = useMemo(() => {
+    if (selectedTechnicianId === 'all') return dateFilteredJobs;
+    return dateFilteredJobs.filter(job => job.assignedTechnicianId === selectedTechnicianId);
+  }, [dateFilteredJobs, selectedTechnicianId]);
 
+  const ftfrFeedbackNotesCount = useMemo(() => {
+    return filteredJobs.filter(job => 
+        job.isFirstTimeFix === false && job.reasonForFollowUp && job.reasonForFollowUp.trim() !== ''
+    ).length;
+  }, [filteredJobs]);
+
+  useEffect(() => {
+    setFtfrSummary(null);
+  }, [date, selectedTechnicianId]);
+
+  const handleSummarizeFtfr = async () => {
+    setIsSummarizing(true);
+    setFtfrSummary(null);
+    const result = await summarizeFtfrAction({ jobs: filteredJobs });
+    if (result.error) {
+        toast({ title: "Summarization Failed", description: result.error, variant: "destructive" });
+    } else {
+        setFtfrSummary(result.data);
+    }
+    setIsSummarizing(false);
+  };
+
+  const reportData = useMemo(() => {
     const completedJobs = filteredJobs.filter(j => j.status === "Completed");
 
     // KPI Calculations
@@ -199,7 +240,7 @@ export default function ReportClientView() {
         avgJobsPerTech,
       },
     };
-  }, [jobs, technicians, date, selectedTechnicianId]);
+  }, [filteredJobs]);
 
   if (authLoading || isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
@@ -350,7 +391,7 @@ export default function ReportClientView() {
        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {kpiCards.map(kpi => (
               <Dialog key={kpi.title}>
-                <Card>
+                <Card className="flex flex-col">
                   <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
                     <DialogTrigger asChild>
@@ -360,10 +401,31 @@ export default function ReportClientView() {
                         </Button>
                     </DialogTrigger>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow">
                     <div className="text-2xl font-bold">{kpi.value}</div>
                     <p className="text-xs text-muted-foreground">{kpi.desc}</p>
                   </CardContent>
+                  {kpi.title === "First-Time-Fix Rate" && (
+                    <CardFooter className="flex-col items-start gap-2 pt-3 border-t">
+                      {ftfrSummary && !isSummarizing && (
+                          <div className="space-y-2 text-xs">
+                              <h4 className="font-semibold text-sm flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-primary" /> AI Summary</h4>
+                              <p className="text-muted-foreground">{ftfrSummary.summary}</p>
+                              <div className="flex flex-wrap gap-1">
+                                  {ftfrSummary.themes.map(theme => <Badge key={theme} variant="secondary">{theme}</Badge>)}
+                              </div>
+                          </div>
+                      )}
+                      <Button onClick={handleSummarizeFtfr} disabled={isSummarizing || ftfrFeedbackNotesCount === 0} className="w-full mt-auto" size="sm" variant="outline">
+                        {isSummarizing ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Sparkles className="mr-2 h-4 w-4" />
+                        )}
+                        Summarize Feedback ({ftfrFeedbackNotesCount})
+                      </Button>
+                    </CardFooter>
+                  )}
                 </Card>
                 <DialogContent>
                     <DialogHeader>

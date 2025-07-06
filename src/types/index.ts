@@ -115,6 +115,9 @@ export type Job = {
   trackingTokenExpiresAt?: string;
   travelDistanceKm?: number;
   co2EmissionsKg?: number;
+  // AI-populated fields
+  aiIdentifiedModel?: string;
+  aiRepairGuide?: string;
 };
 
 export const CustomerSchema = z.object({
@@ -604,3 +607,25 @@ export const SuggestScheduleTimeOutputSchema = z.object({
   })).describe("A list of up to 5 appointment suggestions.")
 });
 export type SuggestScheduleTimeOutput = z.infer<typeof SuggestScheduleTimeOutputSchema>;
+
+export const SummarizeFtfrOutputSchema = z.object({
+  summary: z.string().describe("A concise summary of all the feedback notes provided."),
+  themes: z.array(z.string()).describe("A list of recurring key themes identified from the feedback notes."),
+});
+export type SummarizeFtfrOutput = z.infer<typeof SummarizeFtfrOutputSchema>;
+
+export const TriageJobWithPhotosInputSchema = z.object({
+    jobDescription: z.string(),
+    availableParts: z.array(z.string()),
+    customerPhotos: z.array(z.object({
+        url: z.string().describe("A photo of the broken equipment, as a data URI or a public URL.")
+    })),
+});
+export type TriageJobWithPhotosInput = z.infer<typeof TriageJobWithPhotosInputSchema>;
+
+export const TriageJobWithPhotosOutputSchema = z.object({
+    identifiedModel: z.string().optional().describe("The model of the equipment identified from the photos, if possible."),
+    suggestedParts: z.array(z.string()).describe("A list of required parts, drawn from the available parts list."),
+    repairGuide: z.string().describe("A step-by-step repair guide for the technician."),
+});
+export type TriageJobWithPhotosOutput = z.infer<typeof TriageJobWithPhotosOutputSchema>;

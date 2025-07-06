@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 // Base schema for technician data, omitting fields managed by the server
@@ -32,15 +32,15 @@ export async function updateTechnicianAction(
   appId: string
 ): Promise<{ error: string | null }> {
   try {
-    if (!db) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
     }
     if (!appId) {
       throw new Error('App ID is required');
     }
     const { id, ...updateData } = UpdateTechnicianInputSchema.parse(input);
 
-    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, id);
+    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, id);
 
     await updateDoc(techDocRef, {
       ...updateData,

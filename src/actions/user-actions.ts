@@ -2,8 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db } from '@/lib/firebase-admin';
-import { authAdmin } from '@/lib/firebase-admin';
+import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit, serverTimestamp, orderBy } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
 
@@ -20,13 +19,13 @@ export async function ensureUserDocumentAction(
   input: EnsureUserDocumentInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!db || !authAdmin) {
-      throw new Error('Firebase Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin || !authAdmin) {
+      throw new Error('Firebase Admin SDK not initialized. Check server logs for details.');
     }
     const validatedInput = EnsureUserDocumentInputSchema.parse(input);
     const { uid, email } = validatedInput;
     
-    const userDocRef = doc(db, 'users', uid);
+    const userDocRef = doc(dbAdmin, 'users', uid);
     const docSnap = await getDoc(userDocRef);
 
     if (!docSnap.exists()) {
@@ -45,7 +44,7 @@ export async function ensureUserDocumentAction(
       });
       
       if(isSuperAdmin) {
-          const companyRef = doc(db, 'companies', 'fleetsync_ai_dev');
+          const companyRef = doc(dbAdmin, 'companies', 'fleetsync_ai_dev');
           const companySnap = await getDoc(companyRef);
           if(!companySnap.exists()) {
               await setDoc(companyRef, {
@@ -93,12 +92,12 @@ export async function getCompanyUsersAction(
     companyId: string
 ): Promise<{ data: UserProfile[] | null; error: string | null }> {
     try {
-        if (!db) throw new Error("Firestore Admin SDK not initialized. Check server logs.");
+        if (!dbAdmin) throw new Error("Firestore Admin SDK not initialized. Check server logs for details.");
         if (!companyId) {
             return { data: [], error: null };
         }
 
-        const usersQuery = query(collection(db, "users"), where("companyId", "==", companyId), orderBy("email"));
+        const usersQuery = query(collection(dbAdmin, "users"), where("companyId", "==", companyId), orderBy("email"));
         const querySnapshot = await getDocs(usersQuery);
         const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
 
@@ -122,10 +121,10 @@ export async function inviteUserAction(
   input: InviteUserInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!db || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs.");
+    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
 
-    const usersQuery = query(collection(db, "users"), where("email", "==", email), limit(1));
+    const usersQuery = query(collection(dbAdmin, "users"), where("email", "==", email), limit(1));
     const userSnapshot = await getDocs(usersQuery);
 
     if (userSnapshot.empty) {
@@ -139,9 +138,9 @@ export async function inviteUserAction(
       return { error: `User is already a member of another company.`};
     }
     
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
 
-    const userDocRef = doc(db, "users", userProfile.uid);
+    const userDocRef = doc(dbAdmin, "users", userProfile.uid);
     batch.update(userDocRef, {
         companyId,
         role,
@@ -149,7 +148,7 @@ export async function inviteUserAction(
     });
 
     if (role === 'technician') {
-        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userProfile.uid);
+        const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, userProfile.uid);
         const techDocSnap = await getDoc(techDocRef);
         if (!techDocSnap.exists()) {
             batch.set(techDocRef, {
@@ -200,9 +199,9 @@ export async function updateUserRoleAction(
   input: ManageUserRoleInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!db || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs.");
+        if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
         const { userId, companyId, newRole } = ManageUserRoleInputSchema.parse(input);
-        const userDocRef = doc(db, "users", userId);
+        const userDocRef = doc(dbAdmin, "users", userId);
         const userSnap = await getDoc(userDocRef);
 
         if (!userSnap.exists() || userSnap.data().companyId !== companyId) {
@@ -237,17 +236,17 @@ export async function removeUserFromCompanyAction(
   input: RemoveUserFromCompanyInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!db || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs.");
+        if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
         const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
 
-        const userDocRef = doc(db, "users", userId);
+        const userDocRef = doc(dbAdmin, "users", userId);
         const userSnap = await getDoc(userDocRef);
 
         if (!userSnap.exists() || userSnap.data().companyId !== companyId) {
             return { error: "User not found in this company." };
         }
 
-        const batch = writeBatch(db);
+        const batch = writeBatch(dbAdmin);
 
         batch.update(userDocRef, {
             companyId: null,
@@ -255,7 +254,7 @@ export async function removeUserFromCompanyAction(
             onboardingStatus: 'pending_creation',
         });
         
-        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userId);
+        const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, userId);
         const techDocSnap = await getDoc(techDocRef);
         if (techDocSnap.exists() && techDocSnap.data().companyId === companyId) {
             batch.delete(techDocRef);

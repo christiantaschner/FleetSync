@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { stripe } from '@/lib/stripe';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Company, StripeProduct } from '@/types';
@@ -21,13 +21,13 @@ export async function createCheckoutSessionAction(
   input: CreateCheckoutSessionInput
 ): Promise<{ sessionId: string } | { error: string }> {
   try {
-    if (!db) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
     }
     const validatedInput = CreateCheckoutSessionInputSchema.parse(input);
     const { companyId, uid, email, priceId, quantity } = validatedInput;
 
-    const companyDocRef = doc(db, 'companies', companyId);
+    const companyDocRef = doc(dbAdmin, 'companies', companyId);
     const companyDocSnap = await getDoc(companyDocRef);
 
     if (!companyDocSnap.exists()) {
@@ -92,13 +92,13 @@ export async function createPortalSessionAction(
     input: CreatePortalSessionInput
 ): Promise<{ url: string } | { error: string }> {
     try {
-        if (!db) {
-            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        if (!dbAdmin) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
         }
         const validatedInput = CreatePortalSessionInputSchema.parse(input);
         const { companyId } = validatedInput;
 
-        const companyDocRef = doc(db, 'companies', companyId);
+        const companyDocRef = doc(dbAdmin, 'companies', companyId);
         const companyDocSnap = await getDoc(companyDocRef);
 
         if (!companyDocSnap.exists()) {
@@ -139,12 +139,12 @@ export async function updateSubscriptionQuantityAction(
   input: UpdateSubscriptionQuantityInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!db) {
-            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        if (!dbAdmin) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
         }
         const { companyId, quantity } = UpdateSubscriptionQuantityInputSchema.parse(input);
 
-        const companyDocRef = doc(db, 'companies', companyId);
+        const companyDocRef = doc(dbAdmin, 'companies', companyId);
         const companyDocSnap = await getDoc(companyDocRef);
         if (!companyDocSnap.exists()) {
             // Not an error, just means company doesn't exist to update.

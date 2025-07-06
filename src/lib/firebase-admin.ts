@@ -1,20 +1,33 @@
-
 import * as admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-  try {
-    // When running in a Google Cloud environment (like Cloud Run, Cloud Functions),
-    // the SDK automatically uses the service account credentials.
-    // For local development, you need to set up Application Default Credentials (ADC)
-    // by running `gcloud auth application-default login` in your terminal.
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
-    console.log("Firebase Admin SDK initialized successfully.");
-  } catch (error: any) {
-    console.error('CRITICAL: Firebase admin initialization error. Server actions will fail. Ensure you have set up Application Default Credentials (ADC) for local development or that the service account has the correct permissions in production.', error.message);
-  }
+let dbAdmin: admin.firestore.Firestore | null = null;
+let authAdmin: admin.auth.Auth | null = null;
+
+try {
+    if (!admin.apps.length) {
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+        });
+        console.log("Firebase Admin SDK initialized successfully via Application Default Credentials.");
+    }
+    // If initialization succeeds (or has already succeeded), get the instances.
+    dbAdmin = admin.firestore();
+    authAdmin = admin.auth();
+} catch (error: any) {
+    console.error(`
+---
+CRITICAL: Firebase Admin SDK initialization failed.
+---
+This is likely because Application Default Credentials (ADC) are not configured correctly for your local environment.
+To fix this, run the following command in your terminal and follow the prompts:
+
+    gcloud auth application-default login
+
+---
+Error Message: ${error.message}
+---
+    `);
+    // On failure, dbAdmin and authAdmin will remain null.
 }
 
-export const authAdmin = admin.auth();
-export const dbAdmin = admin.firestore();
+export { dbAdmin, authAdmin };

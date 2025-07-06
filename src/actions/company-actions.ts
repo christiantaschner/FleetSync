@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { CompanySettingsSchema } from '@/types';
 
@@ -17,12 +17,12 @@ export async function updateCompanyAction(
   input: UpdateCompanyInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!db) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
     }
     const validatedInput = UpdateCompanyInputSchema.parse(input);
 
-    const companyDocRef = doc(db, 'companies', validatedInput.companyId);
+    const companyDocRef = doc(dbAdmin, 'companies', validatedInput.companyId);
 
     // Make sure to unpack the settings object correctly
     const updatePayload = {

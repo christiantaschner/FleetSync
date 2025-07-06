@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp, getDocs, query, where, or } from 'firebase/firestore';
 
 export const AddEquipmentInputSchema = z.object({
@@ -22,13 +22,13 @@ export async function addEquipmentAction(
   input: AddEquipmentInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
-    if (!db) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
     }
     const validatedInput = AddEquipmentInputSchema.parse(input);
     const { appId, ...equipmentData } = validatedInput; 
 
-    const equipmentCollectionRef = collection(db, `artifacts/${appId}/public/data/equipment`);
+    const equipmentCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/equipment`);
     const docRef = await addDoc(equipmentCollectionRef, {
       ...equipmentData,
       createdAt: serverTimestamp(),
@@ -67,13 +67,13 @@ export async function getTrackingInfoAction(
   input: GetTrackingInfoInput
 ): Promise<{ data: PublicTrackingInfo | null; error: string | null }> {
   try {
-    if (!db) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
     }
     const { token, appId } = GetTrackingInfoInputSchema.parse(input);
 
     const jobsQuery = query(
-      collection(db, `artifacts/${appId}/public/data/jobs`),
+      collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
       where('trackingToken', '==', token),
       limit(1)
     );
@@ -99,7 +99,7 @@ export async function getTrackingInfoAction(
         return { data: null, error: "A technician has not yet been assigned to this job. Please check back later." };
     }
 
-    const technicianDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+    const technicianDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
     const technicianDocSnap: DocumentSnapshot = await getDoc(technicianDocRef);
 
     if (!technicianDocSnap.exists()) {
@@ -149,13 +149,13 @@ export async function addCustomerAction(
   input: AddCustomerInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
-    if (!db) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    if (!dbAdmin) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
     }
     const validatedInput = AddCustomerInputSchema.parse(input);
     const { appId, companyId, ...customerData } = validatedInput;
 
-    const customersCollectionRef = collection(db, `artifacts/${appId}/public/data/customers`);
+    const customersCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/customers`);
     
     // Check for existing customer with the same name, phone, or email to avoid duplicates
     const duplicateChecks = [where("name", "==", customerData.name)];

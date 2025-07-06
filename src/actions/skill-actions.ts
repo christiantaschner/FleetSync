@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, addDoc, getDocs, query, orderBy, doc, where, writeBatch, arrayRemove, getDoc } from 'firebase/firestore';
 
 // --- Get Skills ---
@@ -18,12 +18,12 @@ export type Skill = {
 };
 export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Skill[] | null; error: string | null; }> {
     try {
-        if (!db) {
-            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        if (!dbAdmin) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
         }
         const { companyId, appId } = GetSkillsInputSchema.parse(input);
         const skillsQuery = query(
-            collection(db, `artifacts/${appId}/public/data/skills`),
+            collection(dbAdmin, `artifacts/${appId}/public/data/skills`),
             where("companyId", "==", companyId),
             orderBy("name")
         );
@@ -47,11 +47,11 @@ export type AddSkillInput = z.infer<typeof AddSkillInputSchema>;
 
 export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id: string; name: string; } | null; error: string | null; }> {
     try {
-        if (!db) {
-            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        if (!dbAdmin) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
         }
         const { name, companyId, appId } = AddSkillInputSchema.parse(input);
-        const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
+        const skillsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/skills`);
 
         const existingSkillQuery = query(skillsCollectionRef, where("companyId", "==", companyId), where("name", "==", name.trim()));
         const existingSkillSnapshot = await getDocs(existingSkillQuery);
@@ -84,16 +84,16 @@ export async function deleteSkillAction(
   input: DeleteSkillInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!db) {
-            throw new Error("Firestore Admin SDK not initialized. Check server logs.");
+        if (!dbAdmin) {
+            throw new Error("Firestore Admin SDK not initialized. Check server logs for details.");
         }
         
         const { skillId, skillName, companyId, appId } = DeleteSkillInputSchema.parse(input);
         
-        const batch = writeBatch(db);
+        const batch = writeBatch(dbAdmin);
 
         // Find all technicians with this skill
-        const techniciansRef = collection(db, `artifacts/${appId}/public/data/technicians`);
+        const techniciansRef = collection(dbAdmin, `artifacts/${appId}/public/data/technicians`);
         const q = query(techniciansRef, where("companyId", "==", companyId), where("skills", "array-contains", skillName));
         const querySnapshot = await getDocs(q);
 
@@ -105,7 +105,7 @@ export async function deleteSkillAction(
         });
 
         // Delete the skill from the skills library
-        const skillDocRef = doc(db, `artifacts/${appId}/public/data/skills`, skillId);
+        const skillDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/skills`, skillId);
         const skillSnap = await getDoc(skillDocRef);
         if (skillSnap.exists() && skillSnap.data().companyId === companyId) {
              batch.delete(skillDocRef);

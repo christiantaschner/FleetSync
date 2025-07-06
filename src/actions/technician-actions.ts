@@ -32,9 +32,7 @@ export async function updateTechnicianAction(
   appId: string
 ): Promise<{ error: string | null }> {
   try {
-    if (!dbAdmin) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-    }
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     if (!appId) {
       throw new Error('App ID is required');
     }

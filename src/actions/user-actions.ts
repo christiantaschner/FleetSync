@@ -19,9 +19,7 @@ export async function ensureUserDocumentAction(
   input: EnsureUserDocumentInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!dbAdmin || !authAdmin) {
-      throw new Error('Firebase Admin SDK not initialized. Check server logs for details.');
-    }
+    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
     const validatedInput = EnsureUserDocumentInputSchema.parse(input);
     const { uid, email } = validatedInput;
     
@@ -92,7 +90,7 @@ export async function getCompanyUsersAction(
     companyId: string
 ): Promise<{ data: UserProfile[] | null; error: string | null }> {
     try {
-        if (!dbAdmin) throw new Error("Firestore Admin SDK not initialized. Check server logs for details.");
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         if (!companyId) {
             return { data: [], error: null };
         }
@@ -121,7 +119,7 @@ export async function inviteUserAction(
   input: InviteUserInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
+    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
 
     const usersQuery = query(collection(dbAdmin, "users"), where("email", "==", email), limit(1));
@@ -199,7 +197,7 @@ export async function updateUserRoleAction(
   input: ManageUserRoleInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
+        if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
         const { userId, companyId, newRole } = ManageUserRoleInputSchema.parse(input);
         const userDocRef = doc(dbAdmin, "users", userId);
         const userSnap = await getDoc(userDocRef);
@@ -236,7 +234,7 @@ export async function removeUserFromCompanyAction(
   input: RemoveUserFromCompanyInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
+        if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
         const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
 
         const userDocRef = doc(dbAdmin, "users", userId);

@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin as db, authAdmin } from '@/lib/firebase-admin';
+import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { PREDEFINED_PARTS } from '@/lib/parts';
@@ -16,12 +16,9 @@ export async function completeOnboardingAction(
   appId: string,
 ): Promise<{ sessionId: string | null; error: string | null }> {
   try {
-    if (!db) {
-        throw new Error('Firestore Admin SDK not initialized. Check server logs.');
-    }
-    if (!stripe) {
-        throw new Error('Stripe not initialized.');
-    }
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+    if (!authAdmin) throw new Error("Firebase Auth Admin SDK has not been initialized. Check server logs for details.");
+    if (!stripe) throw new Error('Stripe not initialized.');
     if (!appId) throw new Error("App ID is required.");
 
     const validatedInput = CompleteOnboardingInputSchema.parse(input);
@@ -29,11 +26,11 @@ export async function completeOnboardingAction(
     const { companyName, uid, numberOfTechnicians, companySpecialties } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
 
     // 1. Create a Stripe Customer first
-    const userDocRef = doc(db, 'users', uid);
-    const userSnap = await doc(db, 'users', uid).get();
+    const userDocRef = doc(dbAdmin, 'users', uid);
+    const userSnap = await doc(dbAdmin, 'users', uid).get();
     if (!userSnap.exists()) {
         throw new Error('User document does not exist.');
     }
@@ -53,7 +50,7 @@ export async function completeOnboardingAction(
     const stripeCustomerId = customer.id;
     
     // 2. Prepare Firestore documents
-    const companyRef = doc(db, 'companies', companyId);
+    const companyRef = doc(dbAdmin, 'companies', companyId);
     const trialEndsAt = addDays(new Date(), 30);
 
     batch.set(companyRef, {
@@ -71,7 +68,7 @@ export async function completeOnboardingAction(
       onboardingStatus: 'completed',
     });
     
-    const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
+    const skillsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/skills`);
     const skillsToSeed = new Set<string>();
     companySpecialties.forEach(specialty => {
         const skillsForSpecialty = SKILLS_BY_SPECIALTY[specialty];
@@ -85,7 +82,7 @@ export async function completeOnboardingAction(
         batch.set(newSkillRef, { name: skillName, companyId: companyId });
     });
     
-    const partsCollectionRef = collection(db, `artifacts/${appId}/public/data/parts`);
+    const partsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/parts`);
     PREDEFINED_PARTS.forEach(partName => {
         const newPartRef = doc(partsCollectionRef);
         batch.set(newPartRef, { name: partName, companyId: companyId });

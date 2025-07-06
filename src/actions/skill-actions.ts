@@ -18,9 +18,7 @@ export type Skill = {
 };
 export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Skill[] | null; error: string | null; }> {
     try {
-        if (!dbAdmin) {
-            throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-        }
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, appId } = GetSkillsInputSchema.parse(input);
         const skillsQuery = query(
             collection(dbAdmin, `artifacts/${appId}/public/data/skills`),
@@ -47,9 +45,7 @@ export type AddSkillInput = z.infer<typeof AddSkillInputSchema>;
 
 export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id: string; name: string; } | null; error: string | null; }> {
     try {
-        if (!dbAdmin) {
-            throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-        }
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { name, companyId, appId } = AddSkillInputSchema.parse(input);
         const skillsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/skills`);
 
@@ -84,9 +80,7 @@ export async function deleteSkillAction(
   input: DeleteSkillInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!dbAdmin) {
-            throw new Error("Firestore Admin SDK not initialized. Check server logs for details.");
-        }
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         
         const { skillId, skillName, companyId, appId } = DeleteSkillInputSchema.parse(input);
         

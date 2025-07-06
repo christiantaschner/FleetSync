@@ -13,7 +13,7 @@ import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/t
 import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
 import { z } from "zod";
-import { dbAdmin as db } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
@@ -156,15 +156,13 @@ export async function importJobsAction(
   input: ImportJobsActionInput
 ): Promise<{ data: { successCount: number }; error: string | null }> {
     try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, jobs, appId } = ImportJobsActionInputSchema.parse(input);
-        if (!db) {
-            throw new Error("Firestore not initialized");
-        }
 
-        const batch = writeBatch(db);
+        const batch = writeBatch(dbAdmin);
         let successCount = 0;
 
-        const jobsCollectionRef = collection(db, `artifacts/${appId}/public/data/jobs`);
+        const jobsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/jobs`);
 
         for (const jobData of jobs) {
             const newJobRef = doc(jobsCollectionRef);
@@ -241,15 +239,13 @@ export async function handleTechnicianUnavailabilityAction(
   input: z.infer<typeof HandleTechnicianUnavailabilityInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, technicianId, reason, unavailableFrom, unavailableUntil, appId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
-
-    const batch = writeBatch(db);
+    
+    const batch = writeBatch(dbAdmin);
     
     // 1. Mark technician as unavailable
-    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technicianId);
+    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
     const techSnap = await getDoc(techDocRef);
     if (!techSnap.exists() || techSnap.data().companyId !== companyId) {
         return { error: "Technician not found or does not belong to your company." };
@@ -266,7 +262,7 @@ export async function handleTechnicianUnavailabilityAction(
     // 2. Find and unassign active jobs for that company
     const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
     const jobsQuery = query(
-      collection(db, `artifacts/${appId}/public/data/jobs`),
+      collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
       where("companyId", "==", companyId),
       where("assignedTechnicianId", "==", technicianId),
       where("status", "in", activeJobStatuses)
@@ -308,17 +304,15 @@ export async function confirmOptimizedRouteAction(
   input: z.infer<typeof ConfirmOptimizedRouteInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, optimizedRoute, jobsNotInRoute, appId } = ConfirmOptimizedRouteInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
 
     // Verify all jobs belong to the company before updating
     const allJobIds = [...optimizedRoute.map(step => step.taskId), ...jobsNotInRoute];
     for (const jobId of allJobIds) {
-        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         const jobSnap = await getDoc(jobDocRef);
         if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
             return { error: `Job ${jobId} not found or does not belong to your company.` };
@@ -327,13 +321,13 @@ export async function confirmOptimizedRouteAction(
 
     // Set new route order for optimized jobs
     optimizedRoute.forEach((step, index) => {
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, step.taskId);
+      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, step.taskId);
       batch.update(jobDocRef, { routeOrder: index });
     });
     
     // Clear route order for jobs that were unselected from optimization
     jobsNotInRoute.forEach((jobId) => {
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
       batch.update(jobDocRef, { routeOrder: deleteField() });
     });
 
@@ -355,17 +349,15 @@ export async function confirmManualRescheduleAction(
   input: z.infer<typeof ConfirmManualRescheduleInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, movedJobId, newScheduledTime, optimizedRoute, appId } = ConfirmManualRescheduleInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
 
     // Verify all jobs belong to the company
     const allJobIds = [movedJobId, ...optimizedRoute.map(step => step.taskId)];
      for (const jobId of allJobIds) {
-        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         const jobSnap = await getDoc(jobDocRef);
         if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
             return { error: `Job ${jobId} not found or does not belong to your company.` };
@@ -373,7 +365,7 @@ export async function confirmManualRescheduleAction(
     }
 
     // Update the moved job with its new time
-    const movedJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, movedJobId);
+    const movedJobRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, movedJobId);
     batch.update(movedJobRef, { 
       scheduledTime: newScheduledTime,
       updatedAt: serverTimestamp(),
@@ -381,7 +373,7 @@ export async function confirmManualRescheduleAction(
 
     // Set new route order for all jobs in the optimized route
     optimizedRoute.forEach((step, index) => {
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, step.taskId);
+      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, step.taskId);
       batch.update(jobDocRef, { 
         routeOrder: index,
         // Also update timestamp for all jobs in the sequence
@@ -415,12 +407,10 @@ export async function requestProfileChangeAction(
   input: z.infer<typeof RequestProfileChangeInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, technicianId, technicianName, requestedChanges, notes, appId } = RequestProfileChangeInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
     
-    const requestsCollectionRef = collection(db, `artifacts/${appId}/public/data/profileChangeRequests`);
+    const requestsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/profileChangeRequests`);
     
     const newRequest: Omit<ProfileChangeRequest, 'id'> = {
         companyId,
@@ -450,22 +440,20 @@ export async function approveProfileChangeRequestAction(
   input: z.infer<typeof ApproveProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, requestId, technicianId, approvedChanges, reviewNotes, appId } = ApproveProfileChangeRequestInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
 
-    const requestDocRef = doc(db, `artifacts/${appId}/public/data/profileChangeRequests`, requestId);
+    const requestDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/profileChangeRequests`, requestId);
     const requestSnap = await getDoc(requestDocRef);
     if (!requestSnap.exists() || requestSnap.data().companyId !== companyId) {
         return { error: "Request not found or you do not have permission to modify it." };
     }
     
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
 
     // 1. Update the technician's document if there are changes
     if (Object.keys(approvedChanges).length > 0) {
-        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technicianId);
+        const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
         batch.update(techDocRef, {
             ...approvedChanges,
             updatedAt: serverTimestamp(),
@@ -497,12 +485,10 @@ export async function rejectProfileChangeRequestAction(
   input: z.infer<typeof RejectProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, requestId, reviewNotes, appId } = RejectProfileChangeRequestInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
 
-    const requestDocRef = doc(db, `artifacts/${appId}/public/data/profileChangeRequests`, requestId);
+    const requestDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/profileChangeRequests`, requestId);
     const requestSnap = await getDoc(requestDocRef);
     if (!requestSnap.exists() || requestSnap.data().companyId !== companyId) {
         return { error: "Request not found or you do not have permission to modify it." };
@@ -633,14 +619,12 @@ export async function reassignJobAction(
   input: z.infer<typeof ReassignJobInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, jobId, newTechnicianId, reason, appId } = ReassignJobInputSchema.parse(input);
-    if (!db) {
-      throw new Error("Firestore not initialized");
-    }
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
 
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+    const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
     const jobSnap = await getDoc(jobDocRef);
     if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
         return { error: "Job not found or you do not have permission to modify it." };
@@ -660,7 +644,7 @@ export async function reassignJobAction(
 
     batch.update(jobDocRef, updatePayload);
 
-    const newTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, newTechnicianId);
+    const newTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, newTechnicianId);
     batch.update(newTechDocRef, {
         isAvailable: false
     });
@@ -688,18 +672,17 @@ export async function generateRecurringJobsAction(
   input: z.infer<typeof GenerateRecurringJobsInputSchema>
 ): Promise<{ data: { jobsCreated: number }; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, untilDate, appId } = GenerateRecurringJobsInputSchema.parse(input);
     const targetDate = new Date(untilDate);
 
-    if (!db) throw new Error("Firestore not initialized");
-
-    const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), where("isActive", "==", true), orderBy("customerName"));
+    const contractsQuery = query(collection(dbAdmin, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), where("isActive", "==", true), orderBy("customerName"));
     const querySnapshot = await getDocs(contractsQuery);
     
     const contracts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
-    const batch = writeBatch(db);
+    const batch = writeBatch(dbAdmin);
     let jobsCreated = 0;
-    const jobsCollectionRef = collection(db, `artifacts/${appId}/public/data/jobs`);
+    const jobsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/jobs`);
 
     for (const contract of contracts) {
       let currentDate = contract.lastGeneratedUntil ? addDays(new Date(contract.lastGeneratedUntil), 1) : new Date(contract.startDate);
@@ -737,7 +720,7 @@ export async function generateRecurringJobsAction(
       }
 
       // Update contract's last generated date
-      const contractDocRef = doc(db, `artifacts/${appId}/public/data/contracts`, contract.id!);
+      const contractDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/contracts`, contract.id!);
       batch.update(contractDocRef, { lastGeneratedUntil: targetDate.toISOString() });
     }
 
@@ -805,13 +788,13 @@ export async function generateTrackingLinkAction(
     input: GenerateTrackingLinkInput
 ): Promise<{ data: { trackingUrl: string } | null; error: string | null }> {
     try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { jobId, companyId, appId } = GenerateTrackingLinkInputSchema.parse(input);
-        if (!db) throw new Error("Firestore not initialized");
 
         const token = crypto.randomUUID();
         const expiresAt = addHours(new Date(), 4); // Link is valid for 4 hours
 
-        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
         const jobSnap = await getDoc(jobDocRef);
         if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
@@ -843,10 +826,10 @@ export async function calculateTravelMetricsAction(
   input: z.infer<typeof CalculateTravelMetricsInputSchema>
 ): Promise<{ error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, jobId, technicianId, appId } = CalculateTravelMetricsInputSchema.parse(input);
-    if (!db) throw new Error("Firestore not initialized");
 
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+    const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
     const jobSnap = await getDoc(jobDocRef);
     if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
         return { error: "Job not found or you do not have permission to modify it." };
@@ -855,7 +838,7 @@ export async function calculateTravelMetricsAction(
     if (!completedJob.completedAt) throw new Error("Job is not yet completed.");
 
     // Fetch company settings to get the custom emission factor
-    const companyDocRef = doc(db, "companies", companyId);
+    const companyDocRef = doc(dbAdmin, "companies", companyId);
     const companySnap = await getDoc(companyDocRef);
     const companyData = companySnap.data() as Company;
     const emissionFactor = companyData?.settings?.co2EmissionFactorKgPerKm ?? DEFAULT_EMISSIONS_KG_PER_KM;
@@ -865,7 +848,7 @@ export async function calculateTravelMetricsAction(
     const startOfDay = new Date(completedDate.setHours(0, 0, 0, 0)).toISOString();
     
     const q = query(
-      collection(db, `artifacts/${appId}/public/data/jobs`),
+      collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
       where("companyId", "==", companyId),
       where("assignedTechnicianId", "==", technicianId),
       where("status", "==", "Completed"),
@@ -882,7 +865,7 @@ export async function calculateTravelMetricsAction(
       startLocation = prevJob.location;
     } else {
       // First job of the day, use technician's home base
-      const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technicianId);
+      const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
       const techSnap = await getDoc(techDocRef);
       if (!techSnap.exists()) throw new Error("Technician not found.");
       const technician = techSnap.data() as Technician;
@@ -941,13 +924,11 @@ export async function deleteJobAction(
   input: z.infer<typeof DeleteJobInputSchema>
 ): Promise<{ error: string | null }> {
     try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { jobId, companyId, appId } = DeleteJobInputSchema.parse(input);
-        if (!db) {
-            throw new Error("Firestore not initialized");
-        }
         
-        const batch = writeBatch(db);
-        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
+        const batch = writeBatch(dbAdmin);
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
 
         const jobSnap = await getDoc(jobDocRef);
         if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
@@ -958,7 +939,7 @@ export async function deleteJobAction(
         
         // If a technician was assigned, update their status to be available again.
         if (jobData.assignedTechnicianId) {
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, jobData.assignedTechnicianId);
+            const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, jobData.assignedTechnicianId);
             const techSnap = await getDoc(techDocRef);
             // Only update the technician if this deleted job was their *current* job.
             if (techSnap.exists() && techSnap.data().currentJobId === jobId) {

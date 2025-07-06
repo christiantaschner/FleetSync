@@ -22,11 +22,11 @@ export async function addEquipmentAction(
   input: AddEquipmentInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
+    if (!db) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    }
     const validatedInput = AddEquipmentInputSchema.parse(input);
     const { appId, ...equipmentData } = validatedInput; 
-    if (!db) {
-      throw new Error('Firestore not initialized');
-    }
 
     const equipmentCollectionRef = collection(db, `artifacts/${appId}/public/data/equipment`);
     const docRef = await addDoc(equipmentCollectionRef, {
@@ -67,10 +67,10 @@ export async function getTrackingInfoAction(
   input: GetTrackingInfoInput
 ): Promise<{ data: PublicTrackingInfo | null; error: string | null }> {
   try {
-    const { token, appId } = GetTrackingInfoInputSchema.parse(input);
     if (!db) {
-      throw new Error('Firestore not initialized');
+      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
     }
+    const { token, appId } = GetTrackingInfoInputSchema.parse(input);
 
     const jobsQuery = query(
       collection(db, `artifacts/${appId}/public/data/jobs`),
@@ -149,11 +149,11 @@ export async function addCustomerAction(
   input: AddCustomerInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
+    if (!db) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    }
     const validatedInput = AddCustomerInputSchema.parse(input);
     const { appId, companyId, ...customerData } = validatedInput;
-    if (!db) {
-      throw new Error('Firestore not initialized');
-    }
 
     const customersCollectionRef = collection(db, `artifacts/${appId}/public/data/customers`);
     

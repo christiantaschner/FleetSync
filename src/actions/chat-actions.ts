@@ -2,7 +2,8 @@
 "use server";
 
 import { z } from "zod";
-import { db, storage } from "@/lib/firebase";
+import { dbAdmin as db } from "@/lib/firebase-admin";
+import { storage } from "@/lib/firebase"; // Keep client storage for now as API is different
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -32,8 +33,10 @@ export async function sendChatMessageAction(
   input: SendChatMessageInput
 ): Promise<{ error: string | null }> {
     try {
+        if (!db) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+        if (!storage) throw new Error("Firebase Storage has not been initialized.");
+        
         const { appId, ...messageInput } = SendChatMessageInputSchema.parse(input);
-        if (!db || !storage) throw new Error("Firebase not initialized");
 
         let imageUrl: string | null = null;
 

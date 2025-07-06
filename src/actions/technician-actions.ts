@@ -32,13 +32,13 @@ export async function updateTechnicianAction(
   appId: string
 ): Promise<{ error: string | null }> {
   try {
-    const { id, ...updateData } = UpdateTechnicianInputSchema.parse(input);
     if (!db) {
-      throw new Error('Firestore not initialized');
+      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
     }
     if (!appId) {
       throw new Error('App ID is required');
     }
+    const { id, ...updateData } = UpdateTechnicianInputSchema.parse(input);
 
     const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, id);
 

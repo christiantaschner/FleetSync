@@ -20,36 +20,30 @@ export async function ensureUserDocumentAction(
   input: EnsureUserDocumentInput
 ): Promise<{ error: string | null }> {
   try {
+    if (!db || !authAdmin) {
+      throw new Error('Firebase Admin SDK not initialized. Check server logs.');
+    }
     const validatedInput = EnsureUserDocumentInputSchema.parse(input);
     const { uid, email } = validatedInput;
     
-    if (!db) {
-      throw new Error('Firestore not initialized.');
-    }
-
     const userDocRef = doc(db, 'users', uid);
     const docSnap = await getDoc(userDocRef);
 
-    let currentRole: string | null = null;
-    let currentCompanyId: string | null = null;
-    
     if (!docSnap.exists()) {
-      // Document does not exist, create it.
       const isSuperAdmin = email === 'christian.taschner.ek@gmail.com';
-      currentRole = isSuperAdmin ? 'superAdmin' : null;
-      currentCompanyId = isSuperAdmin ? 'fleetsync_ai_dev' : null;
+      const role = isSuperAdmin ? 'superAdmin' : null;
+      const companyId = isSuperAdmin ? 'fleetsync_ai_dev' : null;
 
       await setDoc(userDocRef, {
         uid: uid,
         email: email,
         onboardingStatus: isSuperAdmin ? 'completed' : 'pending_creation',
-        role: currentRole,
-        companyId: currentCompanyId,
+        role,
+        companyId,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
       
-      // If super admin, ensure dev company exists
       if(isSuperAdmin) {
           const companyRef = doc(db, 'companies', 'fleetsync_ai_dev');
           const companySnap = await getDoc(companyRef);
@@ -66,32 +60,20 @@ export async function ensureUserDocumentAction(
     }
 
     // --- CRITICAL: Sync Firestore state with Auth Custom Claims ---
-    // This ensures Security Rules have access to role and companyId.
+    const userProfileFromDb = (await getDoc(userDocRef)).data() as UserProfile;
     const currentUser = await authAdmin.getUser(uid);
     const existingClaims = currentUser.customClaims || {};
-
-    const userProfileFromDb = (await getDoc(userDocRef)).data() as UserProfile;
-    const roleFromDb = userProfileFromDb.role || null;
-    const companyIdFromDb = userProfileFromDb.companyId || null;
     
     const claimsToSet: { [key: string]: any } = {};
-    let claimsChanged = false;
-
-    if (existingClaims.role !== roleFromDb) {
-      claimsToSet.role = roleFromDb;
-      claimsChanged = true;
+    if (existingClaims.role !== userProfileFromDb.role) {
+      claimsToSet.role = userProfileFromDb.role || null;
+    }
+    if (existingClaims.companyId !== userProfileFromDb.companyId) {
+      claimsToSet.companyId = userProfileFromDb.companyId || null;
     }
 
-    if (existingClaims.companyId !== companyIdFromDb) {
-      claimsToSet.companyId = companyIdFromDb;
-      claimsChanged = true;
-    }
-
-    if (claimsChanged) {
-      await authAdmin.setCustomUserClaims(uid, {
-        ...existingClaims, 
-        ...claimsToSet,
-      });
+    if (Object.keys(claimsToSet).length > 0) {
+      await authAdmin.setCustomUserClaims(uid, { ...existingClaims, ...claimsToSet });
       console.log(`Custom claims for user ${uid} synchronized:`, claimsToSet);
     }
     // --- END CRITICAL PART ---
@@ -111,7 +93,7 @@ export async function getCompanyUsersAction(
     companyId: string
 ): Promise<{ data: UserProfile[] | null; error: string | null }> {
     try {
-        if (!db) throw new Error("Firestore not initialized");
+        if (!db) throw new Error("Firestore Admin SDK not initialized. Check server logs.");
         if (!companyId) {
             return { data: [], error: null };
         }
@@ -140,8 +122,8 @@ export async function inviteUserAction(
   input: InviteUserInput
 ): Promise<{ error: string | null }> {
   try {
+    if (!db || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
-    if (!db) throw new Error("Firestore not initialized");
 
     const usersQuery = query(collection(db, "users"), where("email", "==", email), limit(1));
     const userSnapshot = await getDocs(usersQuery);
@@ -166,15 +148,13 @@ export async function inviteUserAction(
         onboardingStatus: 'completed'
     });
 
-    // If the invited user is a technician, create a technician profile for them
     if (role === 'technician') {
         const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userProfile.uid);
         const techDocSnap = await getDoc(techDocRef);
-        // Only create if one doesn't already exist for this UID
         if (!techDocSnap.exists()) {
             batch.set(techDocRef, {
                 companyId: companyId,
-                name: userProfile.email.split('@')[0], // Default name to email prefix
+                name: userProfile.email.split('@')[0], 
                 email: userProfile.email,
                 isAvailable: true,
                 skills: [],
@@ -191,7 +171,6 @@ export async function inviteUserAction(
 
     await batch.commit();
 
-    // Set custom claims after updating Firestore
     const user = await authAdmin.getUser(userProfile.uid);
     await authAdmin.setCustomUserClaims(userProfile.uid, {
         ...user.customClaims,
@@ -221,6 +200,7 @@ export async function updateUserRoleAction(
   input: ManageUserRoleInput
 ): Promise<{ error: string | null }> {
     try {
+        if (!db || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs.");
         const { userId, companyId, newRole } = ManageUserRoleInputSchema.parse(input);
         const userDocRef = doc(db, "users", userId);
         const userSnap = await getDoc(userDocRef);
@@ -231,7 +211,6 @@ export async function updateUserRoleAction(
 
         await updateDoc(userDocRef, { role: newRole });
 
-        // Update custom claims after updating Firestore
         const user = await authAdmin.getUser(userId);
         await authAdmin.setCustomUserClaims(userId, {
             ...user.customClaims,
@@ -258,8 +237,8 @@ export async function removeUserFromCompanyAction(
   input: RemoveUserFromCompanyInput
 ): Promise<{ error: string | null }> {
     try {
+        if (!db || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs.");
         const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
-        if (!db) throw new Error("Firestore not initialized");
 
         const userDocRef = doc(db, "users", userId);
         const userSnap = await getDoc(userDocRef);
@@ -270,14 +249,12 @@ export async function removeUserFromCompanyAction(
 
         const batch = writeBatch(db);
 
-        // Reset user's company-related fields in Firestore
         batch.update(userDocRef, {
             companyId: null,
             role: null,
             onboardingStatus: 'pending_creation',
         });
         
-        // Also unassign this user from any technician profile they might have
         const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, userId);
         const techDocSnap = await getDoc(techDocRef);
         if (techDocSnap.exists() && techDocSnap.data().companyId === companyId) {
@@ -286,7 +263,6 @@ export async function removeUserFromCompanyAction(
 
         await batch.commit();
 
-        // Nullify custom claims after updating Firestore
         const user = await authAdmin.getUser(userId);
         await authAdmin.setCustomUserClaims(userId, {
             ...user.customClaims,
@@ -301,4 +277,3 @@ export async function removeUserFromCompanyAction(
         return { error: `Failed to remove user. ${errorMessage}` };
     }
 }
-    

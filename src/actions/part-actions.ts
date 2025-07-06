@@ -18,6 +18,9 @@ export type Part = {
 };
 export async function getPartsAction(input: GetPartsInput): Promise<{ data: Part[] | null; error: string | null; }> {
     try {
+        if (!db) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        }
         const { companyId, appId } = GetPartsInputSchema.parse(input);
         const partsQuery = query(
             collection(db, `artifacts/${appId}/public/data/parts`),
@@ -44,6 +47,9 @@ export type AddPartInput = z.infer<typeof AddPartInputSchema>;
 
 export async function addPartAction(input: AddPartInput): Promise<{ data: { id: string } | null; error: string | null; }> {
     try {
+        if (!db) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        }
         const { name, companyId, appId } = AddPartInputSchema.parse(input);
         const partsCollectionRef = collection(db, `artifacts/${appId}/public/data/parts`);
 
@@ -75,6 +81,9 @@ export type DeletePartInput = z.infer<typeof DeletePartInputSchema>;
 
 export async function deletePartAction(input: DeletePartInput): Promise<{ error: string | null; }> {
     try {
+        if (!db) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        }
         const { partId, companyId, appId } = DeletePartInputSchema.parse(input);
         const partDocRef = doc(db, `artifacts/${appId}/public/data/parts`, partId);
         

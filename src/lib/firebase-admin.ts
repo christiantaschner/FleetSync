@@ -1,3 +1,4 @@
+
 import * as admin from 'firebase-admin';
 
 if (!admin.apps.length) {
@@ -11,8 +12,7 @@ if (!admin.apps.length) {
     });
     console.log("Firebase Admin SDK initialized successfully.");
   } catch (error: any) {
-    console.error('Firebase admin initialization error:', error.message);
-    // Avoid crashing the server on initialization error, but log it.
+    console.error('CRITICAL: Firebase admin initialization error. Server actions will fail. Ensure you have set up Application Default Credentials (ADC) for local development or that the service account has the correct permissions in production.', error.message);
   }
 }
 

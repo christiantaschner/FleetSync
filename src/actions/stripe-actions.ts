@@ -21,6 +21,9 @@ export async function createCheckoutSessionAction(
   input: CreateCheckoutSessionInput
 ): Promise<{ sessionId: string } | { error: string }> {
   try {
+    if (!db) {
+      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+    }
     const validatedInput = CreateCheckoutSessionInputSchema.parse(input);
     const { companyId, uid, email, priceId, quantity } = validatedInput;
 
@@ -89,6 +92,9 @@ export async function createPortalSessionAction(
     input: CreatePortalSessionInput
 ): Promise<{ url: string } | { error: string }> {
     try {
+        if (!db) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        }
         const validatedInput = CreatePortalSessionInputSchema.parse(input);
         const { companyId } = validatedInput;
 
@@ -133,6 +139,9 @@ export async function updateSubscriptionQuantityAction(
   input: UpdateSubscriptionQuantityInput
 ): Promise<{ error: string | null }> {
     try {
+        if (!db) {
+            throw new Error('Firestore Admin SDK not initialized. Check server logs.');
+        }
         const { companyId, quantity } = UpdateSubscriptionQuantityInputSchema.parse(input);
 
         const companyDocRef = doc(db, 'companies', companyId);

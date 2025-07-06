@@ -16,16 +16,16 @@ export async function completeOnboardingAction(
   appId: string,
 ): Promise<{ sessionId: string | null; error: string | null }> {
   try {
-    const validatedInput = CompleteOnboardingInputSchema.parse(input);
-    
     if (!db) {
-        throw new Error('Firestore not initialized.');
+        throw new Error('Firestore Admin SDK not initialized. Check server logs.');
     }
-     if (!stripe) {
+    if (!stripe) {
         throw new Error('Stripe not initialized.');
     }
     if (!appId) throw new Error("App ID is required.");
 
+    const validatedInput = CompleteOnboardingInputSchema.parse(input);
+    
     const { companyName, uid, numberOfTechnicians, companySpecialties } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
 
@@ -96,6 +96,7 @@ export async function completeOnboardingAction(
 
     // 4. Set Custom Auth Claims for the new admin
     try {
+      if (!authAdmin) throw new Error('Auth Admin SDK not initialized.');
       await authAdmin.setCustomUserClaims(uid, {
         companyId: companyId,
         role: 'admin',

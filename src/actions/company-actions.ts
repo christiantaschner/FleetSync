@@ -17,10 +17,10 @@ export async function updateCompanyAction(
   input: UpdateCompanyInput
 ): Promise<{ error: string | null }> {
   try {
-    const validatedInput = UpdateCompanyInputSchema.parse(input);
     if (!db) {
-      throw new Error('Firestore not initialized');
+      throw new Error('Firestore Admin SDK not initialized. Check server logs.');
     }
+    const validatedInput = UpdateCompanyInputSchema.parse(input);
 
     const companyDocRef = doc(db, 'companies', validatedInput.companyId);
 

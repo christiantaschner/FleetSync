@@ -30,8 +30,8 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, AITechnician, Customer } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2, FilePenLine } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput, deleteJobAction } from "@/actions/fleet-actions";
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2, FilePenLine, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput, deleteJobAction, generateTriageLinkAction } from "@/actions/fleet-actions";
 import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -90,6 +90,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
+  
+  const [triageLink, setTriageLink] = useState<string | null>(null);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -115,6 +119,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
+    setTriageLink(null);
+    setIsGeneratingLink(false);
+    setIsCopied(false);
   }, [job]);
 
   useEffect(() => {
@@ -359,6 +366,28 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onClose();
     }
     setIsDeleting(false);
+  };
+
+  const handleGenerateTriageLink = async () => {
+    if (!job || !userProfile?.companyId || !appId) return;
+    setIsGeneratingLink(true);
+    const result = await generateTriageLinkAction({ jobId: job.id, companyId: userProfile.companyId, appId });
+    if (result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else if (result.data?.triageUrl) {
+      const fullUrl = `${window.location.origin}${result.data.triageUrl}`;
+      setTriageLink(fullUrl);
+    }
+    setIsGeneratingLink(false);
+  };
+  
+  const handleCopyToClipboard = () => {
+    if (triageLink) {
+      navigator.clipboard.writeText(triageLink);
+      setIsCopied(true);
+      toast({ title: "Copied!", description: "Link copied to clipboard." });
+      setTimeout(() => setIsCopied(false), 2000);
+    }
   };
 
   const handleSubmit = async (assignTechId: string | null = null) => {
@@ -807,6 +836,37 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             </div>
                         )}
                       </div>
+                    </div>
+                  )}
+                  {job && (
+                    <div className="space-y-2 rounded-md border p-4">
+                      <h3 className="text-sm font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary"/> AI Triage</h3>
+                      {job.aiIdentifiedModel || job.aiSuggestedParts || job.aiRepairGuide ? (
+                        <div className="text-sm space-y-2">
+                           <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
+                           <p><strong>Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
+                           <div>
+                             <p><strong>Guide:</strong></p>
+                             <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
+                           </div>
+                        </div>
+                      ) : triageLink ? (
+                        <div className="space-y-2">
+                           <Label htmlFor="triage-link">Customer Link (Send this to them)</Label>
+                            <div className="flex gap-2">
+                                <Input id="triage-link" readOnly value={triageLink} />
+                                <Button size="icon" type="button" onClick={handleCopyToClipboard}>
+                                    {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">The link is valid for 24 hours. AI results will appear here after the customer uploads photos.</p>
+                        </div>
+                      ) : (
+                        <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>
+                           {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
+                           Generate Photo Upload Link
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

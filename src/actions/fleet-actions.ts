@@ -12,6 +12,7 @@ import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows
 import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/troubleshoot-flow";
 import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
+import { triageJob as triageJobFlow } from "@/ai/flows/triage-job-flow";
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
@@ -56,6 +57,7 @@ import {
   SuggestScheduleTimeInputSchema,
   type SuggestScheduleTimeInput,
   type SuggestScheduleTimeOutput,
+  type TriageJobOutput,
 } from "@/types";
 
 
@@ -66,6 +68,7 @@ export async function allocateJobAction(
   input: AllocateJobActionInput
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = AllocateJobInputSchema.parse(input);
     const result = await allocateJobFlow(validatedInput);
     return { data: result, error: null };
@@ -82,6 +85,7 @@ export async function optimizeRoutesAction(
   input: OptimizeRoutesInput
 ): Promise<{ data: OptimizeRoutesOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = OptimizeRoutesInputSchema.parse(input);
     const result = await optimizeRoutesFlow(validatedInput);
     return { data: result, error: null };
@@ -100,6 +104,7 @@ export async function suggestJobSkillsAction(
   input: SuggestJobSkillsActionInput
 ): Promise<{ data: SuggestJobSkillsOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = SuggestJobSkillsInputSchema.parse(input);
     const result = await suggestJobSkillsFlow(validatedInput);
     return { data: result, error: null };
@@ -118,6 +123,7 @@ export async function suggestJobPriorityAction(
   input: SuggestJobPriorityActionInput
 ): Promise<{ data: SuggestJobPriorityOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = SuggestJobPriorityInputSchema.parse(input);
     const result = await suggestJobPriorityFlow(validatedInput);
     return { data: result, error: null };
@@ -214,6 +220,7 @@ export async function predictNextAvailableTechniciansAction(
   input: PredictNextAvailableTechniciansActionInput
 ): Promise<{ data: PredictNextAvailableTechniciansOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = PredictNextAvailableTechniciansInputSchema.parse(input);
     const result = await predictNextAvailableTechniciansFlow(validatedInput);
     return { data: result, error: null };
@@ -524,6 +531,7 @@ export async function checkScheduleHealthAction(
   { technicians, jobs }: { technicians: Technician[], jobs: Job[] }
 ): Promise<{ data: CheckScheduleHealthResult[] | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
     if (busyTechnicians.length === 0) {
       return { data: [], error: null };
@@ -586,6 +594,7 @@ export async function notifyCustomerAction(
   input: NotifyCustomerInput
 ): Promise<{ data: { message: string } | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = NotifyCustomerInputSchema.parse(input);
     
     // Have an AI generate the message for a more professional touch
@@ -741,6 +750,7 @@ export async function suggestNextAppointmentAction(
   input: SuggestNextAppointmentInput
 ): Promise<{ data: SuggestNextAppointmentOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = SuggestNextAppointmentInputSchema.parse(input);
     const result = await suggestNextAppointmentFlow(validatedInput);
     return { data: result, error: null };
@@ -759,6 +769,7 @@ export async function troubleshootEquipmentAction(
   input: TroubleshootEquipmentInput
 ): Promise<{ data: TroubleshootEquipmentOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = TroubleshootEquipmentInputSchema.parse(input);
     // In a real app, you might fetch a dynamic knowledge base from Firestore here.
     // For now, we'll use a hardcoded example.
@@ -901,6 +912,7 @@ export async function suggestScheduleTimeAction(
   input: SuggestScheduleTimeInput
 ): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const validatedInput = SuggestScheduleTimeInputSchema.parse(input);
     const result = await suggestScheduleTimeFlow(validatedInput);
     return { data: result, error: null };
@@ -964,4 +976,162 @@ export async function deleteJobAction(
     }
 }
     
+const GenerateTriageLinkInputSchema = z.object({
+    jobId: z.string(),
+    companyId: z.string(),
+    appId: z.string().min(1),
+});
+
+export async function generateTriageLinkAction(
+    input: z.infer<typeof GenerateTriageLinkInputSchema>
+): Promise<{ data: { triageUrl: string } | null; error: string | null }> {
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+        const { jobId, companyId, appId } = GenerateTriageLinkInputSchema.parse(input);
+
+        const token = crypto.randomUUID();
+        const expiresAt = addHours(new Date(), 24); // Link is valid for 24 hours
+
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
+        
+        const jobSnap = await getDoc(jobDocRef);
+        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+            return { data: null, error: "Job not found or you do not have permission to modify it." };
+        }
+
+        await updateDoc(jobDocRef, {
+            triageToken: token,
+            triageTokenExpiresAt: expiresAt.toISOString(),
+        });
+        
+        const triageUrl = `/triage/${token}?appId=${appId}`;
+
+        return { data: { triageUrl }, error: null };
+
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map((err) => err.message).join(', ') };
+        }
+        console.error("Error generating triage link:", e);
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        return { data: null, error: `Failed to generate link. ${errorMessage}` };
+    }
+}
+
+const GetTriageJobInfoInputSchema = z.object({
+  token: z.string().min(1),
+  appId: z.string().min(1),
+});
+
+export async function getTriageJobInfoAction(
+  input: z.infer<typeof GetTriageJobInfoInputSchema>
+): Promise<{ data: { jobTitle: string; customerName: string } | null; error: string | null }> {
+  try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+    const { token, appId } = GetTriageJobInfoInputSchema.parse(input);
+
+    const jobsQuery = query(
+      collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
+      where('triageToken', '==', token),
+      limit(1)
+    );
+    const jobSnapshot = await getDocs(jobsQuery);
+
+    if (jobSnapshot.empty) {
+      return { data: null, error: "This link is invalid or has expired." };
+    }
     
+    const job = jobSnapshot.docs[0].data() as Job;
+
+    if (job.triageTokenExpiresAt && new Date(job.triageTokenExpiresAt) < new Date()) {
+      return { data: null, error: "This link has expired." };
+    }
+
+    return { data: { jobTitle: job.title, customerName: job.customerName }, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map((err) => err.message).join(', ') };
+    }
+    console.error("Error getting triage info:", e);
+    return { data: null, error: 'Failed to retrieve job information.' };
+  }
+}
+
+const SubmitTriagePhotosInputSchema = z.object({
+  token: z.string().min(1),
+  appId: z.string().min(1),
+  photoDataUris: z.array(z.string()),
+});
+
+export async function submitTriagePhotosAction(
+  input: z.infer<typeof SubmitTriagePhotosInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+    const { token, appId, photoDataUris } = SubmitTriagePhotosInputSchema.parse(input);
+    
+    // 1. Validate Token & Get Job
+    const jobsQuery = query(collection(dbAdmin, `artifacts/${appId}/public/data/jobs`), where('triageToken', '==', token), limit(1));
+    const jobSnapshot = await getDocs(jobsQuery);
+    if (jobSnapshot.empty) return { error: "This link is invalid or has expired." };
+    
+    const jobDoc = jobSnapshot.docs[0];
+    const job = { id: jobDoc.id, ...jobDoc.data() } as Job;
+
+    if (job.triageTokenExpiresAt && new Date(job.triageTokenExpiresAt) < new Date()) {
+      return { error: "This link has expired." };
+    }
+    
+    // For simplicity, we'll store the data URIs directly on the job for the AI.
+    // In a production app, you would upload to storage and store URLs.
+
+    // 2. Call AI Triage Flow
+    const aiResult: TriageJobOutput = await triageJobFlow({
+      jobId: job.id,
+      jobDescription: job.description,
+      photoDataUris,
+    });
+    
+    // 3. Update Job Document with results
+    await updateDoc(jobDoc.ref, {
+      triageImages: photoDataUris, // Note: Storing base64 is not ideal for large images
+      aiIdentifiedModel: aiResult.identifiedModel || null,
+      aiSuggestedParts: aiResult.suggestedParts || [],
+      aiRepairGuide: aiResult.repairGuide || null,
+      triageToken: deleteField(), // Invalidate the token after use
+      triageTokenExpiresAt: deleteField(),
+      updatedAt: serverTimestamp(),
+    });
+
+    return { error: null };
+
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map((err) => err.message).join(', ') };
+    }
+    console.error("Error submitting triage photos:", e);
+    return { error: 'An unexpected error occurred.' };
+  }
+}
+
+```
+  </change>
+  <change>
+    <file>/src/ai/dev.ts</file>
+    <content><![CDATA[
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/optimize-routes.ts';
+import '@/ai/flows/allocate-job.ts';
+import '@/ai/flows/suggest-job-skills.ts';
+import '@/ai/flows/predict-next-technician.ts';
+import '@/ai/flows/suggest-job-priority.ts';
+import '@/ai/flows/predict-schedule-risk.ts';
+import '@/ai/flows/generate-customer-notification-flow.ts';
+import '@/ai/flows/suggest-next-appointment-flow.ts';
+import '@/ai/flows/suggest-schedule-time.ts';
+import '@/ai/flows/troubleshoot-flow.ts';
+import '@/ai/flows/estimate-travel-distance-flow.ts';
+import '@/ai/flows/summarize-ftfr-flow.ts';
+import '@/ai/flows/triage-job-flow.ts';

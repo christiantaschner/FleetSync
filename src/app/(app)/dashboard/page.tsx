@@ -17,7 +17,6 @@ import ScheduleCalendarView from './components/ScheduleCalendarView';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
-import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
@@ -59,9 +58,6 @@ export default function DashboardPage() {
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [selectedJobForAIAssign, setSelectedJobForAIAssign] = useState<Job | null>(null);
-  const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
-  
   const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
   const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
   const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
@@ -100,8 +96,7 @@ export default function DashboardPage() {
   const [searchAddressText, setSearchAddressText] = useState('');
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
 
-  const [isAddEditJobDialogOpen, setIsAddEditJobDialogOpen] = useState(false);
-  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
+  const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false);
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
@@ -119,16 +114,7 @@ export default function DashboardPage() {
   }, [jobFilterId]);
   
   const handleOpenAddJob = () => {
-    setSelectedJobForEdit(null);
-    setIsAddEditJobDialogOpen(true);
-  };
-  const handleOpenEditJob = (job: Job) => {
-    setSelectedJobForEdit(job);
-    setIsAddEditJobDialogOpen(true);
-  };
-  const handleCloseAddEditJobDialog = () => {
-    setIsAddEditJobDialogOpen(false);
-    setSelectedJobForEdit(null);
+    setIsAddJobDialogOpen(true);
   };
   
   const handleOpenEditTechnician = (technician: Technician) => {
@@ -496,18 +482,6 @@ export default function DashboardPage() {
     }
   };
   
-  const handleJobAddedOrUpdated = (updatedJob: Job, assignedTechnicianId?: string | null) => {
-    // onSnapshot handles this
-  };
-  const handleTechnicianAddedOrUpdated = (updatedTechnician: Technician) => {
-    // onSnapshot handles this
-  };
-  
-  const openAIAssignDialogForJob = (job: Job) => {
-    setSelectedJobForAIAssign(job);
-    setIsAIAssignDialogOpen(true);
-  };
-  
   const handleOpenChat = (job: Job) => {
     setSelectedChatJob(job);
     setIsChatOpen(true);
@@ -765,13 +739,12 @@ export default function DashboardPage() {
   return (
       <div className="flex flex-col gap-6">
        <AddEditJobDialog
-            isOpen={isAddEditJobDialogOpen}
-            onClose={handleCloseAddEditJobDialog}
-            job={selectedJobForEdit}
+            isOpen={isAddJobDialogOpen}
+            onClose={() => setIsAddJobDialogOpen(false)}
+            job={null}
             technicians={technicians}
             allSkills={allSkills}
             customers={customers}
-            onJobAddedOrUpdated={handleJobAddedOrUpdated}
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
         />
@@ -782,7 +755,6 @@ export default function DashboardPage() {
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills}
                 appId={appId}
-                onTechnicianAddedOrUpdated={handleTechnicianAddedOrUpdated}
             />
         )}
       <ShareTrackingDialog 
@@ -833,18 +805,6 @@ export default function DashboardPage() {
           setIsOpen={setIsHealthDialogOpen}
           healthResults={healthResults}
       />
-
-      {selectedJobForAIAssign && (
-        <SmartJobAllocationDialog
-          isOpen={isAIAssignDialogOpen}
-          setIsOpen={setIsAIAssignDialogOpen}
-          jobToAssign={selectedJobForAIAssign}
-          technicians={technicians}
-          onJobAssigned={(assignedJob, updatedTechnician) => {
-            setSelectedJobForAIAssign(null); 
-          }}
-        />
-      )}
 
       {isBatchReviewDialogOpen && (
           <BatchAssignmentReviewDialog
@@ -954,7 +914,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-col gap-4">
                   <div>
                       <CardTitle className="font-headline">Current Jobs</CardTitle>
-                      <CardDescription>{isAdmin ? "Manage and track all ongoing and pending jobs. Use 'Assign (AI)' for individual pending jobs or batch assign all." : "View and manage all jobs."}</CardDescription>
+                      <CardDescription>{isAdmin ? "Manage and track all ongoing and pending jobs." : "View and manage all jobs."}</CardDescription>
                   </div>
                   {jobFilterId && (
                     <Alert variant="default" className="flex items-center justify-between">
@@ -1045,11 +1005,8 @@ export default function DashboardPage() {
                 <JobListItem 
                   key={job.id} 
                   job={job}
-                  onAssignWithAI={openAIAssignDialogForJob}
                   onOpenChat={handleOpenChat}
                   onShareTracking={handleShareTracking}
-                  onEdit={handleOpenEditJob}
-                  canAssign={isAdmin}
                 />
               )) : (
                  <Alert className="border-primary/30 bg-primary/5">
@@ -1169,7 +1126,7 @@ export default function DashboardPage() {
                 defaultCenter={defaultMapCenter}
                 defaultZoom={4}
                 searchedLocation={searchedLocation}
-                onJobClick={handleOpenEditJob}
+                onJobClick={(job) => router.push(`/job/${job.id}`)}
                 onTechnicianClick={handleOpenEditTechnician}
               />
             </CardContent>
@@ -1178,3 +1135,5 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
+
+    

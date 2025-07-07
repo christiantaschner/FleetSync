@@ -4,7 +4,6 @@
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { stripe } from '@/lib/stripe';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import type { Company, StripeProduct } from '@/types';
 import type Stripe from 'stripe';
 
@@ -25,10 +24,10 @@ export async function createCheckoutSessionAction(
     const validatedInput = CreateCheckoutSessionInputSchema.parse(input);
     const { companyId, uid, email, priceId, quantity } = validatedInput;
 
-    const companyDocRef = doc(dbAdmin, 'companies', companyId);
-    const companyDocSnap = await getDoc(companyDocRef);
+    const companyDocRef = dbAdmin.collection('companies').doc(companyId);
+    const companyDocSnap = await companyDocRef.get();
 
-    if (!companyDocSnap.exists()) {
+    if (!companyDocSnap.exists) {
       throw new Error('Company not found.');
     }
     const company = companyDocSnap.data() as Company;
@@ -45,7 +44,7 @@ export async function createCheckoutSessionAction(
         },
       });
       stripeCustomerId = customer.id;
-      await updateDoc(companyDocRef, { stripeCustomerId });
+      await companyDocRef.update({ stripeCustomerId });
     }
     
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -79,7 +78,6 @@ export async function createCheckoutSessionAction(
   }
 }
 
-
 const CreatePortalSessionInputSchema = z.object({
   companyId: z.string(),
 });
@@ -94,10 +92,10 @@ export async function createPortalSessionAction(
         const validatedInput = CreatePortalSessionInputSchema.parse(input);
         const { companyId } = validatedInput;
 
-        const companyDocRef = doc(dbAdmin, 'companies', companyId);
-        const companyDocSnap = await getDoc(companyDocRef);
+        const companyDocRef = dbAdmin.collection('companies').doc(companyId);
+        const companyDocSnap = await companyDocRef.get();
 
-        if (!companyDocSnap.exists()) {
+        if (!companyDocSnap.exists) {
             throw new Error('Company not found.');
         }
 
@@ -138,17 +136,15 @@ export async function updateSubscriptionQuantityAction(
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, quantity } = UpdateSubscriptionQuantityInputSchema.parse(input);
 
-        const companyDocRef = doc(dbAdmin, 'companies', companyId);
-        const companyDocSnap = await getDoc(companyDocRef);
-        if (!companyDocSnap.exists()) {
-            // Not an error, just means company doesn't exist to update.
-            return { error: null };
+        const companyDocRef = dbAdmin.collection('companies').doc(companyId);
+        const companyDocSnap = await companyDocRef.get();
+        if (!companyDocSnap.exists) {
+            return { error: "Company not found." };
         }
 
         const company = companyDocSnap.data() as Company;
         if (!company.subscriptionId || company.subscriptionStatus !== 'active') {
-            // Not subscribed or not active, so no need to update quantity
-            return { error: null };
+            return { error: null }; // Not subscribed or not active, so no need to update quantity
         }
 
         const subscription = await stripe.subscriptions.retrieve(company.subscriptionId);
@@ -159,11 +155,9 @@ export async function updateSubscriptionQuantityAction(
         }
         
         if (subscription.items.data[0].quantity === quantity) {
-            // No change needed
-            return { error: null };
+            return { error: null }; // No change needed
         }
         
-        // Update the quantity on the existing subscription item
         await stripe.subscriptionItems.update(subscriptionItemId, {
             quantity,
             proration_behavior: 'create_prorations',
@@ -205,15 +199,13 @@ export async function getStripeProductsAction(): Promise<{
         } else if (price.billing_scheme === 'tiered' && price.tiers && price.tiers.length > 0 && price.tiers[0].unit_amount !== null) {
             unitAmount = price.tiers[0].unit_amount;
         } else if (price.billing_scheme === 'tiered' && !price.tiers) {
-            // This can happen, tiers might be null
-             unitAmount = null; // or handle as needed
+             unitAmount = null; 
         }
 
         if (unitAmount === null && price.billing_scheme !== 'tiered') {
              return null;
         }
         
-        // Handle tiered pricing where we just show the base price
         if(price.billing_scheme === 'tiered' && price.tiers && price.tiers[0].unit_amount) {
             unitAmount = price.tiers[0].unit_amount;
         }

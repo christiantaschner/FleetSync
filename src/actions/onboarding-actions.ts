@@ -3,13 +3,13 @@
 
 import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
-import { doc, writeBatch, serverTimestamp, collection } from 'firebase/firestore';
-import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
-import { PREDEFINED_PARTS } from '@/lib/parts';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
 import { addDays } from 'date-fns';
 import { stripe } from '@/lib/stripe';
 import type { Company } from '@/types';
+import * as admin from 'firebase-admin';
+import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
+import { PREDEFINED_PARTS } from '@/lib/parts';
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput,
@@ -26,12 +26,12 @@ export async function completeOnboardingAction(
     const { companyName, uid, numberOfTechnicians, companySpecialties } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
 
-    const batch = writeBatch(dbAdmin);
+    const batch = dbAdmin.batch();
 
     // 1. Create a Stripe Customer first
-    const userDocRef = doc(dbAdmin, 'users', uid);
-    const userSnap = await doc(dbAdmin, 'users', uid).get();
-    if (!userSnap.exists()) {
+    const userDocRef = dbAdmin.collection('users').doc(uid);
+    const userSnap = await userDocRef.get();
+    if (!userSnap.exists) {
         throw new Error('User document does not exist.');
     }
     const userEmail = userSnap.data()?.email;
@@ -50,13 +50,13 @@ export async function completeOnboardingAction(
     const stripeCustomerId = customer.id;
     
     // 2. Prepare Firestore documents
-    const companyRef = doc(dbAdmin, 'companies', companyId);
+    const companyRef = dbAdmin.collection('companies').doc(companyId);
     const trialEndsAt = addDays(new Date(), 30);
 
     batch.set(companyRef, {
       name: companyName,
       ownerId: uid,
-      createdAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       subscriptionStatus: 'trialing',
       trialEndsAt: trialEndsAt.toISOString(),
       stripeCustomerId: stripeCustomerId,
@@ -68,7 +68,7 @@ export async function completeOnboardingAction(
       onboardingStatus: 'completed',
     });
     
-    const skillsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/skills`);
+    const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
     const skillsToSeed = new Set<string>();
     companySpecialties.forEach(specialty => {
         const skillsForSpecialty = SKILLS_BY_SPECIALTY[specialty];
@@ -78,13 +78,13 @@ export async function completeOnboardingAction(
     });
 
     skillsToSeed.forEach(skillName => {
-        const newSkillRef = doc(skillsCollectionRef);
+        const newSkillRef = skillsCollectionRef.doc();
         batch.set(newSkillRef, { name: skillName, companyId: companyId });
     });
     
-    const partsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/parts`);
+    const partsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/parts`);
     PREDEFINED_PARTS.forEach(partName => {
-        const newPartRef = doc(partsCollectionRef);
+        const newPartRef = partsCollectionRef.doc();
         batch.set(newPartRef, { name: partName, companyId: companyId });
     });
     
@@ -101,8 +101,6 @@ export async function completeOnboardingAction(
       console.log(`Custom claims set for new company admin: ${uid}`);
     } catch(claimError) {
         console.error("Critical Error: Failed to set custom claims for new admin.", claimError);
-        // This is a critical failure. The user won't be able to access their company.
-        // In a production app, you might want to roll back the Firestore changes or queue a retry.
         return { sessionId: null, error: `Your company was created, but there was an error setting your permissions. Please contact support.` };
     }
     

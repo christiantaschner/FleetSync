@@ -3,8 +3,8 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { CompanySettingsSchema } from '@/types';
+import * as admin from 'firebase-admin';
 
 const UpdateCompanyInputSchema = z.object({
     companyId: z.string().min(1),
@@ -22,7 +22,7 @@ export async function updateCompanyAction(
     }
     const validatedInput = UpdateCompanyInputSchema.parse(input);
 
-    const companyDocRef = doc(dbAdmin, 'companies', validatedInput.companyId);
+    const companyDocRef = dbAdmin.collection('companies').doc(validatedInput.companyId);
 
     // Make sure to unpack the settings object correctly
     const updatePayload = {
@@ -33,10 +33,10 @@ export async function updateCompanyAction(
             businessHours: validatedInput.settings.businessHours,
             co2EmissionFactorKgPerKm: validatedInput.settings.co2EmissionFactorKgPerKm,
         },
-        updatedAt: serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
     
-    await updateDoc(companyDocRef, updatePayload);
+    await companyDocRef.update(updatePayload);
 
     return { error: null };
   } catch (e) {

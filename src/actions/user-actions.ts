@@ -3,8 +3,8 @@
 
 import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, writeBatch, limit, serverTimestamp, orderBy } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
+import * as admin from 'firebase-admin';
 
 const EnsureUserDocumentInputSchema = z.object({
   uid: z.string().min(1, 'User ID is required.'),
@@ -12,9 +12,6 @@ const EnsureUserDocumentInputSchema = z.object({
 });
 type EnsureUserDocumentInput = z.infer<typeof EnsureUserDocumentInputSchema>;
 
-/**
- * Ensures a user document exists in Firestore. Assigns superAdmin role and sets Custom Claims if applicable.
- */
 export async function ensureUserDocumentAction(
   input: EnsureUserDocumentInput
 ): Promise<{ error: string | null }> {
@@ -23,41 +20,40 @@ export async function ensureUserDocumentAction(
     const validatedInput = EnsureUserDocumentInputSchema.parse(input);
     const { uid, email } = validatedInput;
     
-    const userDocRef = doc(dbAdmin, 'users', uid);
-    const docSnap = await getDoc(userDocRef);
+    const userDocRef = dbAdmin.collection('users').doc(uid);
+    const docSnap = await userDocRef.get();
 
-    if (!docSnap.exists()) {
+    if (!docSnap.exists) {
       const isSuperAdmin = email === 'christian.taschner.ek@gmail.com';
       const role = isSuperAdmin ? 'superAdmin' : null;
       const companyId = isSuperAdmin ? 'fleetsync_ai_dev' : null;
 
-      await setDoc(userDocRef, {
+      await userDocRef.set({
         uid: uid,
         email: email,
         onboardingStatus: isSuperAdmin ? 'completed' : 'pending_creation',
         role,
         companyId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       
       if(isSuperAdmin) {
-          const companyRef = doc(dbAdmin, 'companies', 'fleetsync_ai_dev');
-          const companySnap = await getDoc(companyRef);
-          if(!companySnap.exists()) {
-              await setDoc(companyRef, {
+          const companyRef = dbAdmin.collection('companies').doc('fleetsync_ai_dev');
+          const companySnap = await companyRef.get();
+          if(!companySnap.exists) {
+              await companyRef.set({
                   name: "FleetSync AI (Dev)",
                   ownerId: uid,
                   subscriptionStatus: 'active',
-                  createdAt: serverTimestamp(),
-                  updatedAt: serverTimestamp(),
+                  createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
               });
           }
       }
     }
 
-    // --- CRITICAL: Sync Firestore state with Auth Custom Claims ---
-    const userProfileFromDb = (await getDoc(userDocRef)).data() as UserProfile;
+    const userProfileFromDb = (await userDocRef.get()).data() as UserProfile;
     const currentUser = await authAdmin.getUser(uid);
     const existingClaims = currentUser.customClaims || {};
     
@@ -73,7 +69,6 @@ export async function ensureUserDocumentAction(
       await authAdmin.setCustomUserClaims(uid, { ...existingClaims, ...claimsToSet });
       console.log(`Custom claims for user ${uid} synchronized:`, claimsToSet);
     }
-    // --- END CRITICAL PART ---
 
     return { error: null };
   } catch (e) {
@@ -95,8 +90,8 @@ export async function getCompanyUsersAction(
             return { data: [], error: null };
         }
 
-        const usersQuery = query(collection(dbAdmin, "users"), where("companyId", "==", companyId), orderBy("email"));
-        const querySnapshot = await getDocs(usersQuery);
+        const usersQuery = dbAdmin.collection("users").where("companyId", "==", companyId).orderBy("email");
+        const querySnapshot = await usersQuery.get();
         const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
 
         return { data: users, error: null };
@@ -122,23 +117,22 @@ export async function inviteUserAction(
     if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
 
-    const usersQuery = query(collection(dbAdmin, "users"), where("email", "==", email), limit(1));
-    const userSnapshot = await getDocs(usersQuery);
+    const usersQuery = await dbAdmin.collection("users").where("email", "==", email).limit(1).get();
 
-    if (userSnapshot.empty) {
+    if (usersQuery.empty) {
       return { error: "User with this email has not signed up yet. Please ask them to create an account first." };
     }
     
-    const userDoc = userSnapshot.docs[0];
+    const userDoc = usersQuery.docs[0];
     const userProfile = userDoc.data() as UserProfile;
 
     if (userProfile.companyId) {
       return { error: `User is already a member of another company.`};
     }
     
-    const batch = writeBatch(dbAdmin);
+    const batch = dbAdmin.batch();
 
-    const userDocRef = doc(dbAdmin, "users", userProfile.uid);
+    const userDocRef = dbAdmin.collection("users").doc(userProfile.uid);
     batch.update(userDocRef, {
         companyId,
         role,
@@ -146,9 +140,9 @@ export async function inviteUserAction(
     });
 
     if (role === 'technician') {
-        const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, userProfile.uid);
-        const techDocSnap = await getDoc(techDocRef);
-        if (!techDocSnap.exists()) {
+        const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(userProfile.uid);
+        const techDocSnap = await techDocRef.get();
+        if (!techDocSnap.exists) {
             batch.set(techDocRef, {
                 companyId: companyId,
                 name: userProfile.email.split('@')[0], 
@@ -160,8 +154,8 @@ export async function inviteUserAction(
                     longitude: 0,
                     address: "Not set",
                 },
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp(),
+                createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             });
         }
     }
@@ -199,14 +193,15 @@ export async function updateUserRoleAction(
     try {
         if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
         const { userId, companyId, newRole } = ManageUserRoleInputSchema.parse(input);
-        const userDocRef = doc(dbAdmin, "users", userId);
-        const userSnap = await getDoc(userDocRef);
+        
+        const userDocRef = dbAdmin.collection("users").doc(userId);
+        const userSnap = await userDocRef.get();
 
-        if (!userSnap.exists() || userSnap.data().companyId !== companyId) {
+        if (!userSnap.exists || userSnap.data()?.companyId !== companyId) {
             return { error: "User not found in this company." };
         }
 
-        await updateDoc(userDocRef, { role: newRole });
+        await userDocRef.update({ role: newRole });
 
         const user = await authAdmin.getUser(userId);
         await authAdmin.setCustomUserClaims(userId, {
@@ -222,7 +217,6 @@ export async function updateUserRoleAction(
     }
 }
 
-
 const RemoveUserFromCompanyInputSchema = z.object({
     userId: z.string(),
     companyId: z.string(),
@@ -237,14 +231,14 @@ export async function removeUserFromCompanyAction(
         if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
         const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
 
-        const userDocRef = doc(dbAdmin, "users", userId);
-        const userSnap = await getDoc(userDocRef);
+        const userDocRef = dbAdmin.collection("users").doc(userId);
+        const userSnap = await userDocRef.get();
 
-        if (!userSnap.exists() || userSnap.data().companyId !== companyId) {
+        if (!userSnap.exists || userSnap.data()?.companyId !== companyId) {
             return { error: "User not found in this company." };
         }
 
-        const batch = writeBatch(dbAdmin);
+        const batch = dbAdmin.batch();
 
         batch.update(userDocRef, {
             companyId: null,
@@ -252,9 +246,9 @@ export async function removeUserFromCompanyAction(
             onboardingStatus: 'pending_creation',
         });
         
-        const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, userId);
-        const techDocSnap = await getDoc(techDocRef);
-        if (techDocSnap.exists() && techDocSnap.data().companyId === companyId) {
+        const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(userId);
+        const techDocSnap = await techDocRef.get();
+        if (techDocSnap.exists && techDocSnap.data()?.companyId === companyId) {
             batch.delete(techDocRef);
         }
 

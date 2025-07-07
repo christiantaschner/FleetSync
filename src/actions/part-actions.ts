@@ -3,7 +3,6 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { collection, addDoc, deleteDoc, getDocs, query, orderBy, doc, where, getDoc } from 'firebase/firestore';
 
 // --- Get Parts ---
 const GetPartsInputSchema = z.object({
@@ -20,12 +19,9 @@ export async function getPartsAction(input: GetPartsInput): Promise<{ data: Part
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, appId } = GetPartsInputSchema.parse(input);
-        const partsQuery = query(
-            collection(dbAdmin, `artifacts/${appId}/public/data/parts`),
-            where("companyId", "==", companyId),
-            orderBy("name")
-        );
-        const querySnapshot = await getDocs(partsQuery);
+        const partsCollection = dbAdmin.collection(`artifacts/${appId}/public/data/parts`);
+        const partsQuery = partsCollection.where("companyId", "==", companyId).orderBy("name");
+        const querySnapshot = await partsQuery.get();
         const partsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
         return { data: partsData, error: null };
     } catch (e) {
@@ -47,15 +43,14 @@ export async function addPartAction(input: AddPartInput): Promise<{ data: { id: 
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { name, companyId, appId } = AddPartInputSchema.parse(input);
-        const partsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/parts`);
+        const partsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/parts`);
 
-        const existingPartQuery = query(partsCollectionRef, where("companyId", "==", companyId), where("name", "==", name.trim()));
-        const existingPartSnapshot = await getDocs(existingPartQuery);
-        if (!existingPartSnapshot.empty) {
+        const existingPartQuery = await partsCollectionRef.where("companyId", "==", companyId).where("name", "==", name.trim()).get();
+        if (!existingPartQuery.empty) {
             return { data: null, error: "This part already exists in the library." };
         }
 
-        const docRef = await addDoc(partsCollectionRef, { name: name.trim(), companyId });
+        const docRef = await partsCollectionRef.add({ name: name.trim(), companyId });
         return { data: { id: docRef.id }, error: null };
     } catch (e) {
         if (e instanceof z.ZodError) {
@@ -79,14 +74,14 @@ export async function deletePartAction(input: DeletePartInput): Promise<{ error:
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { partId, companyId, appId } = DeletePartInputSchema.parse(input);
-        const partDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/parts`, partId);
+        const partDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/parts`).doc(partId);
         
-        const docSnap = await getDoc(partDocRef);
-        if (!docSnap.exists() || docSnap.data().companyId !== companyId) {
+        const docSnap = await partDocRef.get();
+        if (!docSnap.exists || docSnap.data()?.companyId !== companyId) {
             return { error: "Part not found or you do not have permission to delete it." };
         }
 
-        await deleteDoc(partDocRef);
+        await partDocRef.delete();
         return { error: null };
     } catch (e) {
         console.error("Error deleting part:", e);

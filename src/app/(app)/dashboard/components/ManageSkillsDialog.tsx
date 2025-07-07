@@ -16,11 +16,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { useAuth } from '@/contexts/auth-context';
-import { getSkillsAction, addSkillAction, deleteSkillAction, type Skill } from '@/actions/skill-actions';
-import { writeBatch, collection, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getSkillsAction, addSkillAction, deleteSkillAction, seedSkillsAction, type Skill } from '@/actions/skill-actions';
 
 interface ManageSkillsDialogProps {
   isOpen: boolean;
@@ -44,7 +41,6 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     setIsLoading(true);
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if(result.error) {
-        // Do not show a toast for a fetch error, just show an empty state.
         console.error("Could not fetch skills library:", result.error);
         setSkills([]);
     } else {
@@ -106,30 +102,21 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     }
   };
 
-
   const handleSeedSkills = async () => {
-    if (!db || !userProfile?.companyId || !appId) return;
-
+    if (!userProfile?.companyId || !appId) return;
     setIsSubmitting(true);
-    try {
-        const batch = writeBatch(db);
-        const skillsCollectionRef = collection(db, `artifacts/${appId}/public/data/skills`);
-        
-        PREDEFINED_SKILLS.forEach(skillName => {
-            const docRef = doc(skillsCollectionRef);
-            batch.set(docRef, { name: skillName, companyId: userProfile.companyId });
-        });
+    
+    const result = await seedSkillsAction({ companyId: userProfile.companyId, appId });
 
-        await batch.commit();
-        toast({ title: "Success", description: `Seeded ${PREDEFINED_SKILLS.length} common skills.` });
-        await fetchSkills();
-        onSkillsUpdated();
-    } catch(error) {
-        console.error("Error seeding skills:", error);
-        toast({ title: "Error", description: "Could not seed skills library.", variant: "destructive" });
-    } finally {
-        setIsSubmitting(false);
+    if (result.error) {
+        toast({ title: "Error", description: `Could not seed skills library: ${result.error}`, variant: "destructive" });
+    } else {
+        toast({ title: "Success", description: `Seeded common skills.` });
+        await fetchSkills(); 
+        onSkillsUpdated(); 
     }
+    
+    setIsSubmitting(false);
   }
 
   return (

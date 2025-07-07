@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import * as admin from 'firebase-admin';
 
 // Base schema for technician data, omitting fields managed by the server
 const TechnicianDataSchema = z.object({
@@ -38,11 +38,11 @@ export async function updateTechnicianAction(
     }
     const { id, ...updateData } = UpdateTechnicianInputSchema.parse(input);
 
-    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, id);
+    const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(id);
 
-    await updateDoc(techDocRef, {
+    await techDocRef.update({
       ...updateData,
-      updatedAt: serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return { error: null };

@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { storage } from "@/lib/firebase"; // Keep client storage for now as API is different
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import * as admin from 'firebase-admin';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const SendChatMessageInputSchema = z.object({
@@ -54,11 +54,11 @@ export async function sendChatMessageAction(
             receiverId: input.receiverId,
             text: input.text,
             imageUrl: imageUrl,
-            timestamp: serverTimestamp(),
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
             isRead: false,
         };
 
-        await addDoc(collection(dbAdmin, `artifacts/${appId}/public/data/chatMessages`), messageData);
+        await dbAdmin.collection(`artifacts/${appId}/public/data/chatMessages`).add(messageData);
         
         return { error: null };
     } catch (e) {

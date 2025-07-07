@@ -2,10 +2,9 @@
 "use server";
 
 import { z } from "zod";
-import { getDbAdmin } from '@/lib/firebase-admin';
-import { storage } from "@/lib/firebase"; 
+import { dbAdmin } from '@/lib/firebase-admin';
+import { getStorage } from 'firebase-admin/storage';
 import * as admin from 'firebase-admin';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const SendChatMessageInputSchema = z.object({
     jobId: z.string(),
@@ -18,32 +17,34 @@ const SendChatMessageInputSchema = z.object({
     appId: z.string().min(1, 'App ID is required.'),
 });
 
-type SendChatMessageInput = {
-    jobId: string;
-    companyId: string;
-    senderId: string;
-    senderName: string;
-    receiverId: string;
-    text: string;
-    attachment?: File;
-    appId: string;
-};
+type SendChatMessageInput = z.infer<typeof SendChatMessageInputSchema>;
 
 export async function sendChatMessageAction(
   input: SendChatMessageInput
 ): Promise<{ error: string | null }> {
     try {
-        const dbAdmin = getDbAdmin();
-        if (!storage) throw new Error("Firebase Storage has not been initialized.");
+        if (!dbAdmin) throw new Error("Firebase Admin SDK has not been initialized.");
         
         const { appId, ...messageInput } = SendChatMessageInputSchema.parse(input);
 
         let imageUrl: string | null = null;
 
-        if (input.attachment) {
-            const attachmentRef = ref(storage, `chat-attachments/${messageInput.jobId}/${Date.now()}-${messageInput.attachment.name}`);
-            await uploadBytes(attachmentRef, input.attachment);
-            imageUrl = await getDownloadURL(attachmentRef);
+        if (input.attachment && input.attachment.size > 0) {
+            const bucket = getStorage().bucket(); // Get default bucket
+            const fileBuffer = await input.attachment.arrayBuffer();
+            const destination = `chat-attachments/${messageInput.jobId}/${Date.now()}-${input.attachment.name}`;
+            
+            const fileUpload = bucket.file(destination);
+            
+            await fileUpload.save(Buffer.from(fileBuffer), {
+                metadata: {
+                    contentType: input.attachment.type,
+                },
+            });
+            
+            // Make the file publicly readable to get a permanent URL
+            await fileUpload.makePublic();
+            imageUrl = fileUpload.publicUrl();
         }
 
         const messageData = {

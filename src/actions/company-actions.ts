@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { getDbAdmin } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import { CompanySettingsSchema } from '@/types';
 import * as admin from 'firebase-admin';
 
@@ -17,7 +17,7 @@ export async function updateCompanyAction(
   input: UpdateCompanyInput
 ): Promise<{ error: string | null }> {
   try {
-    const dbAdmin = getDbAdmin();
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const validatedInput = UpdateCompanyInputSchema.parse(input);
 
     const companyDocRef = dbAdmin.collection('companies').doc(validatedInput.companyId);

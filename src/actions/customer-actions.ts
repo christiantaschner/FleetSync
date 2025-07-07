@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { getDbAdmin } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import type { Job, Technician, PublicTrackingInfo } from '@/types';
 import * as admin from 'firebase-admin';
 
@@ -23,7 +23,7 @@ export async function addEquipmentAction(
   input: AddEquipmentInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
-    const dbAdmin = getDbAdmin();
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const validatedInput = AddEquipmentInputSchema.parse(input);
     const { appId, ...equipmentData } = validatedInput; 
 
@@ -56,7 +56,7 @@ export async function getTrackingInfoAction(
   input: GetTrackingInfoInput
 ): Promise<{ data: PublicTrackingInfo | null; error: string | null }> {
   try {
-    const dbAdmin = getDbAdmin();
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const { token, appId } = GetTrackingInfoInputSchema.parse(input);
 
     const jobsQuery = dbAdmin.collection(`artifacts/${appId}/public/data/jobs`)
@@ -135,19 +135,11 @@ export async function addCustomerAction(
   input: AddCustomerInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
-    const dbAdmin = getDbAdmin();
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const validatedInput = AddCustomerInputSchema.parse(input);
     const { appId, companyId, ...customerData } = validatedInput;
 
     const customersCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/customers`);
-    
-    const duplicateChecks = [customersCollectionRef.where("name", "==", customerData.name)];
-    if (customerData.phone) {
-      duplicateChecks.push(customersCollectionRef.where("phone", "==", customerData.phone));
-    }
-    if (customerData.email) {
-        duplicateChecks.push(customersCollectionRef.where("email", "==", customerData.email));
-    }
     
     const nameQuery = customersCollectionRef
         .where("companyId", "==", companyId)

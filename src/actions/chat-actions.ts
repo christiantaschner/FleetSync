@@ -2,8 +2,7 @@
 "use server";
 
 import { z } from "zod";
-import { dbAdmin } from '@/lib/firebase-admin';
-import { getStorage } from 'firebase-admin/storage';
+import { dbAdmin, storageAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 
 const SendChatMessageInputSchema = z.object({
@@ -23,14 +22,14 @@ export async function sendChatMessageAction(
   input: SendChatMessageInput
 ): Promise<{ error: string | null }> {
     try {
-        if (!dbAdmin) throw new Error("Firebase Admin SDK has not been initialized.");
+        if (!dbAdmin || !storageAdmin) throw new Error("Firebase Admin SDK has not been initialized.");
         
         const { appId, ...messageInput } = SendChatMessageInputSchema.parse(input);
 
         let imageUrl: string | null = null;
 
         if (input.attachment && input.attachment.size > 0) {
-            const bucket = getStorage().bucket(); // Get default bucket
+            const bucket = storageAdmin.bucket(); // Use the initialized storage admin
             const fileBuffer = await input.attachment.arrayBuffer();
             const destination = `chat-attachments/${messageInput.jobId}/${Date.now()}-${input.attachment.name}`;
             

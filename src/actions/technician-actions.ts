@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { getDbAdmin } from '@/lib/firebase-admin';
+import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 
 // Base schema for technician data, omitting fields managed by the server
@@ -32,7 +32,7 @@ export async function updateTechnicianAction(
   appId: string
 ): Promise<{ error: string | null }> {
   try {
-    const dbAdmin = getDbAdmin();
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     if (!appId) {
       throw new Error('App ID is required');
     }

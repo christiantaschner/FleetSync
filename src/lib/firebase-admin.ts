@@ -3,9 +3,11 @@ import * as admin from 'firebase-admin';
 
 // This pattern ensures the SDK is initialized only once.
 if (admin.apps.length === 0) {
-    // Explicitly providing the projectId can resolve auth issues in some serverless environments
-    // where the default project is not automatically inferred.
+    // Explicitly configure with Application Default Credentials.
+    // This is the standard for Google Cloud environments and helps prevent
+    // authentication conflicts with other Google SDKs like Genkit.
     admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
         projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
 }

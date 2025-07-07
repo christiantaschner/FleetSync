@@ -3,13 +3,23 @@ import * as admin from 'firebase-admin';
 
 // This pattern ensures the SDK is initialized only once.
 if (admin.apps.length === 0) {
-    // Explicitly configure with Application Default Credentials.
-    // This is the standard for Google Cloud environments and helps prevent
-    // authentication conflicts with other Google SDKs like Genkit.
-    admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    });
+    try {
+        admin.initializeApp({
+            credential: admin.credential.applicationDefault(),
+            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        });
+        console.log("Firebase Admin SDK initialized successfully with explicit Project ID.");
+    } catch (error: any) {
+        console.error(`
+        ---
+        CRITICAL: Firebase Admin SDK initialization failed.
+        ---
+        Error Message: ${error.message}
+        This is a fatal error. Server-side Firebase services (Firestore, Auth) will not be available.
+        Please check your server environment configuration and credentials.
+        ---
+        `);
+    }
 }
 
 export const dbAdmin = admin.firestore();

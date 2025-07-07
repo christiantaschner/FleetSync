@@ -3,8 +3,9 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { PREDEFINED_SKILLS } from '@/lib/skills';
+import { PREDEFINED_SKILLS, SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import * as admin from 'firebase-admin';
+import type { Company } from '@/types';
 
 // --- Get Skills ---
 const GetSkillsInputSchema = z.object({
@@ -136,12 +137,45 @@ export async function seedSkillsAction(
     }
     const { companyId, appId } = SeedSkillsInputSchema.parse(input);
 
+    const companyDocRef = dbAdmin.collection('companies').doc(companyId);
+    const companySnap = await companyDocRef.get();
+    if (!companySnap.exists) {
+        return { error: "Company not found." };
+    }
+    const companyData = companySnap.data() as Company;
+    const specialties = companyData.settings?.companySpecialties;
+
+    let skillsToSeed: string[] = [];
+    if (specialties && specialties.length > 0) {
+        const skillsSet = new Set<string>();
+        specialties.forEach(specialty => {
+            const skillsForSpecialty = SKILLS_BY_SPECIALTY[specialty];
+            if (skillsForSpecialty) {
+                skillsForSpecialty.forEach(skill => skillsSet.add(skill));
+            }
+        });
+        skillsToSeed = Array.from(skillsSet);
+    } else {
+        // Fallback to all predefined skills if no specialties are set
+        skillsToSeed = [...PREDEFINED_SKILLS];
+    }
+    
+    if (skillsToSeed.length === 0) {
+        return { error: "No skills found for the selected company specialties." };
+    }
+
     const batch = dbAdmin.batch();
     const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
 
-    PREDEFINED_SKILLS.forEach(skillName => {
-      const newSkillRef = skillsCollectionRef.doc();
-      batch.set(newSkillRef, { name: skillName, companyId });
+    // Fetch existing skills to avoid duplicates
+    const existingSkillsQuery = await skillsCollectionRef.where("companyId", "==", companyId).get();
+    const existingSkillNames = new Set(existingSkillsQuery.docs.map(doc => doc.data().name));
+
+    skillsToSeed.forEach(skillName => {
+      if (!existingSkillNames.has(skillName)) {
+        const newSkillRef = skillsCollectionRef.doc();
+        batch.set(newSkillRef, { name: skillName, companyId });
+      }
     });
 
     await batch.commit();

@@ -14,8 +14,9 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 
 const FormSchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters.'),
@@ -27,6 +28,8 @@ type CompanyFormValues = z.infer<typeof FormSchema>;
 interface CompanySettingsFormProps {
   company: Company;
 }
+
+const specialties = Object.keys(SKILLS_BY_SPECIALTY);
 
 const curatedTimezones = [
   // North America
@@ -75,7 +78,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
       { dayOfWeek: "Sunday", isOpen: false, startTime: "09:00", endTime: "12:00" },
   ] as const;
 
-  const { control, register, handleSubmit, formState: { errors } } = useForm<CompanyFormValues>({
+  const { control, register, handleSubmit, formState: { errors }, setValue } = useForm<CompanyFormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       name: company.name || '',
@@ -86,6 +89,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
             ? company.settings.businessHours 
             : defaultBusinessHours,
         co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? undefined,
+        companySpecialties: company.settings?.companySpecialties || [],
       },
     },
   });
@@ -94,6 +98,13 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
     control,
     name: "settings.businessHours",
   });
+
+  const emissionPresets = [
+    { label: 'Average Diesel Van', value: '0.298' },
+    { label: 'Average Gasoline Van', value: '0.266' },
+    { label: 'Average Hybrid Van', value: '0.150' },
+    { label: 'Electric Vehicle', value: '0' },
+  ];
 
   const onSubmit = async (data: CompanyFormValues) => {
     setIsSubmitting(true);
@@ -139,19 +150,63 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
       <Separator />
 
       <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><ListChecks/> Company Specialties</h3>
+        <p className="text-sm text-muted-foreground">Select all that apply. This will customize features like the "Seed Skills" function.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-4">
+            {specialties.map((item) => (
+                <Controller
+                    key={item}
+                    name="settings.companySpecialties"
+                    control={control}
+                    render={({ field }) => {
+                        return (
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={item}
+                                    checked={field.value?.includes(item)}
+                                    onCheckedChange={(checked) => {
+                                        return checked
+                                            ? field.onChange([...(field.value || []), item])
+                                            : field.onChange(field.value?.filter((value) => value !== item));
+                                    }}
+                                />
+                                <Label htmlFor={item} className="font-normal">{item}</Label>
+                            </div>
+                        );
+                    }}
+                />
+            ))}
+        </div>
+        {errors.settings?.companySpecialties && <p className="text-sm text-destructive mt-1">{errors.settings.companySpecialties.message}</p>}
+      </div>
+
+      <Separator />
+
+      <div className="space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2"><Leaf/> Environmental Settings</h3>
         <div className="space-y-2">
-            <Label htmlFor="co2EmissionFactorKgPerKm">CO₂ Emission Factor (kg/km)</Label>
-            <Input
-                id="co2EmissionFactorKgPerKm"
-                type="number"
-                step="0.001"
-                placeholder="e.g., 0.192 for diesel, 0 for electric"
-                {...register('settings.co2EmissionFactorKgPerKm', { valueAsNumber: true })}
-            />
-            <p className="text-sm text-muted-foreground">
-                Enter your fleet's average CO₂ emission factor. For electric vehicles, enter 0.
-            </p>
+          <Label htmlFor="co2EmissionFactorKgPerKm">CO₂ Emission Factor (kg/km)</Label>
+          <Select onValueChange={(value) => setValue('settings.co2EmissionFactorKgPerKm', parseFloat(value), { shouldValidate: true })}>
+            <SelectTrigger id="emission-presets">
+              <SelectValue placeholder="Select a vehicle type for suggestions..." />
+            </SelectTrigger>
+            <SelectContent>
+              {emissionPresets.map(preset => (
+                <SelectItem key={preset.label} value={preset.value}>{preset.label} ({preset.value} kg/km)</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            id="co2EmissionFactorKgPerKm"
+            type="number"
+            step="0.001"
+            className="mt-2"
+            placeholder="Or enter a custom value..."
+            {...register('settings.co2EmissionFactorKgPerKm', { valueAsNumber: true })}
+          />
+          <p className="text-sm text-muted-foreground">
+            Select a preset or enter your fleet's average CO₂ emission factor. For electric vehicles, use 0.
+          </p>
         </div>
       </div>
 

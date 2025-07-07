@@ -53,14 +53,19 @@ export async function completeOnboardingAction(
     const companyRef = dbAdmin.collection('companies').doc(companyId);
     const trialEndsAt = addDays(new Date(), 30);
 
-    batch.set(companyRef, {
-      name: companyName,
-      ownerId: uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      subscriptionStatus: 'trialing',
-      trialEndsAt: trialEndsAt.toISOString(),
-      stripeCustomerId: stripeCustomerId,
-    });
+    const companyData: Partial<Company> & { createdAt: any; settings?: any } = {
+        name: companyName,
+        ownerId: uid,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        subscriptionStatus: 'trialing',
+        trialEndsAt: trialEndsAt.toISOString(),
+        stripeCustomerId: stripeCustomerId,
+        settings: {
+            companySpecialties: companySpecialties,
+        }
+    };
+
+    batch.set(companyRef, companyData);
     
     batch.update(userDocRef, {
       companyId: companyId,

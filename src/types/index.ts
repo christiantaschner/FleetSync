@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -31,6 +32,7 @@ export const CompanySettingsSchema = z.object({
   timezone: z.string().optional(),
   businessHours: z.array(BusinessDaySchema).length(7).optional(),
   co2EmissionFactorKgPerKm: z.number().optional().describe("Custom CO2 emission factor in kg per km. Set to 0 for electric fleets."),
+  companySpecialties: z.array(z.string()).optional().describe("A list of the company's areas of expertise, e.g., 'Plumbing', 'HVAC'."),
 });
 export type CompanySettings = z.infer<typeof CompanySettingsSchema>;
 

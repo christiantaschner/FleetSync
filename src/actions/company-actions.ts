@@ -6,6 +6,11 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { CompanySettingsSchema } from '@/types';
 import * as admin from 'firebase-admin';
 
+const FormSchema = z.object({
+  name: z.string().min(2, 'Company name must be at least 2 characters.'),
+  settings: CompanySettingsSchema,
+});
+
 const UpdateCompanyInputSchema = z.object({
     companyId: z.string().min(1),
     name: z.string().min(2, 'Company name must be at least 2 characters.'),
@@ -32,6 +37,7 @@ export async function updateCompanyAction(
             timezone: validatedInput.settings.timezone,
             businessHours: validatedInput.settings.businessHours,
             co2EmissionFactorKgPerKm: validatedInput.settings.co2EmissionFactorKgPerKm,
+            companySpecialties: validatedInput.settings.companySpecialties || [],
         },
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };

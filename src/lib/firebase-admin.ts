@@ -1,14 +1,15 @@
 
 import * as admin from 'firebase-admin';
 
-// This pattern ensures the SDK is initialized only once. It initializes the
-// default app if no apps exist, which is the most common and robust pattern
-// for serverless environments where module loading can be complex.
+// This pattern ensures the SDK is initialized only once.
 if (admin.apps.length === 0) {
-    admin.initializeApp();
+    // Explicitly providing the projectId can resolve auth issues in some serverless environments
+    // where the default project is not automatically inferred.
+    admin.initializeApp({
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    });
 }
 
-// Get the services from the default app instance.
 export const dbAdmin = admin.firestore();
 export const authAdmin = admin.auth();
 export const storageAdmin = admin.storage();

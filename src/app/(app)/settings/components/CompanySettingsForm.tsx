@@ -88,7 +88,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         businessHours: company.settings?.businessHours && company.settings.businessHours.length === 7 
             ? company.settings.businessHours 
             : defaultBusinessHours,
-        co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? undefined,
+        co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? 0.266,
         companySpecialties: company.settings?.companySpecialties || [],
       },
     },

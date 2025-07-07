@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ChatCard from './components/ChatCard';
 import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
-import { calculateTravelMetricsAction } from '@/actions/fleet-actions';
+import { calculateTravelMetricsAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import ChecklistCard from './components/ChecklistCard';

@@ -8,19 +8,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Job, Technician, JobStatus, JobPriority, AITechnician, ProfileChangeRequest, Location, Customer } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
 import ScheduleCalendarView from './components/ScheduleCalendarView';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, orderBy, query, doc, updateDoc, serverTimestamp, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, doc, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
-import { allocateJobAction, AllocateJobActionInput, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput, handleTechnicianUnavailabilityAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/fleet-actions";
+import { handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
+import { allocateJobAction, predictNextAvailableTechniciansAction, checkScheduleHealthAction, type PredictNextAvailableTechniciansActionInput, type CheckScheduleHealthResult, type AllocateJobActionInput } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -44,8 +45,6 @@ const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
 const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
-
-type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
 
 export default function DashboardPage() {
   const { user, userProfile, company, loading: authLoading } = useAuth();

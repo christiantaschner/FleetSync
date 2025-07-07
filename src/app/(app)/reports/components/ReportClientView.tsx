@@ -40,7 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { summarizeFtfrAction } from "@/actions/report-actions";
+import { summarizeFtfrAction } from "@/actions/ai-actions";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";

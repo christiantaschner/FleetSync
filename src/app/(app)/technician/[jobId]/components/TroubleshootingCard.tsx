@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, BookOpen, AlertTriangle, Sparkles, Send, Paperclip, X } from 'lucide-react';
-import { troubleshootEquipmentAction } from '@/actions/fleet-actions';
+import { troubleshootEquipmentAction } from '@/actions/ai-actions';
 import type { TroubleshootEquipmentOutput } from '@/types';
 import Image from 'next/image';
 

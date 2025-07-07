@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { suggestNextAppointmentAction } from '@/actions/fleet-actions';
+import { suggestNextAppointmentAction } from '@/actions/ai-actions';
 import type { SuggestNextAppointmentOutput, Contract } from '@/types';
 import { Loader2, Sparkles, Copy, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

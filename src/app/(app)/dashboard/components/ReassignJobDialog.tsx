@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { allocateJobAction, type AllocateJobActionInput, reassignJobAction } from "@/actions/fleet-actions";
+import { allocateJobAction, type AllocateJobActionInput } from "@/actions/ai-actions";
+import { reassignJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Loader2, Sparkles, UserCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
@@ -42,6 +43,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     const [isConfirming, setIsConfirming] = useState(false);
     const [suggestion, setSuggestion] = useState<AllocateJobOutput | null>(null);
     const [suggestedTech, setSuggestedTech] = useState<Technician | null>(null);
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const getSuggestion = useCallback(async () => {
         setIsLoadingAI(true);
@@ -97,14 +99,15 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     }, [isOpen, getSuggestion]);
 
     const handleConfirm = async () => {
-        if (!suggestedTech || !userProfile?.companyId) return;
+        if (!suggestedTech || !userProfile?.companyId || !appId) return;
         setIsConfirming(true);
 
         const result = await reassignJobAction({
             companyId: userProfile.companyId,
             jobId: jobToReassign.id,
             newTechnicianId: suggestedTech.id,
-            reason: `Job at risk of delay. Reassigned from another technician.`
+            reason: `Job at risk of delay. Reassigned from another technician.`,
+            appId,
         });
         
         setIsConfirming(false);

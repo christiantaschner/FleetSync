@@ -29,9 +29,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, AITechnician, Customer } from '@/types';
+import type { Job, JobPriority, JobStatus, Technician, Customer } from '@/types';
 import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2, FilePenLine, Link as LinkIcon, Copy, Check } from 'lucide-react';
-import { allocateJobAction, AllocateJobActionInput, suggestJobSkillsAction, SuggestJobSkillsActionInput, suggestScheduleTimeAction, type SuggestScheduleTimeInput, deleteJobAction, generateTriageLinkAction } from "@/actions/fleet-actions";
+import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput } from "@/actions/ai-actions";
+import { deleteJobAction, generateTriageLinkAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';

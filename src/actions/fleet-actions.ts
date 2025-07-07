@@ -685,10 +685,12 @@ export async function generateRecurringJobsAction(
     const { companyId, untilDate, appId } = GenerateRecurringJobsInputSchema.parse(input);
     const targetDate = new Date(untilDate);
 
-    const contractsQuery = query(collection(dbAdmin, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), where("isActive", "==", true), orderBy("customerName"));
+    const contractsQuery = query(collection(dbAdmin, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId));
     const querySnapshot = await getDocs(contractsQuery);
     
-    const contracts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+    const allContracts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+    const contracts = allContracts.filter(c => c.isActive === true).sort((a,b) => a.customerName.localeCompare(b.customerName));
+
     const batch = writeBatch(dbAdmin);
     let jobsCreated = 0;
     const jobsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/jobs`);
@@ -854,25 +856,27 @@ export async function calculateTravelMetricsAction(
     const companyData = companySnap.data() as Company;
     const emissionFactor = companyData?.settings?.co2EmissionFactorKgPerKm ?? DEFAULT_EMISSIONS_KG_PER_KM;
 
-    // Find the previously completed job for this technician on the same day
-    const completedDate = new Date(completedJob.completedAt);
-    const startOfDay = new Date(completedDate.setHours(0, 0, 0, 0)).toISOString();
-    
+    // Broad query that should not require a custom index
     const q = query(
       collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
-      where("companyId", "==", companyId),
-      where("assignedTechnicianId", "==", technicianId),
-      where("status", "==", "Completed"),
-      where("completedAt", ">=", startOfDay),
-      where("completedAt", "<", completedJob.completedAt),
-      orderBy("completedAt", "desc"),
-      limit(1)
+      where("assignedTechnicianId", "==", technicianId)
     );
-    const prevJobsSnap = await getDocs(q);
+    const jobsSnap = await getDocs(q);
+
+    // Filter and sort in memory to find the immediately preceding job on the same day
+    const prevJob = jobsSnap.docs
+      .map(doc => doc.data() as Job)
+      .filter(job => 
+        job.status === "Completed" && 
+        job.completedAt &&
+        new Date(job.completedAt).getTime() < new Date(completedJob.completedAt!).getTime() &&
+        new Date(job.completedAt).getTime() >= new Date(new Date(completedJob.completedAt).setHours(0, 0, 0, 0)).getTime()
+      )
+      .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())[0];
+
     
     let startLocation: Location;
-    if (!prevJobsSnap.empty) {
-      const prevJob = prevJobsSnap.docs[0].data() as Job;
+    if (prevJob) {
       startLocation = prevJob.location;
     } else {
       // First job of the day, use technician's home base
@@ -1113,5 +1117,4 @@ export async function submitTriagePhotosAction(
     return { error: 'An unexpected error occurred.' };
   }
 }
-
     

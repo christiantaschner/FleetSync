@@ -90,9 +90,11 @@ export async function getCompanyUsersAction(
             return { data: [], error: null };
         }
 
-        const usersQuery = dbAdmin.collection("users").where("companyId", "==", companyId).orderBy("email");
+        const usersQuery = dbAdmin.collection("users").where("companyId", "==", companyId);
         const querySnapshot = await usersQuery.get();
         const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
+
+        users.sort((a,b) => (a.email || '').localeCompare(b.email || ''));
 
         return { data: users, error: null };
     } catch(e) {

@@ -20,9 +20,12 @@ export async function getPartsAction(input: GetPartsInput): Promise<{ data: Part
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, appId } = GetPartsInputSchema.parse(input);
         const partsCollection = dbAdmin.collection(`artifacts/${appId}/public/data/parts`);
-        const partsQuery = partsCollection.where("companyId", "==", companyId).orderBy("name");
+        const partsQuery = partsCollection.where("companyId", "==", companyId);
         const querySnapshot = await partsQuery.get();
         const partsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
+        
+        partsData.sort((a, b) => a.name.localeCompare(b.name));
+
         return { data: partsData, error: null };
     } catch (e) {
         console.error("Error fetching parts:", e);

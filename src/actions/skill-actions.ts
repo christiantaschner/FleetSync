@@ -23,11 +23,13 @@ export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Sk
         const { companyId, appId } = GetSkillsInputSchema.parse(input);
         
         const skillsCollection = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
-        const skillsQuery = skillsCollection.where("companyId", "==", companyId).orderBy("name");
+        const skillsQuery = skillsCollection.where("companyId", "==", companyId);
         
         const querySnapshot = await skillsQuery.get();
         const skillsData = querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name as string }));
         
+        skillsData.sort((a,b) => a.name.localeCompare(b.name));
+
         return { data: skillsData, error: null };
     } catch (e) {
         console.error("Error fetching skills:", e);

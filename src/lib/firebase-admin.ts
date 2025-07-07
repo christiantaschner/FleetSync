@@ -10,11 +10,10 @@ let storageAdmin: admin.storage.Storage | null = null;
 try {
     console.log("firebase_admin.ts: Checking if admin app is already initialized.");
     if (admin.apps.length === 0) {
-        console.log("firebase_admin.ts: Initializing Firebase Admin SDK...");
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault(),
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        });
+        console.log("firebase_admin.ts: Initializing Firebase Admin SDK with default credentials...");
+        // In a Google Cloud environment (like App Hosting), initializeApp() with no arguments
+        // automatically finds the project's service account credentials. This is the most robust method.
+        admin.initializeApp();
         console.log("firebase_admin.ts: Firebase Admin SDK initialized successfully.");
     } else {
         console.log("firebase_admin.ts: Firebase Admin SDK already initialized.");

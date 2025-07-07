@@ -894,8 +894,8 @@ export default function DashboardPage() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="w-full overflow-x-auto sm:overflow-visible">
-            <TabsList className={cn("mb-4 grid w-full", isAdmin ? "grid-cols-4" : "grid-cols-3")}>
+        <div className="w-full overflow-x-auto">
+            <TabsList className={cn("mb-4", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
                 <TabsTrigger value="jobs">Job List</TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 {isAdmin && (
@@ -1135,5 +1135,3 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
-
-    

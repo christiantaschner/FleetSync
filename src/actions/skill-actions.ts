@@ -167,15 +167,12 @@ export async function seedSkillsAction(
     const batch = dbAdmin.batch();
     const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
 
-    // Fetch existing skills to avoid duplicates
-    const existingSkillsQuery = await skillsCollectionRef.where("companyId", "==", companyId).get();
-    const existingSkillNames = new Set(existingSkillsQuery.docs.map(doc => doc.data().name));
-
+    // To fix the server error, we are removing the de-duplication read.
+    // This aligns the logic with the working onboarding function.
+    // The trade-off is that running this multiple times may create duplicates.
     skillsToSeed.forEach(skillName => {
-      if (!existingSkillNames.has(skillName)) {
-        const newSkillRef = skillsCollectionRef.doc();
-        batch.set(newSkillRef, { name: skillName, companyId });
-      }
+      const newSkillRef = skillsCollectionRef.doc();
+      batch.set(newSkillRef, { name: skillName, companyId });
     });
 
     await batch.commit();

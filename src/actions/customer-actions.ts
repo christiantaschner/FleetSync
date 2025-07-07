@@ -2,7 +2,7 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin } from '@/lib/firebase-admin';
+import { getDbAdmin } from '@/lib/firebase-admin';
 import type { Job, Technician, PublicTrackingInfo } from '@/types';
 import * as admin from 'firebase-admin';
 
@@ -23,9 +23,7 @@ export async function addEquipmentAction(
   input: AddEquipmentInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
-    if (!dbAdmin) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-    }
+    const dbAdmin = getDbAdmin();
     const validatedInput = AddEquipmentInputSchema.parse(input);
     const { appId, ...equipmentData } = validatedInput; 
 
@@ -58,9 +56,7 @@ export async function getTrackingInfoAction(
   input: GetTrackingInfoInput
 ): Promise<{ data: PublicTrackingInfo | null; error: string | null }> {
   try {
-    if (!dbAdmin) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-    }
+    const dbAdmin = getDbAdmin();
     const { token, appId } = GetTrackingInfoInputSchema.parse(input);
 
     const jobsQuery = dbAdmin.collection(`artifacts/${appId}/public/data/jobs`)
@@ -112,6 +108,7 @@ export async function getTrackingInfoAction(
         technicianPhoneNumber: technician.phone || null,
         currentTechnicianLocation: technician.location || null,
         etaToJob: null,
+        customerName: job.customerName,
     };
 
     return { data: publicTrackingInfo, error: null };
@@ -138,9 +135,7 @@ export async function addCustomerAction(
   input: AddCustomerInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   try {
-    if (!dbAdmin) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-    }
+    const dbAdmin = getDbAdmin();
     const validatedInput = AddCustomerInputSchema.parse(input);
     const { appId, companyId, ...customerData } = validatedInput;
 
@@ -154,9 +149,6 @@ export async function addCustomerAction(
         duplicateChecks.push(customersCollectionRef.where("email", "==", customerData.email));
     }
     
-    // Note: Firestore Admin SDK does not support 'or' queries directly in the same way client SDK does.
-    // This part requires a more complex implementation (multiple queries).
-    // For now, we will simplify to check by name only.
     const nameQuery = customersCollectionRef
         .where("companyId", "==", companyId)
         .where("name", "==", customerData.name);

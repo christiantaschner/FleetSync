@@ -2,14 +2,9 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin } from '@/lib/firebase-admin';
+import { getDbAdmin } from '@/lib/firebase-admin';
 import { CompanySettingsSchema } from '@/types';
 import * as admin from 'firebase-admin';
-
-const FormSchema = z.object({
-  name: z.string().min(2, 'Company name must be at least 2 characters.'),
-  settings: CompanySettingsSchema,
-});
 
 const UpdateCompanyInputSchema = z.object({
     companyId: z.string().min(1),
@@ -22,14 +17,11 @@ export async function updateCompanyAction(
   input: UpdateCompanyInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!dbAdmin) {
-      throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');
-    }
+    const dbAdmin = getDbAdmin();
     const validatedInput = UpdateCompanyInputSchema.parse(input);
 
     const companyDocRef = dbAdmin.collection('companies').doc(validatedInput.companyId);
 
-    // Make sure to unpack the settings object correctly
     const updatePayload = {
         name: validatedInput.name,
         settings: {

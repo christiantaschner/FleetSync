@@ -4,7 +4,6 @@
 import { summarizeFtfr as summarizeFtfrFlow } from "@/ai/flows/summarize-ftfr-flow";
 import { z } from "zod";
 import type { Job, SummarizeFtfrOutput } from "@/types";
-import { dbAdmin } from '@/lib/firebase-admin';
 
 const SummarizeFtfrActionInputSchema = z.object({
     jobs: z.array(z.any()), // Not parsing full job schema here, just expect an array of job-like objects
@@ -13,9 +12,6 @@ const SummarizeFtfrActionInputSchema = z.object({
 export async function summarizeFtfrAction(
     input: { jobs: Job[] }
 ): Promise<{ data: SummarizeFtfrOutput | null; error: string | null }> {
-    if (!dbAdmin) {
-        throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    }
     try {
         const { jobs } = SummarizeFtfrActionInputSchema.parse(input);
 

@@ -41,8 +41,15 @@ export async function updateCompanyAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in updateCompanyAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in updateCompanyAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to update company settings. ${errorMessage}` };
   }
 }

@@ -50,8 +50,15 @@ export async function updateTechnicianAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in updateTechnicianAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in updateTechnicianAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to update technician. ${errorMessage}` };
   }
 }

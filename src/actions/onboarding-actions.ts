@@ -103,9 +103,19 @@ export async function completeOnboardingAction(
         companyId: companyId,
         role: 'admin',
       });
-      console.log(`Custom claims set for new company admin: ${uid}`);
-    } catch(claimError) {
-        console.error("Critical Error: Failed to set custom claims for new admin.", claimError);
+      console.log(JSON.stringify({
+          message: `Custom claims set for new company admin: ${uid}`,
+          severity: "INFO"
+      }));
+    } catch(claimError: any) {
+        console.error(JSON.stringify({
+            message: "Critical Error: Failed to set custom claims for new admin.",
+            error: {
+                message: claimError.message,
+                stack: claimError.stack,
+            },
+            severity: "ERROR"
+        }));
         return { sessionId: null, error: `Your company was created, but there was an error setting your permissions. Please contact support.` };
     }
     
@@ -141,8 +151,15 @@ export async function completeOnboardingAction(
     if (e instanceof z.ZodError) {
       return { sessionId: null, error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in completeOnboardingAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in completeOnboardingAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { sessionId: null, error: `Failed to complete onboarding. ${errorMessage}` };
   }
 }

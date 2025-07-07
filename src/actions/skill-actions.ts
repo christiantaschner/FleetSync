@@ -33,8 +33,15 @@ export async function getSkillsAction(input: GetSkillsInput): Promise<{ data: Sk
 
         return { data: skillsData, error: null };
     } catch (e) {
-        console.error("Error fetching skills:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error fetching skills',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to fetch skills. ${errorMessage}` };
     }
 }
@@ -64,8 +71,15 @@ export async function addSkillAction(input: AddSkillInput): Promise<{ data: { id
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map((err) => err.message).join(', ') };
         }
-        console.error("Error adding skill:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error adding skill',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to add skill. ${errorMessage}` };
     }
 }
@@ -113,11 +127,18 @@ export async function deleteSkillAction(
         return { error: null };
 
     } catch(e) {
-        console.error("Error deleting skill:", e);
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         if (e instanceof Error && e.message.includes('permission-denied')) {
             return { error: 'Failed to delete skill. Missing or insufficient permissions.' };
         }
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error deleting skill',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to delete skill. ${errorMessage}` };
     }
 }
@@ -181,8 +202,15 @@ export async function seedSkillsAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error("Error seeding skills:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error seeding skills',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to seed skills. ${errorMessage}` };
   }
 }

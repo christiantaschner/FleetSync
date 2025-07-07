@@ -28,8 +28,15 @@ export async function getPartsAction(input: GetPartsInput): Promise<{ data: Part
 
         return { data: partsData, error: null };
     } catch (e) {
-        console.error("Error fetching parts:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error fetching parts',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to fetch parts. ${errorMessage}` };
     }
 }
@@ -59,8 +66,15 @@ export async function addPartAction(input: AddPartInput): Promise<{ data: { id: 
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map((err) => err.message).join(', ') };
         }
-        console.error("Error adding part:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error adding part',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to add part. ${errorMessage}` };
     }
 }
@@ -87,8 +101,15 @@ export async function deletePartAction(input: DeletePartInput): Promise<{ error:
         await partDocRef.delete();
         return { error: null };
     } catch (e) {
-        console.error("Error deleting part:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error deleting part',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to delete part. ${errorMessage}` };
     }
 }

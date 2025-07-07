@@ -65,8 +65,15 @@ export async function sendChatMessageAction(
         if (e instanceof z.ZodError) {
           return { error: e.errors.map((err) => err.message).join(', ') };
         }
-        console.error("Error sending chat message:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: "Error sending chat message",
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to send message. ${errorMessage}` };
     }
 }

@@ -67,7 +67,11 @@ export async function ensureUserDocumentAction(
 
     if (Object.keys(claimsToSet).length > 0) {
       await authAdmin.setCustomUserClaims(uid, { ...existingClaims, ...claimsToSet });
-      console.log(`Custom claims for user ${uid} synchronized:`, claimsToSet);
+      console.log(JSON.stringify({
+          message: `Custom claims for user ${uid} synchronized`,
+          claims: claimsToSet,
+          severity: "INFO"
+      }));
     }
 
     return { error: null };
@@ -75,8 +79,15 @@ export async function ensureUserDocumentAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in ensureUserDocumentAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in ensureUserDocumentAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to ensure user document. ${errorMessage}` };
   }
 }
@@ -99,6 +110,14 @@ export async function getCompanyUsersAction(
         return { data: users, error: null };
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in getCompanyUsersAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to fetch users. ${errorMessage}` };
     }
 }
@@ -170,7 +189,10 @@ export async function inviteUserAction(
         companyId,
         role,
     });
-    console.log(`Custom claims set for invited user ${userProfile.uid}`);
+    console.log(JSON.stringify({
+        message: `Custom claims set for invited user ${userProfile.uid}`,
+        severity: "INFO"
+    }));
     
     return { error: null };
   } catch (e) {
@@ -178,6 +200,14 @@ export async function inviteUserAction(
       return { error: e.errors.map((err) => err.message).join(", ") };
     }
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in inviteUserAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to invite user. ${errorMessage}` };
   }
 }
@@ -210,11 +240,22 @@ export async function updateUserRoleAction(
             ...user.customClaims,
             role: newRole,
         });
-        console.log(`Custom claims updated for user ${userId}`);
+        console.log(JSON.stringify({
+            message: `Custom claims updated for user ${userId}`,
+            severity: "INFO"
+        }));
 
         return { error: null };
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in updateUserRoleAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to update user role. ${errorMessage}` };
     }
 }
@@ -262,11 +303,22 @@ export async function removeUserFromCompanyAction(
             companyId: null,
             role: null,
         });
-        console.log(`Custom claims nullified for removed user ${userId}`);
+        console.log(JSON.stringify({
+            message: `Custom claims nullified for removed user ${userId}`,
+            severity: "INFO"
+        }));
 
         return { error: null };
     } catch(e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in removeUserFromCompanyAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to remove user. ${errorMessage}` };
     }
 }

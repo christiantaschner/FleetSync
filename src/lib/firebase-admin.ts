@@ -8,17 +8,19 @@ if (admin.apps.length === 0) {
             credential: admin.credential.applicationDefault(),
             projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         });
-        console.log("Firebase Admin SDK initialized successfully with explicit Project ID.");
+        console.log(JSON.stringify({
+            message: "Firebase Admin SDK initialized successfully.",
+            severity: "INFO"
+        }));
     } catch (error: any) {
-        console.error(`
-        ---
-        CRITICAL: Firebase Admin SDK initialization failed.
-        ---
-        Error Message: ${error.message}
-        This is a fatal error. Server-side Firebase services (Firestore, Auth) will not be available.
-        Please check your server environment configuration and credentials.
-        ---
-        `);
+        console.error(JSON.stringify({
+            message: "CRITICAL: Firebase Admin SDK initialization failed.",
+            error: {
+                message: error.message,
+                stack: error.stack,
+            },
+            severity: "ERROR"
+        }));
     }
 }
 

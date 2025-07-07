@@ -76,7 +76,15 @@ export async function allocateJobAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in allocateJobAction:", e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in allocateJobAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: "Failed to allocate job. Please try again." };
   }
 }
@@ -93,7 +101,15 @@ export async function optimizeRoutesAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in optimizeRoutesAction:", e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in optimizeRoutesAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: "Failed to optimize routes. Please try again." };
   }
 }
@@ -112,7 +128,15 @@ export async function suggestJobSkillsAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in suggestJobSkillsAction:", e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in suggestJobSkillsAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: "Failed to suggest skills. Please try again." };
   }
 }
@@ -131,7 +155,15 @@ export async function suggestJobPriorityAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in suggestJobPriorityAction:", e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in suggestJobPriorityAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: "Failed to suggest job priority. Please try again." };
   }
 }
@@ -207,8 +239,15 @@ export async function importJobsAction(
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map(err => err.message).join(", ") };
         }
-        console.error("Error in importJobsAction:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error in importJobsAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to import jobs. ${errorMessage}` };
     }
 }
@@ -228,7 +267,15 @@ export async function predictNextAvailableTechniciansAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in predictNextAvailableTechniciansAction:", e);
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in predictNextAvailableTechniciansAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: "Failed to predict next available technicians." };
   }
 }
@@ -292,8 +339,15 @@ export async function handleTechnicianUnavailabilityAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in handleTechnicianUnavailabilityAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in handleTechnicianUnavailabilityAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to handle technician unavailability. ${errorMessage}` };
   }
 }
@@ -345,8 +399,15 @@ export async function confirmOptimizedRouteAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in confirmOptimizedRouteAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in confirmOptimizedRouteAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to confirm optimized route. ${errorMessage}` };
   }
 }
@@ -395,8 +456,15 @@ export async function confirmManualRescheduleAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in confirmManualRescheduleAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in confirmManualRescheduleAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to confirm reschedule. ${errorMessage}` };
   }
 }
@@ -437,8 +505,15 @@ export async function requestProfileChangeAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in requestProfileChangeAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in requestProfileChangeAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to submit profile change request. ${errorMessage}` };
   }
 }
@@ -482,8 +557,15 @@ export async function approveProfileChangeRequestAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in approveProfileChangeRequestAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in approveProfileChangeRequestAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to approve request. ${errorMessage}` };
   }
 }
@@ -512,8 +594,15 @@ export async function rejectProfileChangeRequestAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in rejectProfileChangeRequestAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in rejectProfileChangeRequestAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to reject request. ${errorMessage}` };
   }
 }
@@ -584,8 +673,15 @@ export async function checkScheduleHealthAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in checkScheduleHealthAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in checkScheduleHealthAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to check schedule health. ${errorMessage}` };
   }
 }
@@ -611,15 +707,25 @@ export async function notifyCustomerAction(
     
     // In a real application, this would integrate with an SMS/Email service like Twilio.
     // For this demo, we'll log it and return the message to be displayed in a toast.
-    console.log(`Simulating notification for job ${validatedInput.jobId}: "${message}"`);
+    console.log(JSON.stringify({
+        message: `Simulating notification for job ${validatedInput.jobId}: "${message}"`,
+        severity: "INFO"
+    }));
     
     return { data: { message }, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in notifyCustomerAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in notifyCustomerAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to simulate notification. ${errorMessage}` };
   }
 }
@@ -665,8 +771,15 @@ export async function reassignJobAction(
      if (e instanceof z.ZodError) {
       return { error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in reassignJobAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in reassignJobAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to reassign job. ${errorMessage}` };
   }
 }
@@ -742,8 +855,15 @@ export async function generateRecurringJobsAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error generating recurring jobs:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error generating recurring jobs',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to generate jobs. ${errorMessage}` };
   }
 }
@@ -760,8 +880,15 @@ export async function suggestNextAppointmentAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in suggestNextAppointmentAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in suggestNextAppointmentAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to suggest appointment. ${errorMessage}` };
   }
 }
@@ -784,8 +911,15 @@ export async function troubleshootEquipmentAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in troubleshootEquipmentAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in troubleshootEquipmentAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to get troubleshooting steps. ${errorMessage}` };
   }
 }
@@ -827,8 +961,15 @@ export async function generateTrackingLinkAction(
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map((err) => err.message).join(', ') };
         }
-        console.error("Error generating tracking link:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error generating tracking link',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to generate tracking link. ${errorMessage}` };
     }
 }
@@ -906,8 +1047,15 @@ export async function calculateTravelMetricsAction(
 
     return { error: null };
   } catch (e) {
-    console.error("Error calculating travel metrics:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error calculating travel metrics',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to calculate metrics. ${errorMessage}` };
   }
 }
@@ -924,8 +1072,15 @@ export async function suggestScheduleTimeAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map(err => err.message).join(", ") };
     }
-    console.error("Error in suggestScheduleTimeAction:", e);
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in suggestScheduleTimeAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to suggest schedule time. ${errorMessage}` };
   }
 }
@@ -974,8 +1129,15 @@ export async function deleteJobAction(
         return { error: null };
 
     } catch(e) {
-        console.error("Error deleting job:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error deleting job',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to delete job. ${errorMessage}` };
     }
 }
@@ -1016,8 +1178,15 @@ export async function generateTriageLinkAction(
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map((err) => err.message).join(', ') };
         }
-        console.error("Error generating triage link:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error generating triage link',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to generate link. ${errorMessage}` };
     }
 }
@@ -1056,7 +1225,15 @@ export async function getTriageJobInfoAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error("Error getting triage info:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error getting triage info',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: 'Failed to retrieve job information.' };
   }
 }
@@ -1113,8 +1290,15 @@ export async function submitTriagePhotosAction(
     if (e instanceof z.ZodError) {
       return { error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error("Error submitting triage photos:", e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error submitting triage photos',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: 'An unexpected error occurred.' };
   }
 }
-    

@@ -30,8 +30,15 @@ export async function summarizeFtfrAction(
         if (e instanceof z.ZodError) {
             return { data: null, error: e.errors.map(err => err.message).join(", ") };
         }
-        console.error("Error in summarizeFtfrAction:", e);
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error in summarizeFtfrAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { data: null, error: `Failed to summarize feedback. ${errorMessage}` };
     }
 }

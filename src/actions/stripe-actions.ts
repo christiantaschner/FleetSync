@@ -73,7 +73,14 @@ export async function createCheckoutSessionAction(
 
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error('Error creating checkout session:', e);
+    console.error(JSON.stringify({
+        message: 'Error creating checkout session',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { error: `Failed to create checkout session. ${errorMessage}` };
   }
 }
@@ -118,7 +125,14 @@ export async function createPortalSessionAction(
 
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-        console.error('Error creating portal session:', e);
+        console.error(JSON.stringify({
+            message: 'Error creating portal session',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to create billing portal session. ${errorMessage}` };
     }
 }
@@ -166,7 +180,14 @@ export async function updateSubscriptionQuantityAction(
         return { error: null };
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-        console.error('Error updating subscription quantity:', e);
+        console.error(JSON.stringify({
+            message: 'Error updating subscription quantity',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
         return { error: `Failed to update subscription. ${errorMessage}` };
     }
 }
@@ -230,7 +251,14 @@ export async function getStripeProductsAction(): Promise<{
     return { data: productsWithPrices, error: null };
   } catch (e) {
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error('Error fetching Stripe products:', e);
+    console.error(JSON.stringify({
+        message: 'Error fetching Stripe products',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to fetch products. ${errorMessage}` };
   }
 }

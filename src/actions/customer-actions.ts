@@ -39,8 +39,15 @@ export async function addEquipmentAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in addEquipmentAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in addEquipmentAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to add equipment. ${errorMessage}` };
   }
 }
@@ -116,7 +123,15 @@ export async function getTrackingInfoAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in getTrackingInfoAction:', e);
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in getTrackingInfoAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: 'Failed to retrieve tracking information.' };
   }
 }
@@ -163,8 +178,15 @@ export async function addCustomerAction(
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map((err) => err.message).join(', ') };
     }
-    console.error('Error in addCustomerAction:', e);
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in addCustomerAction',
+        error: {
+            message: errorMessage,
+            stack: e instanceof Error ? e.stack : undefined,
+        },
+        severity: "ERROR"
+    }));
     return { data: null, error: `Failed to add customer. ${errorMessage}` };
   }
 }

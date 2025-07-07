@@ -3,6 +3,7 @@ import {googleAI} from '@genkit-ai/googleai';
 
 export const ai = genkit({
   plugins: [
-    googleAI(),
+    // Temporarily disabled to resolve server-side authentication conflict.
+    // googleAI(),
   ],
 });

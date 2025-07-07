@@ -1,92 +1,13 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // --- Helper Functions (Optimized for Firestore Document Lookups) ---
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Fetches the user's profile from the 'users' collection.
-    function getUserProfile() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    // Gets the companyId from the user's profile document.
-    function getCompanyIdFromDoc() {
-      return getUserProfile().companyId;
-    }
-
-    // Gets the role from the user's profile document.
-    function getRoleFromDoc() {
-      return getUserProfile().role;
-    }
-
-    function isSuperAdmin() {
-      return isSignedIn() && getRoleFromDoc() == 'superAdmin';
-    }
-
-    // Checks if the user is an admin of the specified company.
-    function isCompanyAdmin(targetCompanyId) {
-      return isSignedIn() &&
-             (getRoleFromDoc() == 'admin' || isSuperAdmin()) &&
-             getCompanyIdFromDoc() == targetCompanyId;
-    }
-
-    // Checks if the user is a member of the specified company.
-    function isCompanyMember(targetCompanyId) {
-      return isSignedIn() && (getCompanyIdFromDoc() == targetCompanyId || isSuperAdmin());
-    }
-
-    function isRole(roleName) {
-      return isSignedIn() && getRoleFromDoc() == roleName;
-    }
-
-    // --- Collection Rules ---
-
-    match /users/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin() || (isCompanyAdmin(resource.data.companyId) && getCompanyIdFromDoc() == resource.data.companyId);
-
-      allow create: if isOwner(userId) && request.resource.data.uid == userId;
-
-      allow update: if (isOwner(userId) && request.resource.data.companyId == resource.data.companyId && request.resource.data.role == resource.data.role) || isSuperAdmin() || (isCompanyAdmin(resource.data.companyId) && getCompanyIdFromDoc() == resource.data.companyId);
-      
-      allow list: if isSuperAdmin() || (isRole('admin') && request.query.where.companyId == getCompanyIdFromDoc());
-    }
-
-    match /companies/{companyId} {
-      allow read: if isCompanyMember(companyId) || isSuperAdmin();
-      allow create, update: if isCompanyAdmin(companyId) || isSuperAdmin();
-      allow delete: if isSuperAdmin();
-    }
-    
-    // Generic rules for most collections
-    match /{collection}/{docId} where collection not in ['users', 'companies', 'profileChangeRequests', 'chatMessages'] {
-      allow read, list: if isCompanyMember(resource.data.companyId);
-      
-      allow create: if isCompanyMember(request.resource.data.companyId) && (isRole('admin') || isRole('csr'));
-
-      allow update: if isCompanyMember(resource.data.companyId) && 
-                       (isRole('admin') || isRole('csr') || (collection == 'jobs' && isRole('technician') && resource.data.assignedTechnicianId == request.auth.uid));
-
-      allow delete: if isCompanyMember(resource.data.companyId) && isRole('admin');
-    }
-
-    match /profileChangeRequests/{requestId} {
-      allow read, list: if isCompanyMember(resource.data.companyId);
-      allow create: if isCompanyMember(request.resource.data.companyId) && request.resource.data.technicianId == request.auth.uid && isRole('technician');
-      allow update: if isCompanyMember(resource.data.companyId) && isRole('admin');
-      allow delete: if isCompanyMember(resource.data.companyId) && isRole('admin');
-    }
-
-    match /chatMessages/{messageId} {
-      allow read, list, create: if isCompanyMember(request.resource.data.companyId) || isCompanyMember(resource.data.companyId);
-      allow update, delete: if false;
+    // WARNING: These rules are permissive and are meant for initial development.
+    // They allow any authenticated user to read and write all data.
+    // You should secure your database with more granular rules before deploying to production.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }

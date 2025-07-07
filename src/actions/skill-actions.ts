@@ -158,42 +158,22 @@ export async function seedSkillsAction(
     }
     const { companyId, appId } = SeedSkillsInputSchema.parse(input);
 
-    const companyDocRef = dbAdmin.collection('companies').doc(companyId);
-    const companySnap = await companyDocRef.get();
-    if (!companySnap.exists) {
-        return { error: "Company not found." };
-    }
-    const companyData = companySnap.data() as Company;
-    const specialties = companyData.settings?.companySpecialties;
-
-    let skillsToSeed: string[] = [];
-    if (specialties && specialties.length > 0) {
-        const skillsSet = new Set<string>();
-        specialties.forEach(specialty => {
-            const skillsForSpecialty = SKILLS_BY_SPECIALTY[specialty];
-            if (skillsForSpecialty) {
-                skillsForSpecialty.forEach(skill => skillsSet.add(skill));
-            }
-        });
-        skillsToSeed = Array.from(skillsSet);
-    } else {
-        // Fallback to all predefined skills if no specialties are set
-        skillsToSeed = [...PREDEFINED_SKILLS];
-    }
+    const skillsToSeed = [...PREDEFINED_SKILLS];
     
     if (skillsToSeed.length === 0) {
-        return { error: "No skills found for the selected company specialties." };
+        return { error: "No predefined skills found to seed." };
     }
 
     const batch = dbAdmin.batch();
     const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
+    const skillsQuery = await skillsCollectionRef.where("companyId", "==", companyId).get();
+    const existingSkills = new Set(skillsQuery.docs.map(doc => doc.data().name));
 
-    // To fix the server error, we are removing the de-duplication read.
-    // This aligns the logic with the working onboarding function.
-    // The trade-off is that running this multiple times may create duplicates.
     skillsToSeed.forEach(skillName => {
-      const newSkillRef = skillsCollectionRef.doc();
-      batch.set(newSkillRef, { name: skillName, companyId });
+        if (!existingSkills.has(skillName)) {
+            const newSkillRef = skillsCollectionRef.doc();
+            batch.set(newSkillRef, { name: skillName, companyId });
+        }
     });
 
     await batch.commit();

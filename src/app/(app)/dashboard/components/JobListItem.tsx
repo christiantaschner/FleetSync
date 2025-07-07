@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -130,3 +129,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
               <Edit className="mr-1 h-3 w-3" /> {isDraft ? 'Complete Draft' : 'View Details'}
           </Button>
         </CardFooter>
+      </Card>
+    </Link>
+  );
+};
+
+export default JobListItem;

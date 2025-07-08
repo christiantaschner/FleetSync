@@ -23,7 +23,7 @@ export async function completeOnboardingAction(
 
     const validatedInput = CompleteOnboardingInputSchema.parse(input);
     
-    const { companyName, uid, numberOfTechnicians, companySpecialties } = validatedInput;
+    const { companyName, uid, numberOfTechnicians, companySpecialties, otherSpecialty } = validatedInput;
     const companyId = uid; // The first user's UID becomes the company ID
 
     const batch = dbAdmin.batch();
@@ -50,6 +50,16 @@ export async function completeOnboardingAction(
     const stripeCustomerId = customer.id;
     
     // 2. Prepare Firestore documents
+    // Process specialties: replace 'Other' with the custom value if provided.
+    const finalSpecialties = [...companySpecialties];
+    if (otherSpecialty && otherSpecialty.trim()) {
+        const otherIndex = finalSpecialties.indexOf('Other');
+        if (otherIndex > -1) {
+            finalSpecialties.splice(otherIndex, 1, otherSpecialty.trim());
+        }
+    }
+
+
     const companyRef = dbAdmin.collection('companies').doc(companyId);
     const trialEndsAt = addDays(new Date(), 30);
 
@@ -61,7 +71,7 @@ export async function completeOnboardingAction(
         trialEndsAt: trialEndsAt.toISOString(),
         stripeCustomerId: stripeCustomerId,
         settings: {
-            companySpecialties: companySpecialties,
+            companySpecialties: finalSpecialties,
         }
     };
 
@@ -75,10 +85,13 @@ export async function completeOnboardingAction(
     
     const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
     const skillsToSeed = new Set<string>();
-    companySpecialties.forEach(specialty => {
+    finalSpecialties.forEach(specialty => {
         const skillsForSpecialty = SKILLS_BY_SPECIALTY[specialty];
         if (skillsForSpecialty) {
             skillsForSpecialty.forEach(skill => skillsToSeed.add(skill));
+        } else {
+            // If it's a custom specialty, add the specialty itself as a skill
+            skillsToSeed.add(specialty);
         }
     });
 

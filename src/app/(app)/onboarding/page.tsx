@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -13,8 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
-import { Loader2, Building, Sparkles, Users, ListChecks } from 'lucide-react';
-import { Logo } from '@/components/common/logo';
+import { Loader2, Building, Users, ListChecks } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 
@@ -24,7 +23,7 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
     ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
     : null;
 
-const specialties = Object.keys(SKILLS_BY_SPECIALTY);
+const specialties = [...Object.keys(SKILLS_BY_SPECIALTY), "Other"];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -43,9 +42,18 @@ export default function OnboardingPage() {
     defaultValues: {
         numberOfTechnicians: 1,
         companySpecialties: [],
+        otherSpecialty: '',
     }
   });
   
+  const watchedSpecialties = useWatch({
+    control,
+    name: "companySpecialties",
+    defaultValue: []
+  });
+
+  const isOtherSelected = watchedSpecialties.includes('Other');
+
   const onSubmit = async (data: OnboardingFormValues) => {
     setIsSubmitting(true);
     
@@ -110,9 +118,6 @@ export default function OnboardingPage() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-muted/40 p-4">
-      <div className="absolute top-8 left-8">
-        <Logo />
-      </div>
       <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-headline">Welcome to FleetSync AI!</CardTitle>
@@ -170,7 +175,21 @@ export default function OnboardingPage() {
                       />
                   ))}
               </div>
-              {errors.companySpecialties && (
+               {isOtherSelected && (
+                <div className="space-y-2 pl-1 pt-2">
+                    <Label htmlFor="otherSpecialty">Please specify your specialty</Label>
+                    <Input
+                        id="otherSpecialty"
+                        placeholder="e.g., Marine HVAC"
+                        {...register('otherSpecialty')}
+                        disabled={isSubmitting}
+                    />
+                    {errors.otherSpecialty && (
+                        <p className="text-sm text-destructive">{errors.otherSpecialty.message}</p>
+                    )}
+                </div>
+              )}
+              {errors.companySpecialties && !isOtherSelected && (
                   <p className="text-sm text-destructive">{errors.companySpecialties.message}</p>
               )}
             </div>
@@ -196,8 +215,7 @@ export default function OnboardingPage() {
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4"/>}
-              Complete Setup & Start Free Trial
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Complete Setup & Start Free Trial"}
             </Button>
           </CardFooter>
         </form>

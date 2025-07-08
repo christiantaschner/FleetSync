@@ -40,6 +40,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
     const { userProfile } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const defaultValues = contract || {
             companyId: userProfile?.companyId || '',
@@ -90,16 +91,24 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
 
     const onSubmitForm = async (data: Contract) => {
         setIsSubmitting(true);
+        if (!appId) {
+            toast({ title: "Error", description: "Application ID is not configured.", variant: "destructive" });
+            setIsSubmitting(false);
+            return;
+        }
+
         try {
+            const contractsCollectionPath = `artifacts/${appId}/public/data/contracts`;
             if (contract) {
-                const contractRef = doc(db, "contracts", contract.id!);
+                const contractRef = doc(db, contractsCollectionPath, contract.id!);
                 await updateDoc(contractRef, { ...data, updatedAt: serverTimestamp() });
                 toast({ title: "Success", description: "Contract updated successfully." });
             } else {
                  if (!userProfile?.companyId) {
                     throw new Error("User not associated with a company.");
                 }
-                await addDoc(collection(db, "contracts"), { ...data, companyId: userProfile.companyId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+                const contractsCollectionRef = collection(db, contractsCollectionPath);
+                await addDoc(contractsCollectionRef, { ...data, companyId: userProfile.companyId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
                 toast({ title: "Success", description: "Contract created successfully." });
             }
             onContractUpdated();

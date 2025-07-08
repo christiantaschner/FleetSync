@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -116,7 +115,10 @@ export default function OnboardingPage() {
       </div>
       <Card className="w-full max-w-lg shadow-2xl">
         <CardHeader className="text-center">
-          <Sparkles className="mx-auto h-12 w-12 text-primary mb-4" />
+          <div className="flex flex-wrap items-center justify-center gap-x-2 mb-4">
+            <Logo />
+            <Sparkles className="h-6 w-6 text-primary" />
+          </div>
           <CardTitle className="text-2xl font-headline">Welcome to FleetSync AI!</CardTitle>
           <CardDescription>
             Let's get your company set up. This will only take a moment.

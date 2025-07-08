@@ -54,27 +54,22 @@ export async function ensureUserDocumentAction(
     }
 
     const userProfileFromDb = (await userDocRef.get()).data() as UserProfile;
-    const currentUser = await authAdmin.getUser(uid);
-    const existingClaims = currentUser.customClaims || {};
     
-    const newRole = userProfileFromDb.role || null;
-    const newCompanyId = userProfileFromDb.companyId || null;
-
-    // Only update if something has changed to avoid unnecessary writes.
-    if (existingClaims.role !== newRole || existingClaims.companyId !== newCompanyId) {
-        // Construct the new claims object from scratch. This purges any old/invalid claims.
-        const claimsToSet = {
-            role: newRole,
-            companyId: newCompanyId,
-        };
-        await authAdmin.setCustomUserClaims(uid, claimsToSet);
-        console.log(JSON.stringify({
-            message: `Custom claims for user ${uid} synchronized`,
-            claims: claimsToSet,
-            severity: "INFO"
-        }));
-    }
-
+    // Construct the ideal claims object from the database source of truth.
+    const claimsToSet = {
+        role: userProfileFromDb.role || null,
+        companyId: userProfileFromDb.companyId || null,
+    };
+    
+    // Force-set the custom claims. This overwrites the entire claims object,
+    // purging any old, invalid, or misspelled claims like 'companyid'.
+    // This is the definitive fix for the observed issue.
+    await authAdmin.setCustomUserClaims(uid, claimsToSet);
+    console.log(JSON.stringify({
+        message: `Custom claims for user ${uid} synchronized`,
+        claims: claimsToSet,
+        severity: "INFO"
+    }));
 
     return { error: null };
   } catch (e) {

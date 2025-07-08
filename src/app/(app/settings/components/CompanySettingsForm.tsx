@@ -62,11 +62,8 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
   // Logic to extract initial values for specialties
   const standardSpecialties = Object.keys(SKILLS_BY_SPECIALTY);
   const initialOtherSpecialty = company.settings?.companySpecialties?.find(s => !standardSpecialties.includes(s)) || '';
-  const initialCompanySpecialties = company.settings?.companySpecialties?.filter(s => standardSpecialties.includes(s)) || [];
-  if (initialOtherSpecialty) {
-      initialCompanySpecialties.push('Other');
-  }
-
+  const initialCompanySpecialties = company.settings?.companySpecialties?.map(s => standardSpecialties.includes(s) ? s : 'Other').filter((value, index, self) => self.indexOf(value) === index) || [];
+  
   const { control, register, handleSubmit, formState: { errors }, setValue } = useForm<CompanyFormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

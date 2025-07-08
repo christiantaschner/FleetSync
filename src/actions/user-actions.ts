@@ -57,22 +57,24 @@ export async function ensureUserDocumentAction(
     const currentUser = await authAdmin.getUser(uid);
     const existingClaims = currentUser.customClaims || {};
     
-    const claimsToSet: { [key: string]: any } = {};
-    if (existingClaims.role !== userProfileFromDb.role) {
-      claimsToSet.role = userProfileFromDb.role || null;
-    }
-    if (existingClaims.companyId !== userProfileFromDb.companyId) {
-      claimsToSet.companyId = userProfileFromDb.companyId || null;
+    const newRole = userProfileFromDb.role || null;
+    const newCompanyId = userProfileFromDb.companyId || null;
+
+    // Only update if something has changed to avoid unnecessary writes.
+    if (existingClaims.role !== newRole || existingClaims.companyId !== newCompanyId) {
+        // Construct the new claims object from scratch. This purges any old/invalid claims.
+        const claimsToSet = {
+            role: newRole,
+            companyId: newCompanyId,
+        };
+        await authAdmin.setCustomUserClaims(uid, claimsToSet);
+        console.log(JSON.stringify({
+            message: `Custom claims for user ${uid} synchronized`,
+            claims: claimsToSet,
+            severity: "INFO"
+        }));
     }
 
-    if (Object.keys(claimsToSet).length > 0) {
-      await authAdmin.setCustomUserClaims(uid, { ...existingClaims, ...claimsToSet });
-      console.log(JSON.stringify({
-          message: `Custom claims for user ${uid} synchronized`,
-          claims: claimsToSet,
-          severity: "INFO"
-      }));
-    }
 
     return { error: null };
   } catch (e) {
@@ -183,9 +185,8 @@ export async function inviteUserAction(
 
     await batch.commit();
 
-    const user = await authAdmin.getUser(userProfile.uid);
+    // Rebuild the claims from scratch to ensure no legacy claims persist
     await authAdmin.setCustomUserClaims(userProfile.uid, {
-        ...user.customClaims,
         companyId,
         role,
     });
@@ -235,9 +236,9 @@ export async function updateUserRoleAction(
 
         await userDocRef.update({ role: newRole });
 
-        const user = await authAdmin.getUser(userId);
+        // Rebuild the claims object to preserve companyId but update the role
         await authAdmin.setCustomUserClaims(userId, {
-            ...user.customClaims,
+            companyId: companyId,
             role: newRole,
         });
         console.log(JSON.stringify({
@@ -297,9 +298,8 @@ export async function removeUserFromCompanyAction(
 
         await batch.commit();
 
-        const user = await authAdmin.getUser(userId);
+        // Wipe the relevant claims by setting them to null.
         await authAdmin.setCustomUserClaims(userId, {
-            ...user.customClaims,
             companyId: null,
             role: null,
         });

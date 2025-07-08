@@ -18,8 +18,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/auth-context';
 import { Controller } from "react-hook-form";
-import { getAuth } from 'firebase/auth';
-
 
 const InviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -86,15 +84,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
             if (result.error) {
                 toast({ title: 'Update Failed', description: result.error, variant: 'destructive' });
             } else {
-                toast({ title: 'Role Updated', description: `User role has been changed to ${newRole}.` });
-                
-                // If the admin is changing their OWN role, force a refresh to update their claims.
-                if (currentUser && currentUser.uid === userId) {
-                    console.log("Current user role changed. Forcing token refresh.");
-                    await currentUser.getIdToken(true);
-                }
-
-                await fetchUsers(); // Refresh the user list
+                toast({ title: 'Role Updated', description: `User role has been changed to ${newRole}. The change will apply on their next login or page refresh.` });
+                await fetchUsers();
             }
         } catch (e: any) {
              toast({ title: 'Update Error', description: e.message, variant: 'destructive' });

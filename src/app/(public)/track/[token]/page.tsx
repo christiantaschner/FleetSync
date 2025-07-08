@@ -84,7 +84,7 @@ export default function TrackingPage() {
                                 <p className="text-muted-foreground">{error}</p>
                             </div>
                         )}
-                        {trackingInfo && !error && (
+                        {trackingInfo && !error && trackingInfo.currentTechnicianLocation && (
                            <div className="space-y-4">
                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                    <div className="flex items-center gap-2 p-3 bg-background rounded-md border">
@@ -109,7 +109,7 @@ export default function TrackingPage() {
                                 )}
                                 <div className="h-80 w-full rounded-md overflow-hidden border">
                                     <TrackingMap 
-                                        technicianLocation={trackingInfo.currentTechnicianLocation!}
+                                        technicianLocation={trackingInfo.currentTechnicianLocation}
                                         jobLocation={trackingInfo.jobLocation}
                                     />
                                 </div>
@@ -124,3 +124,5 @@ export default function TrackingPage() {
         </main>
     );
 }
+
+    

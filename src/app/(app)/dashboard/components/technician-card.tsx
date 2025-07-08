@@ -164,3 +164,5 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
 };
 
 export default TechnicianCard;
+
+    

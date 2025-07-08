@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
-import { getDoc } from 'firebase/firestore';
+import { getDoc, doc } from 'firebase/firestore';
 
 // Base schema for technician data, omitting fields managed by the server
 const TechnicianDataSchema = z.object({
@@ -25,24 +25,22 @@ const TechnicianDataSchema = z.object({
 // Schema for updating an existing technician
 const UpdateTechnicianInputSchema = TechnicianDataSchema.extend({
   id: z.string().min(1, 'Technician ID is required.'),
+  appId: z.string().min(1, 'App ID is required'),
 });
 export type UpdateTechnicianInput = z.infer<typeof UpdateTechnicianInputSchema>;
 
 export async function updateTechnicianAction(
   input: UpdateTechnicianInput,
-  appId: string
 ): Promise<{ error: string | null }> {
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    if (!appId) {
-      throw new Error('App ID is required');
-    }
-    const { id, ...updateData } = UpdateTechnicianInputSchema.parse(input);
+    
+    const { id, appId, ...updateData } = UpdateTechnicianInputSchema.parse(input);
 
     const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(id);
 
     // Security Check: Verify the technician belongs to the calling user's company
-    const techSnap = await getDoc(techDocRef);
+    const techSnap = await techDocRef.get();
     if (!techSnap.exists() || techSnap.data()?.companyId !== updateData.companyId) {
         throw new Error("Permission denied. You can only edit technicians in your own company.");
     }
@@ -69,3 +67,5 @@ export async function updateTechnicianAction(
     return { error: `Failed to update technician. ${errorMessage}` };
   }
 }
+
+    

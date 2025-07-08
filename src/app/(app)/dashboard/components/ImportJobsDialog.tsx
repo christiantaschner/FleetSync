@@ -165,8 +165,9 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
     
     const result = await importJobsAction({
         companyId: userProfile.companyId,
+        appId: appId,
         jobs: parsedJobs.map(p => p.data),
-    }, appId);
+    });
     
     setIsSubmitting(false);
 
@@ -295,3 +296,5 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
 };
 
 export default ImportJobsDialog;
+
+    

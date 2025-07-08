@@ -19,17 +19,19 @@ import { generateRecurringJobsAction } from '@/actions/fleet-actions';
 import { Loader2, CalendarPlus, Calendar as CalendarIcon } from 'lucide-react';
 import { format, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/auth-context';
 
 interface GenerateJobsDialogProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
-    companyId: string;
 }
 
-const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOpen, companyId }) => {
+const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOpen }) => {
+    const { userProfile } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [untilDate, setUntilDate] = useState<Date | undefined>(addMonths(new Date(), 3));
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const handleSubmit = async () => {
         if (!untilDate) {
@@ -37,15 +39,21 @@ const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOp
             return;
         }
 
-        if (!companyId) {
+        if (!userProfile?.companyId) {
             toast({ title: "Authentication Error", description: "Company ID is missing. Cannot generate jobs.", variant: "destructive" });
+            return;
+        }
+        
+        if (!appId) {
+            toast({ title: "Configuration Error", description: "App ID is missing.", variant: "destructive" });
             return;
         }
 
         setIsSubmitting(true);
         const result = await generateRecurringJobsAction({ 
-            companyId: companyId, 
-            untilDate: untilDate.toISOString() 
+            companyId: userProfile.companyId, 
+            untilDate: untilDate.toISOString(),
+            appId: appId,
         });
         setIsSubmitting(false);
 
@@ -110,3 +118,5 @@ const GenerateJobsDialog: React.FC<GenerateJobsDialogProps> = ({ isOpen, setIsOp
 };
 
 export default GenerateJobsDialog;
+
+    

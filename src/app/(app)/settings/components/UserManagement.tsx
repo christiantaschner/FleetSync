@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/auth-context';
+import { Controller } from "react-hook-form";
 
 
 const InviteUserSchema = z.object({
@@ -32,7 +33,6 @@ interface UserManagementProps {
 
 const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) => {
     const { toast } = useToast();
-    const { userProfile } = useAuth();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +40,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<InviteUserFormValues>({
+    const { register, handleSubmit, reset, formState: { errors }, control } = useForm<InviteUserFormValues>({
         resolver: zodResolver(InviteUserSchema),
         defaultValues: { role: 'technician' }
     });
@@ -123,15 +123,21 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                     </div>
                      <div className="space-y-1">
                         <Label htmlFor="role">Assign Role</Label>
-                        <Select onValueChange={(value) => reset({ ...InviteUserSchema.parse({ email: '', role: value as any }), email: (document.getElementById('email') as HTMLInputElement).value })} defaultValue="technician">
-                            <SelectTrigger id="role">
-                                <SelectValue placeholder="Select a role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="technician">Technician</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <Controller
+                            name="role"
+                            control={control}
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <SelectTrigger id="role">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="technician">Technician</SelectItem>
+                                        <SelectItem value="admin">Admin</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            )}
+                        />
                     </div>
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
@@ -220,3 +226,5 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 }
 
 export default UserManagement;
+
+    

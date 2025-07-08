@@ -41,11 +41,9 @@ interface AddEditTechnicianDialogProps {
   onClose: () => void;
   technician?: Technician | null;
   allSkills: string[];
-  appId: string;
-  onTechnicianAddedOrUpdated?: (technician: Technician) => void;
 }
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, appId, onTechnicianAddedOrUpdated }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +57,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [isAvailable, setIsAvailable] = useState(true);
+  
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const resetForm = useCallback(() => {
     setName(technician?.name || '');
@@ -138,10 +138,11 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
         address: locationAddress,
       },
       isAvailable,
+      appId: appId,
     };
 
     try {
-        const result = await updateTechnicianAction(technicianData, appId);
+        const result = await updateTechnicianAction(technicianData);
         if(result.error) throw new Error(result.error);
         toast({ title: "Technician Updated", description: `Technician "${technician.name}" has been updated.` });
         onClose();
@@ -257,3 +258,5 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
 };
 
 export default AddEditTechnicianDialog;
+
+    

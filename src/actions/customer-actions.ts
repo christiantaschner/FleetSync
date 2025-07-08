@@ -108,8 +108,8 @@ export async function getTrackingInfoAction(
         jobLocation: job.location,
         scheduledStartTime: job.scheduledTime instanceof Timestamp ? job.scheduledTime.toDate().toISOString() : null,
         scheduledEndTime: null,
-        actualStartTime: job.actualStartTime instanceof Timestamp ? job.actualStartTime.toDate().toISOString() : null,
-        actualEndTime: job.actualEndTime instanceof Timestamp ? job.actualEndTime.toDate().toISOString() : null,
+        actualStartTime: job.inProgressAt instanceof Timestamp ? job.inProgressAt.toDate().toISOString() : null,
+        actualEndTime: job.completedAt instanceof Timestamp ? job.completedAt.toDate().toISOString() : null,
         technicianName: technician.name,
         technicianPhotoUrl: technician.avatarUrl || null,
         technicianPhoneNumber: technician.phone || null,
@@ -190,3 +190,5 @@ export async function addCustomerAction(
     return { data: null, error: `Failed to add customer. ${errorMessage}` };
   }
 }
+
+    

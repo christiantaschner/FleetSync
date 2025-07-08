@@ -364,7 +364,7 @@ export async function calculateTravelMetricsAction(
         job.status === "Completed" && 
         job.completedAt &&
         new Date(job.completedAt).getTime() < new Date(completedJob.completedAt!).getTime() &&
-        new Date(job.completedAt).getTime() >= new Date(new Date(completedJob.completedAt).setHours(0, 0, 0, 0)).getTime()
+        new Date(job.completedAt).getTime() >= new Date(new Date(completedJob.completedAt!).setHours(0, 0, 0, 0)).getTime()
       )
       .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())[0];
 
@@ -522,3 +522,5 @@ export async function summarizeFtfrAction(
     return { data: null, error: `Failed to summarize feedback. ${errorMessage}` };
   }
 }
+
+    

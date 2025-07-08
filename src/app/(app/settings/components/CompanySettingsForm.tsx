@@ -292,3 +292,5 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
 };
 
 export default CompanySettingsForm;
+
+    

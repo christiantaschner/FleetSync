@@ -1,8 +1,3 @@
-/*
-// Deactivated for troubleshooting authentication issues.
-// This file is the entry point for the Genkit developer UI and was
-// importing all flows, which may have caused premature initialization.
-
 import { config } from 'dotenv';
 config();
 
@@ -19,4 +14,3 @@ import '@/ai/flows/troubleshoot-flow.ts';
 import '@/ai/flows/estimate-travel-distance-flow.ts';
 import '@/ai/flows/summarize-ftfr-flow.ts';
 import '@/ai/flows/triage-job-flow.ts';
-*/

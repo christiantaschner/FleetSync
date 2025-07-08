@@ -3,11 +3,107 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // WARNING: These rules are permissive and are meant for initial development.
-    // They allow any authenticated user to read and write all data.
-    // You should secure your database with more granular rules before deploying to production.
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Helper functions to make rules more readable.
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.role == 'superAdmin';
+    }
+
+    function belongsToCompany(companyId) {
+      return isSignedIn() && request.auth.token.companyId == companyId;
+    }
+
+    function isCompanyAdmin(companyId) {
+      return belongsToCompany(companyId) && request.auth.token.role == 'admin';
+    }
+    
+    function isCompanyTechnician(companyId) {
+      return belongsToCompany(companyId) && request.auth.token.role == 'technician';
+    }
+    
+    // --- User Profiles ---
+    // Users can read/update their own profile. Super Admins can read any.
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      // Creation is handled by a server action during signup.
+      allow create, delete: if false; 
+    }
+    
+    // --- Companies ---
+    // Only signed-in users associated with the company can read its details.
+    // Only the company owner (or a superAdmin) can update it.
+    match /companies/{companyId} {
+      allow read: if belongsToCompany(companyId) || isSuperAdmin();
+      // Onboarding action creates the doc. Update is done by company admin.
+      allow create: if isSignedIn();
+      allow update: if isCompanyAdmin(companyId) || isSuperAdmin();
+      allow delete: if false; // Companies are not deleted from the app.
+    }
+    
+    // --- App-Specific Data (Jobs, Technicians, etc.) ---
+    // The main rule for all tenant-specific data is to check the companyId.
+    // This uses a wildcard to match any collection under the public data path.
+    match /artifacts/{appId}/public/data/{collection}/{docId} {
+      allow read, write: if isSignedIn() && belongsToCompany(request.resource.data.companyId);
+    }
+    
+    // More specific rules can be layered if needed, for example:
+    
+    // --- Technicians ---
+    match /artifacts/{appId}/public/data/technicians/{technicianId} {
+       allow read: if isSignedIn() && belongsToCompany(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/technicians/$(technicianId)).data.companyId);
+       
+       // Admins can create/update. Technicians can only update their own profile.
+       allow create: if isCompanyAdmin(request.resource.data.companyId);
+       allow update: if isCompanyAdmin(request.resource.data.companyId) || (isCompanyTechnician(request.resource.data.companyId) && request.auth.uid == technicianId);
+
+       // Deletion should be a server-side action by an admin.
+       allow delete: if isCompanyAdmin(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/technicians/$(technicianId)).data.companyId);
+    }
+    
+    // --- Jobs ---
+    match /artifacts/{appId}/public/data/jobs/{jobId} {
+        // Read access for any user within the company.
+        allow read: if isSignedIn() && belongsToCompany(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.companyId);
+        
+        // Admins can create/update. Technicians can update jobs assigned to them.
+        allow create: if isCompanyAdmin(request.resource.data.companyId);
+        allow update: if isCompanyAdmin(request.resource.data.companyId) || 
+                       (isCompanyTechnician(request.resource.data.companyId) && request.auth.uid == get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.assignedTechnicianId);
+
+        // Deletion by admins only.
+        allow delete: if isCompanyAdmin(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.companyId);
+    }
+
+    // --- Chat Messages ---
+    match /artifacts/{appId}/public/data/chatMessages/{messageId} {
+      // Only members of the company can read/write messages.
+      allow read, create: if belongsToCompany(request.resource.data.companyId);
+      // No one can update/delete chat messages directly.
+      allow update, delete: if false;
+    }
+    
+     // --- Contracts, Customers, Equipment, Parts, Skills ---
+     // Admins can do anything, technicians can only read.
+    match /artifacts/{appId}/public/data/{collection}/{docId} 
+        where collection in ['contracts', 'customers', 'equipment', 'parts', 'skills', 'profileChangeRequests'] {
+      
+      function getDocCompanyId() {
+        return get(/databases/$(database)/documents/artifacts/$(appId)/public/data/$(collection)/$(docId)).data.companyId;
+      }
+      
+      function createDocCompanyId() {
+        return request.resource.data.companyId;
+      }
+      
+      allow read: if isSignedIn() && belongsToCompany(getDocCompanyId());
+      allow create: if isCompanyAdmin(createDocCompanyId());
+      allow update, delete: if isCompanyAdmin(getDocCompanyId());
     }
   }
 }

@@ -2,34 +2,122 @@
 'use server';
 
 import { z } from 'zod';
-import { dbAdmin } from '@/lib/firebase-admin';
+import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
+import { stripe } from '@/lib/stripe';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
-
-// NOTE: This is a drastically simplified version for troubleshooting authentication.
-// The original logic involving Stripe and complex writes has been temporarily removed.
+import { addDays } from 'date-fns';
+import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
+import * as admin from 'firebase-admin';
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput,
   appId: string,
 ): Promise<{ sessionId: string | null; error: string | null }> {
   try {
-    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
 
     const validatedInput = CompleteOnboardingInputSchema.parse(input);
-    const { uid } = validatedInput;
+    const { uid, companyName, numberOfTechnicians, companySpecialties, otherSpecialty } = validatedInput;
 
-    // Perform a single, simple write operation to test the SDK.
     const userDocRef = dbAdmin.collection('users').doc(uid);
-    await userDocRef.update({
-        onboardingStatus: 'completed_test', // Use a distinct status for this test
+    const companyCollectionRef = dbAdmin.collection('companies');
+
+    // Create a Stripe Customer
+    const customer = await stripe.customers.create({
+      email: (await authAdmin.getUser(uid)).email,
+      name: companyName,
+      metadata: {
+        firebaseUID: uid,
+      },
     });
 
-    // The test has passed if the code reaches this point.
-    // The UI will show this message as an "error" toast, which is expected for this test.
-    return { 
-        sessionId: null, 
-        error: "TEST SUCCEEDED: The server action ran and wrote to Firestore. The original authentication error did not occur. Please let me know you saw this message so we can proceed with restoring the full functionality." 
-    };
+    const batch = dbAdmin.batch();
+
+    // 1. Create the Company Document
+    const newCompanyRef = companyCollectionRef.doc();
+    batch.set(newCompanyRef, {
+        name: companyName,
+        ownerId: uid,
+        stripeCustomerId: customer.id,
+        subscriptionStatus: 'trialing',
+        trialEndsAt: addDays(new Date(), 30).toISOString(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        settings: {
+            companySpecialties: companySpecialties.includes("Other") && otherSpecialty ? [...companySpecialties.filter(s => s !== "Other"), otherSpecialty] : companySpecialties,
+        }
+    });
+    
+    // Update Stripe Customer metadata with the new company ID
+    await stripe.customers.update(customer.id, {
+        metadata: {
+            firebaseUID: uid,
+            companyId: newCompanyRef.id,
+        },
+    });
+
+    // 2. Update the User's Document
+    batch.update(userDocRef, {
+        companyId: newCompanyRef.id,
+        role: 'admin',
+        onboardingStatus: 'completed',
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // 3. Seed initial skills based on company specialties
+    const skillsToSeed: string[] = [];
+    const finalSpecialties = companySpecialties.includes("Other") && otherSpecialty ? [...companySpecialties.filter(s => s !== "Other"), otherSpecialty] : companySpecialties;
+    finalSpecialties.forEach(specialty => {
+        if (SKILLS_BY_SPECIALTY[specialty]) {
+            skillsToSeed.push(...SKILLS_BY_SPECIALTY[specialty]);
+        }
+    });
+
+    if (skillsToSeed.length > 0) {
+        const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
+        const uniqueSkills = [...new Set(skillsToSeed)];
+        uniqueSkills.forEach(skillName => {
+            const newSkillRef = skillsCollectionRef.doc();
+            batch.set(newSkillRef, { name: skillName, companyId: newCompanyRef.id });
+        });
+    }
+
+    // 4. Set Custom Claims for the user
+    await authAdmin.setCustomUserClaims(uid, {
+        companyId: newCompanyRef.id,
+        role: 'admin',
+    });
+
+    // Commit all database changes
+    await batch.commit();
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set.');
+
+    const priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID;
+    if (!priceId) throw new Error('NEXT_PUBLIC_STRIPE_PRICE_ID is not set.');
+
+    // 5. Create Stripe Checkout session for the trial
+    const checkoutSession = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'subscription',
+      customer: customer.id,
+      line_items: [{
+          price: priceId,
+          quantity: numberOfTechnicians,
+      }],
+      subscription_data: {
+        trial_period_days: 30,
+      },
+      success_url: `${appUrl}/dashboard?onboarding=success`,
+      cancel_url: `${appUrl}/onboarding?step=2`,
+    });
+
+    if (!checkoutSession.id) {
+        throw new Error('Could not create Stripe Checkout Session.');
+    }
+
+    return { sessionId: checkoutSession.id, error: null };
 
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -37,7 +125,7 @@ export async function completeOnboardingAction(
     }
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     console.error(JSON.stringify({
-        message: 'Error in SIMPLIFIED completeOnboardingAction',
+        message: 'Error in completeOnboardingAction',
         error: {
             message: errorMessage,
             stack: e instanceof Error ? e.stack : undefined,
@@ -45,10 +133,9 @@ export async function completeOnboardingAction(
         severity: "ERROR"
     }));
     
-    // If we get here, the most basic operation failed.
     return { 
         sessionId: null, 
-        error: `TEST FAILED: The simplified action still failed with the original error. This proves the issue is environmental. Error: ${errorMessage}` 
+        error: `Onboarding failed. ${errorMessage}` 
     };
   }
 }

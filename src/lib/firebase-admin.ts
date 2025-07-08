@@ -7,12 +7,11 @@ let storageAdmin: admin.storage.Storage | null = null;
 
 try {
     // In a Google Cloud environment (like App Hosting), initializeApp() with no arguments
-    // automatically finds the project's service account credentials. 
-    // Being explicit with the Project ID can resolve auth issues in some environments.
+    // should automatically find the project's service account credentials. 
+    // Being explicit can resolve auth issues in some environments.
     if (admin.apps.length === 0) {
       admin.initializeApp({
-        // Use the project ID from the environment variables to be explicit.
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+        credential: admin.credential.applicationDefault(),
       });
     }
     

@@ -4,106 +4,114 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions to make rules more readable.
-    function isSignedIn() {
+    // --- Helper Functions ---
+    function isUserAuthenticated() {
       return request.auth != null;
     }
-    
+
+    function getRole() {
+      return request.auth.token.role;
+    }
+
+    function getCompanyId() {
+      return request.auth.token.companyId;
+    }
+
     function isSuperAdmin() {
-      return isSignedIn() && request.auth.token.role == 'superAdmin';
+      return isUserAuthenticated() && getRole() == 'superAdmin';
     }
 
-    function belongsToCompany(companyId) {
-      return isSignedIn() && request.auth.token.companyId == companyId;
+    function isCompanyAdmin() {
+      return isUserAuthenticated() && getRole() == 'admin';
+    }
+    
+    function isCompanyTechnician() {
+        return isUserAuthenticated() && getRole() == 'technician';
     }
 
-    function isCompanyAdmin(companyId) {
-      return belongsToCompany(companyId) && request.auth.token.role == 'admin';
+    // Is the requesting user a member of the company that owns this resource?
+    function isMemberOfCompany(companyId) {
+      return getCompanyId() == companyId;
+    }
+
+    // Check if the incoming data has the correct companyId
+    function isIncomingDataForOwnCompany() {
+      return request.resource.data.companyId == getCompanyId();
     }
     
-    function isCompanyTechnician(companyId) {
-      return belongsToCompany(companyId) && request.auth.token.role == 'technician';
+    // Check if existing resource belongs to user's company
+    function isExistingResourceInOwnCompany() {
+        return resource.data.companyId == getCompanyId();
     }
-    
-    // --- User Profiles ---
-    // Users can read/update their own profile. Super Admins can read any.
+
+
+    // --- Top Level Collections ---
+
+    // Users can read/write their own profile.
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
-      allow update: if isSignedIn() && request.auth.uid == userId;
-      // Creation is handled by a server action during signup.
-      allow create, delete: if false; 
+      allow read, write: if isUserAuthenticated() && request.auth.uid == userId;
     }
     
-    // --- Companies ---
-    // Only signed-in users associated with the company can read its details.
-    // Only the company owner (or a superAdmin) can update it.
+    // Company document can be read by its members, updated by its admin.
     match /companies/{companyId} {
-      allow read: if belongsToCompany(companyId) || isSuperAdmin();
-      // Onboarding action creates the doc. Update is done by company admin.
-      allow create: if isSignedIn();
-      allow update: if isCompanyAdmin(companyId) || isSuperAdmin();
-      allow delete: if false; // Companies are not deleted from the app.
+      allow read: if isUserAuthenticated() && isMemberOfCompany(companyId);
+      allow write: if isCompanyAdmin() && isMemberOfCompany(companyId);
     }
     
-    // --- App-Specific Data (Jobs, Technicians, etc.) ---
-    // The main rule for all tenant-specific data is to check the companyId.
-    // This uses a wildcard to match any collection under the public data path.
-    match /artifacts/{appId}/public/data/{collection}/{docId} {
-      allow read, write: if isSignedIn() && belongsToCompany(request.resource.data.companyId);
+    // --- App Data Collections (Nested under /artifacts/{appId}/public/data) ---
+    
+    // Default deny all to prevent accidentally open collections
+    match /artifacts/{appId}/public/data/{document=**} {
+      allow read, write: if false;
     }
     
-    // More specific rules can be layered if needed, for example:
-    
-    // --- Technicians ---
-    match /artifacts/{appId}/public/data/technicians/{technicianId} {
-       allow read: if isSignedIn() && belongsToCompany(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/technicians/$(technicianId)).data.companyId);
-       
-       // Admins can create/update. Technicians can only update their own profile.
-       allow create: if isCompanyAdmin(request.resource.data.companyId);
-       allow update: if isCompanyAdmin(request.resource.data.companyId) || (isCompanyTechnician(request.resource.data.companyId) && request.auth.uid == technicianId);
-
-       // Deletion should be a server-side action by an admin.
-       allow delete: if isCompanyAdmin(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/technicians/$(technicianId)).data.companyId);
-    }
-    
-    // --- Jobs ---
     match /artifacts/{appId}/public/data/jobs/{jobId} {
-        // Read access for any user within the company.
-        allow read: if isSignedIn() && belongsToCompany(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.companyId);
-        
-        // Admins can create/update. Technicians can update jobs assigned to them.
-        allow create: if isCompanyAdmin(request.resource.data.companyId);
-        allow update: if isCompanyAdmin(request.resource.data.companyId) || 
-                       (isCompanyTechnician(request.resource.data.companyId) && request.auth.uid == get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.assignedTechnicianId);
-
-        // Deletion by admins only.
-        allow delete: if isCompanyAdmin(get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.companyId);
-    }
-
-    // --- Chat Messages ---
-    match /artifacts/{appId}/public/data/chatMessages/{messageId} {
-      // Only members of the company can read/write messages.
-      allow read, create: if belongsToCompany(request.resource.data.companyId);
-      // No one can update/delete chat messages directly.
-      allow update, delete: if false;
+        // Admins have full access to their company's jobs.
+        // Technicians can read all jobs in their company, but can only update jobs assigned to them.
+        allow read: if isUserAuthenticated() && isExistingResourceInOwnCompany();
+        allow create: if isCompanyAdmin() && isIncomingDataForOwnCompany();
+        allow update: if (isCompanyAdmin() && isExistingResourceInOwnCompany()) || 
+                         (isCompanyTechnician() && isExistingResourceInOwnCompany() && resource.data.assignedTechnicianId == request.auth.uid);
+        allow delete: if isCompanyAdmin() && isExistingResourceInOwnCompany();
     }
     
-     // --- Contracts, Customers, Equipment, Parts, Skills ---
-     // Admins can do anything, technicians can only read.
-    match /artifacts/{appId}/public/data/{collection}/{docId} 
-        where collection in ['contracts', 'customers', 'equipment', 'parts', 'skills', 'profileChangeRequests'] {
-      
-      function getDocCompanyId() {
-        return get(/databases/$(database)/documents/artifacts/$(appId)/public/data/$(collection)/$(docId)).data.companyId;
-      }
-      
-      function createDocCompanyId() {
-        return request.resource.data.companyId;
-      }
-      
-      allow read: if isSignedIn() && belongsToCompany(getDocCompanyId());
-      allow create: if isCompanyAdmin(createDocCompanyId());
-      allow update, delete: if isCompanyAdmin(getDocCompanyId());
+    match /artifacts/{appId}/public/data/technicians/{technicianId} {
+        // All members can read technician data in their company.
+        // Only admins can create/delete.
+        // Admins or the technician themselves can update.
+        allow read: if isUserAuthenticated() && isExistingResourceInOwnCompany();
+        allow create: if isCompanyAdmin() && isIncomingDataForOwnCompany();
+        allow update: if (isCompanyAdmin() || request.auth.uid == technicianId) && isExistingResourceInOwnCompany();
+        allow delete: if isCompanyAdmin() && isExistingResourceInOwnCompany();
+    }
+    
+    match /artifacts/{appId}/public/data/profileChangeRequests/{requestId} {
+        // Admins can read/write all requests in their company.
+        // Technicians can create requests for themselves, and read their own history.
+        allow read: if (isCompanyAdmin() && isExistingResourceInOwnCompany()) ||
+                       (isCompanyTechnician() && resource.data.technicianId == request.auth.uid);
+        allow create: if isCompanyTechnician() && request.resource.data.technicianId == request.auth.uid && isIncomingDataForOwnCompany();
+        allow update, delete: if isCompanyAdmin() && isExistingResourceInOwnCompany();
+    }
+
+    match /artifacts/{appId}/public/data/chatMessages/{messageId} {
+        // Participants of a chat can read/write.
+        // A "participant" is the sender or the receiver.
+        function isParticipant() {
+            return request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId;
+        }
+        allow read: if isUserAuthenticated() && isParticipant() && isExistingResourceInOwnCompany();
+        allow create: if isUserAuthenticated() && request.resource.data.senderId == request.auth.uid && isIncomingDataForOwnCompany();
+    }
+    
+    // Rule for simple collections that follow the standard pattern.
+    match /artifacts/{appId}/public/data/{collection}/{docId}
+        where collection in ['skills', 'parts', 'contracts', 'customers', 'equipment'] {
+            // Read: any authenticated member of the company
+            // Write: only admins of the company
+            allow read: if isUserAuthenticated() && isExistingResourceInOwnCompany();
+            allow create: if isCompanyAdmin() && isIncomingDataForOwnCompany();
+            allow update, delete: if isCompanyAdmin() && isExistingResourceInOwnCompany();
     }
   }
 }

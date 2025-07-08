@@ -75,6 +75,7 @@ export default function OnboardingPage() {
 
   const onSubmit = async (data: OnboardingFormValues) => {
     setIsSubmitting(true);
+    console.log("Onboarding form submitted by client. Calling server action with data:", data);
     
     if (!user) {
         toast({
@@ -99,6 +100,7 @@ export default function OnboardingPage() {
     }, appId);
 
     if (result.error || !result.sessionId) {
+      console.error("Server action failed with error:", result.error);
       toast({
         title: "Onboarding Failed",
         description: result.error || "Could not create a checkout session.",
@@ -106,12 +108,14 @@ export default function OnboardingPage() {
       });
       setIsSubmitting(false);
     } else {
+      console.log("Server action successful. Redirecting to Stripe with session ID:", result.sessionId);
       toast({
         title: "Company Setup Complete!",
         description: "Redirecting you to checkout to start your trial...",
       });
       
       if (!stripePromise) {
+        console.error("Stripe.js has not loaded. Cannot redirect to checkout.");
         toast({ title: 'Stripe Error', description: 'Stripe is not configured correctly.', variant: 'destructive' });
         setIsSubmitting(false);
         return;
@@ -121,6 +125,7 @@ export default function OnboardingPage() {
       const { error: stripeError } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
 
       if (stripeError) {
+        console.error("Stripe redirection failed:", stripeError.message);
         toast({ title: 'Redirect Failed', description: stripeError.message, variant: 'destructive' });
         setIsSubmitting(false);
       }

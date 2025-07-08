@@ -13,23 +13,43 @@ export async function completeOnboardingAction(
   input: CompleteOnboardingInput,
   appId: string,
 ): Promise<{ sessionId: string | null; error: string | null }> {
+  console.log(JSON.stringify({ 
+    message: "Starting completeOnboardingAction", 
+    severity: "INFO",
+    uid: input.uid,
+    appId: appId,
+  }));
+
   try {
-    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
+    if (!dbAdmin || !authAdmin) {
+      console.error(JSON.stringify({ 
+        message: "CRITICAL: Firebase Admin SDK has not been initialized. Check server startup logs.", 
+        severity: "CRITICAL"
+      }));
+      throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
+    }
 
     const validatedInput = CompleteOnboardingInputSchema.parse(input);
     const { uid, companyName, numberOfTechnicians, companySpecialties, otherSpecialty } = validatedInput;
+    console.log(JSON.stringify({ message: "Input validated successfully", severity: "INFO" }));
 
     const userDocRef = dbAdmin.collection('users').doc(uid);
     const companyCollectionRef = dbAdmin.collection('companies');
 
     // Create a Stripe Customer
+    console.log(JSON.stringify({ message: "Attempting to create Stripe customer...", severity: "INFO" }));
+    const userEmail = (await authAdmin.getUser(uid)).email;
+    if (!userEmail) throw new Error("User email not found.");
+    
     const customer = await stripe.customers.create({
-      email: (await authAdmin.getUser(uid)).email,
+      email: userEmail,
       name: companyName,
       metadata: {
         firebaseUID: uid,
       },
     });
+    console.log(JSON.stringify({ message: "Stripe customer created successfully", stripeCustomerId: customer.id, severity: "INFO" }));
+
 
     const batch = dbAdmin.batch();
 
@@ -47,6 +67,7 @@ export async function completeOnboardingAction(
             companySpecialties: companySpecialties.includes("Other") && otherSpecialty ? [...companySpecialties.filter(s => s !== "Other"), otherSpecialty] : companySpecialties,
         }
     });
+    console.log(JSON.stringify({ message: "Company document prepared for batch write", companyId: newCompanyRef.id, severity: "INFO" }));
     
     // Update Stripe Customer metadata with the new company ID
     await stripe.customers.update(customer.id, {
@@ -55,6 +76,7 @@ export async function completeOnboardingAction(
             companyId: newCompanyRef.id,
         },
     });
+    console.log(JSON.stringify({ message: "Stripe customer metadata updated", severity: "INFO" }));
 
     // 2. Update the User's Document
     batch.update(userDocRef, {
@@ -63,6 +85,7 @@ export async function completeOnboardingAction(
         onboardingStatus: 'completed',
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+    console.log(JSON.stringify({ message: "User document prepared for batch update", severity: "INFO" }));
 
     // 3. Seed initial skills based on company specialties
     const skillsToSeed: string[] = [];
@@ -80,6 +103,7 @@ export async function completeOnboardingAction(
             const newSkillRef = skillsCollectionRef.doc();
             batch.set(newSkillRef, { name: skillName, companyId: newCompanyRef.id });
         });
+        console.log(JSON.stringify({ message: `${uniqueSkills.length} skills prepared for batch seeding`, severity: "INFO" }));
     }
 
     // 4. Set Custom Claims for the user
@@ -87,9 +111,11 @@ export async function completeOnboardingAction(
         companyId: newCompanyRef.id,
         role: 'admin',
     });
+    console.log(JSON.stringify({ message: "Custom claims set successfully", severity: "INFO" }));
 
     // Commit all database changes
     await batch.commit();
+    console.log(JSON.stringify({ message: "Firestore batch committed successfully", severity: "INFO" }));
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set.');
@@ -98,6 +124,7 @@ export async function completeOnboardingAction(
     if (!priceId) throw new Error('NEXT_PUBLIC_STRIPE_PRICE_ID is not set.');
 
     // 5. Create Stripe Checkout session for the trial
+    console.log(JSON.stringify({ message: "Attempting to create Stripe Checkout session...", severity: "INFO" }));
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
@@ -116,6 +143,7 @@ export async function completeOnboardingAction(
     if (!checkoutSession.id) {
         throw new Error('Could not create Stripe Checkout Session.');
     }
+    console.log(JSON.stringify({ message: "Stripe Checkout session created successfully", sessionId: checkoutSession.id, severity: "INFO" }));
 
     return { sessionId: checkoutSession.id, error: null };
 
@@ -139,5 +167,3 @@ export async function completeOnboardingAction(
     };
   }
 }
-
-    

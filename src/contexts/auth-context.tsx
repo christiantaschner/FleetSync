@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { User } from "firebase/auth";
@@ -16,6 +15,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, Company } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";
+import Link from "next/link";
 
 interface AuthContextType {
   user: User | null;
@@ -184,7 +184,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast({ title: "Signup Failed", description: error.message || "Could not create account.", variant: "destructive" });
+      if (error.code === 'auth/email-already-in-use') {
+        toast({
+          title: "Signup Failed",
+          description: (
+            <span>
+              An account with this email already exists. Please{' '}
+              <Link href="/login" className="font-bold underline">
+                login
+              </Link>
+              {' '}instead.
+            </span>
+          ),
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Signup Failed", description: error.message || "Could not create account.", variant: "destructive" });
+      }
       setLoading(false);
       return false;
     }

@@ -6,12 +6,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
-import {SummarizeFtfrOutputSchema} from '@/types';
+import {SummarizeFtfrOutputSchema, type SummarizeFtfrOutput} from '@/types';
 
-export const SummarizeFtfrInputSchema = z.object({
+const SummarizeFtfrInputSchema = z.object({
     notes: z.array(z.string()).describe("An array of all the textual feedback notes from technicians."),
 });
-export type SummarizeFtfrInput = z.infer<typeof SummarizeFtfrInputSchema>;
+type SummarizeFtfrInput = z.infer<typeof SummarizeFtfrInputSchema>;
 
 export async function summarizeFtfr(input: SummarizeFtfrInput): Promise<SummarizeFtfrOutput> {
   return summarizeFtfrFlow(input);

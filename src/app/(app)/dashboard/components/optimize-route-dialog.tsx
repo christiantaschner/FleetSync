@@ -13,14 +13,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { optimizeRoutesAction, OptimizeRoutesActionInput, confirmOptimizedRouteAction } from "@/actions/fleet-actions";
-import type { OptimizeRoutesOutput } from "@/types";
-import type { Technician, Job, AITask } from '@/types';
+import { optimizeRoutesAction } from "@/actions/ai-actions";
+import { confirmOptimizedRouteAction } from "@/actions/fleet-actions";
+import type { OptimizeRoutesOutput, Technician, Job, AITask, OptimizeRoutesInput } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapIcon, CheckCircle, Shuffle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/auth-context';
 
 interface OptimizeRouteDialogProps {
   children: React.ReactNode;
@@ -31,6 +32,7 @@ interface OptimizeRouteDialogProps {
 
 const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, technicians, jobs, defaultTechnicianId }) => {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -109,7 +111,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
       };
     });
     
-    const input: OptimizeRoutesActionInput = {
+    const input: OptimizeRoutesInput = {
       technicianId: selectedTechnicianId,
       currentLocation: technician.location,
       tasks: tasksForOptimization,
@@ -127,7 +129,12 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   };
   
   const handleConfirmRoute = async () => {
-    if (!optimizedRoute || !selectedTechnicianId) return;
+    if (!optimizedRoute || !selectedTechnicianId || !userProfile?.companyId) return;
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "App ID is missing.", variant: "destructive" });
+        return;
+    }
 
     setIsConfirming(true);
     
@@ -135,7 +142,9 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
     const jobsNotInRoute = allAssignedJobIds
       .filter(id => !selectedJobIds.includes(id));
 
-    const result = await confirmOptimizedRouteAction({ 
+    const result = await confirmOptimizedRouteAction({
+      companyId: userProfile.companyId,
+      appId,
       technicianId: selectedTechnicianId,
       optimizedRoute: optimizedRoute.optimizedRoute,
       jobsNotInRoute

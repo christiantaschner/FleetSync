@@ -1,8 +1,8 @@
 import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
+// import {googleAI} from '@genkit-ai/googleai'; // Deactivated for troubleshooting
 
 export const ai = genkit({
   plugins: [
-    // googleAI(),
+    // googleAI(), // Deactivated for troubleshooting
   ],
 });

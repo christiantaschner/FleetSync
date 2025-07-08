@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/auth-context';
 import { Controller } from "react-hook-form";
+import { getAuth } from 'firebase/auth';
 
 
 const InviteUserSchema = z.object({
@@ -33,6 +34,7 @@ interface UserManagementProps {
 
 const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) => {
     const { toast } = useToast();
+    const { user: currentUser } = useAuth();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,14 +81,26 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 
     const handleRoleChange = async (userId: string, newRole: 'admin' | 'technician') => {
         setIsUpdatingRole(userId);
-        const result = await updateUserRoleAction({ userId, companyId, newRole });
-         if (result.error) {
-            toast({ title: 'Update Failed', description: result.error, variant: 'destructive' });
-        } else {
-            toast({ title: 'Role Updated', description: `User role has been changed to ${newRole}.` });
-            fetchUsers();
+        try {
+            const result = await updateUserRoleAction({ userId, companyId, newRole });
+            if (result.error) {
+                toast({ title: 'Update Failed', description: result.error, variant: 'destructive' });
+            } else {
+                toast({ title: 'Role Updated', description: `User role has been changed to ${newRole}.` });
+                
+                // If the admin is changing their OWN role, force a refresh to update their claims.
+                if (currentUser && currentUser.uid === userId) {
+                    console.log("Current user role changed. Forcing token refresh.");
+                    await currentUser.getIdToken(true);
+                }
+
+                await fetchUsers(); // Refresh the user list
+            }
+        } catch (e: any) {
+             toast({ title: 'Update Error', description: e.message, variant: 'destructive' });
+        } finally {
+            setIsUpdatingRole(null);
         }
-        setIsUpdatingRole(null);
     };
     
     const handleRemoveUser = async (userId: string) => {
@@ -226,5 +240,3 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 }
 
 export default UserManagement;
-
-    

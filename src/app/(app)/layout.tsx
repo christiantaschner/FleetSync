@@ -92,6 +92,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }
         return;
       }
+      
+      if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
+        // User has signed up but not been invited yet. The UI will show a holding message.
+        // We don't need to redirect them away from the holding page.
+        return;
+      }
 
       if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
         if (pathname === '/onboarding') {
@@ -123,7 +129,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     !isTrialActive;
 
 
-  if (loading || !userProfile || !user) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -131,7 +137,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  if (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding') {
+  if (userProfile?.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding') {
       return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -143,17 +149,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
   }
   
-  if (userProfile.onboardingStatus === 'completed' && !userProfile.companyId) {
+  if (userProfile?.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
     return (
         <div className="flex h-screen w-screen flex-col items-center justify-center bg-muted p-4">
             <Logo />
-            <div className="mt-8 text-center">
-                <h1 className="text-2xl font-semibold">Account Pending</h1>
+            <div className="mt-8 text-center max-w-md">
+                <h1 className="text-2xl font-semibold">Account Created</h1>
                 <p className="mt-2 text-muted-foreground">
-                    Your account is created but not yet linked to a company.
+                    Your account is active, but you are not yet a member of a company.
                 </p>
-                <p className="text-muted-foreground">
-                    Please contact your company's administrator to be added.
+                <p className="text-muted-foreground mt-1">
+                    Please contact your company's administrator and ask them to invite you using your email address.
+                </p>
+                 <p className="text-muted-foreground mt-4 text-xs">
+                    (If you are an administrator trying to create a new company, please contact support.)
                 </p>
                 <Button onClick={logout} variant="outline" className="mt-6">
                     <LogOut className="mr-2 h-4 w-4"/>

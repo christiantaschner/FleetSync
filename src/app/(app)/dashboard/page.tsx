@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
@@ -747,13 +747,12 @@ export default function DashboardPage() {
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
         />
-        {isAdmin && appId && (
+        {isAdmin && (
             <AddEditTechnicianDialog
                 isOpen={isAddEditTechnicianDialogOpen}
                 onClose={handleCloseAddEditTechnicianDialog}
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills}
-                appId={appId}
             />
         )}
       <ShareTrackingDialog 

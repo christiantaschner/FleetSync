@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -16,6 +17,7 @@ export default function SelectTechnicianPage() {
     const router = useRouter();
     const [technicians, setTechnicians] = useState<Technician[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     useEffect(() => {
         if (authLoading) return;
@@ -25,14 +27,19 @@ export default function SelectTechnicianPage() {
             return;
         }
 
-        if (userProfile.role !== 'admin') {
+        if (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin') {
             // A technician should be redirected to their jobs page by the layout,
             // but this is a failsafe.
             router.push(`/technician/jobs/${userProfile.uid}`); 
             return;
         }
 
-        const techsQuery = query(collection(db, "technicians"), where("companyId", "==", userProfile.companyId));
+        if (!appId) {
+            setIsLoading(false);
+            return;
+        }
+
+        const techsQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", userProfile.companyId));
         const unsubscribe = onSnapshot(techsQuery, (snapshot) => {
             const techsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
             techsData.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -44,7 +51,7 @@ export default function SelectTechnicianPage() {
         });
 
         return () => unsubscribe();
-    }, [userProfile, authLoading, router]);
+    }, [userProfile, authLoading, router, appId]);
 
     if (isLoading || authLoading) {
         return (
@@ -55,7 +62,7 @@ export default function SelectTechnicianPage() {
     }
     
     // Add an explicit check here in case the redirect hasn't fired yet
-    if (userProfile?.role !== 'admin') {
+    if (userProfile?.role !== 'admin' && userProfile?.role !== 'superAdmin') {
         return (
              <div className="flex flex-col items-center justify-center h-full p-4 text-center">
                 <AlertTriangle className="h-12 w-12 text-destructive mb-4" />

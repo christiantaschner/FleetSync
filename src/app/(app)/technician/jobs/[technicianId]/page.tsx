@@ -34,6 +34,7 @@ export default function TechnicianJobListPage() {
 
   const hasPermission = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin' || userProfile?.uid === technicianId;
   const isViewingOwnPage = userProfile?.uid === technicianId;
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
     if (authLoading || !firebaseUser || !userProfile || !technicianId) return;
@@ -43,10 +44,9 @@ export default function TechnicianJobListPage() {
         setIsLoading(false);
         return;
     }
-
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    
     if (!appId) {
-        setError("Application not configured correctly.");
+        setError("Application is not configured correctly.");
         setIsLoading(false);
         return;
     }
@@ -117,7 +117,7 @@ export default function TechnicianJobListPage() {
     });
     
     return () => unsubscribeTech();
-  }, [firebaseUser, authLoading, userProfile, technicianId, hasPermission, toast, isViewingOwnPage]);
+  }, [firebaseUser, authLoading, userProfile, technicianId, hasPermission, toast, isViewingOwnPage, appId]);
 
   const handleUpdateLocation = async () => {
     if (!navigator.geolocation) {
@@ -128,7 +128,6 @@ export default function TechnicianJobListPage() {
         toast({ title: "Action Not Allowed", description: "You can only update your own location.", variant: "destructive"});
         return;
     }
-     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
      if (!appId) return;
 
     setIsUpdatingLocation(true);
@@ -194,7 +193,7 @@ export default function TechnicianJobListPage() {
   return (
     <div className="max-w-2xl mx-auto p-4">
       {(userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && (
-        <Button variant="outline" size="sm" onClick={() => router.push('/dashboard?tab=technicians')} className="mb-4">
+        <Button variant="outline" size="sm" onClick={() => router.push('/technician')} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician Roster
         </Button>
       )}
@@ -290,5 +289,3 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
-
-    

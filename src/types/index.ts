@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -611,3 +612,5 @@ export const TriageJobOutputSchema = z.object({
   repairGuide: z.string().optional().describe("A summarized, step-by-step repair guide for the technician."),
 });
 export type TriageJobOutput = z.infer<typeof TriageJobOutputSchema>;
+
+export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';

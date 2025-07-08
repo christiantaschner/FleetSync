@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,28 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 
+// Extend the base schema for local form validation
 const FormSchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters.'),
-  settings: CompanySettingsSchema,
+  settings: CompanySettingsSchema.extend({
+      // Add otherSpecialty to the settings part of the form schema for local validation
+      otherSpecialty: z.string().optional(),
+  }).refine(data => {
+      // If 'Other' is checked, otherSpecialty must not be empty
+      if (data.companySpecialties?.includes('Other')) {
+          return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
+      }
+      return true;
+  }, {
+      message: "Please specify your 'Other' specialty.",
+      path: ["settings", "otherSpecialty"], // Correct path for the error message
+  })
 });
+
 
 type CompanyFormValues = z.infer<typeof FormSchema>;
 
@@ -28,42 +43,11 @@ interface CompanySettingsFormProps {
   company: Company;
 }
 
-const curatedTimezones = [
-  // North America
-  { value: 'America/New_York', label: 'New York (Eastern Time)' },
-  { value: 'America/Chicago', label: 'Chicago (Central Time)' },
-  { value: 'America/Denver', label: 'Denver (Mountain Time)' },
-  { value: 'America/Phoenix', label: 'Phoenix (Mountain Time, no DST)' },
-  { value: 'America/Los_Angeles', label: 'Los Angeles (Pacific Time)' },
-  { value: 'America/Anchorage', label: 'Anchorage (Alaska Time)' },
-  { value: 'America/Halifax', label: 'Halifax (Atlantic Time)' },
-  { value: 'America/Toronto', label: 'Toronto (Eastern Time)' },
-  { value: 'America/Vancouver', label: 'Vancouver (Pacific Time)' },
-  { value: 'America/Winnipeg', label: 'Winnipeg (Central Time)' },
-  { value: 'America/Regina', label: 'Regina (Central Time, no DST)' },
-  { value: 'America/Mexico_City', label: 'Mexico City (Central Time)' },
-  // Europe & UK
-  { value: 'Europe/London', label: 'London (GMT/BST)' },
-  { value: 'Europe/Dublin', label: 'Dublin (GMT/IST)' },
-  { value: 'Europe/Paris', label: 'Paris (CET/CEST)' },
-  { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
-  { value: 'Europe/Rome', label: 'Rome (CET/CEST)' },
-  { value: 'Europe/Madrid', label: 'Madrid (CET/CEST)' },
-  { value: 'Europe/Amsterdam', label: 'Amsterdam (CET/CEST)' },
-  { value: 'Europe/Zurich', label: 'Zurich (CET/CEST)' },
-  { value: 'Europe/Vienna', label: 'Vienna (CET/CEST)' },
-  { value: 'Europe/Stockholm', label: 'Stockholm (CET/CEST)' },
-  { value: 'Europe/Oslo', label: 'Oslo (CET/CEST)' },
-  { value: 'Europe/Copenhagen', label: 'Copenhagen (CET/CEST)' },
-  { value: 'Europe/Helsinki', label: 'Helsinki (EET/EEST)' },
-  { value: 'Europe/Athens', label: 'Athens (EET/EEST)' },
-  { value: 'Europe/Moscow', label: 'Moscow (MSK)' },
-  { value: 'Europe/Prague', label: 'Prague (CET/CEST)' },
-].sort((a, b) => a.label.localeCompare(b.label));
-
 const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const specialties = [...Object.keys(SKILLS_BY_SPECIALTY), "Other"];
   
   const defaultBusinessHours = [
       { dayOfWeek: "Monday", isOpen: true, startTime: "08:00", endTime: "17:00" },
@@ -75,6 +59,14 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
       { dayOfWeek: "Sunday", isOpen: false, startTime: "09:00", endTime: "12:00" },
   ] as const;
 
+  // Logic to extract initial values for specialties
+  const standardSpecialties = Object.keys(SKILLS_BY_SPECIALTY);
+  const initialOtherSpecialty = company.settings?.companySpecialties?.find(s => !standardSpecialties.includes(s)) || '';
+  const initialCompanySpecialties = company.settings?.companySpecialties?.filter(s => standardSpecialties.includes(s)) || [];
+  if (initialOtherSpecialty) {
+      initialCompanySpecialties.push('Other');
+  }
+
   const { control, register, handleSubmit, formState: { errors }, setValue } = useForm<CompanyFormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
@@ -85,10 +77,20 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         businessHours: company.settings?.businessHours && company.settings.businessHours.length === 7 
             ? company.settings.businessHours 
             : defaultBusinessHours,
-        co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? undefined,
+        co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? 0.266,
+        companySpecialties: initialCompanySpecialties,
+        otherSpecialty: initialOtherSpecialty,
       },
     },
   });
+  
+  const watchedSpecialties = useWatch({
+    control,
+    name: "settings.companySpecialties",
+    defaultValue: initialCompanySpecialties,
+  });
+
+  const isOtherSelected = watchedSpecialties?.includes('Other');
 
   const { fields } = useFieldArray({
     control,
@@ -104,7 +106,23 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
 
   const onSubmit = async (data: CompanyFormValues) => {
     setIsSubmitting(true);
-    const result = await updateCompanyAction({ companyId: company.id, ...data });
+    
+    const { companySpecialties, otherSpecialty, ...restOfSettings } = data.settings;
+
+    // Transform data to match the backend schema before sending
+    const finalSpecialties = companySpecialties?.includes("Other") && otherSpecialty 
+        ? [...companySpecialties.filter(s => s !== "Other"), otherSpecialty] 
+        : companySpecialties;
+
+    const result = await updateCompanyAction({ 
+        companyId: company.id, 
+        name: data.name,
+        settings: {
+            ...restOfSettings,
+            companySpecialties: finalSpecialties || [],
+        }
+    });
+
     if (result.error) {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else {
@@ -112,6 +130,16 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
     }
     setIsSubmitting(false);
   };
+  
+  const curatedTimezones = [
+    { value: 'America/New_York', label: 'New York (Eastern Time)' },
+    { value: 'America/Chicago', label: 'Chicago (Central Time)' },
+    { value: 'America/Denver', label: 'Denver (Mountain Time)' },
+    { value: 'America/Phoenix', label: 'Phoenix (Mountain Time, no DST)' },
+    { value: 'America/Los_Angeles', label: 'Los Angeles (Pacific Time)' },
+    { value: 'Europe/London', label: 'London (GMT/BST)' },
+    { value: 'Europe/Berlin', label: 'Berlin (CET/CEST)' },
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -143,6 +171,54 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
             </div>
         </div>
       
+      <Separator />
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><ListChecks/> Company Specialties</h3>
+        <p className="text-sm text-muted-foreground">Select all that apply. This will customize features like the "Seed Skills" function.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-4">
+            {specialties.map((item) => (
+                <Controller
+                    key={item}
+                    name="settings.companySpecialties"
+                    control={control}
+                    render={({ field }) => {
+                        return (
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`specialty-${item}`}
+                                    checked={field.value?.includes(item)}
+                                    onCheckedChange={(checked) => {
+                                        return checked
+                                            ? field.onChange([...(field.value || []), item])
+                                            : field.onChange(field.value?.filter((value) => value !== item));
+                                    }}
+                                />
+                                <Label htmlFor={`specialty-${item}`} className="font-normal">{item}</Label>
+                            </div>
+                        );
+                    }}
+                />
+            ))}
+        </div>
+        {isOtherSelected && (
+            <div className="space-y-2 pl-1 pt-2">
+                <Label htmlFor="otherSpecialty">Please specify your 'Other' specialty</Label>
+                <Input
+                    id="otherSpecialty"
+                    placeholder="e.g., Marine HVAC"
+                    {...register('settings.otherSpecialty')}
+                />
+                {errors.settings?.otherSpecialty && (
+                    <p className="text-sm text-destructive">{errors.settings.otherSpecialty.message}</p>
+                )}
+            </div>
+        )}
+        {errors.settings?.companySpecialties && (
+            <p className="text-sm text-destructive mt-1">{errors.settings.companySpecialties.message}</p>
+        )}
+      </div>
+
       <Separator />
 
       <div className="space-y-4">

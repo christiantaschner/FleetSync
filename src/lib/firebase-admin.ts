@@ -7,10 +7,13 @@ let storageAdmin: admin.storage.Storage | null = null;
 
 try {
     // In a Google Cloud environment (like App Hosting), initializeApp() with no arguments
-    // automatically finds the project's service account credentials. This is the most robust method.
-    // The check for admin.apps.length is removed as it's mainly for local dev hot-reloading.
+    // automatically finds the project's service account credentials. 
+    // Being explicit with the Project ID can resolve auth issues in some environments.
     if (admin.apps.length === 0) {
-      admin.initializeApp();
+      admin.initializeApp({
+        // Use the project ID from the environment variables to be explicit.
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      });
     }
     
     dbAdmin = admin.firestore();

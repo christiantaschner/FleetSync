@@ -1,9 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
-import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
+import { type CompleteOnboardingInput } from '@/types';
 import { Loader2, Building, Users, ListChecks } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
@@ -24,6 +26,23 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
     : null;
 
 const specialties = [...Object.keys(SKILLS_BY_SPECIALTY), "Other"];
+
+// Define the schema for the form locally. It's the same as the full schema but without the `uid`.
+const OnboardingFormSchema = z.object({
+  companyName: z.string().min(2, 'Company name must be at least 2 characters.'),
+  companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
+  otherSpecialty: z.string().optional(),
+  numberOfTechnicians: z.number().min(1, 'You must have at least one technician.'),
+}).refine(data => {
+    if (data.companySpecialties.includes('Other')) {
+        return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify your specialty.",
+    path: ["otherSpecialty"],
+});
+
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -38,7 +57,7 @@ export default function OnboardingPage() {
   }, [userProfile, loading, router]);
   
   const { control, register, handleSubmit, formState: { errors } } = useForm<OnboardingFormValues>({
-    resolver: zodResolver(CompleteOnboardingInputSchema.omit({ uid: true })),
+    resolver: zodResolver(OnboardingFormSchema),
     defaultValues: {
         numberOfTechnicians: 1,
         companySpecialties: [],

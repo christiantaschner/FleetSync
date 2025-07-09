@@ -48,7 +48,7 @@ export async function addEquipmentAction(
         },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to add equipment. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -132,7 +132,7 @@ export async function getTrackingInfoAction(
         },
         severity: "ERROR"
     }));
-    return { data: null, error: 'Failed to retrieve tracking information.' };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -187,8 +187,10 @@ export async function addCustomerAction(
         },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to add customer. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
+
+    
 
     

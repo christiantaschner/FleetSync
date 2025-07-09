@@ -21,39 +21,39 @@ import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, de
 import type { Job, Technician, Company } from "@/types";
 
 // Import all required AI-related schemas and types from the central types file
-import {
+import type {
+  AllocateJobInput,
+  AllocateJobOutput,
+  OptimizeRoutesInput,
+  OptimizeRoutesOutput,
+  SuggestJobSkillsInput,
+  SuggestJobSkillsOutput,
+  PredictNextAvailableTechniciansInput,
+  PredictNextAvailableTechniciansOutput,
+  SuggestJobPriorityInput,
+  SuggestJobPriorityOutput,
+  PredictScheduleRiskInput,
+  PredictScheduleRiskOutput,
+  NotifyCustomerInput,
+  SuggestNextAppointmentInput,
+  SuggestNextAppointmentOutput,
+  TroubleshootEquipmentInput,
+  TroubleshootEquipmentOutput,
+  CalculateTravelMetricsInput,
+  SuggestScheduleTimeInput,
+  SuggestScheduleTimeOutput,
+  TriageJobOutput,
+  SummarizeFtfrOutput,
   AllocateJobInputSchema,
-  type AllocateJobInput,
-  type AllocateJobOutput,
   OptimizeRoutesInputSchema,
-  type OptimizeRoutesInput,
-  type OptimizeRoutesOutput,
   SuggestJobSkillsInputSchema,
-  type SuggestJobSkillsInput,
-  type SuggestJobSkillsOutput,
-  PredictNextAvailableTechniciansInputSchema,
-  type PredictNextAvailableTechniciansInput,
-  type PredictNextAvailableTechniciansOutput,
   SuggestJobPriorityInputSchema,
-  type SuggestJobPriorityInput,
-  type SuggestJobPriorityOutput,
-  PredictScheduleRiskInputSchema,
-  type PredictScheduleRiskInput,
-  type PredictScheduleRiskOutput,
+  PredictNextAvailableTechniciansInputSchema,
   NotifyCustomerInputSchema,
-  type NotifyCustomerInput,
   SuggestNextAppointmentInputSchema,
-  type SuggestNextAppointmentInput,
-  type SuggestNextAppointmentOutput,
   TroubleshootEquipmentInputSchema,
-  type TroubleshootEquipmentInput,
-  type TroubleshootEquipmentOutput,
   CalculateTravelMetricsInputSchema,
-  SuggestScheduleTimeInputSchema,
-  type SuggestScheduleTimeInput,
-  type SuggestScheduleTimeOutput,
-  type TriageJobOutput,
-  type SummarizeFtfrOutput,
+  SuggestScheduleTimeInputSchema
 } from "@/types";
 
 // Re-export types for use in components
@@ -86,7 +86,7 @@ export async function allocateJobAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: "Failed to allocate job. Please try again." };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -107,7 +107,7 @@ export async function optimizeRoutesAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: "Failed to optimize routes. Please try again." };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -128,7 +128,7 @@ export async function suggestJobSkillsAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: "Failed to suggest skills. Please try again." };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -149,7 +149,7 @@ export async function suggestJobPriorityAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: "Failed to suggest job priority. Please try again." };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -170,7 +170,7 @@ export async function predictNextAvailableTechniciansAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: "Failed to predict next available technicians." };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -236,7 +236,7 @@ export async function checkScheduleHealthAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to check schedule health. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -276,7 +276,7 @@ export async function notifyCustomerAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to simulate notification. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -297,7 +297,7 @@ export async function suggestNextAppointmentAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to suggest appointment. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -323,14 +323,14 @@ export async function troubleshootEquipmentAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to get troubleshooting steps. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
 
 const DEFAULT_EMISSIONS_KG_PER_KM = 0.192; // Avg for a light commercial vehicle
 
 export async function calculateTravelMetricsAction(
-  input: z.infer<typeof CalculateTravelMetricsInputSchema>
+  input: CalculateTravelMetricsInput
 ): Promise<{ error: string | null }> {
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
@@ -406,7 +406,7 @@ export async function calculateTravelMetricsAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { error: `Failed to calculate metrics. ${errorMessage}` };
+    return { error: errorMessage };
   }
 }
 
@@ -427,7 +427,7 @@ export async function suggestScheduleTimeAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to suggest schedule time. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
 
@@ -489,7 +489,7 @@ export async function submitTriagePhotosAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { error: 'An unexpected error occurred.' };
+    return { error: errorMessage };
   }
 }
 
@@ -519,8 +519,10 @@ export async function summarizeFtfrAction(
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to summarize feedback. ${errorMessage}` };
+    return { data: null, error: errorMessage };
   }
 }
+
+    
 
     

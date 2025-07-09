@@ -23,11 +23,12 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Contract, ContractSchema, JobPriority } from '@/types';
-import { Loader2, Save, Calendar as CalendarIcon, Repeat, User, Briefcase } from 'lucide-react';
+import { Loader2, Save, Calendar as CalendarIcon, Repeat, User, Briefcase, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/auth-context';
 import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AddEditContractDialogProps {
     isOpen: boolean;
@@ -201,7 +202,23 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <Label>Priority *</Label>
+                                <div className="flex items-center gap-1.5 mb-1">
+                                    <Label>Priority *</Label>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger type="button" asChild>
+                                                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p className="max-w-xs">
+                                                    <b>High:</b> Emergencies (e.g., leaks, power loss).<br/>
+                                                    <b>Medium:</b> Standard service calls and repairs.<br/>
+                                                    <b>Low:</b> Routine maintenance or inspections.
+                                                </p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
                                 <Controller
                                     name="jobTemplate.priority"
                                     control={control}

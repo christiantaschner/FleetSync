@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2, FilePenLine, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Edit, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput } from "@/actions/ai-actions";
 import { deleteJobAction, generateTriageLinkAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput } from "@/types";
@@ -43,6 +43,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Draft'];
@@ -593,7 +594,23 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="jobPriority">Job Priority *</Label>
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <Label htmlFor="jobPriority">Job Priority *</Label>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger type="button" asChild>
+                                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="max-w-xs">
+                                            <b>High:</b> Emergencies (e.g., leaks, power loss).<br/>
+                                            <b>Medium:</b> Standard service calls and repairs.<br/>
+                                            <b>Low:</b> Routine maintenance or inspections.
+                                        </p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                       <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
                         <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
                           <SelectValue placeholder="Select priority" />

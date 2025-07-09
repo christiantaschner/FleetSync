@@ -1,15 +1,20 @@
 
 import type { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { dbAdmin } from '@/lib/firebase-admin';
+import { doc, updateDoc } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const signature = headers().get('Stripe-Signature') as string;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!dbAdmin) {
+    console.error('CRITICAL: Firestore Admin SDK not initialized. Webhook cannot process.');
+    return new Response('Webhook Error: Database connection failed.', { status: 500 });
+  }
 
   if (!webhookSecret) {
     console.error('Stripe webhook secret is not set.');
@@ -50,7 +55,7 @@ export async function POST(req: NextRequest) {
           break;
       }
 
-      const companyDocRef = doc(db, 'companies', companyId);
+      const companyDocRef = doc(dbAdmin, 'companies', companyId);
       await updateDoc(companyDocRef, {
         subscriptionId: subscription.id,
         stripeCustomerId: subscription.customer,
@@ -73,7 +78,7 @@ export async function POST(req: NextRequest) {
           break;
       }
       
-      const companyDocRef = doc(db, 'companies', companyId);
+      const companyDocRef = doc(dbAdmin, 'companies', companyId);
        await updateDoc(companyDocRef, {
         subscriptionStatus: subscription.status,
       });

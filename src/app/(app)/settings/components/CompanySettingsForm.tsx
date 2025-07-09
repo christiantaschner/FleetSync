@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ interface CompanySettingsFormProps {
   company: Company;
 }
 
-const specialties = Object.keys(SKILLS_BY_SPECIALTY);
+const specialties = [...Object.keys(SKILLS_BY_SPECIALTY), "Other"];
 
 const curatedTimezones = [
   // North America
@@ -90,6 +90,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
             : defaultBusinessHours,
         co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? 0.266,
         companySpecialties: company.settings?.companySpecialties || [],
+        otherSpecialty: company.settings?.otherSpecialty || '',
       },
     },
   });
@@ -98,6 +99,14 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
     control,
     name: "settings.businessHours",
   });
+  
+  const watchedSpecialties = useWatch({
+    control,
+    name: "settings.companySpecialties",
+    defaultValue: company.settings?.companySpecialties || []
+  });
+
+  const isOtherSelected = watchedSpecialties.includes('Other');
 
   const emissionPresets = [
     { label: 'Average Diesel Van', value: '0.298' },
@@ -162,7 +171,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                         return (
                             <div className="flex items-center space-x-2">
                                 <Checkbox
-                                    id={item}
+                                    id={`settings-${item}`}
                                     checked={field.value?.includes(item)}
                                     onCheckedChange={(checked) => {
                                         return checked
@@ -170,14 +179,27 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                                             : field.onChange(field.value?.filter((value) => value !== item));
                                     }}
                                 />
-                                <Label htmlFor={item} className="font-normal">{item}</Label>
+                                <Label htmlFor={`settings-${item}`} className="font-normal">{item}</Label>
                             </div>
                         );
                     }}
                 />
             ))}
         </div>
-        {errors.settings?.companySpecialties && <p className="text-sm text-destructive mt-1">{errors.settings.companySpecialties.message}</p>}
+        {isOtherSelected && (
+            <div className="space-y-2 pl-1 pt-2">
+                <Label htmlFor="settings-otherSpecialty">Please specify your specialty</Label>
+                <Input
+                    id="settings-otherSpecialty"
+                    placeholder="e.g., Marine HVAC"
+                    {...register('settings.otherSpecialty')}
+                />
+                {errors.settings?.otherSpecialty && (
+                    <p className="text-sm text-destructive">{errors.settings.otherSpecialty.message}</p>
+                )}
+            </div>
+        )}
+        {errors.settings?.companySpecialties && !isOtherSelected && <p className="text-sm text-destructive mt-1">{errors.settings.companySpecialties.message}</p>}
       </div>
 
       <Separator />

@@ -70,7 +70,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
         if (result.error) {
             toast({ title: 'Invite Failed', description: result.error, variant: 'destructive' });
         } else {
-            toast({ title: 'Invite Sent!', description: `An invitation has been associated with ${data.email}. They can now log in.` });
+            toast({ title: 'Invite Sent!', description: `An invitation has been created for ${data.email}. The user will be automatically added to your company upon signup.` });
             reset();
             fetchUsers();
         }
@@ -117,7 +117,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                     <Mail className="h-4 w-4"/>
                     <AlertTitle>How Invites Work</AlertTitle>
                     <AlertDescription>
-                        The user must first <a href="/signup" target="_blank" className="font-semibold underline">create a free account</a>. Once their account exists, you can invite them to your company using their email address here. Inviting someone with the 'Technician' role will automatically create their technician profile.
+                        Enter an email address to invite someone. If they already have an account, they'll be added instantly. If not, they'll be automatically added to your company as soon as they sign up with that email.
                     </AlertDescription>
                  </Alert>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
@@ -231,5 +231,3 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 }
 
 export default UserManagement;
-
-    

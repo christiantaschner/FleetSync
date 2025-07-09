@@ -32,7 +32,16 @@ export const CompanySettingsSchema = z.object({
   timezone: z.string().optional(),
   businessHours: z.array(BusinessDaySchema).length(7).optional(),
   co2EmissionFactorKgPerKm: z.number().optional().describe("Custom CO2 emission factor in kg per km. Set to 0 for electric fleets."),
-  companySpecialties: z.array(z.string()).optional().describe("A list of the company's areas of expertise, e.g., 'Plumbing', 'HVAC'."),
+  companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
+  otherSpecialty: z.string().optional(),
+}).refine(data => {
+    if (data.companySpecialties.includes('Other')) {
+        return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
+    }
+    return true;
+}, {
+    message: "Please specify your other specialty.",
+    path: ["otherSpecialty"],
 });
 export type CompanySettings = z.infer<typeof CompanySettingsSchema>;
 
@@ -602,7 +611,7 @@ export type SummarizeFtfrOutput = z.infer<typeof SummarizeFtfrOutputSchema>;
 export const TriageJobInputSchema = z.object({
   jobId: z.string(),
   jobDescription: z.string(),
-  photoDataUris: z.array(z.string().url()).describe("A list of photos of the equipment, as data URIs."),
+  photoDataUris: z.array(z.string().url()).describe("A list of photos of the equipment, as a data URI."),
 });
 export type TriageJobInput = z.infer<typeof TriageJobInputSchema>;
 

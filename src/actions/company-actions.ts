@@ -30,6 +30,7 @@ export async function updateCompanyAction(
             businessHours: validatedInput.settings.businessHours,
             co2EmissionFactorKgPerKm: validatedInput.settings.co2EmissionFactorKgPerKm,
             companySpecialties: validatedInput.settings.companySpecialties || [],
+            otherSpecialty: validatedInput.settings.otherSpecialty || '',
         },
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };

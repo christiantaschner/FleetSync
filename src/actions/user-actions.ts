@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import type { UserProfile } from '@/types';
 import * as admin from 'firebase-admin';
+import { collection, query, where, getDocs, limit, addDoc } from 'firebase/firestore';
 
 const EnsureUserDocumentInputSchema = z.object({
   uid: z.string().min(1, 'User ID is required.'),
@@ -22,23 +23,43 @@ export async function ensureUserDocumentAction(
     
     const userDocRef = dbAdmin.collection('users').doc(uid);
     const docSnap = await userDocRef.get();
+    
+    let role: UserProfile['role'] = null;
+    let companyId: string | null = null;
+    let onboardingStatus: UserProfile['onboardingStatus'] = 'pending_onboarding';
+    
+    // Check for a pending invitation first
+    const invitesRef = collection(dbAdmin, 'invitations');
+    const inviteQuery = query(invitesRef, where("email", "==", email), limit(1));
+    const inviteSnapshot = await getDocs(inviteQuery);
+
+    if (!inviteSnapshot.empty) {
+        const inviteDoc = inviteSnapshot.docs[0];
+        const inviteData = inviteDoc.data();
+        companyId = inviteData.companyId;
+        role = inviteData.role;
+        onboardingStatus = 'completed';
+        // Once claimed, delete the invitation
+        await inviteDoc.ref.delete();
+    } else if (email === 'christian.taschner.ek@gmail.com') { // Super Admin check
+        role = 'superAdmin';
+        companyId = 'fleetsync_ai_dev';
+        onboardingStatus = 'completed';
+    }
+
 
     if (!docSnap.exists) {
-      const isSuperAdmin = email === 'christian.taschner.ek@gmail.com';
-      const role = isSuperAdmin ? 'superAdmin' : null;
-      const companyId = isSuperAdmin ? 'fleetsync_ai_dev' : null;
-
       await userDocRef.set({
         uid: uid,
         email: email,
-        onboardingStatus: isSuperAdmin ? 'completed' : 'pending_creation',
+        onboardingStatus,
         role,
         companyId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       
-      if(isSuperAdmin) {
+      if(role === 'superAdmin') {
           const companyRef = dbAdmin.collection('companies').doc('fleetsync_ai_dev');
           const companySnap = await companyRef.get();
           if(!companySnap.exists) {
@@ -132,63 +153,62 @@ export async function inviteUserAction(
   input: InviteUserInput
 ): Promise<{ error: string | null }> {
   try {
-    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
+    if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
 
-    const usersQuery = await dbAdmin.collection("users").where("email", "==", email).limit(1).get();
-
-    if (usersQuery.empty) {
-      return { error: "User with this email has not signed up yet. Please ask them to create an account first." };
-    }
+    const usersQuery = dbAdmin.collection("users").where("email", "==", email);
+    const userSnapshot = await usersQuery.get();
     
-    const userDoc = usersQuery.docs[0];
-    const userProfile = userDoc.data() as UserProfile;
+    if (!userSnapshot.empty) {
+        const userDoc = userSnapshot.docs[0];
+        const userProfile = userDoc.data() as UserProfile;
+        if (userProfile.companyId) {
+            return { error: `This user is already a member of a company.` };
+        }
 
-    if (userProfile.companyId) {
-      return { error: `User is already a member of another company.`};
-    }
-    
-    const batch = dbAdmin.batch();
+        // User exists but is not in a company, so add them directly.
+        await userDoc.ref.update({
+            companyId,
+            role,
+            onboardingStatus: 'completed'
+        });
 
-    const userDocRef = dbAdmin.collection("users").doc(userProfile.uid);
-    batch.update(userDocRef, {
-        companyId,
-        role,
-        onboardingStatus: 'completed'
-    });
-
-    if (role === 'technician') {
-        const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(userProfile.uid);
-        const techDocSnap = await techDocRef.get();
-        if (!techDocSnap.exists) {
-            batch.set(techDocRef, {
+        if (role === 'technician') {
+            const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(userProfile.uid);
+            await techDocRef.set({
                 companyId: companyId,
-                name: userProfile.email.split('@')[0], 
+                name: userProfile.email.split('@')[0],
                 email: userProfile.email,
                 isAvailable: true,
                 skills: [],
-                location: {
-                    latitude: 0,
-                    longitude: 0,
-                    address: "Not set",
-                },
+                location: { latitude: 0, longitude: 0, address: "Not set" },
                 createdAt: admin.firestore.FieldValue.serverTimestamp(),
                 updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
+            }, { merge: true });
         }
+
+        await authAdmin.setCustomUserClaims(userProfile.uid, { companyId, role });
+        
+        return { error: null };
     }
+    
+    // User does not exist, so create an invitation document
+    const invitesRef = collection(dbAdmin, 'invitations');
+    const existingInviteQuery = query(invitesRef, where("email", "==", email));
+    const existingInviteSnapshot = await getDocs(existingInviteQuery);
 
-    await batch.commit();
-
-    // Rebuild the claims from scratch to ensure no legacy claims persist
-    await authAdmin.setCustomUserClaims(userProfile.uid, {
-        companyId,
+    if (!existingInviteSnapshot.empty) {
+        return { error: "An invitation for this email address already exists." };
+    }
+    
+    await addDoc(invitesRef, {
+        email,
         role,
+        companyId,
+        createdAt: serverTimestamp(),
     });
-    console.log(JSON.stringify({
-        message: `Custom claims set for invited user ${userProfile.uid}`,
-        severity: "INFO"
-    }));
+    
+    // In a real app, you would now trigger an email send to the user with a signup link.
     
     return { error: null };
   } catch (e) {

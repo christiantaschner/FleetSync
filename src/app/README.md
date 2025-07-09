@@ -37,6 +37,11 @@ Before you run the application, you need to configure your environment variables
 
     # App URL (important for Stripe redirects)
     NEXT_PUBLIC_APP_URL="http://localhost:9002"
+
+    # Mock Data (for testing)
+    # Set to true to use static mock data instead of Firestore.
+    # Note: When true, write operations will not be reflected in the UI.
+    NEXT_PUBLIC_USE_MOCK_DATA="false"
     ```
 
 3.  **Run the development server**:
@@ -46,3 +51,5 @@ Before you run the application, you need to configure your environment variables
     ```
 
 This will start the app on `http://localhost:9002`. Your environment variables from `.env.local` will now be available to the application.
+
+    

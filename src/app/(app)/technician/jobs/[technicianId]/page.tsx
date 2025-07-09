@@ -15,6 +15,7 @@ import { collection, query, where, onSnapshot, doc, updateDoc, orderBy } from 'f
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
@@ -38,6 +39,18 @@ export default function TechnicianJobListPage() {
 
   useEffect(() => {
     if (authLoading || !firebaseUser || !userProfile || !technicianId) return;
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const foundTechnician = mockTechnicians.find(t => t.id === technicianId) || null;
+        setTechnician(foundTechnician);
+        if (foundTechnician) {
+            const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+            const jobsForTech = mockJobs.filter(j => j.assignedTechnicianId === technicianId && activeJobStatuses.includes(j.status));
+            setAssignedJobs(jobsForTech);
+        }
+        setIsLoading(false);
+        return;
+    }
 
     if (!hasPermission) {
         setError("You don't have permission to view this page.");
@@ -289,3 +302,5 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
+
+    

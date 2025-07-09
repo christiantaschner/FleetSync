@@ -41,6 +41,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { summarizeFtfrAction } from "@/actions/ai-actions";
+import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -73,6 +74,13 @@ export default function ReportClientView() {
 
   useEffect(() => {
     if (authLoading) return;
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setJobs(mockJobs);
+        setTechnicians(mockTechnicians);
+        setIsLoading(false);
+        return;
+    }
 
     if (!db || !userProfile?.companyId) {
       setIsLoading(false);
@@ -451,3 +459,5 @@ export default function ReportClientView() {
     </div>
   );
 }
+
+    

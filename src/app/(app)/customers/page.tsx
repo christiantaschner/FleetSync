@@ -8,6 +8,7 @@ import type { Job, Contract, Equipment, CustomerData } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
+import { mockJobs, mockContracts, mockEquipment, mockCustomers } from '@/lib/mock-data';
 
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
@@ -20,6 +21,15 @@ export default function CustomersPage() {
 
     useEffect(() => {
         if (authLoading) {
+            return;
+        }
+
+        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+            setJobs(mockJobs);
+            setContracts(mockContracts);
+            setEquipment(mockEquipment);
+            setCustomers(mockCustomers);
+            setIsLoading(false);
             return;
         }
 

@@ -14,6 +14,7 @@ import GenerateJobsDialog from './components/GenerateJobsDialog';
 import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { mockContracts } from '@/lib/mock-data';
 
 export default function ContractsPage() {
     const { userProfile, loading: authLoading } = useAuth();
@@ -28,6 +29,12 @@ export default function ContractsPage() {
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const fetchContracts = useCallback(() => {
+        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+            setContracts(mockContracts);
+            setIsLoading(false);
+            return;
+        }
+
         if (!db || !userProfile?.companyId || !appId) {
             setIsLoading(false);
             return;
@@ -114,7 +121,6 @@ export default function ContractsPage() {
                 <GenerateJobsDialog
                     isOpen={isGenerateJobsOpen}
                     setIsOpen={setIsGenerateJobsOpen}
-                    companyId={userProfile.companyId}
                 />
              )}
             <SuggestAppointmentDialog

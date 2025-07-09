@@ -21,6 +21,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { getSkillsAction } from '@/actions/skill-actions';
+import { mockTechnicians, mockProfileChangeRequests, mockJobs } from '@/lib/mock-data';
+import { PREDEFINED_SKILLS } from '@/lib/skills';
 
 const getStatusClass = (status: ProfileChangeRequest['status']) => {
     switch (status) {
@@ -85,6 +87,18 @@ export default function TechnicianProfilePage() {
   useEffect(() => {
     if (authLoading || !firebaseUser) return;
 
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const foundTechnician = mockTechnicians.find(t => t.id === firebaseUser.uid) || null;
+        setTechnician(foundTechnician);
+        if (foundTechnician) {
+            setSubmittedRequests(mockProfileChangeRequests.filter(r => r.technicianId === foundTechnician.id));
+            setCompletedJobs(mockJobs.filter(j => j.assignedTechnicianId === foundTechnician.id && j.status === 'Completed'));
+        }
+        setAllSkills(PREDEFINED_SKILLS);
+        setIsLoading(false);
+        return;
+    }
+
     if (!db) {
       setIsLoading(false);
       setError("Database service not available.");
@@ -121,6 +135,10 @@ export default function TechnicianProfilePage() {
 
   useEffect(() => {
     if (!technician || !userProfile?.companyId || !appId) return;
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return;
+    }
     
     const companyId = userProfile.companyId;
 
@@ -401,3 +419,5 @@ export default function TechnicianProfilePage() {
     </div>
   );
 }
+
+    

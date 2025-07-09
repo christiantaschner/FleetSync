@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
@@ -39,6 +39,8 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
+import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
+import { PREDEFINED_SKILLS } from '@/lib/skills';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -146,6 +148,10 @@ export default function DashboardPage() {
 
 
   const fetchSkills = useCallback(async () => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setAllSkills(PREDEFINED_SKILLS);
+        return;
+    }
     if (!userProfile?.companyId || !appId) return;
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if (result.data) {
@@ -162,6 +168,16 @@ export default function DashboardPage() {
   useEffect(() => {
     if (authLoading) {
       return;
+    }
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        console.log("Using mock data for dashboard.");
+        setJobs(mockJobs);
+        setTechnicians(mockTechnicians);
+        setProfileChangeRequests(mockProfileChangeRequests.filter(r => r.status === 'pending'));
+        fetchSkills();
+        setIsLoadingData(false);
+        return;
     }
 
     if (!db || !userProfile?.companyId) {
@@ -259,7 +275,7 @@ export default function DashboardPage() {
   const prevTechCount = useRef<number | null>(null);
 
   useEffect(() => {
-    if (isLoadingData) {
+    if (isLoadingData || process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
       prevTechCount.current = technicians.length;
       return;
     }
@@ -1133,3 +1149,5 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
+
+    

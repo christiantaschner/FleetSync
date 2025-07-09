@@ -26,6 +26,7 @@ import { calculateTravelMetricsAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import ChecklistCard from './components/ChecklistCard';
+import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -49,10 +50,25 @@ export default function TechnicianJobDetailPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
-    if (!jobId || !db || !user || !appId) {
+    if (!jobId || !user) {
       setIsLoading(false);
       return;
     }
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const foundJob = mockJobs.find(j => j.id === jobId) || null;
+        setJob(foundJob);
+        if (foundJob?.assignedTechnicianId) {
+            setTechnician(mockTechnicians.find(t => t.id === foundJob.assignedTechnicianId) || null);
+            const pastJobs = mockJobs.filter(j => j.customerPhone === foundJob.customerPhone && j.status === 'Completed' && j.id !== jobId);
+            setHistoryJobs(pastJobs);
+        }
+        setIsLoading(false);
+        return;
+    }
+
+    if (!db || !appId) return;
+    
     setIsLoading(true);
     
     const fetchJobAndTechnician = async () => {
@@ -564,3 +580,5 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
+
+    

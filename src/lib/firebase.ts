@@ -16,6 +16,17 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID, // Optional
 };
 
+// Developer-friendly check for missing API key.
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_API_KEY")) {
+  console.error("********************************************************************************");
+  console.error("********************************************************************************");
+  console.error("Firebase API Key is missing or using a placeholder value.");
+  console.error("Please check your .env.local file and ensure NEXT_PUBLIC_FIREBASE_API_KEY is set correctly.");
+  console.error("After setting the key, you MUST restart your development server.");
+  console.error("********************************************************************************");
+  console.error("********************************************************************************");
+}
+
 // This pattern is more robust for Next.js environments and prevents re-initialization.
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 

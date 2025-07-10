@@ -169,7 +169,6 @@ interface ScheduleCalendarViewProps {
   technicians: Technician[];
   onCheckScheduleHealth: () => void;
   isCheckingHealth: boolean;
-  busyTechniciansCount: number;
 }
 
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ 
@@ -177,7 +176,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     technicians,
     onCheckScheduleHealth,
     isCheckingHealth,
-    busyTechniciansCount
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -233,12 +231,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 <CardDescription>Daily timeline view of technician assignments.</CardDescription>
             </div>
             <div className="flex items-center flex-wrap gap-2">
-                 <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                    <Button variant="accent" disabled={busyTechniciansCount === 0}>
-                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
-                    </Button>
-                </OptimizeRouteDialog>
-                <Button variant="outline" onClick={onCheckScheduleHealth} disabled={busyTechniciansCount === 0 || isCheckingHealth} className="hover:bg-primary hover:text-primary-foreground">
+                <Button variant="outline" onClick={onCheckScheduleHealth} disabled={isCheckingHealth} className="hover:bg-primary hover:text-primary-foreground">
                     <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
                 </Button>
                 <div className="flex items-center gap-1 p-1 bg-muted rounded-md">

@@ -574,7 +574,6 @@ export default function DashboardPage() {
 
   const pendingJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Pending'), [jobs]);
   const pendingJobsCount = pendingJobsForBatchAssign.length;
-  const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
@@ -963,7 +962,7 @@ export default function DashboardPage() {
             technicians={technicians}
             onCheckScheduleHealth={handleCheckScheduleHealth}
             isCheckingHealth={isCheckingHealth}
-            busyTechniciansCount={busyTechnicians.length}
+            busyTechniciansCount={technicians.filter(t => !t.isAvailable && t.currentJobId).length}
           />
         </TabsContent>
 
@@ -982,6 +981,7 @@ export default function DashboardPage() {
                             key={technician.id} 
                             technician={technician} 
                             jobs={jobs}
+                            allTechnicians={technicians}
                             onEdit={handleOpenEditTechnician}
                             onMarkUnavailable={handleMarkTechnicianUnavailable}
                             />

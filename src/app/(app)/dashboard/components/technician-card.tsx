@@ -1,8 +1,9 @@
+
 "use client";
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon } from 'lucide-react';
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon, Shuffle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -26,15 +27,17 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/auth-context';
+import OptimizeRouteDialog from './optimize-route-dialog';
 
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
+  allTechnicians: Technician[]; // Pass all technicians for the dialog
   onEdit: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allTechnicians, onEdit, onMarkUnavailable }) => {
   const { userProfile } = useAuth();
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
   const [reason, setReason] = useState('');
@@ -102,7 +105,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
             <p className="font-medium text-foreground">Current Job:</p>
              <div className="h-10 flex items-center">
                  {currentJob ? (
-                    <Link href={`/technician/jobs/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
+                    <Link href={`/technician/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
                         {currentJob.title}
                     </Link>
                 ) : (
@@ -110,7 +113,12 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 )}
              </div>
         </div>
-        <div className="w-full">
+        <div className="w-full grid grid-cols-2 gap-2">
+            <OptimizeRouteDialog technicians={allTechnicians} jobs={jobs} defaultTechnicianId={technician.id}>
+                <Button variant="accent" size="sm" className="w-full" disabled={technician.isAvailable}>
+                    <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize
+                </Button>
+            </OptimizeRouteDialog>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="w-full">

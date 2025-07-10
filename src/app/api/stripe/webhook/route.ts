@@ -1,10 +1,9 @@
-
 import type { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc } from 'firebase/firestore';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -79,16 +78,68 @@ export async function POST(req: NextRequest) {
       }
       
       const companyDocRef = doc(dbAdmin, 'companies', companyId);
-       await updateDoc(companyDocRef, {
+      await updateDoc(companyDocRef, {
         subscriptionStatus: subscription.status,
       });
 
       console.log(`Updated subscription status to ${subscription.status} for company ${companyId}`);
       break;
     }
+    
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId = invoice.subscription;
+      
+      if(invoice.billing_reason === 'subscription_cycle' && subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+        const stripeCustomerId = subscription.customer as string;
+        const customer = await stripe.customers.retrieve(stripeCustomerId) as Stripe.Customer;
+        const companyId = customer.metadata.companyId;
+        
+        if (!companyId) {
+          console.error(`Webhook Error: No companyId in metadata for customer ${stripeCustomerId} on invoice payment.`);
+          break;
+        }
+
+        const companyDocRef = doc(dbAdmin, 'companies', companyId);
+        await updateDoc(companyDocRef, {
+            subscriptionStatus: 'active',
+        });
+        console.log(`Subscription for company ${companyId} confirmed as active due to successful payment.`);
+      }
+      break;
+    }
+    
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subscriptionId = invoice.subscription;
+      
+      if(subscriptionId) {
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+        const stripeCustomerId = subscription.customer as string;
+        const customer = await stripe.customers.retrieve(stripeCustomerId) as Stripe.Customer;
+        const companyId = customer.metadata.companyId;
+
+        if (!companyId) {
+          console.error(`Webhook Error: No companyId in metadata for customer ${stripeCustomerId} on invoice failure.`);
+          break;
+        }
+
+        const companyDocRef = doc(dbAdmin, 'companies', companyId);
+        const companySnap = await getDoc(companyDocRef);
+        if (companySnap.exists() && companySnap.data().subscriptionId === subscriptionId) {
+          await updateDoc(companyDocRef, {
+            subscriptionStatus: 'past_due',
+          });
+          console.log(`Subscription for company ${companyId} marked as past_due due to failed payment.`);
+        }
+      }
+      break;
+    }
+
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      // console.log(`Unhandled event type: ${event.type}`);
   }
 
   return new Response(null, { status: 200 });

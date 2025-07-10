@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -6,8 +5,8 @@ import { Map, AdvancedMarker, useMap, useMapsLibrary, Pin } from '@vis.gl/react-
 import type { Job, Technician, Location } from '@/types';
 import { User, Briefcase, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
-// A separate component to hook into the map context
 const TrafficControl = () => {
   const map = useMap();
   const maps = useMapsLibrary('maps');
@@ -18,13 +17,12 @@ const TrafficControl = () => {
     const trafficLayer = new maps.TrafficLayer();
     trafficLayer.setMap(map);
 
-    // Cleanup function to remove the layer when the component unmounts
     return () => {
       trafficLayer.setMap(null);
     };
   }, [map, maps]);
 
-  return null; // This component doesn't render anything itself
+  return null;
 };
 
 const FitBoundsControl = ({ technicians, jobs }: { technicians: Technician[], jobs: Job[] }) => {
@@ -51,7 +49,7 @@ const FitBoundsControl = ({ technicians, jobs }: { technicians: Technician[], jo
 
     if (bounds.isEmpty()) return;
 
-    if (technicians.length + jobs.length > 1) {
+    if (technicians.length + jobs.length > 1 || !bounds.getCenter().equals(bounds.getNorthEast())) {
       map.fitBounds(bounds, 100);
     } else {
       map.setCenter(bounds.getCenter());
@@ -70,8 +68,6 @@ interface MapViewProps {
   defaultCenter: { lat: number; lng: number };
   defaultZoom: number;
   searchedLocation?: Location | null;
-  onJobClick: (job: Job) => void;
-  onTechnicianClick: (technician: Technician) => void;
 }
 
 const MapView: React.FC<MapViewProps> = ({ 
@@ -80,10 +76,9 @@ const MapView: React.FC<MapViewProps> = ({
   defaultCenter, 
   defaultZoom, 
   searchedLocation,
-  onJobClick,
-  onTechnicianClick
 }) => {
   const map = useMap();
+  const router = useRouter();
   const activeJobs = jobs.filter(job => job.status !== 'Completed' && job.status !== 'Cancelled');
   
   useEffect(() => {
@@ -92,9 +87,18 @@ const MapView: React.FC<MapViewProps> = ({
         map.setZoom(15);
     }
   }, [map, searchedLocation]);
+  
+  const handleJobClick = (jobId: string, techId?: string | null) => {
+    const url = techId ? `/technician/${jobId}` : `/job/${jobId}`;
+    router.push(url);
+  };
+  
+  const handleTechnicianClick = (techId: string) => {
+    router.push(`/technician/jobs/${techId}`);
+  };
 
   return (
-    <div style={{ height: '450px', width: '100%' }} className="rounded-md overflow-hidden border">
+    <div style={{ height: '70vh', width: '100%' }} className="rounded-md overflow-hidden border">
       <Map 
           defaultCenter={defaultCenter} 
           defaultZoom={defaultZoom} 
@@ -107,7 +111,7 @@ const MapView: React.FC<MapViewProps> = ({
             key={`tech-${tech.id}`} 
             position={{ lat: tech.location.latitude, lng: tech.location.longitude }} 
             title={`${tech.name} (${tech.isAvailable ? 'Available' : 'Unavailable'})`}
-            onClick={() => onTechnicianClick(tech)}
+            onClick={() => handleTechnicianClick(tech.id)}
           >
             <div className={cn(
               "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md cursor-pointer",
@@ -123,7 +127,7 @@ const MapView: React.FC<MapViewProps> = ({
               key={`job-${job.id}`} 
               position={{ lat: job.location.latitude, lng: job.location.longitude }} 
               title={`${job.title} (${job.priority} Priority)`}
-              onClick={() => onJobClick(job)}
+              onClick={() => handleJobClick(job.id, job.assignedTechnicianId)}
            >
              <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md cursor-pointer",

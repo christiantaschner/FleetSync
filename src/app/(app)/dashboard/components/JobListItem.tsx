@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -45,92 +44,97 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
   const isHighPriorityPending = job.priority === 'High' && job.status === 'Pending';
   const canShareTracking = job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress';
   const isDraft = job.status === 'Draft';
+  
+  // The job detail page is now part of the technician view
+  const jobLink = `/technician/jobs/${job.assignedTechnicianId}?jobFilter=${job.id}`;
+  const detailsLink = job.assignedTechnicianId ? `/technician/${job.id}` : `/job/${job.id}`; // Fallback for unassigned
 
   return (
-    <Link href={`/job/${job.id}`} className="block">
-      <Card className={cn(
-        "hover:shadow-lg transition-shadow duration-200 cursor-pointer",
-        isHighPriorityPending && "border-destructive border-2 ring-2 ring-destructive/50 bg-destructive/5",
-        isDraft && "border-dashed border-gray-400 bg-gray-50/50"
-      )}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
-              isHighPriorityPending && "text-destructive",
-              isDraft && "text-gray-600"
-            )}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span onClick={(e) => e.preventDefault()}>{getStatusIcon(job.status)}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{job.status}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              {job.title}
-            </CardTitle>
-            <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
-          </div>
-          <CardDescription className="flex items-center gap-1 text-sm">
-            <MapPin className="h-3 w-3" /> {job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm pb-3">
-          <p className="text-muted-foreground line-clamp-2">{job.description}</p>
-          
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {job.requiredSkills && job.requiredSkills.length > 0 && (
-              <div className="flex items-center gap-2">
-                <ListChecks className="h-4 w-4 text-muted-foreground" />
-                <div className="flex flex-wrap gap-1">
-                  {job.requiredSkills.map(skill => (
-                    <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-                  ))}
-                </div>
+    <Card className={cn(
+      "hover:shadow-lg transition-shadow duration-200",
+      isHighPriorityPending && "border-destructive border-2 ring-2 ring-destructive/50 bg-destructive/5",
+      isDraft && "border-dashed border-gray-400 bg-gray-50/50"
+    )}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
+            isHighPriorityPending && "text-destructive",
+            isDraft && "text-gray-600"
+          )}>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* Prevent link navigation when clicking icon */}
+                  <span onClick={(e) => e.preventDefault()}>{getStatusIcon(job.status)}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{job.status}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {job.title}
+          </CardTitle>
+          <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
+        </div>
+        <CardDescription className="flex items-center gap-1 text-sm">
+          <MapPin className="h-3 w-3" /> {job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm pb-3">
+        <p className="text-muted-foreground line-clamp-2">{job.description}</p>
+        
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {job.requiredSkills && job.requiredSkills.length > 0 && (
+            <div className="flex items-center gap-2">
+              <ListChecks className="h-4 w-4 text-muted-foreground" />
+              <div className="flex flex-wrap gap-1">
+                {job.requiredSkills.map(skill => (
+                  <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                ))}
               </div>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+          <div>
+            {job.scheduledTime && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Scheduled: {new Date(job.scheduledTime).toLocaleString()}
+              </span>
             )}
           </div>
-          
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-            <div>
-              {job.scheduledTime && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" /> Scheduled: {new Date(job.scheduledTime).toLocaleDateString()} {new Date(job.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
-            </div>
-            <div>
-              {job.assignedTechnicianId ? (
-                <span className="flex items-center gap-1">
-                  <User className="h-3 w-3" /> {job.assignedTechnicianId}
-                </span>
-              ) : (
-                <span className={cn("flex items-center gap-1", job.status === 'Pending' ? 'text-accent font-semibold' : 'text-muted-foreground')}>
-                  <AlertTriangle className="h-3 w-3" /> Unassigned
-                </span>
-              )}
-            </div>
+          <div>
+            {job.assignedTechnicianId ? (
+              <span className="flex items-center gap-1">
+                <User className="h-3 w-3" /> {job.assignedTechnicianId}
+              </span>
+            ) : (
+              <span className={cn("flex items-center gap-1 font-semibold", "text-green-600")}>
+                ▲ Unassigned
+              </span>
+            )}
           </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
-          {job.status !== 'Pending' && job.assignedTechnicianId && job.status !== 'Draft' && (
-              <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onOpenChat(job); }}>
-                  <MessageSquare className="mr-1 h-3 w-3" /> Chat
-              </Button>
-          )}
-          {canShareTracking && (
-              <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onShareTracking(job); }}>
-                  <Share2 className="mr-1 h-3 w-3" /> Share Tracking
-              </Button>
-          )}
-           <Button variant="secondary" size="sm">
-              <Edit className="mr-1 h-3 w-3" /> {isDraft ? 'Complete Draft' : 'View Details'}
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
+        {job.status !== 'Pending' && job.assignedTechnicianId && job.status !== 'Draft' && (
+            <Button variant="outline" size="sm" className="hover:bg-secondary" onClick={(e) => { e.preventDefault(); onOpenChat(job); }}>
+                <MessageSquare className="mr-1 h-3 w-3" /> Chat
+            </Button>
+        )}
+        {canShareTracking && (
+            <Button variant="outline" size="sm" className="hover:bg-secondary" onClick={(e) => { e.preventDefault(); onShareTracking(job); }}>
+                <Share2 className="mr-1 h-3 w-3" /> Share Tracking
+            </Button>
+        )}
+         <Link href={detailsLink} onClick={(e) => e.stopPropagation()}>
+           <Button variant="secondary" size="sm" className="bg-secondary hover:bg-muted">
+              <Edit className="mr-1 h-3 w-3" /> View Details
           </Button>
-        </CardFooter>
-      </Card>
-    </Link>
+        </Link>
+      </CardFooter>
+    </Card>
   );
 };
 

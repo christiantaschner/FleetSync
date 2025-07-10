@@ -1,8 +1,7 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, Sliders, CalendarClock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -40,7 +39,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
-import { serverTimestamp } from 'firebase/firestore'; // Import serverTimestamp
+import { serverTimestamp } from 'firebase/firestore'; 
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
@@ -102,13 +101,13 @@ export default function DashboardPage() {
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('job-list');
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
     if (jobFilterId) {
-        setActiveTab('jobs');
+        setActiveTab('job-list');
     }
   }, [jobFilterId]);
   
@@ -175,7 +174,6 @@ export default function DashboardPage() {
     }
 
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        console.log("Using mock data for dashboard.");
         setJobs(mockJobs);
         setTechnicians(mockTechnicians);
         setProfileChangeRequests(mockProfileChangeRequests.filter(r => r.status === 'pending'));
@@ -289,7 +287,6 @@ export default function DashboardPage() {
     }
     
     if (technicians.length !== prevTechCount.current && prevTechCount.current !== null) {
-      console.log(`Technician count changed from ${prevTechCount.current} to ${technicians.length}. Updating Stripe.`);
       updateSubscriptionQuantityAction({ companyId: company.id, quantity: technicians.length })
         .then(result => {
           if (result.error) {
@@ -507,7 +504,7 @@ export default function DashboardPage() {
             case 'status':
                 return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'technician':
-                const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz'; // Unassigned at end
+                const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz';
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
                 return techA.localeCompare(techB) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'customer':
@@ -725,7 +722,7 @@ export default function DashboardPage() {
   }
 
   return (
-      <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8">
+      <div className="space-y-6">
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
             onClose={() => setIsAddJobDialogOpen(false)}
@@ -757,13 +754,12 @@ export default function DashboardPage() {
           appId={appId}
       />}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">
+        <h1 className="text-3xl font-bold tracking-tight font-headline">
           Dashboard
-          {(isHandlingUnavailability || isFetchingProactiveSuggestion) && <Loader2 className="h-6 w-6 animate-spin text-primary" />}
         </h1>
         <div className="flex flex-wrap gap-2">
            {isAdmin && (
-            <Button variant="ghost" onClick={() => setIsImportJobsOpen(true)}>
+            <Button variant="ghost" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
             </Button>
            )}
@@ -772,247 +768,151 @@ export default function DashboardPage() {
            </Button>
         </div>
       </div>
-
-      {riskAlerts.length > 0 && isAdmin && (
-        <div className="space-y-2">
-          {riskAlerts.map(alert => (
-            <ScheduleRiskAlert 
-              key={alert.technician.id}
-              riskAlert={alert}
-              onDismiss={handleDismissRiskAlert}
-              technicians={technicians}
-              jobs={jobs}
-            />
-          ))}
-        </div>
-      )}
-
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Jobs Awaiting Assignment
-            </CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
-          <CardContent className="h-20">
-            <div className="text-2xl font-bold">{unassignedJobsCount}</div>
-            <p className="text-xs text-muted-foreground">
-              {highPriorityPendingCount} high priority
-            </p>
+          <CardContent className="h-[4.5rem]">
+            <div className="text-2xl font-bold">{highPriorityPendingCount}</div>
+            <p className="text-xs text-muted-foreground">Urgent jobs needing assignment</p>
           </CardContent>
-          <CardFooter>
-            <Button 
-              variant="outline" 
-              className="w-full" 
-              onClick={handleBatchAIAssign} 
-              disabled={pendingJobsCount === 0 || isBatchLoading}
-            >
-              {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-              Auto-Assign Pending Jobs
-            </Button>
-          </CardFooter>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Jobs</CardTitle>
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="h-[4.5rem]">
+            <div className="text-2xl font-bold">{unassignedJobsCount}</div>
+            <p className="text-xs text-muted-foreground">Total jobs awaiting assignment</p>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Available Technicians</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="h-20">
+          <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {busyTechnicians.length} currently busy
-            </p>
+            <p className="text-xs text-muted-foreground">Ready for assignments</p>
           </CardContent>
-          <CardFooter>
-            <Link href="/settings?tab=users" className="w-full">
-              <Button variant="outline" className="w-full">
-                <Users className="mr-2 h-4 w-4" /> Manage Technicians
-              </Button>
-            </Link>
-          </CardFooter>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <CalendarClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="h-20">
+          <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{jobsTodayCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Total appointments for the day
-            </p>
+            <p className="text-xs text-muted-foreground">Total appointments for the day</p>
           </CardContent>
-          <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => setActiveTab('schedule')}>
-              <CalendarDays className="mr-2 h-4 w-4" /> View Schedule
-            </Button>
-          </CardFooter>
-        </Card>
-         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Map Overview</CardTitle>
-            <MapIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent className="h-20">
-            <AddressAutocompleteInput 
-                value={searchAddressText}
-                onValueChange={setSearchAddressText}
-                onLocationSelect={handleLocationSearch}
-                placeholder="Search for an address..."
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Find a location to check for nearby jobs & technicians.
-            </p>
-          </CardContent>
-           <CardFooter>
-            <Button variant="outline" className="w-full" onClick={() => setActiveTab('overview')}>
-              <MapIcon className="mr-2 h-4 w-4" /> View Full Map
-            </Button>
-          </CardFooter>
         </Card>
       </div>
 
-      {proactiveSuggestion && isAdmin && (
-        <Alert className="border-primary/30 bg-primary/5">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <AlertTitle className="font-semibold text-primary">AI Suggestion for {proactiveSuggestion.job?.title}</AlertTitle>
-          <AlertDescription>
-            {proactiveSuggestion.suggestion?.suggestedTechnicianId ? (
-              <>
-                The AI suggests assigning this job to{' '}
-                <span className="font-medium">{proactiveSuggestion.suggestedTechnicianDetails?.name}</span>.
-                Reason: {proactiveSuggestion.suggestion.reasoning}
-              </>
-            ) : (
-              <>
-                No technician found for this job. Reason: {proactiveSuggestion.error}
-              </>
-            )}
-          </AlertDescription>
-          <div className="mt-4 flex gap-2">
-            {proactiveSuggestion.suggestion?.suggestedTechnicianId && (
-              <Button 
-                variant="default" 
-                size="sm" 
-                onClick={() => handleProactiveAssign(proactiveSuggestion)}
-                disabled={isProcessingProactive}
-              >
-                {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                Assign Now
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => setProactiveSuggestion(null)}>
-              <X className="mr-2 h-4 w-4" /> Dismiss
-            </Button>
-          </div>
-        </Alert>
-      )}
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 md:w-fit">
-          <TabsTrigger value="overview"><MapIcon className="mr-2 h-4 w-4" />Overview</TabsTrigger>
-          <TabsTrigger value="jobs">
-            <div className="flex items-center gap-1">
-                <Briefcase className="h-4 w-4" />
-                <span>Job List</span>
-                {unassignedJobsCount > 0 && <Badge variant="default" className="ml-1.5">{unassignedJobsCount}</Badge>}
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="job-list">
+            <div className="flex items-center gap-2">
+                Job List
+                {unassignedJobsCount > 0 && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="schedule"><CalendarDays className="mr-2 h-4 w-4" /> Schedule</TabsTrigger>
-          <TabsTrigger value="technicians" className="flex items-center gap-1">
-            <Users className="h-4 w-4" /> 
-            <span>Technicians</span>
-            {profileChangeRequests.length > 0 && <Badge variant="default" className="ml-1.5">{profileChangeRequests.length}</Badge>}
+          <TabsTrigger value="schedule">Schedule</TabsTrigger>
+          <TabsTrigger value="technicians">
+            <div className="flex items-center gap-2">
+                Technicians
+                {profileChangeRequests.length > 0 && <Badge variant="default" className="h-5">{profileChangeRequests.length}</Badge>}
+            </div>
           </TabsTrigger>
+          <TabsTrigger value="overview-map">Overview Map</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
-             <MapView 
-                jobs={jobs} 
-                technicians={technicians} 
-                defaultCenter={defaultMapCenter} 
-                defaultZoom={5}
-                searchedLocation={searchedLocation}
-                onJobClick={(job) => handleOpenEditJob(job)}
-                onTechnicianClick={(tech) => handleOpenEditTechnician(tech)}
-            />
+        <TabsContent value="job-list" className="mt-4">
+          <Card>
+            <CardHeader>
+                <CardTitle>Current Jobs</CardTitle>
+                <CardDescription>Manage and track all ongoing and pending jobs.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row gap-4 mb-4 items-end">
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor="status-filter">Status</Label>
+                  <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
+                    <SelectTrigger id="status-filter"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted</SelectItem>
+                      <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Assigned">Assigned</SelectItem>
+                      <SelectItem value="En Route">En Route</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor="priority-filter">Priority</Label>
+                  <Select value={priorityFilter} onValueChange={(value: JobPriority | typeof ALL_PRIORITIES) => setPriorityFilter(value)}>
+                    <SelectTrigger id="priority-filter"><SelectValue placeholder="Filter by Priority" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
+                      <SelectItem value="High">High</SelectItem>
+                      <SelectItem value="Medium">Medium</SelectItem>
+                      <SelectItem value="Low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor="sort-order">Sort By</Label>
+                  <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
+                    <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="status">Status</SelectItem>
+                      <SelectItem value="technician">Technician</SelectItem>
+                      <SelectItem value="customer">Customer</SelectItem>
+                      <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button 
+                  variant="accent" 
+                  onClick={handleBatchAIAssign} 
+                  disabled={pendingJobsCount === 0 || isBatchLoading}
+                  className="w-full sm:w-auto"
+                >
+                  {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  AI Batch Assign
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {sortedJobs.length > 0 ? (
+                  sortedJobs.map(job => (
+                    <JobListItem 
+                      key={job.id} 
+                      job={job} 
+                      onOpenChat={handleOpenChat}
+                      onShareTracking={handleShareTracking}
+                    />
+                  ))
+                ) : (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>No Jobs Found</AlertTitle>
+                    <AlertDescription>Adjust your filters or add a new job to get started.</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="jobs" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
-            <div className="flex-1">
-              <Label htmlFor="status-filter">Filter by Status</Label>
-              <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
-                <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="Filter by Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                  <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted Jobs</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Assigned">Assigned</SelectItem>
-                  <SelectItem value="En Route">En Route</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Label htmlFor="priority-filter">Filter by Priority</Label>
-              <Select value={priorityFilter} onValueChange={(value: JobPriority | typeof ALL_PRIORITIES) => setPriorityFilter(value)}>
-                <SelectTrigger id="priority-filter">
-                  <SelectValue placeholder="Filter by Priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Label htmlFor="sort-order">Sort By</Label>
-              <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
-                <SelectTrigger id="sort-order">
-                  <SelectValue placeholder="Sort Order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="priority">Priority</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                  <SelectItem value="technician">Technician</SelectItem>
-                  <SelectItem value="customer">Customer</SelectItem>
-                  <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {sortedJobs.length > 0 ? (
-              sortedJobs.map(job => (
-                <JobListItem 
-                  key={job.id} 
-                  job={job} 
-                  onOpenChat={handleOpenChat}
-                  onShareTracking={handleShareTracking}
-                />
-              ))
-            ) : (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>No Jobs Found</AlertTitle>
-                <AlertDescription>
-                  Adjust your filters or add a new job to get started.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="schedule" className="w-full overflow-x-auto">
+        <TabsContent value="schedule" className="mt-4 w-full overflow-x-auto">
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
@@ -1022,31 +922,49 @@ export default function DashboardPage() {
           />
         </TabsContent>
 
-        <TabsContent value="technicians" className="space-y-4">
-          <div className="space-y-4 mb-4">
-            {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData}/>}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTechnicians.length > 0 ? (
-              filteredTechnicians.map(technician => (
-                <TechnicianCard 
-                  key={technician.id} 
-                  technician={technician} 
-                  jobs={jobs.filter(j => j.assignedTechnicianId === technician.id)}
-                  onEdit={handleOpenEditTechnician}
-                  onMarkUnavailable={handleMarkTechnicianUnavailable}
-                />
-              ))
-            ) : (
-              <Alert className="md:col-span-2 lg:col-span-3">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>No Technicians Found</AlertTitle>
-                <AlertDescription>
-                  Adjust your search or add a new technician to get started.
-                </AlertDescription>
-              </Alert>
-            )}
-          </div>
+        <TabsContent value="technicians" className="mt-4">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Technician Roster</CardTitle>
+                    <CardDescription>Manage your team of field technicians.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData}/>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredTechnicians.length > 0 ? (
+                        filteredTechnicians.map(technician => (
+                            <TechnicianCard 
+                            key={technician.id} 
+                            technician={technician} 
+                            jobs={jobs}
+                            onEdit={handleOpenEditTechnician}
+                            onMarkUnavailable={handleMarkTechnicianUnavailable}
+                            />
+                        ))
+                        ) : (
+                        <Alert className="md:col-span-2 lg:col-span-3">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertTitle>No Technicians Found</AlertTitle>
+                            <AlertDescription>
+                            Your technician roster is empty.
+                            </AlertDescription>
+                        </Alert>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        
+         <TabsContent value="overview-map" className="mt-4">
+            <MapView 
+                jobs={jobs} 
+                technicians={technicians} 
+                defaultCenter={defaultMapCenter} 
+                defaultZoom={5}
+                searchedLocation={searchedLocation}
+                onJobClick={(job) => handleOpenEditJob(job)}
+                onTechnicianClick={(tech) => handleOpenEditTechnician(tech)}
+            />
         </TabsContent>
       </Tabs>
 

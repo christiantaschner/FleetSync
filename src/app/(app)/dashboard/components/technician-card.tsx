@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -69,7 +68,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
               </CardDescription>
             </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(technician)}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" onClick={() => onEdit(technician)}>
             <Edit className="h-4 w-4" />
             <span className="sr-only">Edit Technician</span>
         </Button>
@@ -101,9 +100,9 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
       <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex flex-col items-start gap-2">
         <div className="w-full">
             <p className="font-medium text-foreground">Current Job:</p>
-             <div className="h-8 flex items-center">
+             <div className="h-10 flex items-center">
                  {currentJob ? (
-                    <Link href={`/job/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
+                    <Link href={`/technician/jobs/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
                         {currentJob.title}
                     </Link>
                 ) : (
@@ -111,10 +110,10 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 )}
              </div>
         </div>
-        <div className="flex w-full justify-end">
+        <div className="w-full">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm">
+                  <Button variant="destructive" size="sm" className="w-full">
                       <AlertOctagon className="mr-2 h-4 w-4" />
                       Mark Unavailable
                   </Button>

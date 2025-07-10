@@ -3,7 +3,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, Star, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job } from '@/types';
@@ -49,7 +49,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
   return (
     <Link href={`/job/${job.id}`} className="block">
       <Card className={cn(
-        "hover:shadow-lg transition-shadow duration-200 ease-in-out cursor-pointer",
+        "hover:shadow-lg transition-shadow duration-200 cursor-pointer",
         isHighPriorityPending && "border-destructive border-2 ring-2 ring-destructive/50 bg-destructive/5",
         isDraft && "border-dashed border-gray-400 bg-gray-50/50"
       )}>

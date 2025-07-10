@@ -38,21 +38,24 @@ const FitBoundsControl = ({ technicians, jobs }: { technicians: Technician[], jo
     const bounds = new window.google.maps.LatLngBounds();
 
     technicians.forEach(tech => {
-      bounds.extend({ lat: tech.location.latitude, lng: tech.location.longitude });
+      if (tech.location.latitude && tech.location.longitude) {
+        bounds.extend({ lat: tech.location.latitude, lng: tech.location.longitude });
+      }
     });
 
     jobs.forEach(job => {
-      bounds.extend({ lat: job.location.latitude, lng: job.location.longitude });
+      if (job.location.latitude && job.location.longitude) {
+        bounds.extend({ lat: job.location.latitude, lng: job.location.longitude });
+      }
     });
+
+    if (bounds.isEmpty()) return;
 
     if (technicians.length + jobs.length > 1) {
       map.fitBounds(bounds, 100);
-    } else if (technicians.length + jobs.length === 1) {
-      const location = technicians[0]?.location || jobs[0]?.location;
-      if (location) {
-        map.setCenter({ lat: location.latitude, lng: location.longitude });
-        map.setZoom(12);
-      }
+    } else {
+      map.setCenter(bounds.getCenter());
+      map.setZoom(12);
     }
 
   }, [map, technicians, jobs]);

@@ -23,7 +23,6 @@ import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './compon
 import { handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
 import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
-import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
@@ -74,11 +73,8 @@ export default function DashboardPage() {
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
-  const [nextUpPredictions, setNextUpPredictions] = useState<PredictNextAvailableTechniciansOutput['predictions']>([]);
-  const [isPredicting, setIsPredicting] = useState(false);
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
-  const prevJobIdsRef = useRef<Set<string>>(new Set());
   const [proactiveSuggestion, setProactiveSuggestion] = useState<AssignmentSuggestion | null>(null);
   const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
   const [isProcessingProactive, setIsProcessingProactive] = useState(false);
@@ -302,38 +298,13 @@ export default function DashboardPage() {
   }, [technicians, company, isLoadingData, toast]);
   
   useEffect(() => {
-    const predict = async () => {
-        const busyTechnicians = technicians.filter(t => !t.isAvailable && t.currentJobId);
-        if (busyTechnicians.length === 0) {
-            setNextUpPredictions([]);
-            return;
-        }
-
-        setIsPredicting(true);
-        const result = await predictNextAvailableTechnicians({
-            busyTechnicians,
-            activeJobs: jobs.filter(j => busyTechnicians.some(t => t.currentJobId === j.id)),
-            currentTime: new Date().toISOString(),
-        });
-        if (result) {
-            setNextUpPredictions(result.predictions);
-        }
-        setIsPredicting(false);
-    };
-
-    if (!isLoadingData && jobs.length > 0 && technicians.length > 0) {
-        predict();
-    }
-
-  }, [jobs, technicians, isLoadingData]);
-  
-  useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || proactiveSuggestion || isFetchingProactiveSuggestion || !userProfile?.companyId) {
+    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId) {
       return;
     }
 
+    const prevJobIdsRefCurrent = prevJobIdsRef.current;
     const currentJobIds = new Set(jobs.map(j => j.id));
-    const newJobs = jobs.filter(j => !prevJobIdsRef.current.has(j.id) && j.companyId === userProfile.companyId);
+    const newJobs = jobs.filter(j => !prevJobIdsRefCurrent.has(j.id) && j.companyId === userProfile.companyId);
     prevJobIdsRef.current = currentJobIds;
     
     if (newJobs.length === 0) {
@@ -344,7 +315,7 @@ export default function DashboardPage() {
       j => j.priority === 'High' && j.status === 'Pending'
     );
     
-    if (highPriorityPendingJob) {
+    if (highPriorityPendingJob && !proactiveSuggestion && !isFetchingProactiveSuggestion) {
       fetchProactiveSuggestion(highPriorityPendingJob);
     }
   }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile]);
@@ -900,7 +871,10 @@ export default function DashboardPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="w-full overflow-x-auto">
             <TabsList className={cn("mb-4", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
-                <TabsTrigger value="jobs">Job List</TabsTrigger>
+                <TabsTrigger value="jobs" className="flex items-center gap-2">
+                    Job List
+                    {pendingJobsCount > 0 && <Badge>{pendingJobsCount}</Badge>}
+                </TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 {isAdmin && (
                   <TabsTrigger value="technicians" className="flex items-center gap-2">

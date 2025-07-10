@@ -19,6 +19,9 @@ import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
 import type { Job, Technician, Company } from "@/types";
+import crypto from 'crypto';
+import { addHours } from 'date-fns';
+
 
 // Import all required AI-related schemas and types from the central types file
 import type {
@@ -503,6 +506,48 @@ export async function summarizeFtfrAction(
   }
 }
 
-    
+const GenerateTriageLinkInputSchema = z.object({
+    jobId: z.string(),
+    companyId: z.string(),
+    appId: z.string().min(1),
+});
 
-    
+export async function generateTriageLinkAction(
+    input: z.infer<typeof GenerateTriageLinkInputSchema>
+): Promise<{ data: { triageUrl: string } | null; error: string | null }> {
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+        const { jobId, companyId, appId } = GenerateTriageLinkInputSchema.parse(input);
+
+        const token = crypto.randomUUID();
+        const expiresAt = addHours(new Date(), 24); // Link is valid for 24 hours
+
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
+        
+        const jobSnap = await getDoc(jobDocRef);
+        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+            return { data: null, error: "Job not found or you do not have permission to modify it." };
+        }
+
+        await updateDoc(jobDocRef, {
+            triageToken: token,
+            triageTokenExpiresAt: expiresAt.toISOString(),
+        });
+        
+        const triageUrl = `/triage/${token}?appId=${appId}`;
+
+        return { data: { triageUrl }, error: null };
+
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map((err) => err.message).join(', ') };
+        }
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error generating triage link',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { data: null, error: `Failed to generate link. ${errorMessage}` };
+    }
+}

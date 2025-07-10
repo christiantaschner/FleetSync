@@ -671,7 +671,7 @@ export default function DashboardPage() {
         }
     } catch (error: any) {
         console.error("Error committing batch assignments: ", error);
-        toast({ title: "Batch Assignment Error", description: error.message || "Could not assign jobs.", variant: "destructive" });
+        toast({ title: "Assignment Error", description: "Could not assign jobs.", variant: "destructive" });
     } finally {
         setIsLoadingBatchConfirmation(false);
         setIsBatchReviewDialogOpen(false);

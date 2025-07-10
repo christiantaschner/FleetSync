@@ -27,17 +27,15 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/auth-context';
-import OptimizeRouteDialog from './optimize-route-dialog';
 
 interface TechnicianCardProps {
   technician: Technician;
   jobs: Job[];
-  allTechnicians: Technician[]; // Pass all technicians for the dialog
   onEdit: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allTechnicians, onEdit, onMarkUnavailable }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
   const { userProfile } = useAuth();
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
   const [reason, setReason] = useState('');
@@ -113,12 +111,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, allTe
                 )}
              </div>
         </div>
-        <div className="w-full grid grid-cols-2 gap-2">
-            <OptimizeRouteDialog technicians={allTechnicians} jobs={jobs} defaultTechnicianId={technician.id}>
-                <Button variant="accent" size="sm" className="w-full" disabled={technician.isAvailable}>
-                    <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize
-                </Button>
-            </OptimizeRouteDialog>
+        <div className="w-full">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="w-full">

@@ -231,6 +231,11 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 <CardDescription>Daily timeline view of technician assignments.</CardDescription>
             </div>
             <div className="flex items-center flex-wrap gap-2">
+                 <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+                    <Button variant="outline" className="hover:bg-primary hover:text-primary-foreground">
+                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
+                    </Button>
+                </OptimizeRouteDialog>
                 <Button variant="outline" onClick={onCheckScheduleHealth} disabled={isCheckingHealth} className="hover:bg-primary hover:text-primary-foreground">
                     <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
                 </Button>
@@ -248,7 +253,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       </CardHeader>
       <CardContent className="p-0 sm:p-6 overflow-x-auto">
         {viewMode === 'day' ? (
-        <div className="w-full" ref={containerRef}>
+        <div className="min-w-[1200px]" ref={containerRef}>
           <div className="relative">
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>

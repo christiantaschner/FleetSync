@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { allocateJobAction, type AllocateJobActionInput } from "@/actions/ai-actions";
+import { allocateJobAction } from "@/actions/ai-actions";
 import { reassignJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Loader2, Sparkles, UserCheck, AlertTriangle } from 'lucide-react';

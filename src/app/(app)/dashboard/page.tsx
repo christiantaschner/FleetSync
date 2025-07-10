@@ -794,6 +794,16 @@ export default function DashboardPage() {
           technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
           appId={appId}
       />}
+       {riskAlerts.map(alert => (
+          <ScheduleRiskAlert 
+            key={alert.technician.id} 
+            riskAlert={alert}
+            onDismiss={handleDismissRiskAlert}
+            technicians={technicians}
+            jobs={jobs}
+          />
+        ))}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline">
           Dashboard
@@ -956,13 +966,12 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="schedule" className="mt-4 overflow-x-auto">
+        <TabsContent value="schedule" className="mt-4">
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
             onCheckScheduleHealth={handleCheckScheduleHealth}
             isCheckingHealth={isCheckingHealth}
-            busyTechniciansCount={technicians.filter(t => !t.isAvailable && t.currentJobId).length}
           />
         </TabsContent>
 
@@ -981,7 +990,6 @@ export default function DashboardPage() {
                             key={technician.id} 
                             technician={technician} 
                             jobs={jobs}
-                            allTechnicians={technicians}
                             onEdit={handleOpenEditTechnician}
                             onMarkUnavailable={handleMarkTechnicianUnavailable}
                             />

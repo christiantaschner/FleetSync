@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -873,15 +872,13 @@ export default function DashboardPage() {
             <TabsList className={cn("mb-4", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
                 <TabsTrigger value="jobs" className="flex items-center gap-2">
                     Job List
-                    {unassignedJobsCount > 0 && <Badge variant="default">{unassignedJobsCount}</Badge>}
+                    <Badge variant="default">{unassignedJobsCount}</Badge>
                 </TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 {isAdmin && (
                   <TabsTrigger value="technicians" className="flex items-center justify-center gap-2">
                     Technicians
-                    {profileChangeRequests.length > 0 && (
-                        <Badge variant="default">{profileChangeRequests.length}</Badge>
-                    )}
+                    <Badge variant="default">{profileChangeRequests.length}</Badge>
                   </TabsTrigger>
                 )}
                 <TabsTrigger value="overview">Overview Map</TabsTrigger>
@@ -1113,3 +1110,4 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
+

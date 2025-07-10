@@ -534,7 +534,11 @@ export default function DashboardPage() {
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
             case 'priority':
-                return priorityOrder[a.priority] - priorityOrder[b.priority] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                if (priorityDiff !== 0) return priorityDiff;
+                const assignmentA = a.assignedTechnicianId ? 1 : 0;
+                const assignmentB = b.assignedTechnicianId ? 1 : 0;
+                return assignmentA - assignmentB || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'status':
                 return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'technician':
@@ -1149,5 +1153,3 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
-
-    

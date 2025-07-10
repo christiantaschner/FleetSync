@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -68,7 +69,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {isHighPriorityPending && <Star className="h-5 w-5 text-destructive fill-destructive" />}
               {job.title}
             </CardTitle>
             <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>

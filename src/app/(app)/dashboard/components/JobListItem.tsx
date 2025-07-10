@@ -1,8 +1,9 @@
+
 "use client";
 
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job } from '@/types';
@@ -19,9 +20,10 @@ interface JobListItemProps {
   job: Job;
   onOpenChat: (job: Job) => void;
   onShareTracking: (job: Job) => void;
+  onAIAssign: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTracking }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTracking, onAIAssign }) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -46,8 +48,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
   const isDraft = job.status === 'Draft';
   
   // The job detail page is now part of the technician view
-  const jobLink = `/technician/jobs/${job.assignedTechnicianId}?jobFilter=${job.id}`;
-  const detailsLink = job.assignedTechnicianId ? `/technician/${job.id}` : `/job/${job.id}`; // Fallback for unassigned
+  const detailsLink = `/technician/${job.id}`;
+
+  const isUnassigned = job.status === 'Pending' && !job.assignedTechnicianId;
 
   return (
     <Card className={cn(
@@ -128,6 +131,11 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
                 <Share2 className="mr-1 h-3 w-3" /> Share Tracking
             </Button>
         )}
+         {isUnassigned && (
+            <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
+                <Sparkles className="mr-1 h-3 w-3 text-primary" /> AI Assign
+            </Button>
+        )}
          <Link href={detailsLink} onClick={(e) => e.stopPropagation()}>
            <Button variant="secondary" size="sm" className="bg-secondary hover:bg-muted">
               <Edit className="mr-1 h-3 w-3" /> View Details
@@ -139,3 +147,5 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
 };
 
 export default JobListItem;
+
+    

@@ -1,7 +1,8 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, Sliders, CalendarClock } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -455,7 +456,45 @@ export default function DashboardPage() {
         setIsProcessingProactive(false);
     }
   };
-  
+
+  const handleAIAssign = useCallback(async (job: Job) => {
+    if (!appId) return;
+
+    if (technicians.length === 0) {
+      toast({ title: "Cannot Assign", description: "There are no technicians available.", variant: "default" });
+      return;
+    }
+    
+    setIsBatchLoading(true);
+
+    const suggestions = await Promise.all([job].map(async (job) => {
+        const aiTechnicians: AITechnician[] = technicians.map((t: Technician) => ({
+            technicianId: t.id,
+            technicianName: t.name,
+            isAvailable: t.isAvailable,
+            skills: t.skills || [],
+            location: t.location,
+            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
+        }));
+
+        const input: AllocateJobActionInput = {
+            jobDescription: job.description,
+            jobPriority: job.priority,
+            requiredSkills: job.requiredSkills || [],
+            scheduledTime: job.scheduledTime,
+            technicianAvailability: aiTechnicians,
+        };
+
+        const result = await allocateJobAction(input);
+        const techDetails = result.data ? technicians.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null : null;
+        return { job, suggestion: result.data, suggestedTechnicianDetails: techDetails, error: result.error };
+    }));
+
+    setAssignmentSuggestionsForReview(suggestions);
+    setIsBatchReviewDialogOpen(true);
+    setIsBatchLoading(false);
+  }, [jobs, technicians, toast, appId]);
+
   const handleOpenChat = (job: Job) => {
     setSelectedChatJob(job);
     setIsChatOpen(true);
@@ -803,7 +842,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
-            <CalendarClock className="h-4 w-4 text-muted-foreground" />
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{jobsTodayCount}</div>
@@ -814,20 +853,20 @@ export default function DashboardPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="job-list">
+          <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 Job List
                 {unassignedJobsCount > 0 && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
-          <TabsTrigger value="technicians">
+          <TabsTrigger value="schedule" className="hover:bg-secondary">Schedule</TabsTrigger>
+          <TabsTrigger value="technicians" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 Technicians
                 {profileChangeRequests.length > 0 && <Badge variant="default" className="h-5">{profileChangeRequests.length}</Badge>}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="overview-map">Overview Map</TabsTrigger>
+          <TabsTrigger value="overview-map" className="hover:bg-secondary">Overview Map</TabsTrigger>
         </TabsList>
 
         <TabsContent value="job-list" className="mt-4">
@@ -898,6 +937,7 @@ export default function DashboardPage() {
                       job={job} 
                       onOpenChat={handleOpenChat}
                       onShareTracking={handleShareTracking}
+                      onAIAssign={handleAIAssign}
                     />
                   ))
                 ) : (
@@ -993,3 +1033,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

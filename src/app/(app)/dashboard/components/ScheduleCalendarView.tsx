@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info } from 'lucide-react';
 import OptimizeRouteDialog from './optimize-route-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -244,10 +244,17 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 sm:p-6 overflow-x-auto">
+      <CardContent className="p-0 sm:p-6">
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Proactive Monitoring is Active</AlertTitle>
+          <AlertDescription>
+            This system automatically checks for schedule risks every 10 minutes. If a potential delay is detected, a "Proactive Alert" will appear on the main dashboard with suggested actions.
+          </AlertDescription>
+        </Alert>
         {viewMode === 'day' ? (
         <div ref={containerRef} className="overflow-x-auto">
-          <div className="min-w-[1200px] relative">
+          <div className="relative">
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                   <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>

@@ -111,8 +111,8 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat,
                 <User className="h-3 w-3" /> {assignedTechnician.name}
               </span>
             ) : (
-              <span className={cn("flex items-center gap-1 font-semibold", "text-green-600")}>
-                ▲ Unassigned
+              <span className="flex items-center gap-1 font-semibold">
+                Unassigned
               </span>
             )}
           </div>

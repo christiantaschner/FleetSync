@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import {
   Dialog,
   DialogContent,
@@ -26,15 +27,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
-import type { Technician } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2 } from 'lucide-react';
+import type { Technician, BusinessDay } from '@/types';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { useAuth } from '@/contexts/auth-context';
 import { removeUserFromCompanyAction } from '@/actions/user-actions';
 import { updateTechnicianAction } from '@/actions/technician-actions';
-
+import { Separator } from '@/components/ui/separator';
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
@@ -43,33 +44,60 @@ interface AddEditTechnicianDialogProps {
   allSkills: string[];
 }
 
+const defaultBusinessHours: BusinessDay[] = [
+    { dayOfWeek: "Monday", isOpen: true, startTime: "08:00", endTime: "17:00" },
+    { dayOfWeek: "Tuesday", isOpen: true, startTime: "08:00", endTime: "17:00" },
+    { dayOfWeek: "Wednesday", isOpen: true, startTime: "08:00", endTime: "17:00" },
+    { dayOfWeek: "Thursday", isOpen: true, startTime: "08:00", endTime: "17:00" },
+    { dayOfWeek: "Friday", isOpen: true, startTime: "08:00", endTime: "17:00" },
+    { dayOfWeek: "Saturday", isOpen: false, startTime: "09:00", endTime: "12:00" },
+    { dayOfWeek: "Sunday", isOpen: false, startTime: "09:00", endTime: "12:00" },
+];
+
 const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [locationAddress, setLocationAddress] = useState('');
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [isAvailable, setIsAvailable] = useState(true);
-  
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
+  const { control, register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
+    defaultValues: {
+      name: technician?.name || '',
+      email: technician?.email || '',
+      phone: technician?.phone || '',
+      skills: technician?.skills || [],
+      locationAddress: technician?.location.address || '',
+      latitude: technician?.location.latitude || 0,
+      longitude: technician?.location.longitude || 0,
+      isAvailable: technician ? technician.isAvailable : true,
+      isOnCall: technician?.isOnCall || false,
+      workingHours: technician?.workingHours && technician.workingHours.length === 7 
+            ? technician.workingHours 
+            : defaultBusinessHours,
+    }
+  });
+
+  const { fields, update } = useFieldArray({
+    control,
+    name: "workingHours",
+  });
+
   const resetForm = useCallback(() => {
-    setName(technician?.name || '');
-    setEmail(technician?.email || '');
-    setPhone(technician?.phone || '');
-    setSelectedSkills(technician?.skills || []);
-    setLocationAddress(technician?.location.address || '');
-    setLatitude(technician?.location.latitude || null);
-    setLongitude(technician?.location.longitude || null);
-    setIsAvailable(technician ? technician.isAvailable : true);
-  }, [technician]);
+    reset({
+      name: technician?.name || '',
+      email: technician?.email || '',
+      phone: technician?.phone || '',
+      skills: technician?.skills || [],
+      locationAddress: technician?.location.address || company?.settings?.address || '',
+      latitude: technician?.location.latitude || 0,
+      longitude: technician?.location.longitude || 0,
+      isAvailable: technician ? technician.isAvailable : true,
+      isOnCall: technician?.isOnCall || false,
+      workingHours: technician?.workingHours && technician.workingHours.length === 7 
+            ? technician.workingHours 
+            : company?.settings?.businessHours || defaultBusinessHours,
+    });
+  }, [technician, company, reset]);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,18 +105,10 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     }
   }, [technician, isOpen, resetForm]);
 
-  const handleSkillChange = (skill: string) => {
-    setSelectedSkills(prevSkills => 
-      prevSkills.includes(skill) 
-        ? prevSkills.filter(s => s !== skill) 
-        : [...prevSkills, skill]
-    );
-  };
-  
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
-    setLocationAddress(location.address);
-    setLatitude(location.lat);
-    setLongitude(location.lng);
+    setValue('locationAddress', location.address);
+    setValue('latitude', location.lat);
+    setValue('longitude', location.lng);
   };
 
   const handleDeleteTechnician = async () => {
@@ -104,17 +124,16 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     setIsDeleting(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: any) => {
     if (!technician) {
       toast({ title: "Cannot Save", description: "No technician selected to update.", variant: "destructive" });
       return;
     }
-    if (!name.trim() || !locationAddress.trim()) {
+    if (!data.name.trim() || !data.locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Name and Location Address.", variant: "destructive" });
       return;
     }
-    if (latitude === null || longitude === null) {
+    if (data.latitude === null || data.longitude === null) {
       toast({ title: "Invalid Address", description: "Please select a valid address from the dropdown suggestions to set the location.", variant: "destructive" });
       return;
     }
@@ -123,21 +142,23 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       return;
     }
     
-    setIsLoading(true);
+    setValue('isSubmitting', true);
 
     const technicianData = {
       id: technician.id,
       companyId: userProfile.companyId,
-      name,
-      email: email || "", 
-      phone: phone || "",
-      skills: selectedSkills,
+      name: data.name,
+      email: data.email || "", 
+      phone: data.phone || "",
+      skills: data.skills,
       location: {
-        latitude: latitude ?? 0, 
-        longitude: longitude ?? 0,
-        address: locationAddress,
+        latitude: data.latitude ?? 0, 
+        longitude: data.longitude ?? 0,
+        address: data.locationAddress,
       },
-      isAvailable,
+      isAvailable: data.isAvailable,
+      isOnCall: data.isOnCall,
+      workingHours: data.workingHours,
       appId: appId,
     };
 
@@ -150,75 +171,131 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       const errorMessage = error instanceof Error ? error.message : "Could not save technician.";
       toast({ title: "Firestore Error", description: errorMessage, variant: "destructive" });
     } finally {
-      setIsLoading(false);
+      setValue('isSubmitting', false);
     }
   };
   
+  const isSubmitting = useForm().watch('isSubmitting');
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg flex flex-col max-h-[90dvh] p-0">
+      <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90dvh] p-0">
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline">Edit Technician Details</DialogTitle>
           <DialogDescription>
             Update the details for this technician. New technicians should be added via the User Management settings.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-1 overflow-y-auto px-6">
-            <form id="edit-tech-form" onSubmit={handleSubmit} className="py-4 space-y-3">
+        <ScrollArea className="flex-1 overflow-y-auto px-6">
+            <form id="edit-tech-form" onSubmit={handleSubmit(onSubmit)} className="py-4 space-y-4">
                 <div>
                   <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
-                  <Input id="techName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., John Doe" required />
+                  <Input id="techName" {...register('name')} placeholder="e.g., John Doe" required />
                 </div>
-                <div>
-                  <Label htmlFor="techEmail"><Mail className="inline h-3.5 w-3.5 mr-1" />Email</Label>
-                  <Input id="techEmail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="e.g., john.doe@example.com" />
-                </div>
-                <div>
-                  <Label htmlFor="techPhone"><Phone className="inline h-3.5 w-3.5 mr-1" />Phone</Label>
-                  <Input id="techPhone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 555-123-4567" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="techEmail"><Mail className="inline h-3.5 w-3.5 mr-1" />Email</Label>
+                    <Input id="techEmail" type="email" {...register('email')} placeholder="e.g., john.doe@example.com" />
+                  </div>
+                  <div>
+                    <Label htmlFor="techPhone"><Phone className="inline h-3.5 w-3.5 mr-1" />Phone</Label>
+                    <Input id="techPhone" type="tel" {...register('phone')} placeholder="e.g., 555-123-4567" />
+                  </div>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
-                      <ScrollArea className="h-40 rounded-md border p-3 mt-1">
-                        <div className="space-y-2">
-                          {allSkills.map(skill => (
-                            <div key={skill} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`skill-${skill.replace(/\s+/g, '-')}`}
-                                checked={selectedSkills.includes(skill)}
-                                onCheckedChange={() => handleSkillChange(skill)}
-                              />
-                              <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                                {skill}
-                              </Label>
-                            </div>
-                          ))}
-                          {allSkills.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
-                          )}
-                        </div>
-                      </ScrollArea>
-                    </div>
+                 <div>
+                    <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
+                    <ScrollArea className="h-32 rounded-md border p-3 mt-1">
+                      <div className="space-y-2">
+                        {allSkills.map(skill => (
+                          <Controller
+                            key={skill}
+                            name="skills"
+                            control={control}
+                            render={({ field }) => (
+                               <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id={`skill-${skill}`}
+                                    checked={field.value?.includes(skill)}
+                                    onCheckedChange={(checked) => {
+                                        return checked
+                                            ? field.onChange([...field.value, skill])
+                                            : field.onChange(field.value?.filter((value) => value !== skill));
+                                    }}
+                                />
+                                <Label htmlFor={`skill-${skill}`} className="font-normal cursor-pointer">{skill}</Label>
+                               </div>
+                            )}
+                          />
+                        ))}
+                        {allSkills.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
+                        )}
+                      </div>
+                    </ScrollArea>
                 </div>
-
+                
                 <div>
-                  <Label htmlFor="techLocationAddress"><MapPin className="inline h-3.5 w-3.5 mr-1" />Location (Address) *</Label>
-                  <AddressAutocompleteInput 
-                      value={locationAddress}
-                      onValueChange={setLocationAddress}
-                      onLocationSelect={handleLocationSelect}
-                      placeholder="Start typing technician base address..."
-                      required
+                  <Label htmlFor="techLocationAddress"><MapPin className="inline h-3.5 w-3.5 mr-1" />Base Location *</Label>
+                  <Controller
+                    name="locationAddress"
+                    control={control}
+                    render={({ field }) => (
+                       <AddressAutocompleteInput 
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          onLocationSelect={handleLocationSelect}
+                          placeholder="Start typing technician base address..."
+                          required
+                      />
+                    )}
                   />
                 </div>
-                <div className="flex items-center space-x-2 pt-1">
-                  <Switch id="techIsAvailable" checked={isAvailable} onCheckedChange={setIsAvailable} />
-                  <Label htmlFor="techIsAvailable">Is Available</Label>
+                
+                 <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2"><Clock /> Working Hours</h3>
+                  <div className="flex items-center space-x-2">
+                    <Controller
+                        name="isOnCall"
+                        control={control}
+                        render={({ field }) => ( <Switch id="techIsOnCall" checked={field.value} onCheckedChange={field.onChange} /> )}
+                    />
+                    <Label htmlFor="techIsOnCall" className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary"/>Is On-Call for Emergencies</Label>
+                  </div>
+                  <div className="space-y-3">
+                    {fields.map((field, index) => (
+                      <div key={field.id} className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[100px_1fr_1fr_1fr] items-center gap-3 p-3 border rounded-lg bg-secondary/50">
+                        <Label className="font-semibold col-span-4 sm:col-span-1">{field.dayOfWeek}</Label>
+                        <div className="flex items-center space-x-2">
+                           <Controller
+                              name={`workingHours.${index}.isOpen`}
+                              control={control}
+                              render={({ field: checkboxField }) => (
+                                  <Checkbox
+                                      checked={checkboxField.value}
+                                      onCheckedChange={checkboxField.onChange}
+                                      id={`open-wh-${index}`}
+                                  />
+                               )}
+                          />
+                          <Label htmlFor={`open-wh-${index}`}>Open</Label>
+                        </div>
+                        <div>
+                          <Label htmlFor={`start-time-wh-${index}`} className="text-xs text-muted-foreground">Start Time</Label>
+                          <Input type="time" id={`start-time-wh-${index}`} {...register(`workingHours.${index}.startTime`)} />
+                        </div>
+                        <div>
+                          <Label htmlFor={`end-time-wh-${index}`} className="text-xs text-muted-foreground">End Time</Label>
+                          <Input type="time" id={`end-time-wh-${index}`} {...register(`workingHours.${index}.endTime`)} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
             </form>
-        </div>
+        </ScrollArea>
         <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-col sm:flex-row sm:justify-between items-center gap-2">
             <div>
                 {technician && technician.id !== company?.ownerId && (
@@ -246,8 +323,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             </div>
             <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                <Button type="submit" form="edit-tech-form" disabled={isLoading}>
-                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                <Button type="submit" form="edit-tech-form" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     Save Changes
                 </Button>
             </div>
@@ -258,5 +335,3 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
 };
 
 export default AddEditTechnicianDialog;
-
-    

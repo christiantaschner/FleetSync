@@ -80,6 +80,8 @@ export type Technician = {
   unavailableFrom?: string;
   unavailableUntil?: string;
   location: Location;
+  workingHours?: BusinessDay[];
+  isOnCall?: boolean;
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
@@ -185,6 +187,8 @@ export type AITechnician = {
   skills: string[]; // GenAI flow uses string array
   location: Location;
   currentJobs?: { jobId: string; scheduledTime?: string | null; priority: JobPriority; }[];
+  workingHours?: BusinessDay[];
+  isOnCall?: boolean;
 };
 
 export type ProfileChangeRequest = {
@@ -291,6 +295,8 @@ export const AllocateJobInputSchema = z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
       technicianName: z.string().describe('The name of the technician.'),
       isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
+      isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),
+      workingHours: z.array(BusinessDaySchema).optional().describe("The technician's individual working hours."),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
       location: z.any().describe('The current location of the technician.'),
       currentJobs: z.array(z.object({

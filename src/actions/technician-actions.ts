@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 import { getDoc, doc } from 'firebase/firestore';
+import { BusinessDaySchema } from '@/types';
 
 // Base schema for technician data, omitting fields managed by the server
 const TechnicianDataSchema = z.object({
@@ -20,6 +21,8 @@ const TechnicianDataSchema = z.object({
     address: z.string(),
   }),
   avatarUrl: z.string().url().optional(),
+  workingHours: z.array(BusinessDaySchema).length(7).optional(),
+  isOnCall: z.boolean().optional(),
 });
 
 // Schema for updating an existing technician

@@ -24,7 +24,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
-  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, and location.
+  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, location, and individual schedules.
 
 **TASK:**
 Given the following job and technician data, suggest the most suitable technician.
@@ -32,7 +32,7 @@ Given the following job and technician data, suggest the most suitable technicia
 **Job Details:**
 - Description: {{{jobDescription}}}
 - Priority: {{{jobPriority}}}
-{{#if scheduledTime}}- Customer Requested Time: {{{scheduledTime}}}{{/if}}
+{{#if scheduledTime}}- Customer Requested Time: {{{scheduledTime}}} (This is a strong preference).{{/if}}
 
 {{#if requiredSkills.length}}
 **CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
@@ -42,14 +42,21 @@ Given the following job and technician data, suggest the most suitable technicia
 {{#each technicianAvailability}}
 - **Technician ID: {{{technicianId}}}**
   - Name: {{{technicianName}}}
-  - Available: {{{isAvailable}}}
+  - Available Now: {{{isAvailable}}}
+  - On Call for Emergencies: {{#if isOnCall}}Yes{{else}}No{{/if}}
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Location: (Lat: {{{location.latitude}}}, Lon: {{{location.longitude}}})
   {{#if currentJobs.length}}
   - Current Assigned Jobs:
-  {{#each currentJobs}}
+    {{#each currentJobs}}
     - Job ID: {{{jobId}}}, Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled: {{{scheduledTime}}}{{/if}}
-  {{/each}}
+    {{/each}}
+  {{/if}}
+  {{#if workingHours}}
+  - Working Hours:
+    {{#each workingHours}}
+    - {{dayOfWeek}}: {{#if isOpen}}{{startTime}} - {{endTime}}{{else}}Off{{/if}}
+    {{/each}}
   {{/if}}
 {{/each}}
 
@@ -57,13 +64,15 @@ Given the following job and technician data, suggest the most suitable technicia
 **DECISION-MAKING LOGIC:**
 
 1.  **Skill Match:** The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
-2.  **Job Priority Logic:**
+2.  **Job Priority & Scheduling Logic:**
     *   **If the job priority is 'High':**
-        *   STRONGLY prefer any technician who is \`isAvailable: true\`. Their other \`currentJobs\` for later in the day do not matter for this decision. Choose the closest available and skilled technician.
+        *   Your absolute top priority is to find an available technician who is marked as **\`isOnCall: true\`**. If one exists and is skilled, suggest them immediately.
+        *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is \`isAvailable: true\` and skilled. Choose the closest one. Their future \`currentJobs\` for later in the day do not matter for this decision.
         *   If NO technician is \`isAvailable: true\`, you MAY suggest a technician who is \`isAvailable: false\` BUT is currently working on a 'Low' priority job. This is an interruption.
         *   NEVER suggest interrupting a technician on a 'Medium' or 'High' priority job.
     *   **If the job priority is 'Medium' or 'Low':**
-        *   Only consider technicians who are \`isAvailable: true\`.
+        *   Only consider technicians who are \`isAvailable: true\` and skilled.
+        *   The suggested assignment time MUST respect the technician's individual \`workingHours\`. Do not suggest a technician if the job would fall outside their scheduled shift for the day.
         *   Consider their \`currentJobs\` to ensure they have capacity.
 
 ---

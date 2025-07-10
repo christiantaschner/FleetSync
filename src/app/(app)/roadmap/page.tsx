@@ -234,9 +234,15 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Customizable Business Working Hours",
+      title: "Customizable Company Business Hours",
       description: "Define standard working hours and days for the company. The AI scheduling engine respects these hours for regular job assignments, preventing after-hours suggestions.",
       icon: CalendarClock,
+      status: "Completed",
+    },
+     {
+      title: "Customizable Technician Schedules & On-Call Duty",
+      description: "Set unique working hours for each technician and designate them as 'on-call' for emergencies. The AI respects these individual schedules and prioritizes on-call staff for urgent, after-hours jobs.",
+      icon: Zap,
       status: "Completed",
     },
   ],
@@ -251,12 +257,6 @@ const roadmapFeatures = {
       title: "Customer Service Representative (CSR) Role",
       description: "A limited-access role for CSRs to create job tickets and manage contracts, without seeing all dispatcher functions. Helps maintain a clear separation of duties.",
       icon: User,
-      status: "Planned",
-    },
-    {
-      title: "On-Call & Emergency Duty Roster",
-      description: "Create and manage on-call schedules for emergency jobs outside of normal business hours. The AI will prioritize the designated on-duty technician for any urgent requests.",
-      icon: Zap,
       status: "Planned",
     },
     {

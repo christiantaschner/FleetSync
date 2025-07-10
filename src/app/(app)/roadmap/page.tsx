@@ -7,7 +7,7 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -114,7 +114,7 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Advanced Real-time Dynamic Re-optimization",
+      title: "Dispatcher-Triggered Route Re-optimization",
       description: "Core AI engine tackles inefficient disposition by re-optimizing routes based on dispatcher triggers like a cancelled job or early completion.",
       icon: Shuffle, 
       status: "Completed",
@@ -235,7 +235,7 @@ const roadmapFeatures = {
     },
     {
       title: "Customizable Business Working Hours",
-      description: "Define standard working hours and days for the company (e.g., Mon-Fri, 9am-5pm). The AI scheduling engine will respect these hours for regular job assignments.",
+      description: "Define standard working hours and days for the company. The AI scheduling engine respects these hours for regular job assignments, preventing after-hours suggestions.",
       icon: CalendarClock,
       status: "Completed",
     },
@@ -254,15 +254,15 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "Technician Teams & Joint Scheduling",
-      description: "Ability to group technicians (e.g., a master and apprentice) who are always scheduled for jobs together. The AI will assign suitable jobs to the team, respecting their combined skills.",
-      icon: Users2,
-      status: "Planned",
-    },
-    {
       title: "On-Call & Emergency Duty Roster",
       description: "Create and manage on-call schedules for emergency jobs outside of normal business hours. The AI will prioritize the designated on-duty technician for any urgent requests.",
       icon: Zap,
+      status: "Planned",
+    },
+    {
+      title: "Technician Teams & Joint Scheduling",
+      description: "Ability to group technicians (e.g., a master and apprentice) who are always scheduled for jobs together. The AI will assign suitable jobs to the team, respecting their combined skills.",
+      icon: Users2,
       status: "Planned",
     },
     {
@@ -303,6 +303,36 @@ const roadmapFeatures = {
     },
   ],
   vision: [
+     {
+      title: "Fully Automated Real-time Schedule Re-Optimization",
+      description: "The holy grail. The AI automatically adjusts the entire fleet's schedule in real-time in response to events like traffic, job overruns, or new emergencies, without any dispatcher intervention required. The dispatcher simply approves the new master plan.",
+      icon: Brain,
+      status: "Vision",
+    },
+    {
+      title: "AI-Powered Smart Inbox",
+      description: "An intelligent inbox that automatically parses incoming emails or service requests. The AI extracts key details like customer name, address, and job description, then creates a draft job ticket with a suggested priority and technician, ready for one-click approval.",
+      icon: Mailbox,
+      status: "Vision",
+    },
+    {
+      title: "Predictive Map Overlays",
+      description: "The map view evolves from showing real-time data to showing *predictive* data. The AI will highlight areas of likely traffic congestion, or show a technician's 'shadow' of where they're expected to be in the next hour, allowing for true proactive decision-making.",
+      icon: Eye,
+      status: "Vision",
+    },
+     {
+      title: "AI-Powered Performance Analytics & Insights",
+      description: "Go beyond simple KPIs. The AI will provide 'Why did this happen?' insights, explaining the root causes of delays or inefficiencies (e.g., 'Technician B is consistently 20% slower on HVAC jobs, suggesting a training need').",
+      icon: Search,
+      status: "Vision",
+    },
+     {
+      title: "AI-Automated Customer Communication",
+      description: "The system automatically sends customers updates, such as confirming a booking, providing a precise ETA when the technician is en route, and proactively notifying them of delays with an AI-generated reason. This drastically reduces dispatcher workload from customer calls.",
+      icon: MessageSquare,
+      status: "Vision",
+    },
      {
       title: "Offline Mode for Core Mobile App Functions",
       description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",

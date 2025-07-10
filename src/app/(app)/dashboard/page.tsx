@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -1009,16 +1009,14 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="schedule">
-            <div className="overflow-x-auto">
-              <ScheduleCalendarView
-                  jobs={jobs}
-                  technicians={technicians}
-                  onCheckScheduleHealth={handleCheckScheduleHealth}
-                  isCheckingHealth={isCheckingHealth}
-                  busyTechniciansCount={busyTechnicians.length}
-              />
-            </div>
+        <TabsContent value="schedule" className="w-full overflow-x-auto">
+          <ScheduleCalendarView
+              jobs={jobs}
+              technicians={technicians}
+              onCheckScheduleHealth={handleCheckScheduleHealth}
+              isCheckingHealth={isCheckingHealth}
+              busyTechniciansCount={busyTechnicians.length}
+          />
         </TabsContent>
         {isAdmin && (
             <TabsContent value="technicians">
@@ -1119,4 +1117,3 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
-

@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
-import { allocateJobAction, predictNextAvailableTechniciansAction, checkScheduleHealthAction, type PredictNextAvailableTechniciansActionInput, type CheckScheduleHealthResult, type AllocateJobActionInput } from "@/actions/ai-actions";
+import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import type { PredictNextAvailableTechniciansOutput } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -41,6 +41,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
+import { predictNextAvailableTechnicians } from '@/ai/flows/predict-next-technician';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -309,31 +310,13 @@ export default function DashboardPage() {
         }
 
         setIsPredicting(true);
-        const activeJobsForPrediction = jobs.filter(j => busyTechnicians.some(t => t.currentJobId === j.id));
-
-        const input: PredictNextAvailableTechniciansInput = {
-            activeJobs: activeJobsForPrediction.map(job => ({
-                jobId: job.id,
-                title: job.title,
-                assignedTechnicianId: job.assignedTechnicianId!,
-                estimatedDurationMinutes: job.estimatedDurationMinutes,
-                startedAt: job.status === 'In Progress' ? job.updatedAt : undefined, 
-            })),
-            busyTechnicians: busyTechnicians.map(tech => ({
-                technicianId: tech.id,
-                technicianName: tech.name,
-                currentLocation: tech.location,
-                currentJobId: tech.currentJobId!,
-            })),
+        const result = await predictNextAvailableTechnicians({
+            busyTechnicians,
+            activeJobs: jobs.filter(j => busyTechnicians.some(t => t.currentJobId === j.id)),
             currentTime: new Date().toISOString(),
-        };
-
-        const result = await predictNextAvailableTechniciansAction(input);
-        if (result.data) {
-            setNextUpPredictions(result.data.predictions);
-        } else if (result.error) {
-            console.error("Prediction error:", result.error);
-            setNextUpPredictions([]);
+        });
+        if (result) {
+            setNextUpPredictions(result.predictions);
         }
         setIsPredicting(false);
     };
@@ -1049,13 +1032,15 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
         <TabsContent value="schedule">
-          <ScheduleCalendarView
-              jobs={jobs}
-              technicians={technicians}
-              onCheckScheduleHealth={handleCheckScheduleHealth}
-              isCheckingHealth={isCheckingHealth}
-              busyTechniciansCount={busyTechnicians.length}
-          />
+            <div className="overflow-x-auto">
+              <ScheduleCalendarView
+                  jobs={jobs}
+                  technicians={technicians}
+                  onCheckScheduleHealth={handleCheckScheduleHealth}
+                  isCheckingHealth={isCheckingHealth}
+                  busyTechniciansCount={busyTechnicians.length}
+              />
+            </div>
         </TabsContent>
         {isAdmin && (
             <TabsContent value="technicians">

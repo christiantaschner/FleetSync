@@ -311,7 +311,7 @@ export default function DashboardPage() {
         setIsPredicting(true);
         const activeJobsForPrediction = jobs.filter(j => busyTechnicians.some(t => t.currentJobId === j.id));
 
-        const input: PredictNextAvailableTechniciansActionInput = {
+        const input: PredictNextAvailableTechniciansInput = {
             activeJobs: activeJobsForPrediction.map(job => ({
                 jobId: job.id,
                 title: job.title,
@@ -534,11 +534,14 @@ export default function DashboardPage() {
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
             case 'priority':
-                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-                if (priorityDiff !== 0) return priorityDiff;
                 const assignmentA = a.assignedTechnicianId ? 1 : 0;
                 const assignmentB = b.assignedTechnicianId ? 1 : 0;
-                return assignmentA - assignmentB || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                if (assignmentA !== assignmentB) return assignmentA - assignmentB;
+
+                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                if (priorityDiff !== 0) return priorityDiff;
+                
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'status':
                 return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'technician':
@@ -913,14 +916,14 @@ export default function DashboardPage() {
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="w-full overflow-x-auto">
-            <TabsList className={cn("mb-4 pt-2 pr-2", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
+            <TabsList className={cn("mb-4", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
                 <TabsTrigger value="jobs">Job List</TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 {isAdmin && (
-                  <TabsTrigger value="technicians" className="relative">
+                  <TabsTrigger value="technicians" className="flex items-center gap-2">
                     Technicians
                     {profileChangeRequests.length > 0 && (
-                        <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
+                        <Badge className="h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
                     )}
                   </TabsTrigger>
                 )}

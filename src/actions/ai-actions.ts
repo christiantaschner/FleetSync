@@ -395,10 +395,27 @@ export async function calculateTravelMetricsAction(
 }
 
 export async function suggestScheduleTimeAction(
-  input: SuggestScheduleTimeInput
+  input: Omit<SuggestScheduleTimeInput, 'businessHours'> & { companyId: string }
 ): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
   try {
-    const result = await suggestScheduleTimeFlow(input);
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+
+    const companyDocRef = doc(dbAdmin, "companies", input.companyId);
+    const companySnap = await getDoc(companyDocRef);
+    if (!companySnap.exists()) {
+        return { data: null, error: `Company with ID ${input.companyId} not found.` };
+    }
+    const companyData = companySnap.data() as Company;
+    
+    const businessHours = companyData.settings?.businessHours;
+    if (!businessHours || businessHours.length === 0) {
+        return { data: { suggestions: [] }, error: "Company business hours are not configured." };
+    }
+
+    const result = await suggestScheduleTimeFlow({
+      ...input,
+      businessHours: businessHours,
+    });
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {

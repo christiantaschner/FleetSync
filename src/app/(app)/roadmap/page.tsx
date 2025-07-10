@@ -233,14 +233,14 @@ const roadmapFeatures = {
       icon: Leaf,
       status: "Completed",
     },
+    {
+      title: "Customizable Business Working Hours",
+      description: "Define standard working hours and days for the company (e.g., Mon-Fri, 9am-5pm). The AI scheduling engine will respect these hours for regular job assignments.",
+      icon: CalendarClock,
+      status: "Completed",
+    },
   ],
   planned: [
-    {
-      title: "Customer Live Tracking Portal",
-      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
-      icon: Navigation,
-      status: "Planned",
-    },
     {
       title: "Stripe Subscription & Billing Integration",
       description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes a customer portal for managing billing.",
@@ -257,12 +257,6 @@ const roadmapFeatures = {
       title: "Technician Teams & Joint Scheduling",
       description: "Ability to group technicians (e.g., a master and apprentice) who are always scheduled for jobs together. The AI will assign suitable jobs to the team, respecting their combined skills.",
       icon: Users2,
-      status: "Planned",
-    },
-    {
-      title: "Customizable Technician Working Hours",
-      description: "Define standard working hours and days for each technician (e.g., Mon-Thu, 8am-2pm). The AI scheduling engine will respect these hours for regular job assignments.",
-      icon: CalendarClock,
       status: "Planned",
     },
     {
@@ -299,6 +293,12 @@ const roadmapFeatures = {
       title: "Technician Profile Pictures",
       description: "Allow users to upload profile pictures for technicians, replacing the default placeholder avatars. This adds a personal touch to the UI.",
       icon: ImageIcon,
+      status: "Planned",
+    },
+    {
+      title: "Customer Live Tracking Portal",
+      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
+      icon: Navigation,
       status: "Planned",
     },
   ],
@@ -375,7 +375,7 @@ export default function RoadmapPage() {
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Planned Features</h2>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Planned Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
                 <RoadmapItem key={item.title} {...item} />

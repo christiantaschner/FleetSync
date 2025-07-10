@@ -26,6 +26,7 @@ export const BusinessDaySchema = z.object({
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format, use HH:MM" }),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: "Invalid time format, use HH:MM" }),
 });
+export type BusinessDay = z.infer<typeof BusinessDaySchema>;
 
 export const CompanySettingsSchema = z.object({
   address: z.string().optional(),
@@ -580,6 +581,7 @@ export const SuggestScheduleTimeInputSchema = z.object({
   jobPriority: z.enum(['High', 'Medium', 'Low']),
   requiredSkills: z.array(z.string()).describe("A list of skills required for the job."),
   currentTime: z.string().describe("The current time in ISO 8601 format."),
+  businessHours: z.array(BusinessDaySchema).length(7).describe("The company's operating hours for each day of the week."),
   technicians: z.array(z.object({
     id: z.string(),
     name: z.string(),

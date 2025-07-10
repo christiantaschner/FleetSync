@@ -95,13 +95,14 @@ export default function DashboardPage() {
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
 
   const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false);
+  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
-  const [activeTab, setActiveTab] = useState('jobs');
+  const [activeTab, setActiveTab] = useState('overview');
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -112,9 +113,15 @@ export default function DashboardPage() {
   }, [jobFilterId]);
   
   const handleOpenAddJob = () => {
+    setSelectedJobForEdit(null);
     setIsAddJobDialogOpen(true);
   };
   
+  const handleOpenEditJob = (job: Job) => {
+    setSelectedJobForEdit(job);
+    setIsAddJobDialogOpen(true);
+  };
+
   const handleOpenEditTechnician = (technician: Technician) => {
     setSelectedTechnicianForEdit(technician);
     setIsAddEditTechnicianDialogOpen(true);
@@ -718,11 +725,11 @@ export default function DashboardPage() {
   }
 
   return (
-      <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8"> {/* Added responsive padding */}
+      <div className="flex flex-col gap-6 p-4 md:p-6 lg:p-8">
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
             onClose={() => setIsAddJobDialogOpen(false)}
-            job={null}
+            job={selectedJobForEdit}
             technicians={technicians}
             allSkills={allSkills}
             customers={customers}
@@ -780,11 +787,11 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Jobs Awaiting Assignment
+              Total Jobs Awaiting Assignment
             </CardTitle>
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -842,6 +849,28 @@ export default function DashboardPage() {
             </Button>
           </CardFooter>
         </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Map Overview</CardTitle>
+            <MapIcon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent className="h-20">
+            <AddressAutocompleteInput 
+                value={searchAddressText}
+                onValueChange={setSearchAddressText}
+                onLocationSelect={handleLocationSearch}
+                placeholder="Search for an address..."
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Find a location to check for nearby jobs & technicians.
+            </p>
+          </CardContent>
+           <CardFooter>
+            <Button variant="outline" className="w-full" onClick={() => setActiveTab('overview')}>
+              <MapIcon className="mr-2 h-4 w-4" /> View Full Map
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
 
       {proactiveSuggestion && isAdmin && (
@@ -881,23 +910,34 @@ export default function DashboardPage() {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 md:w-fit">
+        <TabsList className="grid w-full grid-cols-4 md:w-fit">
+          <TabsTrigger value="overview"><MapIcon className="mr-2 h-4 w-4" />Overview</TabsTrigger>
           <TabsTrigger value="jobs">
-            <Briefcase className="mr-2 h-4 w-4" /> Jobs <Badge variant="default" className="ml-2">{unassignedJobsCount}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="schedule">
-            <CalendarDays className="mr-2 h-4 w-4" /> Schedule
-          </TabsTrigger>
-          <TabsTrigger value="technicians" className="relative">
-            <Users className="mr-2 h-4 w-4" />
-            <div className="flex items-center">
-              <span>Technicians</span>
-              {profileChangeRequests.length > 0 && 
-                <Badge variant="default" className="ml-2">{profileChangeRequests.length}</Badge>
-              }
+            <div className="flex items-center gap-1">
+                <Briefcase className="h-4 w-4" />
+                <span>Job List</span>
+                {unassignedJobsCount > 0 && <Badge variant="default" className="ml-1.5">{unassignedJobsCount}</Badge>}
             </div>
           </TabsTrigger>
+          <TabsTrigger value="schedule"><CalendarDays className="mr-2 h-4 w-4" /> Schedule</TabsTrigger>
+          <TabsTrigger value="technicians" className="flex items-center gap-1">
+            <Users className="h-4 w-4" /> 
+            <span>Technicians</span>
+            {profileChangeRequests.length > 0 && <Badge variant="default" className="ml-1.5">{profileChangeRequests.length}</Badge>}
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview">
+             <MapView 
+                jobs={jobs} 
+                technicians={technicians} 
+                defaultCenter={defaultMapCenter} 
+                defaultZoom={5}
+                searchedLocation={searchedLocation}
+                onJobClick={(job) => handleOpenEditJob(job)}
+                onTechnicianClick={(tech) => handleOpenEditTechnician(tech)}
+            />
+        </TabsContent>
 
         <TabsContent value="jobs" className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
@@ -972,7 +1012,7 @@ export default function DashboardPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="schedule" className="space-y-4 w-full overflow-x-auto">
+        <TabsContent value="schedule" className="w-full overflow-x-auto">
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}

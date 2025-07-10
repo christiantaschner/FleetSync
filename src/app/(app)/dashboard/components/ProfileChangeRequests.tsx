@@ -39,10 +39,17 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
 
   const handleApprove = async (request: ProfileChangeRequest) => {
     if (!userProfile?.companyId) return;
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "App ID is missing.", variant: "destructive" });
+        return;
+    }
+    
     setProcessingId(request.id);
     
     const result = await approveProfileChangeRequestAction({
       companyId: userProfile.companyId,
+      appId: appId,
       requestId: request.id,
       technicianId: request.technicianId,
       // Pass the original requested changes for approval
@@ -61,12 +68,19 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
 
   const handleReject = async (requestId: string) => {
     if (!userProfile?.companyId) return;
+     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "App ID is missing.", variant: "destructive" });
+        return;
+    }
+
     setProcessingId(requestId);
 
     const result = await rejectProfileChangeRequestAction({
         companyId: userProfile.companyId,
         requestId, 
-        reviewNotes: reviewNotes[requestId] || '' 
+        reviewNotes: reviewNotes[requestId] || '',
+        appId: appId,
     });
 
     if (result.error) {
@@ -187,3 +201,4 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
 };
 
 export default ProfileChangeRequests;
+

@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
-import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput } from "@/actions/ai-actions";
+import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
@@ -877,14 +877,14 @@ export default function DashboardPage() {
             <TabsList className={cn("mb-4", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
                 <TabsTrigger value="jobs" className="flex items-center gap-2">
                     Job List
-                    {unassignedJobsCount > 0 && <Badge>{unassignedJobsCount}</Badge>}
+                    {unassignedJobsCount > 0 && <Badge variant="default">{unassignedJobsCount}</Badge>}
                 </TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 {isAdmin && (
                   <TabsTrigger value="technicians" className="flex items-center justify-center gap-2">
                     Technicians
                     {profileChangeRequests.length > 0 && (
-                        <Badge className="h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>
+                        <Badge variant="default">{profileChangeRequests.length}</Badge>
                     )}
                   </TabsTrigger>
                 )}
@@ -1119,3 +1119,4 @@ export default function DashboardPage() {
       </Tabs>
     </div>);
 }
+

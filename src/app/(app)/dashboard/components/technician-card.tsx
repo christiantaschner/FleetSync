@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -100,9 +101,15 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
       <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex flex-col items-stretch gap-2">
         <div className="flex items-center justify-between">
             <p className="font-medium text-foreground">Current Job:</p>
-            <span className="truncate ml-2">{currentJob ? currentJob.title : (technician.isAvailable ? 'Awaiting assignment' : 'Idle')}</span>
+            {currentJob ? (
+                <Link href={`/job/${currentJob.id}`} className="truncate ml-2 text-primary hover:underline">
+                    {currentJob.title}
+                </Link>
+            ) : (
+                <span className="truncate ml-2">{technician.isAvailable ? 'Awaiting assignment' : 'Idle'}</span>
+            )}
         </div>
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-center gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
@@ -165,4 +172,3 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
 
 export default TechnicianCard;
 
-    

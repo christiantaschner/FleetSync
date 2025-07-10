@@ -212,7 +212,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places', 'geocoding']}>
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader className="bg-primary text-primary-foreground border-b-primary-foreground/20">
+          <SidebarHeader>
             <div className="flex items-center justify-between">
               <Logo />
               <div className="md:hidden">
@@ -350,5 +350,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </GoogleMapsAPIProvider>
   );
 }
-
-    

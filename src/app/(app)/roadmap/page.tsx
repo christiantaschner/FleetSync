@@ -103,7 +103,7 @@ const roadmapFeatures = {
     },
      {
       title: "Interactive Visual Calendar Scheduling",
-      description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. Supports drag-and-drop job reassignment, which triggers AI to draft an optimized schedule for affected technicians. Dispatcher reviews and confirms changes. This is key for gradual migration from existing scheduling tools.",
+      description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. This is key for gradual migration from existing scheduling tools.",
       icon: CalendarDays,
       status: "Completed",
     },
@@ -115,13 +115,13 @@ const roadmapFeatures = {
     },
     {
       title: "Advanced Real-time Dynamic Re-optimization",
-      description: "Core AI engine tackles 'Ineffiziente Disposition' by re-optimizing routes based on dispatcher triggers. Includes manual and automated schedule health checks to predict delays and enable proactive responses.",
+      description: "Core AI engine tackles inefficient disposition by re-optimizing routes based on dispatcher triggers like a cancelled job or early completion.",
       icon: Shuffle, 
       status: "Completed",
     },
      {
       title: "Proactive Delay Warnings & Smart Suggestions",
-      description: "The system proactively warns dispatchers BEFORE a technician misses a time window and suggests concrete solutions, such as notifying the customer or reassigning the job.",
+      description: "The system automatically and periodically checks for schedule risks and proactively warns dispatchers if a technician is running late, suggesting immediate solutions like re-optimization or customer notifications.",
       icon: ShieldQuestion,
       status: "Completed",
     },
@@ -181,7 +181,7 @@ const roadmapFeatures = {
     },
     {
       title: "Digital Time Tracking & Management",
-      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control 'Kosten' by managing overtime, and provides data for accurate job costing and payroll. Accurate historical time data from this system also enhances the precision of AI-driven route optimization and future job scheduling.",
+      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control costs by managing overtime, and provides data for accurate job costing and payroll. Accurate historical time data from this system also enhances the precision of AI-driven route optimization and future job scheduling.",
       icon: Timer,
       status: "Completed",
     },
@@ -235,7 +235,7 @@ const roadmapFeatures = {
     },
     {
       title: "CO2 Emission Estimation & Reporting",
-      description: "Estimate and report CO2 emissions based on travel data, contributing to 'Nachhaltigkeit' (sustainability) and helping reduce fuel 'Kosten' through awareness and optimized routing.",
+      description: "Estimate and report CO2 emissions based on travel data, contributing to sustainability and helping reduce fuel costs through awareness and optimized routing.",
       icon: Leaf,
       status: "Completed",
     },

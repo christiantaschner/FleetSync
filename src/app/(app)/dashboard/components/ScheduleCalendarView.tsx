@@ -167,15 +167,11 @@ const MonthView = ({ currentDate, jobs, technicians }: { currentDate: Date, jobs
 interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
-  onCheckScheduleHealth: () => void;
-  isCheckingHealth: boolean;
 }
 
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ 
     jobs, 
     technicians,
-    onCheckScheduleHealth,
-    isCheckingHealth,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -236,9 +232,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                         <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
                     </Button>
                 </OptimizeRouteDialog>
-                <Button variant="outline" onClick={onCheckScheduleHealth} disabled={isCheckingHealth} className="hover:bg-primary hover:text-primary-foreground">
-                    <ShieldQuestion className="mr-2 h-4 w-4" /> Find Schedule Risks
-                </Button>
                 <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
                     <Button size="icon" variant={viewMode === 'day' ? 'default' : 'ghost'} onClick={() => setViewMode('day')}><Grid3x3 className="h-4 w-4" /></Button>
                     <Button size="icon" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}><Calendar className="h-4 w-4" /></Button>
@@ -253,8 +246,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       </CardHeader>
       <CardContent className="p-0 sm:p-6 overflow-x-auto">
         {viewMode === 'day' ? (
-        <div className="min-w-[1200px]" ref={containerRef}>
-          <div className="relative">
+        <div ref={containerRef} className="overflow-x-auto">
+          <div className="min-w-[1200px] relative">
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                   <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>

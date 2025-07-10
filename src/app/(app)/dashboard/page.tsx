@@ -377,22 +377,27 @@ export default function DashboardPage() {
     setIsFetchingProactiveSuggestion(false);
   }, [technicians, jobs]);
   
+  // Effect for automatic schedule health checks
   useEffect(() => {
     if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
       return;
     }
-    
+
     const checkHealth = async () => {
       const result = await checkScheduleHealthAction({ technicians, jobs });
       if (result.error) {
+        // Silently fail or show a subtle error, not a toast
+        console.warn("Auto schedule health check failed:", result.error);
       } else if (result.data) {
-        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 15);
+        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 10); // 10 minute buffer
         
         setRiskAlerts(currentAlerts => {
           const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
           const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
           
-          const stillValidAlerts = currentAlerts.filter(oldAlert => highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id));
+          const stillValidAlerts = currentAlerts.filter(oldAlert => 
+            highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id)
+          );
 
           if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {
             return [...stillValidAlerts, ...newAlertsToAdd];
@@ -402,11 +407,12 @@ export default function DashboardPage() {
       }
     };
     
-    const timer = setTimeout(checkHealth, 2000); 
-    const intervalId = setInterval(checkHealth, 600000);
+    // Run once on load, then set an interval
+    const initialCheckTimer = setTimeout(checkHealth, 2000); // Initial check after 2 seconds
+    const intervalId = setInterval(checkHealth, 600000); // 10 minutes
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(initialCheckTimer);
       clearInterval(intervalId);
     };
   }, [jobs, technicians, isLoadingData]);
@@ -711,19 +717,7 @@ export default function DashboardPage() {
         setIsHandlingUnavailability(false);
     }, 1500);
   };
-
-  const handleCheckScheduleHealth = async () => {
-    setIsCheckingHealth(true);
-    setHealthResults([]);
-    const result = await checkScheduleHealthAction({ technicians, jobs });
-    if (result.error) {
-    } else if (result.data) {
-        setHealthResults(result.data);
-        setIsHealthDialogOpen(true);
-    }
-    setIsCheckingHealth(false);
-  };
-
+  
   const handleDismissRiskAlert = (technicianId: string) => {
     setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
   };
@@ -970,8 +964,6 @@ export default function DashboardPage() {
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
-            onCheckScheduleHealth={handleCheckScheduleHealth}
-            isCheckingHealth={isCheckingHealth}
           />
         </TabsContent>
 

@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -487,12 +488,12 @@ export default function DashboardPage() {
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
             case 'priority':
+                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                if (priorityDiff !== 0) return priorityDiff;
+                
                 const assignmentA = a.assignedTechnicianId ? 1 : 0;
                 const assignmentB = b.assignedTechnicianId ? 1 : 0;
                 if (assignmentA !== assignmentB) return assignmentA - assignmentB;
-
-                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-                if (priorityDiff !== 0) return priorityDiff;
                 
                 return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'status':
@@ -861,10 +862,10 @@ export default function DashboardPage() {
 
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle><AlertTriangle className="h-4 w-4 text-destructive" /></CardHeader><CardContent><div className="text-2xl font-bold">{highPriorityPendingCount}</div><p className="text-xs text-muted-foreground h-8">Urgent jobs needing assignment</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pending Jobs</CardTitle><SlidersHorizontal className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{unassignedJobsCount}</div><p className="text-xs text-muted-foreground h-8">Total jobs awaiting assignment</p></CardContent></Card>
-         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Available Technicians</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div><p className="text-xs text-muted-foreground h-8">Ready for assignments</p></CardContent></Card>
-         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent><div className="text-2xl font-bold">{jobsTodayCount}</div><p className="text-xs text-muted-foreground h-8">Total appointments for the day</p></CardContent></Card>
+         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle><AlertTriangle className="h-4 w-4 text-destructive" /></CardHeader><CardContent className="h-20 flex flex-col justify-center"><div className="text-2xl font-bold">{highPriorityPendingCount}</div><p className="text-xs text-muted-foreground">Urgent jobs needing assignment</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Pending Jobs</CardTitle><SlidersHorizontal className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent className="h-20 flex flex-col justify-center"><div className="text-2xl font-bold">{unassignedJobsCount}</div><p className="text-xs text-muted-foreground">Total jobs awaiting assignment</p></CardContent></Card>
+         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Available Technicians</CardTitle><Users className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent className="h-20 flex flex-col justify-center"><div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div><p className="text-xs text-muted-foreground">Ready for assignments</p></CardContent></Card>
+         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle><CalendarDays className="h-4 w-4 text-muted-foreground" /></CardHeader><CardContent className="h-20 flex flex-col justify-center"><div className="text-2xl font-bold">{jobsTodayCount}</div><p className="text-xs text-muted-foreground">Total appointments for the day</p></CardContent></Card>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -878,7 +879,7 @@ export default function DashboardPage() {
                 {isAdmin && (
                   <TabsTrigger value="technicians" className="flex items-center justify-center gap-2">
                     Technicians
-                    <Badge variant="default">{profileChangeRequests.length}</Badge>
+                    <Badge variant="default" className="inline-flex items-center justify-center">{profileChangeRequests.length}</Badge>
                   </TabsTrigger>
                 )}
                 <TabsTrigger value="overview">Overview Map</TabsTrigger>

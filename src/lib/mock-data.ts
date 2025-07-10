@@ -1,6 +1,6 @@
 
 import type { Technician, Job, Location, JobPriority, JobStatus, Contract, Equipment, ProfileChangeRequest, CustomerData, ChecklistResult } from '@/types';
-import { addDays, subDays } from 'date-fns';
+import { addDays, subDays, subMinutes, addMinutes } from 'date-fns';
 
 const MOCK_COMPANY_ID = 'fleetsync_ai_dev';
 
@@ -69,11 +69,12 @@ const completedChecklist: ChecklistResult[] = [
 ];
 
 export const mockJobs: Job[] = [
+  // Scenario to trigger risk alert for Bob Johnson (tech_002)
   {
     id: 'job_001',
     companyId: MOCK_COMPANY_ID,
     title: 'AC Unit Not Cooling',
-    description: 'Central AC unit is running but not blowing cold air. Customer requests urgent repair.',
+    description: 'Central AC unit is running but not blowing cold air. Customer reports strange noises.',
     priority: 'High',
     status: 'In Progress',
     assignedTechnicianId: 'tech_002',
@@ -81,13 +82,32 @@ export const mockJobs: Job[] = [
     customerName: 'Jane Roe',
     customerPhone: '555-5678',
     customerEmail: 'jane.roe@example.com',
-    scheduledTime: new Date().toISOString(),
-    estimatedDurationMinutes: 120,
+    scheduledTime: subMinutes(new Date(), 90).toISOString(),
+    estimatedDurationMinutes: 180, // Long job to ensure overlap
     createdAt: subDays(new Date(), 1).toISOString(),
-    updatedAt: new Date().toISOString(),
-    inProgressAt: new Date().toISOString(),
+    updatedAt: subMinutes(new Date(), 30).toISOString(),
+    inProgressAt: subMinutes(new Date(), 30).toISOString(), // Started 30 mins ago
     requiredSkills: ['HVAC', 'AC Repair'],
     checklistResults: completedChecklist,
+  },
+  {
+    id: 'job_006', // Next job for Bob
+    companyId: MOCK_COMPANY_ID,
+    title: 'Thermostat Replacement',
+    description: 'Customer wants to replace an old thermostat with a new smart thermostat they purchased.',
+    priority: 'Medium',
+    status: 'Assigned',
+    assignedTechnicianId: 'tech_002',
+    location: { latitude: 40.7295, longitude: -73.9965, address: '50 Cooper Square, New York, NY' }, // Nearby location
+    customerName: 'East Village Apartments',
+    customerPhone: '555-3344',
+    customerEmail: 'eva@example.com',
+    scheduledTime: addMinutes(new Date(), 90).toISOString(), // Scheduled in 1.5 hours, which will be tight
+    estimatedDurationMinutes: 60,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    requiredSkills: ['HVAC', 'Thermostat Installation'],
+    routeOrder: 1
   },
   {
     id: 'job_002',
@@ -221,5 +241,3 @@ export const mockProfileChangeRequests: ProfileChangeRequest[] = [
     createdAt: new Date().toISOString(),
   },
 ];
-
-    

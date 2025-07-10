@@ -20,8 +20,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
-import { handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
-import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
+import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
+import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
@@ -40,11 +40,38 @@ import { getSkillsAction } from '@/actions/skill-actions';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { serverTimestamp } from 'firebase/firestore'; 
+import { Copy } from 'lucide-react';
+import OptimizeRouteDialog from './components/optimize-route-dialog';
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
 const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+
+const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
+  const { toast } = useToast();
+  return (
+    <div className="w-full space-y-3">
+      <p className="text-sm">{message}</p>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            navigator.clipboard.writeText(message);
+            toast({ title: "Copied to clipboard!", duration: 2000 });
+          }}
+        >
+          <Copy className="mr-2 h-4 w-4" /> Copy Text
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDismiss}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 export default function DashboardPage() {
   const { user, userProfile, company, loading: authLoading } = useAuth();
@@ -79,7 +106,6 @@ export default function DashboardPage() {
   const [isProcessingProactive, setIsProcessingProactive] = useState(false);
 
   const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
-  const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -94,6 +120,9 @@ export default function DashboardPage() {
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
+
+  const [isOptimizeRouteOpen, setIsOptimizeRouteOpen] = useState(false);
+  const [technicianToOptimize, setTechnicianToOptimize] = useState<string | undefined>(undefined);
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
@@ -340,7 +369,7 @@ export default function DashboardPage() {
         }))
     }));
     
-    const input: AllocateJobActionInput = {
+    const input = {
       jobDescription: job.description,
       jobPriority: job.priority,
       requiredSkills: job.requiredSkills || [],
@@ -478,7 +507,7 @@ export default function DashboardPage() {
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
 
-        const input: AllocateJobActionInput = {
+        const input = {
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
@@ -600,7 +629,7 @@ export default function DashboardPage() {
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
 
-        const input: AllocateJobActionInput = {
+        const input = {
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
@@ -735,6 +764,42 @@ export default function DashboardPage() {
     });
   };
 
+  const handleDraftNotificationForJob = async (job: Job) => {
+    if (!job.assignedTechnicianId) {
+        toast({ title: "Cannot Notify", description: "Job is not assigned to a technician.", variant: "destructive" });
+        return;
+    }
+    const tech = technicians.find(t => t.id === job.assignedTechnicianId);
+    if (!tech) {
+        toast({ title: "Cannot Notify", description: "Assigned technician not found.", variant: "destructive" });
+        return;
+    }
+
+    const result = await notifyCustomerAction({
+      jobId: job.id,
+      customerName: job.customerName,
+      technicianName: tech.name,
+      jobTitle: job.title,
+      // You can add logic here to pass delay if known, or let AI be more generic
+      reasonForChange: `Regarding your upcoming appointment.`
+    });
+
+    if (result.error) {
+      toast({ title: 'Error', description: result.error, variant: 'destructive' });
+    } else if (result.data?.message) {
+      const { dismiss } = toast({
+        title: "AI Message Draft",
+        description: <ToastWithCopy message={result.data.message} onDismiss={() => dismiss()} />,
+        duration: Infinity,
+      });
+    }
+  };
+
+  const handleOpenOptimizeRoute = (technicianId: string) => {
+    setTechnicianToOptimize(technicianId);
+    setIsOptimizeRouteOpen(true);
+  };
+
   if (authLoading || isLoadingData) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
@@ -789,7 +854,7 @@ export default function DashboardPage() {
         </h1>
         <div className="flex flex-wrap gap-2">
            {isAdmin && (
-            <Button variant="ghost" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
+            <Button variant="outline" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
             </Button>
            )}
@@ -911,7 +976,7 @@ export default function DashboardPage() {
                   </Select>
                 </div>
                 <Button 
-                  variant="accent" 
+                  variant="outline" 
                   onClick={handleBatchAIAssign} 
                   disabled={pendingJobsCount === 0 || isBatchLoading}
                   className="w-full sm:w-auto"
@@ -930,6 +995,8 @@ export default function DashboardPage() {
                       onOpenChat={handleOpenChat}
                       onAIAssign={handleAIAssign}
                       onOpenDetails={handleOpenEditJob}
+                      onReOptimize={handleOpenOptimizeRoute}
+                      onDraftNotification={handleDraftNotificationForJob}
                     />
                   ))
                 ) : (
@@ -1012,11 +1079,16 @@ export default function DashboardPage() {
         onConfirmAssignments={handleConfirmBatchAssignments}
         isLoadingConfirmation={isLoadingBatchConfirmation}
       />
-      <ScheduleHealthDialog
-        isOpen={isHealthDialogOpen}
-        setIsOpen={setIsHealthDialogOpen}
-        healthResults={healthResults}
-      />
+      <OptimizeRouteDialog 
+        isOpen={isOptimizeRouteOpen}
+        onOpenChange={setIsOptimizeRouteOpen}
+        technicians={technicians} 
+        jobs={jobs}
+        defaultTechnicianId={technicianToOptimize}
+      >
+        {/* This is a controlled dialog, so the trigger is handled programmatically */}
+        <div />
+      </OptimizeRouteDialog>
     </div>
   );
 }

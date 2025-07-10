@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles, Shuffle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -21,9 +21,19 @@ interface JobListItemProps {
   onOpenChat: (job: Job) => void;
   onAIAssign: (job: Job) => void;
   onOpenDetails: (job: Job) => void;
+  onReOptimize: (technicianId: string) => void;
+  onDraftNotification: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat, onAIAssign, onOpenDetails }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ 
+    job, 
+    technicians, 
+    onOpenChat, 
+    onAIAssign, 
+    onOpenDetails,
+    onReOptimize,
+    onDraftNotification
+}) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -47,6 +57,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat,
   const isDraft = job.status === 'Draft';
   
   const isUnassigned = job.status === 'Pending' && !job.assignedTechnicianId;
+  const isRoutable = (job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress') && job.assignedTechnicianId;
   const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
 
   return (
@@ -105,11 +116,11 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat,
           </div>
           <div>
             {assignedTechnician ? (
-              <span className="flex items-center gap-1 font-medium">
+              <span className="flex items-center gap-1 font-medium text-foreground">
                 <User className="h-3 w-3" /> {assignedTechnician.name}
               </span>
             ) : (
-              <span className="flex items-center gap-1 font-semibold">
+              <span className="flex items-center gap-1 font-semibold text-muted-foreground">
                 Unassigned
               </span>
             )}
@@ -117,17 +128,22 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat,
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
-        {job.status !== 'Pending' && job.assignedTechnicianId && job.status !== 'Draft' && (
-            <Button variant="outline" size="sm" className="hover:bg-secondary" onClick={(e) => { e.preventDefault(); onOpenChat(job); }}>
-                <MessageSquare className="mr-1 h-3 w-3" /> Chat
-            </Button>
-        )}
          {isUnassigned && (
             <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
                 <Sparkles className="mr-1 h-3 w-3 text-primary" /> AI Assign
             </Button>
         )}
-         <Button variant="secondary" size="sm" className="bg-secondary hover:bg-muted" onClick={() => onOpenDetails(job)}>
+        {isRoutable && (
+          <>
+            <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onReOptimize(job.assignedTechnicianId!); }}>
+                <Shuffle className="mr-1 h-3 w-3 text-primary" /> Re-Optimize
+            </Button>
+            <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onDraftNotification(job); }}>
+                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Notify Customer
+            </Button>
+          </>
+        )}
+         <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm" onClick={() => onOpenDetails(job)}>
             <Edit className="mr-1 h-3 w-3" /> View Details
         </Button>
       </CardFooter>

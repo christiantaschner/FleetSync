@@ -27,6 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/auth-context';
+import OptimizeRouteDialog from './optimize-route-dialog';
 
 interface TechnicianCardProps {
   technician: Technician;
@@ -52,6 +53,8 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
       );
     }
   };
+
+  const hasJobsToOptimize = jobs.some(j => j.assignedTechnicianId === technician.id && (j.status === 'Assigned' || j.status === 'En Route'));
 
   return (
     <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
@@ -111,7 +114,12 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 )}
              </div>
         </div>
-        <div className="w-full">
+        <div className="w-full grid grid-cols-2 gap-2">
+            <OptimizeRouteDialog technicians={[technician]} jobs={jobs} defaultTechnicianId={technician.id}>
+                <Button variant="outline" size="sm" className="w-full" disabled={!hasJobsToOptimize}>
+                  <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize
+                </Button>
+            </OptimizeRouteDialog>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="w-full">

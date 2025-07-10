@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { optimizeRoutesAction } from "@/actions/ai-actions";
 import { confirmOptimizedRouteAction } from "@/actions/fleet-actions";
-import type { OptimizeRoutesOutput, Technician, Job, AITask, OptimizeRoutesInput } from '@/types';
+import type { OptimizeRoutesOutput, Technician, Job, OptimizeRoutesInput } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,15 +25,25 @@ import { useAuth } from '@/contexts/auth-context';
 
 interface OptimizeRouteDialogProps {
   children: React.ReactNode;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
   technicians: Technician[];
   jobs: Job[];
   defaultTechnicianId?: string;
 }
 
-const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, technicians, jobs, defaultTechnicianId }) => {
+const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isOpen: controlledIsOpen, onOpenChange: setControlledIsOpen, technicians, jobs, defaultTechnicianId }) => {
   const { toast } = useToast();
   const { userProfile } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  
+  // Internal state for uncontrolled dialog
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  // Determine if the dialog is controlled or uncontrolled
+  const isControlled = controlledIsOpen !== undefined && setControlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+  const setIsOpen = isControlled ? setControlledIsOpen : setInternalIsOpen;
+
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>('');
@@ -88,17 +98,9 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
       return;
     }
 
-    const tasksForOptimization: AITask[] = selectedJobIds.map(jobId => {
+    const tasksForOptimization = selectedJobIds.map(jobId => {
       const job = jobs.find(j => j.id === jobId);
       if (!job) throw new Error(`Job with ID ${jobId} not found`); 
-      
-      let priority: 'high' | 'medium' | 'low';
-      switch(job.priority) {
-        case 'High': priority = 'high'; break;
-        case 'Medium': priority = 'medium'; break;
-        case 'Low': priority = 'low'; break;
-        default: priority = 'medium';
-      }
 
       return {
         taskId: job.id,
@@ -106,7 +108,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
           latitude: job.location.latitude,
           longitude: job.location.longitude,
         },
-        priority: priority,
+        priority: job.priority,
         scheduledTime: job.scheduledTime,
       };
     });
@@ -168,7 +170,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, tec
   };
   
   const resetDialogState = () => {
-    setSelectedTechnicianId('');
+    setSelectedTechnicianId(defaultTechnicianId || '');
     setSelectedJobIds([]);
     setOptimizedRoute(null);
     setIsLoading(false);

@@ -764,7 +764,10 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
-            onClose={() => setIsAddJobDialogOpen(false)}
+            onClose={() => {
+              setIsAddJobDialogOpen(false);
+              setSelectedJobForEdit(null);
+            }}
             job={selectedJobForEdit}
             technicians={technicians}
             allSkills={allSkills}
@@ -935,9 +938,11 @@ export default function DashboardPage() {
                     <JobListItem 
                       key={job.id} 
                       job={job} 
+                      technicians={technicians}
                       onOpenChat={handleOpenChat}
                       onShareTracking={handleShareTracking}
                       onAIAssign={handleAIAssign}
+                      onOpenDetails={handleOpenEditJob}
                     />
                   ))
                 ) : (
@@ -952,7 +957,7 @@ export default function DashboardPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="schedule" className="mt-4 w-full overflow-x-auto">
+        <TabsContent value="schedule" className="mt-4 overflow-x-auto">
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
@@ -1002,8 +1007,6 @@ export default function DashboardPage() {
                 defaultCenter={defaultMapCenter} 
                 defaultZoom={5}
                 searchedLocation={searchedLocation}
-                onJobClick={(job) => handleOpenEditJob(job)}
-                onTechnicianClick={(tech) => handleOpenEditTechnician(tech)}
             />
         </TabsContent>
       </Tabs>
@@ -1033,5 +1036,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -2,11 +2,10 @@
 "use client";
 
 import React from 'react';
-import Link from 'next/link';
 import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Job } from '@/types';
+import type { Job, Technician } from '@/types';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -18,12 +17,14 @@ import { Button } from '@/components/ui/button';
 
 interface JobListItemProps {
   job: Job;
+  technicians: Technician[];
   onOpenChat: (job: Job) => void;
   onShareTracking: (job: Job) => void;
   onAIAssign: (job: Job) => void;
+  onOpenDetails: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTracking, onAIAssign }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat, onShareTracking, onAIAssign, onOpenDetails }) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -47,10 +48,8 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
   const canShareTracking = job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress';
   const isDraft = job.status === 'Draft';
   
-  // The job detail page is now part of the technician view
-  const detailsLink = `/technician/${job.id}`;
-
   const isUnassigned = job.status === 'Pending' && !job.assignedTechnicianId;
+  const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
 
   return (
     <Card className={cn(
@@ -67,7 +66,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {/* Prevent link navigation when clicking icon */}
                   <span onClick={(e) => e.preventDefault()}>{getStatusIcon(job.status)}</span>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -108,9 +106,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
             )}
           </div>
           <div>
-            {job.assignedTechnicianId ? (
-              <span className="flex items-center gap-1">
-                <User className="h-3 w-3" /> {job.assignedTechnicianId}
+            {assignedTechnician ? (
+              <span className="flex items-center gap-1 font-medium">
+                <User className="h-3 w-3" /> {assignedTechnician.name}
               </span>
             ) : (
               <span className={cn("flex items-center gap-1 font-semibold", "text-green-600")}>
@@ -136,16 +134,12 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onOpenChat, onShareTrack
                 <Sparkles className="mr-1 h-3 w-3 text-primary" /> AI Assign
             </Button>
         )}
-         <Link href={detailsLink} onClick={(e) => e.stopPropagation()}>
-           <Button variant="secondary" size="sm" className="bg-secondary hover:bg-muted">
-              <Edit className="mr-1 h-3 w-3" /> View Details
-          </Button>
-        </Link>
+         <Button variant="secondary" size="sm" className="bg-secondary hover:bg-muted" onClick={() => onOpenDetails(job)}>
+            <Edit className="mr-1 h-3 w-3" /> View Details
+        </Button>
       </CardFooter>
     </Card>
   );
 };
 
 export default JobListItem;
-
-    

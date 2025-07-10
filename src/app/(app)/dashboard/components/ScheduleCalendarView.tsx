@@ -48,7 +48,7 @@ const JobBlock = ({ job, dayStart, totalMinutes }: { job: Job, dayStart: Date, t
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "absolute h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
+              "absolute top-0 bottom-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
               getStatusAppearance(job.status),
               priorityColor
             )}

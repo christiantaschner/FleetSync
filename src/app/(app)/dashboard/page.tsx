@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from "@/actions/fleet-actions";
-import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
+import { allocateJobAction, checkScheduleHealthAction, type CheckScheduleHealthResult, predictNextAvailableTechniciansAction, type PredictNextAvailableTechniciansActionInput } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
@@ -40,7 +40,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
-import { predictNextAvailableTechnicians } from '@/ai/flows/predict-next-technician';
 
 
 const ALL_STATUSES = "all_statuses";
@@ -53,6 +52,7 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const prevJobIdsRef = useRef(new Set());
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -689,6 +689,10 @@ export default function DashboardPage() {
     jobs.filter(j => j.status === 'Pending' && j.priority === 'High').length, 
     [jobs]
   );
+  const unassignedJobsCount = useMemo(() => 
+    jobs.filter(j => j.status === 'Pending').length, 
+    [jobs]
+  );
 
   const jobsTodayCount = useMemo(() => 
     jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
@@ -869,15 +873,15 @@ export default function DashboardPage() {
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="w-full overflow-x-auto">
+        <div className="w-full overflow-x-auto pb-1">
             <TabsList className={cn("mb-4", isAdmin ? "sm:grid sm:w-full sm:grid-cols-4" : "sm:grid sm:w-full sm:grid-cols-3")}>
                 <TabsTrigger value="jobs" className="flex items-center gap-2">
                     Job List
-                    {pendingJobsCount > 0 && <Badge>{pendingJobsCount}</Badge>}
+                    {unassignedJobsCount > 0 && <Badge>{unassignedJobsCount}</Badge>}
                 </TabsTrigger>
                 <TabsTrigger value="schedule">Schedule</TabsTrigger>
                 {isAdmin && (
-                  <TabsTrigger value="technicians" className="flex items-center gap-2">
+                  <TabsTrigger value="technicians" className="flex items-center justify-center gap-2">
                     Technicians
                     {profileChangeRequests.length > 0 && (
                         <Badge className="h-5 w-5 p-0 flex items-center justify-center">{profileChangeRequests.length}</Badge>

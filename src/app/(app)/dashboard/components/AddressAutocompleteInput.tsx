@@ -6,16 +6,15 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover';
 import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Loader2, MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface AddressAutocompleteInputProps {
+interface AddressAutocompleteInputProps extends React.ComponentPropsWithoutRef<typeof Input> {
   value: string;
   onValueChange: (value: string) => void;
   onLocationSelect: (location: { address: string; lat: number; lng: number }) => void;
-  placeholder?: string;
-  required?: boolean;
 }
 
-const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ value, onValueChange, onLocationSelect, ...props }) => {
+const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ value, onValueChange, onLocationSelect, className, ...props }) => {
   const [autocompleteService, setAutocompleteService] = useState<google.maps.places.AutocompleteService | null>(null);
   const [geocodingService, setGeocodingService] = useState<google.maps.Geocoder | null>(null);
   const [predictions, setPredictions] = useState<google.maps.places.AutocompletePrediction[]>([]);
@@ -83,6 +82,7 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
           value={value}
           onChange={handleInputChange}
           onFocus={() => { if (value) setShowPredictions(true); }}
+          className={cn(className)}
         />
       </PopoverAnchor>
       <PopoverContent 

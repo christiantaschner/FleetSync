@@ -574,7 +574,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
           <DialogHeader className="px-6 pt-6 flex-shrink-0">
             <DialogTitle className="font-headline">{titleText}</DialogTitle>
-            <DialogDescription>{descriptionText}</DialogDescription>
+            {descriptionText && <DialogDescription>{descriptionText}</DialogDescription>}
           </DialogHeader>
           <form id="job-form" ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="flex-1 min-h-0 flex flex-col">
             <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -591,11 +591,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="jobTitle">Job Title *</Label>
-                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required readOnly={!isEditing} />
+                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required readOnly={!isEditing} className={!isEditing ? 'bg-background' : ''}/>
                   </div>
                   <div>
                     <Label htmlFor="jobDescription">Job Description *</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} readOnly={!isEditing} />
+                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} readOnly={!isEditing} className={!isEditing ? 'bg-background' : ''} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -619,7 +619,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             )}
                         </div>
                       <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority" disabled={!isEditing}>
-                        <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
+                        <SelectTrigger id="jobPriority" name="jobPriorityTrigger" className={!isEditing ? 'bg-background' : ''}>
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                         <SelectContent>
@@ -636,7 +636,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
                             disabled={!isEditing || manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
                           >
-                            <SelectTrigger id="jobStatus">
+                            <SelectTrigger id="jobStatus" className={!isEditing ? 'bg-background' : ''}>
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -659,6 +659,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           placeholder="e.g., John Doe"
                           autoComplete="off"
                           readOnly={!isEditing}
+                          className={!isEditing ? 'bg-background' : ''}
                         />
                       </PopoverAnchor>
                       <PopoverContent
@@ -683,11 +684,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="customerEmail">Customer Email</Label>
-                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" readOnly={!isEditing} />
+                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" readOnly={!isEditing} className={!isEditing ? 'bg-background' : ''} />
                     </div>
                     <div>
                         <Label htmlFor="customerPhone">Customer Phone</Label>
-                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" readOnly={!isEditing} />
+                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" readOnly={!isEditing} className={!isEditing ? 'bg-background' : ''} />
                     </div>
                   </div>
                   <div>
@@ -699,6 +700,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       placeholder="Start typing job address..."
                       required
                       disabled={!isEditing}
+                      className={!isEditing ? 'bg-background' : ''}
                     />
                   </div>
                 </div>
@@ -707,7 +709,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Label htmlFor="assign-technician">Assigned Technician</Label>
                       <div className="flex gap-2">
                          <Select value={manualTechnicianId} onValueChange={setManualTechnicianId} disabled={!isEditing}>
-                            <SelectTrigger id="assign-technician">
+                            <SelectTrigger id="assign-technician" className={!isEditing ? 'bg-background' : ''}>
                               <SelectValue placeholder="Unassigned" />
                             </SelectTrigger>
                             <SelectContent>
@@ -719,26 +721,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               ))}
                             </SelectContent>
                           </Select>
-                          {(!job || manualTechnicianId === UNASSIGNED_VALUE) && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
-                                            disabled={isFetchingAISuggestion || !description}
-                                        >
-                                            {isFetchingAISuggestion ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
-                                            <span className="sr-only">AI Assign</span>
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Get AI Suggestion</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                          {isEditing && (manualTechnicianId === UNASSIGNED_VALUE) && (
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
+                                disabled={isFetchingAISuggestion || !description}
+                            >
+                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                                AI Assign
+                            </Button>
                           )}
                       </div>
                   </div>
@@ -827,7 +820,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             variant={"outline"}
                             className={cn(
                               "flex-1 justify-start text-left font-normal",
-                              !scheduledTime && "text-muted-foreground"
+                              !scheduledTime && "text-muted-foreground",
+                              !isEditing && "bg-background"
                             )}
                             disabled={!isEditing}
                           >
@@ -843,7 +837,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           type="time"
                           onChange={handleTimeChange}
                           value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                          className="w-32"
+                          className={cn("w-32", !isEditing && "bg-background")}
                           readOnly={!isEditing}
                       />
                     </div>
@@ -854,10 +848,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> AI Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Customer Photo Upload (AI Triage) <Info className="h-3 w-3 text-muted-foreground"/></h3>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p className="max-w-xs">AI Triage helps technicians prepare by identifying the equipment model and suggesting parts based on photos the customer uploads via a secure link.</p>
+                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze to help the technician prepare.</p>
                             </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

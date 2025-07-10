@@ -19,12 +19,11 @@ interface JobListItemProps {
   job: Job;
   technicians: Technician[];
   onOpenChat: (job: Job) => void;
-  onShareTracking: (job: Job) => void;
   onAIAssign: (job: Job) => void;
   onOpenDetails: (job: Job) => void;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat, onShareTracking, onAIAssign, onOpenDetails }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat, onAIAssign, onOpenDetails }) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -45,7 +44,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat,
   };
 
   const isHighPriorityPending = job.priority === 'High' && job.status === 'Pending';
-  const canShareTracking = job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress';
   const isDraft = job.status === 'Draft';
   
   const isUnassigned = job.status === 'Pending' && !job.assignedTechnicianId;
@@ -122,11 +120,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, technicians, onOpenChat,
         {job.status !== 'Pending' && job.assignedTechnicianId && job.status !== 'Draft' && (
             <Button variant="outline" size="sm" className="hover:bg-secondary" onClick={(e) => { e.preventDefault(); onOpenChat(job); }}>
                 <MessageSquare className="mr-1 h-3 w-3" /> Chat
-            </Button>
-        )}
-        {canShareTracking && (
-            <Button variant="outline" size="sm" className="hover:bg-secondary" onClick={(e) => { e.preventDefault(); onShareTracking(job); }}>
-                <Share2 className="mr-1 h-3 w-3" /> Share Tracking
             </Button>
         )}
          {isUnassigned && (

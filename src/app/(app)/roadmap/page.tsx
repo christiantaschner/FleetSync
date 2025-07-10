@@ -228,12 +228,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Live Technician Tracking Portal for Customers",
-      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
-      icon: Navigation,
-      status: "Completed",
-    },
-    {
       title: "CO2 Emission Estimation & Reporting",
       description: "Estimate and report CO2 emissions based on travel data, contributing to sustainability and helping reduce fuel costs through awareness and optimized routing.",
       icon: Leaf,
@@ -241,6 +235,12 @@ const roadmapFeatures = {
     },
   ],
   planned: [
+    {
+      title: "Live Technician Tracking Portal for Customers",
+      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
+      icon: Navigation,
+      status: "Planned",
+    },
     {
       title: "Stripe Subscription & Billing Integration",
       description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes a customer portal for managing billing.",

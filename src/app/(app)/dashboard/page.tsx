@@ -31,7 +31,6 @@ import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
-import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { isToday } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
@@ -79,7 +78,6 @@ export default function DashboardPage() {
   const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
   const [isProcessingProactive, setIsProcessingProactive] = useState(false);
 
-  const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [isHealthDialogOpen, setIsHealthDialogOpen] = useState(false);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
@@ -87,9 +85,6 @@ export default function DashboardPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [selectedChatJob, setSelectedChatJob] = useState<Job | null>(null);
   
-  const [isTrackingDialogOpen, setIsTrackingDialogOpen] = useState(false);
-  const [selectedJobForTracking, setSelectedJobForTracking] = useState<Job | null>(null);
-
   const [searchedLocation, setSearchedLocation] = useState<Location | null>(null);
   const [searchAddressText, setSearchAddressText] = useState('');
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
@@ -506,11 +501,6 @@ export default function DashboardPage() {
     setIsChatOpen(true);
   };
   
-  const handleShareTracking = (job: Job) => {
-    setSelectedJobForTracking(job);
-    setIsTrackingDialogOpen(true);
-  };
-
   const filteredJobs = useMemo(() => {
     if (jobFilterId) {
         return jobs.filter(job => job.id === jobFilterId);
@@ -776,11 +766,6 @@ export default function DashboardPage() {
                 allSkills={allSkills}
             />
         )}
-      <ShareTrackingDialog 
-          isOpen={isTrackingDialogOpen}
-          setIsOpen={setIsTrackingDialogOpen}
-          job={selectedJobForTracking}
-      />
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
           setIsOpen={setIsChatOpen} 
@@ -943,7 +928,6 @@ export default function DashboardPage() {
                       job={job} 
                       technicians={technicians}
                       onOpenChat={handleOpenChat}
-                      onShareTracking={handleShareTracking}
                       onAIAssign={handleAIAssign}
                       onOpenDetails={handleOpenEditJob}
                     />

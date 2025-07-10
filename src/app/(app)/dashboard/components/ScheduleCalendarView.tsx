@@ -48,7 +48,7 @@ const JobBlock = ({ job, dayStart, totalMinutes }: { job: Job, dayStart: Date, t
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "absolute top-0 bottom-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
+              "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
               getStatusAppearance(job.status),
               priorityColor
             )}
@@ -256,7 +256,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       <CardContent className="min-h-[500px] p-0 sm:p-6">
         {viewMode === 'day' ? (
         <div className="w-full overflow-x-auto" ref={containerRef}>
-          <div className="relative">
+          <div className="relative min-w-[1200px]">
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                   <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>

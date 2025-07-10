@@ -567,7 +567,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   }
   
   const titleText = job ? (isEditing ? 'Edit Job Details' : 'View Job Details') : 'Add New Job';
-  const descriptionText = job ? (isEditing ? 'Update the details for this job.' : 'Viewing job details. Click "Edit" to make changes.') : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job.';
+  const descriptionText = job ? (isEditing ? 'Update the details for this job.' : '') : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job.';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogClose}>
@@ -703,50 +703,45 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </div>
                 </div>
                 <div className="space-y-4">
-                  {job ? (
-                      <div>
-                        <Label htmlFor="assign-technician">Assigned Technician</Label>
-                        <Select value={manualTechnicianId} onValueChange={setManualTechnicianId} disabled={!isEditing}>
-                          <SelectTrigger id="assign-technician">
-                            <SelectValue placeholder="Unassigned" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
-                            {technicians.map(tech => (
-                              <SelectItem key={tech.id} value={tech.id}>
-                                {tech.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                  <div>
+                    <Label htmlFor="assign-technician">Assigned Technician</Label>
+                      <div className="flex gap-2">
+                         <Select value={manualTechnicianId} onValueChange={setManualTechnicianId} disabled={!isEditing}>
+                            <SelectTrigger id="assign-technician">
+                              <SelectValue placeholder="Unassigned" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
+                              {technicians.map(tech => (
+                                <SelectItem key={tech.id} value={tech.id}>
+                                  {tech.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {(!job || manualTechnicianId === UNASSIGNED_VALUE) && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
+                                            disabled={isFetchingAISuggestion || !description}
+                                        >
+                                            {isFetchingAISuggestion ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
+                                            <span className="sr-only">AI Assign</span>
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Get AI Suggestion</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                          )}
                       </div>
-                    ) : (
-                      <div>
-                         <Label htmlFor="assign-technician">Assign Technician</Label>
-                          <div className="flex gap-2">
-                             <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
-                                <SelectTrigger id="assign-technician">
-                                  <SelectValue placeholder="-- Unassigned --" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
-                                  {technicians.map(tech => (
-                                    <SelectItem key={tech.id} value={tech.id}>{tech.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
-                                disabled={isFetchingAISuggestion || !description}
-                              >
-                                {isFetchingAISuggestion ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
-                                <span className="ml-2 hidden sm:inline">AI Assign</span>
-                              </Button>
-                          </div>
-                      </div>
-                    )}
+                  </div>
 
                   <div>
                     <div className="flex justify-between items-center mb-1">
@@ -784,7 +779,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             {skillSuggestionReasoning}
                         </div>
                     )}
-                    <ScrollArea className="rounded-md border p-3 max-h-48">
+                    <ScrollArea className="rounded-md border p-3 max-h-36">
                       <div className="space-y-2">
                         {allSkills.length === 0 ? (
                           <div className="text-center flex flex-col items-center justify-center h-full pt-8">
@@ -856,8 +851,18 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   
                   {job && (
                     <div className="space-y-2 rounded-md border p-4">
-                      <h3 className="text-sm font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary"/> AI Triage</h3>
-                      {job.aiIdentifiedModel || job.aiSuggestedParts || job.aiRepairGuide ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> AI Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="max-w-xs">AI Triage helps technicians prepare by identifying the equipment model and suggesting parts based on photos the customer uploads via a secure link.</p>
+                            </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+
+                      {job.aiIdentifiedModel || job.aiSuggestedParts?.length || job.aiRepairGuide ? (
                         <div className="text-sm space-y-2">
                            <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
                            <p><strong>Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
@@ -878,7 +883,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <p className="text-xs text-muted-foreground">The link is valid for 24 hours. AI results will appear here after the customer uploads photos.</p>
                         </div>
                       ) : (
-                        <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink || !isEditing}>
+                        <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>
                            {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
                            Generate Photo Upload Link
                         </Button>

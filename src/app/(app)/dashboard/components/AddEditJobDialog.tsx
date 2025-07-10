@@ -305,6 +305,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       if (result.data.suggestedTechnicianId) {
         const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
         setSuggestedTechnicianDetails(tech || null);
+        setManualTechnicianId(result.data.suggestedTechnicianId); // Pre-select the suggested technician
       }
     }
   }, [technicians, toast, jobs]);
@@ -313,12 +314,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   useEffect(() => {
     if (isOpen && !job && title.trim() && description.trim() && locationAddress.trim() && latitude !== null && longitude !== null) {
       const timer = setTimeout(() => {
-        fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime);
         fetchScheduleSuggestion(priority, requiredSkills);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [title, description, priority, locationAddress, latitude, longitude, requiredSkills, scheduledTime, isOpen, job, fetchAIAssignmentSuggestion, fetchScheduleSuggestion]);
+  }, [title, description, priority, locationAddress, latitude, longitude, requiredSkills, scheduledTime, isOpen, job, fetchScheduleSuggestion]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -485,7 +485,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onJobAddedOrUpdated?.(finalJobDataForCallback, newAssignedTechId || null);
 
       } else { // CREATING A NEW JOB
-        const techToAssign = assignTechId ? technicians.find(t => t.id === assignTechId) : null;
+        const techToAssignId = assignTechId || (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
+        const techToAssign = techToAssignId ? technicians.find(t => t.id === techToAssignId) : null;
         const isInterruption = !!(techToAssign && !techToAssign.isAvailable && techToAssign.currentJobId);
 
         const batch = writeBatch(db);
@@ -494,8 +495,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         
         const newJobPayload: any = {
           ...jobData,
-          status: assignTechId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
-          assignedTechnicianId: assignTechId || null,
+          status: techToAssignId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
+          assignedTechnicianId: techToAssignId || null,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           notes: '',
@@ -503,14 +504,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           estimatedDurationMinutes: 0,
         };
 
-        if(assignTechId) {
+        if(techToAssignId) {
             newJobPayload.assignedAt = serverTimestamp();
         }
 
         batch.set(newJobRef, newJobPayload);
 
-        if (assignTechId && techToAssign) {
-          const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, assignTechId);
+        if (techToAssignId && techToAssign) {
+          const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, techToAssignId);
           batch.update(techDocRef, {
               isAvailable: false, // Tech will be busy with the new job
               currentJobId: newJobRef.id,
@@ -537,13 +538,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
         if (isInterruption) {
             toast({ title: "Job Interrupted & Assigned", description: `Assigned "${finalJobDataForCallback.title}" and returned previous job to queue.` });
-        } else if (assignTechId) {
+        } else if (techToAssignId) {
             toast({ title: "Job Added & Assigned", description: `New job "${finalJobDataForCallback.title}" created and assigned.` });
         } else {
             toast({ title: "Job Added", description: `New job "${finalJobDataForCallback.title}" created.` });
         }
 
-        onJobAddedOrUpdated?.(finalJobDataForCallback, assignTechId);
+        onJobAddedOrUpdated?.(finalJobDataForCallback, techToAssignId);
       }
       onClose();
     } catch (error) {
@@ -566,7 +567,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   }
   
   const titleText = job ? (isEditing ? 'Edit Job Details' : 'View Job Details') : 'Add New Job';
-  const descriptionText = job ? (isEditing ? 'Update the details for this job.' : 'Viewing job details. Click "Edit" to make changes.') : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job. AI will suggest a technician.';
+  const descriptionText = job ? (isEditing ? 'Update the details for this job.' : 'Viewing job details. Click "Edit" to make changes.') : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details for the new job.';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogClose}>
@@ -586,37 +587,38 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </AlertDescription>
                 </Alert>
               )}
-              <fieldset disabled={!isEditing} className="disabled:opacity-100">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="jobTitle">Job Title *</Label>
-                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required readOnly={!isEditing} />
                   </div>
                   <div>
                     <Label htmlFor="jobDescription">Job Description *</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} />
+                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} readOnly={!isEditing} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <div className="flex items-center gap-1.5 mb-1">
                             <Label htmlFor="jobPriority">Job Priority *</Label>
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger type="button" asChild>
-                                        <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p className="max-w-xs">
-                                            <b>High:</b> Emergencies (e.g., leaks, power loss).<br/>
-                                            <b>Medium:</b> Standard service calls and repairs.<br/>
-                                            <b>Low:</b> Routine maintenance or inspections.
-                                        </p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            {isEditing && (
+                              <TooltipProvider>
+                                  <Tooltip>
+                                      <TooltipTrigger type="button" asChild>
+                                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                          <p className="max-w-xs">
+                                              <b>High:</b> Emergencies (e.g., leaks, power loss).<br/>
+                                              <b>Medium:</b> Standard service calls and repairs.<br/>
+                                              <b>Low:</b> Routine maintenance or inspections.
+                                          </p>
+                                      </TooltipContent>
+                                  </Tooltip>
+                              </TooltipProvider>
+                            )}
                         </div>
-                      <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
+                      <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority" disabled={!isEditing}>
                         <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
@@ -632,7 +634,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         <div>
                           <Label htmlFor="jobStatus">Status</Label>
                           <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
-                            disabled={manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
+                            disabled={!isEditing || manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
                           >
                             <SelectTrigger id="jobStatus">
                               <SelectValue placeholder="Select status" />
@@ -656,6 +658,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           onChange={handleCustomerNameChange}
                           placeholder="e.g., John Doe"
                           autoComplete="off"
+                          readOnly={!isEditing}
                         />
                       </PopoverAnchor>
                       <PopoverContent
@@ -680,11 +683,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <Label htmlFor="customerEmail">Customer Email</Label>
-                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
+                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" readOnly={!isEditing} />
                     </div>
                     <div>
                         <Label htmlFor="customerPhone">Customer Phone</Label>
-                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" readOnly={!isEditing} />
                     </div>
                   </div>
                   <div>
@@ -695,28 +698,56 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       onLocationSelect={handleLocationSelect}
                       placeholder="Start typing job address..."
                       required
+                      disabled={!isEditing}
                     />
                   </div>
-                  {job && (
-                    <div>
-                      <Label htmlFor="assign-technician">Assigned Technician</Label>
-                      <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
-                        <SelectTrigger id="assign-technician">
-                          <SelectValue placeholder="Unassigned" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
-                          {technicians.map(tech => (
-                            <SelectItem key={tech.id} value={tech.id}>
-                              {tech.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
                 </div>
                 <div className="space-y-4">
+                  {job ? (
+                      <div>
+                        <Label htmlFor="assign-technician">Assigned Technician</Label>
+                        <Select value={manualTechnicianId} onValueChange={setManualTechnicianId} disabled={!isEditing}>
+                          <SelectTrigger id="assign-technician">
+                            <SelectValue placeholder="Unassigned" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
+                            {technicians.map(tech => (
+                              <SelectItem key={tech.id} value={tech.id}>
+                                {tech.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div>
+                         <Label htmlFor="assign-technician">Assign Technician</Label>
+                          <div className="flex gap-2">
+                             <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
+                                <SelectTrigger id="assign-technician">
+                                  <SelectValue placeholder="-- Unassigned --" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
+                                  {technicians.map(tech => (
+                                    <SelectItem key={tech.id} value={tech.id}>{tech.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
+                                disabled={isFetchingAISuggestion || !description}
+                              >
+                                {isFetchingAISuggestion ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
+                                <span className="ml-2 hidden sm:inline">AI Assign</span>
+                              </Button>
+                          </div>
+                      </div>
+                    )}
+
                   <div>
                     <div className="flex justify-between items-center mb-1">
                         <Label className="flex items-center gap-2">
@@ -753,7 +784,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             {skillSuggestionReasoning}
                         </div>
                     )}
-                    <ScrollArea className="h-32 rounded-md border p-3">
+                    <ScrollArea className="rounded-md border p-3 max-h-48">
                       <div className="space-y-2">
                         {allSkills.length === 0 ? (
                           <div className="text-center flex flex-col items-center justify-center h-full pt-8">
@@ -777,7 +808,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           ))
                         ) : (
                           requiredSkills.length > 0 ? (
-                            requiredSkills.map(skill => <Badge key={skill} variant="secondary">{skill}</Badge>)
+                            <div className="flex flex-wrap gap-2">
+                              {requiredSkills.map(skill => <Badge key={skill} variant="secondary">{skill}</Badge>)}
+                            </div>
                           ) : (
                             <p className="text-sm text-muted-foreground">No skills required.</p>
                           )
@@ -788,87 +821,39 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </div>
                     </ScrollArea>
                   </div>
-                  {(userProfile?.role !== 'csr' && !job) && (
-                    <div className="space-y-4">
-                      {isFetchingAISuggestion && (
-                        <Alert>
-                           <Loader2 className="h-4 w-4 animate-spin"/>
-                           <AlertTitle>Finding Technician</AlertTitle>
-                           <AlertDescription>AI is finding the best technician...</AlertDescription>
-                        </Alert>
-                      )}
-                      {!isFetchingAISuggestion && aiSuggestion && (
-                        <Alert className={cn(aiSuggestion.suggestedTechnicianId ? "border-primary/50 bg-primary/5" : "border-destructive/50 bg-destructive/5")}>
-                          <Sparkles className={cn("h-4 w-4", aiSuggestion.suggestedTechnicianId ? "text-primary" : "text-destructive")} />
-                          <AlertTitle className={cn("font-semibold", aiSuggestion.suggestedTechnicianId ? "text-primary" : "text-destructive")}>AI Suggestion</AlertTitle>
-                           <AlertDescription className={cn(aiSuggestion.suggestedTechnicianId ? "" : "text-destructive")}>
-                             {aiSuggestion.suggestedTechnicianId && suggestedTechnicianDetails ? (
-                                <>
-                                  Assign to: <strong>{suggestedTechnicianDetails.name}</strong>
-                                  <p className="text-xs mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
-                                </>
-                             ) : (
-                                <>
-                                  <strong>Could not find a suitable technician.</strong>
-                                  <p className="text-xs mt-1 italic">Reason: {aiSuggestion.reasoning}</p>
-                                </>
-                             )}
-                           </AlertDescription>
-                         </Alert>
-                      )}
-                      
-                      <div>
-                        <Label>Schedule Time</Label>
-                        <div className="flex gap-2">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button
-                                id="scheduledTime"
-                                variant={"outline"}
-                                className={cn(
-                                  "flex-1 justify-start text-left font-normal",
-                                  !scheduledTime && "text-muted-foreground"
-                                )}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                              <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
-                            </PopoverContent>
-                          </Popover>
-                          <Input
-                              type="time"
-                              onChange={handleTimeChange}
-                              value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                              className="w-32"
-                          />
-                        </div>
-                        {isFetchingScheduleSuggestion && (
-                            <div className="flex items-center text-xs mt-1.5 text-muted-foreground">
-                            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> AI is suggesting optimal times...
-                            </div>
-                        )}
-                        {!isFetchingScheduleSuggestion && scheduleSuggestions && scheduleSuggestions.length > 0 && (
-                            <div className="space-y-1 mt-2">
-                                <Select onValueChange={(value) => setScheduledTime(new Date(value))}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Or select an AI suggested time..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {scheduleSuggestions.map((suggestion, index) => (
-                                    <SelectItem key={index} value={suggestion.time}>
-                                        {format(new Date(suggestion.time), "EEE, PPP 'at' p")}
-                                    </SelectItem>
-                                    ))}
-                                </SelectContent>
-                                </Select>
-                            </div>
-                        )}
-                      </div>
+                  
+                  <div>
+                    <Label>Schedule Time</Label>
+                    <div className="flex gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="scheduledTime"
+                            variant={"outline"}
+                            className={cn(
+                              "flex-1 justify-start text-left font-normal",
+                              !scheduledTime && "text-muted-foreground"
+                            )}
+                            disabled={!isEditing}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                          <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <Input
+                          type="time"
+                          onChange={handleTimeChange}
+                          value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                          className="w-32"
+                          readOnly={!isEditing}
+                      />
                     </div>
-                  )}
+                  </div>
+                  
                   {job && (
                     <div className="space-y-2 rounded-md border p-4">
                       <h3 className="text-sm font-semibold flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary"/> AI Triage</h3>
@@ -893,7 +878,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <p className="text-xs text-muted-foreground">The link is valid for 24 hours. AI results will appear here after the customer uploads photos.</p>
                         </div>
                       ) : (
-                        <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>
+                        <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink || !isEditing}>
                            {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
                            Generate Photo Upload Link
                         </Button>
@@ -902,7 +887,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   )}
                 </div>
               </div>
-              </fieldset>
             </div>
             <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
               <div className="flex gap-2">
@@ -947,8 +931,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     </Button>
                   ) : (
                     <>
-                      {userProfile?.role !== 'csr' && (
-                        <Button
+                      {aiSuggestion && suggestedTechnicianDetails && (
+                         <Button
                           type="button"
                           onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
                           disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
@@ -962,7 +946,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        variant={userProfile?.role === 'csr' ? 'default' : 'outline'}
+                        variant={'outline'}
                       >
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
@@ -980,5 +964,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-
-    

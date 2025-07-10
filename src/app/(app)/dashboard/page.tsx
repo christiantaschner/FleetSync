@@ -972,7 +972,7 @@ export default function DashboardPage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="schedule" className="w-full overflow-x-auto">
+        <TabsContent value="schedule" className="space-y-4 w-full overflow-x-auto">
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}

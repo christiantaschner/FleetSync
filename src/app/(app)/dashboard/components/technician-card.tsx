@@ -98,18 +98,20 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
           </div>
         </div>
       </CardContent>
-      <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex flex-col items-stretch gap-2">
-        <div className="flex items-center justify-between">
+      <CardFooter className="text-xs text-muted-foreground border-t pt-3 pb-3 flex flex-col items-start gap-2">
+        <div className="w-full">
             <p className="font-medium text-foreground">Current Job:</p>
-            {currentJob ? (
-                <Link href={`/job/${currentJob.id}`} className="truncate ml-2 text-primary hover:underline">
-                    {currentJob.title}
-                </Link>
-            ) : (
-                <span className="truncate ml-2">{technician.isAvailable ? 'Awaiting assignment' : 'Idle'}</span>
-            )}
+             <div className="h-8 flex items-center">
+                 {currentJob ? (
+                    <Link href={`/job/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
+                        {currentJob.title}
+                    </Link>
+                ) : (
+                    <span className="truncate">{technician.isAvailable ? 'Awaiting assignment' : 'Idle'}</span>
+                )}
+             </div>
         </div>
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex w-full justify-end">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
@@ -171,4 +173,3 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
 };
 
 export default TechnicianCard;
-

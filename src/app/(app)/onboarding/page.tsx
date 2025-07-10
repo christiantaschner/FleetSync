@@ -18,6 +18,7 @@ import { type CompleteOnboardingInput } from '@/types';
 import { Loader2, Building, Users, ListChecks } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
+import { Logo } from '@/components/common/logo';
 
 type OnboardingFormValues = Omit<CompleteOnboardingInput, 'uid'>;
 
@@ -141,109 +142,116 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-lg shadow-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">Welcome to FleetSync AI!</CardTitle>
-          <CardDescription>
-            Let's get your company set up. This will only take a moment.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="companyName" className="flex items-center gap-2 text-md">
-                <Building className="h-4 w-4" /> Company Name
-              </Label>
-              <Input
-                id="companyName"
-                placeholder="e.g., Acme Plumbing & HVAC"
-                {...register('companyName')}
-                disabled={isSubmitting}
-              />
-              {errors.companyName && (
-                <p className="text-sm text-destructive">{errors.companyName.message}</p>
-              )}
+    <div className="flex min-h-screen flex-col bg-muted/40">
+        <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
+            <div className="mx-auto flex items-center justify-center">
+                <Logo />
             </div>
-
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2 text-md">
-                <ListChecks className="h-4 w-4" /> Company Specialties
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Select all that apply. This will seed your account with relevant skills.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-4">
-                  {specialties.map((item) => (
-                      <Controller
-                          key={item}
-                          name="companySpecialties"
-                          control={control}
-                          render={({ field }) => {
-                              return (
-                                  <div className="flex items-center space-x-2">
-                                      <Checkbox
-                                          id={item}
-                                          checked={field.value?.includes(item)}
-                                          onCheckedChange={(checked) => {
-                                              return checked
-                                                  ? field.onChange([...(field.value || []), item])
-                                                  : field.onChange(field.value?.filter((value) => value !== item));
-                                          }}
-                                          disabled={isSubmitting}
-                                      />
-                                      <Label htmlFor={item} className="font-normal">{item}</Label>
-                                  </div>
-                              );
-                          }}
-                      />
-                  ))}
-              </div>
-               {isOtherSelected && (
-                <div className="space-y-2 pl-1 pt-2">
-                    <Label htmlFor="otherSpecialty">Please specify your specialty</Label>
+        </header>
+        <main className="flex flex-1 items-center justify-center p-4">
+            <Card className="w-full max-w-lg shadow-2xl">
+                <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-headline">Welcome to FleetSync AI!</CardTitle>
+                <CardDescription>
+                    Let's get your company set up. This will only take a moment.
+                </CardDescription>
+                </CardHeader>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                    <Label htmlFor="companyName" className="flex items-center gap-2 text-md">
+                        <Building className="h-4 w-4" /> Company Name
+                    </Label>
                     <Input
-                        id="otherSpecialty"
-                        placeholder="e.g., Marine HVAC"
-                        {...register('otherSpecialty')}
+                        id="companyName"
+                        placeholder="e.g., Acme Plumbing & HVAC"
+                        {...register('companyName')}
                         disabled={isSubmitting}
                     />
-                    {errors.otherSpecialty && (
-                        <p className="text-sm text-destructive">{errors.otherSpecialty.message}</p>
+                    {errors.companyName && (
+                        <p className="text-sm text-destructive">{errors.companyName.message}</p>
                     )}
-                </div>
-              )}
-              {errors.companySpecialties && !isOtherSelected && (
-                  <p className="text-sm text-destructive">{errors.companySpecialties.message}</p>
-              )}
-            </div>
+                    </div>
 
-            <div className="space-y-2">
-                <Label htmlFor="numberOfTechnicians" className="flex items-center gap-2 text-md">
-                    <Users className="h-4 w-4" /> Number of Technicians
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                    How many technicians will you be managing? You can change this later.
-                </p>
-                <Input
-                    id="numberOfTechnicians"
-                    type="number"
-                    min="1"
-                    {...register('numberOfTechnicians', { valueAsNumber: true })}
-                    disabled={isSubmitting}
-                />
-                {errors.numberOfTechnicians && (
-                    <p className="text-sm text-destructive">{errors.numberOfTechnicians.message}</p>
-                )}
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Complete Setup & Start Free Trial"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
+                    <div className="space-y-2">
+                    <Label className="flex items-center gap-2 text-md">
+                        <ListChecks className="h-4 w-4" /> Company Specialties
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                        Select all that apply. This will seed your account with relevant skills.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-4">
+                        {specialties.map((item) => (
+                            <Controller
+                                key={item}
+                                name="companySpecialties"
+                                control={control}
+                                render={({ field }) => {
+                                    return (
+                                        <div className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={item}
+                                                checked={field.value?.includes(item)}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                        ? field.onChange([...(field.value || []), item])
+                                                        : field.onChange(field.value?.filter((value) => value !== item));
+                                                }}
+                                                disabled={isSubmitting}
+                                            />
+                                            <Label htmlFor={item} className="font-normal">{item}</Label>
+                                        </div>
+                                    );
+                                }}
+                            />
+                        ))}
+                    </div>
+                    {isOtherSelected && (
+                        <div className="space-y-2 pl-1 pt-2">
+                            <Label htmlFor="otherSpecialty">Please specify your specialty</Label>
+                            <Input
+                                id="otherSpecialty"
+                                placeholder="e.g., Marine HVAC"
+                                {...register('otherSpecialty')}
+                                disabled={isSubmitting}
+                            />
+                            {errors.otherSpecialty && (
+                                <p className="text-sm text-destructive">{errors.otherSpecialty.message}</p>
+                            )}
+                        </div>
+                    )}
+                    {errors.companySpecialties && !isOtherSelected && (
+                        <p className="text-sm text-destructive">{errors.companySpecialties.message}</p>
+                    )}
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="numberOfTechnicians" className="flex items-center gap-2 text-md">
+                            <Users className="h-4 w-4" /> Number of Technicians
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                            How many technicians will you be managing? You can change this later.
+                        </p>
+                        <Input
+                            id="numberOfTechnicians"
+                            type="number"
+                            min="1"
+                            {...register('numberOfTechnicians', { valueAsNumber: true })}
+                            disabled={isSubmitting}
+                        />
+                        {errors.numberOfTechnicians && (
+                            <p className="text-sm text-destructive">{errors.numberOfTechnicians.message}</p>
+                        )}
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Complete Setup & Start Free Trial"}
+                    </Button>
+                </CardFooter>
+                </form>
+            </Card>
+        </main>
     </div>
   );
 }

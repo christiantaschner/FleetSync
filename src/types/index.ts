@@ -347,7 +347,6 @@ export const OptimizeRoutesOutputSchema = z.object({
 });
 export type OptimizeRoutesOutput = z.infer<typeof OptimizeRoutesOutputSchema>;
 
-
 export const PredictNextAvailableTechniciansInputSchema = z.object({
   activeJobs: z.array(
     z.object({

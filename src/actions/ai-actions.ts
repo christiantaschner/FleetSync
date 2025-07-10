@@ -43,17 +43,7 @@ import type {
   SuggestScheduleTimeInput,
   SuggestScheduleTimeOutput,
   TriageJobOutput,
-  SummarizeFtfrOutput,
-  AllocateJobInputSchema,
-  OptimizeRoutesInputSchema,
-  SuggestJobSkillsInputSchema,
-  SuggestJobPriorityInputSchema,
-  PredictNextAvailableTechniciansInputSchema,
-  NotifyCustomerInputSchema,
-  SuggestNextAppointmentInputSchema,
-  TroubleshootEquipmentInputSchema,
-  CalculateTravelMetricsInputSchema,
-  SuggestScheduleTimeInputSchema
+  SummarizeFtfrOutput
 } from "@/types";
 
 // Re-export types for use in components
@@ -73,8 +63,7 @@ export async function allocateJobAction(
   input: AllocateJobActionInput
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
   try {
-    const validatedInput = AllocateJobInputSchema.parse(input);
-    const result = await allocateJobFlow(validatedInput);
+    const result = await allocateJobFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -94,8 +83,7 @@ export async function optimizeRoutesAction(
   input: OptimizeRoutesInput
 ): Promise<{ data: OptimizeRoutesOutput | null; error: string | null }> {
   try {
-    const validatedInput = OptimizeRoutesInputSchema.parse(input);
-    const result = await optimizeRoutesFlow(validatedInput);
+    const result = await optimizeRoutesFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -115,8 +103,7 @@ export async function suggestJobSkillsAction(
   input: SuggestJobSkillsActionInput
 ): Promise<{ data: SuggestJobSkillsOutput | null; error: string | null }> {
   try {
-    const validatedInput = SuggestJobSkillsInputSchema.parse(input);
-    const result = await suggestJobSkillsFlow(validatedInput);
+    const result = await suggestJobSkillsFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -136,8 +123,7 @@ export async function suggestJobPriorityAction(
   input: SuggestJobPriorityActionInput
 ): Promise<{ data: SuggestJobPriorityOutput | null; error: string | null }> {
   try {
-    const validatedInput = SuggestJobPriorityInputSchema.parse(input);
-    const result = await suggestJobPriorityFlow(validatedInput);
+    const result = await suggestJobPriorityFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -157,8 +143,7 @@ export async function predictNextAvailableTechniciansAction(
   input: PredictNextAvailableTechniciansActionInput
 ): Promise<{ data: PredictNextAvailableTechniciansOutput | null; error: string | null }> {
   try {
-    const validatedInput = PredictNextAvailableTechniciansInputSchema.parse(input);
-    const result = await predictNextAvailableTechniciansFlow(validatedInput);
+    const result = await predictNextAvailableTechniciansFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -244,16 +229,14 @@ export async function notifyCustomerAction(
   input: NotifyCustomerInput
 ): Promise<{ data: { message: string } | null; error: string | null }> {
   try {
-    const validatedInput = NotifyCustomerInputSchema.parse(input);
-    
     // Have an AI generate the message for a more professional touch
     const notificationResult = await generateCustomerNotificationFlow({
-        customerName: validatedInput.customerName,
-        technicianName: validatedInput.technicianName,
-        jobTitle: validatedInput.jobTitle,
-        delayMinutes: validatedInput.delayMinutes,
-        newTime: validatedInput.newTime,
-        reasonForChange: validatedInput.reasonForChange,
+        customerName: input.customerName,
+        technicianName: input.technicianName,
+        jobTitle: input.jobTitle,
+        delayMinutes: input.delayMinutes,
+        newTime: input.newTime,
+        reasonForChange: input.reasonForChange,
     });
 
     const message = notificationResult.message;
@@ -261,7 +244,7 @@ export async function notifyCustomerAction(
     // In a real application, this would integrate with an SMS/Email service like Twilio.
     // For this demo, we'll log it and return the message to be displayed in a toast.
     console.log(JSON.stringify({
-        message: `Simulating notification for job ${validatedInput.jobId}: "${message}"`,
+        message: `Simulating notification for job ${input.jobId}: "${message}"`,
         severity: "INFO"
     }));
     
@@ -284,8 +267,7 @@ export async function suggestNextAppointmentAction(
   input: SuggestNextAppointmentInput
 ): Promise<{ data: SuggestNextAppointmentOutput | null; error: string | null }> {
   try {
-    const validatedInput = SuggestNextAppointmentInputSchema.parse(input);
-    const result = await suggestNextAppointmentFlow(validatedInput);
+    const result = await suggestNextAppointmentFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -305,11 +287,10 @@ export async function troubleshootEquipmentAction(
   input: TroubleshootEquipmentInput
 ): Promise<{ data: TroubleshootEquipmentOutput | null; error: string | null }> {
   try {
-    const validatedInput = TroubleshootEquipmentInputSchema.parse(input);
     // In a real app, you might fetch a dynamic knowledge base from Firestore here.
     // For now, we'll use a hardcoded example.
     const result = await troubleshootEquipmentFlow({
-        ...validatedInput,
+        ...input,
         knowledgeBase: "Standard procedure for HVAC units is to first check the thermostat settings, then the circuit breaker, then the air filter for blockages before inspecting any internal components like capacitors or contactors. Always cut power before opening panels."
     });
     return { data: result, error: null };
@@ -334,7 +315,7 @@ export async function calculateTravelMetricsAction(
 ): Promise<{ error: string | null }> {
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    const { companyId, jobId, technicianId, appId } = CalculateTravelMetricsInputSchema.parse(input);
+    const { companyId, jobId, technicianId, appId } = input;
 
     const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
     const jobSnap = await getDoc(jobDocRef);
@@ -414,8 +395,7 @@ export async function suggestScheduleTimeAction(
   input: SuggestScheduleTimeInput
 ): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
   try {
-    const validatedInput = SuggestScheduleTimeInputSchema.parse(input);
-    const result = await suggestScheduleTimeFlow(validatedInput);
+    const result = await suggestScheduleTimeFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {

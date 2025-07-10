@@ -13,6 +13,7 @@ import {
   type PredictNextAvailableTechniciansOutput,
   PredictNextAvailableTechniciansOutputSchema
 } from '@/types';
+import { z } from 'zod';
 
 
 export async function predictNextAvailableTechnicians(input: PredictNextAvailableTechniciansInput): Promise<PredictNextAvailableTechniciansOutput> {
@@ -55,10 +56,13 @@ const predictNextAvailableTechniciansFlow = ai.defineFlow(
     outputSchema: PredictNextAvailableTechniciansOutputSchema,
   },
   async (input) => {
-    if (input.busyTechnicians.length === 0) {
+    // Validate input here
+    const validatedInput = PredictNextAvailableTechniciansInputSchema.parse(input);
+
+    if (validatedInput.busyTechnicians.length === 0) {
         return { predictions: [] };
     }
-    const { output } = await prompt(input);
+    const { output } = await prompt(validatedInput);
     if (!output) {
       return { predictions: [] };
     }

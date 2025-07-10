@@ -256,9 +256,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       <CardContent className="min-h-[500px] p-0 sm:p-6">
         {viewMode === 'day' ? (
         <div className="w-full overflow-x-auto" ref={containerRef}>
-          <div className="relative" style={{ minWidth: '1200px' }}>
+          <div className="relative min-w-[1200px]">
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
-                  <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
+                  <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                   <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                   {hours.map((hour, index) => (
                       <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
@@ -271,7 +271,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
               <div className="relative">
                   {technicians.length > 0 ? technicians.map(tech => (
                   <div key={tech.id} className="flex h-20 items-center border-t">
-                      <div className="w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
+                      <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
                       <Avatar className="h-9 w-9">
                           <AvatarImage src={tech.avatarUrl} alt={tech.name} />
                           <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>

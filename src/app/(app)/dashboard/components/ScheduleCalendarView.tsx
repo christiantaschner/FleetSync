@@ -253,10 +253,10 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
         </div>
       </CardHeader>
-      <CardContent className="min-h-[500px] p-0 sm:p-6">
+      <CardContent className="p-0 sm:p-6 overflow-x-auto">
         {viewMode === 'day' ? (
-        <div className="w-full overflow-x-auto" ref={containerRef}>
-          <div className="relative min-w-[1200px]">
+        <div className="w-full" ref={containerRef}>
+          <div className="relative">
               <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                   <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                   <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>

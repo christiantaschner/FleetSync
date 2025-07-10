@@ -120,7 +120,7 @@ const roadmapFeatures = {
       status: "Completed",
     },
      {
-      title: "Proactive Delay Warnings & Smart Suggestions",
+      title: "Automated & Proactive Delay Warnings",
       description: "The system automatically and periodically checks for schedule risks and proactively warns dispatchers if a technician is running late, suggesting immediate solutions like re-optimization or customer notifications.",
       icon: ShieldQuestion,
       status: "Completed",
@@ -236,7 +236,7 @@ const roadmapFeatures = {
   ],
   planned: [
     {
-      title: "Live Technician Tracking Portal for Customers",
+      title: "Customer Live Tracking Portal",
       description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
       icon: Navigation,
       status: "Planned",
@@ -246,6 +246,30 @@ const roadmapFeatures = {
       description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes a customer portal for managing billing.",
       icon: CreditCard,
       status: "In Progress",
+    },
+    {
+      title: "Customer Service Representative (CSR) Role",
+      description: "A limited-access role for CSRs to create job tickets and manage contracts, without seeing all dispatcher functions. Helps maintain a clear separation of duties.",
+      icon: User,
+      status: "Planned",
+    },
+    {
+      title: "Technician Teams & Joint Scheduling",
+      description: "Ability to group technicians (e.g., a master and apprentice) who are always scheduled for jobs together. The AI will assign suitable jobs to the team, respecting their combined skills.",
+      icon: Users2,
+      status: "Planned",
+    },
+    {
+      title: "Customizable Technician Working Hours",
+      description: "Define standard working hours and days for each technician (e.g., Mon-Thu, 8am-2pm). The AI scheduling engine will respect these hours for regular job assignments.",
+      icon: CalendarClock,
+      status: "Planned",
+    },
+    {
+      title: "On-Call & Emergency Duty Roster",
+      description: "Create and manage on-call schedules for emergency jobs outside of normal business hours. The AI will prioritize the designated on-duty technician for any urgent requests.",
+      icon: Zap,
+      status: "Planned",
     },
     {
       title: "Tiered Feature Access & Subscription Logic",
@@ -272,33 +296,9 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "Technician Teams & Joint Scheduling (Meister/Lehrling)",
-      description: "Ability to group technicians (e.g., a master craftsman and an apprentice) who are always scheduled for jobs together. The AI allocation engine will be updated to assign suitable jobs to a team, respecting their combined skills and availability.",
-      icon: Users2,
-      status: "Planned",
-    },
-    {
       title: "Technician Profile Pictures",
       description: "Allow users to upload profile pictures for technicians, replacing the default placeholder avatars. This adds a personal touch to the UI.",
       icon: ImageIcon,
-      status: "Planned",
-    },
-    {
-      title: "Customizable Technician Working Hours",
-      description: "Define standard working hours and days for each technician (e.g., Mon-Thu, 8am-2pm). The AI scheduling engine will respect these hours for regular job assignments, improving scheduling accuracy and work-life balance.",
-      icon: CalendarClock,
-      status: "Planned",
-    },
-    {
-      title: "On-Call & Emergency Duty Roster",
-      description: "Create and manage on-call schedules for emergency jobs that occur outside of normal business hours. The AI will prioritize the designated on-duty technician for any urgent weekend or night-time requests.",
-      icon: Zap,
-      status: "Planned",
-    },
-    {
-      title: "Customer Service Representative (CSR) Role",
-      description: "A limited-access role for CSRs to create job tickets and manage contracts, without seeing all dispatcher functions.",
-      icon: User,
       status: "Planned",
     },
   ],

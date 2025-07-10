@@ -48,58 +48,62 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="mb-8 flex items-center justify-center rounded-lg bg-primary p-4 text-primary-foreground shadow-md">
-        <Logo />
-      </div>
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">Login</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                  className={errors.email ? "border-destructive" : ""}
-                />
-                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                  className={errors.password ? "border-destructive" : ""}
-                />
-                {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login
-              </Button>
-            </div>
-          </CardContent>
-        </form>
-        <CardFooter className="flex flex-col items-center gap-2 pt-4">
-           <p className="text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-medium text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
-           <Link href="#" className="text-sm text-primary hover:underline">
-                Forgot password?
-            </Link>
-        </CardFooter>
-      </Card>
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
+        <div className="mx-auto flex items-center justify-center">
+            <Logo />
+        </div>
+      </header>
+      <main className="flex flex-1 items-center justify-center p-4">
+          <Card className="w-full max-w-md shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-2xl font-headline">Login</CardTitle>
+              <CardDescription>Enter your credentials to access your account.</CardDescription>
+            </CardHeader>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="m@example.com"
+                      {...register("email")}
+                      className={errors.email ? "border-destructive" : ""}
+                    />
+                    {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      {...register("password")}
+                      className={errors.password ? "border-destructive" : ""}
+                    />
+                    {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Login
+                  </Button>
+                </div>
+              </CardContent>
+            </form>
+            <CardFooter className="flex flex-col items-center gap-2 pt-4">
+               <p className="text-sm text-muted-foreground">
+                Don&apos;t have an account?{" "}
+                <Link href="/signup" className="font-medium text-primary hover:underline">
+                  Sign up
+                </Link>
+              </p>
+               <Link href="#" className="text-sm text-primary hover:underline">
+                    Forgot password?
+                </Link>
+            </CardFooter>
+          </Card>
+      </main>
     </div>
   );
 }

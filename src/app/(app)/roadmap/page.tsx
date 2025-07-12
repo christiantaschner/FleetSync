@@ -7,29 +7,18 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye, BarChart, CloudRain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface DeveloperBrief {
-  coreFunctionality?: string[];
-  dataModels?: string[];
-  aiComponents?: string[];
-  uiUx?: string[];
-  integrationPoints?: string[];
-  technicalChallenges?: string[];
-  successMetrics?: string[];
-}
 
 interface RoadmapItemProps {
   title: string;
   description: string;
   icon: React.ElementType;
   status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision' | 'Completed';
-  developerBrief?: DeveloperBrief;
 }
 
-const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status, developerBrief }) => {
+const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status }) => {
   return (
     <Card className={cn(
         "hover:shadow-lg transition-shadow h-full flex flex-col",
@@ -53,17 +42,6 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="text-sm text-muted-foreground">{description}</p>
-        {developerBrief && (
-          <details className="mt-3 text-xs">
-            <summary className="cursor-pointer font-medium text-primary hover:underline">Dev Notes</summary>
-            <div className="mt-2 space-y-2 p-2 rounded-md border bg-secondary/50">
-              {developerBrief.coreFunctionality && <p><strong>Functionality:</strong> {developerBrief.coreFunctionality.join(' ')}</p>}
-              {developerBrief.dataModels && <p><strong>Data Models:</strong> {developerBrief.dataModels.join(' ')}</p>}
-              {developerBrief.aiComponents && <p><strong>AI:</strong> {developerBrief.aiComponents.join(' ')}</p>}
-              {developerBrief.uiUx && <p><strong>UI/UX:</strong> {developerBrief.uiUx.join(' ')}</p>}
-            </div>
-          </details>
-        )}
       </CardContent>
     </Card>
   );
@@ -72,313 +50,183 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 const roadmapFeatures = {
   completed: [
     {
-      title: "AI-Powered Job Allocation (Single & Batch)",
-      description: "Core AI feature suggests the best technician for new jobs. Includes a batch assignment mode with a review step for all pending jobs.",
+      title: "Basic Dispatcher Web Dashboard",
+      description: "A centralized web interface for managing jobs and viewing technician locations on a map.",
+      icon: LayoutDashboard,
+      status: "Completed",
+    },
+    {
+      title: "Technician Mobile App Foundation",
+      description: "Core mobile view for technicians to see their assigned jobs, update statuses, and navigate to sites.",
+      icon: Smartphone,
+      status: "Completed",
+    },
+    {
+      title: "AI-Powered Job Allocation",
+      description: "Core AI feature suggests the best technician for new jobs, with single and batch assignment modes.",
       icon: Sparkles,
       status: "Completed",
     },
     {
-      title: "CSV Job Data Import",
-      description: "A critical feature for rapid onboarding. Allows dispatchers to import their existing job schedules from a CSV file, minimizing manual data entry.",
-      icon: FileSpreadsheet,
-      status: "Completed",
-    },
-    {
-        title: "Google Maps Address Autocomplete",
-        description: "Integrate Google Maps Places API for automatic address suggestions in job creation/editing forms to improve accuracy and speed.",
-        icon: Map,
-        status: "Completed",
-    },
-    {
-        title: "Dashboard Map with Live Traffic",
-        description: "The main dashboard map view is enhanced with a real-time traffic layer from Google Maps, providing crucial operational awareness.",
-        icon: Map,
-        status: "Completed",
-    },
-     {
-      title: "Handle Technician Unavailability & AI Reassignment",
-      description: "Allows dispatchers to mark a technician as unavailable, which automatically unassigns their active jobs and triggers the AI to suggest reassignments for those jobs, streamlining the response to unexpected staff changes.",
-      icon: AlertOctagon,
-      status: "Completed",
-    },
-     {
-      title: "Interactive Visual Calendar Scheduling",
-      description: "Provides dispatchers a multi-day visual calendar to view all jobs, assigned technicians, and times. This is key for gradual migration from existing scheduling tools.",
-      icon: CalendarDays,
-      status: "Completed",
-    },
-    {
-      title: "Digital Customer Signatures & Photo Documentation",
-      description: "Enable technicians to capture customer signatures digitally on the mobile app for proof of service and upload photos of completed work, reducing paperwork and streamlining job completion.",
-      icon: FileSignature,
-      status: "Completed",
-    },
-    {
       title: "Dispatcher-Triggered Route Re-optimization",
-      description: "Core AI engine tackles inefficient disposition by re-optimizing routes based on dispatcher triggers like a cancelled job or early completion.",
+      description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes.",
       icon: Shuffle, 
       status: "Completed",
     },
-     {
-      title: "Automated & Proactive Delay Warnings",
-      description: "The system automatically and periodically checks for schedule risks and proactively warns dispatchers if a technician is running late, suggesting immediate solutions like re-optimization or customer notifications.",
+    {
+      title: "Automated Schedule Risk Warnings",
+      description: "The system automatically checks for schedule risks and proactively warns dispatchers about potential delays.",
       icon: ShieldQuestion,
       status: "Completed",
     },
     {
-      title: "Recurring Job & Maintenance Contract Management",
-      description: "Create recurring jobs for routine maintenance contracts. The AI will suggest optimal scheduling windows in the future, simplifying long-term planning for dispatchers.",
-      icon: Repeat,
-      status: "Completed",
-    },
-    {
-      title: "In-App Chat & Media Sharing",
-      description: "Enable direct, job-specific chat between dispatchers and technicians. Allows for quick questions and on-site photo sharing, reducing reliance on external apps.",
+      title: "Basic Customer Communication",
+      description: "Dispatcher-triggered notifications for booking confirmations and technician en-route status.",
       icon: MessageSquare,
       status: "Completed",
     },
     {
-      title: "Dynamic Skill Library Management",
-      description: "Allows dispatchers to define and manage a central library of technician skills (e.g., specific certifications, equipment expertise). This list populates selection options when editing technicians and is used by AI for smarter job allocation. Ensures consistent skill terminology and makes skill-based assignment more robust.",
-      icon: Cog, 
+      title: "Basic Performance Analytics",
+      description: "A dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
+      icon: PieChart,
       status: "Completed",
     },
     {
-      title: "AI Job Skill Suggestion",
-      description: "AI automatically analyzes job descriptions to suggest required skills from the company's skill library, which the dispatcher can then review and edit.",
-      icon: Lightbulb,
-      status: "Completed",
-    },
-    {
-      title: "AI-Powered Job Priority Suggestion",
-      description: "When a dispatcher creates a new job, the AI analyzes the description to suggest a priority level (e.g., 'High' for 'emergency,' 'Low' for 'maintenance'). It will also provide a brief justification for the suggested priority, helping dispatchers make faster, more consistent decisions.",
-      icon: Lightbulb,
-      status: "Completed",
-    },
-    {
-      title: "AI-Powered \"Next Up Technicians\" Prediction",
-      description: "Develop an AI model to predict which technicians will become available soonest, considering current job types, travel time, and historical data from time tracking and job statuses. Display this on the dashboard.",
-      icon: Lightbulb,
-      status: "Completed",
-    },
-    {
-      title: "Proactive Emergency Dispatch AI",
-      description: "When a new high-priority job is created, the AI automatically evaluates the best assignment across the entire fleet, even suggesting interruptions. The dispatcher is presented with this optimal suggestion on the dashboard for immediate approval.",
-      icon: Zap,
-      status: "Completed",
-    },
-    {
-      title: "Technician Job Navigation",
-      description: "Technicians can tap a 'Navigate' button in their job view to open Google Maps on their mobile device with turn-by-turn directions to the job site.",
-      icon: Navigation,
+      title: "Interactive Visual Calendar Scheduling",
+      description: "A multi-day calendar view for dispatchers to visually manage all jobs, technicians, and schedules.",
+      icon: CalendarDays,
       status: "Completed",
     },
      {
-      title: "Technician Profile Viewing & Change Suggestions",
-      description: "Enable technicians to view their own detailed profiles (including skills, certifications, contact info) via the mobile app. Implement a system for them to suggest changes or additions (e.g., new skill acquired), which dispatchers can review and approve. Improves data accuracy and empowers technicians.",
+      title: "Technician Profile & Change Requests",
+      description: "Technicians can view their profiles and suggest changes, which dispatchers can review and approve.",
       icon: User, 
       status: "Completed",
     },
     {
-      title: "Digital Time Tracking & Management",
-      description: "Implement features for technicians to digitally record working hours (travel, on-site, breaks) via the mobile app. This simplifies their daily logging, helps control costs by managing overtime, and provides data for accurate job costing and payroll. Accurate historical time data from this system also enhances the precision of AI-driven route optimization and future job scheduling.",
+      title: "Handle Technician Unavailability",
+      description: "Allows marking a technician as unavailable, which unassigns their jobs and can trigger AI for reassignment.",
+      icon: AlertOctagon,
+      status: "Completed",
+    },
+    {
+      title: "Recurring Job & Contract Management",
+      description: "Create and manage recurring service contracts, with AI assistance for scheduling future appointments.",
+      icon: Repeat,
+      status: "Completed",
+    },
+    {
+      title: "Dynamic Skill Library & AI Suggestions",
+      description: "Dispatchers can manage a central skill library, and the AI suggests required skills for new jobs.",
+      icon: Cog, 
+      status: "Completed",
+    },
+    {
+      title: "CSV Job Data Import",
+      description: "Allows for bulk import of existing job data via CSV files to speed up onboarding.",
+      icon: FileSpreadsheet,
+      status: "Completed",
+    },
+    {
+      title: "Digital Time Tracking",
+      description: "Technicians can digitally log working hours (travel, on-site, breaks) for accurate job costing and payroll.",
       icon: Timer,
       status: "Completed",
     },
-    {
-      title: "Real-time Notifications for Schedule Changes",
-      description: "Actively notify technicians (e.g., via a visual alert or eventually a push notification) when their schedule has been changed by a dispatcher, ensuring they are always aware of the latest plan.",
-      icon: Zap,
-      status: "Completed",
-    },
-    {
-      title: "First-Time-Fix-Rate (FTFR) Analytics",
-      description: "Track and analyze the First-Time-Fix-Rate (FTFR) to identify areas for improvement in technician skills, parts availability, or initial job diagnosis, contributing to higher efficiency and customer satisfaction.",
-      icon: ThumbsUp,
-      status: "Completed",
-    },
-    {
-      title: "Customer Satisfaction & Response Time Analytics",
-      description: "Implement tracking for customer satisfaction scores and critical response times to monitor and enhance service quality, directly impacting customer retention.",
-      icon: Smile,
-      status: "Completed",
-    },
-     {
-      title: "Basic Reporting Dashboard",
-      description: "A dashboard providing insights into key performance indicators (KPIs) like job completion rates and technician workloads. Includes charts for jobs by status and jobs completed per technician.",
-      icon: PieChart,
-      status: "Completed",
-    },
-    {
-      title: "Advanced Analytics & Performance Insights",
-      description: "Provide deeper insights by comparing planned vs. actual times, analyzing technician utilization rates, tracking punctuality, and identifying common reasons for schedule deviations to continuously refine planning estimates.",
-      icon: PieChart,
-      status: "Completed",
-    },
-    {
-      title: "AI-Powered Mobile Knowledge Base & Troubleshooting Guides",
-      description: "Provides technicians with quick, in-app access to equipment manuals, error code lookups, and best practices. AI enhances this by enabling natural language queries and guided diagnostics based on symptoms.",
-      icon: BookOpen,
-      status: "Completed",
-    },
-    {
-      title: "Basic Integrated CRM for Customer & Equipment Management",
-      description: "Manage customer details, contact history, and track installed HVAC equipment, enabling better on-site preparation and faster diagnosis. This data also enhances AI job allocation.",
-      icon: ClipboardList,
-      status: "Completed",
-    },
-    {
-      title: "CO2 Emission Estimation & Reporting",
-      description: "Estimate and report CO2 emissions based on travel data, contributing to sustainability and helping reduce fuel costs through awareness and optimized routing.",
-      icon: Leaf,
-      status: "Completed",
-    },
-    {
-      title: "Customizable Company Business Hours",
-      description: "Define standard working hours and days for the company. The AI scheduling engine respects these hours for regular job assignments, preventing after-hours suggestions.",
-      icon: CalendarClock,
-      status: "Completed",
-    },
-     {
-      title: "Customizable Technician Schedules & On-Call Duty",
-      description: "Set unique working hours for each technician and designate them as 'on-call' for emergencies. The AI respects these individual schedules and prioritizes on-call staff for urgent, after-hours jobs.",
-      icon: Zap,
-      status: "Completed",
-    },
   ],
-  planned: [
+  inProgress: [
     {
       title: "Stripe Subscription & Billing Integration",
-      description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes a customer portal for managing billing.",
+      description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial.",
       icon: CreditCard,
       status: "In Progress",
     },
-    {
-      title: "Customer Service Representative (CSR) Role",
-      description: "A limited-access role for CSRs to create job tickets and manage contracts, without seeing all dispatcher functions. Helps maintain a clear separation of duties.",
-      icon: User,
+  ],
+  planned: [
+     {
+      title: "Live GPS Tracking of Technicians",
+      description: "Provides real-time location updates of all active field technicians on the dispatcher's map view. This data is fed directly from the technician's mobile app.",
+      icon: MapPin,
       status: "Planned",
     },
     {
-      title: "Technician Teams & Joint Scheduling",
-      description: "Ability to group technicians (e.g., a master and apprentice) who are always scheduled for jobs together. The AI will assign suitable jobs to the team, respecting their combined skills.",
-      icon: Users2,
+      title: "Hyper-Accurate ETA Predictions",
+      description: "Leverage historical data, live traffic, and weather to provide highly precise ETAs for each job.",
+      icon: Zap,
       status: "Planned",
     },
-    {
-      title: "Tiered Feature Access & Subscription Logic",
-      description: "Implement logic to restrict access to features based on the customer's subscription plan (Starter, Professional, Enterprise). This will involve creating UI controls and backend checks to enforce plan limits.",
-      icon: CreditCard,
+     {
+      title: "Real-time Traffic & Weather Overlays",
+      description: "Enhance the dispatcher's map with real-time overlays for traffic congestion and basic weather patterns.",
+      icon: CloudRain,
       status: "Planned",
     },
-    {
-      title: "AI-Assisted Digital Protocols & Checklists",
-      description: "Enable technicians to complete job-specific digital checklists on their mobile device. This ensures standardized procedures and captures structured data.",
-      icon: ClipboardList,
-      status: "Planned",
-    },
-    {
-      title: "Intelligent Parts & Van Stock Management",
-      description: "The AI will know which technician has which parts or special tools in their van, and factor this into job allocation to avoid unnecessary trips to the warehouse. (Note: This feature is fully coded but has been temporarily disabled pending further review).",
-      icon: Wrench,
-      status: "Planned",
-    },
-    {
-      title: "Exportable Time Tracking Reports",
-      description: "Enable dispatchers to export detailed time logs to a CSV file. This data, including travel, on-site, and break times, can be used for payroll and job costing.",
-      icon: FileSpreadsheet,
-      status: "Planned",
-    },
-    {
-      title: "Technician Profile Pictures",
-      description: "Allow users to upload profile pictures for technicians, replacing the default placeholder avatars. This adds a personal touch to the UI.",
-      icon: ImageIcon,
+     {
+      title: "Enhanced Automated Customer Communication",
+      description: "Automatically trigger and intelligently word notifications for predicted delays, managing customer expectations proactively.",
+      icon: MessageSquare,
       status: "Planned",
     },
     {
       title: "Customer Live Tracking Portal",
-      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map and their updated ETA, similar to modern package delivery services.",
+      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map.",
       icon: Navigation,
+      status: "Planned",
+    },
+     {
+      title: "Tiered Feature Access & Subscription Logic",
+      description: "Implement logic to restrict access to features based on the customer's subscription plan (Starter, Professional, Enterprise).",
+      icon: CreditCard,
+      status: "Planned",
+    },
+     {
+      title: "Advanced Performance Analytics & Forecasting",
+      description: "Comprehensive dashboards on all KPIs and predictive forecasting for upcoming demand to help with staffing decisions.",
+      icon: BarChart,
+      status: "Planned",
+    },
+    {
+      title: "Custom Reporting",
+      description: "Ability to request bespoke reports tailored to specific business needs or unique metrics not covered by standard analytics.",
+      icon: FileText,
       status: "Planned",
     },
   ],
   vision: [
      {
-      title: "Fully Automated Real-time Schedule Re-Optimization",
-      description: "The holy grail. The AI automatically adjusts the entire fleet's schedule in real-time in response to events like traffic, job overruns, or new emergencies, without any dispatcher intervention required. The dispatcher simply approves the new master plan.",
+      title: "Advanced Multi-Technician Re-optimization",
+      description: "The AI constantly monitors the entire fleet and external data, automatically recalculating the most efficient routes and assignments for all technicians in response to any event.",
       icon: Brain,
       status: "Vision",
     },
     {
-      title: "AI-Powered Smart Inbox",
-      description: "An intelligent inbox that automatically parses incoming emails or service requests. The AI extracts key details like customer name, address, and job description, then creates a draft job ticket with a suggested priority and technician, ready for one-click approval.",
-      icon: Mailbox,
-      status: "Vision",
-    },
-    {
-      title: "Predictive Map Overlays",
-      description: "The map view evolves from showing real-time data to showing *predictive* data. The AI will highlight areas of likely traffic congestion, or show a technician's 'shadow' of where they're expected to be in the next hour, allowing for true proactive decision-making.",
+      title: "Disruption Forecasting (Predicted Bottlenecks)",
+      description: "The AI analyzes complex data patterns (traffic, weather, local events) to predict future potential delays, allowing dispatchers to proactively adjust schedules.",
       icon: Eye,
       status: "Vision",
     },
-     {
-      title: "AI-Powered Performance Analytics & Insights",
-      description: "Go beyond simple KPIs. The AI will provide 'Why did this happen?' insights, explaining the root causes of delays or inefficiencies (e.g., 'Technician B is consistently 20% slower on HVAC jobs, suggesting a training need').",
+    {
+      title: "\"Why this happened\" AI Insights",
+      description: "The system provides clear explanations for significant schedule deviations or AI decisions, building trust and providing learning opportunities.",
       icon: Search,
       status: "Vision",
     },
-     {
-      title: "AI-Automated Customer Communication",
-      description: "The system automatically sends customers updates, such as confirming a booking, providing a precise ETA when the technician is en route, and proactively notifying them of delays with an AI-generated reason. This drastically reduces dispatcher workload from customer calls.",
-      icon: MessageSquare,
-      status: "Vision",
-    },
-     {
-      title: "Offline Mode for Core Mobile App Functions",
-      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored, ensuring uninterrupted workflow in areas with poor signal (e.g., basements, remote sites).",
-      icon: WifiOff,
-      status: "Vision",
-    },
     {
-      title: "Predictive Maintenance as a Service",
-      description: "Analyze vehicle consumption data and machine data to predict maintenance needs and enable proactive service planning, minimizing downtime and extending equipment lifespan.",
-      icon: Brain,
-      status: "Vision",
-    },
-    {
-      title: "Smart City Infrastructure Integration",
-      description: "Explore deeper integration with urban data sources like construction site information, parking availability, or environmental zones to further refine route optimization and ensure compliance.",
+      title: "CRM/Accounting Software Integrations",
+      description: "Seamless, automated data flow between FleetSync AI and existing business software like Salesforce, QuickBooks, or HubSpot.",
       icon: Building2,
       status: "Vision",
     },
     {
-      title: "AI-Powered Material Management & Inventory Optimization",
-      description: "Extend AI to predict material requirements for jobs, optimizing warehousing and avoiding parts shortages in the field.",
-      icon: Package,
+      title: "AI-Powered Smart Inbox",
+      description: "An intelligent inbox that automatically parses incoming emails or service requests, creating draft job tickets with suggested priorities and technicians.",
+      icon: Mailbox,
       status: "Vision",
     },
-    {
-      title: "Augmented Reality (AR) for Technicians",
-      description: "Utilize AR in the mobile app to support technicians on-site, e.g., through interactive instructions or by overlaying relevant device information.",
-      icon: Glasses,
-      status: "Vision",
-    },
-    {
-      title: "Marketplace for Craft Service Orders",
-      description: "Develop a platform enabling craft businesses to share or take on unassigned jobs within a trusted network, optimizing industry-wide utilization.",
-      icon: ShoppingCart,
-      status: "Vision",
-    },
-    {
-      title: "Automated Invoicing and Report Creation",
-      description: "Fully integrate job documentation into automated administrative processes to further reduce office workload.",
-      icon: FileSpreadsheet,
-      status: "Vision",
-    },
-    {
-      title: "Machine Learning for Skills Development",
-      description: "Analyze job data and technician performance to generate personalized further education recommendations for technicians, actively helping to combat 'Fachkräftemangel' (labor shortage) through targeted qualification.",
-      icon: GraduationCap,
+     {
+      title: "Offline Mode for Core Mobile App Functions",
+      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored.",
+      icon: WifiOff,
       status: "Vision",
     },
   ]
@@ -390,8 +238,7 @@ export default function RoadmapPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight font-headline">FleetSync AI Roadmap</h1>
         <p className="text-muted-foreground">
-          Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient,
-          directly addressing key industry pain points and leveraging cutting-edge AI.
+          Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.
         </p>
       </div>
 
@@ -401,6 +248,15 @@ export default function RoadmapPage() {
           {roadmapFeatures.completed.map((item) => (
             <RoadmapItem key={item.title} {...item} />
           ))}
+        </div>
+      </section>
+
+       <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">In Progress</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {roadmapFeatures.inProgress.length > 0 ? roadmapFeatures.inProgress.map((item) => (
+                <RoadmapItem key={item.title} {...item} />
+            )) : <p className="text-muted-foreground col-span-full">No features currently in progress.</p>}
         </div>
       </section>
 

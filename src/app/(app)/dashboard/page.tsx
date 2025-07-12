@@ -584,11 +584,21 @@ export default function DashboardPage() {
   }, [filteredJobs, sortOrder, technicians]);
 
   const filteredTechnicians = useMemo(() => {
+    const sorted = [...technicians].sort((a, b) => {
+        const aIsOnCall = a.isOnCall ? 0 : 1;
+        const bIsOnCall = b.isOnCall ? 0 : 1;
+        if (aIsOnCall !== bIsOnCall) {
+            return aIsOnCall - bIsOnCall;
+        }
+        return a.name.localeCompare(b.name);
+    });
+
     if (!technicianSearchTerm) {
-      return technicians;
+      return sorted;
     }
+    
     const lowercasedTerm = technicianSearchTerm.toLowerCase();
-    return technicians.filter(tech => {
+    return sorted.filter(tech => {
       const isAvailableMatch = lowercasedTerm === 'available' && tech.isAvailable;
       const isUnavailableMatch = (lowercasedTerm === 'unavailable' || lowercasedTerm === 'busy') && !tech.isAvailable;
       const nameMatch = tech.name.toLowerCase().includes(lowercasedTerm);
@@ -1092,3 +1102,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

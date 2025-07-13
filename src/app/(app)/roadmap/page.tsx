@@ -7,7 +7,8 @@ import {
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye, BarChart, CloudRain
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye, BarChart, CloudRain,
+  List, MousePointerClick
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -80,12 +81,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Basic Customer Communication",
-      description: "Dispatcher-triggered notifications for booking confirmations and technician en-route status.",
-      icon: MessageSquare,
-      status: "Completed",
-    },
-    {
       title: "Basic Performance Analytics",
       description: "A dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
       icon: PieChart,
@@ -150,45 +145,45 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "Hyper-Accurate ETA Predictions",
-      description: "Leverage historical data, live traffic, and weather to provide highly precise ETAs for each job.",
-      icon: Zap,
+      title: "Customer Live Tracking Portal",
+      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map.",
+      icon: Navigation,
       status: "Planned",
     },
-     {
-      title: "Real-time Traffic & Weather Overlays",
-      description: "Enhance the dispatcher's map with real-time overlays for traffic congestion and basic weather patterns.",
-      icon: CloudRain,
-      status: "Planned",
+    {
+      title: "Getting Started Checklist",
+      description: "A simple, interactive checklist on the dashboard to guide new users through essential first steps like adding a technician and creating a job.",
+      icon: List,
+      status: "Planned"
     },
-     {
+    {
+      title: "One-Click Sample Data",
+      description: "A feature for new accounts to generate a set of sample technicians and jobs, allowing them to explore the app's features without manual data entry.",
+      icon: MousePointerClick,
+      status: "Planned"
+    },
+    {
+      title: "Contextual In-App Guidance",
+      description: "Non-intrusive tooltips and info icons next to key features to provide brief, helpful explanations right where the user needs them.",
+      icon: Lightbulb,
+      status: "Planned"
+    },
+    {
       title: "Enhanced Automated Customer Communication",
       description: "Automatically trigger and intelligently word notifications for predicted delays, managing customer expectations proactively.",
       icon: MessageSquare,
       status: "Planned",
     },
-    {
-      title: "Customer Live Tracking Portal",
-      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map.",
-      icon: Navigation,
+     {
+      title: "Real-time Traffic & Basic Weather Overlays",
+      description: "Enhance the dispatcher's map with real-time overlays for traffic congestion and basic weather patterns (e.g., rain, snow).",
+      icon: CloudRain,
       status: "Planned",
     },
      {
       title: "Tiered Feature Access & Subscription Logic",
       description: "Implement logic to restrict access to features based on the customer's subscription plan (Starter, Professional, Enterprise).",
       icon: CreditCard,
-      status: "Planned",
-    },
-     {
-      title: "Advanced Performance Analytics & Forecasting",
-      description: "Comprehensive dashboards on all KPIs and predictive forecasting for upcoming demand to help with staffing decisions.",
-      icon: BarChart,
-      status: "Planned",
-    },
-    {
-      title: "Custom Reporting",
-      description: "Ability to request bespoke reports tailored to specific business needs or unique metrics not covered by standard analytics.",
-      icon: FileText,
       status: "Planned",
     },
   ],
@@ -200,14 +195,20 @@ const roadmapFeatures = {
       status: "Vision",
     },
     {
+      title: "Hyper-Accurate ETA Predictions",
+      description: "Leverage historical data, live traffic, and weather to provide highly precise ETAs for each job.",
+      icon: Zap,
+      status: "Vision"
+    },
+    {
       title: "Disruption Forecasting (Predicted Bottlenecks)",
-      description: "The AI analyzes complex data patterns (traffic, weather, local events) to predict future potential delays, allowing dispatchers to proactively adjust schedules.",
+      description: "The AI analyzes complex data patterns (traffic, weather, local events) to predict future potential delays or bottlenecks. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to concert.'",
       icon: Eye,
       status: "Vision",
     },
     {
       title: "\"Why this happened\" AI Insights",
-      description: "The system provides clear explanations for significant schedule deviations or AI decisions, building trust and providing learning opportunities.",
+      description: "The system provides explanations for significant deviations or AI decisions. If an ETA was off, or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
       icon: Search,
       status: "Vision",
     },

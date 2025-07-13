@@ -56,7 +56,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
 import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
-import { LanguageProvider, useTranslation } from "@/hooks/use-language";
+import { useTranslation } from "@/hooks/use-language";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
@@ -374,9 +374,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
      <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places', 'geocoding']}>
-       <LanguageProvider>
-          <MainAppLayout>{children}</MainAppLayout>
-       </LanguageProvider>
+        <MainAppLayout>{children}</MainAppLayout>
     </GoogleMapsAPIProvider>
   );
 }

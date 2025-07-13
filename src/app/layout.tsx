@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Inter } from 'next/font/google';
+import { LanguageProvider } from '@/hooks/use-language';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -25,9 +26,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </LanguageProvider>
         <Toaster />
       </body>
     </html>

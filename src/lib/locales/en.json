@@ -36,5 +36,22 @@
   "sort_by_scheduled_time": "Scheduled Time",
   "ai_batch_assign": "AI Batch Assign",
   "no_jobs_found": "No Jobs Found",
-  "no_jobs_found_desc": "Adjust your filters or add a new job to get started."
+  "no_jobs_found_desc": "Adjust your filters or add a new job to get started.",
+  "login_title": "Login",
+  "login_desc": "Enter your credentials to access your account.",
+  "email": "Email",
+  "password": "Password",
+  "login_button": "Login",
+  "no_account": "Don't have an account?",
+  "sign_up_link": "Sign up",
+  "forgot_password": "Forgot password?",
+  "onboarding_title": "Welcome to FleetSync AI!",
+  "onboarding_desc": "Let's get your company set up. This will only take a moment.",
+  "company_name": "Company Name",
+  "company_specialties": "Company Specialties",
+  "specialties_desc": "Select all that apply. This will seed your account with relevant skills.",
+  "specify_specialty": "Please specify your specialty",
+  "number_of_technicians": "Number of Technicians",
+  "technicians_desc": "How many technicians will you be managing? You can change this later.",
+  "complete_setup_button": "Complete Setup & Start Free Trial"
 }

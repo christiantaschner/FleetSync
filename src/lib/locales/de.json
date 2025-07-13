@@ -36,5 +36,22 @@
   "sort_by_scheduled_time": "Geplante Zeit",
   "ai_batch_assign": "KI Stapelzuweisung",
   "no_jobs_found": "Keine Aufträge gefunden",
-  "no_jobs_found_desc": "Passen Sie Ihre Filter an oder fügen Sie einen neuen Auftrag hinzu, um zu beginnen."
+  "no_jobs_found_desc": "Passen Sie Ihre Filter an oder fügen Sie einen neuen Auftrag hinzu, um zu beginnen.",
+  "login_title": "Anmelden",
+  "login_desc": "Geben Sie Ihre Anmeldedaten ein, um auf Ihr Konto zuzugreifen.",
+  "email": "E-Mail",
+  "password": "Passwort",
+  "login_button": "Anmelden",
+  "no_account": "Sie haben noch kein Konto?",
+  "sign_up_link": "Registrieren",
+  "forgot_password": "Passwort vergessen?",
+  "onboarding_title": "Willkommen bei FleetSync AI!",
+  "onboarding_desc": "Lassen Sie uns Ihr Unternehmen einrichten. Das dauert nur einen Moment.",
+  "company_name": "Firmenname",
+  "company_specialties": "Firmenschwerpunkte",
+  "specialties_desc": "Wählen Sie alle zutreffenden aus. Dies wird Ihr Konto mit relevanten Fähigkeiten vorbelegen.",
+  "specify_specialty": "Bitte geben Sie Ihren Schwerpunkt an",
+  "number_of_technicians": "Anzahl der Techniker",
+  "technicians_desc": "Wie viele Techniker werden Sie verwalten? Sie können dies später ändern.",
+  "complete_setup_button": "Einrichtung abschließen & kostenlose Testversion starten"
 }

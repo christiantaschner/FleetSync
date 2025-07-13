@@ -14,6 +14,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/hooks/use-language";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Globe } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -26,6 +35,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { t, setLanguage, language } = useTranslation();
   const {
     register,
     handleSubmit,
@@ -38,11 +48,8 @@ export default function LoginPage() {
     setIsLoading(true);
     const success = await login(data.email, data.password);
     if (success) {
-      // On success, redirect to the main app. The layout will then handle
-      // routing to either /onboarding or /dashboard based on user status.
       router.push('/dashboard');
     } else {
-      // On failure, re-enable the button so the user can try again.
       setIsLoading(false);
     }
   };
@@ -50,21 +57,32 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-        <div className="mx-auto flex items-center justify-center">
+        <div className="mx-auto flex items-center justify-between max-w-lg">
             <Logo />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                  <Globe className="h-5 w-5"/>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center p-4">
           <Card className="w-full max-w-md shadow-xl">
             <CardHeader>
-              <CardTitle className="text-2xl font-headline">Login</CardTitle>
-              <CardDescription>Enter your credentials to access your account.</CardDescription>
+              <CardTitle className="text-2xl font-headline">{t('login_title')}</CardTitle>
+              <CardDescription>{t('login_desc')}</CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t('email')}</Label>
                     <Input
                       id="email"
                       type="email"
@@ -75,7 +93,7 @@ export default function LoginPage() {
                     {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">{t('password')}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -86,20 +104,20 @@ export default function LoginPage() {
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Login
+                    {t('login_button')}
                   </Button>
                 </div>
               </CardContent>
             </form>
             <CardFooter className="flex flex-col items-center gap-2 pt-4">
                <p className="text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                {t('no_account')}{" "}
                 <Link href="/signup" className="font-medium text-primary hover:underline">
-                  Sign up
+                  {t('sign_up_link')}
                 </Link>
               </p>
                <Link href="#" className="text-sm text-primary hover:underline">
-                    Forgot password?
+                    {t('forgot_password')}
                 </Link>
             </CardFooter>
           </Card>

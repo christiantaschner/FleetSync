@@ -114,12 +114,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 )}
              </div>
         </div>
-        <div className="w-full grid grid-cols-2 gap-2">
-            <OptimizeRouteDialog technicians={[technician]} jobs={jobs} defaultTechnicianId={technician.id}>
-                <Button variant="outline" size="sm" className="w-full" disabled={!hasJobsToOptimize}>
-                  <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize
-                </Button>
-            </OptimizeRouteDialog>
+        <div className="w-full grid grid-cols-1 gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="w-full">

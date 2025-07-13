@@ -49,6 +49,20 @@ export async function createCheckoutSessionAction(
     
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set.');
+    
+    // Check if the company has an active subscription already
+    if (company.subscriptionId && ['active', 'trialing'].includes(company.subscriptionStatus || '')) {
+         const subscription = await stripe.subscriptions.retrieve(company.subscriptionId);
+         // If they have a subscription, create a portal session instead of a new checkout
+         if (subscription) {
+            const portalSession = await stripe.billingPortal.sessions.create({
+                customer: stripeCustomerId,
+                return_url: `${appUrl}/settings?tab=billing`,
+            });
+            // This is a special case: we return a URL to redirect to the portal
+            return { sessionId: portalSession.url };
+         }
+    }
 
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -58,11 +72,15 @@ export async function createCheckoutSessionAction(
         price: priceId,
         quantity: quantity,
       }],
-      subscription_data: {
+      // Only add trial if the company status is actually 'trialing'
+      subscription_data: company.subscriptionStatus === 'trialing' ? {
+        trial_period_days: 30,
+        proration_behavior: 'create_prorations',
+      } : {
         proration_behavior: 'create_prorations',
       },
-      success_url: `${appUrl}/settings?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/settings?tab=billing`,
+      success_url: `${appUrl}/settings?session_id={CHECKOUT_SESSION_ID}&subscription_success=true`,
+      cancel_url: `${appUrl}/settings?tab=billing&subscription_cancelled=true`,
     });
 
     if (!checkoutSession.id) {

@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import type { Company } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Loader2, CreditCard } from 'lucide-react';
+import { Sparkles, Loader2, CreditCard, AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -51,6 +51,9 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     
     const isSubscribed = company.subscriptionStatus === 'active';
     const isTrialing = company.subscriptionStatus === 'trialing';
+    const isPastDue = company.subscriptionStatus === 'past_due' || company.subscriptionStatus === 'unpaid';
+    const isCancelled = company.subscriptionStatus === 'canceled';
+
     let trialDaysLeft = 0;
     if (isTrialing && company.trialEndsAt) {
       trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
@@ -88,11 +91,15 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
         if ('error' in result) {
             toast({ title: 'Checkout Error', description: result.error, variant: 'destructive'});
             setIsLoading(false);
-        } else if (stripePromise) {
+        } else if ('sessionId' in result && result.sessionId.startsWith('http')) {
+             // This is a special case from our action if the user already has a subscription
+            window.location.href = result.sessionId;
+        } else if ('sessionId' in result && stripePromise) {
             const stripe = await stripePromise;
             await stripe?.redirectToCheckout({ sessionId: result.sessionId });
-            setIsLoading(false);
+            // This will redirect, so no need to set loading to false unless it fails
         }
+         setIsLoading(false);
     };
     
     if (isSubscribed) {
@@ -131,6 +138,32 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                     </AlertDescription>
                 </Alert>
             )}
+
+            {isPastDue && (
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Payment Required</AlertTitle>
+                    <AlertDescription>
+                        Your last payment failed. Please update your payment information to restore service.
+                    </AlertDescription>
+                     <div className="mt-4">
+                        <Button onClick={handleOpenPortal} variant="destructive">
+                            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
+                            Update Payment Info
+                        </Button>
+                    </div>
+                </Alert>
+            )}
+            
+             {isCancelled && (
+                 <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Subscription Cancelled</AlertTitle>
+                    <AlertDescription>
+                        Your subscription is cancelled. You can choose a plan below to reactivate your account.
+                    </AlertDescription>
+                </Alert>
+            )}
             
             <div className="flex justify-center">
                 <div className="w-full max-w-sm">
@@ -142,7 +175,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                         currency="EUR"
                         interval="month"
                         features={allInclusivePlan.features}
-                        cta={"Choose Plan"}
+                        cta={isPastDue ? "Reactivate Subscription" : "Choose Plan"}
                         onCtaClick={() => setIsQuantityDialogOpen(true)}
                         isLoading={isLoading}
                         isPopular={true}

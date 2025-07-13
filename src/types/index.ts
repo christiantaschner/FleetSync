@@ -20,6 +20,18 @@ export const UserProfileSchema = z.object({
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 
+export const InviteSchema = z.object({
+    id: z.string(),
+    email: z.string(),
+    role: z.enum(['admin', 'technician']),
+    companyId: z.string(),
+    status: z.enum(['pending', 'accepted']),
+    createdAt: z.string(),
+    acceptedAt: z.string().optional(),
+    acceptedByUid: z.string().optional(),
+});
+export type Invite = z.infer<typeof InviteSchema>;
+
 export const BusinessDaySchema = z.object({
   dayOfWeek: z.enum(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
   isOpen: z.boolean(),
@@ -398,7 +410,7 @@ export type SuggestJobSkillsInput = z.infer<typeof SuggestJobSkillsInputSchema>;
 
 export const SuggestJobSkillsOutputSchema = z.object({
   suggestedSkills: z.array(z.string()).describe('An array of skill names suggested for the job, drawn exclusively from the availableSkills list.'),
-  reasoning: z.string().optional().describe('A brief explanation of why these skills were chosen, or why no skills could be suggested if the list is empty.'),
+  reasoning: z.string().optional().describe('A brief explanation for why these skills were chosen, or why no skills could be suggested if the list is empty.'),
 });
 export type SuggestJobSkillsOutput = z.infer<typeof SuggestJobSkillsOutputSchema>;
 

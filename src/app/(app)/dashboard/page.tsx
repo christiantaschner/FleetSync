@@ -822,6 +822,22 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-6">
+        {technicians.length === 0 && userProfile?.role === 'admin' && (
+            <Alert className="border-primary/30 bg-primary/5 text-primary">
+                <UserPlus className="h-4 w-4" />
+                <AlertTitle className="font-semibold">Welcome to FleetSync AI!</AlertTitle>
+                <AlertDescription>
+                   Your dashboard is ready. Your first step is to add technicians to your team.
+                </AlertDescription>
+                <div className="mt-4">
+                    <Link href="/settings?tab=users">
+                        <Button variant="default" size="sm">
+                            <Users className="mr-2 h-4 w-4" /> Add Your First Technician
+                        </Button>
+                    </Link>
+                </div>
+            </Alert>
+        )}
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
             onClose={() => {

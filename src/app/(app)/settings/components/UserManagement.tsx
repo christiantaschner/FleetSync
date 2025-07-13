@@ -2,13 +2,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { UserProfile } from '@/types';
+import type { UserProfile, Invite } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { getCompanyUsersAction, inviteUserAction, removeUserFromCompanyAction, updateUserRoleAction } from '@/actions/user-actions';
+import { getCompanyUsersAction, inviteUserAction, removeUserFromCompanyAction, updateUserRoleAction, getCompanyInvitesAction } from '@/actions/user-actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, PlusCircle, Trash2, ShieldCheck, User, Wrench } from 'lucide-react';
+import { Loader2, Mail, PlusCircle, Trash2, ShieldCheck, User, Wrench, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +18,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/contexts/auth-context';
 import { Controller } from "react-hook-form";
+import { formatDistanceToNow } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 const InviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -34,6 +36,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     const { toast } = useToast();
     const { user: currentUser } = useAuth();
     const [users, setUsers] = useState<UserProfile[]>([]);
+    const [invites, setInvites] = useState<Invite[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isUpdatingRole, setIsUpdatingRole] = useState<string | null>(null);
@@ -45,20 +48,31 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
         defaultValues: { role: 'technician' }
     });
 
-    const fetchUsers = useCallback(async () => {
+    const fetchData = useCallback(async () => {
         setIsLoading(true);
-        const result = await getCompanyUsersAction(companyId);
-        if (result.error) {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        const [usersResult, invitesResult] = await Promise.all([
+            getCompanyUsersAction(companyId),
+            getCompanyInvitesAction(companyId),
+        ]);
+
+        if (usersResult.error) {
+            toast({ title: 'Error fetching users', description: usersResult.error, variant: 'destructive' });
         } else {
-            setUsers(result.data || []);
+            setUsers(usersResult.data || []);
         }
+        
+        if (invitesResult.error) {
+            toast({ title: 'Error fetching invites', description: invitesResult.error, variant: 'destructive' });
+        } else {
+            setInvites(invitesResult.data || []);
+        }
+
         setIsLoading(false);
     }, [companyId, toast]);
 
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+        fetchData();
+    }, [fetchData]);
     
     const onInviteSubmit = async (data: InviteUserFormValues) => {
         if (!appId) {
@@ -72,7 +86,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
         } else {
             toast({ title: 'Invite Sent!', description: `An invitation has been created for ${data.email}. The user will be automatically added to your company upon signup.` });
             reset();
-            fetchUsers();
+            fetchData();
         }
         setIsSubmitting(false);
     };
@@ -85,7 +99,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                 toast({ title: 'Update Failed', description: result.error, variant: 'destructive' });
             } else {
                 toast({ title: 'Role Updated', description: `User role has been changed to ${newRole}. The change will apply on their next login or page refresh.` });
-                await fetchUsers();
+                await fetchData();
             }
         } catch (e: any) {
              toast({ title: 'Update Error', description: e.message, variant: 'destructive' });
@@ -105,7 +119,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
             toast({ title: 'Removal Failed', description: result.error, variant: 'destructive' });
         } else {
             toast({ title: 'User Removed', description: `The user has been removed from the company.` });
-            fetchUsers();
+            fetchData();
         }
     };
 
@@ -218,6 +232,52 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                                                     </AlertDialogContent>
                                                 </AlertDialog>
                                             )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                 <h4 className="font-semibold text-lg">Pending & Accepted Invitations</h4>
+                <div className="border rounded-lg">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Invited Email</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Invited</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">
+                                        <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+                                    </TableCell>
+                                </TableRow>
+                            ) : invites.length === 0 ? (
+                                 <TableRow>
+                                    <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                                        No invitations have been sent.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                invites.map(invite => (
+                                    <TableRow key={invite.id}>
+                                        <TableCell className="font-medium">{invite.email}</TableCell>
+                                        <TableCell className="capitalize">{invite.role}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={invite.status === 'pending' ? 'default' : 'secondary'}>
+                                                {invite.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right text-muted-foreground text-xs">
+                                            {formatDistanceToNow(new Date(invite.createdAt), { addSuffix: true })}
                                         </TableCell>
                                     </TableRow>
                                 ))

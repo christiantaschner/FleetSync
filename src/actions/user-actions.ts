@@ -3,9 +3,9 @@
 
 import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
-import type { UserProfile } from '@/types';
+import type { UserProfile, Invite } from '@/types';
 import * as admin from 'firebase-admin';
-import { collection, query, where, getDocs, limit, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 const EnsureUserDocumentInputSchema = z.object({
   uid: z.string().min(1, 'User ID is required.'),
@@ -30,7 +30,7 @@ export async function ensureUserDocumentAction(
     
     // Check for a pending invitation first
     const invitesRef = collection(dbAdmin, 'invitations');
-    const inviteQuery = query(invitesRef, where("email", "==", email), limit(1));
+    const inviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"), limit(1));
     const inviteSnapshot = await getDocs(inviteQuery);
 
     if (!inviteSnapshot.empty) {
@@ -39,8 +39,12 @@ export async function ensureUserDocumentAction(
         companyId = inviteData.companyId;
         role = inviteData.role;
         onboardingStatus = 'completed';
-        // Once claimed, delete the invitation
-        await inviteDoc.ref.delete();
+        // Mark invitation as accepted instead of deleting
+        await updateDoc(inviteDoc.ref, { 
+            status: 'accepted',
+            acceptedAt: serverTimestamp(),
+            acceptedByUid: uid,
+        });
     } else if (email === 'christian.taschner.ek@gmail.com') { // Super Admin check
         role = 'superAdmin';
         companyId = 'fleetsync_ai_dev';
@@ -140,6 +144,46 @@ export async function getCompanyUsersAction(
     }
 }
 
+export async function getCompanyInvitesAction(
+    companyId: string
+): Promise<{ data: Invite[] | null; error: string | null }> {
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+        if (!companyId) {
+            return { data: [], error: null };
+        }
+
+        const invitesQuery = query(
+            dbAdmin.collection("invitations"),
+            where("companyId", "==", companyId),
+            orderBy("createdAt", "desc")
+        );
+        const querySnapshot = await getDocs(invitesQuery);
+        const invites = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as Invite;
+        });
+
+        return { data: invites, error: null };
+    } catch(e) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in getCompanyInvitesAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
+        return { data: null, error: `Failed to fetch invitations. ${errorMessage}` };
+    }
+}
+
 
 const InviteUserInputSchema = z.object({
   email: z.string().email(),
@@ -194,17 +238,18 @@ export async function inviteUserAction(
     
     // User does not exist, so create an invitation document
     const invitesRef = collection(dbAdmin, 'invitations');
-    const existingInviteQuery = query(invitesRef, where("email", "==", email));
+    const existingInviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"));
     const existingInviteSnapshot = await getDocs(existingInviteQuery);
 
     if (!existingInviteSnapshot.empty) {
-        return { error: "An invitation for this email address already exists." };
+        return { error: "An active invitation for this email address already exists." };
     }
     
     await addDoc(invitesRef, {
         email,
         role,
         companyId,
+        status: 'pending',
         createdAt: serverTimestamp(),
     });
     

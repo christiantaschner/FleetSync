@@ -641,4 +641,14 @@ export const TriageJobOutputSchema = z.object({
 });
 export type TriageJobOutput = z.infer<typeof TriageJobOutputSchema>;
 
+export const AnswerUserQuestionInputSchema = z.object({
+  question: z.string().describe("The user's question about the FleetSync AI application."),
+});
+export type AnswerUserQuestionInput = z.infer<typeof AnswerUserQuestionInputSchema>;
+
+export const AnswerUserQuestionOutputSchema = z.object({
+  answer: z.string().describe("A helpful answer to the user's question."),
+});
+export type AnswerUserQuestionOutput = z.infer<typeof AnswerUserQuestionOutputSchema>;
+
 export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';

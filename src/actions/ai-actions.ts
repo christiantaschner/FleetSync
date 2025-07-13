@@ -14,6 +14,7 @@ import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
 import { triageJob as triageJobFlow } from "@/ai/flows/triage-job-flow";
 import { summarizeFtfr as summarizeFtfrFlow } from "@/ai/flows/summarize-ftfr-flow";
+import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-assistant-flow";
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
@@ -46,7 +47,9 @@ import type {
   SuggestScheduleTimeInput,
   SuggestScheduleTimeOutput,
   TriageJobOutput,
-  SummarizeFtfrOutput
+  SummarizeFtfrOutput,
+  AnswerUserQuestionInput,
+  AnswerUserQuestionOutput
 } from "@/types";
 
 // Re-export types for use in components
@@ -567,4 +570,24 @@ export async function generateTriageLinkAction(
         }));
         return { data: null, error: `Failed to generate link. ${errorMessage}` };
     }
+}
+
+export async function answerUserQuestionAction(
+  input: AnswerUserQuestionInput
+): Promise<{ data: AnswerUserQuestionOutput | null; error: string | null }> {
+  try {
+    const result = await answerUserQuestionFlow(input);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map((err) => err.message).join(", ") };
+    }
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error in answerUserQuestionAction',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { data: null, error: errorMessage };
+  }
 }

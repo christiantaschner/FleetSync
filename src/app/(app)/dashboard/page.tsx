@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -22,7 +22,7 @@ import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
-import { updateSubscriptionQuantityAction } from '@/actions/stripe-actions';
+import { updateSubscriptionQuantityAction, seedSampleDataAction } from '@/actions/onboarding-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
@@ -43,6 +43,8 @@ import { serverTimestamp } from 'firebase/firestore';
 import { Copy } from 'lucide-react';
 import OptimizeRouteDialog from './components/optimize-route-dialog';
 import { useTranslation } from '@/hooks/use-language';
+import GettingStartedChecklist from './components/GettingStartedChecklist';
+import HelpAssistant from './components/HelpAssistant';
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
@@ -125,12 +127,26 @@ export default function DashboardPage() {
 
   const [isOptimizeRouteOpen, setIsOptimizeRouteOpen] = useState(false);
   const [technicianToOptimize, setTechnicianToOptimize] = useState<string | undefined>(undefined);
+  
+  const [showGettingStarted, setShowGettingStarted] = useState(false);
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
   const [activeTab, setActiveTab] = useState('job-list');
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  
+  const handleSeedData = async () => {
+    if (!userProfile?.companyId || !appId) return;
+    setIsLoadingData(true);
+    const result = await seedSampleDataAction({ companyId: userProfile.companyId, appId });
+    if (result.error) {
+      toast({ title: "Error", description: `Could not seed data: ${result.error}`, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Sample data has been added." });
+    }
+    // Data will refresh via onSnapshot listeners
+  };
 
   useEffect(() => {
     if (jobFilterId) {
@@ -286,7 +302,7 @@ export default function DashboardPage() {
             return { id: doc.id, ...data } as ProfileChangeRequest
         });
         const pendingRequests = requestsData.filter(r => r.status === 'pending');
-        pendingRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        pendingRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime());
         setProfileChangeRequests(pendingRequests);
         onListenerLoaded();
     }, (error) => {
@@ -302,6 +318,13 @@ export default function DashboardPage() {
   }, [authLoading, userProfile, fetchSkills, appId]);
 
   const prevTechCount = useRef<number | null>(null);
+  
+  useEffect(() => {
+    if (!isLoadingData && company) {
+        const isNewCompany = technicians.length === 0 && jobs.length === 0 && !localStorage.getItem('getting_started_dismissed');
+        setShowGettingStarted(isNewCompany);
+    }
+  }, [isLoadingData, company, technicians, jobs]);
 
   useEffect(() => {
     if (isLoadingData || process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
@@ -823,20 +846,11 @@ export default function DashboardPage() {
   return (
       <div className="space-y-6">
         {technicians.length === 0 && userProfile?.role === 'admin' && (
-            <Alert className="border-primary/30 bg-primary/5 text-primary">
-                <UserPlus className="h-4 w-4" />
-                <AlertTitle className="font-semibold">Welcome to FleetSync AI!</AlertTitle>
-                <AlertDescription>
-                   Your dashboard is ready. Your first step is to add technicians to your team.
-                </AlertDescription>
-                <div className="mt-4">
-                    <Link href="/settings?tab=users">
-                        <Button variant="default" size="sm">
-                            <Users className="mr-2 h-4 w-4" /> Add Your First Technician
-                        </Button>
-                    </Link>
-                </div>
-            </Alert>
+          <GettingStartedChecklist
+            onOpenAddJobDialog={handleOpenAddJob}
+            onSeedData={handleSeedData}
+            onSwitchToScheduleTab={() => setActiveTab('schedule')}
+          />
         )}
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
@@ -1117,6 +1131,7 @@ export default function DashboardPage() {
         {/* This is a controlled dialog, so the trigger is handled programmatically */}
         <div />
       </OptimizeRouteDialog>
+      <HelpAssistant />
     </div>
   );
 }

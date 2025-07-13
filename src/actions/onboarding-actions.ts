@@ -5,9 +5,11 @@ import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import { stripe } from '@/lib/stripe';
 import { CompleteOnboardingInputSchema, type CompleteOnboardingInput } from '@/types';
-import { addDays } from 'date-fns';
+import { addDays, addHours } from 'date-fns';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import * as admin from 'firebase-admin';
+import { collection, writeBatch, serverTimestamp, getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 
 export async function completeOnboardingAction(
   input: CompleteOnboardingInput,
@@ -165,5 +167,89 @@ export async function completeOnboardingAction(
         sessionId: null, 
         error: `Onboarding failed. ${errorMessage}` 
     };
+  }
+}
+
+const SeedDataInputSchema = z.object({
+  companyId: z.string().min(1),
+  appId: z.string().min(1),
+});
+
+export async function seedSampleDataAction(
+  input: z.infer<typeof SeedDataInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+    const { companyId, appId } = SeedDataInputSchema.parse(input);
+
+    const batch = writeBatch(dbAdmin);
+
+    // 1. Seed Technicians
+    const techsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`);
+    mockTechnicians.forEach(tech => {
+        const docRef = techsCollectionRef.doc(); // Let Firestore generate ID
+        batch.set(docRef, { ...tech, id: docRef.id, companyId: companyId, isSampleData: true });
+    });
+
+    // 2. Seed Jobs
+    const jobsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/jobs`);
+    mockJobs.forEach(job => {
+        const docRef = jobsCollectionRef.doc();
+        batch.set(docRef, { ...job, id: docRef.id, companyId: companyId, isSampleData: true });
+    });
+    
+    // 3. Seed Skills
+    const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
+    const allSkills = [...new Set(mockTechnicians.flatMap(t => t.skills || []))];
+    allSkills.forEach(skillName => {
+      const docRef = skillsCollectionRef.doc();
+      batch.set(docRef, { name: skillName, companyId: companyId, isSampleData: true });
+    });
+
+    await batch.commit();
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map((err) => err.message).join(', ') };
+    }
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error seeding sample data',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { error: `Failed to seed data. ${errorMessage}` };
+  }
+}
+
+export async function clearSampleDataAction(
+  input: z.infer<typeof SeedDataInputSchema>
+): Promise<{ error: string | null }> {
+  try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+    const { companyId, appId } = SeedDataInputSchema.parse(input);
+    const batch = writeBatch(dbAdmin);
+    
+    const collectionsToClear = ['technicians', 'jobs', 'skills'];
+
+    for (const collectionName of collectionsToClear) {
+      const collectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/${collectionName}`);
+      const q = query(collectionRef, where("companyId", "==", companyId), where("isSampleData", "==", true));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+    }
+
+    await batch.commit();
+    return { error: null };
+  } catch (e) {
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error clearing sample data',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { error: `Failed to clear data. ${errorMessage}` };
   }
 }

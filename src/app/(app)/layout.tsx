@@ -56,30 +56,33 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
 import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
+import { LanguageProvider, useTranslation } from "@/hooks/use-language";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
-const adminNavItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/contracts", label: "Contracts", icon: Repeat },
-  { href: "/customers", label: "Customers", icon: ClipboardList },
-  { href: "/reports", label: "Reports", icon: PieChart },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
-
-const getTechnicianNavItems = (uid: string) => [
-  { href: `/technician/jobs/${uid}`, label: "My Active Jobs", icon: Smartphone },
-];
-
-const superAdminNavItems = [
-  { href: "/roadmap", label: "Roadmap", icon: ListChecks },
-];
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function MainAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useTranslation();
   const { user, userProfile, company, loading, logout } = useAuth();
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  const adminNavItems = [
+    { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+    { href: "/contracts", label: t('contracts'), icon: Repeat },
+    { href: "/customers", label: t('customers'), icon: ClipboardList },
+    { href: "/reports", label: t('reports'), icon: PieChart },
+    { href: "/settings", label: t('settings'), icon: Settings },
+  ];
   
+  const getTechnicianNavItems = (uid: string) => [
+    { href: `/technician/jobs/${uid}`, label: "My Active Jobs", icon: Smartphone },
+  ];
+  
+  const superAdminNavItems = [
+    { href: "/roadmap", label: "Roadmap", icon: ListChecks },
+  ];
+
   React.useEffect(() => {
     if (loading) return;
 
@@ -97,8 +100,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
       
       if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
-        // User has signed up but not been invited yet. The UI will show a holding message.
-        // We don't need to redirect them away from the holding page.
         return;
       }
 
@@ -106,8 +107,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         if (pathname === '/onboarding') {
           router.replace('/dashboard');
         }
-        // Redirect technician to their specific jobs page if they land somewhere else
-        // but allow them to visit their profile.
         if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
             router.replace(`/technician/jobs/${user.uid}`);
         }
@@ -119,7 +118,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
       const days = differenceInDays(new Date(company.trialEndsAt), new Date());
-      // Ensure we don't show a negative number if the trial just ended.
       trialDaysLeft = Math.max(0, days);
   }
 
@@ -212,7 +210,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places', 'geocoding']}>
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
           <SidebarHeader className="bg-primary text-primary-foreground">
@@ -253,10 +250,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <SidebarMenuButton
                           isActive={pathname.startsWith("/technician")}
                           className="w-full justify-start"
-                          tooltip="Technician View"
+                          tooltip={t('technician_view')}
                       >
                           <Smartphone className="h-4 w-4" />
-                          <span>Technician View</span>
+                          <span>{t('technician_view')}</span>
                       </SidebarMenuButton>
                       </Link>
                   </SidebarMenuItem>
@@ -277,13 +274,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="start" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {canSeeAdminViews && (
                   <Link href="/technician/profile">
                       <DropdownMenuItem>
                           <UserCog className="mr-2 h-4 w-4" />
-                          <span>My Admin Profile</span>
+                          <span>{t('my_admin_profile')}</span>
                       </DropdownMenuItem>
                   </Link>
                 )}
@@ -291,20 +288,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       <Link href="/technician/profile">
                           <DropdownMenuItem>
                               <Users className="mr-2 h-4 w-4" />
-                              <span>My Profile</span>
+                              <span>{t('my_profile')}</span>
                           </DropdownMenuItem>
                       </Link>
                   )}
                 <Link href="/settings">
                   <DropdownMenuItem>
                       <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
+                      <span>{t('settings')}</span>
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
+                <LanguageSwitcher />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  <span>{t('log_out')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -350,6 +349,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </main>
         </SidebarInset>
       </SidebarProvider>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+  if (!googleMapsApiKey) {
+    return (
+        <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
+            <div className="flex flex-col items-center justify-center h-full max-w-lg p-6 text-center border bg-card rounded-md shadow-lg">
+                <MapPin className="h-16 w-16 text-destructive opacity-70 mb-4" />
+                <h2 className="text-2xl font-bold text-destructive mb-2">Google Maps API Key Missing</h2>
+                <p className="text-muted-foreground mb-1">
+                The <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is not configured.
+                </p>
+                <p className="text-muted-foreground">
+                Please add it to your environment file to enable map features.
+                </p>
+            </div>
+        </div>
+    );
+  }
+
+  return (
+     <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places', 'geocoding']}>
+       <LanguageProvider>
+          <MainAppLayout>{children}</MainAppLayout>
+       </LanguageProvider>
     </GoogleMapsAPIProvider>
   );
 }

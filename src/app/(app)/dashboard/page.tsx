@@ -42,6 +42,7 @@ import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { serverTimestamp } from 'firebase/firestore'; 
 import { Copy } from 'lucide-react';
 import OptimizeRouteDialog from './components/optimize-route-dialog';
+import { useTranslation } from '@/hooks/use-language';
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
@@ -75,6 +76,7 @@ const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () 
 
 export default function DashboardPage() {
   const { user, userProfile, company, loading: authLoading } = useAuth();
+  const { t } = useTranslation();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -860,16 +862,16 @@ export default function DashboardPage() {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline">
-          Dashboard
+          {t('dashboard')}
         </h1>
         <div className="flex flex-wrap gap-2">
            {isAdmin && (
             <Button variant="outline" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Import Jobs
+                <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('import_jobs')}
             </Button>
            )}
            <Button onClick={handleOpenAddJob}>
-             <PlusCircle className="mr-2 h-4 w-4" /> Add New Job
+             <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
            </Button>
         </div>
       </div>
@@ -877,42 +879,42 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High-Priority Queue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{highPriorityPendingCount}</div>
-            <p className="text-xs text-muted-foreground">Urgent jobs needing assignment</p>
+            <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Jobs</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
             <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{unassignedJobsCount}</div>
-            <p className="text-xs text-muted-foreground">Total jobs awaiting assignment</p>
+            <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Available Technicians</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
-            <p className="text-xs text-muted-foreground">Ready for assignments</p>
+            <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('jobs_scheduled_today')}</CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="h-[4.5rem]">
             <div className="text-2xl font-bold">{jobsTodayCount}</div>
-            <p className="text-xs text-muted-foreground">Total appointments for the day</p>
+            <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
           </CardContent>
         </Card>
       </div>
@@ -921,30 +923,30 @@ export default function DashboardPage() {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
-                Job List
+                {t('job_list')}
                 {unassignedJobsCount > 0 && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="schedule" className="hover:bg-secondary">Schedule</TabsTrigger>
+          <TabsTrigger value="schedule" className="hover:bg-secondary">{t('schedule')}</TabsTrigger>
           <TabsTrigger value="technicians" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
-                Technicians
+                {t('technicians')}
                 {profileChangeRequests.length > 0 && <Badge variant="default" className="h-5">{profileChangeRequests.length}</Badge>}
             </div>
           </TabsTrigger>
-          <TabsTrigger value="overview-map" className="hover:bg-secondary">Overview Map</TabsTrigger>
+          <TabsTrigger value="overview-map" className="hover:bg-secondary">{t('overview_map')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="job-list" className="mt-4">
           <Card>
             <CardHeader>
-                <CardTitle>Current Jobs</CardTitle>
-                <CardDescription>Manage and track all ongoing and pending jobs.</CardDescription>
+                <CardTitle>{t('current_jobs')}</CardTitle>
+                <CardDescription>{t('current_jobs_desc')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 mb-4 items-end">
                 <div className="flex-1 space-y-1">
-                  <Label htmlFor="status-filter">Status</Label>
+                  <Label htmlFor="status-filter">{t('status')}</Label>
                   <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
                     <SelectTrigger id="status-filter"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
                     <SelectContent>
@@ -961,7 +963,7 @@ export default function DashboardPage() {
                   </Select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <Label htmlFor="priority-filter">Priority</Label>
+                  <Label htmlFor="priority-filter">{t('priority')}</Label>
                   <Select value={priorityFilter} onValueChange={(value: JobPriority | typeof ALL_PRIORITIES) => setPriorityFilter(value)}>
                     <SelectTrigger id="priority-filter"><SelectValue placeholder="Filter by Priority" /></SelectTrigger>
                     <SelectContent>
@@ -973,15 +975,15 @@ export default function DashboardPage() {
                   </Select>
                 </div>
                 <div className="flex-1 space-y-1">
-                  <Label htmlFor="sort-order">Sort By</Label>
+                  <Label htmlFor="sort-order">{t('sort_by')}</Label>
                   <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
                     <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="priority">Priority</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                      <SelectItem value="technician">Technician</SelectItem>
-                      <SelectItem value="customer">Customer</SelectItem>
-                      <SelectItem value="scheduledTime">Scheduled Time</SelectItem>
+                      <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
+                      <SelectItem value="status">{t('sort_by_status')}</SelectItem>
+                      <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
+                      <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
+                      <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -992,7 +994,7 @@ export default function DashboardPage() {
                   className="w-full sm:w-auto"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  AI Batch Assign
+                  {t('ai_batch_assign')}
                 </Button>
               </div>
               <div className="space-y-4">
@@ -1012,8 +1014,8 @@ export default function DashboardPage() {
                 ) : (
                   <Alert>
                     <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>No Jobs Found</AlertTitle>
-                    <AlertDescription>Adjust your filters or add a new job to get started.</AlertDescription>
+                    <AlertTitle>{t('no_jobs_found')}</AlertTitle>
+                    <AlertDescription>{t('no_jobs_found_desc')}</AlertDescription>
                   </Alert>
                 )}
               </div>
@@ -1102,5 +1104,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +12,8 @@ import { answerUserQuestionAction } from '@/actions/ai-actions';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth-context';
+import { useTranslation } from '@/hooks/use-language';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -19,18 +21,32 @@ interface Message {
 }
 
 const HelpAssistant: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
+  const { isHelpOpen, setHelpOpen, company } = useAuth();
+  const { language } = useTranslation();
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   
+  const showFloatingButton = !company?.settings?.hideHelpButton;
+
   const quickQuestions = [
     "How do I add a new job?",
     "How does AI assignment work?",
     "Can I import jobs from a CSV?",
     "How do I change a technician's skills?",
   ];
+
+  useEffect(() => {
+    if (messages.length) {
+      scrollAreaRef.current?.scrollTo({
+        top: scrollAreaRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [messages]);
 
   const handleQuickQuestion = async (question: string) => {
     setInput(question);
@@ -48,7 +64,7 @@ const HelpAssistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-        const result = await answerUserQuestionAction({ question: userMessage });
+        const result = await answerUserQuestionAction({ question: userMessage, language });
         if (result.error) {
             setMessages([...newMessages, { role: 'assistant', content: `Sorry, I encountered an error: ${result.error}` }]);
         } else if (result.data) {
@@ -63,16 +79,18 @@ const HelpAssistant: React.FC = () => {
   };
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="default"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
-          aria-label="Open AI Assistant"
-        >
-          <HelpCircle className="h-7 w-7" />
-        </Button>
-      </PopoverTrigger>
+    <Popover open={isHelpOpen} onOpenChange={setHelpOpen}>
+      {showFloatingButton && (
+         <PopoverTrigger asChild>
+          <Button
+            variant="default"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+            aria-label="Open AI Assistant"
+          >
+            <HelpCircle className="h-7 w-7" />
+          </Button>
+        </PopoverTrigger>
+      )}
       <PopoverContent
         side="top"
         align="end"
@@ -82,13 +100,13 @@ const HelpAssistant: React.FC = () => {
         <Card className="flex flex-col h-[70vh]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1">
-                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />FleetSync AI Assistant</CardTitle>
+                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Fleetie AI Assistant</CardTitle>
                 <CardDescription>Ask me anything about using the app.</CardDescription>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-7 w-7"><X className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setHelpOpen(false)} className="h-7 w-7"><X className="h-4 w-4" /></Button>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden p-3">
-            <ScrollArea className="h-full">
+            <ScrollArea className="h-full" ref={scrollAreaRef as any}>
               <div className="space-y-4 pr-3">
                  <div className={cn("flex items-start gap-3 text-sm")}>
                     <div className="flex h-8 w-8 shrink-0 select-none items-center justify-center rounded-md border bg-secondary text-secondary-foreground shadow-sm">
@@ -96,7 +114,7 @@ const HelpAssistant: React.FC = () => {
                     </div>
                     <div className="flex-1 space-y-2 overflow-hidden">
                         <p className="rounded-lg bg-muted p-3">
-                            Hello! How can I help you today?
+                            Hello! I'm Fleetie. How can I help you today?
                         </p>
                     </div>
                 </div>

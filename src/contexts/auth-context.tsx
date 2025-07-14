@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { User } from "firebase/auth";
@@ -25,6 +26,8 @@ interface AuthContextType {
   login: (email_address: string, pass_word: string) => Promise<boolean>;
   signup: (email_address: string, pass_word: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  isHelpOpen: boolean;
+  setHelpOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isHelpOpen, setHelpOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -217,7 +221,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen }}>
       {children}
     </AuthContext.Provider>
   );

@@ -31,6 +31,7 @@ export async function updateCompanyAction(
             co2EmissionFactorKgPerKm: validatedInput.settings.co2EmissionFactorKgPerKm,
             companySpecialties: validatedInput.settings.companySpecialties || [],
             otherSpecialty: validatedInput.settings.otherSpecialty || '',
+            hideHelpButton: validatedInput.settings.hideHelpButton || false,
         },
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };

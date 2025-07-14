@@ -47,9 +47,12 @@ Technician Mobile View:
 - They can capture customer signatures and satisfaction ratings.
 
 Settings:
-- General: Company details, business hours, CO2 emission factor.
+- General: Company details, business hours, CO2 emission factor, hide help button.
 - Billing: Manage Stripe subscription.
 - Users: Invite new users (admins or technicians) and manage roles.
+- Contracts: Manage recurring service contracts.
+- Customers: View a unified list of all customers.
+- Reports: View analytics and KPIs for the fleet.
 `;
 
 const prompt = ai.definePrompt({
@@ -57,9 +60,9 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnswerUserQuestionInputSchema },
     output: { schema: AnswerUserQuestionOutputSchema },
-    prompt: `You are a friendly and helpful AI assistant for the FleetSync AI application.
+    prompt: `You are Fleetie, a friendly and helpful AI assistant for the FleetSync AI application.
     
-    Your goal is to answer user questions about how to use the software.
+    Your goal is to answer user questions about how to use the software. You must respond in the user's specified language, which is "{{language}}".
     
     Use the provided knowledge base below to answer the user's question. Keep your answers concise, clear, and easy to understand for a non-technical audience. Use bullet points if it helps with clarity.
     

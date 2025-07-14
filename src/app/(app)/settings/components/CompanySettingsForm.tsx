@@ -14,9 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
+import { Switch } from '@/components/ui/switch';
 
 const FormSchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters.'),
@@ -91,6 +92,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? 0.266,
         companySpecialties: company.settings?.companySpecialties || [],
         otherSpecialty: company.settings?.otherSpecialty || '',
+        hideHelpButton: company.settings?.hideHelpButton || false,
       },
     },
   });
@@ -156,6 +158,29 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
             </div>
         </div>
       
+      <Separator />
+      
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><HelpCircle/> UI Settings</h3>
+        <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Controller
+            name="settings.hideHelpButton"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                id="hideHelpButton"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <div>
+              <Label htmlFor="hideHelpButton">Hide Floating Help Button</Label>
+              <p className="text-sm text-muted-foreground">The AI Assistant will still be accessible from the main menu.</p>
+          </div>
+        </div>
+      </div>
+
       <Separator />
 
       <div className="space-y-4">

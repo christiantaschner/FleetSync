@@ -24,6 +24,7 @@ import {
   Map as MapIcon,
   Briefcase,
   CalendarDays,
+  HelpCircle,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -64,7 +65,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, userProfile, company, loading, logout } = useAuth();
+  const { user, userProfile, company, loading, logout, setHelpOpen } = useAuth();
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const adminNavItems = [
@@ -262,6 +263,10 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
+             <DropdownMenuItem onClick={() => setHelpOpen(true)} className="cursor-pointer">
+                <HelpCircle className="mr-2 h-4 w-4" />
+                <span>Help Assistant</span>
+            </DropdownMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">

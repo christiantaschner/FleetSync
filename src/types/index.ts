@@ -47,6 +47,7 @@ export const CompanySettingsSchema = z.object({
   co2EmissionFactorKgPerKm: z.number().optional().describe("Custom CO2 emission factor in kg per km. Set to 0 for electric fleets."),
   companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
   otherSpecialty: z.string().optional(),
+  hideHelpButton: z.boolean().optional(),
 }).refine(data => {
     if (data.companySpecialties.includes('Other')) {
         return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
@@ -643,6 +644,7 @@ export type TriageJobOutput = z.infer<typeof TriageJobOutputSchema>;
 
 export const AnswerUserQuestionInputSchema = z.object({
   question: z.string().describe("The user's question about the FleetSync AI application."),
+  language: z.enum(['en', 'de']).describe("The language the user is interacting in."),
 });
 export type AnswerUserQuestionInput = z.infer<typeof AnswerUserQuestionInputSchema>;
 

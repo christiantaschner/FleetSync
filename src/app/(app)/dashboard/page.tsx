@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -145,7 +145,7 @@ export default function DashboardPage() {
     } else {
       toast({ title: "Success", description: "Sample data has been added." });
     }
-    // Data will refresh via onSnapshot listeners
+    await fetchAllData();
   };
 
   useEffect(() => {
@@ -192,7 +192,6 @@ export default function DashboardPage() {
     return Array.from(customerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [jobs]);
 
-
   const fetchSkills = useCallback(async () => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         setAllSkills(PREDEFINED_SKILLS);
@@ -205,117 +204,90 @@ export default function DashboardPage() {
     } else {
         console.error("Could not fetch skills library:", result.error);
     }
-}, [userProfile, appId]);
+  }, [userProfile, appId]);
   
-  const fetchAllData = useCallback(() => {
-    fetchSkills();
-  }, [fetchSkills]);
-
-  useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+  const fetchAllData = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoadingData(true);
 
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         setJobs(mockJobs);
         setTechnicians(mockTechnicians);
         setProfileChangeRequests(mockProfileChangeRequests.filter(r => r.status === 'pending'));
         fetchSkills();
-        setIsLoadingData(false);
+        if (showLoading) setIsLoadingData(false);
         return;
     }
 
-    if (!db || !userProfile?.companyId) {
-      if (userProfile && userProfile.onboardingStatus === 'completed') {
-          setIsLoadingData(false);
-      }
-      return;
-    }
-    
-    if (!appId) {
-        console.error("Firebase Project ID not found in environment variables.");
-        setIsLoadingData(false);
+    if (!db || !userProfile?.companyId || !appId) {
+        if (showLoading) setIsLoadingData(false);
         return;
     }
-    
-    setIsLoadingData(true);
-    let activeListeners = 0;
-    const requiredListeners = 3;
+
     const companyId = userProfile.companyId;
 
-    const onListenerLoaded = () => {
-        activeListeners++;
-        if (activeListeners === requiredListeners) {
-            setIsLoadingData(false);
-        }
-    }
+    try {
+        await fetchSkills();
 
-    fetchSkills();
+        const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
+        const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
+        const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
 
-    const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
-    const jobsUnsubscribe = onSnapshot(jobsQuery, (querySnapshot) => {
-      const jobsData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        for (const key in data) {
-            if (data[key] && typeof data[key].toDate === 'function') {
-                data[key] = data[key].toDate().toISOString();
+        const [jobsSnapshot, techniciansSnapshot, requestsSnapshot] = await Promise.all([
+            getDocs(jobsQuery),
+            getDocs(techniciansQuery),
+            getDocs(requestsQuery),
+        ]);
+
+        const jobsData = jobsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
             }
-        }
-        return { id: doc.id, ...data } as Job;
-      });
-      jobsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setJobs(jobsData);
-      onListenerLoaded();
-    }, (error) => {
-      console.error("Error fetching jobs: ", error);
-      onListenerLoaded();
-    });
-
-    const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
-    const techniciansUnsubscribe = onSnapshot(techniciansQuery, (querySnapshot) => {
-      const techniciansData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        for (const key in data) {
-            if (data[key] && typeof data[key].toDate === 'function') {
-                data[key] = data[key].toDate().toISOString();
-            }
-        }
-        return { id: doc.id, ...data } as Technician;
-      });
-      techniciansData.sort((a, b) => a.name.localeCompare(b.name));
-      setTechnicians(techniciansData);
-      onListenerLoaded();
-    }, (error) => {
-      console.error("Error fetching technicians: ", error);
-      onListenerLoaded();
-    });
-    
-    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
-    const requestsUnsubscribe = onSnapshot(requestsQuery, (querySnapshot) => {
-        const requestsData = querySnapshot.docs.map(doc => {
+            return { id: doc.id, ...data } as Job;
+        }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setJobs(jobsData);
+        
+        const techniciansData = techniciansSnapshot.docs.map(doc => {
             const data = doc.data();
              for (const key in data) {
                 if (data[key] && typeof data[key].toDate === 'function') {
                     data[key] = data[key].toDate().toISOString();
                 }
             }
+            return { id: doc.id, ...data } as Technician;
+        }).sort((a, b) => a.name.localeCompare(b.name));
+        setTechnicians(techniciansData);
+        
+        const requestsData = requestsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
             return { id: doc.id, ...data } as ProfileChangeRequest
+        }).filter(r => r.status === 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProfileChangeRequests(requestsData);
+
+    } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+        toast({
+            title: "Data Fetch Error",
+            description: "Could not retrieve the latest data. Please try refreshing.",
+            variant: "destructive",
         });
-        const pendingRequests = requestsData.filter(r => r.status === 'pending');
-        pendingRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime());
-        setProfileChangeRequests(pendingRequests);
-        onListenerLoaded();
-    }, (error) => {
-        console.error("Error fetching profile change requests: ", error);
-        onListenerLoaded();
-    });
-    
-    return () => {
-      jobsUnsubscribe();
-      techniciansUnsubscribe();
-      requestsUnsubscribe();
-    };
-  }, [authLoading, userProfile, fetchSkills, appId]);
+    } finally {
+        if (showLoading) setIsLoadingData(false);
+    }
+  }, [userProfile, appId, fetchSkills, toast]);
+
+  useEffect(() => {
+    if (!authLoading) {
+      fetchAllData();
+    }
+  }, [authLoading, fetchAllData]);
 
   const prevTechCount = useRef<number | null>(null);
   
@@ -725,6 +697,7 @@ export default function DashboardPage() {
         await batch.commit();
         if (assignmentsMade > 0) {
           toast({ title: "Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
+          await fetchAllData(false); // Re-fetch data without showing a full page loader
         } else {
           toast({ title: "No Assignments Made", description: "No valid jobs could be assigned in this batch.", variant: "default" });
         }
@@ -765,6 +738,8 @@ export default function DashboardPage() {
       title: "Technician Marked Unavailable",
       description: "Their active jobs are now pending and ready for reassignment.",
     });
+    
+    await fetchAllData(false);
     
     setTimeout(() => {
         handleBatchAIAssign();
@@ -850,6 +825,11 @@ export default function DashboardPage() {
             onOpenAddJobDialog={handleOpenAddJob}
             onSeedData={handleSeedData}
             onSwitchToScheduleTab={() => setActiveTab('schedule')}
+            onDismiss={() => {
+              setShowGettingStarted(false);
+              localStorage.setItem('getting_started_dismissed', 'true');
+            }}
+            isLoading={isLoadingData}
           />
         )}
         <AddEditJobDialog
@@ -895,6 +875,9 @@ export default function DashboardPage() {
           {t('dashboard')}
         </h1>
         <div className="flex flex-wrap gap-2">
+           <Button variant="outline" className="hover:bg-secondary" onClick={() => fetchAllData()}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Data
+           </Button>
            {isAdmin && (
             <Button variant="outline" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('import_jobs')}

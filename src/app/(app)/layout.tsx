@@ -57,7 +57,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
 import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
-import { useTranslation } from "@/hooks/use-language";
+import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
@@ -263,10 +263,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-             <DropdownMenuItem onClick={() => setHelpOpen(true)} className="cursor-pointer">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                <span>Help Assistant</span>
-            </DropdownMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
@@ -303,6 +299,10 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                       <span>{t('settings')}</span>
                   </DropdownMenuItem>
                 </Link>
+                <DropdownMenuItem onClick={() => setHelpOpen(true)} className="cursor-pointer">
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    <span>Help Assistant</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <LanguageSwitcher />
                 <DropdownMenuSeparator />

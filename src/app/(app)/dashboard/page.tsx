@@ -1018,7 +1018,7 @@ export default function DashboardPage() {
                   </Select>
                 </div>
                 <Button 
-                  variant="outline" 
+                  variant="accent" 
                   onClick={handleBatchAIAssign} 
                   disabled={pendingJobsCount === 0 || isBatchLoading}
                   className="w-full sm:w-auto"

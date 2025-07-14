@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye, BarChart, CloudRain,
-  List, MousePointerClick
+  List, MousePointerClick, HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +16,7 @@ interface RoadmapItemProps {
   title: string;
   description: string;
   icon: React.ElementType;
-  status?: 'Planned' | 'In Progress' | 'Consideration' | 'Vision' | 'Completed';
+  status?: 'Planned' | 'In Progress' | 'Completed' | 'Vision';
 }
 
 const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Icon, status }) => {
@@ -128,6 +128,30 @@ const roadmapFeatures = {
       icon: Timer,
       status: "Completed",
     },
+    {
+      title: "Getting Started Checklist",
+      description: "A simple, interactive checklist on the dashboard to guide new users through essential first steps like adding a technician and creating a job.",
+      icon: List,
+      status: "Completed"
+    },
+    {
+      title: "One-Click Sample Data",
+      description: "A feature for new accounts to generate a set of sample technicians and jobs, allowing them to explore the app's features without manual data entry.",
+      icon: MousePointerClick,
+      status: "Completed"
+    },
+    {
+      title: "Contextual In-App Guidance",
+      description: "Non-intrusive tooltips and info icons next to key features to provide brief, helpful explanations right where the user needs them.",
+      icon: Lightbulb,
+      status: "Completed"
+    },
+    {
+      title: "AI Help Assistant",
+      description: "An in-app chat assistant powered by Genkit that can answer user questions about how to use the application's features.",
+      icon: HelpCircle,
+      status: "Completed"
+    },
   ],
   inProgress: [
     {
@@ -151,31 +175,13 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "Getting Started Checklist",
-      description: "A simple, interactive checklist on the dashboard to guide new users through essential first steps like adding a technician and creating a job.",
-      icon: List,
-      status: "Planned"
-    },
-    {
-      title: "One-Click Sample Data",
-      description: "A feature for new accounts to generate a set of sample technicians and jobs, allowing them to explore the app's features without manual data entry.",
-      icon: MousePointerClick,
-      status: "Planned"
-    },
-    {
-      title: "Contextual In-App Guidance",
-      description: "Non-intrusive tooltips and info icons next to key features to provide brief, helpful explanations right where the user needs them.",
-      icon: Lightbulb,
-      status: "Planned"
-    },
-    {
       title: "Enhanced Automated Customer Communication",
       description: "Automatically trigger and intelligently word notifications for predicted delays, managing customer expectations proactively.",
       icon: MessageSquare,
       status: "Planned",
     },
      {
-      title: "Real-time Traffic & Basic Weather Overlays",
+      title: "Real-time Traffic & Basic Weather Overlays on Map",
       description: "Enhance the dispatcher's map with real-time overlays for traffic congestion and basic weather patterns (e.g., rain, snow).",
       icon: CloudRain,
       status: "Planned",

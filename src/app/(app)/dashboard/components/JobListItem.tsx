@@ -23,6 +23,7 @@ interface JobListItemProps {
   onOpenDetails: (job: Job) => void;
   onDraftNotification: (job: Job) => void;
   onViewOnMap: (location: Location) => void;
+  onReOptimize: (technicianId: string) => void;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ 
@@ -136,10 +137,10 @@ const JobListItem: React.FC<JobListItemProps> = ({
         {isRoutable && (
           <>
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
-                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat with Technician
+                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
             </Button>
             <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onDraftNotification(job); }}>
-                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Notify Customer
+                <Sparkles className="mr-1 h-3 w-3 text-primary" /> Notify Customer
             </Button>
           </>
         )}

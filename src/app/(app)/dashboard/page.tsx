@@ -37,7 +37,6 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
-import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { serverTimestamp } from 'firebase/firestore'; 
 import { Copy } from 'lucide-react';
@@ -137,10 +136,6 @@ export default function DashboardPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   
   const fetchSkills = useCallback(async () => {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setAllSkills(PREDEFINED_SKILLS);
-        return;
-    }
     if (!userProfile?.companyId || !appId) return;
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if (result.data) {
@@ -152,15 +147,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setJobs(mockJobs);
-        setTechnicians(mockTechnicians);
-        setProfileChangeRequests(mockProfileChangeRequests.filter(r => r.status === 'pending'));
-        fetchSkills();
-        setIsLoadingData(false);
-        return;
-    }
 
     if (!db || !userProfile?.companyId || !appId) {
         setIsLoadingData(false);
@@ -236,7 +222,7 @@ export default function DashboardPage() {
         unsubscribeTechnicians();
         unsubscribeRequests();
     };
-}, [authLoading, userProfile, appId, fetchSkills, toast]);
+}, [authLoading, userProfile, appId, fetchSkills, toast, isLoadingData]);
 
 
   const handleSeedData = async () => {
@@ -1008,7 +994,7 @@ export default function DashboardPage() {
                   className="w-full sm:w-auto"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  {t('ai_batch_assign')}
+                  Fleetie's Batch Assign
                 </Button>
               </div>
               <div className="space-y-4">

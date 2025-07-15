@@ -62,7 +62,7 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
       <Alert variant="destructive" className="bg-amber-50 border-amber-400 text-amber-800 [&>svg]:text-amber-500">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle className="font-headline text-amber-900 flex justify-between items-center">
-          <span>Proactive Alert: Schedule at Risk</span>
+          <span>Fleetie's Proactive Alert: Schedule at Risk</span>
            <TooltipProvider>
              <div className="flex items-center gap-1">
                 <Tooltip>

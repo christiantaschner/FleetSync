@@ -71,7 +71,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
             currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
 
-        const input: AllocateJobActionInput = {
+        const input = {
             jobDescription: jobToReassign.description,
             jobPriority: jobToReassign.priority,
             requiredSkills: jobToReassign.requiredSkills || [],
@@ -125,9 +125,9 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="font-headline">AI Reassignment Suggestion</DialogTitle>
+                    <DialogTitle className="font-headline">Fleetie's Reassignment Suggestion</DialogTitle>
                     <DialogDescription>
-                        For job "<strong>{jobToReassign.title}</strong>", the AI suggests an alternative technician to avoid a potential delay.
+                        For job "<strong>{jobToReassign.title}</strong>", Fleetie suggests an alternative technician to avoid a potential delay.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -140,7 +140,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
 
                 {!isLoadingAI && suggestedTech && suggestion && (
                     <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2">
-                         <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> AI Suggestion:</h3>
+                         <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Fleetie's Suggestion:</h3>
                          <p>Assign to: <strong>{suggestedTech.name}</strong></p>
                          <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestion.reasoning}</em></p>
                     </div>

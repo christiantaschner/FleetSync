@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { optimizeRoutesAction } from "@/actions/ai-actions";
-import { confirmOptimizedRouteAction } from "@/actions/fleet-actions";
+import { confirmOptimizedRouteAction } from '@/actions/fleet-actions';
 import type { OptimizeRoutesOutput, Technician, Job, OptimizeRoutesInput } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -126,7 +126,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isO
       toast({ title: "Route Optimization Error", description: result.error, variant: "destructive" });
     } else if (result.data) {
       setOptimizedRoute(result.data);
-      toast({ title: "Route Optimized", description: `New route generated for ${technician.name}.` });
+      toast({ title: "Route Optimized", description: `Fleetie has generated a new route for ${technician.name}.` });
     }
   };
   
@@ -187,9 +187,9 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isO
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Re-Optimize a Technician's Route</DialogTitle>
+          <DialogTitle className="font-headline">Fleetie's Route Optimizer</DialogTitle>
           <DialogDescription>
-            Select a technician to have the AI find the most efficient order for their assigned jobs. This is useful if a job is cancelled or finishes early.
+            Select a technician to have Fleetie find the most efficient order for their assigned jobs. This is useful if a job is cancelled or finishes early.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">

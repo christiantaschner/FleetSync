@@ -76,7 +76,7 @@ export default function LoginPage() {
           <Card className="w-full max-w-md shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl font-headline">{t('login_title')}</CardTitle>
-              <CardDescription>{t('login_desc')}</CardDescription>
+              <CardDescription>Enter your credentials to access FleetSync AI. Your assistant, Fleetie, is ready to help.</CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
               <CardContent>

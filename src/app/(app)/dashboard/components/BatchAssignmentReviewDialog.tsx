@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Job, Technician } from '@/types';
-import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
+import type { AllocateJobOutput } from "@/types";
 import { AlertTriangle, CheckCircle, User, Sparkles, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -54,10 +54,10 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <Sparkles className="text-primary h-5 w-5" /> Review AI Batch Assignments
+            <Sparkles className="text-primary h-5 w-5" /> Review Fleetie's Batch Assignments
           </DialogTitle>
           <DialogDescription>
-            Review the AI's suggestions for pending jobs. Only assignments to currently available technicians can be confirmed.
+            Review Fleetie's suggestions for pending jobs. Only assignments to currently available technicians can be confirmed.
             {validSuggestions.length !== assignmentSuggestions.length && (
                 <span className="block text-sm text-destructive mt-1">
                     {assignmentSuggestions.length - validSuggestions.length} suggestion(s) cannot be confirmed (e.g., technician unavailable or AI error).
@@ -101,7 +101,7 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
                           {!suggestedTechnicianDetails.isAvailable && <span className="text-red-600 font-semibold ml-1">(Unavailable)</span>}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'}</p>
-                        <p className="text-xs text-muted-foreground mt-1">AI Reason: {suggestion.reasoning}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Fleetie's Reason: {suggestion.reasoning}</p>
                       </>
                     ) : !error && (
                       <p className="text-sm text-muted-foreground">No AI suggestion available for this job.</p>
@@ -138,5 +138,3 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
 };
 
 export default BatchAssignmentReviewDialog;
-
-

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock, User, ShieldQuestion, HelpCircle } from 'lucide-react';
-import type { CheckScheduleHealthResult } from '@/actions/fleet-actions';
+import type { CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { cn } from '@/lib/utils';
 
 interface ScheduleHealthDialogProps {
@@ -50,7 +50,7 @@ const ScheduleHealthDialog: React.FC<ScheduleHealthDialogProps> = ({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <ShieldQuestion className="text-primary h-5 w-5" /> Schedule Risk Report
+            <ShieldQuestion className="text-primary h-5 w-5" /> Fleetie's Schedule Risk Report
           </DialogTitle>
           <DialogDescription>
             AI-powered analysis of active technicians' schedules to predict potential delays for their next job.
@@ -87,7 +87,7 @@ const ScheduleHealthDialog: React.FC<ScheduleHealthDialogProps> = ({
                      <div className="space-y-1 text-xs text-muted-foreground">
                         <p><strong>Current:</strong> {currentJob.title}</p>
                         <p><strong>Next:</strong> {nextJob?.title || 'None assigned'}</p>
-                        {risk && <p className="mt-1"><strong>AI Reason:</strong> <span className="italic">{risk.reasoning}</span></p>}
+                        {risk && <p className="mt-1"><strong>Fleetie's Reason:</strong> <span className="italic">{risk.reasoning}</span></p>}
                         {error && <p className="mt-1 text-destructive"><strong>Error:</strong> <span className="italic">{error}</span></p>}
                     </div>
                   </div>

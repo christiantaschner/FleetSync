@@ -172,7 +172,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     if (result.data) {
         if (result.data.suggestedSkills && result.data.suggestedSkills.length > 0) {
             setRequiredSkills(result.data.suggestedSkills);
-            toast({ title: "Skills Suggested", description: "AI has suggested skills based on the description." });
+            toast({ title: "Fleetie's Skills Suggestion", description: "Fleetie has suggested skills based on the description." });
         } else {
             setRequiredSkills([]); // Clear existing skills if none are suggested
             const reasoning = result.data.reasoning || "No specific skills from the library seem to match the job description.";
@@ -227,7 +227,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingAISuggestion(false);
 
     if (result.error) {
-      toast({ title: "AI Suggestion Error", description: result.error, variant: "destructive" });
+      toast({ title: "Fleetie Suggestion Error", description: result.error, variant: "destructive" });
       setAiSuggestion(null);
     } else if (result.data) {
       setAiSuggestion(result.data);
@@ -659,7 +659,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 ) : (
                                     <Sparkles className="mr-2 h-4 w-4 text-primary" />
                                 )}
-                                Suggest Skills
+                                Fleetie Suggests
                             </Button>
                     </div>
                     <Input
@@ -729,7 +729,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 className="h-10"
                             >
                                 {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4 text-primary"/>}
-                                AI Assign
+                                Fleetie Assign
                             </Button>
                           )}
                       </div>
@@ -740,7 +740,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Photo Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleetie's Photo Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI can analyze to help prepare for the job.</p>

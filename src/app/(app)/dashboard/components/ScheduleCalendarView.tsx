@@ -245,13 +245,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         </div>
       </CardHeader>
       <CardContent className="p-0 sm:p-6">
-        <Alert className="mb-4">
-          <Info className="h-4 w-4" />
-          <AlertTitle>Proactive Monitoring is Active</AlertTitle>
-          <AlertDescription>
-            This system automatically checks for schedule risks every 10 minutes. If a potential delay is detected, a "Proactive Alert" will appear on the main dashboard with suggested actions.
-          </AlertDescription>
-        </Alert>
         {viewMode === 'day' ? (
         <div ref={containerRef} className="overflow-x-auto">
           <div className="relative">

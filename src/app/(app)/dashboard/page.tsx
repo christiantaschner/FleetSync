@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -44,6 +44,7 @@ import OptimizeRouteDialog from './components/optimize-route-dialog';
 import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
+import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 
 const ALL_STATUSES = "all_statuses";
 const ALL_PRIORITIES = "all_priorities";
@@ -147,6 +148,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (authLoading) return;
+    
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setJobs(mockJobs);
+        setTechnicians(mockTechnicians);
+        setProfileChangeRequests(mockProfileChangeRequests);
+        setIsLoadingData(false);
+        return;
+    }
 
     if (!db || !userProfile?.companyId || !appId) {
         setIsLoadingData(false);

@@ -921,7 +921,7 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
-          <CardContent className="h-[4.5rem]">
+          <CardContent>
             <div className="text-2xl font-bold">{highPriorityPendingCount}</div>
             <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
           </CardContent>
@@ -931,7 +931,7 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
             <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="h-[4.5rem]">
+          <CardContent>
             <div className="text-2xl font-bold">{unassignedJobsCount}</div>
             <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
           </CardContent>
@@ -941,7 +941,7 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="h-[4.5rem]">
+          <CardContent>
             <div className="text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
             <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
           </CardContent>
@@ -951,7 +951,7 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-medium">{t('jobs_scheduled_today')}</CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="h-[4.5rem]">
+          <CardContent>
             <div className="text-2xl font-bold">{jobsTodayCount}</div>
             <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
           </CardContent>
@@ -959,7 +959,7 @@ export default function DashboardPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 {t('job_list')}

@@ -21,7 +21,6 @@ interface JobListItemProps {
   onOpenChat: (job: Job) => void;
   onAIAssign: (job: Job) => void;
   onOpenDetails: (job: Job) => void;
-  onReOptimize: (technicianId: string) => void;
   onDraftNotification: (job: Job) => void;
   onViewOnMap: (location: Location) => void;
 }
@@ -32,7 +31,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onOpenChat, 
     onAIAssign, 
     onOpenDetails,
-    onReOptimize,
     onDraftNotification,
     onViewOnMap
 }) => {
@@ -137,8 +135,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
         )}
         {isRoutable && (
           <>
-            <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onReOptimize(job.assignedTechnicianId!); }}>
-                <Shuffle className="mr-1 h-3 w-3 text-primary" /> Re-Optimize
+            <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
+                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat with Technician
             </Button>
             <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onDraftNotification(job); }}>
                 <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Notify Customer

@@ -14,7 +14,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
 import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { UserProfile, Company, Contract } from "@/types";
+import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";
 import Link from "next/link";
 import { addDays, isBefore } from 'date-fns';
@@ -54,13 +54,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     let unsubscribeProfile: (() => void) | null = null;
     let unsubscribeCompany: (() => void) | null = null;
-    let unsubscribeContracts: (() => void) | null = null;
+    let unsubscribeContractsAndJobs: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       // Clean up previous listeners to prevent memory leaks on user change
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
-      if (unsubscribeContracts) unsubscribeContracts();
+      if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
       
       // Reset state
       setUserProfile(null);
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 setUserProfile(finalProfile);
 
                 if (unsubscribeCompany) unsubscribeCompany();
-                if (unsubscribeContracts) unsubscribeContracts();
+                if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
 
                 if (finalProfile.companyId) {
                     const companyDocRef = doc(db, "companies", finalProfile.companyId);
@@ -119,28 +119,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         setLoading(false);
                     });
 
-                    // Listen for due contracts
+                    // Combined listener for Contracts and Jobs
                     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
                     if (appId) {
-                      const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", finalProfile.companyId), where("isActive", "==", true));
-                      unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
-                          const oneWeekFromNow = addDays(new Date(), 7);
-                          let dueCount = 0;
-                          snapshot.docs.forEach(doc => {
-                              const data = doc.data();
-                              for (const key in data) {
-                                if (data[key] && typeof data[key].toDate === 'function') {
-                                    data[key] = data[key].toDate().toISOString();
+                        const activeJobStatuses: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+                        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", finalProfile.companyId), where("isActive", "==", true));
+                        
+                        unsubscribeContractsAndJobs = onSnapshot(contractsQuery, async (contractsSnapshot) => {
+                            const contracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+                            
+                            // Get all jobs for the company to cross-reference
+                            const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", finalProfile.companyId));
+                            const jobsSnapshot = await getDocs(jobsQuery);
+                            const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
+
+                            const oneWeekFromNow = addDays(new Date(), 7);
+                            let dueCount = 0;
+
+                            for (const contract of contracts) {
+                                const nextDueDate = getNextDueDate(contract);
+                                // A contract is due if its next service date is in the past or within the next 7 days.
+                                const isTheoreticallyDue = isBefore(nextDueDate, oneWeekFromNow);
+
+                                if (isTheoreticallyDue) {
+                                    // Check if a job for this contract already exists and is not cancelled.
+                                    const hasOpenJob = allJobs.some(job => 
+                                        job.sourceContractId === contract.id &&
+                                        new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+                                        job.status !== 'Cancelled'
+                                    );
+                                    
+                                    // If it's due AND there's no open job, it needs attention.
+                                    if (!hasOpenJob) {
+                                        dueCount++;
+                                    }
                                 }
-                              }
-                              const contract = { id: doc.id, ...data } as Contract;
-                              const nextDueDate = getNextDueDate(contract);
-                              if (isBefore(nextDueDate, oneWeekFromNow)) {
-                                  dueCount++;
-                              }
-                          });
-                          setContractsDueCount(dueCount);
-                      });
+                            }
+                            setContractsDueCount(dueCount);
+                        });
                     }
 
                 } else {
@@ -171,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
-      if (unsubscribeContracts) unsubscribeContracts();
+      if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
   }, []);
 

@@ -5,22 +5,23 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
-import type { Contract } from '@/types';
+import type { Contract, Job } from '@/types';
 import { db } from '@/lib/firebase';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import AddEditContractDialog from './components/AddEditContractDialog';
 import ContractListItem from './components/ContractListItem';
 import GenerateJobsDialog from './components/GenerateJobsDialog';
 import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { mockContracts } from '@/lib/mock-data';
+import { mockContracts, mockJobs } from '@/lib/mock-data';
 import { addDays, isBefore } from 'date-fns';
 import { getNextDueDate } from '@/lib/utils';
 
 export default function ContractsPage() {
     const { userProfile, loading: authLoading } = useAuth();
     const [contracts, setContracts] = useState<(Contract & { isDue?: boolean })[]>([]);
+    const [jobs, setJobs] = useState<Job[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
@@ -30,12 +31,23 @@ export default function ContractsPage() {
     const [isSuggestAppointmentOpen, setIsSuggestAppointmentOpen] = useState(false);
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-    const fetchContracts = useCallback(() => {
+    const fetchContractsAndJobs = useCallback(() => {
         if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
             const contractsData = mockContracts.map(contract => {
                 const nextDueDate = getNextDueDate(contract);
                 const oneWeekFromNow = addDays(new Date(), 7);
-                const isDue = contract.isActive && isBefore(nextDueDate, oneWeekFromNow);
+                const isTheoreticallyDue = isBefore(nextDueDate, oneWeekFromNow);
+                let isDue = false;
+                if (isTheoreticallyDue) {
+                    const hasOpenJob = mockJobs.some(job => 
+                        job.sourceContractId === contract.id &&
+                        new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+                        job.status !== 'Cancelled'
+                    );
+                    if (!hasOpenJob) {
+                        isDue = true;
+                    }
+                }
                 return { ...contract, isDue };
             });
             contractsData.sort((a, b) => {
@@ -44,59 +56,80 @@ export default function ContractsPage() {
                 return a.customerName.localeCompare(b.customerName);
             });
             setContracts(contractsData);
+            setJobs(mockJobs);
             setIsLoading(false);
-            return;
+            return () => {};
         }
 
         if (!db || !userProfile?.companyId || !appId) {
             setIsLoading(false);
-            return;
+            return () => {};
         }
 
         setIsLoading(true);
-        const contractsQuery = query(
-            collection(db, `artifacts/${appId}/public/data/contracts`), 
-            where("companyId", "==", userProfile.companyId)
-        );
-        const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {
-            const oneWeekFromNow = addDays(new Date(), 7);
-            const contractsData = snapshot.docs.map(doc => {
-                const data = doc.data();
-                 for (const key in data) {
-                    if (data[key] && typeof data[key].toDate === 'function') {
-                        data[key] = data[key].toDate().toISOString();
+        let jobsUnsubscribe: (() => void) | null = null;
+        
+        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", userProfile.companyId));
+        const unsubscribeContracts = onSnapshot(contractsQuery, async (contractsSnapshot) => {
+            
+            if (jobsUnsubscribe) jobsUnsubscribe();
+
+            const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", userProfile.companyId));
+            jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
+                const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
+                setJobs(allJobs);
+
+                const oneWeekFromNow = addDays(new Date(), 7);
+                const contractsData = contractsSnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    for (const key in data) {
+                        if (data[key] && typeof data[key].toDate === 'function') {
+                            data[key] = data[key].toDate().toISOString();
+                        }
                     }
-                }
-                const contract = { id: doc.id, ...data } as Contract;
-                const nextDueDate = getNextDueDate(contract);
-                const isDue = contract.isActive && isBefore(nextDueDate, oneWeekFromNow);
+                    const contract = { id: doc.id, ...data } as Contract;
+                    const nextDueDate = getNextDueDate(contract);
+                    const isTheoreticallyDue = isBefore(nextDueDate, oneWeekFromNow);
+                    let isDue = false;
 
-                return { ...contract, isDue };
+                    if (contract.isActive && isTheoreticallyDue) {
+                         const hasOpenJob = allJobs.some(job => 
+                            job.sourceContractId === contract.id &&
+                            new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+                            job.status !== 'Cancelled'
+                        );
+                        if (!hasOpenJob) {
+                            isDue = true;
+                        }
+                    }
+                    return { ...contract, isDue };
+                });
+
+                contractsData.sort((a, b) => {
+                    if (a.isDue && !b.isDue) return -1;
+                    if (!a.isDue && b.isDue) return 1;
+                    return a.customerName.localeCompare(b.customerName);
+                });
+
+                setContracts(contractsData as (Contract & { isDue: boolean })[]);
+                setIsLoading(false);
             });
-
-            contractsData.sort((a, b) => {
-                if (a.isDue && !b.isDue) return -1;
-                if (!a.isDue && b.isDue) return 1;
-                return a.customerName.localeCompare(b.customerName);
-            });
-
-            setContracts(contractsData as (Contract & { isDue: boolean })[]);
-            setIsLoading(false);
         }, (error) => {
             console.error("Error fetching contracts:", error);
             setIsLoading(false);
         });
 
-        return unsubscribe;
+        return () => {
+            unsubscribeContracts();
+            if (jobsUnsubscribe) jobsUnsubscribe();
+        };
     }, [userProfile, appId]);
 
     useEffect(() => {
-        if (authLoading) {
-            return;
-        }
-        const unsubscribe = fetchContracts();
-        return () => unsubscribe?.();
-    }, [authLoading, fetchContracts]);
+        if (authLoading) return;
+        const unsubscribe = fetchContractsAndJobs();
+        return () => unsubscribe();
+    }, [authLoading, fetchContractsAndJobs]);
 
     const handleEditContract = (contract: Contract) => {
         setSelectedContract(contract);
@@ -138,7 +171,7 @@ export default function ContractsPage() {
                     isOpen={isAddEditDialogOpen}
                     onClose={onDialogClose}
                     contract={selectedContract}
-                    onContractUpdated={fetchContracts}
+                    onContractUpdated={fetchContractsAndJobs}
                 />
             )}
              {userProfile?.companyId && userProfile.role === 'admin' && appId && (

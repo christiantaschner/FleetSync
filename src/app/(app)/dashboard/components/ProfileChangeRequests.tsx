@@ -113,10 +113,13 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
           {requests.map((request) => (
             <AccordionItem value={request.id} key={request.id}>
               <AccordionTrigger>
-                <div className="flex justify-between w-full pr-4">
-                  <span className="font-semibold">{request.technicianName}</span>
-                  <span className="text-sm text-muted-foreground">
-                    <History className="inline h-3.5 w-3.5 mr-1" />
+                <div className="flex justify-between items-center w-full pr-4">
+                  <span className="font-semibold flex items-center gap-2">
+                    <ListChecks className="h-4 w-4 text-muted-foreground" />
+                    {request.technicianName}
+                  </span>
+                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <History className="inline h-3.5 w-3.5" />
                     Requested: {new Date(request.createdAt).toLocaleDateString()}
                   </span>
                 </div>

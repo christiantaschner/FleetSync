@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Repeat, User, MapPin, Calendar, Edit, Circle, MessageSquare } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, addWeeks, addMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ContractListItemProps {
@@ -16,7 +16,22 @@ interface ContractListItemProps {
     onSuggestAppointment: (contract: Contract) => void;
 }
 
+const getNextDueDate = (contract: Contract): Date => {
+    const baseDate = new Date(contract.lastGeneratedUntil || contract.startDate);
+    switch (contract.frequency) {
+        case 'Weekly': return addWeeks(baseDate, 1);
+        case 'Bi-Weekly': return addWeeks(baseDate, 2);
+        case 'Monthly': return addMonths(baseDate, 1);
+        case 'Quarterly': return addMonths(baseDate, 3);
+        case 'Semi-Annually': return addMonths(baseDate, 6);
+        case 'Annually': return addMonths(baseDate, 12);
+        default: return baseDate;
+    }
+};
+
 const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, onSuggestAppointment }) => {
+    const nextDueDate = getNextDueDate(contract);
+
     return (
         <Card className={cn(
             "hover:shadow-md transition-shadow",
@@ -48,8 +63,8 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                     <p className="flex items-center gap-1"><Repeat className="h-3.5 w-3.5"/>{contract.frequency}</p>
                 </div>
                  <div>
-                    <h4 className="font-semibold text-xs text-muted-foreground mb-1">Next Job Approx.</h4>
-                     <p className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5"/>{contract.lastGeneratedUntil ? format(new Date(contract.lastGeneratedUntil), 'PPP') : format(new Date(contract.startDate), 'PPP')}</p>
+                    <h4 className="font-semibold text-xs text-muted-foreground mb-1">Next Job Due</h4>
+                     <p className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5"/>{format(nextDueDate, 'PPP')}</p>
                 </div>
             </CardContent>
             <CardContent className="pt-2 flex gap-2">

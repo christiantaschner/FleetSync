@@ -574,7 +574,7 @@ export default function DashboardPage() {
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
                 return techA.localeCompare(techB) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'customer':
-                return a.customerName.localeCompare(b.customerName) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return a.customerName.localeCompare(b.customerName) || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'scheduledTime':
                 const timeA = a.scheduledTime ? new Date(a.scheduledTime).getTime() : Infinity;
                 const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
@@ -983,54 +983,56 @@ export default function DashboardPage() {
                 <CardDescription>{t('current_jobs_desc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4 mb-4 items-end">
-                <div className="flex-1 space-y-1">
-                  <Label htmlFor="status-filter">{t('status')}</Label>
-                  <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
-                    <SelectTrigger id="status-filter"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted</SelectItem>
-                      <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="Assigned">Assigned</SelectItem>
-                      <SelectItem value="En Route">En Route</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="Cancelled">Cancelled</SelectItem>
-                      <SelectItem value="Draft">Draft</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <Label htmlFor="priority-filter">{t('priority')}</Label>
-                  <Select value={priorityFilter} onValueChange={(value: JobPriority | typeof ALL_PRIORITIES) => setPriorityFilter(value)}>
-                    <SelectTrigger id="priority-filter"><SelectValue placeholder="Filter by Priority" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <Label htmlFor="sort-order">{t('sort_by')}</Label>
-                  <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
-                    <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
-                      <SelectItem value="status">{t('sort_by_status')}</SelectItem>
-                      <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
-                      <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
-                      <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:flex-1">
+                    <div className="space-y-1">
+                      <Label htmlFor="status-filter">{t('status')}</Label>
+                      <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
+                        <SelectTrigger id="status-filter"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted</SelectItem>
+                          <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
+                          <SelectItem value="Pending">Pending</SelectItem>
+                          <SelectItem value="Assigned">Assigned</SelectItem>
+                          <SelectItem value="En Route">En Route</SelectItem>
+                          <SelectItem value="In Progress">In Progress</SelectItem>
+                          <SelectItem value="Completed">Completed</SelectItem>
+                          <SelectItem value="Cancelled">Cancelled</SelectItem>
+                          <SelectItem value="Draft">Draft</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="priority-filter">{t('priority')}</Label>
+                      <Select value={priorityFilter} onValueChange={(value: JobPriority | typeof ALL_PRIORITIES) => setPriorityFilter(value)}>
+                        <SelectTrigger id="priority-filter"><SelectValue placeholder="Filter by Priority" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
+                          <SelectItem value="High">High</SelectItem>
+                          <SelectItem value="Medium">Medium</SelectItem>
+                          <SelectItem value="Low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="sort-order">{t('sort_by')}</Label>
+                      <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
+                        <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
+                          <SelectItem value="status">{t('sort_by_status')}</SelectItem>
+                          <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
+                          <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
+                          <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                 </div>
                 <Button 
                   variant="accent" 
                   onClick={handleBatchAIAssign} 
                   disabled={pendingJobsCount === 0 || isBatchLoading}
-                  className="w-full sm:w-auto"
+                  className="w-full md:w-auto flex-shrink-0"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   Fleety's Batch Assign

@@ -18,7 +18,7 @@ import {
   PlusCircle,
   Sparkles,
   AlertTriangle,
-  PieChart,
+  BarChart,
   CreditCard,
   MapPin,
   Map as MapIcon,
@@ -72,7 +72,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
     { href: "/contracts", label: t('contracts'), icon: Repeat },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
-    { href: "/reports", label: t('reports'), icon: PieChart },
+    { href: "/reports", label: t('reports'), icon: BarChart },
   ];
   
   const getTechnicianNavItems = (uid: string) => [

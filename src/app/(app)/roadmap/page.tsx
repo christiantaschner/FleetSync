@@ -5,9 +5,9 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
-  Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, PieChart, User,
+  Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
-  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye, BarChart, CloudRain,
+  Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
   List, MousePointerClick, HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -83,7 +83,7 @@ const roadmapFeatures = {
     {
       title: "Basic Performance Analytics",
       description: "A dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
-      icon: PieChart,
+      icon: BarChart,
       status: "Completed",
     },
     {

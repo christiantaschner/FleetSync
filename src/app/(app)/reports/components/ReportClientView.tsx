@@ -20,6 +20,7 @@ import {
   Coffee,
   Info,
   Sparkles,
+  BarChart,
 } from "lucide-react";
 import {
   Card,
@@ -459,5 +460,3 @@ export default function ReportClientView() {
     </div>
   );
 }
-
-    

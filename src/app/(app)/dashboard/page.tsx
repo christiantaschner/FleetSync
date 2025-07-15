@@ -136,6 +136,109 @@ export default function DashboardPage() {
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   
+  const fetchSkills = useCallback(async () => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setAllSkills(PREDEFINED_SKILLS);
+        return;
+    }
+    if (!userProfile?.companyId || !appId) return;
+    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
+    if (result.data) {
+        setAllSkills(result.data?.map(s => s.name) || []);
+    } else {
+        console.error("Could not fetch skills library:", result.error);
+    }
+  }, [userProfile, appId]);
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setJobs(mockJobs);
+        setTechnicians(mockTechnicians);
+        setProfileChangeRequests(mockProfileChangeRequests.filter(r => r.status === 'pending'));
+        fetchSkills();
+        setIsLoadingData(false);
+        return;
+    }
+
+    if (!db || !userProfile?.companyId || !appId) {
+        setIsLoadingData(false);
+        return;
+    }
+
+    const companyId = userProfile.companyId;
+    let collectionsLoaded = 0;
+    const totalCollections = 3;
+
+    const checkLoadingComplete = () => {
+        collectionsLoaded++;
+        if (collectionsLoaded === totalCollections) {
+            setIsLoadingData(false);
+        }
+    };
+    
+    fetchSkills();
+
+    const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
+    const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
+    const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
+
+    const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
+        const jobsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as Job;
+        }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setJobs(jobsData);
+        if (isLoadingData) checkLoadingComplete();
+    }, (error) => {
+        console.error("Error fetching jobs:", error);
+        toast({ title: "Data Fetch Error", description: "Could not retrieve jobs.", variant: "destructive" });
+        if (isLoadingData) checkLoadingComplete();
+    });
+
+    const unsubscribeTechnicians = onSnapshot(techniciansQuery, (snapshot) => {
+        const techniciansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician))
+            .sort((a, b) => a.name.localeCompare(b.name));
+        setTechnicians(techniciansData);
+        if (isLoadingData) checkLoadingComplete();
+    }, (error) => {
+        console.error("Error fetching technicians:", error);
+        toast({ title: "Data Fetch Error", description: "Could not retrieve technicians.", variant: "destructive" });
+        if (isLoadingData) checkLoadingComplete();
+    });
+
+    const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+        const requestsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+             for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as ProfileChangeRequest;
+        }).filter(r => r.status === 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setProfileChangeRequests(requestsData);
+        if (isLoadingData) checkLoadingComplete();
+    }, (error) => {
+        console.error("Error fetching change requests:", error);
+        toast({ title: "Data Fetch Error", description: "Could not retrieve change requests.", variant: "destructive" });
+        if (isLoadingData) checkLoadingComplete();
+    });
+
+    return () => {
+        unsubscribeJobs();
+        unsubscribeTechnicians();
+        unsubscribeRequests();
+    };
+}, [authLoading, userProfile, appId, fetchSkills, toast]);
+
+
   const handleSeedData = async () => {
     if (!userProfile?.companyId || !appId) return;
     setIsLoadingData(true);
@@ -145,7 +248,8 @@ export default function DashboardPage() {
     } else {
       toast({ title: "Success", description: "Sample data has been added." });
     }
-    await fetchAllData();
+    // Data will refresh via onSnapshot, just set loading to false.
+    setIsLoadingData(false);
   };
 
   useEffect(() => {
@@ -191,105 +295,6 @@ export default function DashboardPage() {
     });
     return Array.from(customerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [jobs]);
-
-  const fetchSkills = useCallback(async () => {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setAllSkills(PREDEFINED_SKILLS);
-        return;
-    }
-    if (!userProfile?.companyId || !appId) return;
-    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
-    if (result.data) {
-        setAllSkills(result.data?.map(s => s.name) || []);
-    } else {
-        console.error("Could not fetch skills library:", result.error);
-    }
-  }, [userProfile, appId]);
-  
-  const fetchAllData = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoadingData(true);
-
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setJobs(mockJobs);
-        setTechnicians(mockTechnicians);
-        setProfileChangeRequests(mockProfileChangeRequests.filter(r => r.status === 'pending'));
-        fetchSkills();
-        if (showLoading) setIsLoadingData(false);
-        return;
-    }
-
-    if (!db || !userProfile?.companyId || !appId) {
-        if (showLoading) setIsLoadingData(false);
-        return;
-    }
-
-    const companyId = userProfile.companyId;
-
-    try {
-        await fetchSkills();
-
-        const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
-        const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
-        const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
-
-        const [jobsSnapshot, techniciansSnapshot, requestsSnapshot] = await Promise.all([
-            getDocs(jobsQuery),
-            getDocs(techniciansQuery),
-            getDocs(requestsQuery),
-        ]);
-
-        const jobsData = jobsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
-                }
-            }
-            return { id: doc.id, ...data } as Job;
-        }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setJobs(jobsData);
-        
-        const techniciansData = techniciansSnapshot.docs.map(doc => {
-            const data = doc.data();
-             for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
-                }
-            }
-            return { id: doc.id, ...data } as Technician;
-        }).sort((a, b) => a.name.localeCompare(b.name));
-        setTechnicians(techniciansData);
-        
-        const requestsData = requestsSnapshot.docs.map(doc => {
-            const data = doc.data();
-            for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
-                }
-            }
-            return { id: doc.id, ...data } as ProfileChangeRequest
-        }).filter(r => r.status === 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setProfileChangeRequests(requestsData);
-
-    } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        toast({
-            title: "Data Fetch Error",
-            description: "Could not retrieve the latest data. Please try refreshing.",
-            variant: "destructive",
-        });
-    } finally {
-        if (showLoading) setIsLoadingData(false);
-    }
-  }, [userProfile, appId, fetchSkills, toast]);
-
-  useEffect(() => {
-    if (!authLoading) {
-      fetchAllData();
-    }
-  }, [authLoading, fetchAllData]);
-
-  const prevTechCount = useRef<number | null>(null);
   
   useEffect(() => {
     if (!isLoadingData && company) {
@@ -298,6 +303,8 @@ export default function DashboardPage() {
     }
   }, [isLoadingData, company, technicians, jobs]);
 
+  const prevTechCount = useRef<number | null>(null);
+  
   useEffect(() => {
     if (isLoadingData || process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
       prevTechCount.current = technicians.length;
@@ -697,7 +704,6 @@ export default function DashboardPage() {
         await batch.commit();
         if (assignmentsMade > 0) {
           toast({ title: "Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
-          await fetchAllData(false); // Re-fetch data without showing a full page loader
         } else {
           toast({ title: "No Assignments Made", description: "No valid jobs could be assigned in this batch.", variant: "default" });
         }
@@ -738,8 +744,6 @@ export default function DashboardPage() {
       title: "Technician Marked Unavailable",
       description: "Their active jobs are now pending and ready for reassignment.",
     });
-    
-    await fetchAllData(false);
     
     setTimeout(() => {
         handleBatchAIAssign();
@@ -875,9 +879,6 @@ export default function DashboardPage() {
           {t('dashboard')}
         </h1>
         <div className="flex flex-wrap gap-2">
-           <Button variant="outline" className="hover:bg-secondary" onClick={() => fetchAllData()}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Refresh Data
-           </Button>
            {isAdmin && (
             <Button variant="outline" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('import_jobs')}
@@ -1050,7 +1051,7 @@ export default function DashboardPage() {
                     <CardDescription>Manage your team of field technicians.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={fetchAllData}/>}
+                    {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredTechnicians.length > 0 ? (
                         filteredTechnicians.map(technician => (
@@ -1090,12 +1091,12 @@ export default function DashboardPage() {
       <ManageSkillsDialog 
         isOpen={isManageSkillsOpen} 
         setIsOpen={setIsManageSkillsOpen} 
-        onSkillsUpdated={fetchAllData}
+        onSkillsUpdated={() => {}}
       />
       <ImportJobsDialog 
         isOpen={isImportJobsOpen} 
         setIsOpen={setIsImportJobsOpen} 
-        onJobsImported={fetchAllData}
+        onJobsImported={() => {}}
       />
       <BatchAssignmentReviewDialog 
         isOpen={isBatchReviewDialogOpen} 

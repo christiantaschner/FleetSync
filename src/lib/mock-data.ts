@@ -132,6 +132,22 @@ export const mockContracts: Contract[] = [
         },
         lastGeneratedUntil: subDays(new Date(), 1).toISOString(),
     },
+    {
+        id: 'contract_2',
+        companyId: MOCK_COMPANY_ID,
+        customerName: 'Sunset Apartments',
+        customerAddress: '800 Sunset Blvd, Los Angeles, CA',
+        frequency: 'Monthly',
+        startDate: '2023-01-15T09:00:00.000Z',
+        isActive: true,
+        jobTemplate: {
+            title: 'Monthly Fire Extinguisher Check',
+            description: 'Inspect and certify all fire extinguishers in common areas.',
+            priority: 'Medium',
+            estimatedDurationMinutes: 90,
+        },
+        lastGeneratedUntil: '2023-06-15T09:00:00.000Z', // This date is far in the past, making it overdue
+    },
 ];
 
 export const mockCustomers: CustomerData[] = [

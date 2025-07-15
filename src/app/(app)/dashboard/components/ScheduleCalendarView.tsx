@@ -243,6 +243,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
             </div>
         </div>
+         <Alert className="mt-4 text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600">
+            <Info className="h-4 w-4" />
+            <AlertTitle className="font-semibold">Proactive AI Monitoring</AlertTitle>
+            <AlertDescription>
+                Fleetie continuously checks schedules in the background. If a potential delay or issue is detected, an alert will appear on the dashboard.
+            </AlertDescription>
+        </Alert>
       </CardHeader>
       <CardContent className="p-0 sm:p-6">
         {viewMode === 'day' ? (

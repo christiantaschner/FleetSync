@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles, Shuffle } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles, Shuffle, Wrench } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician } from '@/types';
@@ -45,7 +45,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
       case 'Pending': return <AlertTriangle className="text-amber-500" />;
       case 'Assigned': return <User className="text-sky-500" />;
       case 'En Route': return <Truck className="text-indigo-500" />;
-      case 'In Progress': return <Clock className="text-blue-500" />;
+      case 'In Progress': return <Wrench className="text-blue-500" />;
       case 'Completed': return <CheckCircle className="text-green-500" />;
       case 'Cancelled': return <XCircle className="text-destructive" />;
       case 'Draft': return <FilePenLine className="text-gray-500" />;

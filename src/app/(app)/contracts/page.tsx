@@ -15,24 +15,12 @@ import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { mockContracts } from '@/lib/mock-data';
-import { addWeeks, addMonths, isBefore, addDays } from 'date-fns';
-
-const getNextDueDate = (contract: Contract): Date => {
-    const baseDate = new Date(contract.lastGeneratedUntil || contract.startDate);
-    switch (contract.frequency) {
-        case 'Weekly': return addWeeks(baseDate, 1);
-        case 'Bi-Weekly': return addWeeks(baseDate, 2);
-        case 'Monthly': return addMonths(baseDate, 1);
-        case 'Quarterly': return addMonths(baseDate, 3);
-        case 'Semi-Annually': return addMonths(baseDate, 6);
-        case 'Annually': return addMonths(baseDate, 12);
-        default: return baseDate;
-    }
-}
+import { addDays, isBefore } from 'date-fns';
+import { getNextDueDate } from '@/lib/utils';
 
 export default function ContractsPage() {
     const { userProfile, loading: authLoading } = useAuth();
-    const [contracts, setContracts] = useState<Contract[]>([]);
+    const [contracts, setContracts] = useState<(Contract & { isDue?: boolean })[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
@@ -44,7 +32,18 @@ export default function ContractsPage() {
 
     const fetchContracts = useCallback(() => {
         if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-            setContracts(mockContracts);
+            const contractsData = mockContracts.map(contract => {
+                const nextDueDate = getNextDueDate(contract);
+                const oneWeekFromNow = addDays(new Date(), 7);
+                const isDue = contract.isActive && isBefore(nextDueDate, oneWeekFromNow);
+                return { ...contract, isDue };
+            });
+            contractsData.sort((a, b) => {
+                if (a.isDue && !b.isDue) return -1;
+                if (!a.isDue && b.isDue) return 1;
+                return a.customerName.localeCompare(b.customerName);
+            });
+            setContracts(contractsData);
             setIsLoading(false);
             return;
         }

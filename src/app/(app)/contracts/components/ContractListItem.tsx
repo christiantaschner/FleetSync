@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Repeat, User, MapPin, Calendar, Edit, Circle, MessageSquare } from 'lucide-react';
-import { format, addWeeks, addMonths, isPast, isBefore, addDays } from 'date-fns';
+import { format, isPast } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { getNextDueDate } from '@/lib/utils';
 
 interface ContractListItemProps {
     contract: Contract & { isDue?: boolean };
@@ -16,18 +17,6 @@ interface ContractListItemProps {
     onSuggestAppointment: (contract: Contract) => void;
 }
 
-const getNextDueDate = (contract: Contract): Date => {
-    const baseDate = new Date(contract.lastGeneratedUntil || contract.startDate);
-    switch (contract.frequency) {
-        case 'Weekly': return addWeeks(baseDate, 1);
-        case 'Bi-Weekly': return addWeeks(baseDate, 2);
-        case 'Monthly': return addMonths(baseDate, 1);
-        case 'Quarterly': return addMonths(baseDate, 3);
-        case 'Semi-Annually': return addMonths(baseDate, 6);
-        case 'Annually': return addMonths(baseDate, 12);
-        default: return baseDate;
-    }
-};
 
 const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, onSuggestAppointment }) => {
     const nextDueDate = getNextDueDate(contract);
@@ -35,7 +24,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
     return (
         <Card className={cn(
             "hover:shadow-md transition-shadow",
-            contract.isDue && "border-accent ring-2 ring-accent/50 bg-accent/5"
+            contract.isDue && "border-accent ring-2 ring-accent/50"
         )}>
             <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
@@ -64,7 +53,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                 </div>
                  <div>
                     <h4 className="font-semibold text-xs text-muted-foreground mb-1">Next Job Due</h4>
-                     <p className={cn("flex items-center gap-1", isPast(nextDueDate) && "text-destructive font-bold")}>
+                     <p className={cn("flex items-center gap-1", (contract.isDue || isPast(nextDueDate)) && "text-destructive font-bold")}>
                         <Calendar className="h-3.5 w-3.5"/>
                         {format(nextDueDate, 'PPP')}
                      </p>

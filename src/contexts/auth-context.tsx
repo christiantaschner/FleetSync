@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, Company, Contract } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";
 import Link from "next/link";
-import { addDays, addMonths, addWeeks, isBefore } from "date-fns";
+import { addDays, isBefore } from 'date-fns';
+import { getNextDueDate } from "@/lib/utils";
 
 interface AuthContextType {
   user: User | null;
@@ -33,19 +34,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const getNextDueDate = (contract: Contract): Date => {
-    const baseDate = new Date(contract.lastGeneratedUntil || contract.startDate);
-    switch (contract.frequency) {
-        case 'Weekly': return addWeeks(baseDate, 1);
-        case 'Bi-Weekly': return addWeeks(baseDate, 2);
-        case 'Monthly': return addMonths(baseDate, 1);
-        case 'Quarterly': return addMonths(baseDate, 3);
-        case 'Semi-Annually': return addMonths(baseDate, 6);
-        case 'Annually': return addMonths(baseDate, 12);
-        default: return baseDate;
-    }
-}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -138,8 +126,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                       unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
                           const oneWeekFromNow = addDays(new Date(), 7);
                           let dueCount = 0;
-                          snapshot.forEach(doc => {
-                              const contract = doc.data() as Contract;
+                          snapshot.docs.forEach(doc => {
+                              const data = doc.data();
+                              for (const key in data) {
+                                if (data[key] && typeof data[key].toDate === 'function') {
+                                    data[key] = data[key].toDate().toISOString();
+                                }
+                              }
+                              const contract = { id: doc.id, ...data } as Contract;
                               const nextDueDate = getNextDueDate(contract);
                               if (isBefore(nextDueDate, oneWeekFromNow)) {
                                   dueCount++;

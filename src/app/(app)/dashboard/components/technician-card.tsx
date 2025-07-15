@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon, Shuffle, MapIcon } from 'lucide-react';
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon, Shuffle, MapIcon, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/auth-context';
 import OptimizeRouteDialog from './optimize-route-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TechnicianCardProps {
   technician: Technician;
@@ -35,9 +36,19 @@ interface TechnicianCardProps {
   onEdit: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => void;
   onViewOnMap: (location: Location) => void;
+  onToggleOnCall: (technicianId: string, isOnCall: boolean) => void;
+  isUpdatingOnCall: boolean;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable, onViewOnMap }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ 
+  technician, 
+  jobs, 
+  onEdit, 
+  onMarkUnavailable, 
+  onViewOnMap,
+  onToggleOnCall,
+  isUpdatingOnCall,
+ }) => {
   const { userProfile } = useAuth();
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
   const [reason, setReason] = useState('');
@@ -58,7 +69,10 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
   const hasJobsToOptimize = jobs.some(j => j.assignedTechnicianId === technician.id && (j.status === 'Assigned' || j.status === 'En Route'));
 
   return (
-    <Card className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
+    <Card className={cn(
+      "flex flex-col h-full hover:shadow-lg transition-shadow duration-200",
+      technician.isOnCall && "border-accent ring-2 ring-accent/50 bg-accent/5"
+    )}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
@@ -73,10 +87,31 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
               </CardDescription>
             </div>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" onClick={() => onEdit(technician)}>
-            <Edit className="h-4 w-4" />
-            <span className="sr-only">Edit Technician</span>
-        </Button>
+        <div className="flex items-center">
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn("h-8 w-8 hover:bg-secondary", technician.isOnCall && "bg-accent/20 text-accent-foreground hover:bg-accent/30")}
+                            onClick={() => onToggleOnCall(technician.id, !technician.isOnCall)}
+                            disabled={isUpdatingOnCall}
+                        >
+                            <ShieldCheck className="h-4 w-4" />
+                            <span className="sr-only">Toggle On-Call Status</span>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{technician.isOnCall ? 'Currently On-Call' : 'Set as On-Call'}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-secondary" onClick={() => onEdit(technician)}>
+                <Edit className="h-4 w-4" />
+                <span className="sr-only">Edit Technician</span>
+            </Button>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow space-y-2 text-sm">
         <div className="flex items-start gap-2 text-muted-foreground">

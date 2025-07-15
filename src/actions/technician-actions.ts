@@ -71,4 +71,46 @@ export async function updateTechnicianAction(
   }
 }
 
+const ToggleOnCallStatusInputSchema = z.object({
+  companyId: z.string().min(1),
+  appId: z.string().min(1),
+  technicianId: z.string().min(1),
+  isOnCall: z.boolean(),
+});
+export type ToggleOnCallStatusInput = z.infer<typeof ToggleOnCallStatusInputSchema>;
+
+export async function toggleOnCallStatusAction(
+  input: ToggleOnCallStatusInput,
+): Promise<{ error: string | null }> {
+  try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+    const { companyId, appId, technicianId, isOnCall } = ToggleOnCallStatusInputSchema.parse(input);
+
+    const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(technicianId);
+    
+    // Security check
+    const techSnap = await techDocRef.get();
+    if (!techSnap.exists() || techSnap.data()?.companyId !== companyId) {
+        return { error: "Permission denied or technician not found." };
+    }
+
+    await techDocRef.update({
+      isOnCall,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map((err) => err.message).join(', ') };
+    }
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in toggleOnCallStatusAction',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { error: `Failed to update on-call status. ${errorMessage}` };
+  }
+}
     

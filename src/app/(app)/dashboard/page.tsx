@@ -23,6 +23,7 @@ import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './compon
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from "@/actions/ai-actions";
 import { updateSubscriptionQuantityAction, seedSampleDataAction } from '@/actions/onboarding-actions';
+import { toggleOnCallStatusAction } from '@/actions/technician-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
@@ -108,6 +109,8 @@ export default function DashboardPage() {
   const [proactiveSuggestion, setProactiveSuggestion] = useState<AssignmentSuggestion | null>(null);
   const [isFetchingProactiveSuggestion, setIsFetchingProactiveSuggestion] = useState(false);
   const [isProcessingProactive, setIsProcessingProactive] = useState(false);
+  
+  const [isUpdatingOnCall, setIsUpdatingOnCall] = useState(false);
 
   const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
@@ -814,6 +817,28 @@ export default function DashboardPage() {
     setSearchedLocation(location);
   };
 
+  const handleToggleOnCall = async (technicianId: string, isOnCall: boolean) => {
+    if (!userProfile?.companyId || !appId) return;
+
+    setIsUpdatingOnCall(true);
+    const result = await toggleOnCallStatusAction({
+      companyId: userProfile.companyId,
+      appId,
+      technicianId,
+      isOnCall,
+    });
+
+    if (result.error) {
+      toast({ title: 'Update Failed', description: result.error, variant: 'destructive' });
+    } else {
+      toast({
+        title: 'Status Updated',
+        description: `Technician is now ${isOnCall ? 'On-Call' : 'Off-Call'}.`,
+      });
+    }
+    setIsUpdatingOnCall(false);
+  };
+
   if (authLoading || isLoadingData) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
@@ -1063,6 +1088,8 @@ export default function DashboardPage() {
                             onEdit={handleOpenEditTechnician}
                             onMarkUnavailable={handleMarkTechnicianUnavailable}
                             onViewOnMap={handleViewOnMap}
+                            onToggleOnCall={handleToggleOnCall}
+                            isUpdatingOnCall={isUpdatingOnCall}
                             />
                         ))
                         ) : (

@@ -20,7 +20,7 @@ import { Loader2, Send, ListChecks } from 'lucide-react';
 import { requestProfileChangeAction } from '@/actions/fleet-actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash.isequal';
 import { useAuth } from '@/contexts/auth-context';
 
 interface SuggestChangeDialogProps {
@@ -172,5 +172,3 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 };
 
 export default SuggestChangeDialog;
-
-    

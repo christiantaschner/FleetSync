@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/auth-context';
 import SuggestChangeDialog from './components/SuggestChangeDialog';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import { isEqual } from 'lodash';
+import isEqual from 'lodash.isequal';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
@@ -419,5 +419,3 @@ export default function TechnicianProfilePage() {
     </div>
   );
 }
-
-    

@@ -22,6 +22,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, MapIcon, CheckCircle, Shuffle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
+import { Badge } from '@/components/ui/badge';
 
 interface OptimizeRouteDialogProps {
   children: React.ReactNode;

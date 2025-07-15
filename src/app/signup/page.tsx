@@ -58,7 +58,7 @@ export default function SignupPage() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-          <CardDescription>Sign up to get started with FleetSync AI and meet Fleetie, your personal fleet assistant.</CardDescription>
+          <CardDescription>Sign up to get started with FleetSync AI and meet Fleety, your personal fleet assistant.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent>

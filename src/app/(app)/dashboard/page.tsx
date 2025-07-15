@@ -1033,7 +1033,7 @@ export default function DashboardPage() {
                   className="w-full sm:w-auto"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  Fleetie's Batch Assign
+                  Fleety's Batch Assign
                 </Button>
               </div>
               <div className="space-y-4">

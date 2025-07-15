@@ -171,7 +171,7 @@ export default function OnboardingPage() {
                 <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-headline">{t('onboarding_title')}</CardTitle>
                 <CardDescription>
-                    Let's get your company set up. Your AI assistant, Fleetie, will help you along the way.
+                    Let's get your company set up. Your AI assistant, Fleety, will help you along the way.
                 </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit(onSubmit)}>

@@ -127,7 +127,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isO
       toast({ title: "Route Optimization Error", description: result.error, variant: "destructive" });
     } else if (result.data) {
       setOptimizedRoute(result.data);
-      toast({ title: "Route Optimized", description: `Fleetie has generated a new route for ${technician.name}.` });
+      toast({ title: "Route Optimized", description: `Fleety has generated a new route for ${technician.name}.` });
     }
   };
   
@@ -188,9 +188,9 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isO
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">Fleetie's Route Optimizer</DialogTitle>
+          <DialogTitle className="font-headline">Fleety's Route Optimizer</DialogTitle>
           <DialogDescription>
-            Select a technician to have Fleetie find the most efficient order for their assigned jobs. This is useful if a job is cancelled or finishes early.
+            Select a technician to have Fleety find the most efficient order for their assigned jobs. This is useful if a job is cancelled or finishes early.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -240,7 +240,7 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isO
         
         {optimizedRoute && (
           <div className="mt-4 p-4 bg-secondary/50 rounded-md">
-            <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary" /> Fleetie's Optimized Suggestion:</h3>
+            <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary" /> Fleety's Optimized Suggestion:</h3>
              <p className="text-xs text-muted-foreground mb-2">{optimizedRoute.reasoning}</p>
             <ul className="list-decimal list-inside ml-4 space-y-1 text-sm">
               {optimizedRoute.optimizedRoute.map(step => (

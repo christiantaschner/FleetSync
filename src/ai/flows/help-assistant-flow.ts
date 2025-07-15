@@ -60,7 +60,7 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnswerUserQuestionInputSchema },
     output: { schema: AnswerUserQuestionOutputSchema },
-    prompt: `You are Fleetie, a friendly and helpful AI assistant for the FleetSync AI application.
+    prompt: `You are Fleety, a friendly and helpful AI assistant for the FleetSync AI application.
     
     Your goal is to answer user questions about how to use the software. You must respond in the user's specified language, which is "{{language}}".
     

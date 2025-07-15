@@ -50,7 +50,7 @@ const ScheduleHealthDialog: React.FC<ScheduleHealthDialogProps> = ({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <ShieldQuestion className="text-primary h-5 w-5" /> Fleetie's Schedule Risk Report
+            <ShieldQuestion className="text-primary h-5 w-5" /> Fleety's Schedule Risk Report
           </DialogTitle>
           <DialogDescription>
             AI-powered analysis of active technicians' schedules to predict potential delays for their next job.
@@ -87,7 +87,7 @@ const ScheduleHealthDialog: React.FC<ScheduleHealthDialogProps> = ({
                      <div className="space-y-1 text-xs text-muted-foreground">
                         <p><strong>Current:</strong> {currentJob.title}</p>
                         <p><strong>Next:</strong> {nextJob?.title || 'None assigned'}</p>
-                        {risk && <p className="mt-1"><strong>Fleetie's Reason:</strong> <span className="italic">{risk.reasoning}</span></p>}
+                        {risk && <p className="mt-1"><strong>Fleety's Reason:</strong> <span className="italic">{risk.reasoning}</span></p>}
                         {error && <p className="mt-1 text-destructive"><strong>Error:</strong> <span className="italic">{error}</span></p>}
                     </div>
                   </div>

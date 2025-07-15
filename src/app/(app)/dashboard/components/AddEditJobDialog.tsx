@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer } from '@/types';
-import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info } from 'lucide-react';
+import { Loader2, Sparkles, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, AITechnician } from "@/types";
@@ -45,6 +45,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Draft'];
@@ -346,6 +347,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         address: locationAddress 
       },
       scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
+      sourceContractId: job?.sourceContractId || null,
     };
 
     try {
@@ -495,6 +497,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <AlertDescription>
                     This is a draft job. Please complete all required fields and set a status to "Pending" to activate it.
                   </AlertDescription>
+                </Alert>
+              )}
+              {job?.sourceContractId && (
+                <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600">
+                    <Repeat className="h-4 w-4"/>
+                    <AlertTitle>Contract Job</AlertTitle>
+                    <AlertDescription>
+                        This job was generated from a recurring service contract. <Link href="/contracts" className="font-semibold underline">View contracts</Link>.
+                    </AlertDescription>
                 </Alert>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">

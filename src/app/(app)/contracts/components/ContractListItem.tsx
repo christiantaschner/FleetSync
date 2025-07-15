@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Repeat, User, MapPin, Calendar, Edit, Circle, MessageSquare } from 'lucide-react';
-import { format, addWeeks, addMonths } from 'date-fns';
+import { format, addWeeks, addMonths, isPast, isBefore, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ContractListItemProps {
@@ -64,7 +64,10 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                 </div>
                  <div>
                     <h4 className="font-semibold text-xs text-muted-foreground mb-1">Next Job Due</h4>
-                     <p className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5"/>{format(nextDueDate, 'PPP')}</p>
+                     <p className={cn("flex items-center gap-1", isPast(nextDueDate) && "text-destructive font-bold")}>
+                        <Calendar className="h-3.5 w-3.5"/>
+                        {format(nextDueDate, 'PPP')}
+                     </p>
                 </div>
             </CardContent>
             <CardContent className="pt-2 flex gap-2">

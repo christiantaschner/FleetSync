@@ -16,8 +16,10 @@ import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { suggestNextAppointmentAction } from '@/actions/ai-actions';
 import type { SuggestNextAppointmentOutput, Contract } from '@/types';
-import { Loader2, Sparkles, Copy, X } from 'lucide-react';
+import { Loader2, Sparkles, Copy, X, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
 
 interface SuggestAppointmentDialogProps {
   isOpen: boolean;
@@ -27,22 +29,24 @@ interface SuggestAppointmentDialogProps {
 
 const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isOpen, onClose, contract }) => {
   const { toast } = useToast();
+  const { userProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestNextAppointmentOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
   useEffect(() => {
     const getSuggestion = async () => {
-        if (isOpen && contract) {
+        if (isOpen && contract && userProfile?.companyId && appId) {
             setIsLoading(true);
             setError(null);
             setSuggestion(null);
 
             const result = await suggestNextAppointmentAction({
-                customerName: contract.customerName,
-                jobTitle: contract.jobTemplate.title,
-                frequency: contract.frequency,
-                lastAppointmentDate: contract.lastGeneratedUntil || contract.startDate,
+                companyId: userProfile.companyId,
+                appId,
+                contract,
             });
 
             if (result.error) {
@@ -56,7 +60,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
     };
     
     getSuggestion();
-  }, [isOpen, contract, toast]);
+  }, [isOpen, contract, toast, userProfile, appId]);
 
   const handleCopyToClipboard = () => {
     if (suggestion?.message) {
@@ -73,7 +77,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             <Sparkles className="h-5 w-5 text-primary" /> AI Appointment Suggestion
           </DialogTitle>
           <DialogDescription>
-            AI has drafted a message to schedule the next service for {contract?.customerName}.
+            AI has drafted a message and created a draft job for {contract?.customerName}.
           </DialogDescription>
         </DialogHeader>
         
@@ -106,6 +110,19 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
                  <Alert>
                     <AlertTitle className="font-semibold">Next Suggested Date</AlertTitle>
                     <AlertDescription>{suggestion.suggestedDate}</AlertDescription>
+                </Alert>
+                <Alert variant="default" className="bg-primary/5 border-primary/20">
+                    <AlertTitle className="font-semibold text-primary">Draft Job Created</AlertTitle>
+                    <AlertDescription>
+                        A draft job has been created. Click below to review and assign it.
+                    </AlertDescription>
+                     <div className="mt-3">
+                        <Link href={`/dashboard?jobFilter=${suggestion.createdJobId}`}>
+                            <Button variant="secondary" size="sm" onClick={onClose}>
+                                View Draft Job <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </Link>
+                    </div>
                 </Alert>
             </div>
         )}

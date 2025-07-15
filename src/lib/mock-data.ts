@@ -1,6 +1,6 @@
 
 import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus } from '@/types';
-import { addDays, subDays } from 'date-fns';
+import { addDays, subDays, subMonths } from 'date-fns';
 
 const MOCK_COMPANY_ID = 'mock_company_123';
 
@@ -131,6 +131,7 @@ export const mockContracts: Contract[] = [
             estimatedDurationMinutes: 180,
         },
         lastGeneratedUntil: subDays(new Date(), 1).toISOString(),
+        createdAt: subDays(new Date(), 90).toISOString(),
     },
     {
         id: 'contract_2',
@@ -146,7 +147,9 @@ export const mockContracts: Contract[] = [
             priority: 'Medium',
             estimatedDurationMinutes: 90,
         },
-        lastGeneratedUntil: '2023-06-15T09:00:00.000Z', // This date is far in the past, making it overdue
+        // This date is now set to 1 month ago, so the next due date is today.
+        lastGeneratedUntil: subMonths(new Date(), 1).toISOString(), 
+        createdAt: '2023-01-15T09:00:00.000Z',
     },
 ];
 

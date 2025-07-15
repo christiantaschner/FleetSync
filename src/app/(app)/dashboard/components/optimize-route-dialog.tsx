@@ -233,13 +233,13 @@ const OptimizeRouteDialog: React.FC<OptimizeRouteDialogProps> = ({ children, isO
           
           <Button type="submit" disabled={isLoading || !selectedTechnicianId || selectedJobIds.length === 0} className="w-full">
             {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shuffle className="mr-2 h-4 w-4" />}
-            Generate Optimized Route
+            Generate Optimized Suggestion
           </Button>
         </form>
         
         {optimizedRoute && (
           <div className="mt-4 p-4 bg-secondary/50 rounded-md">
-            <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary" /> Optimized Route:</h3>
+            <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><MapIcon className="h-5 w-5 text-primary" /> Fleetie's Optimized Suggestion:</h3>
              <p className="text-xs text-muted-foreground mb-2">{optimizedRoute.reasoning}</p>
             <ul className="list-decimal list-inside ml-4 space-y-1 text-sm">
               {optimizedRoute.optimizedRoute.map(step => (

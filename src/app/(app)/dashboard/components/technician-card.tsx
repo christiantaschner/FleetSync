@@ -3,11 +3,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon, Shuffle } from 'lucide-react';
+import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Calendar as CalendarIcon, Shuffle, MapIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import type { Technician, Job } from '@/types';
+import type { Technician, Job, Location } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,9 +34,10 @@ interface TechnicianCardProps {
   jobs: Job[];
   onEdit: (technician: Technician) => void;
   onMarkUnavailable: (technicianId: string, reason?: string, unavailableFrom?: string, unavailableUntil?: string) => void;
+  onViewOnMap: (location: Location) => void;
 }
 
-const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable }) => {
+const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdit, onMarkUnavailable, onViewOnMap }) => {
   const { userProfile } = useAuth();
   const currentJob = jobs.find(job => job.id === technician.currentJobId);
   const [reason, setReason] = useState('');
@@ -114,7 +115,10 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({ technician, jobs, onEdi
                 )}
              </div>
         </div>
-        <div className="w-full grid grid-cols-1 gap-2">
+        <div className="w-full grid grid-cols-2 gap-2">
+            <Button variant="outline" size="sm" onClick={() => onViewOnMap(technician.location)}>
+                <MapIcon className="mr-2 h-4 w-4" /> View on Map
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm" className="w-full">

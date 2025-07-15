@@ -2,10 +2,10 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles, Shuffle, Wrench } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles, Shuffle, Wrench, MapIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { Job, Technician } from '@/types';
+import type { Job, Technician, Location } from '@/types';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -23,6 +23,7 @@ interface JobListItemProps {
   onOpenDetails: (job: Job) => void;
   onReOptimize: (technicianId: string) => void;
   onDraftNotification: (job: Job) => void;
+  onViewOnMap: (location: Location) => void;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ 
@@ -32,7 +33,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onAIAssign, 
     onOpenDetails,
     onReOptimize,
-    onDraftNotification
+    onDraftNotification,
+    onViewOnMap
 }) => {
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
@@ -143,6 +145,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
             </Button>
           </>
         )}
+         <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)}>
+            <MapIcon className="mr-2 h-3 w-3" /> View on Map
+        </Button>
          <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm" onClick={() => onOpenDetails(job)}>
             <Edit className="mr-1 h-3 w-3" /> View Details
         </Button>

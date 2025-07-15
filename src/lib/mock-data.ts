@@ -1,5 +1,5 @@
 
-import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest } from '@/types';
+import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus } from '@/types';
 import { addDays, subDays } from 'date-fns';
 
 const MOCK_COMPANY_ID = 'mock_company_123';
@@ -26,7 +26,7 @@ export const mockTechnicians: Technician[] = [
     phone: '555-0102',
     isAvailable: false,
     skills: ['Plumbing', 'Pipe Fitting', 'Leak Detection', 'Water Heater Repair'],
-    location: { latitude: 34.0522, longitude: -118.2437, address: 'Los Angeles, CA' },
+    location: { latitude: 34.0582, longitude: -118.2517, address: 'Glendale, CA' },
     avatarUrl: 'https://placehold.co/100x100.png',
     currentJobId: 'job_2',
   },
@@ -38,7 +38,7 @@ export const mockTechnicians: Technician[] = [
     phone: '555-0103',
     isAvailable: true,
     skills: ['Electrical', 'Wiring and Rewiring', 'Circuit Breaker Repair'],
-    location: { latitude: 34.0522, longitude: -118.2437, address: 'Los Angeles, CA' },
+    location: { latitude: 34.1522, longitude: -118.2637, address: 'Burbank, CA' },
     avatarUrl: 'https://placehold.co/100x100.png',
     currentJobId: null,
   },

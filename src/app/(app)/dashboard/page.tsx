@@ -756,7 +756,7 @@ export default function DashboardPage() {
   );
   
   const handleLocationSearch = (location: { address: string; lat: number; lng: number }) => {
-    setSearchAddressText(location.address);
+    setActiveTab('overview-map');
     setSearchedLocation({
         address: location.address,
         latitude: location.lat,
@@ -799,6 +799,11 @@ export default function DashboardPage() {
     setTechnicianToOptimize(technicianId);
     setIsOptimizeRouteOpen(true);
   };
+  
+  const handleViewOnMap = (location: Location) => {
+    setActiveTab('overview-map');
+    setSearchedLocation(location);
+  };
 
   if (authLoading || isLoadingData) { 
     return (
@@ -810,7 +815,7 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-6">
-        {technicians.length === 0 && userProfile?.role === 'admin' && (
+        {showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
             onOpenAddJobDialog={handleOpenAddJob}
             onSeedData={handleSeedData}
@@ -1009,6 +1014,7 @@ export default function DashboardPage() {
                       onOpenDetails={handleOpenEditJob}
                       onReOptimize={handleOpenOptimizeRoute}
                       onDraftNotification={handleDraftNotificationForJob}
+                      onViewOnMap={handleViewOnMap}
                     />
                   ))
                 ) : (
@@ -1047,6 +1053,7 @@ export default function DashboardPage() {
                             jobs={jobs}
                             onEdit={handleOpenEditTechnician}
                             onMarkUnavailable={handleMarkTechnicianUnavailable}
+                            onViewOnMap={handleViewOnMap}
                             />
                         ))
                         ) : (

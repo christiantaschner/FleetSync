@@ -53,7 +53,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                 </div>
                  <div>
                     <h4 className="font-semibold text-xs text-muted-foreground mb-1">Next Job Due</h4>
-                     <p className={cn("flex items-center gap-1", (contract.isDue || isPast(nextDueDate)) && "text-destructive font-bold")}>
+                     <p className={cn("flex items-center gap-1", (contract.isDue || isPast(nextDueDate)) && "text-primary font-bold")}>
                         <Calendar className="h-3.5 w-3.5"/>
                         {format(nextDueDate, 'PPP')}
                      </p>

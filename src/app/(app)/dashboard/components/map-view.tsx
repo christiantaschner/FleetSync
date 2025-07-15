@@ -138,18 +138,6 @@ const MapView: React.FC<MapViewProps> = ({
           </AdvancedMarker>
         ))}
 
-        {searchedLocation && (
-           <AdvancedMarker 
-              key="searched-location"
-              position={{ lat: searchedLocation.latitude, lng: searchedLocation.longitude }}
-              title={searchedLocation.address}
-           >
-             <Pin background={'#fbbf24'} borderColor={'#f59e0b'} glyphColor={'#fff'}>
-                <Search />
-             </Pin>
-          </AdvancedMarker>
-        )}
-
         <TrafficControl />
         {!searchedLocation && <FitBoundsControl technicians={technicians} jobs={activeJobs} />}
       </Map>

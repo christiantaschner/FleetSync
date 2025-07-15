@@ -12,11 +12,12 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { UserProfile, Company } from "@/types";
+import type { UserProfile, Company, Contract } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";
 import Link from "next/link";
+import { addDays, addMonths, addWeeks, isBefore } from "date-fns";
 
 interface AuthContextType {
   user: User | null;
@@ -28,9 +29,23 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isHelpOpen: boolean;
   setHelpOpen: (open: boolean) => void;
+  contractsDueCount: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const getNextDueDate = (contract: Contract): Date => {
+    const baseDate = new Date(contract.lastGeneratedUntil || contract.startDate);
+    switch (contract.frequency) {
+        case 'Weekly': return addWeeks(baseDate, 1);
+        case 'Bi-Weekly': return addWeeks(baseDate, 2);
+        case 'Monthly': return addMonths(baseDate, 1);
+        case 'Quarterly': return addMonths(baseDate, 3);
+        case 'Semi-Annually': return addMonths(baseDate, 6);
+        case 'Annually': return addMonths(baseDate, 12);
+        default: return baseDate;
+    }
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -38,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [isHelpOpen, setHelpOpen] = useState(false);
+  const [contractsDueCount, setContractsDueCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -50,47 +66,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     let unsubscribeProfile: (() => void) | null = null;
     let unsubscribeCompany: (() => void) | null = null;
+    let unsubscribeContracts: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       // Clean up previous listeners to prevent memory leaks on user change
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
+      if (unsubscribeContracts) unsubscribeContracts();
       
       // Reset state
       setUserProfile(null);
       setCompany(null);
       setUser(currentUser); // Set the Firebase user object immediately
+      setContractsDueCount(0);
 
       if (currentUser) {
         try {
-            // Ensure a user document exists in Firestore.
             await ensureUserDocumentAction({ 
                 uid: currentUser.uid, 
                 email: currentUser.email! 
             });
 
-            // Force a token refresh to get the latest custom claims.
             const idTokenResult = await currentUser.getIdTokenResult(true);
             const claims = idTokenResult.claims;
             
-            // Log claims for debugging, as requested.
-            console.log("--- Firebase Auth Custom Claims ---");
-            console.log("Gesamte Claims:", idTokenResult.claims);
-            console.log("companyId aus Claims:", idTokenResult.claims.companyId); // Beachten Sie die Groß-/Kleinschreibung
-            console.log("role aus Claims:", idTokenResult.claims.role);
-            console.log("-----------------------------------");
-            
-            // Claims are the source of truth for role and companyId.
             const roleFromClaims = (claims.role as UserProfile['role']) || null;
             const companyIdFromClaims = (claims.companyId as string) || null;
             
-            // Listen to the user's Firestore document for non-critical, reactive UI data.
             const userDocRef = doc(db, "users", currentUser.uid);
 
             unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
                 const firestoreData = userDocSnap.exists() ? userDocSnap.data() : {};
                 
-                // Combine claims and Firestore data.
                 const finalProfile: UserProfile = {
                     uid: currentUser.uid,
                     email: currentUser.email!,
@@ -100,15 +107,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 };
                 setUserProfile(finalProfile);
 
-                // Clean up any old company listener before creating a new one
                 if (unsubscribeCompany) unsubscribeCompany();
+                if (unsubscribeContracts) unsubscribeContracts();
 
                 if (finalProfile.companyId) {
                     const companyDocRef = doc(db, "companies", finalProfile.companyId);
                     unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
                         if (companyDocSnap.exists()) {
                             const companyData = companyDocSnap.data();
-                            // Ensure timestamps are serializable
                             for (const key in companyData) {
                                 if (companyData[key] && typeof companyData[key].toDate === 'function') {
                                     companyData[key] = companyData[key].toDate().toISOString();
@@ -118,14 +124,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                         } else {
                             setCompany(null);
                         }
-                        setLoading(false); // Auth is ready only AFTER company data is fetched
+                        setLoading(false); 
                     }, (error) => {
                         console.error("Error fetching company data:", error);
                         setCompany(null);
                         setLoading(false);
                     });
+
+                    // Listen for due contracts
+                    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+                    if (appId) {
+                      const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", finalProfile.companyId), where("isActive", "==", true));
+                      unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
+                          const oneWeekFromNow = addDays(new Date(), 7);
+                          let dueCount = 0;
+                          snapshot.forEach(doc => {
+                              const contract = doc.data() as Contract;
+                              const nextDueDate = getNextDueDate(contract);
+                              if (isBefore(nextDueDate, oneWeekFromNow)) {
+                                  dueCount++;
+                              }
+                          });
+                          setContractsDueCount(dueCount);
+                      });
+                    }
+
                 } else {
-                    // If no companyId, we are done loading.
                     setCompany(null);
                     setLoading(false);
                 }
@@ -144,19 +168,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
       } else {
-        // User is logged out, clear all data and stop loading.
         setUser(null);
         setLoading(false);
       }
     });
 
-    // Cleanup function for the main auth listener
     return () => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
+      if (unsubscribeContracts) unsubscribeContracts();
     };
-  }, []); // Removed toast dependency as it's stable
+  }, []);
 
   const login = async (email_address: string, pass_word: string) => {
     if (!auth) {
@@ -166,7 +189,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email_address, pass_word);
-      // Redirection is handled by layout component based on profile status
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
@@ -184,7 +206,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email_address, pass_word);
-      // Redirect handled by layout
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -216,12 +237,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     await signOut(auth);
-    // The onAuthStateChanged listener will handle state cleanup
     router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen }}>
+    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen, contractsDueCount }}>
       {children}
     </AuthContext.Provider>
   );

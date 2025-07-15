@@ -11,14 +11,17 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface ContractListItemProps {
-    contract: Contract;
+    contract: Contract & { isDue?: boolean };
     onEdit: (contract: Contract) => void;
     onSuggestAppointment: (contract: Contract) => void;
 }
 
 const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, onSuggestAppointment }) => {
     return (
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className={cn(
+            "hover:shadow-md transition-shadow",
+            contract.isDue && "border-accent ring-2 ring-accent/50 bg-accent/5"
+        )}>
             <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
                     <div>
@@ -50,7 +53,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                 </div>
             </CardContent>
             <CardContent className="pt-2 flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => onSuggestAppointment(contract)}>
+                <Button variant={contract.isDue ? "accent" : "outline"} size="sm" onClick={() => onSuggestAppointment(contract)}>
                     <MessageSquare className="mr-2 h-4 w-4" /> Suggest Appointment
                 </Button>
                 <Button variant="secondary" size="sm" onClick={() => onEdit(contract)}>

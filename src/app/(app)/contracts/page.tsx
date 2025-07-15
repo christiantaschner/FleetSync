@@ -15,6 +15,20 @@ import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { mockContracts } from '@/lib/mock-data';
+import { addWeeks, addMonths, isBefore, addDays } from 'date-fns';
+
+const getNextDueDate = (contract: Contract): Date => {
+    const baseDate = new Date(contract.lastGeneratedUntil || contract.startDate);
+    switch (contract.frequency) {
+        case 'Weekly': return addWeeks(baseDate, 1);
+        case 'Bi-Weekly': return addWeeks(baseDate, 2);
+        case 'Monthly': return addMonths(baseDate, 1);
+        case 'Quarterly': return addMonths(baseDate, 3);
+        case 'Semi-Annually': return addMonths(baseDate, 6);
+        case 'Annually': return addMonths(baseDate, 12);
+        default: return baseDate;
+    }
+}
 
 export default function ContractsPage() {
     const { userProfile, loading: authLoading } = useAuth();
@@ -43,10 +57,10 @@ export default function ContractsPage() {
         setIsLoading(true);
         const contractsQuery = query(
             collection(db, `artifacts/${appId}/public/data/contracts`), 
-            where("companyId", "==", userProfile.companyId),
-            orderBy("customerName")
+            where("companyId", "==", userProfile.companyId)
         );
         const unsubscribe = onSnapshot(contractsQuery, (snapshot) => {
+            const oneWeekFromNow = addDays(new Date(), 7);
             const contractsData = snapshot.docs.map(doc => {
                 const data = doc.data();
                  for (const key in data) {
@@ -54,9 +68,20 @@ export default function ContractsPage() {
                         data[key] = data[key].toDate().toISOString();
                     }
                 }
-                return { id: doc.id, ...data } as Contract;
+                const contract = { id: doc.id, ...data } as Contract;
+                const nextDueDate = getNextDueDate(contract);
+                const isDue = contract.isActive && isBefore(nextDueDate, oneWeekFromNow);
+
+                return { ...contract, isDue };
             });
-            setContracts(contractsData);
+
+            contractsData.sort((a, b) => {
+                if (a.isDue && !b.isDue) return -1;
+                if (!a.isDue && b.isDue) return 1;
+                return a.customerName.localeCompare(b.customerName);
+            });
+
+            setContracts(contractsData as (Contract & { isDue: boolean })[]);
             setIsLoading(false);
         }, (error) => {
             console.error("Error fetching contracts:", error);
@@ -179,5 +204,3 @@ export default function ContractsPage() {
         </div>
     );
 }
-
-    

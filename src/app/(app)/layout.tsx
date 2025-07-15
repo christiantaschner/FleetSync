@@ -42,6 +42,7 @@ import {
   SidebarSeparator,
   SidebarRail,
   SidebarFooter,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/common/logo";
@@ -65,12 +66,12 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, userProfile, company, loading, logout, setHelpOpen } = useAuth();
+  const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount } = useAuth();
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-    { href: "/contracts", label: t('contracts'), icon: Repeat },
+    { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
     { href: "/reports", label: t('reports'), icon: BarChart },
   ];
@@ -237,6 +238,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         >
                         <item.icon className="h-4 w-4" />
                         <span>{item.label}</span>
+                        {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
                         </SidebarMenuButton>
                     </Link>
                     </SidebarMenuItem>

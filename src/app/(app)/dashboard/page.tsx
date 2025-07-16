@@ -960,7 +960,7 @@ export default function DashboardPage() {
 
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="h-auto w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        <TabsList className="h-auto w-full grid-cols-1 grid sm:grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 {t('job_list')}
@@ -984,8 +984,8 @@ export default function DashboardPage() {
                 <CardDescription>{t('current_jobs_desc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:flex-1">
+              <div className="flex flex-col sm:flex-row gap-4 mb-4 items-start sm:items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full sm:flex-1">
                     <div className="space-y-1">
                       <Label htmlFor="status-filter">{t('status')}</Label>
                       <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
@@ -1033,7 +1033,7 @@ export default function DashboardPage() {
                   variant="accent" 
                   onClick={handleBatchAIAssign} 
                   disabled={pendingJobsCount === 0 || isBatchLoading}
-                  className="w-full md:w-auto flex-shrink-0"
+                  className="w-full sm:w-auto flex-shrink-0"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   {t('ai_batch_assign')}
@@ -1151,4 +1151,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

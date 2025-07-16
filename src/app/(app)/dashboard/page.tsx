@@ -922,7 +922,7 @@ export default function DashboardPage() {
                 <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent className="p-3 sm:p-4 pt-0">
-                <div className="text-xl sm:text-2xl font-bold">{highPriorityPendingCount}</div>
+                <div className="text-xl lg:text-2xl font-bold">{highPriorityPendingCount}</div>
                 <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
             </CardContent>
         </Card>
@@ -932,7 +932,7 @@ export default function DashboardPage() {
                 <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 sm:p-4 pt-0">
-                <div className="text-xl sm:text-2xl font-bold">{unassignedJobsCount}</div>
+                <div className="text-xl lg:text-2xl font-bold">{unassignedJobsCount}</div>
                 <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
             </CardContent>
         </Card>
@@ -942,7 +942,7 @@ export default function DashboardPage() {
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 sm:p-4 pt-0">
-                <div className="text-xl sm:text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
+                <div className="text-xl lg:text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
                 <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
             </CardContent>
         </Card>
@@ -952,7 +952,7 @@ export default function DashboardPage() {
                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-3 sm:p-4 pt-0">
-                <div className="text-xl sm:text-2xl font-bold">{jobsTodayCount}</div>
+                <div className="text-xl lg:text-2xl font-bold">{jobsTodayCount}</div>
                 <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
             </CardContent>
         </Card>
@@ -1151,3 +1151,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

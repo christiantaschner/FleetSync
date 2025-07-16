@@ -960,7 +960,7 @@ export default function DashboardPage() {
 
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="h-auto w-full grid-cols-1 grid sm:grid-cols-2 md:grid-cols-4">
+        <TabsList className="h-auto w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 {t('job_list')}

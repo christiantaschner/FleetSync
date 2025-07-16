@@ -332,7 +332,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             <Logo />
             <div className="w-7"/>
           </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8">
+          <main className="flex-1 overflow-x-hidden">
+            <div className="container mx-auto p-4 md:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6">
                       <CreditCard className="h-4 w-4" />
@@ -362,6 +363,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               ) : null}
               
               {children}
+            </div>
           </main>
         </SidebarInset>
       </SidebarProvider>

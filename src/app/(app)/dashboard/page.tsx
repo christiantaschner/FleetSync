@@ -368,7 +368,9 @@ export default function DashboardPage() {
           jobId: j.id,
           scheduledTime: j.scheduledTime,
           priority: j.priority,
-        }))
+        })),
+      workingHours: t.workingHours,
+      isOnCall: t.isOnCall,
     }));
     
     const input = {
@@ -898,6 +900,35 @@ export default function DashboardPage() {
             jobs={jobs}
           />
         ))}
+
+        {proactiveSuggestion && (
+            <Alert variant="default" className="border-accent ring-2 ring-accent/50 bg-accent/5">
+                <Sparkles className="h-4 w-4 text-accent-foreground" />
+                <AlertTitle className="font-headline text-accent-foreground flex justify-between items-center">
+                    <span>Fleety's Proactive Suggestion</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveSuggestion(null)}><X className="h-4 w-4" /></Button>
+                </AlertTitle>
+                <AlertDescription>
+                    A new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>" was just created. Fleety suggests assigning it to <strong>{proactiveSuggestion.suggestedTechnicianDetails?.name || "the best available tech"}</strong>.
+                    <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.reasoning}"</p>
+                </AlertDescription>
+                <div className="mt-4 flex gap-2">
+                    <Button 
+                        size="sm" 
+                        variant="accent" 
+                        onClick={() => handleProactiveAssign(proactiveSuggestion)}
+                        disabled={isProcessingProactive || !proactiveSuggestion.suggestedTechnicianDetails}
+                    >
+                        {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
+                        Assign Now
+                    </Button>
+                     <Button size="sm" variant="outline" onClick={() => handleOpenEditJob(proactiveSuggestion.job)}>
+                        <Edit className="mr-2 h-4 w-4"/>
+                        View Details
+                    </Button>
+                </div>
+            </Alert>
+        )}
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold tracking-tight font-headline">

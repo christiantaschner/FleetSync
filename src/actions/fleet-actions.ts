@@ -4,7 +4,7 @@
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company } from "@/types";
+import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company, DispatcherFeedback } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
 import crypto from 'crypto';
 
@@ -240,7 +240,7 @@ export async function confirmManualRescheduleAction(
 ): Promise<{ error: string | null }> {
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    const { companyId, movedJobId, newScheduledTime, optimizedRoute, appId } = ConfirmManualRescheduleInputSchema.parse(input);
+    const { companyId, movedJobId, newScheduledTime, optimizedRoute, appId, aiSuggestedTechnicianId, aiReasoning } = ConfirmManualRescheduleInputSchema.parse(input);
 
     const batch = writeBatch(dbAdmin);
 
@@ -270,6 +270,21 @@ export async function confirmManualRescheduleAction(
         updatedAt: serverTimestamp(),
       });
     });
+
+    // If there was an AI suggestion that was overridden, log it for feedback.
+    if (aiSuggestedTechnicianId && aiReasoning) {
+        const feedback: DispatcherFeedback = {
+            companyId,
+            jobId: movedJobId,
+            aiSuggestedTechnicianId,
+            dispatcherSelectedTechnicianId: 'manual_reschedule', // Indicate manual action
+            aiReasoning,
+            dispatcherReasoning: "Dispatcher manually adjusted the schedule, overriding the initial AI placement.",
+            createdAt: new Date().toISOString(),
+        };
+        const feedbackRef = doc(collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`));
+        batch.set(feedbackRef, feedback);
+    }
 
     await batch.commit();
 

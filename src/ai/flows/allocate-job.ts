@@ -12,10 +12,34 @@ import {
   type AllocateJobInput,
   AllocateJobInputSchema,
   type AllocateJobOutput,
-  AllocateJobOutputSchema
+  AllocateJobOutputSchema,
+  type DispatcherFeedback,
 } from '@/types';
+import { dbAdmin } from '@/lib/firebase-admin';
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+
 
 export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobOutput> {
+  // 1. Augment the input with past feedback for the AI
+  if (dbAdmin && input.technicianAvailability.length > 0) {
+    const firstTech = input.technicianAvailability[0];
+    const techDocRef = doc(dbAdmin, 'technicians', firstTech.technicianId);
+    const companyId = (await getDoc(techDocRef)).data()?.companyId;
+
+    if (companyId) {
+        const feedbackQuery = query(
+            collection(dbAdmin, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/public/data/dispatcherFeedback`),
+            where("companyId", "==", companyId),
+            orderBy("createdAt", "desc"),
+            limit(5) // Get the last 5 feedback examples
+        );
+        const feedbackSnapshot = await getDocs(feedbackQuery);
+        const pastFeedback = feedbackSnapshot.docs.map(doc => doc.data() as DispatcherFeedback);
+        input.pastFeedback = pastFeedback;
+    }
+  }
+  
+  // 2. Call the flow with the augmented input
   return allocateJobFlow(input);
 }
 
@@ -25,6 +49,7 @@ const prompt = ai.definePrompt({
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
   prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, location, and individual schedules.
+You must also learn from past dispatcher decisions.
 
 **TASK:**
 Given the following job and technician data, suggest the most suitable technician.
@@ -61,10 +86,22 @@ Given the following job and technician data, suggest the most suitable technicia
 {{/each}}
 
 ---
+**LEARNING FROM PAST DECISIONS:**
+Analyze the following examples where a human dispatcher overrode the AI's suggestion. These reveal the company's hidden preferences. Learn from them.
+{{#if pastFeedback.length}}
+  {{#each pastFeedback}}
+  - **Example:** For Job #{{{jobId}}}, the AI suggested Technician #{{{aiSuggestedTechnicianId}}} because "{{{aiReasoning}}}". The dispatcher disagreed and chose Technician #{{{dispatcherSelectedTechnicianId}}} instead.
+  {{/each}}
+{{else}}
+- No past feedback available. Use standard logic.
+{{/if}}
+---
+
 **DECISION-MAKING LOGIC:**
 
-1.  **Skill Match:** The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
-2.  **Job Priority & Scheduling Logic:**
+1.  **Learn from Feedback**: First, analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Did the dispatcher prefer a more experienced tech even if they were further away? Do they avoid interrupting certain techs? Let these examples heavily influence your final choice.
+2.  **Skill Match**: The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
+3.  **Job Priority & Scheduling Logic:**
     *   **If the job priority is 'High':**
         *   Your absolute top priority is to find an available technician who is marked as **\`isOnCall: true\`**. If one exists and is skilled, suggest them immediately.
         *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is \`isAvailable: true\` and skilled. Choose the closest one. Their future \`currentJobs\` for later in the day do not matter for this decision.
@@ -76,7 +113,7 @@ Given the following job and technician data, suggest the most suitable technicia
         *   Consider their \`currentJobs\` to ensure they have capacity.
 
 ---
-Provide a clear reasoning for your choice. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
+Provide a clear reasoning for your choice, explicitly mentioning how past feedback influenced your decision if applicable. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
 `,
 });
 

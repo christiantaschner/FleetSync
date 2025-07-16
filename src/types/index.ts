@@ -295,6 +295,18 @@ export const CustomerDataSchema = z.object({
 });
 export type CustomerData = z.infer<typeof CustomerDataSchema>;
 
+export const DispatcherFeedbackSchema = z.object({
+    id: z.string().optional(),
+    companyId: z.string(),
+    jobId: z.string(),
+    aiSuggestedTechnicianId: z.string(),
+    dispatcherSelectedTechnicianId: z.string(),
+    aiReasoning: z.string(),
+    dispatcherReasoning: z.string().optional(),
+    createdAt: z.string(),
+});
+export type DispatcherFeedback = z.infer<typeof DispatcherFeedbackSchema>;
+
 
 // --- AI Flow Schemas ---
 
@@ -319,6 +331,7 @@ export const AllocateJobInputSchema = z.object({
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
+  pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
 });
 export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
 
@@ -444,6 +457,9 @@ export const ConfirmManualRescheduleInputSchema = z.object({
   movedJobId: z.string().describe("The ID of the job that was manually moved."),
   newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
   optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
+  // Add feedback fields
+  aiSuggestedTechnicianId: z.string().optional(),
+  aiReasoning: z.string().optional(),
 });
 export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;
 

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
-import { Loader2 } from "lucide-react";
+import { Loader2, Bot } from "lucide-react";
 
 const signupSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -51,65 +51,71 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-       <div className="mb-8">
-        <Logo />
-      </div>
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader>
-          <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-          <CardDescription>Sign up to get started with FleetSync AI and meet Fleety, your personal fleet assistant.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                  className={errors.email ? "border-destructive" : ""}
-                />
-                {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  {...register("password")}
-                  className={errors.password ? "border-destructive" : ""}
-                />
-                {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  {...register("confirmPassword")}
-                  className={errors.confirmPassword ? "border-destructive" : ""}
-                />
-                {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign Up
-              </Button>
+    <div className="flex min-h-screen flex-col bg-background">
+       <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
+            <div className="mx-auto flex items-center justify-center">
+                <Logo />
             </div>
-          </CardContent>
-        </form>
-         <CardFooter className="flex flex-col items-center">
-           <p className="text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
-              Login
-            </Link>
-          </p>
-        </CardFooter>
-      </Card>
+        </header>
+      <main className="flex flex-1 items-center justify-center p-4">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+            <CardDescription className="flex items-center gap-1.5">
+              Sign up to meet <Bot className="inline-block h-4 w-4" /> <strong className="text-primary">Fleety</strong>, your AI fleet assistant.
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    {...register("email")}
+                    className={errors.email ? "border-destructive" : ""}
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register("password")}
+                    className={errors.password ? "border-destructive" : ""}
+                  />
+                  {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    {...register("confirmPassword")}
+                    className={errors.confirmPassword ? "border-destructive" : ""}
+                  />
+                  {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>}
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Sign Up
+                </Button>
+              </div>
+            </CardContent>
+          </form>
+           <CardFooter className="flex flex-col items-center">
+             <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium text-primary hover:underline">
+                Login
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </main>
     </div>
   );
 }

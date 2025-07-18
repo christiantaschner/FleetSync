@@ -51,3 +51,32 @@ Before you run the application, you need to configure your environment variables
     ```
 
 This will start the app on `http://localhost:9002`. Your environment variables from `.env.local` will now be available to the application.
+
+## Required Google Cloud APIs
+
+For the application to function correctly, you must enable the following APIs in your Google Cloud Console for the project associated with your Firebase configuration.
+
+### Firebase
+
+These APIs are typically enabled when you create your Firebase project but are essential for core functionality.
+
+-   **Identity Platform API**: For Firebase Authentication (user login/signup).
+-   **Cloud Firestore API**: For the main application database.
+-   **Cloud Storage for Firebase API**: For storing user-uploaded files like photos and signatures.
+
+### Google Maps Platform
+
+These APIs are crucial for all mapping, location, and distance features.
+
+-   **Maps JavaScript API**: Displays the interactive maps in the dashboard.
+-   **Places API**: Powers the address autocomplete feature in forms.
+-   **Geocoding API**: Converts street addresses into latitude/longitude coordinates for map markers.
+-   **Distance Matrix API**: Used by the AI to calculate realistic travel times and distances between job locations for route optimization and risk prediction.
+
+### Google AI
+
+This API powers all generative AI features in the application through Genkit.
+
+-   **Vertex AI API**: Enables access to Google's Gemini family of models for all AI-driven suggestions, analysis, and content generation.
+
+You can enable these APIs by navigating to the "APIs & Services" > "Library" section of your Google Cloud Console, searching for each API by name, and clicking "Enable".

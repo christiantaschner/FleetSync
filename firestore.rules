@@ -4,87 +4,118 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
   
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Helper function to check if the user is an admin of the requested company
-    function isAdmin(companyId) {
-      return request.auth.token.companyId == companyId && request.auth.token.role == 'admin';
-    }
-    
-    // Helper function to check if the user is a technician of the requested company
-    function isTechnician(companyId) {
-      return request.auth.token.companyId == companyId && request.auth.token.role == 'technician';
-    }
-    
-    // Helper function to check if the user owns this document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    // Users can read their own profile, admins can read profiles within their company.
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == resource.data.companyId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      // Only server-side logic can write to user profiles.
+      allow write: if false; 
     }
 
-    // --- User and Company Management ---
-    match /users/{userId} {
-      // Only the user themselves or a superAdmin can read/write their own profile
-      allow read, write: if isAuthenticated() && isOwner(userId);
-    }
-    
+    // Company documents can only be read/written to by the server.
+    // Client-side access is not needed as company data is provided via auth context.
     match /companies/{companyId} {
-      // Only an admin of that company can read/write
-      allow read, write: if isAuthenticated() && isAdmin(companyId);
-    }
-    
-    // --- Application Data ---
-    // All application data is stored under an "artifacts" collection structure.
-    // This allows for better separation and security rules.
-    match /artifacts/{appId}/public/data/{collection}/{documentId} {
-      // The most restrictive rule: by default, nobody can access anything.
       allow read, write: if false;
     }
     
-    // --- Specific Collection Rules ---
-    match /artifacts/{appId}/public/data/jobs/{jobId} {
-      // Admins and technicians of the same company can read all jobs.
-      allow read: if isAuthenticated() && (isAdmin(resource.data.companyId) || isTechnician(resource.data.companyId));
-      
-      // Admins can create/update jobs.
-      // Technicians can update a job only if it's assigned to them.
-      allow create, update: if isAuthenticated() && isAdmin(request.resource.data.companyId);
-      allow update: if isAuthenticated() && isTechnician(request.resource.data.companyId) && request.resource.data.assignedTechnicianId == request.auth.uid;
-      
-      // Only admins can delete jobs.
-      allow delete: if isAuthenticated() && isAdmin(resource.data.companyId);
-    }
-    
-    match /artifacts/{appId}/public/data/technicians/{techId} {
-        // Admins and technicians of the company can read all technician profiles.
-        allow read: if isAuthenticated() && (isAdmin(resource.data.companyId) || isTechnician(resource.data.companyId));
-        
-        // Admins can update any technician profile.
-        // A technician can only update their own profile.
-        allow update: if isAuthenticated() && (isAdmin(request.resource.data.companyId) || isOwner(techId));
-    }
-    
-    match /artifacts/{appId}/public/data/profileChangeRequests/{requestId} {
-        // Admins can read all requests.
-        // Technicians can only read requests they submitted.
-        allow read: if isAuthenticated() && (isAdmin(resource.data.companyId) || (isTechnician(resource.data.companyId) && resource.data.technicianId == request.auth.uid));
-        
-        // Admins can approve/reject (update).
-        // Technicians can only create new requests.
-        allow create: if isAuthenticated() && isTechnician(request.resource.data.companyId) && request.resource.data.technicianId == request.auth.uid;
-        allow update: if isAuthenticated() && isAdmin(request.resource.data.companyId);
+    // Invitations can only be managed by server-side logic.
+    match /invitations/{inviteId} {
+        allow read, write: if false;
     }
 
-    match /artifacts/{appId}/public/data/{collection=**} {
-        // More generic rule for other data collections (skills, parts, contracts, customers, equipment, chat)
-        // Admins have full access.
-        // Technicians can only read.
-        allow read: if isAuthenticated() && (isAdmin(resource.data.companyId) || isTechnician(resource.data.companyId));
-        allow write: if isAuthenticated() && isAdmin(request.resource.data.companyId);
+    // This is the structure for multi-tenant public data.
+    // Each app instance gets its own sandboxed data.
+    match /artifacts/{appId}/public/data/{collection}/{docId} {
+
+        // Allow any authenticated user of the app to read public data.
+        // This is necessary for components like the customer tracking page.
+        function canRead() {
+            return request.auth != null;
+        }
+
+        // Only allow writes if the user is authenticated and part of a company.
+        function canWrite() {
+          return request.auth != null && request.auth.token.companyId != null;
+        }
+
+        // A user can only access data belonging to their own company.
+        function isOwner() {
+          return canWrite() && request.auth.token.companyId == resource.data.companyId;
+        }
+
+        // Admins and the assigned technician (for jobs) have special write access.
+        function isAdmin() {
+            return request.auth != null && request.auth.token.role == 'admin';
+        }
+        
+        function isAssignedTechnician(jobId) {
+            return request.auth.uid == get(/databases/$(database)/documents/artifacts/$(appId)/public/data/jobs/$(jobId)).data.assignedTechnicianId;
+        }
+        
+        // --- Collection-Specific Rules ---
+
+        // Jobs can be read by any authenticated user within the company.
+        // Writes are more complex: admins can do anything, technicians can update their assigned jobs.
+        match /jobs/{jobId} {
+            allow read: if canRead() && isOwner();
+            allow create: if isAdmin();
+            allow update: if isAdmin() || (isAssignedTechnician(jobId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'notes', 'photos', 'completedAt', 'inProgressAt', 'enRouteAt', 'isFirstTimeFix', 'reasonForFollowUp', 'customerSignatureUrl', 'customerSignatureTimestamp', 'customerSatisfactionScore', 'breaks', 'updatedAt', 'checklistResults']));
+            allow delete: if isAdmin();
+        }
+
+        // Technicians can be read by anyone in the company.
+        // Technicians can update their own profile, admins can update any.
+        match /technicians/{techId} {
+            allow read: if canRead() && isOwner();
+            allow update: if isAdmin() || request.auth.uid == techId;
+            allow create, delete: if isAdmin();
+        }
+
+        // Admins can manage all other data types.
+        match /customers/{customerId} {
+            allow read: if canRead() && isOwner();
+            allow create, update, delete: if isAdmin();
+        }
+
+        match /contracts/{contractId} {
+            allow read: if canRead() && isOwner();
+            allow create, update, delete: if isAdmin();
+        }
+        
+        match /equipment/{equipmentId} {
+            allow read: if canRead() && isOwner();
+            allow create, update, delete: if isAdmin();
+        }
+
+        match /skills/{skillId} {
+            allow read: if canRead() && isOwner();
+            allow create, delete: if isAdmin();
+        }
+
+        match /parts/{partId} {
+            allow read: if canRead() && isOwner();
+            allow create, delete: if isAdmin();
+        }
+        
+        // Chat messages can be read by participants, created by participants.
+        // Updates/Deletes are disallowed for message integrity.
+        match /chatMessages/{messageId} {
+            allow read: if canRead() && isOwner() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
+            allow create: if canWrite() && request.resource.data.senderId == request.auth.uid;
+            allow update, delete: if false;
+        }
+
+        // Anyone can create a profile change request for themselves. Only admins can modify them.
+        match /profileChangeRequests/{requestId} {
+          allow read: if canRead() && (isAdmin() || request.auth.uid == resource.data.technicianId);
+          allow create: if canWrite() && request.resource.data.technicianId == request.auth.uid;
+          allow update: if isAdmin();
+          allow delete: if false;
+        }
+
+        // Dispatcher feedback is write-only from the client (via server action).
+        match /dispatcherFeedback/{feedbackId} {
+          allow read, write: if false;
+        }
     }
   }
 }
-
-    

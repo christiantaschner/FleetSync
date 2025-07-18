@@ -13,7 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
-import { Loader2, Bot } from "lucide-react";
+import { Loader2, Bot, Globe } from "lucide-react";
+import { useTranslation } from "@/hooks/use-language";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const signupSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -30,6 +37,7 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const { t, setLanguage } = useTranslation();
 
   const {
     register,
@@ -53,7 +61,20 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
        <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-            <div className="mx-auto flex items-center justify-center">
+            <div className="mx-auto flex items-center justify-center max-w-lg relative">
+                 <div className="absolute left-0">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                                <Globe className="h-5 w-5"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
                 <Logo />
             </div>
         </header>

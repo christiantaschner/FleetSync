@@ -82,8 +82,13 @@ export default function SignupPage() {
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader>
             <CardTitle className="text-2xl font-headline">{t('create_account')}</CardTitle>
-            <CardDescription className="flex items-center gap-1.5">
-              {t('signup_desc_1')} <Bot className="inline-block h-4 w-4" /> <strong className="text-primary">Fleety</strong>, {t('signup_desc_2')}
+            <CardDescription>
+              {t('signup_desc_1')}{' '}
+              <span className="inline-flex items-center gap-1.5">
+                <Bot className="inline-block h-4 w-4" />
+                <strong className="text-primary">Fleety</strong>
+              </span>
+              , {t('signup_desc_2')}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>

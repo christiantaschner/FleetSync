@@ -197,10 +197,15 @@ export type AITechnician = {
   technicianId: string;
   technicianName: string;
   isAvailable: boolean;
-  skills: string[]; // GenAI flow uses string array
+  skills: string[];
+  currentJobs: {
+    jobId: string;
+    location: Location;
+    scheduledTime?: string | null;
+    priority: JobPriority;
+  }[];
   liveLocation: Location;
   homeBaseLocation: Location;
-  currentJobs?: { jobId: string; scheduledTime?: string | null; priority: JobPriority; }[];
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
 };
@@ -329,6 +334,7 @@ export const AllocateJobInputSchema = z.object({
       homeBaseLocation: z.any().describe('The technician\'s home base or starting location for the day.'),
       currentJobs: z.array(z.object({
         jobId: z.string(),
+        location: z.any().describe("The location of this scheduled job."),
         scheduledTime: z.string().optional().nullable(),
         priority: z.enum(['High', 'Medium', 'Low']),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),

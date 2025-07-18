@@ -76,12 +76,12 @@ Given the following job and technician data, suggest the most suitable technicia
   - Available Now: {{{isAvailable}}}
   - On Call for Emergencies: {{#if isOnCall}}Yes{{else}}No{{/if}}
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
-  - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}}) - Use this for same-day jobs.
-  - Home Base: {{{homeBaseLocation.address}}} - Use this as the starting point for jobs on a future day.
+  - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
+  - Home Base: {{{homeBaseLocation.address}}}
   {{#if currentJobs.length}}
-  - Current Assigned Jobs:
+  - Current Assigned Jobs for Today/Tomorrow:
     {{#each currentJobs}}
-    - Job ID: {{{jobId}}}, Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled: {{{scheduledTime}}}{{/if}}
+    - Job ID: {{{jobId}}}, Location: ({{{location.latitude}}}, {{{location.longitude}}}), Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled: {{{scheduledTime}}}{{/if}}
     {{/each}}
   {{/if}}
   {{#if workingHours}}
@@ -106,24 +106,28 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
 
 **DECISION-MAKING LOGIC:**
 
-1.  **Determine Starting Point:** First, decide if the job is for today or a future day based on the scheduled time and current time. 
-    *   If it's for today, calculate travel distance from the technician's **Live Location**.
-    *   If it's for a future day, calculate travel distance from the technician's **Home Base**.
-2.  **Learn from Feedback**: Analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Did the dispatcher prefer a more experienced tech even if they were further away? Do they avoid interrupting certain techs? Let these examples heavily influence your final choice.
-3.  **Skill Match**: The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
-4.  **Job Priority & Scheduling Logic:**
+1.  **Determine Job Day:** First, decide if the job is for today or a future day by comparing its scheduled time to the current time.
+2.  **Determine Starting Location for Travel Calculation:**
+    *   If the job is for **today**: The starting point is the technician's **Live Location**.
+    *   If the job is for a **future day**:
+        *   Look at the technician's `currentJobs` for that future day.
+        *   If they have jobs scheduled, the starting point is the location of the **last job** in their schedule for that day.
+        *   If they have no jobs scheduled for that future day, the starting point is their **Home Base**.
+3.  **Learn from Feedback**: Analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Let these examples heavily influence your final choice.
+4.  **Skill Match**: The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
+5.  **Job Priority & Scheduling Logic:**
     *   **If the job priority is 'High':**
         *   Your absolute top priority is to find an available technician who is marked as **\`isOnCall: true\`**. If one exists and is skilled, suggest them immediately.
-        *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is \`isAvailable: true\` and skilled. Choose the closest one. Their future \`currentJobs\` for later in the day do not matter for this decision.
+        *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is \`isAvailable: true\` and skilled. Choose the closest one based on the starting location determined in Step 2.
         *   If NO technician is \`isAvailable: true\`, you MAY suggest a technician who is \`isAvailable: false\` BUT is currently working on a 'Low' priority job. This is an interruption.
         *   NEVER suggest interrupting a technician on a 'Medium' or 'High' priority job.
     *   **If the job priority is 'Medium' or 'Low':**
         *   Only consider technicians who are \`isAvailable: true\` and skilled.
-        *   The suggested assignment time MUST respect the technician's individual \`workingHours\`. Do not suggest a technician if the job would fall outside their scheduled shift for the day.
+        *   The suggested assignment time MUST respect the technician's individual \`workingHours\`.
         *   Consider their \`currentJobs\` to ensure they have capacity.
 
 ---
-Provide a clear reasoning for your choice, explicitly mentioning how past feedback and the chosen starting location (Live vs. Home Base) influenced your decision. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
+Provide a clear reasoning for your choice, explicitly mentioning how past feedback and the chosen starting location (Live, Home Base, or Previous Job's Location) influenced your decision. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
 `,
 });
 

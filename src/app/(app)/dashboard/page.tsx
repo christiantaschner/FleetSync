@@ -946,7 +946,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>

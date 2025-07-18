@@ -120,7 +120,8 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
         *   Your absolute top priority is to find an available technician who is marked as 'isOnCall: true'. If one exists and is skilled, suggest them immediately.
         *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is 'isAvailable: true' and skilled. Choose the closest one based on the starting location determined in Step 2.
         *   If NO technician is 'isAvailable: true', you MAY suggest a technician who is 'isAvailable: false' BUT is currently working on a 'Low' priority job. This is an interruption.
-        *   NEVER suggest interrupting a technician on a 'Medium' or 'High' priority job.
+        *   If no technicians are available or on 'Low' priority jobs, you MAY suggest interrupting a technician on a 'Medium' priority job.
+        *   NEVER suggest interrupting a technician on a 'High' priority job.
     *   **If the job priority is 'Medium' or 'Low':**
         *   Only consider technicians who are 'isAvailable: true' and skilled.
         *   The suggested assignment time MUST respect the technician's individual 'workingHours'.

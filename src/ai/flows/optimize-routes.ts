@@ -28,33 +28,23 @@ const prompt = ai.definePrompt({
   prompt: `You are an AI assistant specialized in optimizing routes for field technicians.
 
   Given the technician's current location, a list of tasks with their locations, priorities, and potentially specific scheduled times,
-  real-time traffic data (if available), and information about unexpected events (if available),
-  you will generate an optimized route that minimizes travel time and maximizes efficiency.
+  you will generate an optimized route that minimizes travel time while respecting constraints.
 
   Technician ID: {{{technicianId}}}
   Current Location: Latitude: {{{currentLocation.latitude}}}, Longitude: {{{currentLocation.longitude}}}
-  Tasks:
+  Tasks to Optimize:
   {{#each tasks}}
-  - Task ID: {{{taskId}}}, Location: Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}}, Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled Time: {{{scheduledTime}}} (MUST HONOR IF POSSIBLE){{/if}}
+  - Task ID: {{{taskId}}}, Location: Latitude: {{{location.latitude}}}, Longitude: {{{location.longitude}}}, Priority: {{{priority}}}{{#if scheduledTime}}, **Scheduled Time Constraint: {{{scheduledTime}}}**{{/if}}
   {{/each}}
   {{#if trafficData}}Traffic Data: {{{trafficData}}}{{/if}}
   {{#if unexpectedEvents}}Unexpected Events: {{{unexpectedEvents}}}{{/if}}
 
-  Provide the optimized route as a JSON object with the following structure:
-  {
-    "optimizedRoute": [
-      {
-        "taskId": "task_id",
-        "estimatedArrivalTime": "estimated_arrival_time"
-      }
-    ],
-    "totalTravelTime": "total_estimated_travel_time",
-    "reasoning": "reasoning_behind_the_optimized_route"
-  }
+  **DECISION-MAKING LOGIC:**
+  1.  **Honor Time Constraints:** Identify any tasks with a specific 'scheduledTime'. These are firm appointments and must be prioritized. The optimized route should be built around meeting these appointments.
+  2.  **Minimize Travel:** For all other tasks, sequence them in an order that minimizes the total travel distance between them.
+  3.  **Factor in Priority:** If two flexible tasks are equidistant, schedule the one with the higher priority first.
 
-  Consider task priorities, travel times, and any available traffic or event information to create the most efficient route.
-  If any tasks have a specific 'scheduledTime', these are high-priority constraints that the optimized route must attempt to meet. Your reasoning should reflect this consideration.
-  Explain your reasoning for the chosen route in the "reasoning" field.
+  Provide the optimized route as a JSON object with a clear reasoning explaining how you prioritized the time constraints and then optimized the remaining jobs.
 `,
 });
 

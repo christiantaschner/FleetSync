@@ -24,6 +24,14 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     const storedLang = localStorage.getItem('fleetsync_lang') as Language | null;
     if (storedLang && ['en', 'de'].includes(storedLang)) {
       setLanguage(storedLang);
+    } else if (typeof navigator !== 'undefined') {
+      // If no language is stored, detect from browser
+      const browserLang = navigator.language.split('-')[0];
+      if (browserLang === 'de') {
+        setLanguage('de');
+      } else {
+        setLanguage('en');
+      }
     }
   }, []);
 

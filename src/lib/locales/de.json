@@ -38,7 +38,7 @@
   "no_jobs_found": "Keine Aufträge gefunden",
   "no_jobs_found_desc": "Passen Sie Ihre Filter an oder fügen Sie einen neuen Auftrag hinzu, um zu beginnen.",
   "login_title": "Anmelden",
-  "login_desc": "Geben Sie Ihre Anmeldedaten ein, um auf FleetSync AI zuzugreifen.",
+  "login_desc": "Geben Sie Ihre Anmeldedaten ein, um auf Ihr Konto zuzugreifen.",
   "email": "E-Mail",
   "password": "Passwort",
   "login_button": "Anmelden",
@@ -53,5 +53,12 @@
   "specify_specialty": "Bitte geben Sie Ihren Schwerpunkt an",
   "number_of_technicians": "Anzahl der Techniker",
   "technicians_desc": "Wie viele Techniker werden Sie verwalten? Sie können dies später ändern.",
-  "complete_setup_button": "Einrichtung abschließen & kostenlose Testversion starten"
+  "complete_setup_button": "Einrichtung abschließen & kostenlose Testversion starten",
+  "create_account": "Konto erstellen",
+  "signup_desc_1": "Registrieren Sie sich, um",
+  "signup_desc_2": "Ihren KI-Flottenassistenten, kennenzulernen.",
+  "confirm_password": "Passwort bestätigen",
+  "signup_button": "Registrieren",
+  "already_have_account": "Haben Sie bereits ein Konto?",
+  "login_link": "Anmelden"
 }

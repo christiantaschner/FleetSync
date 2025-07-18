@@ -81,16 +81,16 @@ export default function SignupPage() {
       <main className="flex flex-1 items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-xl">
           <CardHeader>
-            <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
+            <CardTitle className="text-2xl font-headline">{t('create_account')}</CardTitle>
             <CardDescription className="flex items-center gap-1.5">
-              Sign up to meet <Bot className="inline-block h-4 w-4" /> <strong className="text-primary">Fleety</strong>, your AI fleet assistant.
+              {t('signup_desc_1')} <Bot className="inline-block h-4 w-4" /> <strong className="text-primary">Fleety</strong>, {t('signup_desc_2')}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -101,7 +101,7 @@ export default function SignupPage() {
                   {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('password')}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -111,7 +111,7 @@ export default function SignupPage() {
                   {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Label htmlFor="confirmPassword">{t('confirm_password')}</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -122,16 +122,16 @@ export default function SignupPage() {
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sign Up
+                  {t('signup_button')}
                 </Button>
               </div>
             </CardContent>
           </form>
            <CardFooter className="flex flex-col items-center">
              <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              {t('already_have_account')}{" "}
               <Link href="/login" className="font-medium text-primary hover:underline">
-                Login
+                {t('login_link')}
               </Link>
             </p>
           </CardFooter>

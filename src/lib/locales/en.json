@@ -53,5 +53,12 @@
   "specify_specialty": "Please specify your specialty",
   "number_of_technicians": "Number of Technicians",
   "technicians_desc": "How many technicians will you be managing? You can change this later.",
-  "complete_setup_button": "Complete Setup & Start Free Trial"
+  "complete_setup_button": "Complete Setup & Start Free Trial",
+  "create_account": "Create an Account",
+  "signup_desc_1": "Sign up to meet",
+  "signup_desc_2": "your AI fleet assistant.",
+  "confirm_password": "Confirm Password",
+  "signup_button": "Sign Up",
+  "already_have_account": "Already have an account?",
+  "login_link": "Login"
 }

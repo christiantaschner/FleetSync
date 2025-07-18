@@ -16,7 +16,7 @@ import {
   type DispatcherFeedback,
 } from '@/types';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 
 export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobOutput> {
@@ -51,13 +51,19 @@ const prompt = ai.definePrompt({
   prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, location, and individual schedules.
 You must also learn from past dispatcher decisions.
 
+The current time is {{{currentTime}}}.
+
 **TASK:**
 Given the following job and technician data, suggest the most suitable technician.
 
 **Job Details:**
 - Description: {{{jobDescription}}}
 - Priority: {{{jobPriority}}}
-{{#if scheduledTime}}- Customer Requested Time: {{{scheduledTime}}} (This is a strong preference).{{/if}}
+{{#if scheduledTime}}
+- Customer Requested Time: {{{scheduledTime}}}. You must determine if this is for today or a future day by comparing it to the current time.
+{{else}}
+- No specific time requested. Assume the job is for as soon as possible (today).
+{{/if}}
 
 {{#if requiredSkills.length}}
 **CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
@@ -70,7 +76,8 @@ Given the following job and technician data, suggest the most suitable technicia
   - Available Now: {{{isAvailable}}}
   - On Call for Emergencies: {{#if isOnCall}}Yes{{else}}No{{/if}}
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
-  - Location: (Lat: {{{location.latitude}}}, Lon: {{{location.longitude}}})
+  - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}}) - Use this for same-day jobs.
+  - Home Base: {{{homeBaseLocation.address}}} - Use this as the starting point for jobs on a future day.
   {{#if currentJobs.length}}
   - Current Assigned Jobs:
     {{#each currentJobs}}
@@ -99,9 +106,12 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
 
 **DECISION-MAKING LOGIC:**
 
-1.  **Learn from Feedback**: First, analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Did the dispatcher prefer a more experienced tech even if they were further away? Do they avoid interrupting certain techs? Let these examples heavily influence your final choice.
-2.  **Skill Match**: The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
-3.  **Job Priority & Scheduling Logic:**
+1.  **Determine Starting Point:** First, decide if the job is for today or a future day based on the scheduled time and current time. 
+    *   If it's for today, calculate travel distance from the technician's **Live Location**.
+    *   If it's for a future day, calculate travel distance from the technician's **Home Base**.
+2.  **Learn from Feedback**: Analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Did the dispatcher prefer a more experienced tech even if they were further away? Do they avoid interrupting certain techs? Let these examples heavily influence your final choice.
+3.  **Skill Match**: The technician MUST have ALL \`requiredSkills\`. If no technician has the required skills, no one is suitable.
+4.  **Job Priority & Scheduling Logic:**
     *   **If the job priority is 'High':**
         *   Your absolute top priority is to find an available technician who is marked as **\`isOnCall: true\`**. If one exists and is skilled, suggest them immediately.
         *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is \`isAvailable: true\` and skilled. Choose the closest one. Their future \`currentJobs\` for later in the day do not matter for this decision.
@@ -113,7 +123,7 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
         *   Consider their \`currentJobs\` to ensure they have capacity.
 
 ---
-Provide a clear reasoning for your choice, explicitly mentioning how past feedback influenced your decision if applicable. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
+Provide a clear reasoning for your choice, explicitly mentioning how past feedback and the chosen starting location (Live vs. Home Base) influenced your decision. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
 `,
 });
 

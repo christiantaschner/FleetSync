@@ -359,10 +359,8 @@ export default function DashboardPage() {
       technicianName: t.name,
       isAvailable: t.isAvailable,
       skills: t.skills || [],
-      location: {
-        latitude: t.location.latitude,
-        longitude: t.location.longitude,
-      },
+      liveLocation: t.location,
+      homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
         .map(j => ({
           jobId: j.id,
@@ -379,6 +377,7 @@ export default function DashboardPage() {
       requiredSkills: job.requiredSkills || [],
       scheduledTime: job.scheduledTime,
       technicianAvailability: aiTechnicians,
+      currentTime: new Date().toISOString(),
     };
     
     const result = await allocateJobAction(input);
@@ -403,7 +402,7 @@ export default function DashboardPage() {
     }
     
     setIsFetchingProactiveSuggestion(false);
-  }, [technicians, jobs]);
+  }, [technicians, jobs, company]);
   
   // Effect for automatic schedule health checks
   useEffect(() => {
@@ -507,7 +506,8 @@ export default function DashboardPage() {
             technicianName: t.name,
             isAvailable: t.isAvailable,
             skills: t.skills || [],
-            location: t.location,
+            liveLocation: t.location,
+            homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
 
@@ -517,6 +517,7 @@ export default function DashboardPage() {
             requiredSkills: job.requiredSkills || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
+            currentTime: new Date().toISOString(),
         };
 
         const result = await allocateJobAction(input);
@@ -527,7 +528,7 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId]);
+  }, [jobs, technicians, toast, appId, company]);
 
   const handleOpenChat = (job: Job) => {
     setSelectedChatJob(job);
@@ -636,10 +637,8 @@ export default function DashboardPage() {
             technicianName: t.name,
             isAvailable: t.isAvailable,
             skills: t.skills || [],
-            location: {
-              latitude: t.location.latitude,
-              longitude: t.location.longitude,
-            },
+            liveLocation: t.location,
+            homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
         }));
 
@@ -649,6 +648,7 @@ export default function DashboardPage() {
             requiredSkills: job.requiredSkills || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
+            currentTime: new Date().toISOString(),
         };
 
         const result = await allocateJobAction(input);
@@ -665,7 +665,7 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId]);
+  }, [jobs, technicians, toast, appId, company]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
     if (!db || !userProfile?.companyId || !appId) {
@@ -948,41 +948,41 @@ export default function DashboardPage() {
       
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 pt-0">
+            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
                 <div className="text-xl lg:text-2xl font-bold">{highPriorityPendingCount}</div>
                 <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
             </CardContent>
         </Card>
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
                 <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 pt-0">
+            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
                 <div className="text-xl lg:text-2xl font-bold">{unassignedJobsCount}</div>
                 <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
             </CardContent>
         </Card>
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 pt-0">
+            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
                 <div className="text-xl lg:text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
                 <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
             </CardContent>
         </Card>
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 sm:p-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('jobs_scheduled_today')}</CardTitle>
                 <CalendarDays className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="p-3 sm:p-4 pt-0">
+            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
                 <div className="text-xl lg:text-2xl font-bold">{jobsTodayCount}</div>
                 <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
             </CardContent>
@@ -1015,8 +1015,8 @@ export default function DashboardPage() {
                 <CardDescription>{t('current_jobs_desc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4 mb-4 items-start sm:items-end">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full sm:flex-1">
+              <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:flex-1">
                     <div className="space-y-1">
                       <Label htmlFor="status-filter">{t('status')}</Label>
                       <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
@@ -1064,7 +1064,7 @@ export default function DashboardPage() {
                   variant="accent" 
                   onClick={handleBatchAIAssign} 
                   disabled={pendingJobsCount === 0 || isBatchLoading}
-                  className="w-full sm:w-auto flex-shrink-0"
+                  className="w-full md:w-auto flex-shrink-0"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                   {t('ai_batch_assign')}

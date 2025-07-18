@@ -198,7 +198,8 @@ export type AITechnician = {
   technicianName: string;
   isAvailable: boolean;
   skills: string[]; // GenAI flow uses string array
-  location: Location;
+  liveLocation: Location;
+  homeBaseLocation: Location;
   currentJobs?: { jobId: string; scheduledTime?: string | null; priority: JobPriority; }[];
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
@@ -314,7 +315,8 @@ export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
-  scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format). This should be strongly considered.'),
+  scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
+  currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
@@ -323,7 +325,8 @@ export const AllocateJobInputSchema = z.object({
       isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),
       workingHours: z.array(BusinessDaySchema).optional().describe("The technician's individual working hours."),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
-      location: z.any().describe('The current location of the technician.'),
+      liveLocation: z.any().describe('The current, real-time location of the technician.'),
+      homeBaseLocation: z.any().describe('The technician\'s home base or starting location for the day.'),
       currentJobs: z.array(z.object({
         jobId: z.string(),
         scheduledTime: z.string().optional().nullable(),

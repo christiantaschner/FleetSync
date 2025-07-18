@@ -57,7 +57,20 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-        <div className="mx-auto flex items-center justify-center max-w-lg">
+        <div className="mx-auto flex items-center justify-center max-w-lg relative">
+            <div className="absolute left-0">
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
+                            <Globe className="h-5 w-5"/>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
             <Logo />
         </div>
       </header>

@@ -57,26 +57,15 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-        <div className="mx-auto flex items-center justify-between max-w-lg">
+        <div className="mx-auto flex items-center justify-center max-w-lg">
             <Logo />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                  <Globe className="h-5 w-5"/>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center p-4">
           <Card className="w-full max-w-md shadow-xl">
             <CardHeader>
               <CardTitle className="text-2xl font-headline">{t('login_title')}</CardTitle>
-              <CardDescription>Enter your credentials to access FleetSync AI. Your assistant, Fleety, is ready to help.</CardDescription>
+              <CardDescription>{t('login_desc')}</CardDescription>
             </CardHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
               <CardContent>

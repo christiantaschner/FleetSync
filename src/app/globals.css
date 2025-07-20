@@ -3,83 +3,62 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 210 29% 95%; /* Light Gray #F0F4F8 */
-    --foreground: 0 0% 3.9%;
+    --background: 210 29% 97%; /* Even Lighter Gray #F7FAFC */
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover-foreground: 222 47% 11%;
     --primary: 196 82% 43%; /* Saturated Blue #29ABE2 */
     --primary-foreground: 0 0% 100%; /* White for contrast */
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 220 9% 32%;
-    --muted: 220 13% 91%;
-    --muted-foreground: 220 9% 45%;
-    --accent: 142 71% 45%; /* Green for Accent */
-    --accent-foreground: 0 0% 100%; /* White for contrast on Accent */
+    --secondary: 210 29% 93%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 29% 93%;
+    --muted-foreground: 215 20% 45%;
+    --accent: 30 100% 60%; /* Vivid Orange #FF9933 */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 13% 85%;
-    --input: 220 13% 88%;
+    --border: 214 20% 85%;
+    --input: 214 20% 90%;
     --ring: 196 82% 43%; /* Primary color for rings */
-    --chart-1: 196 82% 43%; /* Primary Blue */
-    --chart-2: 30 100% 60%;  /* Accent Orange */
-    --chart-3: 196 60% 55%; /* Lighter Primary Blue */
-    --chart-4: 30 80% 65%; /* Lighter Accent Orange */
-    --chart-5: 210 40% 55%; /* A different shade of blue for variety */
     --radius: 0.5rem;
-
-    /* Sidebar specific colors */
-    --sidebar-background: 0 0% 100%; /* Card background */
-    --sidebar-foreground: 0 0% 3.9%;
-    --sidebar-primary: 196 82% 43%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 91%;
-    --sidebar-accent-foreground: 220 9% 32%;
-    --sidebar-border: 220 13% 85%;
-    --sidebar-ring: 196 82% 43%;
   }
   .dark {
-    --background: 220 14% 10%;
-    --foreground: 0 0% 98%;
-    --card: 220 14% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 220 14% 10%;
-    --popover-foreground: 0 0% 98%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
     --primary: 196 82% 53%; /* Lighter blue for dark mode */
-    --primary-foreground: 0 0% 100%; 
-    --secondary: 220 14% 20%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 220 14% 20%;
-    --muted-foreground: 220 9% 55%;
-    --accent: 142 61% 55%; /* Lighter green for dark mode */
-    --accent-foreground: 0 0% 10%; 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 14% 25%;
-    --input: 220 14% 22%;
-    --ring: 196 82% 53%; /* Lighter blue for rings */
-    --chart-1: 196 82% 53%;
-    --chart-2: 30 100% 65%;
-    --chart-3: 196 60% 65%;
-    --chart-4: 30 80% 70%;
-    --chart-5: 210 40% 65%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 30 100% 65%; /* Lighter orange for dark mode */
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 22%;
+    --input: 217 33% 20%;
+    --ring: 196 82% 53%;
+    --radius: 0.5rem;
+  }
 
-    /* Dark Sidebar specific colors */
-    --sidebar-background: 220 14% 10%; 
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 196 82% 53%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 20%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 14% 25%;
-    --sidebar-ring: 196 82% 53%;
+  :root, .dark {
+     /* Sidebar specific colors */
+    --sidebar-background: var(--card); 
+    --sidebar-foreground: var(--card-foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--secondary);
+    --sidebar-accent-foreground: var(--secondary-foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
   }
 }
 
@@ -89,5 +68,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

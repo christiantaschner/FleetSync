@@ -104,10 +104,15 @@ export default function TriagePage() {
             return;
         }
 
+        if (!token || !appId) {
+            setError("This link is invalid or incomplete.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             const photoDataUris = await Promise.all(files.map(fileToDataUri));
-            const result = await submitTriagePhotosAction({ token, appId: appId!, photoDataUris });
+            const result = await submitTriagePhotosAction({ token, appId, photoDataUris });
             
             if (result.error) {
                 setError(result.error);

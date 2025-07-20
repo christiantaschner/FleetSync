@@ -11,12 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Logo } from '@/components/common/logo';
 import { format } from 'date-fns';
+import { APIProvider } from '@vis.gl/react-google-maps';
 
 export default function TrackingPage() {
     const params = useParams();
     const searchParams = useSearchParams();
     const token = params.token as string;
     const appId = searchParams.get('appId');
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     
     const [trackingInfo, setTrackingInfo] = useState<PublicTrackingInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -108,10 +110,14 @@ export default function TrackingPage() {
                                     </div>
                                 )}
                                 <div className="h-80 w-full rounded-md overflow-hidden border">
-                                    <TrackingMap 
-                                        technicianLocation={trackingInfo.currentTechnicianLocation}
-                                        jobLocation={trackingInfo.jobLocation}
-                                    />
+                                    {apiKey && (
+                                        <APIProvider apiKey={apiKey}>
+                                            <TrackingMap 
+                                                technicianLocation={trackingInfo.currentTechnicianLocation}
+                                                jobLocation={trackingInfo.jobLocation}
+                                            />
+                                        </APIProvider>
+                                    )}
                                 </div>
                            </div>
                         )}
@@ -124,5 +130,3 @@ export default function TrackingPage() {
         </main>
     );
 }
-
-    

@@ -20,9 +20,15 @@ const TrackingMap: React.FC<TrackingMapProps> = ({ technicianLocation, jobLocati
     // Optional: Adjust map bounds to fit both markers
     if (map) {
       const bounds = new window.google.maps.LatLngBounds();
-      bounds.extend(new window.google.maps.LatLng(technicianLocation.latitude, technicianLocation.longitude));
-      bounds.extend(new window.google.maps.LatLng(jobLocation.latitude, jobLocation.longitude));
-      map.fitBounds(bounds, 100); // 100px padding
+      if(technicianLocation.latitude && technicianLocation.longitude) {
+         bounds.extend(new window.google.maps.LatLng(technicianLocation.latitude, technicianLocation.longitude));
+      }
+      if(jobLocation.latitude && jobLocation.longitude) {
+        bounds.extend(new window.google.maps.LatLng(jobLocation.latitude, jobLocation.longitude));
+      }
+      if(!bounds.isEmpty()){
+         map.fitBounds(bounds, 100); // 100px padding
+      }
     }
   }, [technicianLocation, jobLocation, map]);
 

@@ -57,7 +57,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
-import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
 import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 
@@ -67,8 +66,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount } = useAuth();
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
+  
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
     { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
@@ -192,23 +190,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   
   const navItems = getNavItemsForRole();
   const canSeeAdminViews = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
-
-  if (!googleMapsApiKey) {
-    return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
-            <div className="flex flex-col items-center justify-center h-full max-w-lg p-6 text-center border bg-card rounded-md shadow-lg">
-                <MapPin className="h-16 w-16 text-destructive opacity-70 mb-4" />
-                <h2 className="text-2xl font-bold text-destructive mb-2">Google Maps API Key Missing</h2>
-                <p className="text-muted-foreground mb-1">
-                The <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is not configured.
-                </p>
-                <p className="text-muted-foreground">
-                Please add it to your environment file to enable map features.
-                </p>
-            </div>
-        </div>
-    );
-  }
 
   return (
       <SidebarProvider defaultOpen>
@@ -371,28 +352,5 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (!googleMapsApiKey) {
-    return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background p-4">
-            <div className="flex flex-col items-center justify-center h-full max-w-lg p-6 text-center border bg-card rounded-md shadow-lg">
-                <MapPin className="h-16 w-16 text-destructive opacity-70 mb-4" />
-                <h2 className="text-2xl font-bold text-destructive mb-2">Google Maps API Key Missing</h2>
-                <p className="text-muted-foreground mb-1">
-                The <code className="bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> is not configured.
-                </p>
-                <p className="text-muted-foreground">
-                Please add it to your environment file to enable map features.
-                </p>
-            </div>
-        </div>
-    );
-  }
-
-  return (
-     <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places', 'geocoding']}>
-        <MainAppLayout>{children}</MainAppLayout>
-    </GoogleMapsAPIProvider>
-  );
+  return <MainAppLayout>{children}</MainAppLayout>;
 }

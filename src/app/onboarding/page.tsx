@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
 import { type CompleteOnboardingInput } from '@/types';
-import { Loader2, Building, Users, ListChecks, Globe } from 'lucide-react';
+import { Loader2, Building, Users, ListChecks } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { Logo } from '@/components/common/logo';
@@ -56,7 +56,7 @@ export default function OnboardingPage() {
   const { user, userProfile, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { t, setLanguage } = useTranslation();
+  const { t, setLanguage, language } = useTranslation();
 
   useEffect(() => {
     if (!loading && userProfile && userProfile.onboardingStatus === 'completed') {
@@ -155,8 +155,8 @@ export default function OnboardingPage() {
                 <div className="absolute left-0">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                          <Globe className="h-5 w-5"/>
+                        <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                          {language.toUpperCase()}
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">

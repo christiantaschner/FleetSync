@@ -15,14 +15,12 @@ import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
 import { Loader2 } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Globe } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -61,8 +59,8 @@ export default function LoginPage() {
             <div className="absolute left-0">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                            <Globe className="h-5 w-5"/>
+                        <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                            {language.toUpperCase()}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">

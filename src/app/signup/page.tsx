@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
-import { Loader2, Bot, Globe } from "lucide-react";
+import { Loader2, Bot } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";
 import {
   DropdownMenu,
@@ -37,7 +37,7 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { t, setLanguage } = useTranslation();
+  const { t, setLanguage, language } = useTranslation();
 
   const {
     register,
@@ -65,8 +65,8 @@ export default function SignupPage() {
                  <div className="absolute left-0">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary/80">
-                                <Globe className="h-5 w-5"/>
+                            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                                {language.toUpperCase()}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
@@ -88,7 +88,7 @@ export default function SignupPage() {
                 <Bot className="inline-block h-4 w-4" />
                 <strong className="text-primary">Fleety</strong>
               </span>
-              , {t('signup_desc_2')}
+              {t('signup_desc_2')}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>

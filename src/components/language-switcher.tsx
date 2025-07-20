@@ -4,7 +4,7 @@
 import React from 'react';
 import { useTranslation } from '@/hooks/use-language';
 import { DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
-import { Globe, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { DropdownMenuPortal } from '@radix-ui/react-dropdown-menu';
 
 export const LanguageSwitcher = () => {
@@ -13,8 +13,10 @@ export const LanguageSwitcher = () => {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <Globe className="mr-2 h-4 w-4" />
-        <span>Language</span>
+        <span className="flex items-center gap-2">
+          <span className="w-5 text-center font-semibold">{language.toUpperCase()}</span>
+          <span>Language</span>
+        </span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
         <DropdownMenuSubContent>

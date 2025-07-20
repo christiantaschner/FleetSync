@@ -81,6 +81,15 @@ export default function OnboardingPage() {
 
   const isOtherSelected = watchedSpecialties.includes('Other');
 
+  const specialtyTranslations: { [key: string]: string } = {
+    "Plumbing": t('specialty_plumbing'),
+    "Electrical": t('specialty_electrical'),
+    "HVAC": t('specialty_hvac'),
+    "Appliance Repair": t('specialty_appliance_repair'),
+    "General Maintenance": t('specialty_general_maintenance'),
+    "Other": t('specialty_other'),
+  };
+
   const onSubmit = async (data: OnboardingFormValues) => {
     setIsSubmitting(true);
     console.log("Onboarding form submitted by client. Calling server action with data:", data);
@@ -184,7 +193,7 @@ export default function OnboardingPage() {
                     </Label>
                     <Input
                         id="companyName"
-                        placeholder="e.g., Acme Plumbing & HVAC"
+                        placeholder={t('onboarding_placeholder')}
                         {...register('companyName')}
                         disabled={isSubmitting}
                     />
@@ -219,7 +228,7 @@ export default function OnboardingPage() {
                                                 }}
                                                 disabled={isSubmitting}
                                             />
-                                            <Label htmlFor={item} className="font-normal">{item}</Label>
+                                            <Label htmlFor={item} className="font-normal">{specialtyTranslations[item] || item}</Label>
                                         </div>
                                     );
                                 }}

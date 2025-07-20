@@ -240,7 +240,7 @@ export default function OnboardingPage() {
                             <Label htmlFor="otherSpecialty">{t('specify_specialty')}</Label>
                             <Input
                                 id="otherSpecialty"
-                                placeholder="e.g., Marine HVAC"
+                                placeholder={t('specify_specialty_placeholder')}
                                 {...register('otherSpecialty')}
                                 disabled={isSubmitting}
                             />

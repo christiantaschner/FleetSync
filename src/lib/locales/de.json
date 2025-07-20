@@ -58,6 +58,7 @@
   "specialty_general_maintenance": "Allgemeine Instandhaltung",
   "specialty_other": "Sonstiges",
   "specify_specialty": "Bitte geben Sie Ihren Schwerpunkt an",
+  "specify_specialty_placeholder": "z.B., Schiffsklimaanlagen",
   "number_of_technicians": "Anzahl der Techniker",
   "technicians_desc": "Wie viele Techniker werden Sie verwalten? Sie können dies später ändern.",
   "complete_setup_button": "Einrichtung abschließen & kostenlose Testversion starten",

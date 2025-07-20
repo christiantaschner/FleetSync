@@ -68,5 +68,6 @@
   "confirm_password": "Confirm Password",
   "signup_button": "Sign Up",
   "already_have_account": "Already have an account?",
-  "login_link": "Login"
+  "login_link": "Login",
+  "my_active_jobs": "My Active Jobs"
 }

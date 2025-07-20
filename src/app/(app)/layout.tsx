@@ -77,7 +77,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   ];
   
   const getTechnicianNavItems = (uid: string) => [
-    { href: `/technician/jobs/${uid}`, label: "My Active Jobs", icon: Smartphone },
+    { href: `/technician/jobs/${uid}`, label: t('my_active_jobs'), icon: Smartphone },
   ];
   
   const superAdminNavItems = [

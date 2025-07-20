@@ -68,5 +68,6 @@
   "confirm_password": "Passwort bestätigen",
   "signup_button": "Registrieren",
   "already_have_account": "Haben Sie bereits ein Konto?",
-  "login_link": "Anmelden"
+  "login_link": "Anmelden",
+  "my_active_jobs": "Meine aktiven Aufträge"
 }

@@ -335,16 +335,26 @@ export default function MarketingPage() {
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('how_it_works_title')}</h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">{t('how_it_works_subtitle')}</p>
             <div className="relative mt-12 grid grid-cols-1 items-start gap-12 md:grid-cols-3">
-              <div className="absolute top-1/2 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
+              <div className="absolute top-8 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
               {howItWorksSteps.map((step, index) => (
                 <div key={index} className="relative flex flex-col items-center text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary shadow-lg">{index + 1}</div>
+                   <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary shadow-lg z-10">{index + 1}</div>
                   <h3 className="mt-4 text-xl font-semibold font-headline">{step.title}</h3>
                   <p className="mt-2 text-muted-foreground">{step.description}</p>
                 </div>
               ))}
             </div>
           </div>
+        </section>
+
+        {/* Growth Section */}
+        <section className="bg-primary/5 py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('growth_title')}</h2>
+                    <p className="mt-6 text-lg text-muted-foreground">{t('growth_desc')}</p>
+                </div>
+            </div>
         </section>
 
         {/* Testimonials Section */}

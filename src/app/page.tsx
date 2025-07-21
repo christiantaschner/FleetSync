@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, CloudRain } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, CloudRain, Briefcase, TrendingUp, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -63,15 +63,15 @@ export default function MarketingPage() {
         title: t('benefit_efficiency_title'),
         description: t('benefit_efficiency_desc')
       },
+       {
+        icon: <DollarSign className="h-6 w-6 text-accent" />,
+        title: t('benefit_costs_title'),
+        description: t('benefit_costs_desc')
+      },
       {
         icon: <Users className="h-6 w-6 text-accent" />,
         title: t('benefit_satisfaction_title'),
         description: t('benefit_satisfaction_desc')
-      },
-      {
-        icon: <Check className="h-6 w-6 text-accent" />,
-        title: t('benefit_costs_title'),
-        description: t('benefit_costs_desc')
       }
   ];
 
@@ -92,6 +92,16 @@ export default function MarketingPage() {
       solution: t('scenario_cancellation_solution'),
     },
   ];
+  
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    e.preventDefault();
+    const href = e.currentTarget.href;
+    const targetId = href.replace(/.*#/, "");
+    const elem = document.getElementById(targetId);
+    elem?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
@@ -103,15 +113,21 @@ export default function MarketingPage() {
               <Logo />
             </Link>
           </div>
-          <nav className="flex items-center space-x-6 text-sm font-medium">
-             <Link href="/pricing" className="text-foreground/60 transition-colors hover:text-foreground/80">
+          <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
+             <Link href="#features" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+                {t('nav_features')}
+              </Link>
+              <Link href="#benefits" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+                {t('nav_benefits')}
+              </Link>
+             <Link href="#pricing" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
                 {t('pricing_title')}
               </Link>
           </nav>
           <div className="flex flex-1 items-center justify-end space-x-2">
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="px-2 font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground">
+                    <Button variant="ghost" size="sm" className="text-foreground/80 hover:bg-secondary hover:text-foreground px-2 font-semibold">
                         {language.toUpperCase()}
                     </Button>
                 </DropdownMenuTrigger>
@@ -166,6 +182,25 @@ export default function MarketingPage() {
             </div>
           </div>
         </section>
+        
+        {/* Benefits Section */}
+        <section id="benefits" className="py-16 sm:py-24 bg-background">
+            <div className="container text-center">
+                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('benefits_title')}</h2>
+                 <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+                    {t('benefits_subtitle')}
+                </p>
+                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+                    {benefits.map((benefit) => (
+                        <div key={benefit.title} className="flex flex-col items-center text-center">
+                            {benefit.icon}
+                            <h3 className="mt-4 text-xl font-semibold font-headline">{benefit.title}</h3>
+                            <p className="mt-2 text-muted-foreground">{benefit.description}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
 
         {/* Scenarios Section */}
         <section className="container py-16 sm:py-24">
@@ -191,7 +226,7 @@ export default function MarketingPage() {
         </section>
 
         {/* Features Section */}
-        <section className="bg-muted py-16 sm:py-24">
+        <section id="features" className="bg-muted py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <Badge variant="default">{t('our_solution')}</Badge>
@@ -215,38 +250,92 @@ export default function MarketingPage() {
                 </Card>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* Fleety AI Assistant Section */}
-        <section className="container py-16 sm:py-24">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="text-center md:text-left">
-                <Badge variant="secondary">{t('fleety_badge')}</Badge>
-                <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('fleety_title')}</h2>
-                <p className="mt-6 text-lg text-muted-foreground">
-                  {t('fleety_desc')}
-                </p>
-            </div>
-            <div>
-              <Image src="https://placehold.co/600x400.png" alt="AI assistant helping a user" width={600} height={400} className="rounded-lg shadow-xl" data-ai-hint="friendly robot mascot" />
-            </div>
+             <div className="mt-12 text-center">
+                 <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                    <Bot className="h-5 w-5 text-accent"/>
+                    {t('fleety_title')}
+                </h3>
+                <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">{t('fleety_desc')}</p>
+             </div>
           </div>
         </section>
         
-        {/* Benefits Section */}
-        <section className="py-16 sm:py-24 bg-primary/5">
-            <div className="container">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-                    {benefits.map((benefit) => (
-                        <div key={benefit.title} className="flex flex-col items-center text-center">
-                            {benefit.icon}
-                            <h3 className="mt-4 text-xl font-semibold font-headline">{benefit.title}</h3>
-                            <p className="mt-2 text-muted-foreground">{benefit.description}</p>
+         {/* Pricing Section */}
+        <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
+          <div className="container px-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <div className="text-center md:text-left">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('pricing_roi_title')}</h2>
+                    <p className="mt-6 text-lg text-muted-foreground">
+                        {t('pricing_roi_desc')}
+                    </p>
+                     <div className="mt-8 space-y-4">
+                        <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
+                                <TrendingUp className="h-6 w-6"/>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{t('pricing_benefit_1_title')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_1_desc')}</p>
+                            </div>
                         </div>
-                    ))}
+                         <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
+                                <DollarSign className="h-6 w-6"/>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{t('pricing_benefit_2_title')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_2_desc')}</p>
+                            </div>
+                        </div>
+                         <div className="flex items-start gap-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
+                                <Users className="h-6 w-6"/>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold">{t('pricing_benefit_3_title')}</h3>
+                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_3_desc')}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div className="flex justify-center">
+                    <Card className="max-w-md w-full border-primary ring-2 ring-primary shadow-xl">
+                        <CardHeader>
+                            <CardTitle className="font-headline text-2xl">{t('pricing_plan_title')}</CardTitle>
+                            <CardDescription>{t('pricing_plan_desc')}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-baseline justify-center gap-2">
+                                <span className="text-5xl font-bold">$49</span>
+                                <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
+                            </div>
+                            <Button asChild size="lg" className="w-full">
+                                <Link href="/signup">{t('get_started_free')}</Link>
+                            </Button>
+                             <ul className="space-y-2 text-sm text-muted-foreground">
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span>{t('pricing_feature_all_inclusive')}</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span>{t('pricing_feature_all_ai')}</span>
+                                </li>
+                                 <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span>{t('pricing_feature_no_hidden_fees')}</span>
+                                </li>
+                                <li className="flex items-center gap-2">
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span>{t('pricing_feature_cancel_anytime')}</span>
+                                </li>
+                            </ul>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
+          </div>
         </section>
 
         {/* CTA Section */}

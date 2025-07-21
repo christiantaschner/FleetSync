@@ -2,10 +2,8 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AppProviders } from '@/contexts/AppProviders';
 import { Inter } from 'next/font/google';
-import { LanguageProvider } from '@/hooks/use-language';
-import { APIProvider as GoogleMapsAPIProvider } from '@vis.gl/react-google-maps';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -19,9 +17,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  if (!googleMapsApiKey) {
+  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.includes("YOUR_API_KEY")) {
     return (
       <html lang="en" suppressHydrationWarning>
         <body className="flex h-screen w-screen items-center justify-center bg-background text-destructive p-4 text-center">
@@ -43,13 +40,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className={`${inter.variable} font-body antialiased`}>
-        <GoogleMapsAPIProvider apiKey={googleMapsApiKey} libraries={['places', 'geocoding', 'maps']}>
-          <LanguageProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </LanguageProvider>
-        </GoogleMapsAPIProvider>
+        <AppProviders>
+          {children}
+        </AppProviders>
         <Toaster />
       </body>
     </html>

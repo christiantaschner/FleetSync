@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, CloudRain, Briefcase, TrendingUp, DollarSign, Menu } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/use-language';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import Image from 'next/image';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
@@ -90,6 +91,24 @@ export default function MarketingPage() {
       icon: <UserCog className="h-8 w-8 text-blue-500" />,
       problem: t('scenario_cancellation_problem'),
       solution: t('scenario_cancellation_solution'),
+    },
+  ];
+
+  const howItWorksSteps = [
+    {
+      icon: <Briefcase className="h-8 w-8 text-primary" />,
+      title: t('how_it_works_1_title'),
+      description: t('how_it_works_1_desc'),
+    },
+    {
+      icon: <UserCheck className="h-8 w-8 text-primary" />,
+      title: t('how_it_works_2_title'),
+      description: t('how_it_works_2_desc'),
+    },
+    {
+      icon: <Star className="h-8 w-8 text-primary" />,
+      title: t('how_it_works_3_title'),
+      description: t('how_it_works_3_desc'),
     },
   ];
   
@@ -309,6 +328,60 @@ export default function MarketingPage() {
              </div>
           </div>
         </section>
+
+        {/* How it Works Section */}
+        <section className="py-16 sm:py-24">
+          <div className="container text-center">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('how_it_works_title')}</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">{t('how_it_works_subtitle')}</p>
+            <div className="relative mt-12 grid grid-cols-1 items-start gap-12 md:grid-cols-3">
+              <div className="absolute top-1/2 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
+              {howItWorksSteps.map((step, index) => (
+                <div key={index} className="relative flex flex-col items-center text-center">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary shadow-lg">{index + 1}</div>
+                  <h3 className="mt-4 text-xl font-semibold font-headline">{step.title}</h3>
+                  <p className="mt-2 text-muted-foreground">{step.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="bg-secondary py-16 sm:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('testimonials_title')}</h2>
+              <p className="mt-6 text-lg text-muted-foreground">{t('testimonials_subtitle')}</p>
+            </div>
+            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-lg font-medium">"{t('testimonial_1_quote')}"</p>
+                </CardContent>
+                <CardHeader className="flex-row items-center gap-4">
+                  <Image src="https://placehold.co/40x40.png" alt="Testimonial author" data-ai-hint="person face" width={40} height={40} className="h-10 w-10 rounded-full" />
+                  <div>
+                    <CardTitle className="text-base">{t('testimonial_1_author')}</CardTitle>
+                    <CardDescription>{t('testimonial_1_role')}</CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <p className="text-lg font-medium">"{t('testimonial_2_quote')}"</p>
+                </CardContent>
+                <CardHeader className="flex-row items-center gap-4">
+                  <Image src="https://placehold.co/40x40.png" alt="Testimonial author" data-ai-hint="person face" width={40} height={40} className="h-10 w-10 rounded-full" />
+                  <div>
+                    <CardTitle className="text-base">{t('testimonial_2_author')}</CardTitle>
+                    <CardDescription>{t('testimonial_2_role')}</CardDescription>
+                  </div>
+                </CardHeader>
+              </Card>
+            </div>
+          </div>
+        </section>
         
          {/* Pricing Section */}
         <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
@@ -406,8 +479,8 @@ export default function MarketingPage() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container flex flex-col md:flex-row h-auto md:h-16 items-center justify-center md:justify-between text-center md:text-left py-4 md:py-0">
-          <p className="text-sm text-muted-foreground mb-2 md:mb-0">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
+        <div className="container flex flex-col items-center justify-between gap-4 py-6 text-center md:h-16 md:flex-row md:py-0">
+          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
              <Link href="#" className="hover:text-primary">{t('privacy_policy')}</Link>
              <Link href="#" className="hover:text-primary">{t('terms_of_service')}</Link>

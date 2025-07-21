@@ -93,7 +93,7 @@
   "meet_your_ai_codispatcher": "Meet Your AI Co-Dispatcher",
   "everything_you_need": "FleetSync AI makes complex technology simple. The AI runs in the background, giving you simple, powerful tools to deliver measurable results from day one.",
   "feature_ai_dispatch_title": "AI-Powered Dispatch",
-  "feature_ai_dispatch_desc": "Instantly assign the best technician to any job based on skill, availability, and location. For emergencies, our AI can even suggest interrupting a lower-priority job.",
+  "feature_ai_dispatch_desc": "Instantly assign the best technician to any job. Our AI analyzes skills, availability, and live location simultaneously to make the optimal choice in seconds, eliminating guesswork.",
   "feature_dynamic_optimization_title": "Dynamic Route Optimization",
   "feature_dynamic_optimization_desc": "When plans change, re-optimize any technician's route with a single click. The AI finds the most efficient path, respecting fixed appointments while minimizing travel time.",
   "feature_risk_alerts_title": "Proactive Schedule Risk Alerts",
@@ -162,3 +162,5 @@
   "growth_title": "From Daily Fixes to a Future-Proof Fleet",
   "growth_desc": "FleetSync AI doesn't just solve today's problems. Every completed job, every route driven, and every piece of customer feedback becomes valuable data. Our AI analyzes this information in the background, helping you spot trends, improve the efficiency of your entire operation over time, and arm your business for future growth."
 }
+
+    

@@ -114,11 +114,11 @@ export default function MarketingPage() {
             </Link>
           </div>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-             <Link href="#features" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
-                {t('nav_features')}
-              </Link>
-              <Link href="#benefits" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+             <Link href="#benefits" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
                 {t('nav_benefits')}
+              </Link>
+              <Link href="#features" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+                {t('nav_features')}
               </Link>
              <Link href="#pricing" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
                 {t('pricing_title')}
@@ -168,17 +168,13 @@ export default function MarketingPage() {
         {/* Industries Section */}
         <section className="py-12 bg-secondary">
           <div className="container text-center">
-            <h3 className="font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h3>
-            <div className="mt-4 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-lg font-medium text-foreground">
-                <span>{t('hvac_services')}</span>
-                <span className="text-muted-foreground">&bull;</span>
-                <span>{t('plumbing_services')}</span>
-                <span className="text-muted-foreground">&bull;</span>
-                <span>{t('electrical_services')}</span>
-                 <span className="text-muted-foreground">&bull;</span>
-                <span>{t('appliance_repair_services')}</span>
-                 <span className="text-muted-foreground">&bull;</span>
-                <span>{t('and_more')}</span>
+            <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h3>
+            <div className="mt-4 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
+                <Badge variant="outline" className="text-base px-4 py-1">{t('hvac_services')}</Badge>
+                <Badge variant="outline" className="text-base px-4 py-1">{t('plumbing_services')}</Badge>
+                <Badge variant="outline" className="text-base px-4 py-1">{t('electrical_services')}</Badge>
+                <Badge variant="outline" className="text-base px-4 py-1">{t('appliance_repair_services')}</Badge>
+                <Badge variant="outline" className="text-base px-4 py-1">{t('and_more')}</Badge>
             </div>
           </div>
         </section>

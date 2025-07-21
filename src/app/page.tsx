@@ -1,15 +1,15 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, CloudRain, Briefcase, TrendingUp, DollarSign } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, CloudRain, Briefcase, TrendingUp, DollarSign, Menu } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/use-language';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
@@ -124,24 +124,67 @@ export default function MarketingPage() {
                 {t('pricing_title')}
               </Link>
           </nav>
+          
           <div className="flex flex-1 items-center justify-end space-x-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-foreground/80 hover:bg-secondary hover:text-foreground px-2 font-semibold mr-2">
-                      {language.toUpperCase()}
-                  </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button asChild variant="ghost">
-                <Link href="/login">{t('login_button')}</Link>
-            </Button>
-            <Button asChild>
-                <Link href="/signup">{t('start_free_trial')}</Link>
-            </Button>
+            <div className="hidden md:flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-foreground/80 hover:bg-secondary hover:text-foreground px-2 font-semibold mr-2">
+                        {language.toUpperCase()}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button asChild variant="ghost">
+                  <Link href="/login">{t('login_button')}</Link>
+              </Button>
+              <Button asChild>
+                  <Link href="/signup">{t('start_free_trial')}</Link>
+              </Button>
+            </div>
+            {/* Mobile Menu */}
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" className="md:hidden">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Open menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                    <nav className="flex flex-col gap-4 mt-8">
+                       <SheetClose asChild>
+                         <Link href="#benefits" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
+                           {t('nav_benefits')}
+                         </Link>
+                       </SheetClose>
+                       <SheetClose asChild>
+                         <Link href="#features" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
+                            {t('nav_features')}
+                         </Link>
+                       </SheetClose>
+                       <SheetClose asChild>
+                          <Link href="#pricing" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
+                            {t('pricing_title')}
+                          </Link>
+                       </SheetClose>
+                       <div className="mt-8 space-y-4">
+                            <SheetClose asChild>
+                               <Link href="/login" className="w-full">
+                                    <Button variant="outline" className="w-full">{t('login_button')}</Button>
+                                </Link>
+                            </SheetClose>
+                             <SheetClose asChild>
+                                <Link href="/signup" className="w-full">
+                                    <Button className="w-full">{t('start_free_trial')}</Button>
+                                </Link>
+                             </SheetClose>
+                       </div>
+                    </nav>
+                </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
@@ -166,17 +209,17 @@ export default function MarketingPage() {
         </section>
 
         {/* Industries Section */}
-        <section className="py-12 bg-secondary">
-          <div className="container text-center">
-            <h3 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h3>
-            <div className="mt-4 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
-                <Badge variant="outline" className="text-base px-4 py-1">{t('hvac_services')}</Badge>
-                <Badge variant="outline" className="text-base px-4 py-1">{t('plumbing_services')}</Badge>
-                <Badge variant="outline" className="text-base px-4 py-1">{t('electrical_services')}</Badge>
-                <Badge variant="outline" className="text-base px-4 py-1">{t('appliance_repair_services')}</Badge>
-                <Badge variant="outline" className="text-base px-4 py-1">{t('and_more')}</Badge>
+        <section className="bg-secondary py-12">
+            <div className="container text-center">
+                <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h2>
+                <div className="mt-6 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('hvac_services')}</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('plumbing_services')}</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('electrical_services')}</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('appliance_repair_services')}</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('and_more')}</Badge>
+                </div>
             </div>
-          </div>
         </section>
         
         {/* Benefits Section */}

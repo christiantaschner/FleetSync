@@ -155,6 +155,17 @@ export default function MarketingPage() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                     <nav className="flex flex-col gap-4 mt-8">
+                       <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="w-full justify-center text-lg">
+                                    {language === 'en' ? 'English' : 'Deutsch'}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="center" className="w-[280px] sm:w-[380px]">
+                                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                        <SheetClose asChild>
                          <Link href="#benefits" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
                            {t('nav_benefits')}

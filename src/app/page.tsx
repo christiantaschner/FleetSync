@@ -379,7 +379,7 @@ export default function MarketingPage() {
 
         {/* CTA Section */}
         <section className="bg-secondary py-16">
-          <div className="container text-center">
+          <div className="container px-4 text-center">
             <h2 className="text-3xl font-bold tracking-tight font-headline">{t('ready_to_transform')}</h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
               {t('ready_to_transform_desc')}
@@ -395,8 +395,8 @@ export default function MarketingPage() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container flex h-16 items-center justify-between">
-          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
+        <div className="container flex flex-col md:flex-row h-auto md:h-16 items-center justify-center md:justify-between text-center md:text-left py-4 md:py-0">
+          <p className="text-sm text-muted-foreground mb-2 md:mb-0">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
              <Link href="#" className="hover:text-primary">{t('privacy_policy')}</Link>
              <Link href="#" className="hover:text-primary">{t('terms_of_service')}</Link>

@@ -111,5 +111,15 @@
   "start_free_trial_now": "Start Your Free Trial Now",
   "all_rights_reserved": "All rights reserved.",
   "privacy_policy": "Privacy Policy",
-  "terms_of_service": "Terms of Service"
+  "terms_of_service": "Terms of Service",
+  "feature_mobile_app_title": "Intuitive Technician App",
+  "feature_mobile_app_desc": "Empower techs with a mobile app showing their schedule, job details, status updates, and an AI assistant for on-site troubleshooting.",
+  "feature_live_map_title": "Live Map Overview",
+  "feature_live_map_desc": "Visualize your entire operation in real-time. See all active jobs and technician locations on a single, interactive map to make smarter, faster decisions.",
+  "feature_schedule_overview_title": "Centralized Schedule",
+  "feature_schedule_overview_desc": "View and manage the schedule for all technicians in a clear, visual timeline. Drag-and-drop jobs and quickly identify open slots.",
+  "feature_customer_comms_title": "AI-Assisted Communication",
+  "feature_customer_comms_desc": "Let the AI draft professional notifications for customers about schedule changes or delays. Includes in-app chat between dispatch and technicians.",
+  "feature_skill_library_title": "Skills & Parts Management",
+  "feature_skill_library_desc": "Maintain a central library of technician skills and available parts. The AI uses this data to make smarter job allocation recommendations."
 }

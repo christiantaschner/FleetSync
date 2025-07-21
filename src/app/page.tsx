@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,21 @@ export default function MarketingPage() {
       description: t('feature_ai_dispatch_desc'),
     },
     {
+      icon: <Smartphone className="h-8 w-8 text-primary" />,
+      title: t('feature_mobile_app_title'),
+      description: t('feature_mobile_app_desc'),
+    },
+    {
+      icon: <Map className="h-8 w-8 text-primary" />,
+      title: t('feature_live_map_title'),
+      description: t('feature_live_map_desc'),
+    },
+    {
+      icon: <CalendarDays className="h-8 w-8 text-primary" />,
+      title: t('feature_schedule_overview_title'),
+      description: t('feature_schedule_overview_desc'),
+    },
+    {
       icon: <Shuffle className="h-8 w-8 text-primary" />,
       title: t('feature_dynamic_optimization_title'),
       description: t('feature_dynamic_optimization_desc'),
@@ -31,9 +46,14 @@ export default function MarketingPage() {
       description: t('feature_risk_alerts_desc'),
     },
     {
-      icon: <BarChart className="h-8 w-8 text-primary" />,
-      title: t('feature_intelligent_reporting_title'),
-      description: t('feature_intelligent_reporting_desc'),
+      icon: <MessageSquare className="h-8 w-8 text-primary" />,
+      title: t('feature_customer_comms_title'),
+      description: t('feature_customer_comms_desc'),
+    },
+    {
+      icon: <Cog className="h-8 w-8 text-primary" />,
+      title: t('feature_skill_library_title'),
+      description: t('feature_skill_library_desc'),
     },
   ];
 
@@ -175,10 +195,10 @@ export default function MarketingPage() {
                 {t('everything_you_need')}
               </p>
             </div>
-            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               {features.map((feature) => (
-                <Card key={feature.title} className="text-center">
-                  <CardHeader>
+                <Card key={feature.title} className="text-center flex flex-col">
+                  <CardHeader className="flex-grow">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                       {feature.icon}
                     </div>

@@ -111,5 +111,15 @@
   "start_free_trial_now": "Starten Sie jetzt Ihre kostenlose Testversion",
   "all_rights_reserved": "Alle Rechte vorbehalten.",
   "privacy_policy": "Datenschutzrichtlinie",
-  "terms_of_service": "Nutzungsbedingungen"
+  "terms_of_service": "Nutzungsbedingungen",
+  "feature_mobile_app_title": "Intuitive Techniker-App",
+  "feature_mobile_app_desc": "Stärken Sie Ihre Techniker mit einer mobilen App, die ihren Tagesplan, Auftragsdetails, Status-Updates und einen KI-Assistenten für die Fehlersuche vor Ort anzeigt.",
+  "feature_live_map_title": "Live-Kartenübersicht",
+  "feature_live_map_desc": "Visualisieren Sie Ihren gesamten Betrieb in Echtzeit. Sehen Sie alle aktiven Aufträge und Technikerstandorte auf einer einzigen interaktiven Karte für intelligentere Entscheidungen.",
+  "feature_schedule_overview_title": "Zentraler Zeitplan",
+  "feature_schedule_overview_desc": "Verwalten Sie den Zeitplan für alle Techniker in einer klaren, visuellen Zeitleiste. Ziehen Sie Aufträge per Drag-and-Drop und identifizieren Sie schnell freie Zeitfenster.",
+  "feature_customer_comms_title": "KI-gestützte Kommunikation",
+  "feature_customer_comms_desc": "Lassen Sie die KI professionelle Benachrichtigungen für Kunden über Zeitplanänderungen oder Verzögerungen entwerfen. Inklusive In-App-Chat.",
+  "feature_skill_library_title": "Fähigkeiten & Ersatzteile verwalten",
+  "feature_skill_library_desc": "Pflegen Sie eine zentrale Bibliothek mit den Fähigkeiten Ihrer Techniker und verfügbaren Teilen. Die KI nutzt diese Daten, um intelligentere Zuweisungen zu machen."
 }

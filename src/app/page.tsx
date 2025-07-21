@@ -237,9 +237,23 @@ export default function MarketingPage() {
             <p className="mt-4 text-xs text-muted-foreground">{t('no_setup_fee')}</p>
           </div>
         </section>
+        
+        {/* Screenshot placeholder */}
+        <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
+            <div className="relative">
+                <Image 
+                    src="https://placehold.co/1200x750.png"
+                    width={1200}
+                    height={750}
+                    alt="FleetSync AI Dashboard Screenshot"
+                    className="rounded-xl border shadow-2xl"
+                    data-ai-hint="dashboard interface"
+                />
+            </div>
+        </section>
 
         {/* Industries Section */}
-        <section className="bg-secondary py-12">
+        <section className="bg-secondary py-12 mt-16 sm:mt-24">
             <div className="container text-center">
                 <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h2>
                 <div className="mt-6 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
@@ -489,8 +503,8 @@ export default function MarketingPage() {
 
       {/* Footer */}
       <footer className="border-t">
-        <div className="container flex flex-col items-center justify-between gap-4 py-6 text-center md:h-16 md:flex-row md:py-0">
-          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
+        <div className="container flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0">
+          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
              <Link href="#" className="hover:text-primary">{t('privacy_policy')}</Link>
              <Link href="#" className="hover:text-primary">{t('terms_of_service')}</Link>

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, CloudRain } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -103,10 +103,15 @@ export default function MarketingPage() {
               <Logo />
             </Link>
           </div>
+          <nav className="flex items-center space-x-6 text-sm font-medium">
+             <Link href="/pricing" className="text-foreground/60 transition-colors hover:text-foreground/80">
+                {t('pricing_title')}
+              </Link>
+          </nav>
           <div className="flex flex-1 items-center justify-end space-x-2">
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="px-2 font-semibold">
+                    <Button variant="ghost" size="sm" className="px-2 font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground">
                         {language.toUpperCase()}
                     </Button>
                 </DropdownMenuTrigger>
@@ -212,9 +217,25 @@ export default function MarketingPage() {
             </div>
           </div>
         </section>
+
+        {/* Fleety AI Assistant Section */}
+        <section className="container py-16 sm:py-24">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="text-center md:text-left">
+                <Badge variant="secondary">{t('fleety_badge')}</Badge>
+                <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('fleety_title')}</h2>
+                <p className="mt-6 text-lg text-muted-foreground">
+                  {t('fleety_desc')}
+                </p>
+            </div>
+            <div>
+              <Image src="https://placehold.co/600x400.png" alt="AI assistant helping a user" width={600} height={400} className="rounded-lg shadow-xl" data-ai-hint="friendly robot mascot" />
+            </div>
+          </div>
+        </section>
         
         {/* Benefits Section */}
-        <section className="py-16 sm:py-24">
+        <section className="py-16 sm:py-24 bg-primary/5">
             <div className="container">
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                     {benefits.map((benefit) => (
@@ -229,7 +250,7 @@ export default function MarketingPage() {
         </section>
 
         {/* CTA Section */}
-        <section className="bg-primary/5 py-16">
+        <section className="bg-secondary py-16">
           <div className="container text-center">
             <h2 className="text-3xl font-bold tracking-tight font-headline">{t('ready_to_transform')}</h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">

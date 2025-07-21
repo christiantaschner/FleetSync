@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle } from 'lucide-react';
@@ -8,9 +9,10 @@ import { Logo } from '@/components/common/logo';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/use-language';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function MarketingPage() {
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
 
   const features = [
     {
@@ -82,6 +84,17 @@ export default function MarketingPage() {
             </Link>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-2">
+             <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="px-2 font-semibold">
+                        {language.toUpperCase()}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
             <Button asChild variant="ghost">
                 <Link href="/login">{t('login_button')}</Link>
             </Button>

@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle, Clock, User, ShieldQuestion, HelpCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, User, Bot, HelpCircle } from 'lucide-react';
 import type { CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { cn } from '@/lib/utils';
 
@@ -50,7 +50,7 @@ const ScheduleHealthDialog: React.FC<ScheduleHealthDialogProps> = ({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <ShieldQuestion className="text-primary h-5 w-5" /> Fleety's Schedule Risk Report
+            <Bot className="text-primary h-5 w-5" /> Fleety's Schedule Risk Report
           </DialogTitle>
           <DialogDescription>
             AI-powered analysis of active technicians' schedules to predict potential delays for their next job.

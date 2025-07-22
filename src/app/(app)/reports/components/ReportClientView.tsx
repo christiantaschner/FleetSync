@@ -19,7 +19,7 @@ import {
   Route,
   Coffee,
   Info,
-  Sparkles,
+  Bot,
   BarChart,
 } from "lucide-react";
 import {
@@ -418,7 +418,7 @@ export default function ReportClientView() {
                     <CardFooter className="flex-col items-start gap-2 pt-3 border-t">
                       {ftfrSummary && !isSummarizing && (
                           <div className="space-y-2 text-xs">
-                              <h4 className="font-semibold text-sm flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-primary" /> AI Summary</h4>
+                              <h4 className="font-semibold text-sm flex items-center gap-1.5"><Bot className="h-4 w-4 text-primary" /> AI Summary</h4>
                               <p className="text-muted-foreground">{ftfrSummary.summary}</p>
                               <div className="flex flex-wrap gap-1">
                                   {ftfrSummary.themes.map(theme => <Badge key={theme} variant="secondary">{theme}</Badge>)}
@@ -429,7 +429,7 @@ export default function ReportClientView() {
                         {isSummarizing ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
-                            <Sparkles className="mr-2 h-4 w-4" />
+                            <Bot className="mr-2 h-4 w-4" />
                         )}
                         Summarize Feedback ({ftfrFeedbackNotesCount})
                       </Button>

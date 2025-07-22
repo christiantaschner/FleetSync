@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Sparkles, Shuffle, Wrench, MapIcon } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Shuffle, Wrench, MapIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -131,7 +131,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
       <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
          {isUnassigned && (
             <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
-                <Sparkles className="mr-1 h-3 w-3 text-primary" /> Fleety Assign
+                <Bot className="mr-1 h-3 w-3 text-primary" /> Fleety Assign
             </Button>
         )}
         {isRoutable && (
@@ -140,7 +140,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
             </Button>
             <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onDraftNotification(job); }}>
-                <Sparkles className="mr-1 h-3 w-3 text-primary" /> Notify Customer
+                <Bot className="mr-1 h-3 w-3 text-primary" /> Notify Customer
             </Button>
           </>
         )}

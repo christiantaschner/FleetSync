@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction } from "@/actions/ai-actions";
 import { reassignJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
-import { Loader2, Sparkles, UserCheck, AlertTriangle } from 'lucide-react';
+import { Loader2, Bot, UserCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
@@ -140,7 +140,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
 
                 {!isLoadingAI && suggestedTech && suggestion && (
                     <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2">
-                         <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Fleety's Suggestion:</h3>
+                         <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Fleety's Suggestion:</h3>
                          <p>Assign to: <strong>{suggestedTech.name}</strong></p>
                          <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestion.reasoning}</em></p>
                     </div>

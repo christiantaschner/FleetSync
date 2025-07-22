@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Job, Technician } from '@/types';
 import type { AllocateJobOutput } from "@/types";
-import { AlertTriangle, CheckCircle, User, Sparkles, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, User, Bot, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +54,7 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <Sparkles className="text-primary h-5 w-5" /> Review Fleety's Batch Assignments
+            <Bot className="text-primary h-5 w-5" /> Review Fleety's Batch Assignments
           </DialogTitle>
           <DialogDescription>
             Review Fleety's suggestions for pending jobs. Only assignments to currently available technicians can be confirmed.

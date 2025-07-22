@@ -16,7 +16,7 @@ import {
   ClipboardList,
   UserCog,
   PlusCircle,
-  Sparkles,
+  Bot,
   AlertTriangle,
   BarChart,
   CreditCard,
@@ -319,7 +319,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                   </Alert>
               ) : isTrialActive ? (
                   <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
-                      <Sparkles className="h-4 w-4" />
+                      <Bot className="h-4 w-4" />
                       <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
                       <AlertDescription className="text-primary/90">
                           You have <strong>{trialDaysLeft} days left</strong>. {' '}

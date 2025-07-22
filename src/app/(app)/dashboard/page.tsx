@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Sparkles, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -897,20 +897,21 @@ export default function DashboardPage() {
         ))}
 
         {proactiveSuggestion && (
-            <Alert variant="default" className="border-accent ring-2 ring-accent/50 bg-accent/5">
-                <Sparkles className="h-4 w-4 text-accent-foreground" />
-                <AlertTitle className="font-headline text-accent-foreground flex justify-between items-center">
+            <Alert variant="default" className="border-amber-400 bg-amber-50 text-amber-900">
+                <Bot className="h-4 w-4 text-amber-600" />
+                <AlertTitle className="font-headline text-amber-900 flex justify-between items-center">
                     <span>Fleety's Proactive Suggestion</span>
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveSuggestion(null)}><X className="h-4 w-4" /></Button>
                 </AlertTitle>
-                <AlertDescription>
+                <AlertDescription className="text-amber-800">
                     A new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>" was just created.
                     <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.reasoning}"</p>
                 </AlertDescription>
                 <div className="mt-4 flex gap-2">
                     <Button 
                         size="sm" 
-                        variant="accent" 
+                        variant="default"
+                        className="bg-amber-500 hover:bg-amber-600"
                         onClick={() => handleProactiveAssign(proactiveSuggestion)}
                         disabled={isProcessingProactive || !proactiveSuggestion.suggestedTechnicianDetails}
                     >
@@ -1063,7 +1064,7 @@ export default function DashboardPage() {
                   disabled={pendingJobsCount === 0 || isBatchLoading}
                   className="w-full md:w-auto flex-shrink-0"
                 >
-                  {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                  {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
                   Fleety Batch Assign
                 </Button>
               </div>

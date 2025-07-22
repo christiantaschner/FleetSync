@@ -189,9 +189,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email_address: string, pass_word: string) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        // In mock mode, login is automatic, so this function should ideally not be called.
-        // But if it is, just return true.
-        return true;
+        toast({
+            title: "User Not Found in Mock Data",
+            description: "In mock mode, only the default admin user exists. No new accounts can be created.",
+            variant: "destructive"
+        });
+        return false;
     }
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
@@ -203,7 +206,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        toast({
+            title: "User Not Found",
+            description: (
+                <span>
+                    No account found for this email. Would you like to{' '}
+                    <Link href="/signup" className="font-bold underline">
+                        Sign up?
+                    </Link>
+                </span>
+            ),
+            variant: "destructive",
+            duration: 10000,
+        });
+      } else {
+        toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+      }
       setLoading(false);
       return false;
     }

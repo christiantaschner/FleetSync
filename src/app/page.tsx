@@ -166,7 +166,7 @@ export default function MarketingPage() {
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
               <Button asChild>
-                  <Link href="/signup">{t('start_free_trial')}</Link>
+                  <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('start_free_trial')}</a>
               </Button>
             </div>
             {/* Mobile Menu */}
@@ -212,9 +212,9 @@ export default function MarketingPage() {
                                 </Link>
                             </SheetClose>
                              <SheetClose asChild>
-                                <Link href="/signup" className="w-full">
+                                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer" className="w-full">
                                     <Button className="w-full">{t('start_free_trial')}</Button>
-                                </Link>
+                                </a>
                              </SheetClose>
                        </div>
                     </nav>
@@ -236,7 +236,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
-                <Link href="/signup">{t('get_started_free')}</Link>
+                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('get_started_free')}</a>
               </Button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">{t('no_setup_fee')}</p>
@@ -467,7 +467,7 @@ export default function MarketingPage() {
                                 <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
                             </div>
                             <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">{t('get_started_free')}</Link>
+                                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('get_started_free')}</a>
                             </Button>
                              <ul className="space-y-2 text-sm text-muted-foreground">
                                 <li className="flex items-center gap-2">
@@ -503,7 +503,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg">
-                <Link href="/signup">{t('start_free_trial_now')}</Link>
+                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('start_free_trial_now')}</a>
               </Button>
             </div>
           </div>

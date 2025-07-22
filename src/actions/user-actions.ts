@@ -15,7 +15,7 @@ type EnsureUserDocumentInput = z.infer<typeof EnsureUserDocumentInputSchema>;
 
 export async function ensureUserDocumentAction(
   input: EnsureUserDocumentInput
-): Promise<{ error: string | null }> {
+): Promise<{ data: UserProfile | null; error: string | null }> {
   try {
     if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK not initialized. Check server logs for details.");
     const validatedInput = EnsureUserDocumentInputSchema.parse(input);
@@ -24,7 +24,6 @@ export async function ensureUserDocumentAction(
     const userDocRef = dbAdmin.collection('users').doc(uid);
     const docSnap = await userDocRef.get();
     
-    // This is the source of truth for the user's profile data.
     let userProfileFromDb: UserProfile;
 
     if (!docSnap.exists) {
@@ -32,7 +31,6 @@ export async function ensureUserDocumentAction(
         let companyId: string | null = null;
         let onboardingStatus: UserProfile['onboardingStatus'] = 'pending_onboarding';
         
-        // Check for a pending invitation first
         const invitesRef = collection(dbAdmin, 'invitations');
         const inviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"), limit(1));
         const inviteSnapshot = await getDocs(inviteQuery);
@@ -43,7 +41,6 @@ export async function ensureUserDocumentAction(
             companyId = inviteData.companyId;
             role = inviteData.role;
             onboardingStatus = 'completed';
-            // Mark invitation as accepted instead of deleting
             await updateDoc(inviteDoc.ref, { 
                 status: 'accepted',
                 acceptedAt: serverTimestamp(),
@@ -69,24 +66,27 @@ export async function ensureUserDocumentAction(
         userProfileFromDb = docSnap.data() as UserProfile;
     }
 
-    // Always re-synchronize claims with the database as the source of truth.
-    // This fixes issues where claims might be stale or incorrect after signup/login.
     const claimsToSet = {
         role: userProfileFromDb.role || null,
         companyId: userProfileFromDb.companyId || null,
     };
     
-    await authAdmin.setCustomUserClaims(uid, claimsToSet);
-    console.log(JSON.stringify({
-        message: `Custom claims for user ${uid} synchronized`,
-        claims: claimsToSet,
-        severity: "INFO"
-    }));
+    // Only set claims if they are different from what's currently on the user
+    const currentUser = await authAdmin.getUser(uid);
+    const currentClaims = currentUser.customClaims || {};
+    if (claimsToSet.role !== currentClaims.role || claimsToSet.companyId !== currentClaims.companyId) {
+        await authAdmin.setCustomUserClaims(uid, claimsToSet);
+        console.log(JSON.stringify({
+            message: `Custom claims for user ${uid} synchronized`,
+            claims: claimsToSet,
+            severity: "INFO"
+        }));
+    }
 
-    return { error: null };
+    return { data: userProfileFromDb, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return { error: e.errors.map((err) => err.message).join(', ') };
+      return { data: null, error: e.errors.map((err) => err.message).join(', ') };
     }
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     console.error(JSON.stringify({
@@ -97,7 +97,7 @@ export async function ensureUserDocumentAction(
         },
         severity: "ERROR"
     }));
-    return { error: `Failed to ensure user document. ${errorMessage}` };
+    return { data: null, error: `Failed to ensure user document. ${errorMessage}` };
   }
 }
 

@@ -73,6 +73,11 @@ export default function MarketingPage() {
         icon: <Users className="h-6 w-6 text-primary" />,
         title: t('benefit_satisfaction_title'),
         description: t('benefit_satisfaction_desc')
+      },
+      {
+        icon: <TrendingUp className="h-6 w-6 text-primary" />,
+        title: 'Scalable Growth',
+        description: 'Our per-technician pricing and robust features support your business as it grows, from a few vans to a large fleet.'
       }
   ];
 
@@ -266,34 +271,32 @@ export default function MarketingPage() {
             </div>
         </section>
         
-        {/* Benefits Section */}
+        {/* Benefits Section - REDESIGNED */}
         <section id="benefits" className="py-16 sm:py-24 bg-primary/5">
             <div className="container">
                  <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('benefits_title')}</h2>
-                    <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
+                    <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
                         {t('benefits_subtitle')}
                     </p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+                <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2">
                     {benefits.map((benefit) => (
-                        <Card key={benefit.title} className="h-full">
-                            <CardHeader className="flex-row items-center gap-4 pb-4">
-                               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                                   {benefit.icon}
-                               </div>
-                                <CardTitle className="font-headline text-xl">{benefit.title}</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-muted-foreground">{benefit.description}</p>
-                            </CardContent>
-                        </Card>
+                        <div key={benefit.title} className="flex items-start gap-4">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                               {benefit.icon}
+                           </div>
+                           <div>
+                                <h3 className="font-headline text-xl font-semibold">{benefit.title}</h3>
+                                <p className="mt-1 text-muted-foreground">{benefit.description}</p>
+                           </div>
+                        </div>
                     ))}
                 </div>
             </div>
         </section>
 
-        {/* Scenarios Section */}
+        {/* Scenarios Section - REDESIGNED */}
         <section className="container py-16 sm:py-24">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('from_nightmare_to_excellence')}</h2>
@@ -303,9 +306,9 @@ export default function MarketingPage() {
             </div>
             <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
               {scenarios.map((scenario, index) => (
-                <Card key={index} className="flex flex-col text-center">
+                <Card key={index} className="flex flex-col text-center bg-secondary/50">
                   <CardHeader>
-                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background border shadow-sm">
                         {scenario.icon}
                       </div>
                       <CardTitle className="font-headline pt-2">{scenario.problem}</CardTitle>
@@ -318,7 +321,7 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* Features Section */}
+        {/* Features Section - REDESIGNED */}
         <section id="features" className="bg-muted py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
@@ -328,19 +331,15 @@ export default function MarketingPage() {
                 {t('everything_you_need')}
               </p>
             </div>
-            <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
               {features.map((feature) => (
-                <Card key={feature.title} className="text-center flex flex-col">
-                  <CardHeader className="flex-grow">
+                 <div key={feature.title} className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                       {feature.icon}
                     </div>
-                    <CardTitle className="mt-4 font-headline">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{feature.description}</p>
-                  </CardContent>
-                </Card>
+                    <h3 className="mt-4 font-headline text-lg font-semibold">{feature.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
+                </div>
               ))}
             </div>
              <div className="mt-12 text-center">

@@ -22,7 +22,7 @@ import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
-import { updateSubscriptionQuantityAction, seedSampleDataAction } from '@/actions/onboarding-actions';
+import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
@@ -314,14 +314,8 @@ export default function DashboardPage() {
     }
     
     if (technicians.length !== prevTechCount.current && prevTechCount.current !== null) {
-      updateSubscriptionQuantityAction({ companyId: company.id, quantity: technicians.length })
-        .then(result => {
-          if (result.error) {
-            toast({ title: "Stripe Sync Error", description: `Could not update subscription: ${result.error}`, variant: "destructive" });
-          } else {
-            toast({ title: "Subscription Updated", description: `Seat count is now ${technicians.length}.` });
-          }
-        });
+        // This is where auto-sync logic would go, but based on user request, this is disabled.
+        // A manual sync or different flow would be needed if the user changes their plan.
     }
       
     prevTechCount.current = technicians.length;
@@ -366,6 +360,7 @@ export default function DashboardPage() {
           jobId: j.id,
           scheduledTime: j.scheduledTime,
           priority: j.priority,
+          location: j.location,
         })),
       workingHours: t.workingHours,
       isOnCall: t.isOnCall,
@@ -508,7 +503,7 @@ export default function DashboardPage() {
             skills: t.skills || [],
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
-            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
+            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
         }));
 
         const input = {
@@ -557,7 +552,7 @@ export default function DashboardPage() {
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
     const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
-    const statusOrder = { 'Draft': 0, 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Cancelled': 6 } as Record<JobStatus, number>;
+    const statusOrder = { 'Draft': 0, 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Pending Invoice': 6, 'Finished': 7, 'Cancelled': 8 } as Record<JobStatus, number>;
 
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
@@ -639,7 +634,7 @@ export default function DashboardPage() {
             skills: t.skills || [],
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
-            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
+            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
         }));
 
         const input = {
@@ -909,7 +904,7 @@ export default function DashboardPage() {
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveSuggestion(null)}><X className="h-4 w-4" /></Button>
                 </AlertTitle>
                 <AlertDescription>
-                    A new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>" was just created. Fleety suggests assigning it to <strong>{proactiveSuggestion.suggestedTechnicianDetails?.name || "the best available tech"}</strong>.
+                    A new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>" was just created.
                     <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.reasoning}"</p>
                 </AlertDescription>
                 <div className="mt-4 flex gap-2">
@@ -920,7 +915,7 @@ export default function DashboardPage() {
                         disabled={isProcessingProactive || !proactiveSuggestion.suggestedTechnicianDetails}
                     >
                         {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
-                        Assign Now
+                        Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
                     </Button>
                      <Button size="sm" variant="outline" onClick={() => handleOpenEditJob(proactiveSuggestion.job)}>
                         <Edit className="mr-2 h-4 w-4"/>
@@ -1029,6 +1024,8 @@ export default function DashboardPage() {
                           <SelectItem value="En Route">En Route</SelectItem>
                           <SelectItem value="In Progress">In Progress</SelectItem>
                           <SelectItem value="Completed">Completed</SelectItem>
+                          <SelectItem value="Pending Invoice">Pending Invoice</SelectItem>
+                          <SelectItem value="Finished">Finished</SelectItem>
                           <SelectItem value="Cancelled">Cancelled</SelectItem>
                           <SelectItem value="Draft">Draft</SelectItem>
                         </SelectContent>

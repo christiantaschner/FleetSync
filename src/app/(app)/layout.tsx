@@ -72,6 +72,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
     { href: "/reports", label: t('reports'), icon: BarChart },
+    { isSeparator: true },
     { href: "/technician", label: t('technician_view'), icon: Smartphone },
   ];
   
@@ -203,7 +204,10 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {navItems.map((item, index) => {
+                 if (item.isSeparator) {
+                    return <SidebarSeparator key={`sep-${index}`} className="my-1" />;
+                 }
                  const isActive = item.href === '/dashboard' 
                     ? pathname === '/dashboard' && !searchParams.get('view')
                     : pathname.startsWith(item.href);

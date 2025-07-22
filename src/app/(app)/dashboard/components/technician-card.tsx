@@ -150,13 +150,23 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
                 )}
              </div>
         </div>
-        <div className="w-full grid grid-cols-2 gap-2">
-            <Button variant="outline" size="sm" onClick={() => onViewOnMap(technician.location)}>
-                <MapIcon className="mr-2 h-4 w-4" /> View on Map
-            </Button>
+        <div className="w-full grid grid-cols-[auto,1fr] gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="outline" size="icon" onClick={() => onViewOnMap(technician.location)}>
+                        <MapIcon className="h-4 w-4" />
+                        <span className="sr-only">View on Map</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>View on Map</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" className="w-full">
+                  <Button variant="destructive" className="w-full">
                       <AlertOctagon className="mr-2 h-4 w-4" />
                       Mark Unavailable
                   </Button>

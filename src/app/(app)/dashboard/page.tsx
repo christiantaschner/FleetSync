@@ -575,7 +575,7 @@ export default function DashboardPage() {
             case 'technician':
                 const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz';
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
-                return techA.localeCompare(techB) || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return techA.localeCompare(techB) || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'customer':
                 return a.customerName.localeCompare(b.customerName) || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'scheduledTime':
@@ -623,7 +623,7 @@ export default function DashboardPage() {
     if (!appId) return;
     const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
     if (currentPendingJobs.length === 0 || technicians.length === 0) {
-      toast({ title: "Batch Assignment", description: "No pending jobs or no technicians available for assignment.", variant: "default" });
+      toast({ title: "Fleety Batch Assign", description: "No pending jobs or no technicians available for assignment.", variant: "default" });
       return;
     }
     setIsBatchLoading(true);
@@ -703,7 +703,7 @@ export default function DashboardPage() {
     try {
         await batch.commit();
         if (assignmentsMade > 0) {
-          toast({ title: "Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
+          toast({ title: "Fleety Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
         } else {
           toast({ title: "No Assignments Made", description: "No valid jobs could be assigned in this batch.", variant: "default" });
         }
@@ -802,7 +802,7 @@ export default function DashboardPage() {
       toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else if (result.data?.message) {
       const { dismiss } = toast({
-        title: "AI Message Draft",
+        title: "Fleety's Message Draft",
         description: <ToastWithCopy message={result.data.message} onDismiss={() => dismiss()} />,
         duration: Infinity,
       });
@@ -1067,7 +1067,7 @@ export default function DashboardPage() {
                   className="w-full md:w-auto flex-shrink-0"
                 >
                   {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                  {t('ai_batch_assign')}
+                  Fleety Batch Assign
                 </Button>
               </div>
               <div className="space-y-4">

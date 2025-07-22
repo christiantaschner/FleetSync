@@ -29,17 +29,26 @@ export default function SettingsPage() {
 
     const canManageUsers = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
     
-    // Route protection
+    // Route protection logic is now primarily in the main layout,
+    // but we can keep a fallback here for direct navigation attempts.
     useEffect(() => {
-        if (loading) return; // Wait until auth state is confirmed
-        if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin')) {
+        if (!loading && (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin'))) {
             router.replace('/dashboard');
         }
     }, [userProfile, loading, router]);
 
 
     // Loading state for the whole page until role is confirmed
-    if (loading || !userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin')) {
+    if (loading || !userProfile) {
+        return (
+            <div className="flex h-[50vh] w-full items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
+    }
+    
+    // This check prevents non-admins from seeing the page content flash before redirect.
+    if (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin') {
         return (
             <div className="flex h-[50vh] w-full items-center justify-center">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />

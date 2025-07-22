@@ -45,7 +45,7 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
       // For simplicity, we'll just show a standard success toast now.
       // A custom toast with copy actions can be added back if needed.
        toast({
-        title: "AI Message Drafted",
+        title: "Fleety's Message Drafted",
         description: "The customer notification has been drafted and is ready to be sent from your communication tool.",
       });
       onDismiss(technician.id);

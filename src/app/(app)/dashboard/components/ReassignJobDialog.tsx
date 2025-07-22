@@ -86,7 +86,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
             setSuggestion(result.data);
             setSuggestedTech(techDetails);
         } else {
-            toast({ title: "AI Suggestion Failed", description: result.error, variant: "destructive" });
+            toast({ title: "Fleety Suggestion Failed", description: result.error, variant: "destructive" });
         }
 
         setIsLoadingAI(false);

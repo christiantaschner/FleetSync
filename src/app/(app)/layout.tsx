@@ -107,6 +107,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
         if (pathname === '/onboarding') {
           router.replace('/dashboard');
         }
+        // Add a check to prevent redirecting away from settings if user is an admin
         if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
             router.replace(`/technician/jobs/${user.uid}`);
         }

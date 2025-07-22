@@ -87,34 +87,39 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     if (loading) return;
 
     if (!user) {
-      router.replace("/login");
-      return;
+        router.replace("/login");
+        return;
     }
 
     if (userProfile) {
-      if (userProfile.onboardingStatus === 'pending_onboarding') {
-        if (pathname !== '/onboarding') {
-          router.replace('/onboarding');
+        // Priority 1: If onboarding is pending, they MUST go to onboarding.
+        if (userProfile.onboardingStatus === 'pending_onboarding') {
+            if (pathname !== '/onboarding') {
+                router.replace('/onboarding');
+            }
+            return;
         }
-        return;
-      }
-      
-      if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
-        return; // User is stuck on the "waiting for invite" page, which is correct.
-      }
 
-      if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
-        if (pathname === '/onboarding') {
-          router.replace('/dashboard');
+        // Priority 2: If onboarding is complete, check their role and route accordingly.
+        if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
+            if (pathname === '/onboarding') { // Don't let them go back to onboarding
+                router.replace('/dashboard');
+            }
+            // If user is a technician but not on a technician page, redirect them.
+            if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
+                router.replace(`/technician/jobs/${user.uid}`);
+            }
+            return;
         }
-        
-        if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
-            router.replace(`/technician/jobs/${user.uid}`);
+
+        // Priority 3: If their profile is created but they have no company/role yet.
+        if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
+            // This is the "waiting for invite" state. The UI for this is handled below.
+            // No redirect needed if they are on a valid app page (which will show the message).
+            return;
         }
-        return;
-      }
     }
-  }, [user, userProfile, loading, router, pathname]);
+}, [user, userProfile, loading, router, pathname]);
 
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {

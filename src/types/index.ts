@@ -15,7 +15,7 @@ export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
     companyId: z.string().nullable(),
-    role: z.enum(['admin', 'technician', 'superAdmin']).nullable(),
+    role: z.enum(['admin', 'technician', 'superAdmin', 'accountant']).nullable(),
     onboardingStatus: z.enum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
@@ -23,7 +23,7 @@ export type UserProfile = z.infer<typeof UserProfileSchema>;
 export const InviteSchema = z.object({
     id: z.string(),
     email: z.string(),
-    role: z.enum(['admin', 'technician']),
+    role: z.enum(['admin', 'technician', 'accountant']),
     companyId: z.string(),
     status: z.enum(['pending', 'accepted']),
     createdAt: z.string(),
@@ -98,7 +98,7 @@ export type Technician = {
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
-export type JobStatus = 'Pending' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Cancelled' | 'Draft';
+export type JobStatus = 'Pending' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
 
 export type ChecklistResult = {
     item: string;
@@ -148,6 +148,9 @@ export type Job = {
   aiRepairGuide?: string;
   travelDistanceKm?: number;
   co2EmissionsKg?: number;
+  invoiceUrl?: string;
+  invoiceUploadedAt?: string;
+  invoiceUploadedBy?: string;
 };
 
 export const CustomerSchema = z.object({

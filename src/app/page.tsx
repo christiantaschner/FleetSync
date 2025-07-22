@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain, Repeat } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -27,9 +27,9 @@ export default function MarketingPage() {
       description: t('feature_mobile_app_desc'),
     },
     {
-      icon: <Map className="h-8 w-8 text-primary" />,
-      title: t('feature_live_map_title'),
-      description: t('feature_live_map_desc'),
+      icon: <Repeat className="h-8 w-8 text-primary" />,
+      title: "Automated Contract Jobs",
+      description: "Manage recurring service contracts. Let AI suggest the next appointment date and draft customer notifications automatically.",
     },
     {
       icon: <CalendarDays className="h-8 w-8 text-primary" />,
@@ -277,7 +277,7 @@ export default function MarketingPage() {
                 </div>
                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
                     {benefits.map((benefit) => (
-                        <Card key={benefit.title}>
+                        <Card key={benefit.title} className="h-full">
                             <CardHeader className="flex-row items-center gap-4 pb-4">
                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                                    {benefit.icon}
@@ -303,10 +303,12 @@ export default function MarketingPage() {
             </div>
             <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
               {scenarios.map((scenario, index) => (
-                <Card key={index} className="flex flex-col">
-                  <CardHeader className="flex-row items-center gap-4">
-                      {scenario.icon}
-                      <CardTitle className="font-headline">{scenario.problem}</CardTitle>
+                <Card key={index} className="flex flex-col text-center">
+                  <CardHeader>
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+                        {scenario.icon}
+                      </div>
+                      <CardTitle className="font-headline pt-2">{scenario.problem}</CardTitle>
                   </CardHeader>
                   <CardContent className="flex-grow">
                       <p className="text-muted-foreground">{scenario.solution}</p>

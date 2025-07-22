@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import type { UserProfile, Invite } from '@/types';
 import * as admin from 'firebase-admin';
-import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc, orderBy } from 'firebase/firestore';
 
 const EnsureUserDocumentInputSchema = z.object({
   uid: z.string().min(1, 'User ID is required.'),
@@ -24,71 +24,58 @@ export async function ensureUserDocumentAction(
     const userDocRef = dbAdmin.collection('users').doc(uid);
     const docSnap = await userDocRef.get();
     
-    let role: UserProfile['role'] = null;
-    let companyId: string | null = null;
-    let onboardingStatus: UserProfile['onboardingStatus'] = 'pending_onboarding';
-    
-    // Check for a pending invitation first
-    const invitesRef = collection(dbAdmin, 'invitations');
-    const inviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"), limit(1));
-    const inviteSnapshot = await getDocs(inviteQuery);
-
-    if (!inviteSnapshot.empty) {
-        const inviteDoc = inviteSnapshot.docs[0];
-        const inviteData = inviteDoc.data();
-        companyId = inviteData.companyId;
-        role = inviteData.role;
-        onboardingStatus = 'completed';
-        // Mark invitation as accepted instead of deleting
-        await updateDoc(inviteDoc.ref, { 
-            status: 'accepted',
-            acceptedAt: serverTimestamp(),
-            acceptedByUid: uid,
-        });
-    } else if (email === 'christian.taschner.ek@gmail.com') { // Super Admin check
-        role = 'superAdmin';
-        companyId = 'fleetsync_ai_dev';
-        onboardingStatus = 'completed';
-    }
-
+    // This is the source of truth for the user's profile data.
+    let userProfileFromDb: UserProfile;
 
     if (!docSnap.exists) {
-      await userDocRef.set({
-        uid: uid,
-        email: email,
-        onboardingStatus,
-        role,
-        companyId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      
-      if(role === 'superAdmin') {
-          const companyRef = dbAdmin.collection('companies').doc('fleetsync_ai_dev');
-          const companySnap = await companyRef.get();
-          if(!companySnap.exists) {
-              await companyRef.set({
-                  name: "FleetSync AI (Dev)",
-                  ownerId: uid,
-                  subscriptionStatus: 'active',
-                  createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              });
-          }
-      }
+        let role: UserProfile['role'] = null;
+        let companyId: string | null = null;
+        let onboardingStatus: UserProfile['onboardingStatus'] = 'pending_onboarding';
+        
+        // Check for a pending invitation first
+        const invitesRef = collection(dbAdmin, 'invitations');
+        const inviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"), limit(1));
+        const inviteSnapshot = await getDocs(inviteQuery);
+
+        if (!inviteSnapshot.empty) {
+            const inviteDoc = inviteSnapshot.docs[0];
+            const inviteData = inviteDoc.data();
+            companyId = inviteData.companyId;
+            role = inviteData.role;
+            onboardingStatus = 'completed';
+            // Mark invitation as accepted instead of deleting
+            await updateDoc(inviteDoc.ref, { 
+                status: 'accepted',
+                acceptedAt: serverTimestamp(),
+                acceptedByUid: uid,
+            });
+        }
+        
+        const newUserProfile: UserProfile = {
+            uid: uid,
+            email: email,
+            onboardingStatus,
+            role,
+            companyId,
+        };
+        await userDocRef.set({
+            ...newUserProfile,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        userProfileFromDb = newUserProfile;
+
+    } else {
+        userProfileFromDb = docSnap.data() as UserProfile;
     }
 
-    const userProfileFromDb = (await userDocRef.get()).data() as UserProfile;
-    
-    // Construct the ideal claims object from the database source of truth.
+    // Always re-synchronize claims with the database as the source of truth.
+    // This fixes issues where claims might be stale or incorrect after signup/login.
     const claimsToSet = {
         role: userProfileFromDb.role || null,
         companyId: userProfileFromDb.companyId || null,
     };
     
-    // Force-set the custom claims. This overwrites the entire claims object,
-    // purging any old, invalid, or misspelled claims like 'companyid'.
-    // This is the definitive fix for the observed issue.
     await authAdmin.setCustomUserClaims(uid, claimsToSet);
     console.log(JSON.stringify({
         message: `Custom claims for user ${uid} synchronized`,

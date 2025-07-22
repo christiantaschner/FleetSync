@@ -62,123 +62,86 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
       
-      // Reset state
+      setUser(currentUser);
       setUserProfile(null);
       setCompany(null);
-      setUser(currentUser); // Set the Firebase user object immediately
       setContractsDueCount(0);
 
       if (currentUser) {
         try {
+            // First, ensure the user document and claims are synchronized.
             await ensureUserDocumentAction({ 
                 uid: currentUser.uid, 
                 email: currentUser.email! 
             });
-
-            const idTokenResult = await currentUser.getIdTokenResult(true);
-            const claims = idTokenResult.claims;
             
+            // Force a refresh of the token to get the latest claims.
+            const idTokenResult = await currentUser.getIdTokenResult(true); 
+            const claims = idTokenResult.claims;
             const roleFromClaims = (claims.role as UserProfile['role']) || null;
             const companyIdFromClaims = (claims.companyId as string) || null;
-            
+
+            // Now that claims are fresh, set up listeners.
             const userDocRef = doc(db, "users", currentUser.uid);
 
             unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
-                const firestoreData = userDocSnap.exists() ? userDocSnap.data() : {};
-                
-                const finalProfile: UserProfile = {
-                    uid: currentUser.uid,
-                    email: currentUser.email!,
-                    role: roleFromClaims,
-                    companyId: companyIdFromClaims,
-                    onboardingStatus: firestoreData.onboardingStatus || 'pending_onboarding',
-                };
-                setUserProfile(finalProfile);
+                if (userDocSnap.exists()) {
+                    const firestoreData = userDocSnap.data();
+                    const finalProfile: UserProfile = {
+                        uid: currentUser.uid,
+                        email: currentUser.email!,
+                        role: roleFromClaims,
+                        companyId: companyIdFromClaims,
+                        onboardingStatus: firestoreData.onboardingStatus || 'pending_onboarding',
+                    };
+                    setUserProfile(finalProfile);
 
-                if (unsubscribeCompany) unsubscribeCompany();
-                if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
+                    if (unsubscribeCompany) unsubscribeCompany();
+                    if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
 
-                if (finalProfile.companyId) {
-                    const companyDocRef = doc(db, "companies", finalProfile.companyId);
-                    unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
-                        if (companyDocSnap.exists()) {
-                            const companyData = companyDocSnap.data();
-                            for (const key in companyData) {
-                                if (companyData[key] && typeof companyData[key].toDate === 'function') {
-                                    companyData[key] = companyData[key].toDate().toISOString();
-                                }
+                    if (finalProfile.companyId) {
+                        const companyDocRef = doc(db, "companies", finalProfile.companyId);
+                        unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
+                            if (companyDocSnap.exists()) {
+                                const companyData = companyDocSnap.data();
+                                setCompany({ id: companyDocSnap.id, ...companyData } as Company);
+                            } else {
+                                setCompany(null);
                             }
-                            setCompany({ id: companyDocSnap.id, ...companyData } as Company);
-                        } else {
+                            setLoading(false);
+                        }, (error) => {
+                            console.error("Error fetching company data:", error);
                             setCompany(null);
-                        }
-                        setLoading(false); 
-                    }, (error) => {
-                        console.error("Error fetching company data:", error);
+                            setLoading(false);
+                        });
+                    } else {
+                        // If no companyId, we are done loading.
                         setCompany(null);
                         setLoading(false);
-                    });
-
-                    // Combined listener for Contracts and Jobs
-                    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-                    if (appId) {
-                        const activeJobStatuses: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
-                        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", finalProfile.companyId), where("isActive", "==", true));
-                        
-                        unsubscribeContractsAndJobs = onSnapshot(contractsQuery, async (contractsSnapshot) => {
-                            const contracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
-                            
-                            // Get all jobs for the company to cross-reference
-                            const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", finalProfile.companyId));
-                            const jobsSnapshot = await getDocs(jobsQuery);
-                            const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
-
-                            const oneWeekFromNow = addDays(new Date(), 7);
-                            let dueCount = 0;
-
-                            for (const contract of contracts) {
-                                const nextDueDate = getNextDueDate(contract);
-                                // A contract is due if its next service date is in the past or within the next 7 days.
-                                const isTheoreticallyDue = isBefore(nextDueDate, oneWeekFromNow);
-
-                                if (isTheoreticallyDue) {
-                                    // Check if a job for this contract already exists and is not cancelled.
-                                    const hasOpenJob = allJobs.some(job => 
-                                        job.sourceContractId === contract.id &&
-                                        new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
-                                        job.status !== 'Cancelled'
-                                    );
-                                    
-                                    // If it's due AND there's no open job, it needs attention.
-                                    if (!hasOpenJob) {
-                                        dueCount++;
-                                    }
-                                }
-                            }
-                            setContractsDueCount(dueCount);
-                        });
                     }
-
                 } else {
+                    // User doc doesn't exist, which shouldn't happen after ensureUserDocumentAction.
+                    // This is a fail-safe to prevent getting stuck.
+                    console.error("User document not found after ensuring it exists.");
+                    setUserProfile(null);
                     setCompany(null);
                     setLoading(false);
                 }
-
             }, (error) => {
-                console.error("Error fetching user profile:", error);
+                console.error("Error listening to user profile:", error);
                 setUserProfile(null);
                 setCompany(null);
                 setLoading(false);
             });
         } catch (err) {
-            console.error("Error during auth state processing:", err);
+            console.error("Critical error during auth state processing:", err);
             setUser(null);
             setUserProfile(null);
             setCompany(null);
             setLoading(false);
         }
       } else {
-        setUser(null);
+        // No user, we are done loading.
         setLoading(false);
       }
     });

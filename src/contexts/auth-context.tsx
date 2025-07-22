@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
-import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, getDocs } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";

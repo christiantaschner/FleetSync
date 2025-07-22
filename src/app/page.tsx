@@ -371,11 +371,51 @@ export default function MarketingPage() {
         </section>
 
         {/* Growth Section */}
-        <section className="bg-primary/5 py-16 sm:py-24">
-            <div className="container">
+        <section className="relative py-16 sm:py-24 bg-primary/5 overflow-hidden">
+            <div className="absolute inset-0">
+                <Image
+                    src="https://placehold.co/1920x1080.png"
+                    alt="Abstract background"
+                    layout="fill"
+                    objectFit="cover"
+                    className="opacity-5"
+                    data-ai-hint="abstract lines"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
+            </div>
+            <div className="container relative z-10">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('growth_title')}</h2>
                     <p className="mt-6 text-lg text-muted-foreground">{t('growth_desc')}</p>
+                </div>
+                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <Card className="bg-background/80 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center gap-4">
+                            <TrendingUp className="h-8 w-8 text-primary"/>
+                            <CardTitle>Data-Driven Insights</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Every completed job becomes a data point. Our AI helps you spot trends in job types, durations, and technician performance.</p>
+                        </CardContent>
+                    </Card>
+                     <Card className="bg-background/80 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center gap-4">
+                            <Workflow className="h-8 w-8 text-primary"/>
+                            <CardTitle>Continuous Improvement</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                           <p className="text-muted-foreground">Use insights from analytics to refine your processes, offer better training, and improve time and cost estimates for future work.</p>
+                        </CardContent>
+                    </Card>
+                     <Card className="bg-background/80 backdrop-blur-sm">
+                        <CardHeader className="flex flex-row items-center gap-4">
+                            <Brain className="h-8 w-8 text-primary"/>
+                            <CardTitle>Future-Ready Growth</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground">Arm your business with the data it needs to scale intelligently, forecast demand, and stay ahead of the competition.</p>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </section>

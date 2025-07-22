@@ -17,11 +17,16 @@ try {
             // This is more robust than relying on Application Default Credentials (ADC)
             // which might not be configured on a developer's machine.
             if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-                const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-                admin.initializeApp({
-                    credential: admin.credential.cert(serviceAccount),
-                });
-                console.log('Firebase Admin SDK initialized for local development with service account.');
+                try {
+                    const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+                    admin.initializeApp({
+                        credential: admin.credential.cert(serviceAccount),
+                    });
+                    console.log('Firebase Admin SDK initialized for local development with service account.');
+                } catch (e) {
+                    console.error("Failed to parse GOOGLE_APPLICATION_CREDENTIALS. Make sure it's a valid JSON string.", e);
+                    throw new Error("Invalid service account credentials provided.");
+                }
             } else {
                  // Fallback to ADC if the specific variable isn't set
                 admin.initializeApp();

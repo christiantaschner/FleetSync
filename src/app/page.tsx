@@ -31,6 +31,11 @@ export default function MarketingPage() {
       title: "Automated Contract Jobs",
       description: "Manage recurring service contracts. Let AI suggest the next appointment date and draft customer notifications automatically.",
     },
+     {
+      icon: <ClipboardList className="h-8 w-8 text-primary" />,
+      title: "Customer Management",
+      description: "Access a complete history of past jobs and installed equipment for every customer, empowering your technicians with crucial context before they arrive on-site.",
+    },
     {
       icon: <CalendarDays className="h-8 w-8 text-primary" />,
       title: t('feature_schedule_overview_title'),
@@ -40,11 +45,6 @@ export default function MarketingPage() {
       icon: <Shuffle className="h-8 w-8 text-primary" />,
       title: t('feature_dynamic_optimization_title'),
       description: t('feature_dynamic_optimization_desc'),
-    },
-    {
-      icon: <ClipboardList className="h-8 w-8 text-primary" />,
-      title: "Customer Management",
-      description: "Access a complete history of past jobs and installed equipment for every customer, empowering your technicians with crucial context before they arrive on-site.",
     },
     {
       icon: <MessageSquare className="h-8 w-8 text-primary" />,
@@ -247,11 +247,11 @@ export default function MarketingPage() {
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative flex justify-center">
                 <Image 
-                    src="https://placehold.co/1200x750.png"
+                    src="https://storage.googleapis.com/project-pin-prod.appspot.com/a976a161-4623-47ff-b841-57643198031d"
                     width={1200}
                     height={750}
                     alt="FleetSync AI Dashboard Screenshot"
-                    className="rounded-xl border shadow-2xl"
+                    className="rounded-xl border bg-background shadow-2xl"
                     data-ai-hint="dashboard interface"
                 />
             </div>

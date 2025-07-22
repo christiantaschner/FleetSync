@@ -240,7 +240,7 @@ export default function MarketingPage() {
         
         {/* Screenshot placeholder */}
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
-            <div className="relative">
+            <div className="relative flex justify-center">
                 <Image 
                     src="https://placehold.co/1200x750.png"
                     width={1200}

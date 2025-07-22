@@ -271,7 +271,7 @@ export default function MarketingPage() {
             </div>
         </section>
         
-        {/* Benefits Section - REDESIGNED */}
+        {/* Benefits Section */}
         <section id="benefits" className="py-16 sm:py-24 bg-primary/5">
             <div className="container">
                  <div className="mx-auto max-w-2xl text-center">
@@ -283,7 +283,7 @@ export default function MarketingPage() {
                 <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2">
                     {benefits.map((benefit) => (
                         <div key={benefit.title} className="flex items-start gap-4">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
                                {benefit.icon}
                            </div>
                            <div>
@@ -296,7 +296,7 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* Scenarios Section - REDESIGNED */}
+        {/* Scenarios Section */}
         <section className="container py-16 sm:py-24">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('from_nightmare_to_excellence')}</h2>
@@ -321,7 +321,7 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* Features Section - REDESIGNED */}
+        {/* Features Section */}
         <section id="features" className="bg-muted py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
@@ -463,7 +463,7 @@ export default function MarketingPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline justify-center gap-2">
-                                <span className="text-5xl font-bold">$49</span>
+                                <span className="text-5xl font-bold">$69</span>
                                 <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
                             </div>
                             <Button asChild size="lg" className="w-full">

@@ -46,7 +46,7 @@ export default function LoginPage() {
     setIsLoading(true);
     const success = await login(data.email, data.password);
     if (success) {
-      router.push('/dashboard');
+      // The auth context will handle routing based on user profile state
     } else {
       setIsLoading(false);
     }

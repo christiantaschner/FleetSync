@@ -42,6 +42,9 @@ export type ImportJobsActionInput = z.infer<typeof ImportJobsActionInputSchema>;
 export async function importJobsAction(
   input: ImportJobsActionInput
 ): Promise<{ data: { successCount: number }; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { data: { successCount: input.jobs.length }, error: "Mock mode: Data is not saved." };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, jobs, appId } = ImportJobsActionInputSchema.parse(input);
@@ -114,13 +117,15 @@ const HandleTechnicianUnavailabilityInputSchema = z.object({
 export async function handleTechnicianUnavailabilityAction(
   input: z.infer<typeof HandleTechnicianUnavailabilityInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, technicianId, reason, unavailableFrom, unavailableUntil, appId } = HandleTechnicianUnavailabilityInputSchema.parse(input);
     
     const batch = writeBatch(dbAdmin);
     
-    // 1. Mark technician as unavailable
     const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
     const techSnap = await getDoc(techDocRef);
     if (!techSnap.exists() || techSnap.data().companyId !== companyId) {
@@ -135,7 +140,6 @@ export async function handleTechnicianUnavailabilityAction(
         unavailableUntil: unavailableUntil || null,
     });
 
-    // 2. Find and unassign active jobs for that company
     const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
     const jobsQuery = query(
       collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
@@ -153,7 +157,6 @@ export async function handleTechnicianUnavailabilityAction(
       });
     });
 
-    // 3. Commit all changes
     await batch.commit();
 
     return { error: null };
@@ -186,13 +189,15 @@ const ConfirmOptimizedRouteInputSchema = z.object({
 export async function confirmOptimizedRouteAction(
   input: z.infer<typeof ConfirmOptimizedRouteInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, optimizedRoute, jobsNotInRoute, appId } = ConfirmOptimizedRouteInputSchema.parse(input);
 
     const batch = writeBatch(dbAdmin);
 
-    // Verify all jobs belong to the company before updating
     const allJobIds = [...optimizedRoute.map(step => step.taskId), ...jobsNotInRoute];
     for (const jobId of allJobIds) {
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
@@ -202,13 +207,11 @@ export async function confirmOptimizedRouteAction(
         }
     }
 
-    // Set new route order for optimized jobs
     optimizedRoute.forEach((step, index) => {
       const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, step.taskId);
       batch.update(jobDocRef, { routeOrder: index });
     });
     
-    // Clear route order for jobs that were unselected from optimization
     jobsNotInRoute.forEach((jobId) => {
       const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
       batch.update(jobDocRef, { routeOrder: deleteField() });
@@ -238,13 +241,15 @@ export async function confirmOptimizedRouteAction(
 export async function confirmManualRescheduleAction(
   input: z.infer<typeof ConfirmManualRescheduleInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, movedJobId, newScheduledTime, optimizedRoute, appId, aiSuggestedTechnicianId, aiReasoning } = ConfirmManualRescheduleInputSchema.parse(input);
 
     const batch = writeBatch(dbAdmin);
 
-    // Verify all jobs belong to the company
     const allJobIds = [movedJobId, ...optimizedRoute.map(step => step.taskId)];
      for (const jobId of allJobIds) {
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
@@ -254,30 +259,26 @@ export async function confirmManualRescheduleAction(
         }
     }
 
-    // Update the moved job with its new time
     const movedJobRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, movedJobId);
     batch.update(movedJobRef, { 
       scheduledTime: newScheduledTime,
       updatedAt: serverTimestamp(),
      });
 
-    // Set new route order for all jobs in the optimized route
     optimizedRoute.forEach((step, index) => {
       const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, step.taskId);
       batch.update(jobDocRef, { 
         routeOrder: index,
-        // Also update timestamp for all jobs in the sequence
         updatedAt: serverTimestamp(),
       });
     });
 
-    // If there was an AI suggestion that was overridden, log it for feedback.
     if (aiSuggestedTechnicianId && aiReasoning) {
         const feedback: DispatcherFeedback = {
             companyId,
             jobId: movedJobId,
             aiSuggestedTechnicianId,
-            dispatcherSelectedTechnicianId: 'manual_reschedule', // Indicate manual action
+            dispatcherSelectedTechnicianId: 'manual_reschedule',
             aiReasoning,
             dispatcherReasoning: "Dispatcher manually adjusted the schedule, overriding the initial AI placement.",
             createdAt: new Date().toISOString(),
@@ -318,6 +319,9 @@ const RequestProfileChangeInputSchema = z.object({
 export async function requestProfileChangeAction(
   input: z.infer<typeof RequestProfileChangeInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, technicianId, technicianName, requestedChanges, notes, appId } = RequestProfileChangeInputSchema.parse(input);
@@ -358,6 +362,9 @@ export async function requestProfileChangeAction(
 export async function approveProfileChangeRequestAction(
   input: z.infer<typeof ApproveProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, requestId, technicianId, approvedChanges, reviewNotes, appId } = ApproveProfileChangeRequestInputSchema.parse(input);
@@ -370,7 +377,6 @@ export async function approveProfileChangeRequestAction(
     
     const batch = writeBatch(dbAdmin);
 
-    // 1. Update the technician's document if there are changes
     if (Object.keys(approvedChanges).length > 0) {
         const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
         batch.update(techDocRef, {
@@ -379,7 +385,6 @@ export async function approveProfileChangeRequestAction(
         });
     }
 
-    // 2. Update the request's status
     batch.update(requestDocRef, {
       status: 'approved',
       reviewedAt: new Date().toISOString(),
@@ -410,6 +415,9 @@ export async function approveProfileChangeRequestAction(
 export async function rejectProfileChangeRequestAction(
   input: z.infer<typeof RejectProfileChangeRequestInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, requestId, reviewNotes, appId } = RejectProfileChangeRequestInputSchema.parse(input);
@@ -447,6 +455,9 @@ export async function rejectProfileChangeRequestAction(
 export async function reassignJobAction(
   input: z.infer<typeof ReassignJobInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, jobId, newTechnicianId, reason, appId } = ReassignJobInputSchema.parse(input);
@@ -464,7 +475,7 @@ export async function reassignJobAction(
       status: "Assigned" as JobStatus,
       updatedAt: serverTimestamp(),
       assignedAt: serverTimestamp(),
-      routeOrder: deleteField(), // Clear route order as it belongs to a new tech's route
+      routeOrder: deleteField(),
     };
     
     if (reason) {
@@ -507,6 +518,9 @@ const GenerateRecurringJobsInputSchema = z.object({
 export async function generateRecurringJobsAction(
   input: z.infer<typeof GenerateRecurringJobsInputSchema>
 ): Promise<{ data: { jobsCreated: number }; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { data: { jobsCreated: 5 }, error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, untilDate, appId } = GenerateRecurringJobsInputSchema.parse(input);
@@ -526,7 +540,6 @@ export async function generateRecurringJobsAction(
       let currentDate = contract.lastGeneratedUntil ? addDays(new Date(contract.lastGeneratedUntil), 1) : new Date(contract.startDate);
 
       while (currentDate <= targetDate) {
-        // Create job
         const newJobRef = doc(jobsCollectionRef);
         const newJobPayload = {
           ...contract.jobTemplate,
@@ -545,7 +558,6 @@ export async function generateRecurringJobsAction(
         batch.set(newJobRef, newJobPayload);
         jobsCreated++;
 
-        // Increment current date
         switch (contract.frequency) {
           case 'Weekly': currentDate = addWeeks(currentDate, 1); break;
           case 'Bi-Weekly': currentDate = addWeeks(currentDate, 2); break;
@@ -557,7 +569,6 @@ export async function generateRecurringJobsAction(
         }
       }
 
-      // Update contract's last generated date
       const contractDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/contracts`, contract.id!);
       batch.update(contractDocRef, { lastGeneratedUntil: targetDate.toISOString() });
     }
@@ -592,12 +603,17 @@ export type GenerateTrackingLinkInput = z.infer<typeof GenerateTrackingLinkInput
 export async function generateTrackingLinkAction(
     input: GenerateTrackingLinkInput
 ): Promise<{ data: { trackingUrl: string } | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const token = crypto.randomUUID();
+        const trackingUrl = `/track/${token}?appId=${input.appId}`;
+        return { data: { trackingUrl }, error: null };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { jobId, companyId, appId } = GenerateTrackingLinkInputSchema.parse(input);
 
         const token = crypto.randomUUID();
-        const expiresAt = addHours(new Date(), 4); // Link is valid for 4 hours
+        const expiresAt = addHours(new Date(), 4); 
 
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
@@ -641,6 +657,9 @@ const DeleteJobInputSchema = z.object({
 export async function deleteJobAction(
   input: z.infer<typeof DeleteJobInputSchema>
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { jobId, companyId, appId } = DeleteJobInputSchema.parse(input);
@@ -655,11 +674,9 @@ export async function deleteJobAction(
         
         const jobData = jobSnap.data() as Job;
         
-        // If a technician was assigned, update their status to be available again.
         if (jobData.assignedTechnicianId) {
             const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, jobData.assignedTechnicianId);
             const techSnap = await getDoc(techDocRef);
-            // Only update the technician if this deleted job was their *current* job.
             if (techSnap.exists() && techSnap.data().currentJobId === jobId) {
                 batch.update(techDocRef, {
                     isAvailable: true,
@@ -668,7 +685,6 @@ export async function deleteJobAction(
             }
         }
         
-        // Delete the job itself.
         batch.delete(jobDocRef);
         
         await batch.commit();
@@ -698,12 +714,17 @@ const GenerateTriageLinkInputSchema = z.object({
 export async function generateTriageLinkAction(
     input: z.infer<typeof GenerateTriageLinkInputSchema>
 ): Promise<{ data: { triageUrl: string } | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const token = crypto.randomUUID();
+        const triageUrl = `/triage/${token}?appId=${input.appId}`;
+        return { data: { triageUrl }, error: null };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
         const { jobId, companyId, appId } = GenerateTriageLinkInputSchema.parse(input);
 
         const token = crypto.randomUUID();
-        const expiresAt = addHours(new Date(), 24); // Link is valid for 24 hours
+        const expiresAt = addHours(new Date(), 24);
 
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
@@ -746,6 +767,9 @@ const GetTriageJobInfoInputSchema = z.object({
 export async function getTriageJobInfoAction(
   input: z.infer<typeof GetTriageJobInfoInputSchema>
 ): Promise<{ data: { jobTitle: string; customerName: string } | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { data: { jobTitle: 'Mock Triage Job', customerName: 'Mock Customer' }, error: null };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const { token, appId } = GetTriageJobInfoInputSchema.parse(input);

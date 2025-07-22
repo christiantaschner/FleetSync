@@ -10,6 +10,9 @@ import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, upda
 export async function getCompanyUsersAction(
     companyId: string
 ): Promise<{ data: UserProfile[] | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { data: [], error: null };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         if (!companyId) {
@@ -40,6 +43,9 @@ export async function getCompanyUsersAction(
 export async function getCompanyInvitesAction(
     companyId: string
 ): Promise<{ data: Invite[] | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { data: [], error: null };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         if (!companyId) {
@@ -89,6 +95,9 @@ export type InviteUserInput = z.infer<typeof InviteUserInputSchema>;
 export async function inviteUserAction(
   input: InviteUserInput
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
@@ -103,7 +112,6 @@ export async function inviteUserAction(
             return { error: `This user is already a member of a company.` };
         }
 
-        // User exists but is not in a company, so add them directly.
         await userDoc.ref.update({
             companyId,
             role,
@@ -129,7 +137,6 @@ export async function inviteUserAction(
         return { error: null };
     }
     
-    // User does not exist, so create an invitation document
     const invitesRef = collection(dbAdmin, 'invitations');
     const existingInviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"));
     const existingInviteSnapshot = await getDocs(existingInviteQuery);
@@ -145,8 +152,6 @@ export async function inviteUserAction(
         status: 'pending',
         createdAt: serverTimestamp(),
     });
-    
-    // In a real app, you would now trigger an email send to the user with a signup link.
     
     return { error: null };
   } catch (e) {
@@ -176,6 +181,9 @@ export type ManageUserRoleInput = z.infer<typeof ManageUserRoleInputSchema>;
 export async function updateUserRoleAction(
   input: ManageUserRoleInput
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
     try {
         if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
         const { userId, companyId, newRole } = ManageUserRoleInputSchema.parse(input);
@@ -189,7 +197,6 @@ export async function updateUserRoleAction(
 
         await userDocRef.update({ role: newRole });
 
-        // Rebuild the claims object to preserve companyId but update the role
         await authAdmin.setCustomUserClaims(userId, {
             companyId: companyId,
             role: newRole,
@@ -224,6 +231,9 @@ export type RemoveUserFromCompanyInput = z.infer<typeof RemoveUserFromCompanyInp
 export async function removeUserFromCompanyAction(
   input: RemoveUserFromCompanyInput
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
     try {
         if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized. Check server logs for details.");
         const { userId, companyId, appId } = RemoveUserFromCompanyInputSchema.parse(input);
@@ -251,7 +261,6 @@ export async function removeUserFromCompanyAction(
 
         await batch.commit();
 
-        // Wipe the relevant claims by setting them to null.
         await authAdmin.setCustomUserClaims(userId, {
             companyId: null,
             role: null,

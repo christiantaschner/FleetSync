@@ -35,6 +35,9 @@ export type UpdateTechnicianInput = z.infer<typeof UpdateTechnicianInputSchema>;
 export async function updateTechnicianAction(
   input: UpdateTechnicianInput,
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     
@@ -42,7 +45,6 @@ export async function updateTechnicianAction(
 
     const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(id);
 
-    // Security Check: Verify the technician belongs to the calling user's company
     const techSnap = await techDocRef.get();
     if (!techSnap.exists() || techSnap.data()?.companyId !== updateData.companyId) {
         throw new Error("Permission denied. You can only edit technicians in your own company.");
@@ -82,13 +84,15 @@ export type ToggleOnCallStatusInput = z.infer<typeof ToggleOnCallStatusInputSche
 export async function toggleOnCallStatusAction(
   input: ToggleOnCallStatusInput,
 ): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const { companyId, appId, technicianId, isOnCall } = ToggleOnCallStatusInputSchema.parse(input);
 
     const techDocRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`).doc(technicianId);
     
-    // Security check
     const techSnap = await techDocRef.get();
     if (!techSnap.exists() || techSnap.data()?.companyId !== companyId) {
         return { error: "Permission denied or technician not found." };

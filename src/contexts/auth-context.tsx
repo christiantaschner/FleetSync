@@ -18,6 +18,7 @@ import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
 import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
+import { mockJobs, mockContracts, mockTechnicians } from "@/lib/mock-data";
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +46,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // --- MOCK DATA MODE ---
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+      console.log("Auth Context: Running in MOCK DATA mode.");
+      const mockUser = { uid: 'mock_user_id', email: 'admin@mock.com' } as User;
+      const mockUserProfile: UserProfile = {
+        uid: 'mock_user_id',
+        email: 'admin@mock.com',
+        companyId: 'mock_company_123',
+        role: 'admin',
+        onboardingStatus: 'completed',
+      };
+      const mockCompany: Company = {
+        id: 'mock_company_123',
+        name: 'Mock Service Company',
+        ownerId: 'mock_user_id',
+        subscriptionStatus: 'active',
+      };
+
+      setUser(mockUser);
+      setUserProfile(mockUserProfile);
+      setCompany(mockCompany);
+
+      const dueCount = mockContracts.reduce((count, contract) => {
+          if (!contract.isActive) return count;
+          const nextDueDate = getNextDueDate(contract);
+          const hasOpenJob = mockJobs.some(job => 
+              job.sourceContractId === contract.id &&
+              new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+              job.status !== 'Cancelled'
+          );
+          if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
+              return count + 1;
+          }
+          return count;
+      }, 0);
+      setContractsDueCount(dueCount);
+
+      setLoading(false);
+      return;
+    }
+
+    // --- REAL FIREBASE MODE ---
     if (!auth || !db) {
       console.error("Firebase Auth or Firestore is not initialized.");
       setLoading(false);
@@ -145,6 +188,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const login = async (email_address: string, pass_word: string) => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        // In mock mode, login is automatic, so this function should ideally not be called.
+        // But if it is, just return true.
+        return true;
+    }
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
@@ -171,7 +219,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userCredential = await createUserWithEmailAndPassword(auth, email_address, pass_word);
       const user = userCredential.user;
 
-      // Create the user document in Firestore immediately after signup
       const userDocRef = doc(db, 'users', user.uid);
       const newUserProfile: Omit<UserProfile, 'uid'> = {
           email: user.email!,
@@ -211,6 +258,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+      // In mock mode, a "logout" just sends you back to the login page.
+      router.push("/login");
+      return;
+    }
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return;

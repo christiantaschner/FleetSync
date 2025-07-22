@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain, Repeat } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain, Repeat, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -42,9 +42,9 @@ export default function MarketingPage() {
       description: t('feature_dynamic_optimization_desc'),
     },
     {
-      icon: <ShieldQuestion className="h-8 w-8 text-primary" />,
-      title: t('feature_risk_alerts_title'),
-      description: t('feature_risk_alerts_desc'),
+      icon: <ClipboardList className="h-8 w-8 text-primary" />,
+      title: "Customer Management",
+      description: "Access a complete history of past jobs and installed equipment for every customer, empowering your technicians with crucial context before they arrive on-site.",
     },
     {
       icon: <MessageSquare className="h-8 w-8 text-primary" />,
@@ -60,22 +60,22 @@ export default function MarketingPage() {
 
   const benefits = [
       {
-        icon: <Zap className="h-6 w-6 text-primary" />,
+        icon: <Zap className="h-8 w-8 text-primary" />,
         title: t('benefit_efficiency_title'),
         description: t('benefit_efficiency_desc')
       },
        {
-        icon: <DollarSign className="h-6 w-6 text-primary" />,
+        icon: <DollarSign className="h-8 w-8 text-primary" />,
         title: t('benefit_costs_title'),
         description: t('benefit_costs_desc')
       },
       {
-        icon: <Users className="h-6 w-6 text-primary" />,
+        icon: <Users className="h-8 w-8 text-primary" />,
         title: t('benefit_satisfaction_title'),
         description: t('benefit_satisfaction_desc')
       },
       {
-        icon: <TrendingUp className="h-6 w-6 text-primary" />,
+        icon: <TrendingUp className="h-8 w-8 text-primary" />,
         title: 'Scalable Growth',
         description: 'Our per-technician pricing and robust features support your business as it grows, from a few vans to a large fleet.'
       }
@@ -280,17 +280,21 @@ export default function MarketingPage() {
                         {t('benefits_subtitle')}
                     </p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2">
+                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
                     {benefits.map((benefit) => (
-                        <div key={benefit.title} className="flex items-start gap-4">
-                           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                               {benefit.icon}
-                           </div>
-                           <div>
-                                <h3 className="font-headline text-xl font-semibold">{benefit.title}</h3>
-                                <p className="mt-1 text-muted-foreground">{benefit.description}</p>
-                           </div>
-                        </div>
+                        <Card key={benefit.title} className="bg-background">
+                           <CardContent className="pt-6">
+                               <div className="flex items-center gap-4">
+                                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                                       {benefit.icon}
+                                   </div>
+                                   <div>
+                                        <h3 className="font-headline text-xl font-semibold">{benefit.title}</h3>
+                                   </div>
+                               </div>
+                                <p className="mt-4 text-muted-foreground">{benefit.description}</p>
+                           </CardContent>
+                        </Card>
                     ))}
                 </div>
             </div>

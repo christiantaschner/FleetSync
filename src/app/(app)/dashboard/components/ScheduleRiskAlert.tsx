@@ -55,27 +55,16 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
 
   if (!risk || !nextJob) return null;
 
-  const roundedDelay = Math.ceil(risk.predictedDelayMinutes / 15) * 15;
+  const roundedDelay = Math.ceil(risk.predictedDelayMinutes / 5) * 5;
 
   return (
     <>
       <Alert variant="destructive" className="bg-amber-50 border-amber-400 text-amber-800 [&>svg]:text-amber-500">
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle className="font-headline text-amber-900 flex justify-between items-center">
-          <span>Fleety's Proactive Alert: Schedule at Risk</span>
+          <span>Proactive Alert: Schedule at Risk</span>
            <TooltipProvider>
              <div className="flex items-center gap-1">
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-700 hover:bg-amber-100">
-                            <Info className="h-3 w-3" />
-                            <span className="sr-only">Show AI Reasoning</span>
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom" align="end" className="max-w-xs">
-                        <p className="text-xs">{risk.reasoning}</p>
-                    </TooltipContent>
-                </Tooltip>
                 <Button variant="ghost" size="icon" className="h-6 w-6 text-amber-700 hover:bg-amber-100" onClick={() => onDismiss(technician.id)}>
                     <X className="h-4 w-4" />
                     <span className="sr-only">Dismiss Alert</span>
@@ -83,16 +72,17 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
              </div>
            </TooltipProvider>
         </AlertTitle>
-        <AlertDescription className="text-amber-700">
-          <strong>{technician.name}</strong> is at risk of being <strong>~{roundedDelay} minutes late</strong> for job "{nextJob.title}".
+        <AlertDescription className="text-amber-700 space-y-1">
+          <p>Technician <strong>{technician.name}</strong> is at risk of being <strong>~{roundedDelay} minutes late</strong> for their next job, "{nextJob.title}".</p>
+          <p className="text-xs"><strong>AI Reason:</strong> {risk.reasoning}</p>
         </AlertDescription>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100" onClick={() => setIsReassignOpen(true)}>
+          <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100 text-amber-800" onClick={() => setIsReassignOpen(true)}>
               <UserPlus className="mr-2 h-4 w-4" /> Find Alternative
           </Button>
           <Button size="sm" variant="default" className="bg-amber-500 hover:bg-amber-600 text-white" onClick={handleDraftNotification} disabled={isNotifying}>
             {isNotifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
-            Draft Customer Notification
+            Draft Notification
           </Button>
         </div>
       </Alert>

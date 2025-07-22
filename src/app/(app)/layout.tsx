@@ -69,6 +69,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+    { href: "/technician", label: t('technician_view'), icon: Smartphone },
     { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
     { href: "/reports", label: t('reports'), icon: BarChart },
@@ -107,7 +108,12 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
         if (pathname === '/onboarding') {
           router.replace('/dashboard');
         }
-        // Add a check to prevent redirecting away from settings if user is an admin
+        
+        if (userProfile.role === 'admin' || userProfile.role === 'superAdmin') {
+            return;
+        }
+        
+        // Add a check to prevent redirecting away from profile page for technicians
         if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
             router.replace(`/technician/jobs/${user.uid}`);
         }
@@ -227,23 +233,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                     </SidebarMenuItem>
                 );
               })}
-              {canSeeAdminViews && (
-                <>
-                  <SidebarSeparator />
-                  <SidebarMenuItem>
-                      <Link href="/technician">
-                      <SidebarMenuButton
-                          isActive={pathname.startsWith("/technician")}
-                          className="w-full justify-start"
-                          tooltip={t('technician_view')}
-                      >
-                          <Smartphone className="h-4 w-4" />
-                          <span>{t('technician_view')}</span>
-                      </SidebarMenuButton>
-                      </Link>
-                  </SidebarMenuItem>
-                </>
-              )}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>

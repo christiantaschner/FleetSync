@@ -316,6 +316,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
 
   const handleSubmit = async (assignTechId: string | null = null) => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        toast({ title: 'Success', description: 'Job saved in mock mode.' });
+        onClose();
+        return;
+    }
     if (!title.trim() || !description.trim() || !locationAddress.trim()) {
       toast({ title: "Missing Information", description: "Please fill in Title, Description, and Address.", variant: "destructive" });
       return;

@@ -27,7 +27,9 @@ interface AddCustomerDialogProps {
 }
 
 // Omitting companyId and appId from the form values, as they come from context
-type AddCustomerFormValues = Omit<AddCustomerInput, 'companyId' | 'appId'>;
+const FormSchema = AddCustomerInputSchema.omit({ companyId: true, appId: true });
+type AddCustomerFormValues = Zod.infer<typeof FormSchema>;
+
 
 const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded }) => {
   const { userProfile } = useAuth();
@@ -37,7 +39,7 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddCustomerFormValues>({
-    resolver: zodResolver(AddCustomerInputSchema.omit({ companyId: true, appId: true })),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       name: '',
       phone: '',
@@ -47,6 +49,14 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
   });
 
   const onSubmitForm = async (data: AddCustomerFormValues) => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        toast({ title: 'Success', description: 'Mock Customer added successfully.' });
+        onCustomerAdded();
+        setIsOpen(false);
+        reset();
+        return;
+    }
+
     if (!userProfile?.companyId) {
         toast({ title: "Authentication Error", description: "Company ID is missing.", variant: "destructive" });
         return;

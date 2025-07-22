@@ -18,6 +18,7 @@ import { approveProfileChangeRequestAction, rejectProfileChangeRequestAction } f
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth-context';
+import { cn } from '@/lib/utils';
 
 interface ProfileChangeRequestsProps {
   requests: ProfileChangeRequest[];
@@ -97,35 +98,35 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
   }
 
   return (
-    <Card className="mb-6">
+    <Card className="mb-6 border-amber-400 bg-amber-50">
       <CardHeader>
-        <CardTitle className="font-headline flex items-center gap-2">
-            <UserCog className="h-5 w-5 text-primary"/>
+        <CardTitle className="font-headline flex items-center gap-2 text-amber-900">
+            <UserCog className="h-5 w-5"/>
             Pending Profile Change Requests
-            <Badge variant="default">{requests.length}</Badge>
+            <Badge variant="default" className="bg-amber-600 hover:bg-amber-700">{requests.length}</Badge>
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-amber-800">
           Review and approve or reject change requests submitted by technicians.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="multiple" className="w-full">
           {requests.map((request) => (
-            <AccordionItem value={request.id} key={request.id}>
+            <AccordionItem value={request.id} key={request.id} className="border-amber-300">
               <AccordionTrigger>
                 <div className="flex justify-between items-center w-full pr-4">
-                  <span className="font-semibold flex items-center gap-2">
-                    <ListChecks className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold flex items-center gap-2 text-amber-900">
+                    <ListChecks className="h-4 w-4 text-amber-700" />
                     {request.technicianName}
                   </span>
-                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                  <span className="text-sm text-amber-700 flex items-center gap-1">
                     <History className="inline h-3.5 w-3.5" />
                     Requested: {new Date(request.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="space-y-4 p-2 bg-secondary/50 rounded-md">
+                <div className="space-y-4 p-2 bg-amber-50/50 rounded-md">
                     {Object.keys(request.requestedChanges).length > 0 && (
                         <div>
                             <h4 className="text-sm font-semibold mb-2">Requested Changes:</h4>
@@ -204,4 +205,3 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
 };
 
 export default ProfileChangeRequests;
-

@@ -55,6 +55,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
   };
 
   const isHighPriorityPending = job.priority === 'High' && job.status === 'Pending';
+  const isMediumOrLowPriorityPending = (job.priority === 'Medium' || job.priority === 'Low') && job.status === 'Pending';
   const isDraft = job.status === 'Draft';
   
   const isUnassigned = job.status === 'Pending' && !job.assignedTechnicianId;
@@ -65,12 +66,14 @@ const JobListItem: React.FC<JobListItemProps> = ({
     <Card className={cn(
       "hover:shadow-lg transition-shadow duration-200",
       isHighPriorityPending && "border-destructive bg-destructive/5",
+      isMediumOrLowPriorityPending && "border-amber-400 bg-amber-50",
       isDraft && "border-dashed border-gray-400 bg-gray-50/50"
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
             isHighPriorityPending && "text-destructive",
+            isMediumOrLowPriorityPending && "text-amber-900",
             isDraft && "text-gray-600"
           )}>
             <TooltipProvider>

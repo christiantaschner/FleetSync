@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
@@ -46,11 +45,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
-
-const ALL_STATUSES = "all_statuses";
-const ALL_PRIORITIES = "all_priorities";
-const UNCOMPLETED_JOBS_FILTER = "uncompleted_jobs";
-const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+import { MultiSelectFilter } from './components/MultiSelectFilter';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -90,8 +85,8 @@ export default function DashboardPage() {
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [statusFilter, setStatusFilter] = useState<JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER>(UNCOMPLETED_JOBS_FILTER);
-  const [priorityFilter, setPriorityFilter] = useState<JobPriority | typeof ALL_PRIORITIES>(ALL_PRIORITIES);
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Pending', 'Assigned', 'En Route', 'In Progress']);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>(['Low', 'Medium', 'High']);
   const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
 
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
@@ -534,17 +529,12 @@ export default function DashboardPage() {
     if (jobFilterId) {
         return jobs.filter(job => job.id === jobFilterId);
     }
+    if (statusFilter.length === 0 && priorityFilter.length === 0) {
+        return [];
+    }
     return jobs.filter(job => {
-      let statusMatch = false;
-      if (statusFilter === ALL_STATUSES) {
-        statusMatch = true;
-      } else if (statusFilter === UNCOMPLETED_JOBS_FILTER) {
-        statusMatch = UNCOMPLETED_STATUSES_LIST.includes(job.status);
-      } else {
-        statusMatch = job.status === statusFilter;
-      }
-      
-      const priorityMatch = priorityFilter === ALL_PRIORITIES || job.priority === priorityFilter;
+      const statusMatch = statusFilter.length === 0 || statusFilter.includes(job.status);
+      const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
       return statusMatch && priorityMatch;
     });
   }, [jobs, statusFilter, priorityFilter, jobFilterId]);
@@ -576,7 +566,7 @@ export default function DashboardPage() {
             case 'scheduledTime':
                 const timeA = a.scheduledTime ? new Date(a.scheduledTime).getTime() : Infinity;
                 const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
-                return timeA - timeB || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return timeA - timeB || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             default:
                 return new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime();
         }
@@ -843,6 +833,22 @@ export default function DashboardPage() {
       </div>
     );
   }
+  
+  const statusOptions = [
+    { value: "Pending", label: "Pending" },
+    { value: "Assigned", label: "Assigned" },
+    { value: "En Route", label: "En Route" },
+    { value: "In Progress", label: "In Progress" },
+    { value: "Completed", label: "Completed" },
+    { value: "Cancelled", label: "Cancelled" },
+    { value: "Draft", label: "Draft" },
+  ];
+
+  const priorityOptions = [
+    { value: "High", label: "High" },
+    { value: "Medium", label: "Medium" },
+    { value: "Low", label: "Low" },
+  ];
 
   return (
       <div className="space-y-6">
@@ -1015,34 +1021,21 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:flex-1">
                     <div className="space-y-1">
                       <Label htmlFor="status-filter">{t('status')}</Label>
-                      <Select value={statusFilter} onValueChange={(value: JobStatus | typeof ALL_STATUSES | typeof UNCOMPLETED_JOBS_FILTER) => setStatusFilter(value)}>
-                        <SelectTrigger id="status-filter"><SelectValue placeholder="Filter by Status" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNCOMPLETED_JOBS_FILTER}>Uncompleted</SelectItem>
-                          <SelectItem value={ALL_STATUSES}>All Statuses</SelectItem>
-                          <SelectItem value="Pending">Pending</SelectItem>
-                          <SelectItem value="Assigned">Assigned</SelectItem>
-                          <SelectItem value="En Route">En Route</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                          <SelectItem value="Pending Invoice">Pending Invoice</SelectItem>
-                          <SelectItem value="Finished">Finished</SelectItem>
-                          <SelectItem value="Cancelled">Cancelled</SelectItem>
-                          <SelectItem value="Draft">Draft</SelectItem>
-                        </SelectContent>
-                      </Select>
+                       <MultiSelectFilter
+                        options={statusOptions}
+                        selected={statusFilter}
+                        onChange={setStatusFilter}
+                        placeholder="Filter by Status"
+                      />
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="priority-filter">{t('priority')}</Label>
-                      <Select value={priorityFilter} onValueChange={(value: JobPriority | typeof ALL_PRIORITIES) => setPriorityFilter(value)}>
-                        <SelectTrigger id="priority-filter"><SelectValue placeholder="Filter by Priority" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={ALL_PRIORITIES}>All Priorities</SelectItem>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
-                        </SelectContent>
-                      </Select>
+                       <MultiSelectFilter
+                        options={priorityOptions}
+                        selected={priorityFilter}
+                        onChange={setPriorityFilter}
+                        placeholder="Filter by Priority"
+                      />
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="sort-order">{t('sort_by')}</Label>

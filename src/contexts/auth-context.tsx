@@ -68,8 +68,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (currentUser) {
         try {
-          // This server action now creates the user doc if it doesn't exist
-          // and reliably returns the user's profile data from Firestore.
+          // This server action is now the single source of truth for creating/fetching
+          // the user profile and setting custom claims.
           const { data: profile, error } = await ensureUserDocumentAction({ 
               uid: currentUser.uid, 
               email: currentUser.email! 
@@ -78,63 +78,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (error) {
             throw new Error(error);
           }
+          if (!profile) {
+            throw new Error("User profile could not be created or retrieved.");
+          }
 
-          if (profile) {
-              setUserProfile(profile);
+          setUserProfile(profile);
 
-              if (profile.companyId) {
-                  const companyDocRef = doc(db, "companies", profile.companyId);
-                  unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
-                      if (companyDocSnap.exists()) {
-                          const companyData = { id: companyDocSnap.id, ...companyDocSnap.data() } as Company;
-                          setCompany(companyData);
+          if (profile.companyId) {
+              const companyDocRef = doc(db, "companies", profile.companyId);
+              unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
+                  if (companyDocSnap.exists()) {
+                      const companyData = { id: companyDocSnap.id, ...companyDocSnap.data() } as Company;
+                      setCompany(companyData);
 
-                          // Set up listener for due contracts
-                           const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-                           if (appId) {
-                                let jobsUnsubscribe: (() => void) | null = null;
-                                const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", profile.companyId), where("isActive", "==", true));
+                      // Set up listener for due contracts
+                       const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+                       if (appId) {
+                            let jobsUnsubscribe: (() => void) | null = null;
+                            const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", profile.companyId), where("isActive", "==", true));
+                            
+                            unsubscribeContractsAndJobs = onSnapshot(contractsQuery, async (contractsSnapshot) => {
+                                if (jobsUnsubscribe) jobsUnsubscribe(); // Unsubscribe from old jobs listener
                                 
-                                unsubscribeContractsAndJobs = onSnapshot(contractsQuery, async (contractsSnapshot) => {
-                                    if (jobsUnsubscribe) jobsUnsubscribe(); // Unsubscribe from old jobs listener
-                                    
-                                    const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", profile.companyId));
-                                    jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
-                                        const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
-                                        const allContracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+                                const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", profile.companyId));
+                                jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
+                                    const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
+                                    const allContracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
 
-                                        const dueCount = allContracts.reduce((count, contract) => {
-                                            const nextDueDate = getNextDueDate(contract);
-                                            const hasOpenJob = allJobs.some(job => 
-                                                job.sourceContractId === contract.id &&
-                                                new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
-                                                job.status !== 'Cancelled'
-                                            );
-                                            if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
-                                                return count + 1;
-                                            }
-                                            return count;
-                                        }, 0);
-                                        setContractsDueCount(dueCount);
-                                    });
+                                    const dueCount = allContracts.reduce((count, contract) => {
+                                        const nextDueDate = getNextDueDate(contract);
+                                        const hasOpenJob = allJobs.some(job => 
+                                            job.sourceContractId === contract.id &&
+                                            new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+                                            job.status !== 'Cancelled'
+                                        );
+                                        if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
+                                            return count + 1;
+                                        }
+                                        return count;
+                                    }, 0);
+                                    setContractsDueCount(dueCount);
                                 });
-                            }
-                      } else {
-                          setCompany(null);
-                      }
-                      setLoading(false);
-                  }, (err) => {
-                      console.error("Error fetching company data:", err);
+                            });
+                        }
+                  } else {
                       setCompany(null);
-                      setLoading(false);
-                  });
-              } else {
+                  }
+                  // Company data loaded (or confirmed not to exist), finish loading.
+                  setLoading(false);
+              }, (err) => {
+                  console.error("Error fetching company data:", err);
                   setCompany(null);
                   setLoading(false);
-              }
+              });
           } else {
-            // Failsafe if profile is null but no error was thrown
-            throw new Error("User profile could not be retrieved.");
+              // No company ID, no need to fetch company data.
+              setCompany(null);
+              setLoading(false);
           }
         } catch (err) {
             console.error("Critical error during auth state processing:", err);
@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
-  }, []);
+  }, [toast]); // Removed router from dependency array as it's stable
 
   const login = async (email_address: string, pass_word: string) => {
     if (!auth) {

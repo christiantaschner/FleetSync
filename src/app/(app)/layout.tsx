@@ -69,11 +69,10 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-    { href: "/technician", label: t('technician_view'), icon: Smartphone },
     { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
     { href: "/reports", label: t('reports'), icon: BarChart },
-    { href: "/settings", label: t('settings'), icon: Settings },
+    { href: "/technician", label: t('technician_view'), icon: Smartphone },
   ];
   
   const getTechnicianNavItems = (uid: string) => [
@@ -101,7 +100,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
       }
       
       if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
-        return;
+        return; // User is stuck on the "waiting for invite" page, which is correct.
       }
 
       if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
@@ -109,11 +108,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           router.replace('/dashboard');
         }
         
-        if (userProfile.role === 'admin' || userProfile.role === 'superAdmin') {
-            return;
-        }
-        
-        // Add a check to prevent redirecting away from profile page for technicians
         if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
             router.replace(`/technician/jobs/${user.uid}`);
         }
@@ -137,20 +131,12 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     !isTrialActive;
 
 
-  if (loading || !user) {
+  if (loading || !userProfile || (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
-  }
-  
-  if (userProfile?.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding') {
-      return (
-        <div className="flex h-screen w-screen items-center justify-center bg-background">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
   }
   
   if (pathname === '/onboarding') {
@@ -181,13 +167,14 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const userInitial = user.email ? user.email.charAt(0).toUpperCase() : "U";
-  const userDisplayName = user.email || "User";
+  const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
+  const userDisplayName = user?.email || "User";
+  const canSeeAdminViews = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
   const getNavItemsForRole = () => {
     switch (userProfile?.role) {
         case 'technician':
-            return getTechnicianNavItems(user.uid);
+            return getTechnicianNavItems(user!.uid);
         case 'superAdmin':
             return [...adminNavItems, ...superAdminNavItems];
         case 'admin':
@@ -197,7 +184,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   };
   
   const navItems = getNavItemsForRole();
-  const canSeeAdminViews = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
   return (
       <SidebarProvider defaultOpen>
@@ -236,6 +222,25 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
+             {canSeeAdminViews && (
+              <>
+                <SidebarSeparator />
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <Link href="/settings">
+                      <SidebarMenuButton
+                        isActive={pathname.startsWith('/settings')}
+                        className="w-full justify-start"
+                        tooltip={t('settings')}
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>{t('settings')}</span>
+                      </SidebarMenuButton>
+                    </Link>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
@@ -250,19 +255,18 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent side="right" align="start" className="w-56">
                 <DropdownMenuLabel>{t('my_account')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {canSeeAdminViews && (
-                  <Link href="/technician/profile">
-                      <DropdownMenuItem>
-                          <UserCog className="mr-2 h-4 w-4" />
-                          <span>{t('my_admin_profile')}</span>
-                      </DropdownMenuItem>
-                  </Link>
-                )}
-                  {userProfile?.role === 'technician' && (
+                  {userProfile?.role === 'technician' ? (
                       <Link href="/technician/profile">
                           <DropdownMenuItem>
-                              <Users className="mr-2 h-4 w-4" />
+                              <UserCog className="mr-2 h-4 w-4" />
                               <span>{t('my_profile')}</span>
+                          </DropdownMenuItem>
+                      </Link>
+                  ) : (
+                      <Link href="/settings">
+                          <DropdownMenuItem>
+                              <UserCog className="mr-2 h-4 w-4" />
+                              <span>{t('my_admin_profile')}</span>
                           </DropdownMenuItem>
                       </Link>
                   )}

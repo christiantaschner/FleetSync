@@ -92,7 +92,18 @@ export default function OnboardingPage() {
 
   const onSubmit = async (data: OnboardingFormValues) => {
     setIsSubmitting(true);
-    console.log("Onboarding form submitted by client. Calling server action with data:", data);
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        toast({
+          title: "Onboarding Complete!",
+          description: "You are now being redirected to the dashboard.",
+        });
+        setTimeout(() => {
+            sessionStorage.setItem('mock_session', 'admin');
+            window.location.reload();
+        }, 1500);
+        return;
+    }
     
     if (!user) {
         toast({
@@ -149,7 +160,7 @@ export default function OnboardingPage() {
     }
   };
 
-  if (loading || !userProfile || userProfile.onboardingStatus === 'completed') {
+  if (loading || (!userProfile && process.env.NEXT_PUBLIC_USE_MOCK_DATA !== 'true') || (userProfile && userProfile.onboardingStatus === 'completed')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

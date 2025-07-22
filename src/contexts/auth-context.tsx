@@ -35,6 +35,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// --- Mock Data Setup ---
+const MOCK_ADMIN_USER: User = { uid: 'mock_admin_id', email: 'admin@mock.com' } as User;
+const MOCK_ADMIN_PROFILE: UserProfile = {
+  uid: 'mock_admin_id',
+  email: 'admin@mock.com',
+  companyId: 'mock_company_123',
+  role: 'admin',
+  onboardingStatus: 'completed',
+};
+const MOCK_COMPANY: Company = {
+  id: 'mock_company_123',
+  name: 'Mock Service Company',
+  ownerId: 'mock_admin_id',
+  subscriptionStatus: 'active',
+};
+
+const getMockContractsDueCount = () => {
+    return mockContracts.reduce((count, contract) => {
+        if (!contract.isActive) return count;
+        const nextDueDate = getNextDueDate(contract);
+        const hasOpenJob = mockJobs.some(job => 
+            job.sourceContractId === contract.id &&
+            new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+            job.status !== 'Cancelled'
+        );
+        if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
+            return count + 1;
+        }
+        return count;
+    }, 0);
+};
+
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -49,40 +82,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // --- MOCK DATA MODE ---
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
       console.log("Auth Context: Running in MOCK DATA mode.");
-      const mockUser = { uid: 'mock_user_id', email: 'admin@mock.com' } as User;
-      const mockUserProfile: UserProfile = {
-        uid: 'mock_user_id',
-        email: 'admin@mock.com',
-        companyId: 'mock_company_123',
-        role: 'admin',
-        onboardingStatus: 'completed',
-      };
-      const mockCompany: Company = {
-        id: 'mock_company_123',
-        name: 'Mock Service Company',
-        ownerId: 'mock_user_id',
-        subscriptionStatus: 'active',
-      };
+      
+      const mockSession = sessionStorage.getItem('mock_session');
 
-      setUser(mockUser);
-      setUserProfile(mockUserProfile);
-      setCompany(mockCompany);
-
-      const dueCount = mockContracts.reduce((count, contract) => {
-          if (!contract.isActive) return count;
-          const nextDueDate = getNextDueDate(contract);
-          const hasOpenJob = mockJobs.some(job => 
-              job.sourceContractId === contract.id &&
-              new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
-              job.status !== 'Cancelled'
-          );
-          if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
-              return count + 1;
-          }
-          return count;
-      }, 0);
-      setContractsDueCount(dueCount);
-
+      if (mockSession === 'new_user') {
+          setUser({ uid: 'mock_new_user', email: 'new@mock.com' } as User);
+          setUserProfile({
+              uid: 'mock_new_user',
+              email: 'new@mock.com',
+              companyId: null,
+              role: null,
+              onboardingStatus: 'pending_onboarding',
+          });
+          setCompany(null);
+      } else {
+         setUser(MOCK_ADMIN_USER);
+         setUserProfile(MOCK_ADMIN_PROFILE);
+         setCompany(MOCK_COMPANY);
+         setContractsDueCount(getMockContractsDueCount());
+      }
+      
       setLoading(false);
       return;
     }
@@ -189,12 +208,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email_address: string, pass_word: string) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        toast({
-            title: "User Not Found in Mock Data",
-            description: "In mock mode, only the default admin user exists. No new accounts can be created.",
-            variant: "destructive"
-        });
-        return false;
+        sessionStorage.setItem('mock_session', 'admin');
+        window.location.reload();
+        return true;
     }
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
@@ -229,6 +245,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (email_address: string, pass_word: string) => {
+     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        sessionStorage.setItem('mock_session', 'new_user');
+        window.location.reload();
+        return true;
+    }
      if (!auth || !db) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
@@ -278,8 +299,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-      // In mock mode, a "logout" just sends you back to the login page.
-      router.push("/login");
+      sessionStorage.removeItem('mock_session');
+      window.location.reload();
       return;
     }
     if (!auth) {

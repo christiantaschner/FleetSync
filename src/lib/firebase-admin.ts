@@ -6,12 +6,28 @@ let authAdmin: admin.auth.Auth | null = null;
 let storageAdmin: admin.storage.Storage | null = null;
 
 try {
-    // In a Google Cloud environment (like App Hosting), initializeApp() with no arguments
-    // will automatically find the project's service account credentials.
-    // This is the most robust method for this environment.
     if (admin.apps.length === 0) {
-      admin.initializeApp();
-      console.log('Firebase Admin SDK initialized successfully.');
+        // In a deployed Google Cloud environment (like App Hosting), the SDK
+        // will automatically find the project's service account credentials.
+        if (process.env.NODE_ENV === 'production') {
+            admin.initializeApp();
+            console.log('Firebase Admin SDK initialized for production.');
+        } else {
+            // For local development, we check for a service account key file.
+            // This is more robust than relying on Application Default Credentials (ADC)
+            // which might not be configured on a developer's machine.
+            if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+                const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                });
+                console.log('Firebase Admin SDK initialized for local development with service account.');
+            } else {
+                 // Fallback to ADC if the specific variable isn't set
+                admin.initializeApp();
+                console.warn('WARNING: GOOGLE_APPLICATION_CREDENTIALS env var not set. Falling back to Application Default Credentials for local development.');
+            }
+        }
     }
     
     dbAdmin = admin.firestore();

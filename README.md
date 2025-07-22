@@ -9,7 +9,13 @@ Before you run the application, you need to configure your environment variables
 
 1.  **Create a `.env.local` file** in the root of your project. This file is for your local environment variables and will not be committed to version control.
 
-2.  **Add your credentials** to the `.env.local` file. Copy and paste the block below and replace the placeholder values with your actual credentials.
+2.  **Set up a Firebase Service Account** for server-side operations:
+    *   Go to your Firebase project settings -> Service accounts.
+    *   Click "Generate new private key" and save the downloaded JSON file.
+    *   **Important**: Treat this file like a password; do not commit it to version control.
+
+3.  **Add your credentials** to the `.env.local` file. Copy and paste the block below and replace the placeholder values with your actual credentials.
+    *   For `GOOGLE_APPLICATION_CREDENTIALS`, copy the **entire content** of the JSON file you just downloaded and paste it between the quotes.
 
     ```
     # Firebase Configuration
@@ -21,6 +27,10 @@ Before you run the application, you need to configure your environment variables
     NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID"
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="YOUR_MEASUREMENT_ID"
     
+    # Firebase Admin SDK (Server-Side)
+    # Copy the entire content of your service account JSON file here
+    GOOGLE_APPLICATION_CREDENTIALS='{"type": "service_account", "project_id": "...", ...}'
+
     # Google Maps Configuration
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
 
@@ -44,7 +54,7 @@ Before you run the application, you need to configure your environment variables
     NEXT_PUBLIC_USE_MOCK_DATA="false"
     ```
 
-3.  **Run the development server**:
+4.  **Run the development server**:
 
     ```bash
     npm run dev

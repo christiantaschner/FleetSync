@@ -1,4 +1,3 @@
-
 # FleetSync AI
 
 This is a Next.js application built with Firebase Studio.
@@ -29,6 +28,8 @@ Before you run the application, you need to configure your environment variables
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
 
     # Genkit AI (Gemini) Configuration - This is used by the client for some operations
+    # No longer needed server-side, which will use Application Default Credentials.
+    # Keep it for any potential client-side AI calls.
     GOOGLE_API_KEY="YOUR_GEMINI_API_KEY"
     
     # Stripe Configuration
@@ -75,7 +76,7 @@ These APIs are crucial for all mapping, location, and distance features.
 -   **Maps JavaScript API**: Displays the interactive maps in the dashboard.
 -   **Places API**: Powers the address autocomplete feature in forms.
 -   **Geocoding API**: Converts street addresses into latitude/longitude coordinates for map markers.
--   **Distance Matrix API**: Used by the AI to calculate realistic travel times and distances between job locations for route optimization and risk prediction.
+-   **Distance Matrix API**: Used by the AI to calculate realistic travel times and distances for route optimization and risk prediction.
 
 ### Google AI
 

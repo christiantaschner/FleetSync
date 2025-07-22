@@ -1,3 +1,4 @@
+
 import type { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
         subscriptionId: subscription.id,
         stripeCustomerId: subscription.customer,
         subscriptionStatus: subscription.status,
+        technicianSeatCount: subscription.items.data[0]?.quantity || 1,
       });
 
       console.log(`Updated subscription for company ${companyId}`);
@@ -80,6 +82,7 @@ export async function POST(req: NextRequest) {
       const companyDocRef = doc(dbAdmin, 'companies', companyId);
       await updateDoc(companyDocRef, {
         subscriptionStatus: subscription.status,
+        technicianSeatCount: subscription.items.data[0]?.quantity || 1,
       });
 
       console.log(`Updated subscription status to ${subscription.status} for company ${companyId}`);
@@ -104,6 +107,7 @@ export async function POST(req: NextRequest) {
         const companyDocRef = doc(dbAdmin, 'companies', companyId);
         await updateDoc(companyDocRef, {
             subscriptionStatus: 'active',
+            technicianSeatCount: subscription.items.data[0]?.quantity || 1,
         });
         console.log(`Subscription for company ${companyId} confirmed as active due to successful payment.`);
       }

@@ -155,61 +155,6 @@ export async function createPortalSessionAction(
     }
 }
 
-const UpdateSubscriptionQuantityInputSchema = z.object({
-    companyId: z.string(),
-    quantity: z.number().min(0),
-});
-type UpdateSubscriptionQuantityInput = z.infer<typeof UpdateSubscriptionQuantityInputSchema>;
-
-export async function updateSubscriptionQuantityAction(
-  input: UpdateSubscriptionQuantityInput
-): Promise<{ error: string | null }> {
-    try {
-        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-        const { companyId, quantity } = UpdateSubscriptionQuantityInputSchema.parse(input);
-
-        const companyDocRef = dbAdmin.collection('companies').doc(companyId);
-        const companyDocSnap = await companyDocRef.get();
-        if (!companyDocSnap.exists) {
-            return { error: "Company not found." };
-        }
-
-        const company = companyDocSnap.data() as Company;
-        if (!company.subscriptionId || company.subscriptionStatus !== 'active') {
-            return { error: null }; // Not subscribed or not active, so no need to update quantity
-        }
-
-        const subscription = await stripe.subscriptions.retrieve(company.subscriptionId);
-        const subscriptionItemId = subscription.items.data[0]?.id;
-
-        if (!subscriptionItemId) {
-            throw new Error('No subscription item found to update.');
-        }
-        
-        if (subscription.items.data[0].quantity === quantity) {
-            return { error: null }; // No change needed
-        }
-        
-        await stripe.subscriptionItems.update(subscriptionItemId, {
-            quantity,
-            proration_behavior: 'create_prorations',
-        });
-        
-        return { error: null };
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-        console.error(JSON.stringify({
-            message: 'Error updating subscription quantity',
-            error: {
-                message: errorMessage,
-                stack: e instanceof Error ? e.stack : undefined,
-            },
-            severity: "ERROR"
-        }));
-        return { error: `Failed to update subscription. ${errorMessage}` };
-    }
-}
-
 export async function getStripeProductsAction(): Promise<{
   data: StripeProduct[] | null;
   error: string | null;

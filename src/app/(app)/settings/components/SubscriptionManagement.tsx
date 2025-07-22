@@ -22,7 +22,7 @@ interface SubscriptionManagementProps {
 
 const allInclusivePlan = {
     title: "All-Inclusive Plan",
-    price: 4900, // in cents
+    price: 6900, // in cents
     features: [
         "Unlimited Technicians (billed per seat)",
         "AI-Powered Job Allocation",
@@ -109,7 +109,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                     <Sparkles className="h-4 w-4 text-green-600" />
                     <AlertTitle className="text-green-700 font-semibold">You have an active subscription!</AlertTitle>
                     <AlertDescription className="text-green-700/90">
-                        The number of technicians is automatically synced with your billing. To manage your payment method or cancel your subscription, use the portal.
+                        You are currently subscribed for <strong>{company.technicianSeatCount || 1} technician(s)</strong>. To change your plan, manage payment methods, or cancel, please use the customer portal.
                     </AlertDescription>
                 </Alert>
                 <Button onClick={handleOpenPortal} disabled={isLoading} className="w-full sm:w-auto">
@@ -172,7 +172,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                         title={allInclusivePlan.title}
                         description="One plan with all features. Billed per technician."
                         price={allInclusivePlan.price}
-                        currency="EUR"
+                        currency="USD"
                         interval="month"
                         features={allInclusivePlan.features}
                         cta={isPastDue ? "Reactivate Subscription" : "Choose Plan"}

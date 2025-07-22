@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getCompanyUsersAction, inviteUserAction, removeUserFromCompanyAction, updateUserRoleAction, getCompanyInvitesAction } from '@/actions/user-actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, PlusCircle, Trash2, ShieldCheck, User, Wrench, Clock } from 'lucide-react';
+import { Loader2, Mail, PlusCircle, Trash2, ShieldCheck, User, Wrench, Clock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Controller } from "react-hook-form";
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 const InviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -34,7 +35,7 @@ interface UserManagementProps {
 
 const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) => {
     const { toast } = useToast();
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, company } = useAuth();
     const [users, setUsers] = useState<UserProfile[]>([]);
     const [invites, setInvites] = useState<Invite[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -42,11 +43,17 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
     const [isUpdatingRole, setIsUpdatingRole] = useState<string | null>(null);
     
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    
+    const technicianCount = users.filter(u => u.role === 'technician').length;
+    const seatLimit = company?.technicianSeatCount || 1;
+    const atOrOverLimit = technicianCount >= seatLimit;
 
-    const { register, handleSubmit, reset, formState: { errors }, control } = useForm<InviteUserFormValues>({
+    const { register, handleSubmit, reset, formState: { errors }, control, watch } = useForm<InviteUserFormValues>({
         resolver: zodResolver(InviteUserSchema),
         defaultValues: { role: 'technician' }
     });
+    
+    const selectedRole = watch('role');
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -79,6 +86,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
             toast({ title: 'Configuration Error', description: 'App ID is missing.', variant: 'destructive'});
             return;
         }
+        if (atOrOverLimit && data.role === 'technician') {
+            toast({ title: 'Seat Limit Reached', description: 'Please upgrade your plan to add more technicians.', variant: 'destructive'});
+            return;
+        }
+
         setIsSubmitting(true);
         const result = await inviteUserAction({ ...data, companyId, appId });
         if (result.error) {
@@ -125,6 +137,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 
     return (
         <div className="space-y-6">
+             <Alert variant={atOrOverLimit ? "destructive" : "default"}>
+                <Users className="h-4 w-4" />
+                <AlertTitle>Technician Seats</AlertTitle>
+                <AlertDescription>
+                    You are currently using <strong>{technicianCount}</strong> of your <strong>{seatLimit}</strong> available technician seats.
+                    {atOrOverLimit && (
+                        <span className="block mt-1">
+                            Please <Link href="/settings?tab=billing" className="font-semibold underline">upgrade your plan</Link> to add more technicians.
+                        </span>
+                    )}
+                </AlertDescription>
+            </Alert>
             <form onSubmit={handleSubmit(onInviteSubmit)} className="space-y-4 p-4 border rounded-lg bg-secondary/50">
                  <h4 className="font-semibold text-lg">Invite New User</h4>
                  <Alert>
@@ -158,7 +182,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
                             )}
                         />
                     </div>
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button type="submit" disabled={isSubmitting || (atOrOverLimit && selectedRole === 'technician')}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <PlusCircle className="mr-2 h-4 w-4"/>}
                         Invite User
                     </Button>

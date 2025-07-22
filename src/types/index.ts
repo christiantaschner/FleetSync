@@ -72,6 +72,7 @@ export const CompanySchema = z.object({
     subscriptionId: z.string().optional(),
     subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'canceled', 'unpaid']).optional(),
     trialEndsAt: z.string().optional(), // ISO string
+    technicianSeatCount: z.number().optional().default(1),
 });
 export type Company = z.infer<typeof CompanySchema>;
 

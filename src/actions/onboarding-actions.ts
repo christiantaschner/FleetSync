@@ -63,6 +63,7 @@ export async function completeOnboardingAction(
         stripeCustomerId: customer.id,
         subscriptionStatus: 'trialing',
         trialEndsAt: addDays(new Date(), 30).toISOString(),
+        technicianSeatCount: numberOfTechnicians,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         settings: {

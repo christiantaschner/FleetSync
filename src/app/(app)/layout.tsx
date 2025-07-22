@@ -72,6 +72,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
     { href: "/reports", label: t('reports'), icon: BarChart },
+    { href: "/settings", label: t('settings'), icon: Settings },
   ];
   
   const getTechnicianNavItems = (uid: string) => [
@@ -245,22 +246,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-             {canSeeAdminViews && (
-                <SidebarMenu>
-                    <SidebarMenuItem>
-                         <Link href="/settings">
-                            <SidebarMenuButton
-                                isActive={pathname.startsWith("/settings")}
-                                className="w-full justify-start"
-                                tooltip={t('settings')}
-                            >
-                                <Settings className="h-4 w-4" />
-                                <span>{t('settings')}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                </SidebarMenu>
-            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">

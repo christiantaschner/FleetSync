@@ -7,12 +7,10 @@ let storageAdmin: admin.storage.Storage | null = null;
 
 try {
     // In a Google Cloud environment (like App Hosting), initializeApp() with no arguments
-    // should automatically find the project's service account credentials. 
-    // Being explicit with applicationDefault() is more robust and resolves auth issues in some environments.
+    // will automatically find the project's service account credentials.
+    // This is the most robust method for this environment.
     if (admin.apps.length === 0) {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
+      admin.initializeApp();
       console.log('Firebase Admin SDK initialized successfully.');
     }
     

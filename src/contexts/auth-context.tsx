@@ -18,6 +18,7 @@ import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
 import { ensureUserDocumentAction } from "@/actions/user-actions";
 import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
+import { isBefore } from "date-fns";
 
 interface AuthContextType {
   user: User | null;
@@ -168,7 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({ title: "Login Failed", description: error.message || "Invalid credentials.", variant: "destructive" });
+      toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
       setLoading(false);
       return false;
     }

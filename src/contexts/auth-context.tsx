@@ -12,10 +12,9 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
-import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, setDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
-import { ensureUserDocumentAction } from "@/actions/user-actions";
 import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
@@ -52,11 +51,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    let unsubscribeProfile: (() => void) | null = null;
     let unsubscribeCompany: (() => void) | null = null;
     let unsubscribeContractsAndJobs: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       // Clean up previous listeners
+      if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
       
@@ -67,96 +68,81 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
 
       if (currentUser) {
-        try {
-          // This server action is now the single source of truth for creating/fetching
-          // the user profile and setting custom claims.
-          const { data: profile, error } = await ensureUserDocumentAction({ 
-              uid: currentUser.uid, 
-              email: currentUser.email! 
-          });
+        const userDocRef = doc(db, "users", currentUser.uid);
+        unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
+            if (userDocSnap.exists()) {
+                const profile = { uid: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+                setUserProfile(profile);
 
-          if (error) {
-            throw new Error(error);
-          }
-          if (!profile) {
-            throw new Error("User profile could not be created or retrieved.");
-          }
-
-          setUserProfile(profile);
-
-          if (profile.companyId) {
-              const companyDocRef = doc(db, "companies", profile.companyId);
-              unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
-                  if (companyDocSnap.exists()) {
-                      const companyData = { id: companyDocSnap.id, ...companyDocSnap.data() } as Company;
-                      setCompany(companyData);
-
-                      // Set up listener for due contracts
-                       const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-                       if (appId) {
-                            let jobsUnsubscribe: (() => void) | null = null;
-                            const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", profile.companyId), where("isActive", "==", true));
+                if (profile.companyId) {
+                    const companyDocRef = doc(db, "companies", profile.companyId);
+                    unsubscribeCompany = onSnapshot(companyDocRef, (companyDocSnap) => {
+                        if (companyDocSnap.exists()) {
+                            const companyData = { id: companyDocSnap.id, ...companyDocSnap.data() } as Company;
+                            setCompany(companyData);
                             
-                            unsubscribeContractsAndJobs = onSnapshot(contractsQuery, async (contractsSnapshot) => {
-                                if (jobsUnsubscribe) jobsUnsubscribe(); // Unsubscribe from old jobs listener
-                                
-                                const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", profile.companyId));
-                                jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
-                                    const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
-                                    const allContracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
+                             const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+                             if (appId) {
+                                  let jobsUnsubscribe: (() => void) | null = null;
+                                  const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", profile.companyId), where("isActive", "==", true));
+                                  
+                                  unsubscribeContractsAndJobs = onSnapshot(contractsQuery, async (contractsSnapshot) => {
+                                      if (jobsUnsubscribe) jobsUnsubscribe();
+                                      
+                                      const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", profile.companyId));
+                                      jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
+                                          const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
+                                          const allContracts = contractsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Contract));
 
-                                    const dueCount = allContracts.reduce((count, contract) => {
-                                        const nextDueDate = getNextDueDate(contract);
-                                        const hasOpenJob = allJobs.some(job => 
-                                            job.sourceContractId === contract.id &&
-                                            new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
-                                            job.status !== 'Cancelled'
-                                        );
-                                        if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
-                                            return count + 1;
-                                        }
-                                        return count;
-                                    }, 0);
-                                    setContractsDueCount(dueCount);
-                                });
-                            });
+                                          const dueCount = allContracts.reduce((count, contract) => {
+                                              const nextDueDate = getNextDueDate(contract);
+                                              const hasOpenJob = allJobs.some(job => 
+                                                  job.sourceContractId === contract.id &&
+                                                  new Date(job.createdAt) > new Date(contract.lastGeneratedUntil || 0) &&
+                                                  job.status !== 'Cancelled'
+                                              );
+                                              if (isBefore(nextDueDate, new Date()) && !hasOpenJob) {
+                                                  return count + 1;
+                                              }
+                                              return count;
+                                          }, 0);
+                                          setContractsDueCount(dueCount);
+                                      });
+                                  });
+                              }
+
+                        } else {
+                            setCompany(null);
                         }
-                  } else {
-                      setCompany(null);
-                  }
-                  // Company data loaded (or confirmed not to exist), finish loading.
-                  setLoading(false);
-              }, (err) => {
-                  console.error("Error fetching company data:", err);
-                  setCompany(null);
-                  setLoading(false);
-              });
-          } else {
-              // No company ID, no need to fetch company data.
-              setCompany(null);
-              setLoading(false);
-          }
-        } catch (err) {
-            console.error("Critical error during auth state processing:", err);
+                        setLoading(false);
+                    });
+                } else {
+                    setCompany(null);
+                    setLoading(false);
+                }
+            } else {
+                setUserProfile(null);
+                setLoading(false);
+            }
+        }, (err) => {
+            console.error("Error fetching user profile:", err);
             toast({ title: "Authentication Error", description: "Could not retrieve your profile. Please try logging in again.", variant: "destructive"});
-            await signOut(auth);
-            setUser(null);
             setUserProfile(null);
-            setCompany(null);
             setLoading(false);
-        }
+        });
+
       } else {
-        // No user, we are done loading.
         setLoading(false);
       }
     });
 
     return () => {
       unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
-  }, [toast]); // Removed router from dependency array as it's stable
+  }, [toast]);
 
   const login = async (email_address: string, pass_word: string) => {
     if (!auth) {
@@ -176,13 +162,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (email_address: string, pass_word: string) => {
-     if (!auth) {
+     if (!auth || !db) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
     }
     setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email_address, pass_word);
+      const userCredential = await createUserWithEmailAndPassword(auth, email_address, pass_word);
+      const user = userCredential.user;
+
+      // Create the user document in Firestore immediately after signup
+      const userDocRef = doc(db, 'users', user.uid);
+      const newUserProfile: Omit<UserProfile, 'uid'> = {
+          email: user.email!,
+          onboardingStatus: 'pending_onboarding',
+          role: null,
+          companyId: null,
+      };
+      await setDoc(userDocRef, {
+        ...newUserProfile,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);

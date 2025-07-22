@@ -13,25 +13,18 @@ try {
             admin.initializeApp();
             console.log('Firebase Admin SDK initialized for production.');
         } else {
-            // For local development, we check for a service account key file.
-            // This is more robust than relying on Application Default Credentials (ADC)
-            // which might not be configured on a developer's machine.
-            if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-                try {
-                    const serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS);
-                    admin.initializeApp({
-                        credential: admin.credential.cert(serviceAccount),
-                    });
-                    console.log('Firebase Admin SDK initialized for local development with service account.');
-                } catch (e) {
-                    console.error("Failed to parse GOOGLE_APPLICATION_CREDENTIALS. Make sure it's a valid JSON string.", e);
-                    throw new Error("Invalid service account credentials provided.");
-                }
-            } else {
-                 // Fallback to ADC if the specific variable isn't set
-                admin.initializeApp();
-                console.warn('WARNING: GOOGLE_APPLICATION_CREDENTIALS env var not set. Falling back to Application Default Credentials for local development.');
-            }
+             // For local development, we use the Project ID and expect Application
+             // Default Credentials (ADC) to be configured. This is more robust
+             // than parsing a JSON string from an env var.
+             // See updated README for instructions on setting up ADC.
+             if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+                admin.initializeApp({
+                    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                });
+                console.log(`Firebase Admin SDK initialized for local development for project ${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.`);
+             } else {
+                throw new Error("NEXT_PUBLIC_FIREBASE_PROJECT_ID is not set. Cannot initialize Firebase Admin SDK for local development.");
+             }
         }
     }
     

@@ -9,16 +9,14 @@ Before you run the application, you need to configure your environment variables
 
 1.  **Create a `.env.local` file** in the root of your project. This file is for your local environment variables and will not be committed to version control.
 
-2.  **Set up a Firebase Service Account** for server-side operations:
-    *   Go to your Firebase project settings -> Service accounts.
-    *   Click "Generate new private key" and save the downloaded JSON file.
-    *   **Important**: Treat this file like a password; do not commit it to version control.
+2.  **Set up Local Authentication (VERY IMPORTANT)**: For server-side operations to work locally, you must provide Google Application Default Credentials.
+    *   Install the [Google Cloud CLI](https://cloud.google.com/sdk/docs/install).
+    *   Run `gcloud auth application-default login` in your terminal and follow the prompts to log in with the Google account that has access to your Firebase project. This command creates a credentials file on your machine that the Firebase Admin SDK will automatically find.
 
-3.  **Add your credentials** to the `.env.local` file. Copy and paste the block below and replace the placeholder values with your actual credentials.
-    *   For `GOOGLE_APPLICATION_CREDENTIALS`, copy the **entire content** of the JSON file you just downloaded and paste it between the quotes.
+3.  **Populate `.env.local`**: Copy the block below into your `.env.local` file and replace the placeholder values with your actual credentials.
 
     ```
-    # Firebase Configuration
+    # Firebase Client Configuration (for browser)
     NEXT_PUBLIC_FIREBASE_API_KEY="YOUR_API_KEY"
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="YOUR_PROJECT_ID.firebaseapp.com"
     NEXT_PUBLIC_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
@@ -27,14 +25,10 @@ Before you run the application, you need to configure your environment variables
     NEXT_PUBLIC_FIREBASE_APP_ID="YOUR_APP_ID"
     NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID="YOUR_MEASUREMENT_ID"
     
-    # Firebase Admin SDK (Server-Side)
-    # Copy the entire content of your service account JSON file here
-    GOOGLE_APPLICATION_CREDENTIALS='{"type": "service_account", "project_id": "...", ...}'
-
     # Google Maps Configuration
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="YOUR_GOOGLE_MAPS_API_KEY"
 
-    # Genkit AI (Gemini) Configuration
+    # Genkit AI (Gemini) Configuration - This is used by the client for some operations
     GOOGLE_API_KEY="YOUR_GEMINI_API_KEY"
     
     # Stripe Configuration

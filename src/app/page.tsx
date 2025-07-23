@@ -245,27 +245,33 @@ export default function MarketingPage() {
         
         {/* Screenshot placeholder */}
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
-            <div className="relative mx-auto flex justify-center items-end gap-2">
+            <div className="relative mx-auto flex flex-col md:flex-row justify-center items-end gap-2 md:gap-0">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-2xl lg:max-w-4xl z-10">
-                    <div className="relative aspect-[16/10] bg-muted rounded-t-lg border-x-4 border-t-4 border-b-8 border-background shadow-lg">
+                    <div className="relative aspect-[16/10] bg-gray-800 rounded-t-xl border-x-4 border-t-4 border-gray-900 pt-8 shadow-lg">
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+                        </div>
                         <Image 
                             src="/dashboard-screenshot.png"
                             width={1200}
                             height={750}
                             alt="FleetSync AI Dashboard Screenshot"
-                            className="w-full h-full object-cover object-top rounded-t-sm"
+                            className="w-full h-full object-cover object-top rounded-t-md"
                             data-ai-hint="dashboard interface"
                             onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
                         />
                     </div>
-                    <div className="relative h-4 w-full bg-muted rounded-b-lg shadow-lg"></div>
+                    <div className="relative h-4 w-[102%] -left-[1%] bg-gray-900 rounded-b-xl shadow-lg"></div>
                 </div>
 
                 {/* iPhone Mockup */}
-                <div className="relative hidden md:block w-full max-w-[150px] lg:max-w-[200px] z-20 mb-1 -ml-20 lg:-ml-24">
-                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.5rem] h-auto w-full shadow-xl">
-                        <div className="w-full h-full bg-white dark:bg-black rounded-[1.1rem] overflow-hidden">
+                 <div className="relative w-full max-w-[200px] md:max-w-[200px] lg:max-w-[240px] z-20 md:mb-1 -mt-16 md:-ml-24">
+                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[10px] rounded-[2rem] h-auto w-full shadow-xl">
+                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-gray-800 rounded-b-lg z-10"></div>
+                        <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
                            <Image
                                 src="/technician-app-screenshot.png"
                                 width={375}

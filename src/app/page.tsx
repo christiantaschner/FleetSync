@@ -245,30 +245,46 @@ export default function MarketingPage() {
         
         {/* Screenshot placeholder */}
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
-            <div className="relative mx-auto max-w-4xl">
-              {/* Laptop mock frame */}
-              <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-auto w-full shadow-2xl">
-                  {/* Top bar with camera */}
-                  <div className="absolute top-0 inset-x-0 h-6 bg-gray-900 rounded-t-lg flex items-center justify-center">
-                      <div className="h-2 w-2 bg-gray-600 rounded-full"></div>
-                  </div>
-                  {/* Screen content */}
-                  <div className="rounded-lg overflow-hidden bg-white dark:bg-black border-t-2 border-gray-900">
-                      <Image 
-                          src="/dashboard-screenshot.png"
-                          width={1200}
-                          height={750}
-                          alt="FleetSync AI Dashboard Screenshot"
-                          className="w-full h-auto"
-                          data-ai-hint="dashboard interface"
-                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
-                      />
-                  </div>
-              </div>
-              {/* Laptop base */}
-               <div className="relative mx-auto h-[18px] bg-gray-300 dark:bg-gray-700 rounded-b-xl w-[95%]">
-                    <div className="absolute left-1/2 top-0 h-[8px] w-1/6 -translate-x-1/2 rounded-b-md bg-gray-400 dark:bg-gray-600"></div>
-              </div>
+            <div className="relative mx-auto flex justify-center items-end gap-4 md:gap-8">
+                {/* Laptop Mockup */}
+                <div className="relative w-full max-w-2xl lg:max-w-4xl z-10">
+                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-auto w-full shadow-2xl">
+                        <div className="absolute top-0 inset-x-0 h-6 bg-gray-900 rounded-t-lg flex items-center justify-center">
+                            <div className="h-2 w-2 bg-gray-600 rounded-full"></div>
+                        </div>
+                        <div className="rounded-lg overflow-hidden bg-white dark:bg-black border-t-2 border-gray-900 pt-6">
+                            <Image 
+                                src="/dashboard-screenshot.png"
+                                width={1200}
+                                height={750}
+                                alt="FleetSync AI Dashboard Screenshot"
+                                className="w-full h-auto"
+                                data-ai-hint="dashboard interface"
+                                onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
+                            />
+                        </div>
+                    </div>
+                    <div className="relative mx-auto h-[18px] bg-gray-300 dark:bg-gray-700 rounded-b-xl w-[98%]">
+                        <div className="absolute left-1/2 top-0 h-[8px] w-1/6 -translate-x-1/2 rounded-b-md bg-gray-400 dark:bg-gray-600"></div>
+                    </div>
+                </div>
+
+                {/* iPhone Mockup */}
+                <div className="relative hidden md:block w-full max-w-[200px] lg:max-w-xs z-20 mb-[18px] -ml-24 lg:-ml-32">
+                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[10px] rounded-[2.5rem] h-auto w-full shadow-xl">
+                        <div className="w-full h-full bg-white dark:bg-black rounded-[2rem] overflow-hidden">
+                           <Image
+                                src="/technician-app-screenshot.png"
+                                width={375}
+                                height={812}
+                                alt="FleetSync AI Technician App Screenshot"
+                                className="w-full h-auto"
+                                data-ai-hint="mobile app interface"
+                                onError={(e) => { e.currentTarget.src = 'https://placehold.co/375x812.png'; e.currentTarget.classList.add('bg-muted') }}
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 

@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
+import { cn } from '@/lib/utils';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
@@ -206,7 +207,7 @@ export default function TechnicianJobListPage() {
   return (
     <div className="max-w-2xl mx-auto p-4">
       {(userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && (
-        <Button variant="outline" size="sm" onClick={() => router.push('/technician')} className="mb-4">
+        <Button variant="outline" size="sm" onClick={() => router.push('/dashboard?tab=technicians')} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician Roster
         </Button>
       )}
@@ -260,7 +261,10 @@ export default function TechnicianJobListPage() {
       ) : (
         <div className="space-y-4">
           {assignedJobs.map(job => (
-            <Card key={job.id} className="overflow-hidden hover:shadow-md transition-shadow">
+            <Card key={job.id} className={cn(
+                "overflow-hidden hover:shadow-md transition-shadow",
+                job.priority === 'High' && "border-destructive bg-destructive/5"
+            )}>
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg font-headline">{job.title}</CardTitle>
@@ -302,5 +306,3 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
-
-    

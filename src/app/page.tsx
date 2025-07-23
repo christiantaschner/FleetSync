@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, CloudRain } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -336,24 +336,28 @@ export default function MarketingPage() {
                             {otherGuysPoints.map((point, index) => (
                                 <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
                                     <X className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                                    <strong className="font-semibold text-foreground">{point.title}</strong>
-                                    <div/>
-                                    <p className="text-muted-foreground">{point.description}</p>
+                                    <div>
+                                        <strong className="font-semibold text-foreground">{point.title}</strong>
+                                        <p className="text-muted-foreground">{point.description}</p>
+                                    </div>
                                 </div>
                             ))}
                         </CardContent>
                     </Card>
                     <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
                         <CardHeader>
-                            <CardTitle className="font-headline text-primary flex items-center gap-2"><Logo className="h-5 w-5"/>FleetSync AI</CardTitle>
+                            <CardTitle className="font-headline text-primary flex items-center gap-2">
+                                <Logo />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              {fleetSyncPoints.map((point, index) => (
                                 <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
                                     <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                                    <strong className="font-semibold text-foreground">{point.title}</strong>
-                                    <div/>
-                                    <p className="text-muted-foreground">{point.description}</p>
+                                    <div>
+                                        <strong className="font-semibold text-foreground">{point.title}</strong>
+                                        <p className="text-muted-foreground">{point.description}</p>
+                                    </div>
                                 </div>
                             ))}
                         </CardContent>

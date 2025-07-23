@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
@@ -346,7 +347,7 @@ export default function MarketingPage() {
                     <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
                         <CardHeader>
                            <CardTitle className="font-headline text-primary flex items-center gap-2">
-                             <Logo className="text-primary"/>
+                             <Logo />
                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -474,8 +475,60 @@ export default function MarketingPage() {
             </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('testimonials_title')}</h2>
+                    <p className="mt-6 text-lg text-muted-foreground">{t('testimonials_subtitle')}</p>
+                </div>
+                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-y-12 lg:max-w-none lg:grid-cols-2 lg:gap-8">
+                    <div className="flex flex-col items-center text-center">
+                        <p className="relative text-xl font-medium leading-8 text-foreground">
+                            <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
+                                <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
+                            </svg>
+                            {t('testimonial_1_quote')}
+                        </p>
+                        <footer className="mt-8">
+                            <div className="flex items-center justify-center gap-x-3">
+                                <Avatar>
+                                    <AvatarImage src="https://placehold.co/40x40.png" alt="" data-ai-hint="person"/>
+                                    <AvatarFallback>DW</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="text-base font-semibold">{t('testimonial_1_author')}</div>
+                                    <div className="text-sm text-muted-foreground">{t('testimonial_1_role')}</div>
+                                </div>
+                            </div>
+                        </footer>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                        <p className="relative text-xl font-medium leading-8 text-foreground">
+                            <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
+                                <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
+                            </svg>
+                            {t('testimonial_2_quote')}
+                        </p>
+                        <footer className="mt-8">
+                            <div className="flex items-center justify-center gap-x-3">
+                                <Avatar>
+                                    <AvatarImage src="https://placehold.co/40x40.png" alt="" data-ai-hint="person" />
+                                    <AvatarFallback>MR</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="text-base font-semibold">{t('testimonial_2_author')}</div>
+                                    <div className="text-sm text-muted-foreground">{t('testimonial_2_role')}</div>
+                                </div>
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         {/* Pricing Section */}
-        <section id="pricing" className="py-20 sm:py-24 lg:py-32">
+        <section id="pricing" className="bg-muted py-20 sm:py-24 lg:py-32">
           <div className="container px-4">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div className="text-center md:text-left">

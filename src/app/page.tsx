@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, CloudRain, Lightbulb } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -286,7 +286,7 @@ export default function MarketingPage() {
                 </div>
 
                 {/* iPhone Mockup */}
-                 <div className="relative w-36 sm:w-44 md:absolute md:bottom-0 md:right-0 md:mr-[-20px] lg:mr-[-40px] md:mb-6 -mt-16 md:mt-0 z-20">
+                 <div className="absolute w-36 sm:w-44 -bottom-16 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
                     <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -260,7 +260,7 @@ export default function MarketingPage() {
         </section>
         
          {/* Screenshot placeholder */}
-         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
+        <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
@@ -443,9 +443,9 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-3xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('growth_title')}</h2>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the Chaos of Field Service</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        {t('growth_desc')}
+                        Generic software fails because it doesn't understand your reality. A technician stuck in traffic, a customer emergency, a last-minute cancellation—these aren't exceptions, they're your Tuesday. We use a <strong className="text-primary">Vertical AI</strong> approach, meaning our system is specifically trained on the unique, data-intensive problems of your industry to turn unpredictability into a competitive advantage.
                     </p>
                 </div>
             </div>

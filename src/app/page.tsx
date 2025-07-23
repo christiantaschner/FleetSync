@@ -245,16 +245,30 @@ export default function MarketingPage() {
         
         {/* Screenshot placeholder */}
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
-            <div className="relative flex justify-center">
-                <Image 
-                    src="/dashboard-screenshot.png"
-                    width={1200}
-                    height={750}
-                    alt="FleetSync AI Dashboard Screenshot"
-                    className="rounded-xl border bg-background shadow-2xl"
-                    data-ai-hint="dashboard interface"
-                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
-                />
+            <div className="relative mx-auto max-w-4xl">
+              {/* Laptop mock frame */}
+              <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-auto w-full shadow-2xl">
+                  {/* Top bar with camera */}
+                  <div className="absolute top-0 inset-x-0 h-6 bg-gray-900 rounded-t-lg flex items-center justify-center">
+                      <div className="h-2 w-2 bg-gray-600 rounded-full"></div>
+                  </div>
+                  {/* Screen content */}
+                  <div className="rounded-lg overflow-hidden bg-white dark:bg-black border-t-2 border-gray-900">
+                      <Image 
+                          src="/dashboard-screenshot.png"
+                          width={1200}
+                          height={750}
+                          alt="FleetSync AI Dashboard Screenshot"
+                          className="w-full h-auto"
+                          data-ai-hint="dashboard interface"
+                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
+                      />
+                  </div>
+              </div>
+              {/* Laptop base */}
+               <div className="relative mx-auto h-[18px] bg-gray-300 dark:bg-gray-700 rounded-b-xl w-[95%]">
+                    <div className="absolute left-1/2 top-0 h-[8px] w-1/6 -translate-x-1/2 rounded-b-md bg-gray-400 dark:bg-gray-600"></div>
+              </div>
             </div>
         </section>
 

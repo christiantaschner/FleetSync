@@ -287,7 +287,7 @@ export default function MarketingPage() {
                 </div>
 
                 {/* iPhone Mockup */}
-                <div className="absolute w-36 sm:w-44 -bottom-16 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
+                 <div className="absolute w-36 sm:w-44 -bottom-16 sm:bottom-0 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
                     <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
@@ -482,47 +482,51 @@ export default function MarketingPage() {
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('testimonials_title')}</h2>
                     <p className="mt-6 text-lg text-muted-foreground">{t('testimonials_subtitle')}</p>
                 </div>
-                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-y-12 lg:max-w-none lg:grid-cols-2 lg:gap-8">
-                    <div className="flex flex-col items-center text-center">
+                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
+                    <Card className="flex flex-col text-center p-8">
+                      <CardContent className="flex-grow p-0">
                         <p className="relative text-xl font-medium leading-8 text-foreground">
                             <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
                                 <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
                             </svg>
                             {t('testimonial_1_quote')}
                         </p>
-                        <footer className="mt-8">
-                            <div className="flex items-center justify-center gap-x-3">
-                                <Avatar>
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="" data-ai-hint="person"/>
-                                    <AvatarFallback>DW</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="text-base font-semibold">{t('testimonial_1_author')}</div>
-                                    <div className="text-sm text-muted-foreground">{t('testimonial_1_role')}</div>
-                                </div>
-                            </div>
-                        </footer>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
+                      </CardContent>
+                      <footer className="mt-8">
+                          <div className="flex items-center justify-center gap-x-3">
+                              <Avatar>
+                                  <AvatarImage src="https://placehold.co/40x40.png" alt="" data-ai-hint="person"/>
+                                  <AvatarFallback>DW</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                  <div className="text-base font-semibold">{t('testimonial_1_author')}</div>
+                                  <div className="text-sm text-muted-foreground">{t('testimonial_1_role')}</div>
+                              </div>
+                          </div>
+                      </footer>
+                    </Card>
+                     <Card className="flex flex-col text-center p-8">
+                      <CardContent className="flex-grow p-0">
                         <p className="relative text-xl font-medium leading-8 text-foreground">
                             <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
                                 <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
                             </svg>
                             {t('testimonial_2_quote')}
                         </p>
-                        <footer className="mt-8">
-                            <div className="flex items-center justify-center gap-x-3">
-                                <Avatar>
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="" data-ai-hint="person" />
-                                    <AvatarFallback>MR</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="text-base font-semibold">{t('testimonial_2_author')}</div>
-                                    <div className="text-sm text-muted-foreground">{t('testimonial_2_role')}</div>
-                                </div>
-                            </div>
-                        </footer>
-                    </div>
+                      </CardContent>
+                      <footer className="mt-8">
+                          <div className="flex items-center justify-center gap-x-3">
+                              <Avatar>
+                                  <AvatarImage src="https://placehold.co/40x40.png" alt="" data-ai-hint="person" />
+                                  <AvatarFallback>MR</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                  <div className="text-base font-semibold">{t('testimonial_2_author')}</div>
+                                  <div className="text-sm text-muted-foreground">{t('testimonial_2_role')}</div>
+                              </div>
+                          </div>
+                      </footer>
+                    </Card>
                 </div>
             </div>
         </section>

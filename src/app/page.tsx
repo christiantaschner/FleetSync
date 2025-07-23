@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -286,9 +286,9 @@ export default function MarketingPage() {
                 </div>
 
                 {/* iPhone Mockup */}
-                 <div className="absolute w-36 sm:w-44 -bottom-16 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
+                <div className="absolute w-36 sm:w-44 -bottom-16 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
                     <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
-                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
                            <Image
                                 src="/dashboard-screenshot-mobile.png"
@@ -445,8 +445,31 @@ export default function MarketingPage() {
                 <div className="mx-auto max-w-3xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the Chaos of Field Service</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Generic software fails because it doesn't understand your reality. A technician stuck in traffic, a customer emergency, a last-minute cancellation—these aren't exceptions, they're your Tuesday. We use a <strong className="text-primary">Vertical AI</strong> approach, meaning our system is specifically trained on the unique, data-intensive problems of your industry to turn unpredictability into a competitive advantage.
+                        Generic software fails because it doesn’t understand your reality. Our AI is different because it's trained specifically on the complex, unpredictable problems of your industry.
                     </p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+                    <div className="flex flex-col items-center text-center">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
+                            <Workflow className="h-7 w-7 text-primary" />
+                        </div>
+                        <h3 className="mt-4 text-lg font-semibold">Understands Your Chaos</h3>
+                        <p className="mt-2 text-muted-foreground">A technician stuck in traffic, a customer emergency, a last-minute cancellation—these aren't exceptions, they're your Tuesday. Our system thrives on it.</p>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
+                            <Bot className="h-7 w-7 text-primary" />
+                        </div>
+                        <h3 className="mt-4 text-lg font-semibold">AI That Speaks Your Language</h3>
+                        <p className="mt-2 text-muted-foreground">We use a "Vertical AI" approach. This means our AI is fluent in the language of your business—technician skills, job priorities, and real-world logistics.</p>
+                    </div>
+                    <div className="flex flex-col items-center text-center">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
+                            <Target className="h-7 w-7 text-primary" />
+                        </div>
+                        <h3 className="mt-4 text-lg font-semibold">Turns Data into Dollars</h3>
+                        <p className="mt-2 text-muted-foreground">We turn your operational data into a competitive advantage, making smarter decisions that directly lead to fuel savings, more completed jobs, and happier customers.</p>
+                    </div>
                 </div>
             </div>
         </section>

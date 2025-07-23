@@ -247,12 +247,13 @@ export default function MarketingPage() {
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative flex justify-center">
                 <Image 
-                    src="https://storage.googleapis.com/project-pin-prod.appspot.com/a976a161-4623-47ff-b841-57643198031d"
+                    src="/dashboard-screenshot.png"
                     width={1200}
                     height={750}
                     alt="FleetSync AI Dashboard Screenshot"
                     className="rounded-xl border bg-background shadow-2xl"
                     data-ai-hint="dashboard interface"
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
                 />
             </div>
         </section>

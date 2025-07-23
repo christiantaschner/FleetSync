@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain, Repeat, ClipboardList } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain, Repeat, ClipboardList, Package, Target, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/use-language';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
@@ -19,17 +20,17 @@ export default function MarketingPage() {
     {
       icon: <Bot className="h-8 w-8 text-primary" />,
       title: t('feature_ai_dispatch_title'),
-      description: t('feature_ai_dispatch_desc'),
+      description: "One click is all it takes. Our AI analyzes skills, availability, and live location to suggest the perfect technician, eliminating hours of guesswork.",
     },
     {
       icon: <Smartphone className="h-8 w-8 text-primary" />,
       title: t('feature_mobile_app_title'),
-      description: t('feature_mobile_app_desc'),
+      description: "An app so simple, your team will actually want to use it. Clear schedules, easy status updates, and direct communication with dispatch.",
     },
     {
       icon: <Repeat className="h-8 w-8 text-primary" />,
       title: "Automated Contract Jobs",
-      description: "Manage recurring service contracts. Let AI suggest the next appointment date and draft customer notifications automatically.",
+      description: "Manage recurring service contracts effortlessly. Let AI suggest the next appointment date and draft customer notifications automatically.",
     },
      {
       icon: <ClipboardList className="h-8 w-8 text-primary" />,
@@ -39,22 +40,22 @@ export default function MarketingPage() {
     {
       icon: <CalendarDays className="h-8 w-8 text-primary" />,
       title: t('feature_schedule_overview_title'),
-      description: t('feature_schedule_overview_desc'),
+      description: "Visualize your entire operation on a clear, drag-and-drop timeline. See who's busy, who's free, and make schedule changes in seconds.",
     },
     {
       icon: <Shuffle className="h-8 w-8 text-primary" />,
       title: t('feature_dynamic_optimization_title'),
-      description: t('feature_dynamic_optimization_desc'),
+      description: "Plans change. When a job is cancelled or finishes early, one click re-optimizes your technician's route to fill gaps and maximize their day.",
     },
     {
       icon: <MessageSquare className="h-8 w-8 text-primary" />,
       title: t('feature_customer_comms_title'),
-      description: t('feature_customer_comms_desc'),
+      description: "Keep customers happy and informed. The AI can draft professional notifications for delays, and in-app chat keeps everyone connected.",
     },
     {
       icon: <Cog className="h-8 w-8 text-primary" />,
       title: t('feature_skill_library_title'),
-      description: t('feature_skill_library_desc'),
+      description: "Define the skills your business needs. The AI uses this library to make intelligent assignment decisions, ensuring the right person is sent every time.",
     },
   ];
 
@@ -138,8 +139,8 @@ export default function MarketingPage() {
             </Link>
           </div>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-             <Link href="#benefits" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
-                {t('nav_benefits')}
+             <Link href="#why" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+                Why FleetSync?
               </Link>
               <Link href="#features" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
                 {t('nav_features')}
@@ -191,8 +192,8 @@ export default function MarketingPage() {
                             </DropdownMenuContent>
                         </DropdownMenu>
                        <SheetClose asChild>
-                         <Link href="#benefits" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
-                           {t('nav_benefits')}
+                         <Link href="#why" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
+                           Why FleetSync?
                          </Link>
                        </SheetClose>
                        <SheetClose asChild>
@@ -229,10 +230,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              {t('homepage_title')}
+              The AI Dispatch Software for Growing Service Businesses
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              {t('homepage_subtitle')}
+              Stop juggling spreadsheets and complex software. FleetSync AI gives you the power of enterprise-level dispatch in a simple, intuitive platform designed for your team.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -247,8 +248,10 @@ export default function MarketingPage() {
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative mx-auto flex flex-col md:flex-row justify-center items-end gap-2 md:gap-0">
                 {/* Laptop Mockup */}
-                <div className="relative w-full max-w-2xl lg:max-w-4xl z-10">
+                <div className="relative w-full max-w-xl lg:max-w-3xl z-10">
+                    {/* Laptop screen */}
                     <div className="relative aspect-[16/10] bg-gray-800 rounded-t-xl border-x-4 border-t-4 border-gray-900 pt-8 shadow-lg">
+                        {/* Top bar with camera */}
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-gray-600"></div>
                             <div className="w-2 h-2 rounded-full bg-gray-600"></div>
@@ -264,11 +267,12 @@ export default function MarketingPage() {
                             onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
                         />
                     </div>
-                    <div className="relative h-4 w-[102%] -left-[1%] bg-gray-900 rounded-b-xl shadow-lg"></div>
+                    {/* Laptop base */}
+                    <div className="relative h-4 w-full bg-gray-900 rounded-b-xl shadow-lg"></div>
                 </div>
 
                 {/* iPhone Mockup */}
-                 <div className="relative w-full max-w-[200px] md:max-w-[200px] lg:max-w-[240px] z-20 md:mb-1 -mt-16 md:-ml-24">
+                 <div className="relative w-full max-w-[180px] md:max-w-[200px] lg:max-w-[220px] z-20 md:mb-1 -mt-16 md:-ml-24">
                     <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[10px] rounded-[2rem] h-auto w-full shadow-xl">
                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
@@ -301,31 +305,36 @@ export default function MarketingPage() {
             </div>
         </section>
         
-        {/* Benefits Section */}
-        <section id="benefits" className="py-16 sm:py-24 bg-primary/5">
+        {/* Why Choose Us Section */}
+        <section id="why" className="py-16 sm:py-24 bg-primary/5">
             <div className="container">
-                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('benefits_title')}</h2>
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for Your Business, Not for Enterprises</h2>
                     <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-                        {t('benefits_subtitle')}
+                        Tired of field service software that's too complex, too expensive, and built for mega-corporations? We are too. Here’s how we’re different.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
-                    {benefits.map((benefit) => (
-                        <Card key={benefit.title} className="bg-background">
-                           <CardContent className="pt-6">
-                               <div className="flex items-center gap-4">
-                                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                                       {benefit.icon}
-                                   </div>
-                                   <div>
-                                        <h3 className="font-headline text-xl font-semibold">{benefit.title}</h3>
-                                   </div>
-                               </div>
-                                <p className="mt-4 text-muted-foreground">{benefit.description}</p>
-                           </CardContent>
-                        </Card>
-                    ))}
+                    <Card className="bg-background/80">
+                        <CardHeader>
+                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Other Guys</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="flex items-start gap-2 text-muted-foreground"><X className="h-5 w-5 text-destructive shrink-0 mt-0.5"/> <strong>Bloated & Overwhelming:</strong> Dozens of features you'll never use, buried in confusing menus.</p>
+                            <p className="flex items-start gap-2 text-muted-foreground"><X className="h-5 w-5 text-destructive shrink-0 mt-0.5"/> <strong>Punishing Pricing:</strong> Complicated tiers and long-term contracts designed to lock you in.</p>
+                            <p className="flex items-start gap-2 text-muted-foreground"><X className="h-5 w-5 text-destructive shrink-0 mt-0.5"/> <strong>Poor Technician Adoption:</strong> Clunky mobile apps that your team hates using, leading to inconsistent data.</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
+                        <CardHeader>
+                            <CardTitle className="font-headline text-primary flex items-center gap-2"><Logo className="h-5 w-5"/>FleetSync AI</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="flex items-start gap-2"><Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> <strong>Simple & Powerful:</strong> All the essential tools you need, with one-click AI to handle the complexity for you.</p>
+                            <p className="flex items-start gap-2"><Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> <strong>Fair & Scalable Pricing:</strong> Simple per-technician pricing that grows with you. No hidden fees. No long-term commitments.</p>
+                            <p className="flex items-start gap-2"><Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> <strong>Loved by Technicians:</strong> An intuitive mobile app designed for speed and simplicity, ensuring your whole team is on board.</p>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </section>
@@ -403,101 +412,15 @@ export default function MarketingPage() {
             </div>
           </div>
         </section>
-
-        {/* Growth Section */}
-        <section className="relative py-16 sm:py-24 bg-primary/5 overflow-hidden">
-            <div className="absolute inset-0">
-                <Image
-                    src="https://placehold.co/1920x1080.png"
-                    alt="Abstract background"
-                    layout="fill"
-                    objectFit="cover"
-                    className="opacity-5"
-                    data-ai-hint="abstract lines"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent"></div>
-            </div>
-            <div className="container relative z-10">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('growth_title')}</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">{t('growth_desc')}</p>
-                </div>
-                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <Card className="bg-background/80 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <TrendingUp className="h-8 w-8 text-primary"/>
-                            <CardTitle>Data-Driven Insights</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Every completed job becomes a data point. Our AI helps you spot trends in job types, durations, and technician performance.</p>
-                        </CardContent>
-                    </Card>
-                     <Card className="bg-background/80 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Workflow className="h-8 w-8 text-primary"/>
-                            <CardTitle>Continuous Improvement</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                           <p className="text-muted-foreground">Use insights from analytics to refine your processes, offer better training, and improve time and cost estimates for future work.</p>
-                        </CardContent>
-                    </Card>
-                     <Card className="bg-background/80 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Brain className="h-8 w-8 text-primary"/>
-                            <CardTitle>Future-Ready Growth</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground">Arm your business with the data it needs to scale intelligently, forecast demand, and stay ahead of the competition.</p>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="bg-secondary py-16 sm:py-24">
-          <div className="container">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('testimonials_title')}</h2>
-              <p className="mt-6 text-lg text-muted-foreground">{t('testimonials_subtitle')}</p>
-            </div>
-            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-lg font-medium">"{t('testimonial_1_quote')}"</p>
-                </CardContent>
-                <CardHeader className="flex-row items-center gap-4">
-                  <Image src="https://placehold.co/40x40.png" alt="Testimonial author" data-ai-hint="person face" width={40} height={40} className="h-10 w-10 rounded-full" />
-                  <div>
-                    <CardTitle className="text-base">{t('testimonial_1_author')}</CardTitle>
-                    <CardDescription>{t('testimonial_1_role')}</CardDescription>
-                  </div>
-                </CardHeader>
-              </Card>
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-lg font-medium">"{t('testimonial_2_quote')}"</p>
-                </CardContent>
-                <CardHeader className="flex-row items-center gap-4">
-                  <Image src="https://placehold.co/40x40.png" alt="Testimonial author" data-ai-hint="person face" width={40} height={40} className="h-10 w-10 rounded-full" />
-                  <div>
-                    <CardTitle className="text-base">{t('testimonial_2_author')}</CardTitle>
-                    <CardDescription>{t('testimonial_2_role')}</CardDescription>
-                  </div>
-                </CardHeader>
-              </Card>
-            </div>
-          </div>
-        </section>
         
-         {/* Pricing Section */}
+        {/* Pricing Section */}
         <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div className="text-center md:text-left">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('pricing_roi_title')}</h2>
                     <p className="mt-6 text-lg text-muted-foreground">
-                        {t('pricing_roi_desc')}
+                        Stop guessing and start growing. Our simple, transparent pricing is designed to deliver a clear return on investment by boosting efficiency, not your overheads.
                     </p>
                      <div className="mt-8 space-y-4">
                         <div className="flex items-start gap-4">
@@ -533,7 +456,7 @@ export default function MarketingPage() {
                     <Card className="max-w-md w-full border-primary ring-2 ring-primary shadow-xl">
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">{t('pricing_plan_title')}</CardTitle>
-                            <CardDescription>{t('pricing_plan_desc')}</CardDescription>
+                            <CardDescription>One plan. All features. No compromises.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline justify-center gap-2">

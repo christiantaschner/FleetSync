@@ -1,10 +1,10 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, CloudRain } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, CloudRain, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/common/logo';
+import { Logo } from '@/components/ui/logo';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/use-language';
@@ -259,7 +259,7 @@ export default function MarketingPage() {
           </div>
         </section>
         
-        {/* Screenshot placeholder */}
+         {/* Screenshot placeholder */}
          <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
@@ -286,7 +286,7 @@ export default function MarketingPage() {
                 </div>
 
                 {/* iPhone Mockup */}
-                 <div className="relative w-40 sm:w-48 md:absolute md:bottom-0 md:right-0 md:mr-[-20px] lg:mr-[-40px] md:mb-6 -mt-16 md:mt-0 z-20">
+                 <div className="relative w-36 sm:w-44 md:absolute md:bottom-0 md:right-0 md:mr-[-20px] lg:mr-[-40px] md:mb-6 -mt-16 md:mt-0 z-20">
                     <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
@@ -345,9 +345,9 @@ export default function MarketingPage() {
                     </Card>
                     <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
                         <CardHeader>
-                            <CardTitle className="font-headline text-primary flex items-center gap-2">
-                                <Logo />
-                            </CardTitle>
+                           <CardTitle className="font-headline text-primary flex items-center gap-2">
+                             <Logo className="text-primary"/>
+                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              {fleetSyncPoints.map((point, index) => (
@@ -439,8 +439,20 @@ export default function MarketingPage() {
           </div>
         </section>
         
+        {/* Vertical AI Section */}
+        <section className="bg-primary/5 py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-3xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('growth_title')}</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                        {t('growth_desc')}
+                    </p>
+                </div>
+            </div>
+        </section>
+
         {/* Pricing Section */}
-        <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
+        <section id="pricing" className="py-20 sm:py-24 lg:py-32">
           <div className="container px-4">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div className="text-center md:text-left">

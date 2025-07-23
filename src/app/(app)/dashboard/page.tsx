@@ -46,6 +46,7 @@ import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
 import { MultiSelectFilter } from './components/MultiSelectFilter';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();

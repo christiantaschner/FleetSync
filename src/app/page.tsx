@@ -128,6 +128,19 @@ export default function MarketingPage() {
     });
   };
 
+  const otherGuysPoints = [
+    { title: 'Bloated & Overwhelming:', description: 'Dozens of features you\'ll never use, buried in confusing menus.' },
+    { title: 'Punishing Pricing:', description: 'Complicated tiers and long-term contracts designed to lock you in.' },
+    { title: 'Poor Technician Adoption:', description: 'Clunky mobile apps that your team hates using, leading to inconsistent data.' }
+  ];
+
+  const fleetSyncPoints = [
+    { title: 'Simple & Powerful:', description: 'All the essential tools you need, with one-click AI to handle the complexity for you.' },
+    { title: 'Fair & Scalable Pricing:', description: 'Simple per-technician pricing that grows with you. No hidden fees. No long-term commitments.' },
+    { title: 'Loved by Technicians:', description: 'An intuitive mobile app designed for speed and simplicity, ensuring your whole team is on board.' }
+  ];
+
+
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
@@ -246,7 +259,7 @@ export default function MarketingPage() {
         
         {/* Screenshot placeholder */}
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
-            <div className="relative mx-auto flex flex-col md:flex-row justify-center items-end gap-2 md:gap-0">
+            <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-xl lg:max-w-3xl z-10">
                     {/* Laptop screen */}
@@ -269,12 +282,14 @@ export default function MarketingPage() {
                     </div>
                     {/* Laptop base */}
                     <div className="relative h-4 w-full bg-gray-900 rounded-b-xl shadow-lg"></div>
+                     <div className="relative mx-auto h-2 w-[55%] bg-gray-800/50 rounded-b-md"></div>
+                     <div className="relative mx-auto h-1 w-[45%] bg-gray-700/50 rounded-b-md"></div>
                 </div>
 
                 {/* iPhone Mockup */}
-                 <div className="relative w-full max-w-[180px] md:max-w-[200px] lg:max-w-[220px] z-20 md:mb-1 -mt-16 md:-ml-24">
-                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[10px] rounded-[2rem] h-auto w-full shadow-xl">
-                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-gray-800 rounded-b-lg z-10"></div>
+                 <div className="relative w-full max-w-[150px] md:max-w-[180px] z-20 md:absolute md:bottom-0 md:right-0 md:mr-[-40px] lg:mr-[-60px] md:mb-6">
+                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
+                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
                            <Image
                                 src="/technician-app-screenshot.png"
@@ -311,7 +326,7 @@ export default function MarketingPage() {
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for Your Business, Not for Enterprises</h2>
                     <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-                        Tired of field service software that's too complex, too expensive, and built for mega-corporations? We are too. Here’s how we’re different.
+                        Tired of field service software that's too complex, too expensive, and built for mega-corporations? We are too. Here's how we're different.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -319,20 +334,30 @@ export default function MarketingPage() {
                         <CardHeader>
                             <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Other Guys</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            <p className="flex items-start gap-2 text-muted-foreground"><X className="h-5 w-5 text-destructive shrink-0 mt-0.5"/> <strong>Bloated & Overwhelming:</strong> Dozens of features you'll never use, buried in confusing menus.</p>
-                            <p className="flex items-start gap-2 text-muted-foreground"><X className="h-5 w-5 text-destructive shrink-0 mt-0.5"/> <strong>Punishing Pricing:</strong> Complicated tiers and long-term contracts designed to lock you in.</p>
-                            <p className="flex items-start gap-2 text-muted-foreground"><X className="h-5 w-5 text-destructive shrink-0 mt-0.5"/> <strong>Poor Technician Adoption:</strong> Clunky mobile apps that your team hates using, leading to inconsistent data.</p>
+                        <CardContent className="space-y-4">
+                            {otherGuysPoints.map((point, index) => (
+                                <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
+                                    <X className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                                    <strong className="font-semibold text-foreground">{point.title}</strong>
+                                    <div/>
+                                    <p className="text-muted-foreground">{point.description}</p>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
                     <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
                         <CardHeader>
                             <CardTitle className="font-headline text-primary flex items-center gap-2"><Logo className="h-5 w-5"/>FleetSync AI</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            <p className="flex items-start gap-2"><Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> <strong>Simple & Powerful:</strong> All the essential tools you need, with one-click AI to handle the complexity for you.</p>
-                            <p className="flex items-start gap-2"><Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> <strong>Fair & Scalable Pricing:</strong> Simple per-technician pricing that grows with you. No hidden fees. No long-term commitments.</p>
-                            <p className="flex items-start gap-2"><Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5"/> <strong>Loved by Technicians:</strong> An intuitive mobile app designed for speed and simplicity, ensuring your whole team is on board.</p>
+                        <CardContent className="space-y-4">
+                             {fleetSyncPoints.map((point, index) => (
+                                <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
+                                    <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                                    <strong className="font-semibold text-foreground">{point.title}</strong>
+                                    <div/>
+                                    <p className="text-muted-foreground">{point.description}</p>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
                 </div>

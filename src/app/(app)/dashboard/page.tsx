@@ -134,6 +134,8 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('job-list');
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
   
   const fetchSkills = useCallback(async () => {
     if (!userProfile?.companyId || !appId) return;
@@ -519,7 +521,7 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId, company]);
+  }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST]);
 
   const handleOpenChat = (job: Job) => {
     setSelectedChatJob(job);
@@ -651,7 +653,7 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId, company]);
+  }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
     if (!db || !userProfile?.companyId || !appId) {

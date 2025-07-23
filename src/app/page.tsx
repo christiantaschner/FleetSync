@@ -271,12 +271,12 @@ export default function MarketingPage() {
                             <div className="w-2 h-2 rounded-full bg-gray-600"></div>
                         </div>
                         <Image 
-                            src="https://placehold.co/1200x750.png"
+                            src="/dashboard-screenshot.png"
                             width={1200}
                             height={750}
                             alt="FleetSync AI Dashboard Screenshot"
                             className="w-full h-full object-cover object-top rounded-t-md"
-                            data-ai-hint="dashboard interface"
+                            priority
                         />
                     </div>
                     {/* Laptop base */}
@@ -291,12 +291,11 @@ export default function MarketingPage() {
                          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
                            <Image
-                                src="https://placehold.co/375x812.png"
+                                src="/dashboard-screenshot-mobile.png"
                                 width={375}
                                 height={812}
                                 alt="FleetSync AI Technician App Screenshot"
                                 className="w-full h-auto"
-                                data-ai-hint="mobile app interface"
                             />
                         </div>
                     </div>

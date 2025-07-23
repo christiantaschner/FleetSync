@@ -32,6 +32,12 @@ export const LanguageSwitcher = () => {
               Deutsch
             </span>
           </DropdownMenuItem>
+           <DropdownMenuItem onClick={() => setLanguage('fr')}>
+            <span className="flex items-center">
+              {language === 'fr' && <Check className="mr-2 h-4 w-4" />}
+              Français
+            </span>
+          </DropdownMenuItem>
         </DropdownMenuSubContent>
       </DropdownMenuPortal>
     </DropdownMenuSub>

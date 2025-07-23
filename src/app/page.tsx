@@ -174,6 +174,7 @@ export default function MarketingPage() {
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <Button asChild variant="ghost">
@@ -196,12 +197,13 @@ export default function MarketingPage() {
                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="w-full justify-center text-lg">
-                                    {language === 'en' ? 'English' : 'Deutsch'}
+                                    {language === 'en' ? 'English' : language === 'de' ? 'Deutsch' : 'Français'}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="center" className="w-[280px] sm:w-[380px]">
                                 <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                        <SheetClose asChild>
@@ -258,7 +260,7 @@ export default function MarketingPage() {
         </section>
         
         {/* Screenshot placeholder */}
-        <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
+         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
@@ -317,7 +319,7 @@ export default function MarketingPage() {
         </section>
         
         {/* Why Choose Us Section */}
-        <section id="why" className="py-16 sm:py-24 bg-primary/5">
+        <section id="why" className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for Your Business, Not for Enterprises</h2>

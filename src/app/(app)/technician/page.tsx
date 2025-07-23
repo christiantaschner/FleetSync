@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Users, ChevronRight, AlertTriangle, Mail, MapPin } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { mockTechnicians } from '@/lib/mock-data';
 
 export default function SelectTechnicianPage() {
     const { userProfile, loading: authLoading } = useAuth();
@@ -21,6 +22,12 @@ export default function SelectTechnicianPage() {
 
     useEffect(() => {
         if (authLoading) return;
+        
+        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+            setTechnicians(mockTechnicians);
+            setIsLoading(false);
+            return;
+        }
         
         if (!userProfile) {
             router.push('/login');

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, ShieldQuestion, BarChart, Users, ArrowRight, UserCog, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Brain, Eye, Building2, Mailbox, WifiOff, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, CloudRain, Repeat, ClipboardList, Package, Target, X } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -94,7 +94,7 @@ export default function MarketingPage() {
       solution: t('scenario_emergency_job_solution'),
     },
     {
-      icon: <UserCog className="h-8 w-8 text-blue-500" />,
+      icon: <Workflow className="h-8 w-8 text-blue-500" />,
       problem: t('scenario_cancellation_problem'),
       solution: t('scenario_cancellation_solution'),
     },
@@ -261,23 +261,20 @@ export default function MarketingPage() {
         <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
-                <div className="relative w-full max-w-xl lg:max-w-3xl z-10">
+                <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
                     {/* Laptop screen */}
                     <div className="relative aspect-[16/10] bg-gray-800 rounded-t-xl border-x-4 border-t-4 border-gray-900 pt-8 shadow-lg">
                         {/* Top bar with camera */}
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-gray-600"></div>
-                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
-                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
                         </div>
                         <Image 
-                            src="/dashboard-screenshot.png"
+                            src="https://placehold.co/1200x750.png"
                             width={1200}
                             height={750}
                             alt="FleetSync AI Dashboard Screenshot"
                             className="w-full h-full object-cover object-top rounded-t-md"
                             data-ai-hint="dashboard interface"
-                            onError={(e) => { e.currentTarget.src = 'https://placehold.co/1200x750.png'; e.currentTarget.classList.add('bg-muted') }}
                         />
                     </div>
                     {/* Laptop base */}
@@ -287,18 +284,17 @@ export default function MarketingPage() {
                 </div>
 
                 {/* iPhone Mockup */}
-                 <div className="relative w-full max-w-[150px] md:max-w-[180px] z-20 md:absolute md:bottom-0 md:right-0 md:mr-[-40px] lg:mr-[-60px] md:mb-6">
+                 <div className="relative w-40 sm:w-48 md:absolute md:bottom-0 md:right-0 md:mr-[-20px] lg:mr-[-40px] md:mb-6 -mt-16 md:mt-0 z-20">
                     <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
-                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-3 bg-gray-800 rounded-b-lg z-10"></div>
+                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
                         <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
                            <Image
-                                src="/technician-app-screenshot.png"
+                                src="https://placehold.co/375x812.png"
                                 width={375}
                                 height={812}
                                 alt="FleetSync AI Technician App Screenshot"
                                 className="w-full h-auto"
                                 data-ai-hint="mobile app interface"
-                                onError={(e) => { e.currentTarget.src = 'https://placehold.co/375x812.png'; e.currentTarget.classList.add('bg-muted') }}
                             />
                         </div>
                     </div>

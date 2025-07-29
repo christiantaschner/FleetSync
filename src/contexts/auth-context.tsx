@@ -208,9 +208,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email_address: string, pass_word: string) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        sessionStorage.setItem('mock_session', 'admin');
-        window.location.reload();
-        return true;
+        if (email_address === 'admin@mock.com' && pass_word === 'password') {
+            sessionStorage.setItem('mock_session', 'admin');
+            window.location.reload();
+            return true;
+        } else {
+            toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+            return false;
+        }
     }
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
@@ -246,8 +251,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email_address: string, pass_word: string) => {
      if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        if (email_address === 'admin@mock.com') {
+             toast({
+                title: "Signup Failed",
+                description: (<span>An account with this email already exists. Please <Link href="/login" className="font-bold underline">login</Link> instead.</span>),
+                variant: "destructive",
+             });
+             return false;
+        }
         sessionStorage.setItem('mock_session', 'new_user');
-        window.location.reload();
+        window.location.href = '/onboarding';
         return true;
     }
      if (!auth || !db) {
@@ -300,7 +313,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
       sessionStorage.removeItem('mock_session');
-      window.location.reload();
+      window.location.href = '/login';
       return;
     }
     if (!auth) {

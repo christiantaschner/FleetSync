@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
-import { Loader2 } from "lucide-react";
+import { Loader2, Globe } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";
 import {
   DropdownMenu,
@@ -24,7 +24,7 @@ import {
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  password: z.string().min(1, { message: "Password is required" }),
 });
 
 type LoginFormInputs = z.infer<typeof loginSchema>;
@@ -45,21 +45,21 @@ export default function LoginPage() {
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
     setIsLoading(true);
     const success = await login(data.email, data.password);
-    if (success) {
-      // The auth context will handle routing based on user profile state
-    } else {
+    if (!success) {
       setIsLoading(false);
     }
+    // On success, the auth context will handle routing.
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-        <div className="mx-auto flex items-center justify-center max-w-lg relative">
-            <div className="absolute left-0">
+        <div className="mx-auto flex items-center justify-between max-w-lg">
+            <div className="flex items-center">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                            <Globe className="h-4 w-4 mr-1.5" />
                             {language.toUpperCase()}
                         </Button>
                     </DropdownMenuTrigger>
@@ -70,7 +70,10 @@ export default function LoginPage() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <Logo />
+            <Link href="/">
+                <Logo />
+            </Link>
+             <div className="w-[80px]" /> {/* Spacer to balance the header */}
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center p-4">
@@ -100,6 +103,7 @@ export default function LoginPage() {
                       type="password"
                       {...register("password")}
                       className={errors.password ? "border-destructive" : ""}
+                      placeholder={process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ? 'password' : ''}
                     />
                     {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                   </div>

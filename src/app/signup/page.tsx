@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/contexts/auth-context";
 import { Logo } from "@/components/common/logo";
-import { Loader2, Bot } from "lucide-react";
+import { Loader2, Bot, Globe } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";
 import {
   DropdownMenu,
@@ -50,22 +50,21 @@ export default function SignupPage() {
   const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
     setIsLoading(true);
     const success = await signup(data.email, data.password);
-    if (success) {
-      // New users should always be directed to the onboarding flow.
-      router.push('/onboarding');
-    } else {
+    if (!success) {
       setIsLoading(false);
     }
+    // On success, the auth context will handle routing
   };
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
        <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-            <div className="mx-auto flex items-center justify-center max-w-lg relative">
-                 <div className="absolute left-0">
+            <div className="mx-auto flex items-center justify-between max-w-lg">
+                <div className="flex items-center">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                                <Globe className="h-4 w-4 mr-1.5" />
                                 {language.toUpperCase()}
                             </Button>
                         </DropdownMenuTrigger>
@@ -76,7 +75,10 @@ export default function SignupPage() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <Logo />
+                 <Link href="/">
+                    <Logo />
+                </Link>
+                <div className="w-[80px]" /> {/* Spacer to balance the header */}
             </div>
         </header>
       <main className="flex flex-1 items-center justify-center p-4">

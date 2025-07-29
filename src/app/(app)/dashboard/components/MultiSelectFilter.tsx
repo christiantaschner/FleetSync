@@ -8,9 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandList,
 } from "@/components/ui/command";
 import {
@@ -68,8 +66,8 @@ export function MultiSelectFilter({
           <span className="truncate">
             {selected.length === 0
               ? placeholder
-              : selected.length === 1
-              ? options.find((o) => o.value === selected[0])?.label
+              : selected.length === options.length
+              ? "All selected"
               : `${selected.length} selected`}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -78,7 +76,6 @@ export function MultiSelectFilter({
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandList>
-            <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
                 <div
                     className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-secondary"

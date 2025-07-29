@@ -28,7 +28,7 @@ const getStatusAppearance = (status: JobStatus) => {
     }
 };
 
-const JobBlock = ({ job, dayStart, totalMinutes }: { job: Job, dayStart: Date, totalMinutes: number }) => {
+const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (job: Job) => void }) => {
   if (!job.scheduledTime) return null;
 
   const jobStart = new Date(job.scheduledTime);
@@ -47,6 +47,7 @@ const JobBlock = ({ job, dayStart, totalMinutes }: { job: Job, dayStart: Date, t
       <Tooltip>
         <TooltipTrigger asChild>
           <div
+            onClick={() => onClick(job)}
             className={cn(
               "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
               getStatusAppearance(job.status),
@@ -102,7 +103,8 @@ const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, tota
 };
 
 const technicianColors = [ 'bg-sky-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500' ];
-const getTechnicianColor = (technicianId: string) => {
+const getTechnicianColor = (technicianId: string | null | undefined) => {
+    if (!technicianId) return 'bg-gray-400';
     let hash = 0;
     for (let i = 0; i < technicianId.length; i++) {
         hash = technicianId.charCodeAt(i) + ((hash << 5) - hash);
@@ -111,7 +113,7 @@ const getTechnicianColor = (technicianId: string) => {
     return technicianColors[index];
 };
 
-const MonthView = ({ currentDate, jobs, technicians }: { currentDate: Date, jobs: Job[], technicians: Technician[] }) => {
+const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate: Date, jobs: Job[], technicians: Technician[], onJobClick: (job: Job) => void }) => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const firstDayOfMonth = getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1; 
@@ -141,13 +143,16 @@ const MonthView = ({ currentDate, jobs, technicians }: { currentDate: Date, jobs
                                         <TooltipProvider key={job.id}>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
-                                                    <Badge className={cn("w-full justify-start truncate text-white", getTechnicianColor(job.assignedTechnicianId!))}>
+                                                    <Badge 
+                                                        onClick={() => onJobClick(job)}
+                                                        className={cn("w-full justify-start truncate text-white cursor-pointer", getTechnicianColor(job.assignedTechnicianId))}
+                                                    >
                                                         {technicians.find(t => t.id === job.assignedTechnicianId)?.name.split(' ')[0]}: {job.title}
                                                     </Badge>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
                                                     <p className="font-bold">{job.title}</p>
-                                                    <p>{technicians.find(t => t.id === job.assignedTechnicianId)?.name}</p>
+                                                    <p>{technicians.find(t => t.id === job.assignedTechnicianId)?.name || 'Unassigned'}</p>
                                                     <p>{format(new Date(job.scheduledTime!), 'p')}</p>
                                                 </TooltipContent>
                                             </Tooltip>
@@ -167,11 +172,13 @@ const MonthView = ({ currentDate, jobs, technicians }: { currentDate: Date, jobs
 interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
+  onJobClick: (job: Job) => void;
 }
 
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ 
     jobs, 
     technicians,
+    onJobClick,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -290,7 +297,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                       </div>
                       <div className="relative h-full p-1.5">
                           {jobsByTechnician(tech.id).map(job => (
-                          <JobBlock key={job.id} job={job} dayStart={dayStart} totalMinutes={totalMinutes} />
+                          <JobBlock key={job.id} job={job} dayStart={dayStart} totalMinutes={totalMinutes} onClick={onJobClick} />
                           ))}
                       </div>
                       </div>
@@ -319,7 +326,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         </div>
          ) : (
             technicians.length > 0 ? (
-                <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} />
+                <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={onJobClick} />
             ) : (
                 <div className="pt-6">
                     <Alert className="m-4 border-primary/30 bg-primary/5">

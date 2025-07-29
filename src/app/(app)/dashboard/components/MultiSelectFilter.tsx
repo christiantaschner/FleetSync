@@ -77,15 +77,15 @@ export function MultiSelectFilter({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
-          <CommandInput placeholder="Search options..." />
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
                 <div
-                    className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent"
+                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-secondary"
                     onClick={() => handleSelectAll(!allSelected)}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
+                             e.preventDefault();
                             handleSelectAll(!allSelected);
                         }
                     }}
@@ -95,17 +95,18 @@ export function MultiSelectFilter({
                         checked={allSelected ? true : someSelected ? 'indeterminate' : false}
                         className="mr-2"
                     />
-                    <label className="text-sm font-medium leading-none">
+                    <label className="text-sm font-medium leading-none cursor-pointer">
                         Select All
                     </label>
                 </div>
               {options.map((option) => (
                 <div
                   key={option.value}
-                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent"
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-secondary"
                   onClick={() => handleToggleOption(option.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
                       handleToggleOption(option.value);
                     }
                   }}
@@ -120,7 +121,7 @@ export function MultiSelectFilter({
                         selected.includes(option.value) ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    <span>{option.label}</span>
+                    <span className="cursor-pointer">{option.label}</span>
                   </div>
                 </div>
               ))}

@@ -86,7 +86,7 @@ export default function DashboardPage() {
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [statusFilter, setStatusFilter] = useState<string[]>(['Pending', 'Assigned', 'En Route', 'In Progress']);
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Unassigned', 'Pending', 'Assigned', 'En Route', 'In Progress']);
   const [priorityFilter, setPriorityFilter] = useState<string[]>(['Low', 'Medium', 'High']);
   const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
 
@@ -536,9 +536,17 @@ export default function DashboardPage() {
         return [];
     }
     return jobs.filter(job => {
-      const statusMatch = statusFilter.length === 0 || statusFilter.includes(job.status);
-      const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
-      return statusMatch && priorityMatch;
+        const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
+        if (!priorityMatch) return false;
+
+        if (statusFilter.length === 0) return true;
+        
+        // Handle special "Unassigned" case
+        const isUnassigned = job.status === 'Pending' && !job.assignedTechnicianId;
+        if (statusFilter.includes('Unassigned') && isUnassigned) return true;
+        
+        // Handle regular status match
+        return statusFilter.includes(job.status);
     });
   }, [jobs, statusFilter, priorityFilter, jobFilterId]);
 
@@ -748,7 +756,7 @@ export default function DashboardPage() {
     [jobs]
   );
   const unassignedJobsCount = useMemo(() => 
-    jobs.filter(j => j.status === 'Pending').length, 
+    jobs.filter(j => j.status === 'Pending' && !j.assignedTechnicianId).length, 
     [jobs]
   );
 
@@ -838,6 +846,7 @@ export default function DashboardPage() {
   }
   
   const statusOptions = [
+    { value: "Unassigned", label: "Unassigned" },
     { value: "Pending", label: "Pending" },
     { value: "Assigned", label: "Assigned" },
     { value: "En Route", label: "En Route" },

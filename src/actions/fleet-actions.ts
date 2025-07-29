@@ -453,14 +453,14 @@ export async function rejectProfileChangeRequestAction(
 }
 
 export async function reassignJobAction(
-  input: z.infer<typeof ReassignJobInputSchema>
+  input: z.infer<typeof ReassignJobInputSchema> & { newScheduledTime?: string }
 ): Promise<{ error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         return { error: "Mock mode: Data is not saved." };
     }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    const { companyId, jobId, newTechnicianId, reason, appId } = ReassignJobInputSchema.parse(input);
+    const { companyId, jobId, newTechnicianId, reason, appId, newScheduledTime } = ReassignJobInputSchema.extend({ newScheduledTime: z.string().optional() }).parse(input);
 
     const batch = writeBatch(dbAdmin);
 
@@ -480,6 +480,10 @@ export async function reassignJobAction(
     
     if (reason) {
         updatePayload.notes = arrayUnion(`(Reassigned by dispatcher: ${reason})`);
+    }
+    
+    if (newScheduledTime) {
+        updatePayload.scheduledTime = newScheduledTime;
     }
 
     batch.update(jobDocRef, updatePayload);

@@ -11,7 +11,6 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from "@/components/ui/command";
 import {
@@ -50,6 +49,13 @@ export function MultiSelectFilter({
   const allSelected = selected.length === options.length;
   const someSelected = selected.length > 0 && selected.length < options.length;
 
+  const handleToggleOption = (value: string) => {
+    const newSelected = selected.includes(value)
+      ? selected.filter((s) => s !== value)
+      : [...selected, value];
+    onChange(newSelected);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -75,50 +81,48 @@ export function MultiSelectFilter({
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
-                <CommandItem onSelect={() => {}}>
-                    <div
-                        className="flex w-full items-center space-x-2"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
+                <div
+                    className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent"
+                    onClick={() => handleSelectAll(!allSelected)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
                             handleSelectAll(!allSelected);
-                        }}
-                    >
-                         <Checkbox 
-                            checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                         />
-                         <label
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                            Select All
-                        </label>
-                    </div>
-                </CommandItem>
+                        }
+                    }}
+                    tabIndex={0}
+                >
+                    <Checkbox 
+                        checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                        className="mr-2"
+                    />
+                    <label className="text-sm font-medium leading-none">
+                        Select All
+                    </label>
+                </div>
               {options.map((option) => (
-                <CommandItem
+                <div
                   key={option.value}
-                  onSelect={() => {}} // Prevent closing on select
+                  className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent"
+                  onClick={() => handleToggleOption(option.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleToggleOption(option.value);
+                    }
+                  }}
+                  tabIndex={0}
                 >
                   <div
                     className="flex w-full items-center space-x-2"
-                     onClick={(e) => {
-                       e.preventDefault();
-                       e.stopPropagation();
-                       const newSelected = selected.includes(option.value)
-                         ? selected.filter((s) => s !== option.value)
-                         : [...selected, option.value];
-                       onChange(newSelected);
-                     }}
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "h-4 w-4",
                         selected.includes(option.value) ? "opacity-100" : "opacity-0"
                       )}
                     />
                     <span>{option.label}</span>
                   </div>
-                </CommandItem>
+                </div>
               ))}
             </CommandGroup>
           </CommandList>

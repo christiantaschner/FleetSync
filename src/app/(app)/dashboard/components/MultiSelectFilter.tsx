@@ -43,11 +43,12 @@ export function MultiSelectFilter({
 }: MultiSelectFilterProps) {
   const [open, setOpen] = React.useState(false);
 
-  const handleSelectAll = (checked: boolean) => {
-    onChange(checked ? options.map((option) => option.value) : []);
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    onChange(checked === true ? options.map((option) => option.value) : []);
   };
   
   const allSelected = selected.length === options.length;
+  const someSelected = selected.length > 0 && selected.length < options.length;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -78,7 +79,11 @@ export function MultiSelectFilter({
                     onSelect={() => handleSelectAll(!allSelected)}
                     className="flex items-center space-x-2"
                 >
-                     <Checkbox checked={allSelected} id="select-all"/>
+                     <Checkbox 
+                        checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                        onCheckedChange={handleSelectAll}
+                        id="select-all"
+                     />
                      <label
                         htmlFor="select-all"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

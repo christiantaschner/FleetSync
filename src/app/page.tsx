@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -169,6 +169,7 @@ export default function MarketingPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="text-foreground/80 hover:bg-secondary hover:text-foreground px-2 font-semibold mr-2">
+                        <Globe className="h-4 w-4 mr-1.5" />
                         {language.toUpperCase()}
                     </Button>
                 </DropdownMenuTrigger>
@@ -182,7 +183,7 @@ export default function MarketingPage() {
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
               <Button asChild>
-                  <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('start_free_trial')}</a>
+                  <Link href="/signup">{t('start_free_trial')}</Link>
               </Button>
             </div>
             {/* Mobile Menu */}
@@ -198,6 +199,7 @@ export default function MarketingPage() {
                        <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="w-full justify-center text-lg">
+                                    <Globe className="h-4 w-4 mr-2"/>
                                     {language === 'en' ? 'English' : language === 'de' ? 'Deutsch' : 'Français'}
                                 </Button>
                             </DropdownMenuTrigger>
@@ -229,9 +231,9 @@ export default function MarketingPage() {
                                 </Link>
                             </SheetClose>
                              <SheetClose asChild>
-                                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer" className="w-full">
+                                <Link href="/signup" className="w-full">
                                     <Button className="w-full">{t('start_free_trial')}</Button>
-                                </a>
+                                </Link>
                              </SheetClose>
                        </div>
                     </nav>
@@ -253,7 +255,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
-                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('get_started_free')}</a>
+                <Link href="/signup">{t('get_started_free')}</Link>
               </Button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">{t('no_setup_fee')}</p>
@@ -582,7 +584,7 @@ export default function MarketingPage() {
                                 <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
                             </div>
                             <Button asChild size="lg" className="w-full">
-                                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('get_started_free')}</a>
+                                <Link href="/signup">{t('get_started_free')}</Link>
                             </Button>
                              <ul className="space-y-2 text-sm text-muted-foreground">
                                 <li className="flex items-center gap-2">
@@ -618,7 +620,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8">
               <Button asChild size="lg">
-                <a href="https://buy.stripe.com/5kQfZjbZy8Ubbi22WXeME01" target="_blank" rel="noopener noreferrer">{t('start_free_trial_now')}</a>
+                <Link href="/signup">{t('start_free_trial_now')}</Link>
               </Button>
             </div>
           </div>

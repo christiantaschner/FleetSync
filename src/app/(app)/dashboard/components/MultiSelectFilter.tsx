@@ -75,39 +75,49 @@ export function MultiSelectFilter({
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
-                <CommandItem
-                    onSelect={() => handleSelectAll(!allSelected)}
-                    className="flex items-center space-x-2"
-                >
-                     <Checkbox 
-                        checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                        onCheckedChange={handleSelectAll}
-                        id="select-all"
-                     />
-                     <label
-                        htmlFor="select-all"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                <CommandItem onSelect={() => {}}>
+                    <div
+                        className="flex w-full items-center space-x-2"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectAll(!allSelected);
+                        }}
                     >
-                        Select All
-                    </label>
+                         <Checkbox 
+                            checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                         />
+                         <label
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Select All
+                        </label>
+                    </div>
                 </CommandItem>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  onSelect={() => {
-                    const newSelected = selected.includes(option.value)
-                      ? selected.filter((s) => s !== option.value)
-                      : [...selected, option.value];
-                    onChange(newSelected);
-                  }}
+                  onSelect={() => {}} // Prevent closing on select
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selected.includes(option.value) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option.label}
+                  <div
+                    className="flex w-full items-center space-x-2"
+                     onClick={(e) => {
+                       e.preventDefault();
+                       e.stopPropagation();
+                       const newSelected = selected.includes(option.value)
+                         ? selected.filter((s) => s !== option.value)
+                         : [...selected, option.value];
+                       onChange(newSelected);
+                     }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selected.includes(option.value) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <span>{option.label}</span>
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>

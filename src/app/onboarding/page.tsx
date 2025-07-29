@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { completeOnboardingAction } from '@/actions/onboarding-actions';
 import { type CompleteOnboardingInput } from '@/types';
-import { Loader2, Building, Users, ListChecks } from 'lucide-react';
+import { Loader2, Building, Users, ListChecks, Globe } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { Logo } from '@/components/common/logo';
@@ -96,11 +96,12 @@ export default function OnboardingPage() {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         toast({
           title: "Onboarding Complete!",
-          description: "You are now being redirected to the dashboard.",
+          description: "Redirecting you to the dashboard as if you just completed checkout.",
         });
+        sessionStorage.setItem('mock_session', 'admin');
         setTimeout(() => {
-            sessionStorage.setItem('mock_session', 'admin');
-            window.location.reload();
+          // Simulate a successful return from Stripe
+          router.push('/dashboard?onboarding=success');
         }, 1500);
         return;
     }
@@ -176,6 +177,7 @@ export default function OnboardingPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                          <Globe className="h-4 w-4 mr-1.5" />
                           {language.toUpperCase()}
                         </Button>
                       </DropdownMenuTrigger>
@@ -287,7 +289,8 @@ export default function OnboardingPage() {
                 </CardContent>
                 <CardFooter>
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t('complete_setup_button')}
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {t('complete_setup_button')}
                     </Button>
                 </CardFooter>
                 </form>

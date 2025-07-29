@@ -246,7 +246,7 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              The AI Dispatch Software for Growing Service Businesses
+              Turn Field Service Chaos into Clockwork Efficiency.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
               Stop juggling spreadsheets and complex software. FleetSync AI gives you the power of enterprise-level dispatch in a simple, intuitive platform designed for your team.
@@ -483,7 +483,7 @@ export default function MarketingPage() {
                     <p className="mt-6 text-lg text-muted-foreground">{t('testimonials_subtitle')}</p>
                 </div>
                 <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
-                    <Card className="flex flex-col text-center p-8">
+                    <Card className="flex flex-col text-center p-8 bg-background">
                       <CardContent className="flex-grow p-0">
                         <p className="relative text-xl font-medium leading-8 text-foreground">
                             <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
@@ -505,7 +505,7 @@ export default function MarketingPage() {
                           </div>
                       </footer>
                     </Card>
-                     <Card className="flex flex-col text-center p-8">
+                     <Card className="flex flex-col text-center p-8 bg-background">
                       <CardContent className="flex-grow p-0">
                         <p className="relative text-xl font-medium leading-8 text-foreground">
                             <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">

@@ -101,7 +101,7 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
             senderName: userProfile.role === 'admin' ? "Dispatcher" : technician.name,
             receiverId: technician.id,
             text: newMessage.trim(),
-            attachment,
+            attachment: attachment || undefined,
             appId,
         });
         

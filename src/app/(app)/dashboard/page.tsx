@@ -56,7 +56,7 @@ const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () 
       <div className="flex gap-2">
         <Button
           size="sm"
-          variant="secondary"
+          variant="accent"
           onClick={() => {
             navigator.clipboard.writeText(message);
             toast({ title: "Copied to clipboard!", duration: 2000 });
@@ -537,7 +537,13 @@ export default function DashboardPage() {
     }
     return jobs.filter(job => {
         const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
-        return priorityMatch && (statusFilter.length === 0 || statusFilter.includes(job.status));
+        const statusMatch = statusFilter.length === 0 || statusFilter.some(s => {
+            if (s === 'Unassigned') {
+                return job.status === 'Pending';
+            }
+            return job.status === s;
+        });
+        return priorityMatch && statusMatch;
     });
   }, [jobs, statusFilter, priorityFilter, jobFilterId]);
 
@@ -766,8 +772,8 @@ export default function DashboardPage() {
   };
 
   const handleDraftNotificationForJob = async (job: Job) => {
-    if (!job.assignedTechnicianId) {
-        toast({ title: "Cannot Notify", description: "Job is not assigned to a technician.", variant: "destructive" });
+    if (!job.assignedTechnicianId || !company?.name) {
+        toast({ title: "Cannot Notify", description: "Job is not assigned or company name is missing.", variant: "destructive" });
         return;
     }
     const tech = technicians.find(t => t.id === job.assignedTechnicianId);
@@ -782,7 +788,9 @@ export default function DashboardPage() {
       technicianName: tech.name,
       jobTitle: job.title,
       // You can add logic here to pass delay if known, or let AI be more generic
-      reasonForChange: `Regarding your upcoming appointment.`
+      reasonForChange: `Regarding your upcoming appointment.`,
+      companyName: company.name,
+      appointmentTime: job.scheduledTime
     });
 
     if (result.error) {
@@ -838,7 +846,7 @@ export default function DashboardPage() {
   
   const statusOptions = [
     { value: "Draft", label: "Draft" },
-    { value: "Pending", label: "Unassigned" },
+    { value: "Unassigned", label: "Unassigned" },
     { value: "Assigned", label: "Assigned" },
     { value: "En Route", label: "En Route" },
     { value: "In Progress", label: "In Progress" },

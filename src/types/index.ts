@@ -524,6 +524,8 @@ export const NotifyCustomerInputSchema = z.object({
     customerName: z.string(),
     technicianName: z.string(),
     jobTitle: z.string().optional(),
+    companyName: z.string().optional(),
+    appointmentTime: z.string().optional().nullable(),
     delayMinutes: z.number().optional(),
     newTime: z.string().optional(),
     reasonForChange: z.string().optional(),
@@ -537,6 +539,8 @@ export const GenerateCustomerNotificationInputSchema = z.object({
   delayMinutes: z.number().optional(),
   newTime: z.string().optional(),
   reasonForChange: z.string().optional().describe("A brief reason for the schedule change or delay."),
+  companyName: z.string().optional(),
+  appointmentTime: z.string().optional().nullable(),
 });
 export type GenerateCustomerNotificationInput = z.infer<typeof GenerateCustomerNotificationInputSchema>;
 
@@ -673,7 +677,7 @@ export type TriageJobOutput = z.infer<typeof TriageJobOutputSchema>;
 
 export const AnswerUserQuestionInputSchema = z.object({
   question: z.string().describe("The user's question about the FleetSync AI application."),
-  language: z.enum(['en', 'de']).describe("The language the user is interacting in."),
+  language: z.enum(['en', 'de', 'fr']).describe("The language the user is interacting in."),
 });
 export type AnswerUserQuestionInput = z.infer<typeof AnswerUserQuestionInputSchema>;
 

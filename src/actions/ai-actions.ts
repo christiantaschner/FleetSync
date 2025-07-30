@@ -243,6 +243,8 @@ export async function notifyCustomerAction(
         delayMinutes: input.delayMinutes,
         newTime: input.newTime,
         reasonForChange: input.reasonForChange,
+        companyName: input.companyName,
+        appointmentTime: input.appointmentTime,
     });
 
     const message = notificationResult.message;

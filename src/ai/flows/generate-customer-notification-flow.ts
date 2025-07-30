@@ -13,9 +13,19 @@ import {
   GenerateCustomerNotificationOutputSchema,
   type GenerateCustomerNotificationOutput
 } from '@/types';
+import { format } from 'date-fns';
 
 export async function generateCustomerNotification(input: GenerateCustomerNotificationInput): Promise<GenerateCustomerNotificationOutput> {
-  return generateCustomerNotificationFlow(input);
+  let formattedTime: string | undefined;
+  if (input.appointmentTime) {
+      try {
+        formattedTime = format(new Date(input.appointmentTime), 'p'); // e.g., 2:00 PM
+      } catch (e) {
+        // Ignore invalid dates
+      }
+  }
+
+  return generateCustomerNotificationFlow({ ...input, appointmentTime: formattedTime });
 }
 
 const prompt = ai.definePrompt({
@@ -52,12 +62,18 @@ const prompt = ai.definePrompt({
     3. Clearly state the new appointment is for {{{newTime}}}.
     4. Apologize for the change and advise them to call our office if this new time is inconvenient.
     {{/if}}
-
+    
     {{#if reasonForChange}}
     Please include this reason in the message in a customer-friendly way: "{{{reasonForChange}}}"
     {{/if}}
 
-    Do not include salutations like "Sincerely" or a company name. Keep it brief for an SMS.
+    The message must always end with " - from {{{companyName}}}".
+
+    {{#if appointmentTime}}
+    If there is no specific delay or new time, but an appointment time is provided, create a general notification confirming the upcoming appointment. For example: "Hi {{{customerName}}}, this is a reminder from {{{companyName}}} about your appointment for '{{{jobTitle}}}' with {{{technicianName}}} scheduled for today at {{appointmentTime}}."
+    {{/if}}
+
+    Do not include salutations like "Sincerely". Keep it brief for an SMS.
     Return a JSON object with the generated message in the "message" field.
     `,
 });

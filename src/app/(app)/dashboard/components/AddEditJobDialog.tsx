@@ -48,7 +48,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import Link from 'next/link';
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
-// Reordered to match the filter in the dashboard view
 const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
@@ -665,8 +664,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
                         </PopoverContent>
                       </Popover>
-                        <div 
-                            className="relative w-36"
+                        <div
+                            className="relative w-36 cursor-pointer"
                             onClick={() => timeInputRef.current?.showPicker()}
                         >
                             <Input
@@ -674,7 +673,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 type="time"
                                 onChange={handleTimeChange}
                                 value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                                className="w-full pr-8 appearance-none bg-card"
+                                className="w-full pr-8 appearance-none bg-card [&::-webkit-calendar-picker-indicator]:hidden"
                             />
                              <Clock className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                         </div>
@@ -689,11 +688,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </Label>
                            <Button
                                 type="button"
-                                variant="outline"
+                                variant="default"
                                 size="sm"
                                 onClick={() => fetchAISkillSuggestion(title, description)}
                                 disabled={isFetchingSkillSuggestion || !description.trim()}
-                                className="h-10 text-primary border-primary/50 hover:bg-primary/5 hover:text-primary"
                             >
                                 {isFetchingSkillSuggestion ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -763,10 +761,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           {manualTechnicianId === UNASSIGNED_VALUE && (
                             <Button
                                 type="button"
-                                variant="outline"
+                                variant="default"
                                 onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
                                 disabled={isFetchingAISuggestion || !description}
-                                className="h-10 text-primary border-primary/50 hover:bg-primary/5 hover:text-primary"
                             >
                                 {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
                                 Fleety Assign

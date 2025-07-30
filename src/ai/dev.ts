@@ -15,3 +15,4 @@ import '@/ai/flows/estimate-travel-distance-flow.ts';
 import '@/ai/flows/summarize-ftfr-flow.ts';
 import '@/ai/flows/triage-job-flow.ts';
 import '@/ai/flows/help-assistant-flow.ts';
+import '@/ai/flows/generate-service-prep-message-flow.ts';

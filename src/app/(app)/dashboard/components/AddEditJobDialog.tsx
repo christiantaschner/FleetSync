@@ -94,7 +94,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
   const [skillSearchTerm, setSkillSearchTerm] = useState('');
   
-  const [triageLink, setTriageLink] = useState<string | null>(null);
+  const [triageMessage, setTriageMessage] = useState<string | null>(null);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -122,7 +122,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
-    setTriageLink(null);
+    setTriageMessage(null);
     setIsGeneratingLink(false);
     setIsCopied(false);
   }, [job]);
@@ -315,18 +315,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     const result = await generateTriageLinkAction({ jobId: job.id, companyId: userProfile.companyId, appId });
     if (result.error) {
       toast({ title: "Error", description: result.error, variant: "destructive" });
-    } else if (result.data?.triageUrl) {
-      const fullUrl = `${window.location.origin}${result.data.triageUrl}`;
-      setTriageLink(fullUrl);
+    } else if (result.data?.message) {
+      setTriageMessage(result.data.message);
     }
     setIsGeneratingLink(false);
   };
   
   const handleCopyToClipboard = () => {
-    if (triageLink) {
-      navigator.clipboard.writeText(triageLink);
+    if (triageMessage) {
+      navigator.clipboard.writeText(triageMessage);
       setIsCopied(true);
-      toast({ title: "Copied!", description: "Link copied to clipboard." });
+      toast({ title: "Copied!", description: "Message copied to clipboard." });
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
@@ -776,10 +775,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Photo Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI can analyze to help prepare for the job.</p>
+                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze to suggest parts and repair steps. The uploaded pictures will show up with the AI diagnosis.</p>
                             </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -793,16 +792,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                              <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
                            </div>
                         </div>
-                      ) : triageLink ? (
+                      ) : triageMessage ? (
                         <div className="space-y-2">
-                           <Label htmlFor="triage-link">Customer Link (Send this to them)</Label>
-                            <div className="flex gap-2">
-                                <Input id="triage-link" readOnly value={triageLink} />
-                                <Button size="icon" type="button" onClick={handleCopyToClipboard}>
-                                    {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">The link is valid for 24 hours. AI results will appear here after the customer uploads photos.</p>
+                           <Label htmlFor="triage-link">Customer Message</Label>
+                            <Textarea id="triage-message" readOnly value={triageMessage} rows={4} className="bg-secondary/50"/>
+                            <Button size="sm" type="button" onClick={handleCopyToClipboard}>
+                                {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                                Copy Message
+                            </Button>
+                            <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
                         </div>
                       ) : (
                         <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>

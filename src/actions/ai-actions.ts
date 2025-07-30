@@ -15,6 +15,7 @@ import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/sugge
 import { triageJob as triageJobFlow } from "@/ai/flows/triage-job-flow";
 import { summarizeFtfr as summarizeFtfrFlow } from "@/ai/flows/summarize-ftfr-flow";
 import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-assistant-flow";
+import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/ai/flows/generate-service-prep-message-flow";
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
@@ -557,11 +558,12 @@ const GenerateTriageLinkInputSchema = z.object({
 
 export async function generateTriageLinkAction(
     input: z.infer<typeof GenerateTriageLinkInputSchema>
-): Promise<{ data: { triageUrl: string } | null; error: string | null }> {
+): Promise<{ data: { message: string } | null; error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         const token = crypto.randomUUID();
         const triageUrl = `/triage/${token}?appId=${input.appId}`;
-        return { data: { triageUrl }, error: null };
+        const message = `To help us prepare for your service, please upload photos of the issue here: ${triageUrl}`;
+        return { data: { message }, error: null };
     }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
@@ -573,8 +575,13 @@ export async function generateTriageLinkAction(
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
         const jobSnap = await getDoc(jobDocRef);
-        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
-            return { data: null, error: "Job not found or you do not have permission to modify it." };
+        if (!jobSnap.exists()) {
+            return { data: null, error: "Job not found." };
+        }
+        const job = jobSnap.data() as Job;
+
+        if (job.companyId !== companyId) {
+            return { data: null, error: "You do not have permission to modify this job." };
         }
 
         await updateDoc(jobDocRef, {
@@ -582,9 +589,20 @@ export async function generateTriageLinkAction(
             triageTokenExpiresAt: expiresAt.toISOString(),
         });
         
-        const triageUrl = `/triage/${token}?appId=${appId}`;
+        const triageUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/triage/${token}?appId=${appId}`;
+        
+        // Generate the customer-facing message with the AI
+        const companyDoc = await getDoc(doc(dbAdmin, 'companies', companyId));
+        const companyName = companyDoc.exists() ? companyDoc.data()?.name : 'our team';
 
-        return { data: { triageUrl }, error: null };
+        const { message } = await generateServicePrepMessageFlow({
+            customerName: job.customerName,
+            companyName: companyName,
+            jobTitle: job.title,
+            triageLink: triageUrl,
+        });
+
+        return { data: { message }, error: null };
 
     } catch (e) {
         if (e instanceof z.ZodError) {

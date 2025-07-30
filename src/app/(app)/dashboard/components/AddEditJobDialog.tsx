@@ -47,10 +47,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 
-const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
 // Reordered to match the filter in the dashboard view
 const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
-const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+
 
 interface AddEditJobDialogProps {
   isOpen: boolean;
@@ -653,7 +654,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             id="scheduledTime"
                             variant={"outline"}
                             className={cn(
-                              "flex-1 justify-start text-left font-normal bg-card",
+                              "flex-1 justify-start text-left font-normal",
                               !scheduledTime && "text-muted-foreground",
                             )}
                           >
@@ -665,22 +666,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
                         </PopoverContent>
                       </Popover>
-                      <div className="relative">
                         <Input
                           ref={timeInputRef}
                           type="time"
                           onChange={handleTimeChange}
-                          value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                          className="w-36 pr-8 bg-card"
-                        />
-                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                         <div 
-                          className="absolute inset-0 cursor-pointer"
                           onClick={() => timeInputRef.current?.showPicker()}
-                         />
-                      </div>
+                          value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                          className="w-36 pr-8"
+                        />
                     </div>
                   </div>
                   

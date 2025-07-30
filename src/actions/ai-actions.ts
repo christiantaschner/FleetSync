@@ -576,15 +576,13 @@ export async function generateTriageLinkAction(
 
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
-        // No need to fetch job data if we have what we need from the client
-        // to reduce Firestore reads.
-
         await updateDoc(jobDocRef, {
             triageToken: token,
             triageTokenExpiresAt: expiresAt.toISOString(),
         });
         
-        const triageUrl = `${process.env.NEXT_PUBLIC_APP_URL || ''}/triage/${token}?appId=${appId}`;
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+        const triageUrl = `${appUrl}/triage/${token}?appId=${appId}`;
         
         // Generate the customer-facing message with the AI
         const companyDoc = await getDoc(doc(dbAdmin, 'companies', companyId));

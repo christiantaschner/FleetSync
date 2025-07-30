@@ -766,6 +766,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <Button
                                 type="button"
                                 variant="default"
+                                size="sm"
                                 onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
                                 disabled={isFetchingAISuggestion || !description}
                             >
@@ -784,7 +785,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze to suggest parts and repair steps. The uploaded pictures will show up with the AI diagnosis.</p>
+                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze. The uploaded pictures will show up with the AI diagnosis.</p>
                             </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -809,7 +810,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
                         </div>
                       ) : (
-                        <Button type="button" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>
+                        <Button type="button" size="sm" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>
                            {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
                            Request Photos
                         </Button>

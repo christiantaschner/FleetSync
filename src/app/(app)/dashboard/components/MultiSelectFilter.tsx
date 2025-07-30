@@ -78,7 +78,7 @@ export function MultiSelectFilter({
           <CommandList>
             <CommandGroup>
                 <div
-                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-secondary"
+                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent"
                     onClick={() => handleSelectAll(!allSelected)}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -99,7 +99,7 @@ export function MultiSelectFilter({
               {options.map((option) => (
                 <div
                   key={option.value}
-                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-secondary"
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent"
                   onClick={() => handleToggleOption(option.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -114,7 +114,7 @@ export function MultiSelectFilter({
                   >
                     <Check
                       className={cn(
-                        "h-4 w-4",
+                        "h-4 w-4 text-green-600",
                         selected.includes(option.value) ? "opacity-100" : "opacity-0"
                       )}
                     />

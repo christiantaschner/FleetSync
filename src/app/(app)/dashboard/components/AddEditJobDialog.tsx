@@ -48,7 +48,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import Link from 'next/link';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
-const ALL_JOB_STATUSES: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Draft'];
+// Reordered to match the filter in the dashboard view
+const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
 
 interface AddEditJobDialogProps {
@@ -564,7 +565,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               <SelectValue placeholder="Select status" />
                             </SelectTrigger>
                             <SelectContent>
-                              {ALL_JOB_STATUSES.filter(s => s !== 'Draft').map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                              {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s === 'Pending' ? 'Unassigned' : s}</SelectItem>)}
                             </SelectContent>
                           </Select>
                         </div>
@@ -635,7 +636,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             id="scheduledTime"
                             variant={"outline"}
                             className={cn(
-                              "flex-1 justify-start text-left font-normal",
+                              "flex-1 justify-start text-left font-normal bg-card",
                               !scheduledTime && "text-muted-foreground",
                             )}
                           >
@@ -668,7 +669,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 size="sm"
                                 onClick={() => fetchAISkillSuggestion(title, description)}
                                 disabled={isFetchingSkillSuggestion || !description.trim()}
-                                className="h-8"
+                                className="h-10"
                             >
                                 {isFetchingSkillSuggestion ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -739,7 +740,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="sm"
                                 onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
                                 disabled={isFetchingAISuggestion || !description}
                                 className="h-10"
@@ -864,3 +864,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+
+    

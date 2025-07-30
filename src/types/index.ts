@@ -529,6 +529,7 @@ export const NotifyCustomerInputSchema = z.object({
     delayMinutes: z.number().optional(),
     newTime: z.string().optional(),
     reasonForChange: z.string().optional(),
+    estimatedDurationMinutes: z.number().optional(),
 });
 export type NotifyCustomerInput = z.infer<typeof NotifyCustomerInputSchema>;
 
@@ -541,6 +542,7 @@ export const GenerateCustomerNotificationInputSchema = z.object({
   reasonForChange: z.string().optional().describe("A brief reason for the schedule change or delay."),
   companyName: z.string().optional(),
   appointmentTime: z.string().optional().nullable(),
+  estimatedDurationMinutes: z.number().optional(),
 });
 export type GenerateCustomerNotificationInput = z.infer<typeof GenerateCustomerNotificationInputSchema>;
 

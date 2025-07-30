@@ -245,6 +245,7 @@ export async function notifyCustomerAction(
         reasonForChange: input.reasonForChange,
         companyName: input.companyName,
         appointmentTime: input.appointmentTime,
+        estimatedDurationMinutes: input.estimatedDurationMinutes,
     });
 
     const message = notificationResult.message;

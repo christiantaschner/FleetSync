@@ -538,7 +538,7 @@ export default function DashboardPage() {
     return jobs.filter(job => {
         const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
         const statusMatch = statusFilter.length === 0 || statusFilter.some(s => {
-            if (s === 'Unassigned') {
+            if (s === 'Pending') {
                 return job.status === 'Pending';
             }
             return job.status === s;
@@ -787,10 +787,10 @@ export default function DashboardPage() {
       customerName: job.customerName,
       technicianName: tech.name,
       jobTitle: job.title,
-      // You can add logic here to pass delay if known, or let AI be more generic
       reasonForChange: `Regarding your upcoming appointment.`,
       companyName: company.name,
-      appointmentTime: job.scheduledTime
+      appointmentTime: job.scheduledTime,
+      estimatedDurationMinutes: job.estimatedDurationMinutes,
     });
 
     if (result.error) {
@@ -846,7 +846,7 @@ export default function DashboardPage() {
   
   const statusOptions = [
     { value: "Draft", label: "Draft" },
-    { value: "Unassigned", label: "Unassigned" },
+    { value: "Pending", label: "Unassigned" },
     { value: "Assigned", label: "Assigned" },
     { value: "En Route", label: "En Route" },
     { value: "In Progress", label: "In Progress" },

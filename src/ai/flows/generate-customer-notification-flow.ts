@@ -19,7 +19,8 @@ export async function generateCustomerNotification(input: GenerateCustomerNotifi
   let formattedTime: string | undefined;
   if (input.appointmentTime) {
       try {
-        formattedTime = format(new Date(input.appointmentTime), 'p'); // e.g., 2:00 PM
+        // Format to "Tuesday, March 15th at 2:00 PM"
+        formattedTime = format(new Date(input.appointmentTime), 'PPPPp'); 
       } catch (e) {
         // Ignore invalid dates
       }
@@ -37,42 +38,34 @@ const prompt = ai.definePrompt({
     
     Your task is to write a polite, concise, and professional SMS message to a customer. The tone should adapt based on the situation.
     
+    **Customer & Job Details:**
     - Customer's Name: {{{customerName}}}
     - Technician's Name: {{{technicianName}}}
+    - Company Name: {{{companyName}}}
     {{#if jobTitle}}- Job: {{{jobTitle}}}{{/if}}
-    
-    {{#if delayMinutes}}
-    This is a proactive alert about a potential delay.
-    - Estimated Delay: {{{delayMinutes}}} minutes
-    
-    The message should:
-    1. Greet the customer by name.
-    2. Reference their service appointment{{#if jobTitle}} for "{{{jobTitle}}}"{{/if}}.
-    3. Inform them that their technician, {{{technicianName}}}, might be running late by approximately {{{delayMinutes}}} minutes.
-    4. Apologize for any inconvenience.
-    {{/if}}
-    
-    {{#if newTime}}
-    This is a notification about a confirmed schedule change.
-    - New Appointment Time: {{{newTime}}}
-    
-    The message should:
-    1. Greet the customer by name.
-    2. Inform them that their appointment{{#if jobTitle}} for "{{{jobTitle}}}"{{/if}} has been rescheduled.
-    3. Clearly state the new appointment is for {{{newTime}}}.
-    4. Apologize for the change and advise them to call our office if this new time is inconvenient.
-    {{/if}}
-    
-    {{#if reasonForChange}}
-    Please include this reason in the message in a customer-friendly way: "{{{reasonForChange}}}"
-    {{/if}}
+    {{#if appointmentTime}}- Appointment Time: {{{appointmentTime}}}{{/if}}
+    {{#if estimatedDurationMinutes}}- Estimated Duration: {{{estimatedDurationMinutes}}} minutes{{/if}}
 
-    The message must always end with " - from {{{companyName}}}".
+    **TASK: Generate a notification based on the context.**
 
-    {{#if appointmentTime}}
-    If there is no specific delay or new time, but an appointment time is provided, create a general notification confirming the upcoming appointment. For example: "Hi {{{customerName}}}, this is a reminder from {{{companyName}}} about your appointment for '{{{jobTitle}}}' with {{{technicianName}}} scheduled for today at {{appointmentTime}}."
-    {{/if}}
+    **CONTEXT 1: Standard Appointment Confirmation**
+    If the goal is to confirm an upcoming appointment (no delay or schedule change mentioned), create a comprehensive confirmation message.
+    - **Must include:** Greeting, technician's name, full appointment day and time, and the estimated duration.
+    - **Must suggest:** Ask the customer to ensure the work area is clear and accessible.
+    - **Example Structure:** "Hi [Customer Name], this is a friendly reminder from [Company Name] about your upcoming service for '[Job Title]'. Your technician, [Technician Name], is scheduled to arrive on [Appointment Time]. The appointment should take approximately [Duration]. Please ensure the work area is accessible. Thank you!"
 
+    **CONTEXT 2: Delay Notification**
+    If 'delayMinutes' is provided, this is a proactive alert about a potential delay.
+    - **Must include:** Greeting, technician's name, reference to their appointment, the approximate delay, and an apology.
+    - **Example Structure:** "Hi [Customer Name], a quick update from [Company Name]. Your technician, [Technician Name], is running a bit behind and may be delayed by approximately [Delay Minutes] minutes for your '[Job Title]' service. We apologize for any inconvenience."
+
+    **CONTEXT 3: Reschedule Notification**
+    If 'newTime' is provided, this is a notification about a confirmed schedule change.
+    - **Must include:** Greeting, clear statement of the new appointment day/time, and an apology.
+    - **Example Structure:** "Hi [Customer Name], this is an important update from [Company Name] regarding your appointment for '[Job Title]'. We've had to reschedule your service to [New Time]. We sincerely apologize for this change. Please call our office if this new time is inconvenient."
+
+    ---
+    **Always end the message with " - from {{{companyName}}}".**
     Do not include salutations like "Sincerely". Keep it brief for an SMS.
     Return a JSON object with the generated message in the "message" field.
     `,

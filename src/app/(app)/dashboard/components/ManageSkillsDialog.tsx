@@ -18,6 +18,7 @@ import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
 import { getSkillsAction, addSkillAction, deleteSkillAction, seedSkillsAction, type Skill } from '@/actions/skill-actions';
+import { PREDEFINED_SKILLS } from '@/lib/skills';
 
 interface ManageSkillsDialogProps {
   isOpen: boolean;
@@ -104,8 +105,20 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   const handleSeedSkills = async () => {
     if (!userProfile?.companyId || !appId) return;
-    setIsSubmitting(true);
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const newSkills = PREDEFINED_SKILLS.map(name => ({ id: `mock_${name}`, name }));
+        setSkills(prev => {
+            const existingNames = new Set(prev.map(s => s.name));
+            const uniqueNewSkills = newSkills.filter(s => !existingNames.has(s.name));
+            return [...prev, ...uniqueNewSkills].sort((a,b) => a.name.localeCompare(b.name));
+        });
+        toast({ title: "Success", description: `Seeded common skills.` });
+        onSkillsUpdated();
+        return;
+    }
     
+    setIsSubmitting(true);
     const result = await seedSkillsAction({ companyId: userProfile.companyId, appId });
 
     if (result.error) {

@@ -152,6 +152,9 @@ const SeedSkillsInputSchema = z.object({
 export async function seedSkillsAction(
   input: z.infer<typeof SeedSkillsInputSchema>
 ): Promise<{ error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { error: null };
+  }
   try {
     if (!dbAdmin) {
       throw new Error('Firestore Admin SDK not initialized. Check server logs for details.');

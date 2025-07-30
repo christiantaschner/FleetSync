@@ -577,7 +577,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Select 
                               value={status} 
                               onValueChange={(value: JobStatus) => setStatus(value)}
-                              disabled={manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
                           >
                             <SelectTrigger id="jobStatus">
                               <SelectValue placeholder="Select status" />
@@ -654,7 +653,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             id="scheduledTime"
                             variant={"outline"}
                             className={cn(
-                              "flex-1 justify-start text-left font-normal",
+                              "flex-1 justify-start text-left font-normal bg-card",
                               !scheduledTime && "text-muted-foreground",
                             )}
                           >
@@ -666,14 +665,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
                         </PopoverContent>
                       </Popover>
-                        <Input
-                          ref={timeInputRef}
-                          type="time"
-                          onChange={handleTimeChange}
-                          onClick={() => timeInputRef.current?.showPicker()}
-                          value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                          className="w-36 pr-8"
-                        />
+                        <div 
+                            className="relative w-36"
+                            onClick={() => timeInputRef.current?.showPicker()}
+                        >
+                            <Input
+                                ref={timeInputRef}
+                                type="time"
+                                onChange={handleTimeChange}
+                                value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                                className="w-full pr-8 appearance-none bg-card"
+                            />
+                             <Clock className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        </div>
                     </div>
                   </div>
                   

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -664,19 +663,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
                         </PopoverContent>
                       </Popover>
-                        <div
-                            className="relative w-36 cursor-pointer"
-                            onClick={() => timeInputRef.current?.showPicker()}
-                        >
-                            <Input
-                                ref={timeInputRef}
-                                type="time"
-                                onChange={handleTimeChange}
-                                value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                                className="w-full pr-8 appearance-none bg-card [&::-webkit-calendar-picker-indicator]:hidden"
-                            />
-                             <Clock className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                        </div>
+                        <Input
+                            ref={timeInputRef}
+                            type="time"
+                            onChange={handleTimeChange}
+                            value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                            className="w-36 bg-card"
+                        />
                     </div>
                   </div>
                   

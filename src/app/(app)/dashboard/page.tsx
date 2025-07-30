@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -136,28 +137,27 @@ export default function DashboardPage() {
 
   const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
   
-  const fetchSkills = useCallback(async () => {
-    if (!userProfile?.companyId || !appId) return;
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
-        return;
-    }
-    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
+  const fetchSkills = useCallback(async (companyId: string) => {
+    if (!appId) return;
+    const result = await getSkillsAction({ companyId, appId });
     if (result.data) {
         setAllSkills(result.data || []);
     } else {
         console.error("Could not fetch skills library:", result.error);
     }
-  }, [userProfile, appId]);
+  }, [appId]);
 
   useEffect(() => {
     if (authLoading) return;
     
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setJobs(mockJobs);
-        setTechnicians(mockTechnicians);
-        setProfileChangeRequests(mockProfileChangeRequests);
-        setIsLoadingData(false);
+        if (isLoadingData) { // Only set mock data on initial load
+          setJobs(mockJobs);
+          setTechnicians(mockTechnicians);
+          setProfileChangeRequests(mockProfileChangeRequests);
+          setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
+          setIsLoadingData(false);
+        }
         return;
     }
 
@@ -177,7 +177,7 @@ export default function DashboardPage() {
         }
     };
     
-    fetchSkills();
+    fetchSkills(companyId);
 
     const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
     const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
@@ -863,6 +863,16 @@ export default function DashboardPage() {
     { value: "Low", label: "Low" },
   ];
 
+  const handleSkillsUpdated = (newSkills: Skill[]) => {
+      if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setAllSkills(newSkills);
+      } else {
+        if(userProfile?.companyId) {
+          fetchSkills(userProfile.companyId);
+        }
+      }
+  };
+
   return (
       <div className="space-y-6">
         {showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
@@ -1160,7 +1170,7 @@ export default function DashboardPage() {
         isOpen={isManageSkillsOpen} 
         setIsOpen={setIsManageSkillsOpen} 
         initialSkills={allSkills}
-        onSkillsUpdated={(newSkills) => setAllSkills(newSkills)}
+        onSkillsUpdated={handleSkillsUpdated}
       />
       <ImportJobsDialog 
         isOpen={isImportJobsOpen} 
@@ -1188,4 +1198,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
@@ -96,7 +95,7 @@ export default function DashboardPage() {
   const [isLoadingBatchConfirmation, setIsLoadingBatchConfirmation] = useState(false);
   
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
-  const [allSkills, setAllSkills] = useState<string[]>([]);
+  const [allSkills, setAllSkills] = useState<Skill[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
@@ -139,9 +138,13 @@ export default function DashboardPage() {
   
   const fetchSkills = useCallback(async () => {
     if (!userProfile?.companyId || !appId) return;
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
+        return;
+    }
     const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
     if (result.data) {
-        setAllSkills(result.data?.map(s => s.name) || []);
+        setAllSkills(result.data || []);
     } else {
         console.error("Could not fetch skills library:", result.error);
     }
@@ -882,7 +885,7 @@ export default function DashboardPage() {
             }}
             job={selectedJobForEdit}
             technicians={technicians}
-            allSkills={allSkills}
+            allSkills={allSkills.map(s => s.name)}
             customers={customers}
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
@@ -892,7 +895,7 @@ export default function DashboardPage() {
                 isOpen={isAddEditTechnicianDialogOpen}
                 onClose={handleCloseAddEditTechnicianDialog}
                 technician={selectedTechnicianForEdit}
-                allSkills={allSkills}
+                allSkills={allSkills.map(s => s.name)}
             />
         )}
       {appId && <ChatSheet 
@@ -1156,7 +1159,8 @@ export default function DashboardPage() {
       <ManageSkillsDialog 
         isOpen={isManageSkillsOpen} 
         setIsOpen={setIsManageSkillsOpen} 
-        onSkillsUpdated={() => {}}
+        initialSkills={allSkills}
+        onSkillsUpdated={(newSkills) => setAllSkills(newSkills)}
       />
       <ImportJobsDialog 
         isOpen={isImportJobsOpen} 
@@ -1184,3 +1188,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

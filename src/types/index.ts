@@ -10,6 +10,10 @@ export type Location = {
 };
 
 export type TechnicianSkill = string; 
+export type Skill = {
+  id: string;
+  name: string;
+};
 
 export const UserProfileSchema = z.object({
     uid: z.string(),
@@ -464,15 +468,15 @@ export const SuggestJobPriorityOutputSchema = z.object({
 export type SuggestJobPriorityOutput = z.infer<typeof SuggestJobPriorityOutputSchema>;
 
 export const ConfirmManualRescheduleInputSchema = z.object({
-  companyId: z.string(),
-  appId: z.string(),
-  technicianId: z.string().describe("The ID of the technician whose route is being updated."),
-  movedJobId: z.string().describe("The ID of the job that was manually moved."),
-  newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
-  optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
-  // Add feedback fields
-  aiSuggestedTechnicianId: z.string().optional(),
-  aiReasoning: z.string().optional(),
+    companyId: z.string(),
+    appId: z.string(),
+    technicianId: z.string().describe("The ID of the technician whose route is being updated."),
+    movedJobId: z.string().describe("The ID of the job that was manually moved."),
+    newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
+    optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
+    // Add feedback fields
+    aiSuggestedTechnicianId: z.string().optional(),
+    aiReasoning: z.string().optional(),
 });
 export type ConfirmManualRescheduleInput = z.infer<typeof ConfirmManualRescheduleInputSchema>;
 

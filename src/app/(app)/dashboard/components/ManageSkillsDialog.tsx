@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -14,124 +13,132 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings, Save } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
 import { getSkillsAction, addSkillAction, deleteSkillAction, seedSkillsAction, type Skill } from '@/actions/skill-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
+import { writeBatch, collection, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 interface ManageSkillsDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onSkillsUpdated: () => void;
+  onSkillsUpdated: (newSkills: Skill[]) => void;
+  initialSkills: Skill[];
 }
 
-const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOpen, onSkillsUpdated }) => {
+const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOpen, onSkillsUpdated, initialSkills }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
-  const [skills, setSkills] = useState<Skill[]>([]);
+  
+  const [localSkills, setLocalSkills] = useState<Skill[]>([]);
+  const [skillsToAdd, setSkillsToAdd] = useState<Skill[]>([]);
+  const [skillsToDelete, setSkillsToDelete] = useState<Skill[]>([]);
   const [newSkillName, setNewSkillName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-
-  const fetchSkills = useCallback(async () => {
-    if (!userProfile?.companyId || !appId) return;
-
-    setIsLoading(true);
-    const result = await getSkillsAction({ companyId: userProfile.companyId, appId });
-    if(result.error) {
-        console.error("Could not fetch skills library:", result.error);
-        setSkills([]);
-    } else {
-        setSkills(result.data || []);
-    }
-    setIsLoading(false);
-  }, [userProfile, appId]);
 
   useEffect(() => {
     if (isOpen) {
-      fetchSkills();
+      setLocalSkills([...initialSkills]);
+      setSkillsToAdd([]);
+      setSkillsToDelete([]);
+      setNewSkillName('');
     }
-  }, [isOpen, fetchSkills]);
+  }, [isOpen, initialSkills]);
 
-  const handleAddSkill = async (e: React.FormEvent) => {
+  const handleAddLocalSkill = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSkillName.trim() || !userProfile?.companyId || !appId) return;
+    if (!newSkillName.trim()) return;
 
-    setIsSubmitting(true);
-    const result = await addSkillAction({ name: newSkillName.trim(), companyId: userProfile.companyId, appId });
-
-    if (result.error) {
-        toast({ title: "Error Adding Skill", description: result.error, variant: "destructive" });
-    } else if (result.data) {
-        setNewSkillName('');
-        toast({ title: "Success", description: `Skill "${result.data.name}" added.`});
-        setSkills(prev => [...prev, result.data!].sort((a,b) => a.name.localeCompare(b.name)));
-        onSkillsUpdated(); 
-    }
-    setIsSubmitting(false);
-  };
-
-  const handleDeleteSkill = async (skill: Skill) => {
-    if (!userProfile?.companyId || !appId) return;
-
-    const originalSkills = [...skills];
-    setSkills(prev => prev.filter(s => s.id !== skill.id));
-
-    const result = await deleteSkillAction({
-      skillId: skill.id,
-      skillName: skill.name,
-      companyId: userProfile.companyId,
-      appId,
-    });
-
-    if (result.error) {
-      toast({
-        title: "Deletion Failed",
-        description: result.error,
-        variant: "destructive",
-      });
-      setSkills(originalSkills);
-    } else {
-      toast({
-        title: "Skill Deleted",
-        description: `"${skill.name}" was removed from the library and all technicians.`,
-      });
-      onSkillsUpdated();
-    }
-  };
-
-  const handleSeedSkills = async () => {
-    if (!userProfile?.companyId || !appId) return;
-    setIsSubmitting(true);
-
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        const newSkills = PREDEFINED_SKILLS.map(name => ({ id: `mock_${name}`, name }));
-        setSkills(prev => {
-            const existingNames = new Set(prev.map(s => s.name));
-            const uniqueNewSkills = newSkills.filter(s => !existingNames.has(s.name));
-            return [...prev, ...uniqueNewSkills].sort((a,b) => a.name.localeCompare(b.name));
-        });
-        toast({ title: "Success", description: `Seeded common skills.` });
-        onSkillsUpdated();
-        setIsSubmitting(false);
+    const skillName = newSkillName.trim();
+    if (localSkills.some(s => s.name.toLowerCase() === skillName.toLowerCase())) {
+        toast({ title: "Duplicate Skill", description: "This skill already exists in the list.", variant: "destructive" });
         return;
     }
     
-    const result = await seedSkillsAction({ companyId: userProfile.companyId, appId });
+    const newSkill: Skill = { id: `new_${Date.now()}`, name: skillName };
+    setLocalSkills(prev => [...prev, newSkill].sort((a,b) => a.name.localeCompare(b.name)));
+    setSkillsToAdd(prev => [...prev, newSkill]);
+    setNewSkillName('');
+  };
+  
+  const handleDeleteLocalSkill = (skillToDelete: Skill) => {
+     setLocalSkills(prev => prev.filter(s => s.id !== skillToDelete.id));
 
-    if (result.error) {
-        toast({ title: "Error", description: `Could not seed skills library: ${result.error}`, variant: "destructive" });
+    // If it was a newly added skill, just remove it from the add list
+    if (skillsToAdd.some(s => s.id === skillToDelete.id)) {
+        setSkillsToAdd(prev => prev.filter(s => s.id !== skillToDelete.id));
     } else {
-        toast({ title: "Success", description: `Seeded common skills.` });
-        await fetchSkills(); 
-        onSkillsUpdated(); 
+        // Otherwise, add it to the delete list
+        setSkillsToDelete(prev => [...prev, skillToDelete]);
     }
-    
+  };
+
+  const handleSeedSkills = () => {
+    const existingNames = new Set(localSkills.map(s => s.name.toLowerCase()));
+    const skillsToSeed = PREDEFINED_SKILLS
+        .filter(name => !existingNames.has(name.toLowerCase()))
+        .map(name => ({ id: `new_${name}_${Date.now()}`, name }));
+
+    if (skillsToSeed.length === 0) {
+        toast({ title: "No New Skills to Seed", description: "Your library already contains all predefined common skills.", variant: "default" });
+        return;
+    }
+
+    setLocalSkills(prev => [...prev, ...skillsToSeed].sort((a,b) => a.name.localeCompare(b.name)));
+    setSkillsToAdd(prev => [...prev, ...skillsToSeed]);
+  };
+  
+  const handleSaveAndClose = async () => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        onSkillsUpdated(localSkills);
+        toast({ title: "Success", description: "Skills library updated in mock mode." });
+        setIsOpen(false);
+        return;
+    }
+
+    if (!userProfile?.companyId || !appId || !db) return;
+
+    setIsSubmitting(true);
+    const batch = writeBatch(db);
+    let hasError = false;
+
+    // Process deletions
+    skillsToDelete.forEach(skill => {
+        const skillDocRef = doc(db, `artifacts/${appId}/public/data/skills`, skill.id);
+        batch.delete(skillDocRef);
+    });
+
+    // Process additions
+    skillsToAdd.forEach(skill => {
+        const skillDocRef = doc(collection(db, `artifacts/${appId}/public/data/skills`));
+        batch.set(skillDocRef, { name: skill.name, companyId: userProfile.companyId });
+    });
+
+    try {
+        await batch.commit();
+        toast({ title: "Success", description: "Skills library has been updated." });
+        onSkillsUpdated(localSkills);
+        setIsOpen(false);
+    } catch (error) {
+        console.error("Error saving skills:", error);
+        toast({ title: "Error Saving Skills", description: "An error occurred while saving. Please try again.", variant: "destructive" });
+        hasError = true;
+    }
+
     setIsSubmitting(false);
-  }
+  };
+  
+  const handleDiscard = () => {
+    setIsOpen(false);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -144,7 +151,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
         </DialogHeader>
         
         <div className="flex-1 flex flex-col overflow-hidden px-6">
-            <form onSubmit={handleAddSkill} className="flex items-center gap-2 py-2 flex-shrink-0">
+            <form onSubmit={handleAddLocalSkill} className="flex items-center gap-2 py-2 flex-shrink-0">
                 <Label htmlFor="new-skill-name" className="sr-only">New Skill Name</Label>
                 <Input 
                     id="new-skill-name"
@@ -154,7 +161,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                     disabled={isSubmitting}
                 />
                 <Button type="submit" size="icon" disabled={isSubmitting || !newSkillName.trim()}>
-                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                    <PlusCircle className="h-4 w-4" />
                     <span className="sr-only">Add Skill</span>
                 </Button>
             </form>
@@ -167,19 +174,34 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                             <div className="flex items-center justify-center p-4">
                                 <Loader2 className="h-5 w-5 animate-spin" />
                             </div>
-                        ) : skills.length > 0 ? (
-                            skills.map(skill => (
+                        ) : localSkills.length > 0 ? (
+                            localSkills.map(skill => (
                                 <div key={skill.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
                                     <span className="text-sm">{skill.name}</span>
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon"
-                                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleDeleteSkill(skill)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="sr-only">Delete {skill.name}</span>
-                                    </Button>
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                                <span className="sr-only">Delete {skill.name}</span>
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Deleting "{skill.name}" will remove it from the central library and from all technicians who have it. This action will be saved when you click "Save &amp; Close".
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteLocalSkill(skill)}>Continue</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             ))
                         ) : (
@@ -196,9 +218,13 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
             </div>
         </div>
 
-        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
-          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-            <X className="mr-2 h-4 w-4" /> Close
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 sm:justify-end gap-2">
+          <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>
+            <X className="mr-2 h-4 w-4" /> Discard
+          </Button>
+           <Button type="button" onClick={handleSaveAndClose} disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+            Save &amp; Close
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -207,3 +233,4 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 };
 
 export default ManageSkillsDialog;
+

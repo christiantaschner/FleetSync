@@ -22,6 +22,9 @@ export type AddEquipmentInput = z.infer<typeof AddEquipmentInputSchema>;
 export async function addEquipmentAction(
   input: AddEquipmentInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { data: { id: `mock_equip_${Date.now()}` }, error: "Mock mode: Data is not saved." };
+  }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const validatedInput = AddEquipmentInputSchema.parse(input);
@@ -149,6 +152,9 @@ export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
 export async function addCustomerAction(
   input: AddCustomerInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { data: { id: `mock_cust_${Date.now()}` }, error: "Mock mode: Data is not saved." };
+  }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const validatedInput = AddCustomerInputSchema.parse(input);
@@ -190,7 +196,3 @@ export async function addCustomerAction(
     return { data: null, error: errorMessage };
   }
 }
-
-    
-
-    

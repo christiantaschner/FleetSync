@@ -276,6 +276,17 @@ export async function suggestNextAppointmentAction(
   input: SuggestNextAppointmentInput
 ): Promise<{ data: SuggestNextAppointmentOutput | null; error: string | null }> {
   try {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const mockJobId = `mock_job_${crypto.randomUUID()}`;
+        return { 
+            data: {
+                createdJobId: mockJobId,
+                suggestedDate: new Date().toLocaleDateString(),
+                message: "Mock message for your review."
+            }, 
+            error: null 
+        };
+    }
     const result = await suggestNextAppointmentFlow(input);
     return { data: result, error: null };
   } catch (e) {
@@ -322,6 +333,9 @@ const DEFAULT_EMISSIONS_KG_PER_KM = 0.192; // Avg for a light commercial vehicle
 export async function calculateTravelMetricsAction(
   input: CalculateTravelMetricsInput
 ): Promise<{ error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { error: "Mock mode: Data is not saved." };
+  }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
     const { companyId, jobId, technicianId, appId } = input;
@@ -403,6 +417,9 @@ export async function calculateTravelMetricsAction(
 export async function suggestScheduleTimeAction(
   input: Omit<SuggestScheduleTimeInput, 'businessHours'> & { companyId: string }
 ): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { data: { suggestions: [ { time: new Date().toISOString(), reasoning: 'Mock suggestion' } ] }, error: null };
+  }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
 
@@ -446,6 +463,9 @@ const SubmitTriagePhotosInputSchema = z.object({
 export async function submitTriagePhotosAction(
   input: z.infer<typeof SubmitTriagePhotosInputSchema>
 ): Promise<{ error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { error: "Mock mode: Data is not saved." };
+  }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const { token, appId, photoDataUris } = SubmitTriagePhotosInputSchema.parse(input);
@@ -538,6 +558,11 @@ const GenerateTriageLinkInputSchema = z.object({
 export async function generateTriageLinkAction(
     input: z.infer<typeof GenerateTriageLinkInputSchema>
 ): Promise<{ data: { triageUrl: string } | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const token = crypto.randomUUID();
+        const triageUrl = `/triage/${token}?appId=${input.appId}`;
+        return { data: { triageUrl }, error: null };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
         const { jobId, companyId, appId } = GenerateTriageLinkInputSchema.parse(input);

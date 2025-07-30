@@ -11,7 +11,9 @@ export async function getCompanyUsersAction(
     companyId: string
 ): Promise<{ data: UserProfile[] | null; error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        return { data: [], error: null };
+        const { mockTechnicians } = require('@/lib/mock-data');
+        const users: UserProfile[] = mockTechnicians.map((t:any) => ({ uid: t.id, email: t.email, companyId: t.companyId, role: 'technician', onboardingStatus: 'completed' }));
+        return { data: users, error: null };
     }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");

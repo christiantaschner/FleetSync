@@ -14,6 +14,7 @@ import Link from 'next/link';
 import AddEquipmentDialog from './AddEquipmentDialog';
 import { Button } from '@/components/ui/button';
 import AddCustomerDialog from './AddCustomerDialog';
+import { mockCustomers } from '@/lib/mock-data';
 
 interface CustomerViewProps {
     customers: CustomerData[];
@@ -21,6 +22,8 @@ interface CustomerViewProps {
     contracts: Contract[];
     equipment: Equipment[];
     companyId?: string;
+    onCustomerAdded: () => void;
+    onEquipmentAdded: () => void;
 }
 
 interface DisplayCustomer {
@@ -35,11 +38,13 @@ interface DisplayCustomer {
     isReal: boolean; // Flag to identify if it's from customers collection
 }
 
-export default function CustomerView({ customers, jobs, contracts, equipment, companyId }: CustomerViewProps) {
+export default function CustomerView({ customers: initialCustomers, jobs, contracts, equipment, companyId, onCustomerAdded, onEquipmentAdded }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
     const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+
+    const customers = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ? mockCustomers : initialCustomers;
 
     const processedCustomers = useMemo(() => {
         const customerMap = new Map<string, DisplayCustomer>();
@@ -159,15 +164,13 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
         };
     }, [selectedCustomer, jobs, contracts, equipment]);
 
-    const handleCustomerAdded = useCallback(() => {}, []);
-    const handleEquipmentAdded = useCallback(() => {}, []);
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
              <AddCustomerDialog
                 isOpen={isAddCustomerOpen}
                 setIsOpen={setIsAddCustomerOpen}
-                onCustomerAdded={handleCustomerAdded}
+                onCustomerAdded={onCustomerAdded}
             />
             {selectedCustomer && companyId && (
                  <AddEquipmentDialog
@@ -176,7 +179,7 @@ export default function CustomerView({ customers, jobs, contracts, equipment, co
                     customerId={selectedCustomer.id}
                     customerName={selectedCustomer.name}
                     companyId={companyId}
-                    onEquipmentAdded={handleEquipmentAdded}
+                    onEquipmentAdded={onEquipmentAdded}
                 />
             )}
             <Card className="lg:col-span-1">

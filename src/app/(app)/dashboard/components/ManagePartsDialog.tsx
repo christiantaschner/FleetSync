@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  const fetchParts = async () => {
+  const fetchParts = useCallback(async () => {
     if (!userProfile?.companyId || !appId) return;
     setIsLoading(true);
     const result = await getPartsAction({ companyId: userProfile.companyId, appId });
@@ -49,13 +49,13 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
         setParts(result.data || []);
     }
     setIsLoading(false);
-  };
+  }, [userProfile, appId]);
 
   useEffect(() => {
     if (isOpen) {
       fetchParts();
     }
-  }, [isOpen, userProfile]);
+  }, [isOpen, fetchParts]);
 
   const handleAddPart = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +68,9 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
     } else {
         setNewPartName('');
         toast({ title: "Success", description: `Part "${newPartName.trim()}" added.`});
-        setParts(prev => [...prev, { id: result.data!.id, name: newPartName.trim() }].sort((a,b) => a.name.localeCompare(b.name)));
+        if (result.data) {
+          setParts(prev => [...prev, { id: result.data!.id, name: newPartName.trim() }].sort((a,b) => a.name.localeCompare(b.name)));
+        }
         onPartsUpdated();
     }
     setIsSubmitting(false);
@@ -91,8 +93,24 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
   };
 
   const handleSeedParts = async () => {
-    if (!db || !userProfile?.companyId || !appId) return;
+    if (!userProfile?.companyId || !appId) return;
     setIsSubmitting(true);
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const newParts = PREDEFINED_PARTS.map(name => ({ id: `mock_part_${name}`, name }));
+        setParts(prev => [...prev, ...newParts].sort((a, b) => a.name.localeCompare(b.name)));
+        toast({ title: "Success", description: `Seeded ${PREDEFINED_PARTS.length} common parts.` });
+        onPartsUpdated();
+        setIsSubmitting(false);
+        return;
+    }
+
+    if (!db) {
+        toast({ title: "Error", description: "Database not available.", variant: "destructive" });
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
         const batch = writeBatch(db);
         const partsCollectionRef = collection(db, `artifacts/${appId}/public/data/parts`);

@@ -16,6 +16,10 @@ export type Part = {
   name: string;
 };
 export async function getPartsAction(input: GetPartsInput): Promise<{ data: Part[] | null; error: string | null; }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+      const { PREDEFINED_PARTS } = require('@/lib/parts');
+      return { data: PREDEFINED_PARTS.map((p:string, i:number) => ({ id: `mock_part_${i}`, name: p})), error: null };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { companyId, appId } = GetPartsInputSchema.parse(input);
@@ -50,6 +54,9 @@ const AddPartInputSchema = z.object({
 export type AddPartInput = z.infer<typeof AddPartInputSchema>;
 
 export async function addPartAction(input: AddPartInput): Promise<{ data: { id: string } | null; error: string | null; }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { data: { id: `mock_${Date.now()}` }, error: "Mock mode: Data is not saved." };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { name, companyId, appId } = AddPartInputSchema.parse(input);
@@ -88,6 +95,9 @@ const DeletePartInputSchema = z.object({
 export type DeletePartInput = z.infer<typeof DeletePartInputSchema>;
 
 export async function deletePartAction(input: DeletePartInput): Promise<{ error: string | null; }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: "Mock mode: Data is not saved." };
+    }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
         const { partId, companyId, appId } = DeletePartInputSchema.parse(input);
@@ -113,5 +123,3 @@ export async function deletePartAction(input: DeletePartInput): Promise<{ error:
         return { error: `Failed to delete part. ${errorMessage}` };
     }
 }
-
-    

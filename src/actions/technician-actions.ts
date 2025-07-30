@@ -117,4 +117,3 @@ export async function toggleOnCallStatusAction(
     return { error: `Failed to update on-call status. ${errorMessage}` };
   }
 }
-    

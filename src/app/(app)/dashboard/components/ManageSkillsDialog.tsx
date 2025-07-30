@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, PlusCircle, Trash2, X, Sparkles, Settings } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -105,6 +105,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
   const handleSeedSkills = async () => {
     if (!userProfile?.companyId || !appId) return;
+    setIsSubmitting(true);
 
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         const newSkills = PREDEFINED_SKILLS.map(name => ({ id: `mock_${name}`, name }));
@@ -115,10 +116,10 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
         });
         toast({ title: "Success", description: `Seeded common skills.` });
         onSkillsUpdated();
+        setIsSubmitting(false);
         return;
     }
     
-    setIsSubmitting(true);
     const result = await seedSkillsAction({ companyId: userProfile.companyId, appId });
 
     if (result.error) {
@@ -206,5 +207,3 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 };
 
 export default ManageSkillsDialog;
-
-    

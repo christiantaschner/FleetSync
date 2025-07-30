@@ -16,6 +16,9 @@ export type UpdateCompanyInput = z.infer<typeof UpdateCompanyInputSchema>;
 export async function updateCompanyAction(
   input: UpdateCompanyInput
 ): Promise<{ error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { error: "Mock mode: Data is not saved." };
+  }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
     const validatedInput = UpdateCompanyInputSchema.parse(input);

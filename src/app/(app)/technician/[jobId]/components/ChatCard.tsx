@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { sendChatMessageAction } from '@/actions/chat-actions';
 import { Loader2, Send, Paperclip, X, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { mockChatMessages } from '@/lib/mock-data';
 
 interface ChatCardProps {
     job: Job;
@@ -35,6 +36,19 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician, appId }) => {
     useEffect(() => {
         if (job) {
             setIsLoading(true);
+
+            if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+                const jobMessages = mockChatMessages.filter(m => m.jobId === job.id);
+                setMessages(jobMessages);
+                setIsLoading(false);
+                return;
+            }
+
+            if (!appId) {
+                setIsLoading(false);
+                return;
+            }
+
             const q = query(
                 collection(db, `artifacts/${appId}/public/data/chatMessages`),
                 where('companyId', '==', job.companyId),
@@ -83,7 +97,7 @@ const ChatCard: React.FC<ChatCardProps> = ({ job, technician, appId }) => {
             // In the technician app, the receiver is always the dispatcher. We'll use a placeholder ID for now.
             receiverId: "dispatcher_admin",
             text: newMessage.trim(),
-            attachment,
+            attachment: attachment || undefined,
             appId,
         });
         

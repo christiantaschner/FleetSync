@@ -17,7 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import { addEquipmentAction, AddEquipmentInputSchema, type AddEquipmentInput } from '@/actions/customer-actions';
+import { addEquipmentAction, AddEquipmentInputSchema } from '@/actions/customer-actions';
+import type { AddEquipmentInput } from '@/actions/customer-actions';
 import { Loader2, PackagePlus } from 'lucide-react';
 
 interface AddEquipmentDialogProps {
@@ -51,6 +52,14 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
   });
 
   const onSubmitForm = async (data: AddEquipmentInput) => {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        toast({ title: 'Success', description: 'Mock Equipment added successfully.' });
+        onEquipmentAdded();
+        setIsOpen(false);
+        reset();
+        return;
+    }
+
     if (!companyId) {
         toast({ title: "Authentication Error", description: "Company ID is missing.", variant: "destructive" });
         return;

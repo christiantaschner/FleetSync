@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { Job, Contract, Equipment, CustomerData } from '@/types';
@@ -19,7 +19,7 @@ export default function CustomersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const fetchData = useCallback(() => {
         if (authLoading) {
             return;
         }
@@ -68,10 +68,10 @@ export default function CustomersPage() {
                 return { id: doc.id, ...data } as Job;
             });
             setJobs(jobsData);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         }, (err) => {
             console.error("Error fetching jobs for customer view:", err);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         });
 
         const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
@@ -86,10 +86,10 @@ export default function CustomersPage() {
                 return { id: doc.id, ...data } as Contract;
             });
             setContracts(contractsData);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         }, (err) => {
             console.error("Error fetching contracts for customer view:", err);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         });
         
         const equipmentQuery = query(collection(db, `artifacts/${appId}/public/data/equipment`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
@@ -104,7 +104,7 @@ export default function CustomersPage() {
                 return { id: doc.id, ...data } as Equipment;
             });
             setEquipment(equipmentData);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         });
 
         const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
@@ -119,10 +119,10 @@ export default function CustomersPage() {
                 return { id: doc.id, ...data } as CustomerData;
             });
             setCustomers(customersData);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         }, (err) => {
             console.error("Error fetching customers:", err);
-            updateLoadingState();
+            if(isLoading) updateLoadingState();
         });
 
 
@@ -132,7 +132,11 @@ export default function CustomersPage() {
             unsubscribeEquipment();
             unsubscribeCustomers();
         };
-    }, [authLoading, userProfile]);
+    }, [authLoading, userProfile, isLoading]);
+
+     useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     if (authLoading || isLoading) {
         return (
@@ -142,7 +146,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} />;
+    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} onCustomerAdded={fetchData} onEquipmentAdded={fetchData} />;
 }
-
-    

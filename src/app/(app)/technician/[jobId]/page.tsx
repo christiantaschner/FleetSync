@@ -427,6 +427,8 @@ export default function TechnicianJobDetailPage() {
   const isViewingOwnPage = user?.uid === job.assignedTechnicianId;
   const isAdminView = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isViewingOwnPage;
   const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
+  const allPhotos = [...(job.photos || []), ...(job.triageImages || [])];
+
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
@@ -560,13 +562,13 @@ export default function TechnicianJobDetailPage() {
         </>
       )}
 
-      {job.photos && job.photos.length > 0 && (
+      {allPhotos && allPhotos.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Camera /> Uploaded Photos</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {job.photos.map((photoUrl, index) => (
+            {allPhotos.map((photoUrl, index) => (
               <a href={photoUrl} target="_blank" rel="noopener noreferrer" key={index} className="relative aspect-square rounded-md overflow-hidden border group">
                 <Image src={photoUrl} alt={`Job photo ${index + 1}`} layout="fill" objectFit="cover" data-ai-hint="work site service" onError={(e) => e.currentTarget.src = 'https://placehold.co/300x300.png?text=Preview'} />
                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
@@ -580,5 +582,3 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
-
-    

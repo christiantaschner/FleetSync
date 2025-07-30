@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -29,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, AITechnician } from "@/types";
@@ -645,25 +646,30 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <div>
                     <Label>Schedule Time</Label>
                     <div className="flex gap-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            id="scheduledTime"
-                            variant={"outline"}
-                            className={cn(
-                              "flex-1 justify-start text-left font-normal bg-card",
-                              !scheduledTime && "text-muted-foreground",
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                        <Input
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    id="date"
+                                    variant={"outline"}
+                                    className={cn(
+                                    "flex-1 justify-start text-left font-normal bg-card",
+                                    !scheduledTime && "text-muted-foreground"
+                                    )}
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={scheduledTime}
+                                    onSelect={handleDateSelect}
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                         <Input
                             ref={timeInputRef}
                             type="time"
                             onChange={handleTimeChange}
@@ -689,7 +695,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 {isFetchingSkillSuggestion ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 ) : (
-                                    <Bot className="mr-2 h-4 w-4" />
+                                    <Sparkles className="mr-2 h-4 w-4" />
                                 )}
                                 Fleety Suggests
                             </Button>
@@ -758,7 +764,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
                                 disabled={isFetchingAISuggestion || !description}
                             >
-                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
+                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
                                 Fleety Assign
                             </Button>
                           )}
@@ -770,7 +776,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Bot className="h-4 w-4 text-primary"/> Fleety's Photo Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Photo Triage <Info className="h-3 w-3 text-muted-foreground"/></h3>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI can analyze to help prepare for the job.</p>
@@ -778,12 +784,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </Tooltip>
                       </TooltipProvider>
 
-                      {job.aiIdentifiedModel || job.aiSuggestedParts?.length || job.aiRepairGuide ? (
+                      {job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide ? (
                         <div className="text-sm space-y-2">
                            <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
-                           <p><strong>Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
+                           <p><strong>Suggested Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
                            <div>
-                             <p><strong>Guide:</strong></p>
+                             <p><strong>AI Repair Guide:</strong></p>
                              <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
                            </div>
                         </div>

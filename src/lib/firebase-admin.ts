@@ -20,6 +20,7 @@ try {
              if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
                 admin.initializeApp({
                     projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
                 });
                 console.log(`Firebase Admin SDK initialized for local development for project ${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.`);
              } else {

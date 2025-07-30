@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { sendChatMessageAction } from '@/actions/chat-actions';
 import { Loader2, Send, Paperclip, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { mockChatMessages } from '@/lib/mock-data';
 
 interface ChatSheetProps {
     isOpen: boolean;
@@ -44,6 +45,14 @@ const ChatSheet: React.FC<ChatSheetProps> = ({ isOpen, setIsOpen, job, technicia
     useEffect(() => {
         if (isOpen && job && appId) {
             setIsLoading(true);
+
+            if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+                const jobMessages = mockChatMessages.filter(m => m.jobId === job.id);
+                setMessages(jobMessages);
+                setIsLoading(false);
+                return;
+            }
+
             const q = query(
                 collection(db, `artifacts/${appId}/public/data/chatMessages`),
                 where('companyId', '==', job.companyId),

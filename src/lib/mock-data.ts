@@ -1,8 +1,9 @@
 
-import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus } from '@/types';
-import { addDays, subDays, subMonths } from 'date-fns';
+import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus, ChatMessage } from '@/types';
+import { addDays, subDays, subMinutes, subMonths } from 'date-fns';
 
 const MOCK_COMPANY_ID = 'mock_company_123';
+const MOCK_ADMIN_ID = 'mock_admin_id';
 
 export const mockTechnicians: Technician[] = [
   {
@@ -210,4 +211,40 @@ export const mockProfileChangeRequests: ProfileChangeRequest[] = [
         status: 'pending',
         createdAt: new Date().toISOString(),
     }
+];
+
+export const mockChatMessages: ChatMessage[] = [
+    {
+        id: 'msg_1',
+        jobId: 'job_1',
+        companyId: MOCK_COMPANY_ID,
+        senderId: 'tech_1',
+        senderName: 'Alice Johnson',
+        receiverId: MOCK_ADMIN_ID,
+        text: "I'm on my way to the 'No Hot Water' job. The previous one took a bit longer than expected.",
+        timestamp: subMinutes(new Date(), 15).toISOString(),
+        isRead: true,
+    },
+    {
+        id: 'msg_2',
+        jobId: 'job_1',
+        companyId: MOCK_COMPANY_ID,
+        senderId: MOCK_ADMIN_ID,
+        senderName: 'Dispatcher',
+        receiverId: 'tech_1',
+        text: "Thanks for the update, Alice. Keep me posted if there are any issues finding the site.",
+        timestamp: subMinutes(new Date(), 14).toISOString(),
+        isRead: true,
+    },
+     {
+        id: 'msg_3',
+        jobId: 'job_3',
+        companyId: MOCK_COMPANY_ID,
+        senderId: MOCK_ADMIN_ID,
+        senderName: 'Dispatcher',
+        receiverId: 'tech_1',
+        text: "After the 'Outlet Sparking' job, please check if you have a spare 20A breaker in your van. The next customer might need one.",
+        timestamp: subMinutes(new Date(), 5).toISOString(),
+        isRead: false,
+    },
 ];

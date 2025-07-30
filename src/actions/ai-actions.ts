@@ -561,8 +561,8 @@ export async function generateTriageLinkAction(
 ): Promise<{ data: { message: string } | null; error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         const token = crypto.randomUUID();
-        const triageUrl = `/triage/${token}?appId=${input.appId}`;
-        const message = `To help us prepare for your service, please upload photos of the issue here: ${triageUrl}`;
+        const triageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/triage/${token}?appId=${input.appId}`;
+        const message = `Hi Mock Customer, to help our technician prepare for your "Mock Job" service, please upload photos of the issue here: ${triageUrl}. It will help us bring the right parts and save you time. - from Mock Company`;
         return { data: { message }, error: null };
     }
     try {

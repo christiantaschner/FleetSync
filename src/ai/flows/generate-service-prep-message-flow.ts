@@ -38,7 +38,7 @@ The message must include the following unique link for the customer to upload th
 {{{triageLink}}}
 
 Keep the message friendly and professional. End with the company name.
-Example Tone: "Hi [Customer Name], to help our technician prepare for your upcoming '[Job Title]' service, could you please upload a few photos of the issue at this secure link? It will help us bring the right parts and save you time. [Link] - from [Company Name]"
+Example Tone: "Hi {{{customerName}}}, to help our technician prepare for your upcoming '{{{jobTitle}}}' service, could you please upload a few photos of the issue at this secure link? It will help us bring the right parts and save you time. {{{triageLink}}} - from {{{companyName}}}"
 
 Return the final message in the 'message' field of the JSON output.
 `,

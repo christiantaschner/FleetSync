@@ -27,8 +27,9 @@ export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobO
     const companyId = (await getDoc(techDocRef)).data()?.companyId;
 
     if (companyId) {
+        const feedbackCollectionRef = collection(dbAdmin, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/public/data/dispatcherFeedback`);
         const feedbackQuery = query(
-            collection(dbAdmin, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/public/data/dispatcherFeedback`),
+            feedbackCollectionRef,
             where("companyId", "==", companyId),
             orderBy("createdAt", "desc"),
             limit(5) // Get the last 5 feedback examples

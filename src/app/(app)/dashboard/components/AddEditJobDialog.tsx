@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, AITechnician } from "@/types";
@@ -99,6 +99,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isCopied, setIsCopied] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
+  const timeInputRef = useRef<HTMLInputElement>(null);
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const resetForm = useCallback(() => {
@@ -131,6 +132,18 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       resetForm();
     }
   }, [job, isOpen, resetForm]);
+
+  // Handle smart status updates
+  useEffect(() => {
+    // If status is changed to Unassigned, unassign the technician
+    if (status === 'Pending' && manualTechnicianId !== UNASSIGNED_VALUE) {
+      setManualTechnicianId(UNASSIGNED_VALUE);
+    }
+    // If a tech is assigned to a Pending job, update status to Assigned
+    if (status === 'Pending' && manualTechnicianId !== UNASSIGNED_VALUE) {
+      setStatus('Assigned');
+    }
+  }, [status, manualTechnicianId]);
 
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -202,6 +215,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           jobId: j.id,
           scheduledTime: j.scheduledTime,
           priority: j.priority,
+          location: j.location,
         }));
         
       return {
@@ -209,15 +223,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         technicianName: t.name,
         isAvailable: t.isAvailable,
         skills: t.skills || [],
-        location: {
-          latitude: t.location.latitude,
-          longitude: t.location.longitude,
-        },
+        liveLocation: t.location,
+        homeBaseLocation: t.location,
         currentJobs: currentJobs,
+        workingHours: t.workingHours,
+        isOnCall: t.isOnCall
       };
     });
 
     const input: AllocateJobActionInput = {
+      currentTime: new Date().toISOString(),
       jobDescription: currentDescription,
       jobPriority: currentPriority,
       requiredSkills: currentRequiredSkills,
@@ -558,8 +573,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       <div className="grid grid-cols-1 gap-4">
                         <div>
                           <Label htmlFor="jobStatus">Status</Label>
-                          <Select value={status} onValueChange={(value: JobStatus) => setStatus(value)}
-                            disabled={manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
+                          <Select 
+                              value={status} 
+                              onValueChange={(value: JobStatus) => setStatus(value)}
+                              disabled={manualTechnicianId !== (job.assignedTechnicianId || UNASSIGNED_VALUE)}
                           >
                             <SelectTrigger id="jobStatus">
                               <SelectValue placeholder="Select status" />
@@ -648,12 +665,22 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <Calendar mode="single" selected={scheduledTime} onSelect={handleDateSelect} initialFocus />
                         </PopoverContent>
                       </Popover>
-                      <Input
+                      <div className="relative">
+                        <Input
+                          ref={timeInputRef}
                           type="time"
                           onChange={handleTimeChange}
                           value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                          className="w-32"
-                      />
+                          className="w-36 pr-8 bg-card"
+                        />
+                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                         <div 
+                          className="absolute inset-0 cursor-pointer"
+                          onClick={() => timeInputRef.current?.showPicker()}
+                         />
+                      </div>
                     </div>
                   </div>
                   
@@ -669,12 +696,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 size="sm"
                                 onClick={() => fetchAISkillSuggestion(title, description)}
                                 disabled={isFetchingSkillSuggestion || !description.trim()}
-                                className="h-10"
+                                className="h-10 text-primary border-primary/50 hover:bg-primary/5 hover:text-primary"
                             >
                                 {isFetchingSkillSuggestion ? (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                 ) : (
-                                    <Bot className="mr-2 h-4 w-4 text-primary" />
+                                    <Bot className="mr-2 h-4 w-4" />
                                 )}
                                 Fleety Suggests
                             </Button>
@@ -742,9 +769,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 variant="outline"
                                 onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
                                 disabled={isFetchingAISuggestion || !description}
-                                className="h-10"
+                                className="h-10 text-primary border-primary/50 hover:bg-primary/5 hover:text-primary"
                             >
-                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4 text-primary"/>}
+                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>}
                                 Fleety Assign
                             </Button>
                           )}
@@ -864,5 +891,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-
-    

@@ -312,7 +312,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const handleGenerateTriageLink = async () => {
     if (!job || !userProfile?.companyId || !appId) return;
     setIsGeneratingLink(true);
-    const result = await generateTriageLinkAction({ jobId: job.id, companyId: userProfile.companyId, appId });
+    const result = await generateTriageLinkAction({
+        jobId: job.id,
+        companyId: userProfile.companyId,
+        appId,
+        customerName: customerName || "Valued Customer",
+        jobTitle: title || "Your Service",
+    });
     if (result.error) {
       toast({ title: "Error", description: result.error, variant: "destructive" });
     } else if (result.data?.message) {

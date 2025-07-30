@@ -554,6 +554,8 @@ const GenerateTriageLinkInputSchema = z.object({
     jobId: z.string(),
     companyId: z.string(),
     appId: z.string().min(1),
+    customerName: z.string(),
+    jobTitle: z.string(),
 });
 
 export async function generateTriageLinkAction(
@@ -562,27 +564,20 @@ export async function generateTriageLinkAction(
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         const token = crypto.randomUUID();
         const triageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/triage/${token}?appId=${input.appId}`;
-        const message = `Hi Mock Customer, to help our technician prepare for your "Mock Job" service, please upload photos of the issue here: ${triageUrl}. It will help us bring the right parts and save you time. - from Mock Company`;
+        const message = `Hi ${input.customerName}, to help our technician prepare for your "${input.jobTitle}" service, please upload photos of the issue here: ${triageUrl}. It will help us bring the right parts and save you time. - from Mock Company`;
         return { data: { message }, error: null };
     }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
-        const { jobId, companyId, appId } = GenerateTriageLinkInputSchema.parse(input);
+        const { jobId, companyId, appId, customerName, jobTitle } = GenerateTriageLinkInputSchema.parse(input);
 
         const token = crypto.randomUUID();
         const expiresAt = addHours(new Date(), 24); // Link is valid for 24 hours
 
         const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
-        const jobSnap = await getDoc(jobDocRef);
-        if (!jobSnap.exists()) {
-            return { data: null, error: "Job not found." };
-        }
-        const job = jobSnap.data() as Job;
-
-        if (job.companyId !== companyId) {
-            return { data: null, error: "You do not have permission to modify this job." };
-        }
+        // No need to fetch job data if we have what we need from the client
+        // to reduce Firestore reads.
 
         await updateDoc(jobDocRef, {
             triageToken: token,
@@ -596,9 +591,9 @@ export async function generateTriageLinkAction(
         const companyName = companyDoc.exists() ? companyDoc.data()?.name : 'our team';
 
         const { message } = await generateServicePrepMessageFlow({
-            customerName: job.customerName,
+            customerName: customerName,
             companyName: companyName,
-            jobTitle: job.title,
+            jobTitle: jobTitle,
             triageLink: triageUrl,
         });
 

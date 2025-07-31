@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
-import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult, type AllocateJobActionInput } from '@/actions/ai-actions';
+import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +47,7 @@ import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers } from '@/lib/mock-data';
 import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { type AllocateJobActionInput } from '@/types';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -522,13 +523,13 @@ export default function DashboardPage() {
         }));
 
         const input: AllocateJobActionInput = {
+            appId,
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
-            appId,
         };
 
         const result = await allocateJobAction(input);
@@ -654,13 +655,13 @@ export default function DashboardPage() {
         }));
 
         const input: AllocateJobActionInput = {
+            appId,
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
-            appId,
         };
 
         const result = await allocateJobAction(input);

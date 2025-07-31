@@ -54,7 +54,7 @@ import type {
 } from "@/types";
 
 // Re-export types for use in components
-export type AllocateJobActionInput = AllocateJobInput & { appId: string };
+export type { AllocateJobActionInput } from "@/types";
 export type SuggestJobSkillsActionInput = SuggestJobSkillsInput;
 export type SuggestJobPriorityActionInput = SuggestJobPriorityInput;
 export type PredictNextAvailableTechniciansActionInput = PredictNextAvailableTechniciansInput;
@@ -67,8 +67,35 @@ export type CheckScheduleHealthResult = {
 };
 
 export async function allocateJobAction(
-  input: AllocateJobActionInput
+  input: z.infer<typeof AllocateJobInputSchema>
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    // Simulate AI logic for mock mode
+    const { technicianAvailability, requiredSkills = [] } = input;
+    const suitableTechnician = technicianAvailability.find(tech => 
+        tech.isAvailable && 
+        (requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill)))
+    );
+
+    if (suitableTechnician) {
+      return { 
+        data: { 
+          suggestedTechnicianId: suitableTechnician.technicianId,
+          reasoning: "Mock Mode: Selected the first available technician with the required skills."
+        }, 
+        error: null 
+      };
+    } else {
+      return { 
+        data: {
+          suggestedTechnicianId: null,
+          reasoning: "Mock Mode: No available technicians found with the required skills."
+        },
+        error: null
+      };
+    }
+  }
+
   try {
     const { appId, ...flowInput } = input;
     const result = await allocateJobFlow(flowInput, appId);

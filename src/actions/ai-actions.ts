@@ -54,7 +54,7 @@ import type {
 } from "@/types";
 
 // Re-export types for use in components
-export type AllocateJobActionInput = AllocateJobInput;
+export type AllocateJobActionInput = AllocateJobInput & { appId: string };
 export type SuggestJobSkillsActionInput = SuggestJobSkillsInput;
 export type SuggestJobPriorityActionInput = SuggestJobPriorityInput;
 export type PredictNextAvailableTechniciansActionInput = PredictNextAvailableTechniciansInput;
@@ -70,7 +70,8 @@ export async function allocateJobAction(
   input: AllocateJobActionInput
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
   try {
-    const result = await allocateJobFlow(input);
+    const { appId, ...flowInput } = input;
+    const result = await allocateJobFlow(flowInput, appId);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {

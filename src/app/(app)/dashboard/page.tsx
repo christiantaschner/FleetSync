@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
-import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
+import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult, type AllocateJobActionInput } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
 import { useToast } from '@/hooks/use-toast';
@@ -359,6 +359,7 @@ export default function DashboardPage() {
   }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile, isMockMode]);
 
   const fetchProactiveSuggestion = useCallback(async (job: Job) => {
+    if (!appId) return;
     setIsFetchingProactiveSuggestion(true);
 
     const aiTechnicians: AITechnician[] = technicians.map(t => ({
@@ -379,13 +380,14 @@ export default function DashboardPage() {
       isOnCall: t.isOnCall,
     }));
     
-    const input = {
+    const input: AllocateJobActionInput = {
       jobDescription: job.description,
       jobPriority: job.priority,
       requiredSkills: job.requiredSkills || [],
       scheduledTime: job.scheduledTime,
       technicianAvailability: aiTechnicians,
       currentTime: new Date().toISOString(),
+      appId,
     };
     
     const result = await allocateJobAction(input);
@@ -410,7 +412,7 @@ export default function DashboardPage() {
     }
     
     setIsFetchingProactiveSuggestion(false);
-  }, [technicians, jobs, company]);
+  }, [technicians, jobs, company, appId, UNCOMPLETED_STATUSES_LIST]);
   
   // Effect for automatic schedule health checks
   useEffect(() => {
@@ -519,13 +521,14 @@ export default function DashboardPage() {
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
         }));
 
-        const input = {
+        const input: AllocateJobActionInput = {
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
+            appId,
         };
 
         const result = await allocateJobAction(input);
@@ -650,13 +653,14 @@ export default function DashboardPage() {
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
         }));
 
-        const input = {
+        const input: AllocateJobActionInput = {
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
             scheduledTime: job.scheduledTime,
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
+            appId,
         };
 
         const result = await allocateJobAction(input);

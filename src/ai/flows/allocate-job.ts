@@ -19,15 +19,15 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
 
 
-export async function allocateJob(input: AllocateJobInput): Promise<AllocateJobOutput> {
+export async function allocateJob(input: AllocateJobInput, appId: string): Promise<AllocateJobOutput> {
   // 1. Augment the input with past feedback for the AI
   if (dbAdmin && input.technicianAvailability.length > 0) {
     const firstTech = input.technicianAvailability[0];
-    const techDocRef = doc(dbAdmin, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/public/data/technicians`, firstTech.technicianId);
+    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, firstTech.technicianId);
     const companyId = (await getDoc(techDocRef)).data()?.companyId;
 
     if (companyId) {
-        const feedbackCollectionRef = collection(dbAdmin, `artifacts/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/public/data/dispatcherFeedback`);
+        const feedbackCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`);
         const feedbackQuery = query(
             feedbackCollectionRef,
             where("companyId", "==", companyId),
@@ -150,9 +150,18 @@ const allocateJobFlow = ai.defineFlow(
       }
       return output;
     } catch (error) {
+      console.error('Error in allocateJobFlow:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      // Check for specific Firestore-related error messages
+      if (errorMessage.includes('firestore') || errorMessage.includes('collection()')) {
+        return {
+          suggestedTechnicianId: null,
+          reasoning: `An internal database error occurred while trying to access learning data. ${errorMessage}`,
+        };
+      }
       return {
         suggestedTechnicianId: null,
-        reasoning: `The AI model encountered an error during processing: ${error instanceof Error ? error.message : String(error)}`,
+        reasoning: `The AI model encountered an error during processing: ${errorMessage}`,
       };
     }
   }

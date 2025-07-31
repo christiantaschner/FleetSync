@@ -52,6 +52,7 @@ import type {
   AnswerUserQuestionInput,
   AnswerUserQuestionOutput
 } from "@/types";
+import { AllocateJobInputSchema } from "@/types";
 
 // Re-export types for use in components
 export type { AllocateJobActionInput } from "@/types";
@@ -71,10 +72,11 @@ export async function allocateJobAction(
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
   if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
     // Simulate AI logic for mock mode
-    const { technicianAvailability, requiredSkills = [] } = input;
+    const { technicianAvailability, requiredSkills } = input;
+    const skillsToMatch = requiredSkills || []; // Ensure requiredSkills is an array
     const suitableTechnician = technicianAvailability.find(tech => 
         tech.isAvailable && 
-        (requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill)))
+        (skillsToMatch.length === 0 || skillsToMatch.every(skill => tech.skills.includes(skill)))
     );
 
     if (suitableTechnician) {

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle, Bot } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
+import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/contexts/auth-context';
 
 const FormSchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters.'),
@@ -29,7 +31,7 @@ interface CompanySettingsFormProps {
   company: Company;
 }
 
-const specialties = Object.keys(SKILLS_BY_SPECIALTY);
+const specialties = [...Object.keys(SKILLS_BY_SPECIALTY), "Other"];
 
 const curatedTimezones = [
   // North America
@@ -67,6 +69,7 @@ const curatedTimezones = [
 const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isMockMode, setIsMockMode } = useAuth();
   
   const defaultBusinessHours = [
       { dayOfWeek: "Monday", isOpen: true, startTime: "08:00", endTime: "17:00" },
@@ -90,6 +93,8 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
             : defaultBusinessHours,
         co2EmissionFactorKgPerKm: company.settings?.co2EmissionFactorKgPerKm ?? 0.266,
         companySpecialties: company.settings?.companySpecialties || [],
+        otherSpecialty: company.settings?.otherSpecialty || '',
+        hideHelpButton: company.settings?.hideHelpButton || false,
       },
     },
   });
@@ -98,6 +103,14 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
     control,
     name: "settings.businessHours",
   });
+  
+  const watchedSpecialties = useWatch({
+    control,
+    name: "settings.companySpecialties",
+    defaultValue: company.settings?.companySpecialties || []
+  });
+
+  const isOtherSelected = watchedSpecialties.includes('Other');
 
   const emissionPresets = [
     { label: 'Average Diesel Van', value: '0.298' },
@@ -148,6 +161,40 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         </div>
       
       <Separator />
+      
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><HelpCircle/> UI &amp; Data Settings</h3>
+        <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Controller
+            name="settings.hideHelpButton"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                id="hideHelpButton"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <div>
+              <Label htmlFor="hideHelpButton">Hide Floating Help Button</Label>
+              <p className="text-sm text-muted-foreground">The AI Assistant will still be accessible from the main menu.</p>
+          </div>
+        </div>
+         <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Switch
+            id="mockDataMode"
+            checked={isMockMode}
+            onCheckedChange={setIsMockMode}
+          />
+          <div>
+              <Label htmlFor="mockDataMode" className="flex items-center gap-2"><Bot/> Mock Data Mode</Label>
+              <p className="text-sm text-muted-foreground">Display sample data throughout the app for demonstration or testing. No real data will be saved.</p>
+          </div>
+        </div>
+      </div>
+
+      <Separator />
 
       <div className="space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2"><ListChecks/> Company Specialties</h3>
@@ -162,7 +209,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                         return (
                             <div className="flex items-center space-x-2">
                                 <Checkbox
-                                    id={item}
+                                    id={`settings-${item}`}
                                     checked={field.value?.includes(item)}
                                     onCheckedChange={(checked) => {
                                         return checked
@@ -170,14 +217,27 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                                             : field.onChange(field.value?.filter((value) => value !== item));
                                     }}
                                 />
-                                <Label htmlFor={item} className="font-normal">{item}</Label>
+                                <Label htmlFor={`settings-${item}`} className="font-normal">{item}</Label>
                             </div>
                         );
                     }}
                 />
             ))}
         </div>
-        {errors.settings?.companySpecialties && <p className="text-sm text-destructive mt-1">{errors.settings.companySpecialties.message}</p>}
+        {isOtherSelected && (
+            <div className="space-y-2 pl-1 pt-2">
+                <Label htmlFor="settings-otherSpecialty">Please specify your specialty</Label>
+                <Input
+                    id="settings-otherSpecialty"
+                    placeholder="e.g., Marine HVAC"
+                    {...register('settings.otherSpecialty')}
+                />
+                {errors.settings?.otherSpecialty && (
+                    <p className="text-sm text-destructive">{errors.settings.otherSpecialty.message}</p>
+                )}
+            </div>
+        )}
+        {errors.settings?.companySpecialties && !isOtherSelected && <p className="text-sm text-destructive mt-1">{errors.settings.companySpecialties.message}</p>}
       </div>
 
       <Separator />

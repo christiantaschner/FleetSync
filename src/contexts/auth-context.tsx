@@ -19,6 +19,7 @@ import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
 import { mockJobs, mockContracts, mockTechnicians } from "@/lib/mock-data";
+import { PREDEFINED_SKILLS } from "@/lib/skills";
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +32,8 @@ interface AuthContextType {
   isHelpOpen: boolean;
   setHelpOpen: (open: boolean) => void;
   contractsDueCount: number;
+  isMockMode: boolean;
+  setIsMockMode: (isMock: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,6 +52,10 @@ const MOCK_COMPANY: Company = {
   name: 'Mock Service Company',
   ownerId: 'mock_admin_id',
   subscriptionStatus: 'active',
+  settings: {
+    companySpecialties: ["HVAC", "Plumbing"],
+    hideHelpButton: false
+  }
 };
 
 const getMockContractsDueCount = () => {
@@ -75,33 +82,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [contractsDueCount, setContractsDueCount] = useState(0);
-  const router = useRouter();
+
+  const [isMockMode, setMockModeState] = useState(false);
+
+  const setIsMockMode = (isMock: boolean) => {
+    localStorage.setItem('mockMode', JSON.stringify(isMock));
+    setMockModeState(isMock);
+    if (isMock) {
+        toast({ title: "Mock Mode Activated", description: "You are now viewing sample data." });
+    } else {
+        toast({ title: "Live Mode Activated", description: "You are now viewing your real data." });
+    }
+    // Force a re-evaluation of data sources
+    window.location.reload();
+  };
+
   const { toast } = useToast();
 
   useEffect(() => {
+    
     // --- MOCK DATA MODE ---
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    const storedMockMode = localStorage.getItem('mockMode');
+    const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : false;
+    setMockModeState(mockModeActive);
+    
+    if (mockModeActive) {
       console.log("Auth Context: Running in MOCK DATA mode.");
       
-      const mockSession = sessionStorage.getItem('mock_session');
-
-      if (mockSession === 'new_user') {
-          setUser({ uid: 'mock_new_user', email: 'new@mock.com' } as User);
-          setUserProfile({
-              uid: 'mock_new_user',
-              email: 'new@mock.com',
-              companyId: null,
-              role: null,
-              onboardingStatus: 'pending_onboarding',
-          });
-          setCompany(null);
-      } else {
-         setUser(MOCK_ADMIN_USER);
-         setUserProfile(MOCK_ADMIN_PROFILE);
-         setCompany(MOCK_COMPANY);
-         setContractsDueCount(getMockContractsDueCount());
-      }
-      
+      setUser(MOCK_ADMIN_USER);
+      setUserProfile(MOCK_ADMIN_PROFILE);
+      setCompany(MOCK_COMPANY);
+      setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
       return;
     }
@@ -130,6 +141,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
 
       if (currentUser) {
+        // Check for first-time login flag after signup
+        const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
+        if (isNewUser) {
+            sessionStorage.removeItem('isNewUser');
+            setIsMockMode(true); // This will trigger a reload into mock mode
+            return;
+        }
+
         const userDocRef = doc(db, "users", currentUser.uid);
         unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
             if (userDocSnap.exists()) {
@@ -207,16 +226,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const login = async (email_address: string, pass_word: string) => {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        if (email_address === 'admin@mock.com' && pass_word === 'password') {
-            sessionStorage.setItem('mock_session', 'admin');
-            window.location.reload();
-            return true;
-        } else {
-            toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
-            return false;
-        }
-    }
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
@@ -250,19 +259,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (email_address: string, pass_word: string) => {
-     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        if (email_address === 'admin@mock.com') {
-             toast({
-                title: "Signup Failed",
-                description: (<span>An account with this email already exists. Please <Link href="/login" className="font-bold underline">login</Link> instead.</span>),
-                variant: "destructive",
-             });
-             return false;
-        }
-        sessionStorage.setItem('mock_session', 'new_user');
-        window.location.href = '/onboarding';
-        return true;
-    }
      if (!auth || !db) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
@@ -284,6 +280,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
+      
+      // Set a flag to indicate first-time login
+      sessionStorage.setItem('isNewUser', 'true');
       
       return true;
     } catch (error: any) {
@@ -311,11 +310,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-      sessionStorage.removeItem('mock_session');
-      window.location.href = '/login';
-      return;
-    }
+    localStorage.removeItem('mockMode');
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return;
@@ -325,7 +320,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen, contractsDueCount }}>
+    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen, contractsDueCount, isMockMode, setIsMockMode }}>
       {children}
     </AuthContext.Provider>
   );

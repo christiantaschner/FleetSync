@@ -44,7 +44,7 @@ import OptimizeRouteDialog from './components/optimize-route-dialog';
 import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
-import { mockJobs, mockTechnicians, mockProfileChangeRequests } from '@/lib/mock-data';
+import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers } from '@/lib/mock-data';
 import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -74,7 +74,7 @@ const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () 
 
 
 export default function DashboardPage() {
-  const { user, userProfile, company, loading: authLoading } = useAuth();
+  const { user, userProfile, company, loading: authLoading, isMockMode } = useAuth();
   const { t } = useTranslation();
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -138,6 +138,10 @@ export default function DashboardPage() {
   const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
   
   const fetchSkills = useCallback(async (companyId: string) => {
+    if (isMockMode) {
+      setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
+      return;
+    }
     if (!appId) return;
     const result = await getSkillsAction({ companyId, appId });
     if (result.data) {
@@ -145,19 +149,17 @@ export default function DashboardPage() {
     } else {
         console.error("Could not fetch skills library:", result.error);
     }
-  }, [appId]);
+  }, [appId, isMockMode]);
 
   useEffect(() => {
     if (authLoading) return;
     
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        if (isLoadingData) { // Only set mock data on initial load
-          setJobs(mockJobs);
-          setTechnicians(mockTechnicians);
-          setProfileChangeRequests(mockProfileChangeRequests);
-          setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
-          setIsLoadingData(false);
-        }
+    if (isMockMode) {
+        setJobs(mockJobs);
+        setTechnicians(mockTechnicians);
+        setProfileChangeRequests(mockProfileChangeRequests);
+        setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
+        setIsLoadingData(false);
         return;
     }
 
@@ -235,7 +237,7 @@ export default function DashboardPage() {
         unsubscribeTechnicians();
         unsubscribeRequests();
     };
-}, [authLoading, userProfile, appId, fetchSkills, toast, isLoadingData]);
+}, [authLoading, userProfile, appId, fetchSkills, toast, isLoadingData, isMockMode]);
 
 
   const handleSeedData = async () => {
@@ -277,6 +279,8 @@ export default function DashboardPage() {
   };
 
   const customers = useMemo(() => {
+    const data = isMockMode ? mockCustomers : []; // Need to derive from jobs if not mock
+    
     const customerMap = new Map<string, Customer>();
     jobs.forEach(job => {
         const key = (job.customerEmail || job.customerPhone || job.customerName).toLowerCase().trim();
@@ -292,8 +296,16 @@ export default function DashboardPage() {
             });
         }
     });
+
+    data.forEach(c => {
+        const key = (c.email || c.phone || c.name).toLowerCase().trim();
+        if(!customerMap.has(key)){
+            customerMap.set(key, {id: c.id, name: c.name, email: c.email, phone: c.phone, address: c.address});
+        }
+    })
+
     return Array.from(customerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [jobs]);
+  }, [jobs, isMockMode]);
   
   useEffect(() => {
     if (!isLoadingData && company) {
@@ -305,7 +317,7 @@ export default function DashboardPage() {
   const prevTechCount = useRef<number | null>(null);
   
   useEffect(() => {
-    if (isLoadingData || process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    if (isLoadingData || isMockMode) {
       prevTechCount.current = technicians.length;
       return;
     }
@@ -321,10 +333,10 @@ export default function DashboardPage() {
       
     prevTechCount.current = technicians.length;
     
-  }, [technicians, company, isLoadingData, toast]);
+  }, [technicians, company, isLoadingData, toast, isMockMode]);
   
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId) {
+    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId || isMockMode) {
       return;
     }
 
@@ -344,7 +356,7 @@ export default function DashboardPage() {
     if (highPriorityPendingJob && !proactiveSuggestion && !isFetchingProactiveSuggestion) {
       fetchProactiveSuggestion(highPriorityPendingJob);
     }
-  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile]);
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile, isMockMode]);
 
   const fetchProactiveSuggestion = useCallback(async (job: Job) => {
     setIsFetchingProactiveSuggestion(true);
@@ -402,7 +414,7 @@ export default function DashboardPage() {
   
   // Effect for automatic schedule health checks
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || jobs.length === 0) {
+    if (isLoadingData || technicians.length === 0 || jobs.length === 0 || isMockMode) {
       return;
     }
 
@@ -438,7 +450,7 @@ export default function DashboardPage() {
       clearTimeout(initialCheckTimer);
       clearInterval(intervalId);
     };
-  }, [jobs, technicians, isLoadingData]);
+  }, [jobs, technicians, isLoadingData, isMockMode]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId || !appId) return;
@@ -864,18 +876,14 @@ export default function DashboardPage() {
   ];
 
   const handleSkillsUpdated = (newSkills: Skill[]) => {
-      if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        setAllSkills(newSkills);
-      } else {
-        if(userProfile?.companyId) {
-          fetchSkills(userProfile.companyId);
-        }
+      if(userProfile?.companyId) {
+        fetchSkills(userProfile.companyId);
       }
   };
 
   return (
       <div className="space-y-6">
-        {showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
+        {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
             onOpenAddJobDialog={handleOpenAddJob}
             onSeedData={handleSeedData}

@@ -103,7 +103,6 @@ export default function LoginPage() {
                       type="password"
                       {...register("password")}
                       className={errors.password ? "border-destructive" : ""}
-                      placeholder={process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ? 'password' : ''}
                     />
                     {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
                   </div>

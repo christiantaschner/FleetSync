@@ -59,13 +59,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
 import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { MockModeBanner } from "@/components/common/MockModeBanner";
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount } = useAuth();
+  const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
@@ -85,7 +86,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   React.useEffect(() => {
-    if (loading) return;
+    if (loading || isMockMode) return;
 
     if (!user) {
         router.replace("/login");
@@ -120,7 +121,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             return;
         }
     }
-}, [user, userProfile, loading, router, pathname]);
+}, [user, userProfile, loading, router, pathname, isMockMode]);
 
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
@@ -137,7 +138,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     !isTrialActive;
 
 
-  if (loading || !userProfile || (userProfile.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding')) {
+  if (loading || (!isMockMode && !userProfile) || (!isMockMode && userProfile?.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -149,7 +150,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
       return <>{children}</>;
   }
   
-  if (userProfile?.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
+  if (!isMockMode && userProfile?.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
     return (
         <div className="flex h-screen w-screen flex-col items-center justify-center bg-muted p-4">
             <Logo />
@@ -302,6 +303,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             <div className="w-7"/>
           </header>
           <main className="flex-1 overflow-x-hidden">
+            {isMockMode && <MockModeBanner />}
             <div className="container mx-auto p-4 md:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6">

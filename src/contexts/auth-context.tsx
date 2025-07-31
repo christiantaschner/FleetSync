@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
-import { doc, onSnapshot, collection, query, where, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
 import { mockJobs, mockContracts, mockTechnicians } from "@/lib/mock-data";
 import { PREDEFINED_SKILLS } from "@/lib/skills";
+import { createUserProfileAction } from "@/actions/user-actions";
 
 interface AuthContextType {
   user: User | null;
@@ -259,51 +260,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (email_address: string, pass_word: string) => {
-     if (!auth || !db) {
+    if (isMockMode) {
+      toast({ title: "Signup Complete (Mock)", description: "Redirecting to mock dashboard..." });
+      setUser(MOCK_ADMIN_USER);
+      setUserProfile(MOCK_ADMIN_PROFILE);
+      router.push('/dashboard');
+      return true;
+    }
+
+    if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
     }
     setLoading(true);
     try {
+      // Step 1: Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email_address, pass_word);
       const user = userCredential.user;
 
-      const userDocRef = doc(db, 'users', user.uid);
-      const newUserProfile: Omit<UserProfile, 'uid'> = {
-          email: user.email!,
-          onboardingStatus: 'pending_onboarding',
-          role: null,
-          companyId: null,
-      };
-      await setDoc(userDocRef, {
-        ...newUserProfile,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
+      // Step 2: Call server action to create user profile in Firestore
+      const profileResult = await createUserProfileAction({ uid: user.uid, email: user.email! });
+
+      if (profileResult.error) {
+        throw new Error(`Failed to create user profile: ${profileResult.error}`);
+      }
       
-      // Set a flag to indicate first-time login
+      // Step 3: Set a flag to trigger mock mode on first login
       sessionStorage.setItem('isNewUser', 'true');
       
       return true;
     } catch (error: any) {
       console.error("Signup error:", error);
+      let message = error.message;
+
       if (error.code === 'auth/email-already-in-use') {
-        toast({
-          title: "Signup Failed",
-          description: (
-            <span>
-              An account with this email already exists. Please{' '}
-              <Link href="/login" className="font-bold underline">
-                login
-              </Link>
-              {' '}instead.
-            </span>
-          ),
-          variant: "destructive",
-        });
+        message = 'An account with this email already exists. Please login instead.';
       } else {
-        toast({ title: "Signup Failed", description: error.message || "Could not create account.", variant: "destructive" });
+         message = "An unexpected error occurred during signup. Please contact support at info@fleet-sync.ai if the problem persists.";
       }
+      
+      toast({
+        title: "Signup Failed",
+        description: message,
+        variant: "destructive",
+      });
       setLoading(false);
       return false;
     }

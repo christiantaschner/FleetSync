@@ -5,7 +5,53 @@ import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import type { UserProfile, Invite } from '@/types';
 import * as admin from 'firebase-admin';
-import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc, orderBy, setDoc } from 'firebase/firestore';
+
+const CreateUserProfileInputSchema = z.object({
+  uid: z.string().min(1),
+  email: z.string().email(),
+});
+
+export async function createUserProfileAction(
+    input: z.infer<typeof CreateUserProfileInputSchema>
+): Promise<{ error: string | null }> {
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+        const { uid, email } = CreateUserProfileInputSchema.parse(input);
+
+        const userDocRef = dbAdmin.collection('users').doc(uid);
+        
+        const newUserProfile: Omit<UserProfile, 'uid'> = {
+            email: email,
+            onboardingStatus: 'pending_onboarding',
+            role: null,
+            companyId: null,
+        };
+
+        await setDoc(userDocRef, {
+            ...newUserProfile,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
+        
+        return { error: null };
+    } catch(e) {
+        if (e instanceof z.ZodError) {
+            return { error: e.errors.map((err) => err.message).join(', ') };
+        }
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in createUserProfileAction',
+            error: {
+                message: errorMessage,
+                stack: e instanceof Error ? e.stack : undefined,
+            },
+            severity: "ERROR"
+        }));
+        return { error: `Failed to create user profile. ${errorMessage}` };
+    }
+}
+
 
 export async function getCompanyUsersAction(
     companyId: string

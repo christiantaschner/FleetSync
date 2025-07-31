@@ -86,6 +86,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [isMockMode, setMockModeState] = useState(false);
 
+  const router = useRouter();
+  const { toast } = useToast();
+
   const setIsMockMode = (isMock: boolean) => {
     localStorage.setItem('mockMode', JSON.stringify(isMock));
     setMockModeState(isMock);
@@ -97,8 +100,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Force a re-evaluation of data sources
     window.location.reload();
   };
-
-  const { toast } = useToast();
 
   useEffect(() => {
     
@@ -142,14 +143,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
 
       if (currentUser) {
-        // Check for first-time login flag after signup
-        const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
-        if (isNewUser) {
-            sessionStorage.removeItem('isNewUser');
-            setIsMockMode(true); // This will trigger a reload into mock mode
-            return;
-        }
-
         const userDocRef = doc(db, "users", currentUser.uid);
         unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
             if (userDocSnap.exists()) {
@@ -224,7 +217,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
-  }, [toast]);
+  }, [toast, router]);
 
   const login = async (email_address: string, pass_word: string) => {
     if (!auth) {
@@ -267,7 +260,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       router.push('/dashboard');
       return true;
     }
-
+    
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
@@ -284,9 +277,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (profileResult.error) {
         throw new Error(`Failed to create user profile: ${profileResult.error}`);
       }
-      
-      // Step 3: Set a flag to trigger mock mode on first login
-      sessionStorage.setItem('isNewUser', 'true');
       
       return true;
     } catch (error: any) {

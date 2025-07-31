@@ -26,7 +26,7 @@ export const mockTechnicians: Technician[] = [
     email: 'bob.w@example.com',
     phone: '555-0102',
     isAvailable: true,
-    skills: ['Plumbing', 'Pipe Fitting', 'Leak Detection', 'Water Heater Repair'],
+    skills: ['Plumbing', 'Pipe Fitting', 'Leak Detection', 'Water Heater Repair', 'HVAC', 'AC Repair'],
     location: { latitude: 34.0582, longitude: -118.2517, address: 'Glendale, CA' },
     avatarUrl: 'https://placehold.co/100x100.png',
     currentJobId: null,

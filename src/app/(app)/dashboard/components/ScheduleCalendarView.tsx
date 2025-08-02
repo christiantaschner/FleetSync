@@ -264,6 +264,7 @@ interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
   onJobClick: (job: Job) => void;
+  onRouteDirty: (technicianId: string) => void;
 }
 
 type ProposedChanges = Record<string, { scheduledTime: string; assignedTechnicianId: string; originalTechnicianId: string | null }>;
@@ -273,6 +274,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     jobs, 
     technicians,
     onJobClick,
+    onRouteDirty,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -404,6 +406,19 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         toast({ title: "Some Changes Failed", description: `${failed.length} of ${promises.length} changes could not be saved.`, variant: "destructive"});
     } else {
         toast({ title: "Schedule Updated", description: "All changes have been saved successfully." });
+        
+        // Check if only one technician was affected
+        const affectedTechIds = new Set(Object.values(proposedChanges).map(c => c.assignedTechnicianId));
+        Object.values(proposedChanges).forEach(c => {
+          if (c.originalTechnicianId) {
+            affectedTechIds.add(c.originalTechnicianId);
+          }
+        });
+        
+        if (affectedTechIds.size === 1) {
+            const techId = affectedTechIds.values().next().value;
+            onRouteDirty(techId);
+        }
     }
 
     setProposedChanges({});

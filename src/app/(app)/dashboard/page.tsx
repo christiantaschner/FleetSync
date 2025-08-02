@@ -941,6 +941,7 @@ export default function DashboardPage() {
         <SmartJobAllocationDialog
           jobToAssign={jobForAIAssign}
           technicians={technicians}
+          jobs={jobs}
           isOpen={isAIAssignDialogOpen}
           setIsOpen={setIsAIAssignDialogOpen}
           onJobAssigned={handleAIAssignSuccess}
@@ -1161,6 +1162,7 @@ export default function DashboardPage() {
             jobs={jobs}
             technicians={technicians}
             onJobClick={handleOpenEditJob}
+            onRouteDirty={handleOpenOptimizeRoute}
           />
         </TabsContent>
 

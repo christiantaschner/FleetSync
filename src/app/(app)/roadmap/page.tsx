@@ -42,7 +42,7 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
         )}
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{description}</p>
       </CardContent>
     </Card>
   );
@@ -51,27 +51,27 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 const roadmapFeatures = {
   completed: [
     {
-      title: "Basic Dispatcher Web Dashboard",
-      description: "A centralized web interface for managing jobs and viewing technician locations on a map.",
+      title: "Core Dispatcher Dashboard & Technician View",
+      description: "A centralized web interface for managing jobs and a mobile-optimized view for technicians to see their assigned jobs, update statuses, and navigate to sites.",
       icon: LayoutDashboard,
       status: "Completed",
     },
     {
-      title: "Technician Mobile App Foundation",
-      description: "Core mobile view for technicians to see their assigned jobs, update statuses, and navigate to sites.",
-      icon: Smartphone,
-      status: "Completed",
-    },
-    {
       title: "AI-Powered Job Allocation",
-      description: "Core AI feature suggests the best technician for new jobs, with single and batch assignment modes.",
+      description: "Core AI feature suggests the best technician for new jobs based on skills, availability, and location, with both single and batch assignment modes.",
       icon: Sparkles,
       status: "Completed",
     },
     {
       title: "Dispatcher-Triggered Route Re-optimization",
-      description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes.",
+      description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes or cancellations.",
       icon: Shuffle, 
+      status: "Completed",
+    },
+     {
+      title: "Work Order Management",
+      description: "A centralized hub for all job-related information. Admins can create, edit, and view work orders with all necessary details, including customer information, job history, required parts, and special notes. All data is instantly available and synced across office and technician apps.",
+      icon: ClipboardList,
       status: "Completed",
     },
     {
@@ -80,27 +80,27 @@ const roadmapFeatures = {
       icon: ShieldQuestion,
       status: "Completed",
     },
-    {
+     {
       title: "Basic Performance Analytics",
-      description: "A dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
+      description: "A reporting dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
       icon: BarChart,
       status: "Completed",
     },
     {
-      title: "Interactive Visual Calendar Scheduling",
-      description: "A multi-day calendar view for dispatchers to visually manage all jobs, technicians, and schedules.",
+      title: "Visual Calendar & Schedule View",
+      description: "A visual calendar for dispatchers to view all jobs and technicians. Includes day and month views to manage schedules.",
       icon: CalendarDays,
       status: "Completed",
     },
      {
       title: "Technician Profile & Change Requests",
-      description: "Technicians can view their profiles and suggest changes, which dispatchers can review and approve.",
+      description: "Technicians can view their profiles and suggest changes (e.g., updating their phone number or skills), which dispatchers can review and approve.",
       icon: User, 
       status: "Completed",
     },
     {
       title: "Handle Technician Unavailability",
-      description: "Allows marking a technician as unavailable, which unassigns their jobs and can trigger AI for reassignment.",
+      description: "Allows marking a technician as unavailable, which unassigns their active jobs, making them available for AI-powered reassignment.",
       icon: AlertOctagon,
       status: "Completed",
     },
@@ -123,32 +123,20 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Digital Time Tracking",
-      description: "Technicians can digitally log working hours (travel, on-site, breaks) for accurate job costing and payroll.",
-      icon: Timer,
+      title: "In-App Chat & Photo Documentation",
+      description: "A simple communication hub for technicians and dispatchers. Technicians can also capture and upload before/after photos directly from the job site.",
+      icon: MessageSquare,
       status: "Completed",
     },
     {
-      title: "Getting Started Checklist",
-      description: "A simple, interactive checklist on the dashboard to guide new users through essential first steps like adding a technician and creating a job.",
-      icon: List,
-      status: "Completed"
+      title: "Digital Signature & Satisfaction Capture",
+      description: "Technicians can capture a customer's signature and satisfaction rating directly on their device to confirm job completion.",
+      icon: FileSignature,
+      status: "Completed",
     },
     {
-      title: "One-Click Sample Data",
-      description: "A feature for new accounts to generate a set of sample technicians and jobs, allowing them to explore the app's features without manual data entry.",
-      icon: MousePointerClick,
-      status: "Completed"
-    },
-    {
-      title: "Contextual In-App Guidance",
-      description: "Non-intrusive tooltips and info icons next to key features to provide brief, helpful explanations right where the user needs them.",
-      icon: Lightbulb,
-      status: "Completed"
-    },
-    {
-      title: "AI Help Assistant",
-      description: "An in-app chat assistant powered by Genkit that can answer user questions about how to use the application's features.",
+      title: "Onboarding & In-App Help",
+      description: "A simple, interactive checklist on the dashboard guides new users. An AI Help Assistant is available to answer questions about using the application's features.",
       icon: HelpCircle,
       status: "Completed"
     },
@@ -156,84 +144,84 @@ const roadmapFeatures = {
   inProgress: [
     {
       title: "Stripe Subscription & Billing Integration",
-      description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial.",
+      description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes creating checkout sessions and a customer portal to manage billing.",
       icon: CreditCard,
       status: "In Progress",
     },
   ],
   planned: [
      {
-      title: "Live GPS Tracking of Technicians",
-      description: "Provides real-time location updates of all active field technicians on the dispatcher's map view. This data is fed directly from the technician's mobile app.",
+      title: "Advanced Drag-and-Drop Scheduling",
+      description: "Transform the schedule into a fully interactive board. Dispatchers will be able to assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view will feature clear, color-coded statuses for jobs and availability.",
+      icon: MousePointerClick,
+      status: "Planned",
+    },
+    {
+      title: "Real-Time Technician Location Tracking",
+      description: "Provides live GPS location updates of all active field technicians on the dispatcher's map view, fed directly from the technician's mobile app. This feature is the foundation for automated status updates.",
       icon: MapPin,
       status: "Planned",
     },
     {
+      title: "Automated Customer Communication",
+      description: "Automatically trigger and intelligently word SMS or email notifications for appointment confirmations and reminders. The 'technician on the way' alert will include a precise, real-time ETA based on live traffic data.",
+      icon: MessageSquare,
+      status: "Planned",
+    },
+    {
       title: "Customer Live Tracking Portal",
-      description: "Allow dispatchers to send a unique link to customers, enabling them to see their technician's real-time location on a map.",
+      description: "Allows dispatchers to send a unique, secure link to customers, enabling them to see their technician's real-time location and updated ETA on a map as they approach the job site.",
       icon: Navigation,
       status: "Planned",
     },
     {
-      title: "Enhanced Automated Customer Communication",
-      description: "Automatically trigger and intelligently word notifications for predicted delays, managing customer expectations proactively.",
-      icon: MessageSquare,
+      title: "Automated Geo-Fenced Status Updates",
+      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart for the next location.",
+      icon: Target,
       status: "Planned",
     },
-     {
-      title: "Real-time Traffic & Basic Weather Overlays on Map",
-      description: "Enhance the dispatcher's map with real-time overlays for traffic congestion and basic weather patterns (e.g., rain, snow).",
-      icon: CloudRain,
-      status: "Planned",
-    },
-     {
-      title: "Tiered Feature Access & Subscription Logic",
-      description: "Implement logic to restrict access to features based on the customer's subscription plan (Starter, Professional, Enterprise).",
-      icon: CreditCard,
+    {
+      title: "Integrated Invoicing & Payment",
+      description: "Enable technicians to generate and send a professional invoice on the spot from pre-built templates. The system will support immediate payment processing via credit card, closing the job loop instantly and improving cash flow.",
+      icon: DollarSign,
       status: "Planned",
     },
   ],
   vision: [
      {
-      title: "Advanced Multi-Technician Re-optimization",
-      description: "The AI constantly monitors the entire fleet and external data, automatically recalculating the most efficient routes and assignments for all technicians in response to any event.",
+      title: "Advanced Fleet-Wide Re-optimization",
+      description: "The AI will constantly monitor the entire fleet and external data (traffic, weather), automatically recalculating the most efficient routes and assignments for ALL technicians in response to any event, suggesting swaps and re-assignments across the whole team.",
       icon: Brain,
       status: "Vision",
     },
     {
-      title: "Hyper-Accurate ETA Predictions",
-      description: "Leverage historical data, live traffic, and weather to provide highly precise ETAs for each job.",
-      icon: Zap,
-      status: "Vision"
+      title: "Offline Mode for Technician App",
+      description: "Allow the mobile app to function without an internet connection. Technicians can view job details, document work, and update statuses offline. All data will automatically sync once connectivity is restored, ensuring productivity in areas with poor service.",
+      icon: WifiOff,
+      status: "Vision",
     },
     {
       title: "Disruption Forecasting (Predicted Bottlenecks)",
-      description: "The AI analyzes complex data patterns (traffic, weather, local events) to predict future potential delays or bottlenecks. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to concert.'",
+      description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
       icon: Eye,
       status: "Vision",
     },
     {
       title: "\"Why this happened\" AI Insights",
-      description: "The system provides explanations for significant deviations or AI decisions. If an ETA was off, or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
+      description: "The system will provide explanations for significant deviations. If an ETA was missed or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
       icon: Search,
       status: "Vision",
     },
     {
       title: "CRM/Accounting Software Integrations",
-      description: "Seamless, automated data flow between FleetSync AI and existing business software like Salesforce, QuickBooks, or HubSpot.",
+      description: "Seamless, automated data flow between FleetSync AI and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
       icon: Building2,
       status: "Vision",
     },
     {
       title: "AI-Powered Smart Inbox",
-      description: "An intelligent inbox that automatically parses incoming emails or service requests, creating draft job tickets with suggested priorities and technicians.",
+      description: "An intelligent inbox that automatically parses incoming emails or service requests from a website form, creating draft job tickets with suggested priorities, required skills, and even a suggested technician.",
       icon: Mailbox,
-      status: "Vision",
-    },
-     {
-      title: "Offline Mode for Core Mobile App Functions",
-      description: "Allows technicians to access job details, update statuses, and document work even without internet. Data syncs when connectivity is restored.",
-      icon: WifiOff,
       status: "Vision",
     },
   ]

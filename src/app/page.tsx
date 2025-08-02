@@ -19,44 +19,24 @@ export default function MarketingPage() {
 
   const features = [
     {
-      icon: <Bot className="h-8 w-8 text-primary" />,
-      title: t('feature_ai_dispatch_title'),
+      icon: <UserCheck className="h-8 w-8 text-primary" />,
+      title: "The Right Tech, Every Time",
       description: "One click is all it takes. Our AI analyzes skills, availability, and live location to suggest the perfect technician, eliminating hours of guesswork.",
     },
     {
       icon: <Smartphone className="h-8 w-8 text-primary" />,
-      title: t('feature_mobile_app_title'),
-      description: "An app so simple, your team will actually want to use it. Clear schedules, easy status updates, and direct communication with dispatch.",
-    },
-    {
-      icon: <Repeat className="h-8 w-8 text-primary" />,
-      title: "Automated Contract Jobs",
-      description: "Manage recurring service contracts effortlessly. Let AI suggest the next appointment date and draft customer notifications automatically.",
-    },
-     {
-      icon: <ClipboardList className="h-8 w-8 text-primary" />,
-      title: "Customer Management",
-      description: "Access a complete history of past jobs and installed equipment for every customer, empowering your technicians with crucial context before they arrive on-site.",
-    },
-    {
-      icon: <CalendarDays className="h-8 w-8 text-primary" />,
-      title: t('feature_schedule_overview_title'),
-      description: "Visualize your entire operation on a clear, drag-and-drop timeline. See who's busy, who's free, and make schedule changes in seconds.",
+      title: "An App Your Team Will Use",
+      description: "Finally, a mobile app that's as easy to use as their favorite social media. Clear schedules, simple status updates, and direct communication with dispatch.",
     },
     {
       icon: <Shuffle className="h-8 w-8 text-primary" />,
-      title: t('feature_dynamic_optimization_title'),
-      description: "Plans change. When a job is cancelled or finishes early, one click re-optimizes your technician's route to fill gaps and maximize their day.",
+      title: "Turn Chaos into Cash",
+      description: "A last-minute cancellation just opened a gap in the schedule. One click re-optimizes your technician's route to pull in a nearby job, turning downtime into revenue.",
     },
-    {
-      icon: <MessageSquare className="h-8 w-8 text-primary" />,
-      title: t('feature_customer_comms_title'),
-      description: "Keep customers happy and informed. The AI can draft professional notifications for delays, and in-app chat keeps everyone connected.",
-    },
-    {
-      icon: <Cog className="h-8 w-8 text-primary" />,
-      title: t('feature_skill_library_title'),
-      description: "Define the skills your business needs. The AI uses this library to make intelligent assignment decisions, ensuring the right person is sent every time.",
+     {
+      icon: <AlertTriangle className="h-8 w-8 text-primary" />,
+      title: "Solve Problems Before They Happen",
+      description: "Our AI proactively warns you if a technician is at risk of running late, giving you time to notify the customer or reassign the job before it becomes a complaint.",
     },
   ];
 
@@ -248,10 +228,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              The One-Click AI Dispatcher for Your Field Service Business.
+              Stop Drowning in Dispatch. Start Growing Your Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Stop wasting hours on manual scheduling. FleetSync AI handles your most complex dispatching tasks—from job assignment to emergency rescheduling—with a single click.
+             FleetSync AI is the straightforward, affordable dispatch software for service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -263,7 +243,7 @@ export default function MarketingPage() {
         </section>
         
          {/* Screenshot placeholder */}
-        <section className="container mt-8 sm:-mt-16 md:-mt-20 lg:-mt-24">
+        <section className="container mt-8 md:-mt-16 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
@@ -311,11 +291,12 @@ export default function MarketingPage() {
             <div className="container text-center">
                 <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h2>
                 <div className="mt-6 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('hvac_services')}</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('plumbing_services')}</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('electrical_services')}</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('appliance_repair_services')}</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">{t('and_more')}</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">HVAC</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Plumbing</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Electrical</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Landscaping</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Cleaning Services</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pest Control</Badge>
                 </div>
             </div>
         </section>
@@ -398,9 +379,9 @@ export default function MarketingPage() {
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <Badge variant="default">{t('our_solution')}</Badge>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('meet_your_ai_codispatcher')}</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">Features That Deliver Real Results</h2>
               <p className="mt-6 text-lg text-muted-foreground">
-                {t('everything_you_need')}
+                We focus on simple, powerful tools that directly impact your bottom line and make your daily operations easier.
               </p>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">

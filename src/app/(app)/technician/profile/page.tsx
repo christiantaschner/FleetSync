@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Technician, ProfileChangeRequest, Job } from '@/types';
-import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History, Clock } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History, Clock, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

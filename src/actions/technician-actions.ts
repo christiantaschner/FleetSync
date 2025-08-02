@@ -20,7 +20,7 @@ const TechnicianDataSchema = z.object({
     longitude: z.number(),
     address: z.string(),
   }),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().url().optional().nullable(),
   workingHours: z.array(BusinessDaySchema).length(7).optional(),
   isOnCall: z.boolean().optional(),
 });

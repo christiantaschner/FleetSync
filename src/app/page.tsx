@@ -248,10 +248,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Turn Field Service Chaos into Clockwork Efficiency.
+              The One-Click AI Dispatcher for Your Field Service Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Stop juggling spreadsheets and complex software. FleetSync AI gives you the power of enterprise-level dispatch in a simple, intuitive platform designed for your team.
+              Stop wasting hours on manual scheduling. FleetSync AI handles your most complex dispatching tasks—from job assignment to route optimization—with a single click.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">

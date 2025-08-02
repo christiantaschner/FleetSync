@@ -1,7 +1,8 @@
+
 "use client";
 
-import React from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Shuffle, Wrench, MapIcon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Shuffle, Wrench, MapIcon, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -20,7 +21,7 @@ interface JobListItemProps {
   onOpenChat: (job: Job) => void;
   onAIAssign: (job: Job) => void;
   onOpenDetails: (job: Job) => void;
-  onDraftNotification: (job: Job) => void;
+  onDraftNotification: (job: Job) => Promise<void>;
   onViewOnMap: (location: Location) => void;
   onReOptimize: (technicianId: string) => void;
 }
@@ -34,6 +35,14 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onDraftNotification,
     onViewOnMap
 }) => {
+  const [isNotifying, setIsNotifying] = useState(false);
+
+  const handleDraftNotification = async () => {
+    setIsNotifying(true);
+    await onDraftNotification(job);
+    setIsNotifying(false);
+  };
+
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
@@ -141,8 +150,13 @@ const JobListItem: React.FC<JobListItemProps> = ({
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
                 <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
             </Button>
-            <Button variant="outline" size="sm" onClick={(e) => { e.preventDefault(); onDraftNotification(job); }}>
-                <Bot className="mr-1 h-3 w-3 text-primary" /> Notify Customer
+            <Button variant="outline" size="sm" onClick={handleDraftNotification} disabled={isNotifying}>
+                {isNotifying ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : (
+                  <Bot className="mr-1 h-3 w-3 text-primary" />
+                )}
+                Notify Customer
             </Button>
           </>
         )}
@@ -151,7 +165,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
         </Button>
          <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm" onClick={() => onOpenDetails(job)}>
             <Edit className="mr-1 h-3 w-3" /> View Details
-        </Button>
+         </Button>
       </CardFooter>
     </Card>
   );

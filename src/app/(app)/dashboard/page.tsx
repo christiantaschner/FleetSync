@@ -382,13 +382,13 @@ export default function DashboardPage() {
     }));
     
     const input: AllocateJobActionInput = {
+      appId,
       jobDescription: job.description,
       jobPriority: job.priority,
       requiredSkills: job.requiredSkills || [],
       scheduledTime: job.scheduledTime,
       technicianAvailability: aiTechnicians,
       currentTime: new Date().toISOString(),
-      appId,
     };
     
     const result = await allocateJobAction(input);
@@ -585,7 +585,7 @@ export default function DashboardPage() {
                 
                 return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'status':
-                return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'technician':
                 const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz';
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';

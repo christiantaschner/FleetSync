@@ -97,7 +97,9 @@ export async function toggleOnCallStatusAction(
   input: ToggleOnCallStatusInput,
 ): Promise<{ error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        return { error: "Mock mode: Data is not saved." };
+        // In mock mode, we don't save, but we also don't want to show an error.
+        // Returning null indicates success to the frontend.
+        return { error: null };
     }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");

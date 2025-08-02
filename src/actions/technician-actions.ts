@@ -49,11 +49,23 @@ export async function updateTechnicianAction(
     if (!techSnap.exists() || techSnap.data()?.companyId !== updateData.companyId) {
         throw new Error("Permission denied. You can only edit technicians in your own company.");
     }
+    
+    // Construct the payload to ensure no undefined fields are sent, which can cause errors.
+    const payloadToUpdate = {
+        name: updateData.name,
+        email: updateData.email,
+        phone: updateData.phone,
+        skills: updateData.skills || [],
+        isAvailable: updateData.isAvailable,
+        location: updateData.location,
+        avatarUrl: updateData.avatarUrl,
+        workingHours: updateData.workingHours,
+        isOnCall: updateData.isOnCall,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
 
-    await techDocRef.update({
-      ...updateData,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+
+    await techDocRef.update(payloadToUpdate);
 
     return { error: null };
   } catch (e) {

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import {
   Dialog,
@@ -28,14 +28,17 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
 import type { Technician, BusinessDay } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck } from 'lucide-react';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { useAuth } from '@/contexts/auth-context';
 import { removeUserFromCompanyAction } from '@/actions/user-actions';
 import { updateTechnicianAction } from '@/actions/technician-actions';
+import { uploadAvatarAction } from '@/actions/storage-actions';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import Image from 'next/image';
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
@@ -58,9 +61,12 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  const { control, register, handleSubmit, formState: { errors }, setValue, reset } = useForm({
+  const { control, register, handleSubmit, formState: { errors }, setValue, reset, watch } = useForm({
     defaultValues: {
       name: technician?.name || '',
       email: technician?.email || '',
@@ -74,13 +80,17 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       workingHours: technician?.workingHours && technician.workingHours.length === 7 
             ? technician.workingHours 
             : defaultBusinessHours,
+      avatarUrl: technician?.avatarUrl || null,
+      isSubmitting: false,
     }
   });
 
-  const { fields, update } = useFieldArray({
+  const { fields } = useFieldArray({
     control,
     name: "workingHours",
   });
+  
+  const avatarUrl = watch('avatarUrl');
 
   const resetForm = useCallback(() => {
     reset({
@@ -96,6 +106,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       workingHours: technician?.workingHours && technician.workingHours.length === 7 
             ? technician.workingHours 
             : company?.settings?.businessHours || defaultBusinessHours,
+      avatarUrl: technician?.avatarUrl || null,
+      isSubmitting: false,
     });
   }, [technician, company, reset]);
 
@@ -122,6 +134,28 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
         onClose();
     }
     setIsDeleting(false);
+  };
+  
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files?.[0] || !technician?.id || !appId) return;
+
+    const file = event.target.files[0];
+    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+        toast({ title: "File too large", description: "Avatar image must be less than 2MB.", variant: "destructive" });
+        return;
+    }
+    
+    setIsUploading(true);
+    
+    const result = await uploadAvatarAction({ technicianId: technician.id, file, appId });
+
+    if (result.error) {
+        toast({ title: "Upload Failed", description: result.error, variant: "destructive" });
+    } else if (result.data) {
+        setValue('avatarUrl', result.data.url, { shouldDirty: true });
+        toast({ title: "Success", description: "Avatar uploaded. Save changes to apply." });
+    }
+    setIsUploading(false);
   };
 
   const onSubmit = async (data: any) => {
@@ -159,6 +193,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       isAvailable: data.isAvailable,
       isOnCall: data.isOnCall,
       workingHours: data.workingHours,
+      avatarUrl: data.avatarUrl,
       appId: appId,
     };
 
@@ -175,7 +210,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
     }
   };
   
-  const isSubmitting = useForm().watch('isSubmitting');
+  const isSubmitting = watch('isSubmitting');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -188,10 +223,38 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
         </DialogHeader>
         <ScrollArea className="flex-1 overflow-y-auto px-6">
             <form id="edit-tech-form" onSubmit={handleSubmit(onSubmit)} className="py-4 space-y-4">
-                <div>
-                  <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
-                  <Input id="techName" {...register('name')} placeholder="e.g., John Doe" required />
+                <div className="flex items-center gap-4">
+                  <div className="relative group">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={avatarUrl ?? undefined} />
+                      <AvatarFallback className="text-2xl">{technician?.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="secondary"
+                      className="absolute bottom-0 right-0 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                    >
+                      {isUploading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Camera className="h-4 w-4"/>}
+                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept="image/png, image/jpeg"
+                      onChange={handleAvatarUpload}
+                    />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div>
+                      <Label htmlFor="techName"><User className="inline h-3.5 w-3.5 mr-1" />Name *</Label>
+                      <Input id="techName" {...register('name')} placeholder="e.g., John Doe" required />
+                    </div>
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="techEmail"><Mail className="inline h-3.5 w-3.5 mr-1" />Email</Label>
@@ -219,8 +282,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                                     checked={field.value?.includes(skill)}
                                     onCheckedChange={(checked) => {
                                         return checked
-                                            ? field.onChange([...field.value, skill])
-                                            : field.onChange(field.value?.filter((value) => value !== skill));
+                                            ? field.onChange([...(field.value || []), skill])
+                                            : field.onChange((field.value || [])?.filter((value) => value !== skill));
                                     }}
                                 />
                                 <Label htmlFor={`skill-${skill}`} className="font-normal cursor-pointer">{skill}</Label>
@@ -242,7 +305,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                     control={control}
                     render={({ field }) => (
                        <AddressAutocompleteInput 
-                          value={field.value}
+                          value={field.value || ''}
                           onValueChange={field.onChange}
                           onLocationSelect={handleLocationSelect}
                           placeholder="Start typing technician base address..."

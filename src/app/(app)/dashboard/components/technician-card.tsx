@@ -92,9 +92,9 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
                 <Tooltip>
                     <TooltipTrigger asChild>
                          <Button
-                            variant="ghost"
+                            variant={technician.isOnCall ? "accent" : "ghost"}
                             size="icon"
-                            className={cn("h-8 w-8 hover:bg-secondary", technician.isOnCall && "bg-accent/20 text-accent-foreground hover:bg-accent/30")}
+                            className="h-8 w-8"
                             onClick={() => onToggleOnCall(technician.id, !technician.isOnCall)}
                             disabled={isUpdatingOnCall}
                         >

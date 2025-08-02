@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import type { Job, Technician, JobStatus, Location } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2 } from 'lucide-react';
 import OptimizeRouteDialog from './optimize-route-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DndContext, useDraggable, type DragEndEvent } from '@dnd-kit/core';
+import { useToast } from "@/hooks/use-toast";
+import { reassignJobAction } from '@/actions/fleet-actions';
+import { useAuth } from '@/contexts/auth-context';
 
 const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
@@ -30,9 +33,8 @@ const getStatusAppearance = (status: JobStatus) => {
 };
 
 const formatDuration = (start: Date, end: Date): string => {
-    const diffMs = end.getTime() - start.getTime();
-    if (diffMs <= 0) return "0m";
-    const totalMinutes = Math.floor(diffMs / 60000);
+    if (end <= start) return "0m";
+    const totalMinutes = Math.floor((end.getTime() - start.getTime()) / 60000);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
@@ -42,7 +44,7 @@ const formatDuration = (start: Date, end: Date): string => {
 };
 
 
-const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (job: Job) => void }) => {
+const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (job: Job) => void, isProposed?: boolean }) => {
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: job.id,
     data: { job }
@@ -55,8 +57,8 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
   
   if (!job.scheduledTime) return null;
 
-  const jobStart = job.inProgressAt ? new Date(job.inProgressAt) : new Date(job.scheduledTime);
-  const jobEnd = job.completedAt ? new Date(job.completedAt) : new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
+  const jobStart = new Date(job.scheduledTime);
+  const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
 
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
   const durationMinutes = (jobEnd.getTime() - jobStart.getTime()) / 60000;
@@ -85,10 +87,11 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
             {...attributes}
             onClick={() => onClick(job)}
             className={cn(
-              "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset",
+              "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
               getStatusAppearance(job.status),
               priorityColor,
-              isPendingOrAssigned && "border-dashed"
+              isPendingOrAssigned && "border-dashed",
+              isProposed && "opacity-60 ring-primary ring-2"
             )}
           >
              <div className="flex flex-col w-full truncate">
@@ -98,6 +101,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
           </div>
         </TooltipTrigger>
         <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
+          {isProposed && <p className="font-bold text-primary mb-1 text-sm">PROPOSED CHANGE</p>}
           <p className="font-bold text-base mb-1">{job.title}</p>
           <p className="text-sm"><strong>Status:</strong> {job.status}</p>
           <p className="text-sm"><strong>Priority:</strong> {job.priority}</p>
@@ -262,6 +266,9 @@ interface ScheduleCalendarViewProps {
   onJobClick: (job: Job) => void;
 }
 
+type ProposedChanges = Record<string, { scheduledTime: string; assignedTechnicianId: string; originalTechnicianId: string | null }>;
+
+
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ 
     jobs, 
     technicians,
@@ -270,6 +277,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const containerRef = useRef<HTMLDivElement>(null);
+  const timelineGridRef = useRef<HTMLDivElement>(null);
+  const [proposedChanges, setProposedChanges] = useState<ProposedChanges>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+  const { userProfile } = useAuth();
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const dayStart = useMemo(() => {
     const d = startOfDay(currentDate);
@@ -296,26 +309,112 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     }
   }, [currentDate, dayStart, hours.length, viewMode]);
 
+  const jobsWithProposedChanges = useMemo(() => {
+    return jobs.map(job => {
+        if (proposedChanges[job.id]) {
+            return {
+                ...job,
+                scheduledTime: proposedChanges[job.id].scheduledTime,
+                assignedTechnicianId: proposedChanges[job.id].assignedTechnicianId,
+            };
+        }
+        return job;
+    });
+  }, [jobs, proposedChanges]);
 
-  const jobsByTechnician = (techId: string) => {
+
+  const jobsByTechnician = useCallback((techId: string) => {
     const startOfDayDate = startOfDay(currentDate);
     const endOfDayDate = endOfDay(currentDate);
-    return jobs.filter(job =>
+    return jobsWithProposedChanges.filter(job =>
       job.assignedTechnicianId === techId &&
       job.scheduledTime &&
       new Date(job.scheduledTime) >= startOfDayDate &&
       new Date(job.scheduledTime) <= endOfDayDate
     ).sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
-  };
+  }, [currentDate, jobsWithProposedChanges]);
   
   const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
   const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
   const handleToday = () => setCurrentDate(new Date());
 
   const handleDragEnd = (event: DragEndEvent) => {
-    console.log('Drag ended!', event);
-    // Logic to handle the drop will be added in the next step.
+    const { active, delta, over } = event;
+    const job = active.data.current?.job as Job;
+    if (!job || !timelineGridRef.current) return;
+
+    // Determine the drop target technician row
+    let targetTechnicianId = over?.id as string | undefined;
+    if (!targetTechnicianId) {
+        // Fallback to find based on vertical position if 'over' is not reliable
+        const jobElement = document.getElementById(`job-${job.id}`);
+        const dropY = (jobElement?.getBoundingClientRect().top || 0) + delta.y;
+        const techRows = Array.from(document.querySelectorAll('[data-tech-id]'));
+        const closestRow = techRows.reduce((closest, row) => {
+            const rowRect = row.getBoundingClientRect();
+            const distance = Math.abs(dropY - rowRect.top);
+            return distance < closest.distance ? { distance, element: row } : closest;
+        }, { distance: Infinity, element: null as Element | null });
+
+        targetTechnicianId = closestRow.element?.getAttribute('data-tech-id') || job.assignedTechnicianId || undefined;
+    }
+
+    if (!targetTechnicianId) return; // Still couldn't find a target
+
+    const gridWidth = timelineGridRef.current.offsetWidth;
+    const minutesPerPixel = totalMinutes / gridWidth;
+    const timeDeltaMinutes = delta.x * minutesPerPixel;
+
+    const originalStartTime = new Date(proposedChanges[job.id]?.scheduledTime || job.scheduledTime!);
+    const newStartTime = new Date(originalStartTime.getTime() + timeDeltaMinutes * 60000);
+
+    setProposedChanges(prev => ({
+        ...prev,
+        [job.id]: {
+            scheduledTime: newStartTime.toISOString(),
+            assignedTechnicianId: targetTechnicianId!,
+            originalTechnicianId: job.assignedTechnicianId || null,
+        }
+    }));
   };
+  
+  const handleConfirmChanges = async () => {
+    if (!userProfile?.companyId || !appId) {
+        toast({ title: "Error", description: "Cannot save changes, user or app info is missing.", variant: "destructive"});
+        return;
+    }
+    
+    setIsSaving(true);
+    const promises = Object.entries(proposedChanges).map(([jobId, change]) => {
+        return reassignJobAction({
+            companyId: userProfile.companyId,
+            jobId,
+            newTechnicianId: change.assignedTechnicianId,
+            newScheduledTime: change.scheduledTime,
+            appId,
+            reason: "Manually rescheduled on calendar view"
+        });
+    });
+
+    const results = await Promise.allSettled(promises);
+    
+    const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error));
+
+    if (failed.length > 0) {
+        toast({ title: "Some Changes Failed", description: `${failed.length} of ${promises.length} changes could not be saved.`, variant: "destructive"});
+    } else {
+        toast({ title: "Schedule Updated", description: "All changes have been saved successfully." });
+    }
+
+    setProposedChanges({});
+    setIsSaving(false);
+  };
+
+  const handleDiscardChanges = () => {
+    setProposedChanges({});
+  };
+  
+  const hasProposedChanges = Object.keys(proposedChanges).length > 0;
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
@@ -324,7 +423,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                     <CardTitle className="font-headline">Technician Schedule</CardTitle>
-                    <CardDescription>Daily timeline view of technician assignments.</CardDescription>
+                    <CardDescription>Daily timeline view of technician assignments. Drag and drop jobs to reschedule.</CardDescription>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
                     <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
@@ -351,13 +450,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 </AlertDescription>
             </Alert>
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
+        <CardContent className="p-0 sm:p-6 relative">
             {viewMode === 'day' ? (
             <div ref={containerRef} className="overflow-x-auto">
             <div className="relative">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                     <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
-                    <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                    <div ref={timelineGridRef} className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                     {hours.map((hour, index) => (
                         <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
                         {format(hour, 'ha')}
@@ -370,7 +469,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     {technicians.length > 0 ? technicians.map((tech, techIndex) => {
                         const techJobs = jobsByTechnician(tech.id);
                         return (
-                            <div key={tech.id} className="flex h-20 items-center border-t">
+                            <div key={tech.id} data-tech-id={tech.id} className="flex h-20 items-center border-t">
                                 <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
                                 <Avatar className="h-9 w-9">
                                     <AvatarImage src={tech.avatarUrl} alt={tech.name} />
@@ -399,7 +498,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                             return (
                                                 <React.Fragment key={job.id}>
                                                     {travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
-                                                    <JobBlock job={job} dayStart={dayStart} totalMinutes={totalMinutes} onClick={onJobClick} />
+                                                    <JobBlock 
+                                                        job={job} 
+                                                        dayStart={dayStart} 
+                                                        totalMinutes={totalMinutes} 
+                                                        onClick={onJobClick}
+                                                        isProposed={!!proposedChanges[job.id]}
+                                                     />
                                                     {job.breaks?.map((breakItem, breakIndex) => (
                                                         <BreakBlock key={breakIndex} breakItem={breakItem} dayStart={dayStart} totalMinutes={totalMinutes} />
                                                     ))}
@@ -453,6 +558,19 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                         </Alert>
                     </div>
                 )
+            )}
+            {hasProposedChanges && viewMode === 'day' && (
+                <div className="sticky bottom-4 z-30 mx-auto w-fit flex items-center gap-2 rounded-full border bg-background p-2 shadow-lg animate-in fade-in-50">
+                    <p className="text-sm font-medium px-2">You have unsaved schedule changes.</p>
+                    <Button size="sm" variant="outline" onClick={handleDiscardChanges} disabled={isSaving}>
+                        <X className="mr-1.5 h-4 w-4"/>
+                        Discard
+                    </Button>
+                    <Button size="sm" onClick={handleConfirmChanges} disabled={isSaving}>
+                        {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin"/> : <Save className="mr-1.5 h-4 w-4" />}
+                        Confirm Changes
+                    </Button>
+                </div>
             )}
         </CardContent>
         </Card>

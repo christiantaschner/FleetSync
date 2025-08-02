@@ -469,7 +469,8 @@ export async function reassignJobAction(
     if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
         return { error: "Job not found or you do not have permission to modify it." };
     }
-    
+    const originalJob = jobSnap.data() as Job;
+
     const updatePayload: any = {
       assignedTechnicianId: newTechnicianId,
       status: "Assigned" as JobStatus,
@@ -488,9 +489,20 @@ export async function reassignJobAction(
 
     batch.update(jobDocRef, updatePayload);
 
+    // Free up old technician if they were assigned
+    if (originalJob.assignedTechnicianId) {
+        const oldTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, originalJob.assignedTechnicianId);
+        batch.update(oldTechDocRef, {
+            isAvailable: true,
+            currentJobId: null,
+        });
+    }
+
+    // Assign new technician
     const newTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, newTechnicianId);
     batch.update(newTechDocRef, {
-        isAvailable: false
+        isAvailable: false,
+        currentJobId: jobId,
     });
 
     await batch.commit();

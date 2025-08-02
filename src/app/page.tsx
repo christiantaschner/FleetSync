@@ -251,7 +251,7 @@ export default function MarketingPage() {
               The One-Click AI Dispatcher for Your Field Service Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Stop wasting hours on manual scheduling. FleetSync AI handles your most complex dispatching tasks—from job assignment to route optimization—with a single click.
+              Stop wasting hours on manual scheduling. FleetSync AI handles your most complex dispatching tasks—from job assignment to customer communication—with a single click.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -263,7 +263,7 @@ export default function MarketingPage() {
         </section>
         
          {/* Screenshot placeholder */}
-        <section className="container -mt-16 sm:-mt-20 lg:-mt-24">
+        <section className="container mt-8 sm:-mt-20 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">

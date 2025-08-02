@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench } from 'lucide-react';
 import OptimizeRouteDialog from './optimize-route-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,19 +28,35 @@ const getStatusAppearance = (status: JobStatus) => {
     }
 };
 
+const formatDuration = (start: Date, end: Date): string => {
+    const diffMs = end.getTime() - start.getTime();
+    if (diffMs <= 0) return "0m";
+    const totalMinutes = Math.floor(diffMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+};
+
+
 const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (job: Job) => void }) => {
   if (!job.scheduledTime) return null;
 
-  const jobStart = new Date(job.scheduledTime);
+  const jobStart = job.inProgressAt ? new Date(job.inProgressAt) : new Date(job.scheduledTime);
+  const jobEnd = job.completedAt ? new Date(job.completedAt) : new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
+
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
-  const durationMinutes = job.estimatedDurationMinutes || 60;
+  const durationMinutes = (jobEnd.getTime() - jobStart.getTime()) / 60000;
 
   const left = (offsetMinutes / totalMinutes) * 100;
   const width = (durationMinutes / totalMinutes) * 100;
 
-  if (left > 100 || (left + width) < 0) return null;
+  if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
   const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
+  const isPendingOrAssigned = job.status === 'Pending' || job.status === 'Assigned';
 
   return (
     <TooltipProvider>
@@ -51,7 +67,8 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
             className={cn(
               "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
               getStatusAppearance(job.status),
-              priorityColor
+              priorityColor,
+              isPendingOrAssigned && "border-dashed"
             )}
             style={{ 
               left: `${Math.max(0, left)}%`, 
@@ -59,9 +76,8 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
               minWidth: '20px'
             }}
           >
-            <div className="flex flex-col w-full truncate">
-                <span className="font-bold truncate">{format(jobStart, 'p')}</span>
-                <span className="truncate">{job.customerName}</span>
+             <div className="flex flex-col w-full truncate">
+                <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
                 <span className="text-muted-foreground truncate italic">{job.title}</span>
             </div>
           </div>
@@ -72,13 +88,69 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
           <p className="text-sm"><strong>Priority:</strong> {job.priority}</p>
           <p className="text-sm"><strong>Customer:</strong> {job.customerName}</p>
           <p className="text-sm"><strong>Address:</strong> {job.location.address}</p>
-          <p className="text-sm"><strong>Scheduled:</strong> {format(jobStart, 'PP p')}</p>
-          <p className="text-sm"><strong>Duration:</strong> {durationMinutes} mins</p>
+          <p className="text-sm"><strong>Scheduled:</strong> {format(new Date(job.scheduledTime), 'PP p')}</p>
+          <p className="text-sm"><strong>Duration:</strong> {job.estimatedDurationMinutes} mins</p>
           {job.description && <p className="text-sm mt-2 pt-2 border-t"><strong>Notes:</strong> {job.description}</p>}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
+};
+
+
+const TravelBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
+    const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
+    const durationMinutes = (to.getTime() - from.getTime()) / 60000;
+    if (durationMinutes <= 1) return null;
+
+    const left = (offsetMinutes / totalMinutes) * 100;
+    const width = (durationMinutes / totalMinutes) * 100;
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
+                        <div className="relative w-full h-full flex items-center justify-center bg-gray-200/50">
+                            <Car className="h-4 w-4 text-gray-500" />
+                        </div>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Travel Time: {formatDuration(from, to)}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
+const BreakBlock = ({ breakItem, dayStart, totalMinutes }: { breakItem: {start: string, end?: string}, dayStart: Date, totalMinutes: number }) => {
+    if (!breakItem.end) return null; // Don't render ongoing breaks
+    const start = new Date(breakItem.start);
+    const end = new Date(breakItem.end);
+    const offsetMinutes = (start.getTime() - dayStart.getTime()) / 60000;
+    const durationMinutes = (end.getTime() - start.getTime()) / 60000;
+    if (durationMinutes <= 0) return null;
+
+    const left = (offsetMinutes / totalMinutes) * 100;
+    const width = (durationMinutes / totalMinutes) * 100;
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
+                        <div className="relative w-full h-full flex items-center justify-center bg-amber-200/60">
+                            <Coffee className="h-4 w-4 text-amber-700" />
+                        </div>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Break: {formatDuration(start, end)}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
 };
 
 const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, totalMinutes: number }) => {
@@ -218,7 +290,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       job.scheduledTime &&
       new Date(job.scheduledTime) >= startOfDayDate &&
       new Date(job.scheduledTime) <= endOfDayDate
-    );
+    ).sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
   };
   
   const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
@@ -274,35 +346,50 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
               </div>
 
               <div className="relative">
-                  {technicians.length > 0 ? technicians.map(tech => (
-                  <div key={tech.id} className="flex h-20 items-center border-t">
-                      <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
-                      <Avatar className="h-9 w-9">
-                          <AvatarImage src={tech.avatarUrl} alt={tech.name} />
-                          <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div className="truncate">
-                          <span className="font-medium text-sm truncate block">{tech.name}</span>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <Circle className={cn("h-2 w-2 fill-current", tech.isAvailable ? "text-green-500" : "text-red-500")} />
-                              <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
+                  {technicians.length > 0 ? technicians.map((tech, techIndex) => {
+                      const techJobs = jobsByTechnician(tech.id);
+                      return (
+                          <div key={tech.id} className="flex h-20 items-center border-t">
+                              <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
+                              <Avatar className="h-9 w-9">
+                                  <AvatarImage src={tech.avatarUrl} alt={tech.name} />
+                                  <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                              </Avatar>
+                              <div className="truncate">
+                                  <span className="font-medium text-sm truncate block">{tech.name}</span>
+                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                      <Circle className={cn("h-2 w-2 fill-current", tech.isAvailable ? "text-green-500" : "text-red-500")} />
+                                      <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
+                                  </div>
+                              </div>
+                              </div>
+                              <div className="flex-1 relative h-full">
+                                  <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                                  {hours.map((_, index) => (
+                                      <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
+                                  ))}
+                                  </div>
+                                  <div className="relative h-full p-1.5">
+                                      {techJobs.map((job, jobIndex) => {
+                                          const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
+                                          const travelStartTime = prevJob?.completedAt ? new Date(prevJob.completedAt) : dayStart;
+                                          const travelEndTime = job.enRouteAt ? new Date(job.enRouteAt) : (job.inProgressAt ? new Date(job.inProgressAt) : null);
+                                          
+                                          return (
+                                              <React.Fragment key={job.id}>
+                                                  {travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
+                                                  <JobBlock job={job} dayStart={dayStart} totalMinutes={totalMinutes} onClick={onJobClick} />
+                                                  {job.breaks?.map((breakItem, breakIndex) => (
+                                                      <BreakBlock key={breakIndex} breakItem={breakItem} dayStart={dayStart} totalMinutes={totalMinutes} />
+                                                  ))}
+                                              </React.Fragment>
+                                          );
+                                      })}
+                                  </div>
+                              </div>
                           </div>
-                      </div>
-                      </div>
-                      <div className="flex-1 relative h-full">
-                          <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                          {hours.map((_, index) => (
-                              <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
-                          ))}
-                      </div>
-                      <div className="relative h-full p-1.5">
-                          {jobsByTechnician(tech.id).map(job => (
-                          <JobBlock key={job.id} job={job} dayStart={dayStart} totalMinutes={totalMinutes} onClick={onJobClick} />
-                          ))}
-                      </div>
-                      </div>
-                  </div>
-                  )) : (
+                      )
+                  }) : (
                      <div className="pt-6">
                         <Alert className="m-4 border-primary/30 bg-primary/5">
                             <UserPlus className="h-4 w-4 text-primary" />
@@ -352,3 +439,5 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 };
 
 export default ScheduleCalendarView;
+
+    

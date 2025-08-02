@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { DndContext, useDraggable, type DragEndEvent } from '@dnd-kit/core';
 
 const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
@@ -42,6 +43,16 @@ const formatDuration = (start: Date, end: Date): string => {
 
 
 const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (job: Job) => void }) => {
+  const {attributes, listeners, setNodeRef, transform} = useDraggable({
+    id: job.id,
+    data: { job }
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    zIndex: 100 // Bring to front while dragging
+  } : undefined;
+  
   if (!job.scheduledTime) return null;
 
   const jobStart = job.inProgressAt ? new Date(job.inProgressAt) : new Date(job.scheduledTime);
@@ -63,18 +74,22 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick }: { job: Job, dayStart
       <Tooltip>
         <TooltipTrigger asChild>
           <div
+            ref={setNodeRef}
+            style={{ 
+              left: `${Math.max(0, left)}%`, 
+              width: `${Math.min(100 - Math.max(0, left), width)}%`,
+              minWidth: '20px',
+              ...style
+            }}
+            {...listeners}
+            {...attributes}
             onClick={() => onClick(job)}
             className={cn(
-              "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-pointer ring-1 ring-inset",
+              "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset",
               getStatusAppearance(job.status),
               priorityColor,
               isPendingOrAssigned && "border-dashed"
             )}
-            style={{ 
-              left: `${Math.max(0, left)}%`, 
-              width: `${Math.min(100 - Math.max(0, left), width)}%`,
-              minWidth: '20px'
-            }}
           >
              <div className="flex flex-col w-full truncate">
                 <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
@@ -297,100 +312,131 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
   const handleToday = () => setCurrentDate(new Date());
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <div>
-                <CardTitle className="font-headline">Technician Schedule</CardTitle>
-                <CardDescription>Daily timeline view of technician assignments.</CardDescription>
-            </div>
-            <div className="flex items-center flex-wrap gap-2">
-                 <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                    <Button variant="outline" className="hover:bg-primary hover:text-primary-foreground">
-                        <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
-                    </Button>
-                </OptimizeRouteDialog>
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                    <Button size="icon" variant={viewMode === 'day' ? 'default' : 'ghost'} onClick={() => setViewMode('day')}><Grid3x3 className="h-4 w-4" /></Button>
-                    <Button size="icon" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}><Calendar className="h-4 w-4" /></Button>
-                </div>
-                <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Previous"><ChevronLeft className="h-4 w-4" /></Button>
-                <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
-                    {format(currentDate, viewMode === 'day' ? 'PPP' : 'MMMM yyyy')}
-                </Button>
-                <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
-            </div>
-        </div>
-         <Alert className="mt-4 text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600">
-            <Info className="h-4 w-4" />
-            <AlertTitle className="font-semibold">Fleetie's Proactive Monitoring</AlertTitle>
-            <AlertDescription>
-                Fleetie continuously checks schedules in the background. If a potential delay or issue is detected, an alert will appear on the dashboard.
-            </AlertDescription>
-        </Alert>
-      </CardHeader>
-      <CardContent className="p-0 sm:p-6">
-        {viewMode === 'day' ? (
-        <div ref={containerRef} className="overflow-x-auto">
-          <div className="relative">
-              <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
-                  <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
-                  <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                  {hours.map((hour, index) => (
-                      <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
-                      {format(hour, 'ha')}
-                      </div>
-                  ))}
-                  </div>
-              </div>
+  const handleDragEnd = (event: DragEndEvent) => {
+    console.log('Drag ended!', event);
+    // Logic to handle the drop will be added in the next step.
+  };
 
-              <div className="relative">
-                  {technicians.length > 0 ? technicians.map((tech, techIndex) => {
-                      const techJobs = jobsByTechnician(tech.id);
-                      return (
-                          <div key={tech.id} className="flex h-20 items-center border-t">
-                              <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
-                              <Avatar className="h-9 w-9">
-                                  <AvatarImage src={tech.avatarUrl} alt={tech.name} />
-                                  <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                              </Avatar>
-                              <div className="truncate">
-                                  <span className="font-medium text-sm truncate block">{tech.name}</span>
-                                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                      <Circle className={cn("h-2 w-2 fill-current", tech.isAvailable ? "text-green-500" : "text-red-500")} />
-                                      <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
-                                  </div>
-                              </div>
-                              </div>
-                              <div className="flex-1 relative h-full">
-                                  <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                                  {hours.map((_, index) => (
-                                      <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
-                                  ))}
-                                  </div>
-                                  <div className="relative h-full p-1.5">
-                                      {techJobs.map((job, jobIndex) => {
-                                          const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
-                                          const travelStartTime = prevJob?.completedAt ? new Date(prevJob.completedAt) : dayStart;
-                                          const travelEndTime = job.enRouteAt ? new Date(job.enRouteAt) : (job.inProgressAt ? new Date(job.inProgressAt) : null);
-                                          
-                                          return (
-                                              <React.Fragment key={job.id}>
-                                                  {travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
-                                                  <JobBlock job={job} dayStart={dayStart} totalMinutes={totalMinutes} onClick={onJobClick} />
-                                                  {job.breaks?.map((breakItem, breakIndex) => (
-                                                      <BreakBlock key={breakIndex} breakItem={breakItem} dayStart={dayStart} totalMinutes={totalMinutes} />
-                                                  ))}
-                                              </React.Fragment>
-                                          );
-                                      })}
-                                  </div>
-                              </div>
-                          </div>
-                      )
-                  }) : (
-                     <div className="pt-6">
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+        <Card>
+        <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                <div>
+                    <CardTitle className="font-headline">Technician Schedule</CardTitle>
+                    <CardDescription>Daily timeline view of technician assignments.</CardDescription>
+                </div>
+                <div className="flex items-center flex-wrap gap-2">
+                    <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
+                        <Button variant="outline" className="hover:bg-primary hover:text-primary-foreground">
+                            <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
+                        </Button>
+                    </OptimizeRouteDialog>
+                    <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                        <Button size="icon" variant={viewMode === 'day' ? 'default' : 'ghost'} onClick={() => setViewMode('day')}><Grid3x3 className="h-4 w-4" /></Button>
+                        <Button size="icon" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}><Calendar className="h-4 w-4" /></Button>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Previous"><ChevronLeft className="h-4 w-4" /></Button>
+                    <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
+                        {format(currentDate, viewMode === 'day' ? 'PPP' : 'MMMM yyyy')}
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
+                </div>
+            </div>
+            <Alert className="mt-4 text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600">
+                <Info className="h-4 w-4" />
+                <AlertTitle className="font-semibold">Fleetie's Proactive Monitoring</AlertTitle>
+                <AlertDescription>
+                    Fleetie continuously checks schedules in the background. If a potential delay or issue is detected, an alert will appear on the dashboard.
+                </AlertDescription>
+            </Alert>
+        </CardHeader>
+        <CardContent className="p-0 sm:p-6">
+            {viewMode === 'day' ? (
+            <div ref={containerRef} className="overflow-x-auto">
+            <div className="relative">
+                <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
+                    <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
+                    <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                    {hours.map((hour, index) => (
+                        <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
+                        {format(hour, 'ha')}
+                        </div>
+                    ))}
+                    </div>
+                </div>
+
+                <div className="relative">
+                    {technicians.length > 0 ? technicians.map((tech, techIndex) => {
+                        const techJobs = jobsByTechnician(tech.id);
+                        return (
+                            <div key={tech.id} className="flex h-20 items-center border-t">
+                                <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={tech.avatarUrl} alt={tech.name} />
+                                    <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <div className="truncate">
+                                    <span className="font-medium text-sm truncate block">{tech.name}</span>
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <Circle className={cn("h-2 w-2 fill-current", tech.isAvailable ? "text-green-500" : "text-red-500")} />
+                                        <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
+                                    </div>
+                                </div>
+                                </div>
+                                <div className="flex-1 relative h-full">
+                                    <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                                    {hours.map((_, index) => (
+                                        <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
+                                    ))}
+                                    </div>
+                                    <div className="relative h-full p-1.5">
+                                        {techJobs.map((job, jobIndex) => {
+                                            const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
+                                            const travelStartTime = prevJob?.completedAt ? new Date(prevJob.completedAt) : dayStart;
+                                            const travelEndTime = job.enRouteAt ? new Date(job.enRouteAt) : (job.inProgressAt ? new Date(job.inProgressAt) : null);
+                                            
+                                            return (
+                                                <React.Fragment key={job.id}>
+                                                    {travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
+                                                    <JobBlock job={job} dayStart={dayStart} totalMinutes={totalMinutes} onClick={onJobClick} />
+                                                    {job.breaks?.map((breakItem, breakIndex) => (
+                                                        <BreakBlock key={breakIndex} breakItem={breakItem} dayStart={dayStart} totalMinutes={totalMinutes} />
+                                                    ))}
+                                                </React.Fragment>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    }) : (
+                        <div className="pt-6">
+                            <Alert className="m-4 border-primary/30 bg-primary/5">
+                                <UserPlus className="h-4 w-4 text-primary" />
+                                <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
+                                <AlertDescription>
+                                    The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
+                                </AlertDescription>
+                                <div className="mt-4">
+                                    <Link href="/settings?tab=users">
+                                        <Button variant="default" size="sm">
+                                            <Users className="mr-2 h-4 w-4" /> Go to User Management
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </Alert>
+                        </div>
+                    )}
+                    <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
+                </div>
+            </div>
+            </div>
+            ) : (
+                technicians.length > 0 ? (
+                    <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={onJobClick} />
+                ) : (
+                    <div className="pt-6">
                         <Alert className="m-4 border-primary/30 bg-primary/5">
                             <UserPlus className="h-4 w-4 text-primary" />
                             <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
@@ -406,38 +452,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                             </div>
                         </Alert>
                     </div>
-                  )}
-                  <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
-              </div>
-          </div>
-        </div>
-         ) : (
-            technicians.length > 0 ? (
-                <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={onJobClick} />
-            ) : (
-                <div className="pt-6">
-                    <Alert className="m-4 border-primary/30 bg-primary/5">
-                        <UserPlus className="h-4 w-4 text-primary" />
-                        <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
-                        <AlertDescription>
-                            The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
-                        </AlertDescription>
-                        <div className="mt-4">
-                            <Link href="/settings?tab=users">
-                                <Button variant="default" size="sm">
-                                    <Users className="mr-2 h-4 w-4" /> Go to User Management
-                                </Button>
-                            </Link>
-                        </div>
-                    </Alert>
-                </div>
-            )
-         )}
-      </CardContent>
-    </Card>
+                )
+            )}
+        </CardContent>
+        </Card>
+    </DndContext>
   );
 };
 
 export default ScheduleCalendarView;
-
-    

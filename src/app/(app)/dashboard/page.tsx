@@ -520,6 +520,8 @@ export default function DashboardPage() {
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
+            workingHours: t.workingHours,
+            isOnCall: t.isOnCall,
         }));
 
         const input: AllocateJobActionInput = {
@@ -632,6 +634,52 @@ export default function DashboardPage() {
     : { lat: 39.8283, lng: -98.5795 }; 
 
   const handleBatchAIAssign = useCallback(async () => {
+    if (isMockMode) {
+      // Mock logic
+      const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
+      if (currentPendingJobs.length === 0 || technicians.length === 0) {
+        toast({ title: "Fleety Batch Assign", description: "No pending jobs or technicians available.", variant: "default" });
+        return;
+      }
+      setIsBatchLoading(true);
+      
+      let tempTechnicianPool = JSON.parse(JSON.stringify(technicians.filter(t => t.isAvailable)));
+      
+      const suggestions: AssignmentSuggestion[] = currentPendingJobs.map(job => {
+        const { requiredSkills = [] } = job;
+        const suitableTechIndex = tempTechnicianPool.findIndex((tech: Technician) => 
+            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill))
+        );
+
+        if (suitableTechIndex !== -1) {
+            const assignedTech = tempTechnicianPool[suitableTechIndex];
+            tempTechnicianPool.splice(suitableTechIndex, 1); // Remove tech from pool
+            return {
+                job,
+                suggestion: {
+                    suggestedTechnicianId: assignedTech.id,
+                    reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`
+                },
+                suggestedTechnicianDetails: assignedTech,
+                error: null
+            };
+        } else {
+            return {
+                job,
+                suggestion: null,
+                suggestedTechnicianDetails: null,
+                error: "Mock Mode: No available technician with the required skills."
+            };
+        }
+      });
+      
+      setAssignmentSuggestionsForReview(suggestions);
+      setIsBatchReviewDialogOpen(true);
+      setIsBatchLoading(false);
+      return;
+    }
+
+    // Live logic
     if (!appId) return;
     const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
     if (currentPendingJobs.length === 0 || technicians.length === 0) {
@@ -652,6 +700,8 @@ export default function DashboardPage() {
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
+            workingHours: t.workingHours,
+            isOnCall: t.isOnCall,
         }));
 
         const input: AllocateJobActionInput = {
@@ -678,9 +728,15 @@ export default function DashboardPage() {
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST]);
+  }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST, isMockMode]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: FinalAssignment[]) => {
+    if (isMockMode) {
+        toast({ title: "Assignments Confirmed (Mock)", description: `${assignmentsToConfirm.length} jobs assigned.` });
+        setIsBatchReviewDialogOpen(false);
+        return;
+    }
+    
     if (!db || !userProfile?.companyId || !appId) {
         toast({ title: "Database Error", description: "Firestore instance not available.", variant: "destructive" });
         return;
@@ -1205,3 +1261,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

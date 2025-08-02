@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Job, Technician } from '@/types';
 import type { AllocateJobOutput } from "@/types";
-import { AlertTriangle, CheckCircle, User, Bot, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, User, Bot, Loader2, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -132,7 +132,16 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
                                 </SelectTrigger>
                                 <SelectContent>
                                     {technicians.map(tech => (
-                                        <SelectItem key={tech.id} value={tech.id}>{tech.name}</SelectItem>
+                                        <SelectItem 
+                                            key={tech.id} 
+                                            value={tech.id}
+                                            className={cn(tech.id === suggestion?.suggestedTechnicianId && "ring-2 ring-blue-500/70 font-semibold")}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                {tech.id === suggestion?.suggestedTechnicianId && <Sparkles className="h-4 w-4 text-blue-600"/>}
+                                                {tech.name}
+                                            </div>
+                                        </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
@@ -183,3 +192,5 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
 };
 
 export default BatchAssignmentReviewDialog;
+
+    

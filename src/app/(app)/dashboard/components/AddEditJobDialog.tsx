@@ -135,13 +135,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   // Handle smart status updates
   useEffect(() => {
-    // If status is changed to Unassigned, unassign the technician
-    if (status === 'Pending' && manualTechnicianId !== UNASSIGNED_VALUE) {
-      setManualTechnicianId(UNASSIGNED_VALUE);
+    if (manualTechnicianId === UNASSIGNED_VALUE && (status === 'Assigned' || status === 'En Route' || status === 'In Progress')) {
+        setStatus('Pending');
     }
-    // If a tech is assigned to a Pending job, update status to Assigned
+
+    if (manualTechnicianId !== UNASSIGNED_VALUE && (status === 'Pending' || status === 'Draft')) {
+        setStatus('Assigned');
+    }
+    
     if (status === 'Pending' && manualTechnicianId !== UNASSIGNED_VALUE) {
-      setStatus('Assigned');
+        setManualTechnicianId(UNASSIGNED_VALUE);
     }
   }, [status, manualTechnicianId]);
 
@@ -231,7 +234,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       };
     });
 
+    if (!appId) {
+        toast({ title: "Configuration Error", description: "Firebase Project ID not found.", variant: "destructive"});
+        setIsFetchingAISuggestion(false);
+        return;
+    }
+
     const input: AllocateJobActionInput = {
+      appId,
       currentTime: new Date().toISOString(),
       jobDescription: currentDescription,
       jobPriority: currentPriority,
@@ -254,7 +264,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         setManualTechnicianId(result.data.suggestedTechnicianId); // Pre-select the suggested technician
       }
     }
-  }, [technicians, toast, jobs]);
+  }, [technicians, toast, jobs, appId]);
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -765,7 +775,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           {manualTechnicianId === UNASSIGNED_VALUE && (
                             <Button
                                 type="button"
-                                variant="default"
+                                variant="accent"
                                 size="sm"
                                 onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
                                 disabled={isFetchingAISuggestion || !description}
@@ -785,7 +795,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze. The uploaded pictures will show up with the AI diagnosis.</p>
+                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze. The uploaded pictures and AI diagnosis will appear here.</p>
                             </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -803,14 +813,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         <div className="space-y-2">
                            <Label htmlFor="triage-link">Customer Message</Label>
                             <Textarea id="triage-message" readOnly value={triageMessage} rows={4} className="bg-secondary/50"/>
-                            <Button size="sm" type="button" onClick={handleCopyToClipboard}>
+                            <Button size="sm" type="button" onClick={handleCopyToClipboard} className="h-9">
                                 {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
                                 Copy Message
                             </Button>
                             <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
                         </div>
                       ) : (
-                        <Button type="button" size="sm" onClick={handleGenerateTriageLink} disabled={isGeneratingLink}>
+                        <Button type="button" size="sm" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
                            {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
                            Request Photos
                         </Button>
@@ -862,7 +872,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           type="button"
                           onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
                           disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                          variant={isInterruptionSuggestion ? "destructive" : "default"}
+                          variant={isInterruptionSuggestion ? "destructive" : "accent"}
                           title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
                         >
                           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}

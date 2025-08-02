@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,8 @@ import type { AllocateJobOutput } from "@/types";
 import { AlertTriangle, CheckCircle, User, Bot, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface AssignmentSuggestion {
   job: Job;
@@ -25,11 +27,18 @@ export interface AssignmentSuggestion {
   error?: string | null;
 }
 
+// The data structure used for the confirmation action
+export interface FinalAssignment {
+    jobId: string;
+    technicianId: string;
+}
+
 interface BatchAssignmentReviewDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   assignmentSuggestions: AssignmentSuggestion[];
-  onConfirmAssignments: (assignmentsToConfirm: AssignmentSuggestion[]) => void;
+  technicians: Technician[]; // Pass all technicians for the dropdown
+  onConfirmAssignments: (assignmentsToConfirm: FinalAssignment[]) => void;
   isLoadingConfirmation: boolean;
 }
 
@@ -37,74 +46,110 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
   isOpen,
   setIsOpen,
   assignmentSuggestions,
+  technicians,
   onConfirmAssignments,
   isLoadingConfirmation,
 }) => {
-  
-  const validSuggestions = assignmentSuggestions.filter(
-    s => s.suggestion && s.suggestedTechnicianDetails && s.suggestedTechnicianDetails.isAvailable && !s.error
-  );
+  const [editableAssignments, setEditableAssignments] = useState<FinalAssignment[]>([]);
 
+  useEffect(() => {
+    if (isOpen) {
+      // Initialize the editable state when the dialog opens
+      const initialAssignments = assignmentSuggestions
+        .filter(s => s.suggestion && s.suggestedTechnicianDetails)
+        .map(s => ({
+          jobId: s.job.id,
+          technicianId: s.suggestion!.suggestedTechnicianId!,
+        }));
+      setEditableAssignments(initialAssignments);
+    }
+  }, [isOpen, assignmentSuggestions]);
+
+  const handleToggleAssignment = (jobId: string, technicianId: string) => {
+    setEditableAssignments(prev =>
+      prev.some(a => a.jobId === jobId)
+        ? prev.filter(a => a.jobId !== jobId)
+        : [...prev, { jobId, technicianId }]
+    );
+  };
+
+  const handleTechnicianChange = (jobId: string, newTechnicianId: string) => {
+    setEditableAssignments(prev =>
+      prev.map(a => (a.jobId === jobId ? { ...a, technicianId: newTechnicianId } : a))
+    );
+  };
+  
   const handleConfirm = () => {
-    onConfirmAssignments(validSuggestions);
+    onConfirmAssignments(editableAssignments);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
             <Bot className="text-primary h-5 w-5" /> Review Fleety's Batch Assignments
           </DialogTitle>
           <DialogDescription>
-            Review Fleety's suggestions for pending jobs. Only assignments to currently available technicians can be confirmed.
-            {validSuggestions.length !== assignmentSuggestions.length && (
-                <span className="block text-sm text-destructive mt-1">
-                    {assignmentSuggestions.length - validSuggestions.length} suggestion(s) cannot be confirmed (e.g., technician unavailable or AI error).
-                </span>
-            )}
+            Select jobs to assign and change technicians if needed. Unchecked jobs will not be assigned.
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-3">
           {assignmentSuggestions.length > 0 ? (
             <div className="space-y-4 py-2">
-              {assignmentSuggestions.map(({ job, suggestion, suggestedTechnicianDetails, error }, index) => {
-                const isConfirmable = suggestion && suggestedTechnicianDetails && suggestedTechnicianDetails.isAvailable && !error;
+              {assignmentSuggestions.map(({ job, suggestion, suggestedTechnicianDetails, error }) => {
+                const isSelected = editableAssignments.some(a => a.jobId === job.id);
+                const isOriginallyConfirmable = suggestion && suggestedTechnicianDetails && !error;
+                const selectedTechnicianId = editableAssignments.find(a => a.jobId === job.id)?.technicianId;
+
                 return (
                   <div key={job.id} className={cn(
-                    "p-4 rounded-md border",
-                    isConfirmable ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50 opacity-75"
+                    "p-4 rounded-md border transition-all",
+                    isSelected ? "border-primary/50 bg-primary/5 ring-2 ring-primary/20" : "bg-muted/50",
+                    !isOriginallyConfirmable && "opacity-60"
                   )}>
-                    <div className="flex justify-between items-start">
-                        <div>
+                    <div className="flex justify-between items-start gap-4">
+                       <Checkbox
+                          id={`select-job-${job.id}`}
+                          checked={isSelected}
+                          onCheckedChange={() => handleToggleAssignment(job.id, suggestion?.suggestedTechnicianId || '')}
+                          disabled={!isOriginallyConfirmable || isLoadingConfirmation}
+                          className="mt-1"
+                        />
+                        <div className="flex-1">
                             <h4 className="font-semibold">{job.title}</h4>
                             <p className="text-xs text-muted-foreground">Priority: {job.priority}</p>
                         </div>
-                         {isConfirmable ? (
-                            <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                                <CheckCircle className="mr-1 h-3 w-3" /> Ready to Assign
-                            </Badge>
+                        {isOriginallyConfirmable ? (
+                          <div className="w-48">
+                             <Select
+                                value={selectedTechnicianId || ''}
+                                onValueChange={(techId) => handleTechnicianChange(job.id, techId)}
+                                disabled={!isSelected || isLoadingConfirmation}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select Technician" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {technicians.map(tech => (
+                                        <SelectItem key={tech.id} value={tech.id}>{tech.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                          </div>
                         ) : (
                              <Badge variant="destructive">
                                 <AlertTriangle className="mr-1 h-3 w-3" /> Cannot Assign
                             </Badge>
                         )}
                     </div>
-                    <hr className="my-2"/>
-                    {error && (
-                        <p className="text-sm text-destructive"><AlertTriangle className="inline h-4 w-4 mr-1"/> AI Error: {error}</p>
+                    {isOriginallyConfirmable && (
+                       <p className="text-xs text-muted-foreground mt-2 pl-8">
+                         Fleety's Reason: {suggestion!.reasoning}
+                       </p>
                     )}
-                    {suggestion && suggestedTechnicianDetails ? (
-                      <>
-                        <p className="text-sm">
-                          <User className="inline h-4 w-4 mr-1" /> Suggested: <strong>{suggestedTechnicianDetails.name}</strong>
-                          {!suggestedTechnicianDetails.isAvailable && <span className="text-red-600 font-semibold ml-1">(Unavailable)</span>}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">Skills: {suggestedTechnicianDetails.skills.join(', ') || 'N/A'}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Fleety's Reason: {suggestion.reasoning}</p>
-                      </>
-                    ) : !error && (
-                      <p className="text-sm text-muted-foreground">No AI suggestion available for this job.</p>
+                    {error && (
+                        <p className="text-sm text-destructive mt-2 pl-8"><AlertTriangle className="inline h-4 w-4 mr-1"/> AI Error: {error}</p>
                     )}
                   </div>
                 );
@@ -116,7 +161,7 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
         </ScrollArea>
         <DialogFooter className="sm:justify-between items-center mt-4 gap-2">
           <p className="text-sm text-muted-foreground">
-            Confirming: {validSuggestions.length} job(s)
+            Selected for assignment: {editableAssignments.length} job(s)
           </p>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isLoadingConfirmation}>
@@ -125,10 +170,10 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
             <Button 
               type="button" 
               onClick={handleConfirm} 
-              disabled={validSuggestions.length === 0 || isLoadingConfirmation}
+              disabled={editableAssignments.length === 0 || isLoadingConfirmation}
             >
               {isLoadingConfirmation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
-              Confirm {validSuggestions.length} Assignment(s)
+              Confirm {editableAssignments.length} Assignment(s)
             </Button>
           </div>
         </DialogFooter>

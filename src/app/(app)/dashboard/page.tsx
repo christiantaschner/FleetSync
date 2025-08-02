@@ -18,7 +18,7 @@ import { collection, onSnapshot, orderBy, query, doc, writeBatch, getDocs, where
 import { useAuth } from '@/contexts/auth-context';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
-import BatchAssignmentReviewDialog, { type AssignmentSuggestion } from './components/BatchAssignmentReviewDialog';
+import BatchAssignmentReviewDialog, { type AssignmentSuggestion, type FinalAssignment } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
@@ -680,7 +680,7 @@ export default function DashboardPage() {
     setIsBatchLoading(false);
   }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST]);
 
-  const handleConfirmBatchAssignments = async (assignmentsToConfirm: AssignmentSuggestion[]) => {
+  const handleConfirmBatchAssignments = async (assignmentsToConfirm: FinalAssignment[]) => {
     if (!db || !userProfile?.companyId || !appId) {
         toast({ title: "Database Error", description: "Firestore instance not available.", variant: "destructive" });
         return;
@@ -690,27 +690,21 @@ export default function DashboardPage() {
     const batch = writeBatch(db);
     let assignmentsMade = 0;
 
-    const originalTechnicianStates = new Map(technicians.map(t => [t.id, t]));
+    for (const assignment of assignmentsToConfirm) {
+        const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, assignment.jobId);
+        batch.update(jobDocRef, {
+            assignedTechnicianId: assignment.technicianId,
+            status: 'Assigned' as JobStatus,
+            updatedAt: serverTimestamp(),
+            assignedAt: serverTimestamp(),
+        });
 
-    for (const { job, suggestion, suggestedTechnicianDetails } of assignmentsToConfirm) {
-        const originalTech = originalTechnicianStates.get(suggestedTechnicianDetails!.id);
-        if (job && suggestion && suggestedTechnicianDetails && originalTech && originalTech.isAvailable) {
-            const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-            batch.update(jobDocRef, {
-                assignedTechnicianId: suggestion.suggestedTechnicianId,
-                status: 'Assigned' as JobStatus,
-                updatedAt: serverTimestamp(),
-                assignedAt: serverTimestamp(),
-            });
-
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestion.suggestedTechnicianId!);
-            batch.update(techDocRef, {
-                isAvailable: false,
-                currentJobId: job.id,
-            });
-            originalTechnicianStates.set(originalTech.id, {...originalTech, isAvailable: false, currentJobId: job.id});
-            assignmentsMade++;
-        }
+        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, assignment.technicianId);
+        batch.update(techDocRef, {
+            isAvailable: false,
+            currentJobId: assignment.jobId,
+        });
+        assignmentsMade++;
     }
 
     try {
@@ -718,7 +712,7 @@ export default function DashboardPage() {
         if (assignmentsMade > 0) {
           toast({ title: "Fleety Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
         } else {
-          toast({ title: "No Assignments Made", description: "No valid jobs could be assigned in this batch.", variant: "default" });
+          toast({ title: "No Assignments Made", description: "No jobs were selected for assignment.", variant: "default" });
         }
     } catch (error: any) {
         console.error("Error committing batch assignments: ", error);
@@ -726,7 +720,6 @@ export default function DashboardPage() {
     } finally {
         setIsLoadingBatchConfirmation(false);
         setIsBatchReviewDialogOpen(false);
-        setAssignmentSuggestionsForReview([]); 
     }
   };
   
@@ -1193,7 +1186,8 @@ export default function DashboardPage() {
       <BatchAssignmentReviewDialog 
         isOpen={isBatchReviewDialogOpen} 
         setIsOpen={setIsBatchReviewDialogOpen} 
-        assignmentSuggestions={assignmentSuggestionsForReview} 
+        assignmentSuggestions={assignmentSuggestionsForReview}
+        technicians={technicians}
         onConfirmAssignments={handleConfirmBatchAssignments}
         isLoadingConfirmation={isLoadingBatchConfirmation}
       />

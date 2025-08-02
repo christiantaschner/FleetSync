@@ -9,22 +9,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  // DialogTrigger, // Not used if dialog is controlled externally
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { allocateJobAction, AllocateJobActionInput } from "@/actions/fleet-actions";
-import type { AllocateJobOutput } from "@/ai/flows/allocate-job";
-import type { Technician, Job, AITechnician } from '@/types';
+import { allocateJobAction } from "@/actions/ai-actions";
+import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UserCheck, Bot } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '@/contexts/auth-context';
 
 interface SmartJobAllocationDialogProps {
-  // children prop is removed as this dialog is fully controlled (no DialogTrigger inside)
   jobToAssign: Job | null; 
   technicians: Technician[];
+  jobs: Job[];
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onJobAssigned: (job: Job, technician: Technician) => void;
@@ -33,63 +32,79 @@ interface SmartJobAllocationDialogProps {
 const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ 
     jobToAssign, 
     technicians,
+    jobs,
     isOpen,
     setIsOpen,
     onJobAssigned
 }) => {
   const { toast } = useToast();
+  const { userProfile, company } = useAuth();
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isLoadingAssign, setIsLoadingAssign] = useState(false);
   const [suggestedTechnician, setSuggestedTechnician] = useState<AllocateJobOutput | null>(null);
-
-  const handleGetAISuggestion = async () => {
-    if (!jobToAssign) {
-      toast({ title: "Error", description: "No job selected for assignment.", variant: "destructive" });
-      return;
-    }
-    setIsLoadingAI(true);
-
-    const availableAITechnicians: AITechnician[] = technicians.map(t => ({
-      technicianId: t.id,
-      technicianName: t.name,
-      isAvailable: t.isAvailable,
-      skills: t.skills as string[],
-      location: {
-        latitude: t.location.latitude,
-        longitude: t.location.longitude,
-      },
-    }));
-    
-    const input: AllocateJobActionInput = {
-      jobDescription: jobToAssign.description,
-      jobPriority: jobToAssign.priority,
-      technicianAvailability: availableAITechnicians,
-    };
-
-    const result = await allocateJobAction(input);
-    setIsLoadingAI(false);
-
-    if (result.error) {
-      toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
-    } else if (result.data) {
-      const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
-      toast({ title: "AI Suggestion Received", description: `Technician ${tech?.name || result.data.suggestedTechnicianId} suggested.` });
-      setSuggestedTechnician(result.data);
-    }
-  };
   
+  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
   useEffect(() => {
+    const getAISuggestion = async () => {
+        if (!jobToAssign || !appId) {
+          return;
+        }
+        setIsLoadingAI(true);
+
+        const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+        
+        const aiTechnicians: AITechnician[] = technicians.map(t => ({
+          technicianId: t.id,
+          technicianName: t.name,
+          isAvailable: t.isAvailable,
+          skills: t.skills || [],
+          liveLocation: t.location,
+          homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
+          currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+            .map(j => ({
+              jobId: j.id,
+              scheduledTime: j.scheduledTime,
+              priority: j.priority,
+              location: j.location,
+            })),
+          workingHours: t.workingHours,
+          isOnCall: t.isOnCall,
+        }));
+        
+        const input = {
+            appId,
+            jobDescription: jobToAssign.description,
+            jobPriority: jobToAssign.priority,
+            requiredSkills: jobToAssign.requiredSkills,
+            scheduledTime: jobToAssign.scheduledTime,
+            technicianAvailability: aiTechnicians,
+            currentTime: new Date().toISOString(),
+        };
+
+        const result = await allocateJobAction(input);
+        setIsLoadingAI(false);
+
+        if (result.error) {
+        toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
+        } else if (result.data) {
+        const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
+        toast({ title: "AI Suggestion Received", description: `Fleety suggests ${tech?.name || 'a technician'}.` });
+        setSuggestedTechnician(result.data);
+        }
+    };
+    
     if (isOpen && jobToAssign && !suggestedTechnician && !isLoadingAI) {
-      handleGetAISuggestion();
+      getAISuggestion();
     }
     if(!isOpen) {
         setSuggestedTechnician(null); 
     }
-  }, [isOpen, jobToAssign, suggestedTechnician, isLoadingAI]); // Removed handleGetAISuggestion from deps, it's stable
+  }, [isOpen, jobToAssign, technicians, jobs, company, suggestedTechnician, isLoadingAI, toast, appId]);
 
 
   const handleConfirmAssignJob = async () => {
-    if (!suggestedTechnician || !db || !jobToAssign) return;
+    if (!suggestedTechnician || !db || !jobToAssign || !appId) return;
 
     setIsLoadingAssign(true);
 
@@ -108,7 +123,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
 
 
     try {
-      const jobDocRef = doc(db, "jobs", jobToAssign.id);
+      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobToAssign.id);
       await updateDoc(jobDocRef, {
         assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
         status: 'Assigned' as Job['status'],
@@ -124,7 +139,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         assignedAt: new Date().toISOString(),
       };
 
-      const techDocRef = doc(db, "technicians", suggestedTechnician.suggestedTechnicianId);
+      const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestedTechnician.suggestedTechnicianId);
       await updateDoc(techDocRef, {
         isAvailable: false,
         currentJobId: jobToAssign.id,
@@ -149,65 +164,50 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-        setIsOpen(open);
-    }}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-headline">AI Job Assignment</DialogTitle>
+          <DialogTitle className="font-headline flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/>AI Job Assignment</DialogTitle>
           {jobToAssign && (
             <DialogDescription>
-              Review job details. AI is suggesting the best technician for: <strong>{jobToAssign.title}</strong> (Priority: {jobToAssign.priority}).
+              Fleety is suggesting the best technician for: <strong>{jobToAssign.title}</strong>
             </DialogDescription>
           )}
         </DialogHeader>
         
-        {jobToAssign && (
-            <div className="space-y-3 py-1 my-2 p-3 bg-muted/50 rounded-md border">
-                <div>
-                    <Label className="text-xs text-muted-foreground">Job Title</Label>
-                    <p className="font-semibold">{jobToAssign.title}</p>
-                </div>
-                 <div>
-                    <Label className="text-xs text-muted-foreground">Description</Label>
-                    <p className="text-sm line-clamp-3">{jobToAssign.description}</p>
-                </div>
-                <div>
-                    <Label className="text-xs text-muted-foreground">Priority</Label>
-                    <p className="text-sm">{jobToAssign.priority}</p>
-                </div>
-            </div>
-        )}
-        
         {isLoadingAI && !suggestedTechnician && (
-            <div className="flex items-center justify-center flex-col my-4 p-4 bg-secondary rounded-md">
+            <div className="flex items-center justify-center flex-col my-4 p-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                <p className="text-sm text-muted-foreground">Fetching AI suggestion...</p>
+                <p className="text-sm text-muted-foreground">Analyzing technicians & routes...</p>
             </div>
         )}
 
         {suggestedTechnician && (
-          <div className="mt-4 p-4 bg-secondary rounded-md">
-            <h3 className="text-lg font-semibold font-headline">AI Suggestion:</h3>
-            <p><strong>Technician:</strong> {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || suggestedTechnician.suggestedTechnicianId}</p>
-            <p className="mb-1"><strong>Availability:</strong> {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.isAvailable ? 'Available' : 'Unavailable'}</p>
-            <p><strong>Reasoning:</strong> {suggestedTechnician.reasoning}</p>
-            <Button 
-              onClick={handleConfirmAssignJob} 
-              className="w-full mt-3" 
-              variant="default" 
-              disabled={isLoadingAssign || !technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.isAvailable}
-              title={!technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.isAvailable ? 'Suggested technician is unavailable' : ''}
-            >
-              {isLoadingAssign ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Assign Job to {technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || 'Suggested Tech'}
-            </Button>
+          <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2 border">
+            <h3 className="text-lg font-semibold">Fleety's Suggestion:</h3>
+            <p>Assign to: <strong>{technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || 'Unknown'}</strong></p>
+            <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestedTechnician.reasoning}</em></p>
           </div>
         )}
-        <DialogFooter className="sm:justify-start mt-3">
-           <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-            Close
-          </Button>
+        
+        {jobToAssign && !isLoadingAI && !suggestedTechnician && (
+            <div className="text-center p-4">
+                <p className="text-muted-foreground">The AI could not find a suitable technician based on the current constraints.</p>
+            </div>
+        )}
+
+        <DialogFooter className="sm:justify-end mt-4">
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmAssignJob} 
+              variant="default" 
+              disabled={isLoadingAssign || !suggestedTechnician?.suggestedTechnicianId}
+            >
+              {isLoadingAssign ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+              Confirm & Assign Job
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

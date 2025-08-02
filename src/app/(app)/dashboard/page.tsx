@@ -48,6 +48,7 @@ import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers } f
 import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
+import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -121,6 +122,10 @@ export default function DashboardPage() {
 
   const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false);
   const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
+  
+  const [jobForAIAssign, setJobForAIAssign] = useState<Job | null>(null);
+  const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
+
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
@@ -501,48 +506,14 @@ export default function DashboardPage() {
     }
   };
 
-  const handleAIAssign = useCallback(async (job: Job) => {
-    if (!appId) return;
-
+  const handleAIAssign = useCallback((job: Job) => {
     if (technicians.length === 0) {
       toast({ title: "Cannot Assign", description: "There are no technicians available.", variant: "default" });
       return;
     }
-    
-    setIsBatchLoading(true);
-
-    const suggestions = await Promise.all([job].map(async (job) => {
-        const aiTechnicians: AITechnician[] = technicians.map((t: Technician) => ({
-            technicianId: t.id,
-            technicianName: t.name,
-            isAvailable: t.isAvailable,
-            skills: t.skills || [],
-            liveLocation: t.location,
-            homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
-            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
-            workingHours: t.workingHours,
-            isOnCall: t.isOnCall,
-        }));
-
-        const input: AllocateJobActionInput = {
-            appId,
-            jobDescription: job.description,
-            jobPriority: job.priority,
-            requiredSkills: job.requiredSkills || [],
-            scheduledTime: job.scheduledTime,
-            technicianAvailability: aiTechnicians,
-            currentTime: new Date().toISOString(),
-        };
-
-        const result = await allocateJobAction(input);
-        const techDetails = result.data ? technicians.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null : null;
-        return { job, suggestion: result.data, suggestedTechnicianDetails: techDetails, error: result.error };
-    }));
-
-    setAssignmentSuggestionsForReview(suggestions);
-    setIsBatchReviewDialogOpen(true);
-    setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST]);
+    setJobForAIAssign(job);
+    setIsAIAssignDialogOpen(true);
+  }, [technicians, toast]);
 
   const handleOpenChat = (job: Job) => {
     setSelectedChatJob(job);
@@ -904,6 +875,11 @@ export default function DashboardPage() {
     }
     setIsUpdatingOnCall(false);
   };
+  
+  const handleAIAssignSuccess = () => {
+    // This function can be expanded if we need to do something after AI assignment,
+    // like refreshing a specific part of the data. For now, onSnapshot handles it.
+  };
 
   if (authLoading || isLoadingData) { 
     return (
@@ -961,6 +937,13 @@ export default function DashboardPage() {
             customers={customers}
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
+        />
+        <SmartJobAllocationDialog
+          jobToAssign={jobForAIAssign}
+          technicians={technicians}
+          isOpen={isAIAssignDialogOpen}
+          setIsOpen={setIsAIAssignDialogOpen}
+          onJobAssigned={handleAIAssignSuccess}
         />
         {isAdmin && (
             <AddEditTechnicianDialog
@@ -1261,5 +1244,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

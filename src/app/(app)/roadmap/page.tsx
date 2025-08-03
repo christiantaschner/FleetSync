@@ -140,14 +140,14 @@ const roadmapFeatures = {
       icon: HelpCircle,
       status: "Completed"
     },
-  ],
-  inProgress: [
     {
       title: "Stripe Subscription & Billing Integration",
       description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes creating checkout sessions and a customer portal to manage billing.",
       icon: CreditCard,
-      status: "In Progress",
+      status: "Completed",
     },
+  ],
+  inProgress: [
   ],
   planned: [
      {

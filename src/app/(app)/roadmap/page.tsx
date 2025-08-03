@@ -63,6 +63,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Advanced Drag-and-Drop Scheduling",
+      description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
+      icon: MousePointerClick,
+      status: "Completed",
+    },
+    {
       title: "Dispatcher-Triggered Route Re-optimization",
       description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes or cancellations.",
       icon: Shuffle, 
@@ -162,12 +168,6 @@ const roadmapFeatures = {
   inProgress: [
   ],
   planned: [
-     {
-      title: "Advanced Drag-and-Drop Scheduling",
-      description: "Transform the schedule into a fully interactive board. Dispatchers will be able to assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view will feature clear, color-coded statuses for jobs and availability.",
-      icon: MousePointerClick,
-      status: "Planned",
-    },
     {
       title: "Real-Time Technician Location Tracking",
       description: "Provides live GPS location updates of all active field technicians on the dispatcher's map view, fed directly from the technician's mobile app. This feature is the foundation for automated status updates.",

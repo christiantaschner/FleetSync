@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { DndContext, useDraggable, type DragEndEvent } from '@dnd-kit/core';
+import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
 import { reassignJobAction } from '@/actions/fleet-actions';
 import { useAuth } from '@/contexts/auth-context';
@@ -259,6 +259,30 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
     );
 };
 
+const TechnicianRow = ({ technician, children }: { technician: Technician, children: React.ReactNode }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: technician.id,
+    });
+
+    return (
+        <div ref={setNodeRef} className={cn("flex h-20 items-center border-t", isOver && "bg-primary/10")}>
+            <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
+                <Avatar className="h-9 w-9">
+                    <AvatarImage src={technician.avatarUrl} alt={technician.name} />
+                    <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div className="truncate">
+                    <span className="font-medium text-sm truncate block">{technician.name}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Circle className={cn("h-2 w-2 fill-current", technician.isAvailable ? "text-green-500" : "text-red-500")} />
+                        <span>{technician.isAvailable ? 'Available' : 'Unavailable'}</span>
+                    </div>
+                </div>
+            </div>
+            {children}
+        </div>
+    );
+}
 
 interface ScheduleCalendarViewProps {
   jobs: Job[];
@@ -283,7 +307,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const [proposedChanges, setProposedChanges] = useState<ProposedChanges>({});
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
-  const { userProfile } = useAuth();
+  const { userProfile, isMockMode } = useAuth();
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const dayStart = useMemo(() => {
@@ -343,26 +367,10 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, delta, over } = event;
     const job = active.data.current?.job as Job;
-    if (!job || !timelineGridRef.current) return;
+    if (!job || !timelineGridRef.current || !over) return;
 
-    // Determine the drop target technician row
-    let targetTechnicianId = over?.id as string | undefined;
-    if (!targetTechnicianId) {
-        // Fallback to find based on vertical position if 'over' is not reliable
-        const jobElement = document.getElementById(`job-${job.id}`);
-        const dropY = (jobElement?.getBoundingClientRect().top || 0) + delta.y;
-        const techRows = Array.from(document.querySelectorAll('[data-tech-id]'));
-        const closestRow = techRows.reduce((closest, row) => {
-            const rowRect = row.getBoundingClientRect();
-            const distance = Math.abs(dropY - rowRect.top);
-            return distance < closest.distance ? { distance, element: row } : closest;
-        }, { distance: Infinity, element: null as Element | null });
-
-        targetTechnicianId = closestRow.element?.getAttribute('data-tech-id') || job.assignedTechnicianId || undefined;
-    }
-
-    if (!targetTechnicianId) return; // Still couldn't find a target
-
+    const targetTechnicianId = over.id as string;
+    
     const gridWidth = timelineGridRef.current.offsetWidth;
     const minutesPerPixel = totalMinutes / gridWidth;
     const timeDeltaMinutes = delta.x * minutesPerPixel;
@@ -381,6 +389,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   };
   
   const handleConfirmChanges = async () => {
+    if (isMockMode) {
+        toast({ title: 'Schedule Updated (Mock)', description: 'Changes have been applied in mock mode.'});
+        setProposedChanges({});
+        return;
+    }
+
     if (!userProfile?.companyId || !appId) {
         toast({ title: "Error", description: "Cannot save changes, user or app info is missing.", variant: "destructive"});
         return;
@@ -481,23 +495,10 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 </div>
 
                 <div className="relative">
-                    {technicians.length > 0 ? technicians.map((tech, techIndex) => {
+                    {technicians.length > 0 ? technicians.map((tech) => {
                         const techJobs = jobsByTechnician(tech.id);
                         return (
-                            <div key={tech.id} data-tech-id={tech.id} className="flex h-20 items-center border-t">
-                                <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
-                                <Avatar className="h-9 w-9">
-                                    <AvatarImage src={tech.avatarUrl} alt={tech.name} />
-                                    <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div className="truncate">
-                                    <span className="font-medium text-sm truncate block">{tech.name}</span>
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                        <Circle className={cn("h-2 w-2 fill-current", tech.isAvailable ? "text-green-500" : "text-red-500")} />
-                                        <span>{tech.isAvailable ? 'Available' : 'Unavailable'}</span>
-                                    </div>
-                                </div>
-                                </div>
+                            <TechnicianRow key={tech.id} technician={tech}>
                                 <div className="flex-1 relative h-full">
                                     <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                                     {hours.map((_, index) => (
@@ -528,7 +529,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                         })}
                                     </div>
                                 </div>
-                            </div>
+                            </TechnicianRow>
                         )
                     }) : (
                         <div className="pt-6">

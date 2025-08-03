@@ -45,23 +45,27 @@ const prompt = ai.definePrompt({
     {{#if jobTitle}}- Job: {{{jobTitle}}}{{/if}}
     {{#if appointmentTime}}- Appointment Time: {{{appointmentTime}}}{{/if}}
     {{#if estimatedDurationMinutes}}- Estimated Duration: {{{estimatedDurationMinutes}}} minutes{{/if}}
+    {{#if trackingUrl}}- Live Tracking Link: {{{trackingUrl}}}{{/if}}
 
     **TASK: Generate a notification based on the context.**
 
-    **CONTEXT 1: Standard Appointment Confirmation**
+    **CONTEXT 1: Standard Appointment Confirmation with Tracking**
     If the goal is to confirm an upcoming appointment (no delay or schedule change mentioned), create a comprehensive confirmation message.
     - **Must include:** Greeting, technician's name, full appointment day and time, and the estimated duration.
     - **Must suggest:** Ask the customer to ensure the work area is clear and accessible.
-    - **Example Structure:** "Hi [Customer Name], this is a friendly reminder from [Company Name] about your upcoming service for '[Job Title]'. Your technician, [Technician Name], is scheduled to arrive on [Appointment Time]. The appointment should take approximately [Duration]. Please ensure the work area is accessible. Thank you!"
+    - **If 'trackingUrl' is provided, you MUST include it.** Phrase it as "You can see your technician's live location on the day of service here: [link]".
+    - **Example Structure:** "Hi [Customer Name], this is a friendly reminder from [Company Name] about your upcoming service for '[Job Title]'. Your technician, [Technician Name], is scheduled to arrive on [Appointment Time]. The appointment should take approximately [Duration]. You can see your technician's live location on the day of service here: [trackingUrl]. Please ensure the work area is accessible. Thank you!"
 
     **CONTEXT 2: Delay Notification**
     If 'delayMinutes' is provided, this is a proactive alert about a potential delay.
     - **Must include:** Greeting, technician's name, reference to their appointment, the approximate delay, and an apology.
-    - **Example Structure:** "Hi [Customer Name], a quick update from [Company Name]. Your technician, [Technician Name], is running a bit behind and may be delayed by approximately [Delay Minutes] minutes for your '[Job Title]' service. We apologize for any inconvenience."
+    - **If 'trackingUrl' is provided, you MUST include it.**
+    - **Example Structure:** "Hi [Customer Name], a quick update from [Company Name]. Your technician, [Technician Name], is running a bit behind and may be delayed by approximately [Delay Minutes] minutes for your '[Job Title]' service. You can track their progress here: [trackingUrl]. We apologize for any inconvenience."
 
     **CONTEXT 3: Reschedule Notification**
     If 'newTime' is provided, this is a notification about a confirmed schedule change.
     - **Must include:** Greeting, clear statement of the new appointment day/time, and an apology.
+    - **DO NOT include a tracking link here**, as a new one will be sent with the confirmation for the new date.
     - **Example Structure:** "Hi [Customer Name], this is an important update from [Company Name] regarding your appointment for '[Job Title]'. We've had to reschedule your service to [New Time]. We sincerely apologize for this change. Please call our office if this new time is inconvenient."
 
     ---

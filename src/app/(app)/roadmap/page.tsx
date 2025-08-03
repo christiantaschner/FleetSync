@@ -146,6 +146,12 @@ const roadmapFeatures = {
       icon: CreditCard,
       status: "Completed",
     },
+    {
+      title: "Customer Live Tracking Portal",
+      description: "Allows dispatchers to send a unique, secure link to customers, enabling them to see their technician's real-time location and updated ETA on a map as they approach the job site.",
+      icon: Navigation,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],
@@ -166,12 +172,6 @@ const roadmapFeatures = {
       title: "Automated Customer Communication",
       description: "Automatically trigger and intelligently word SMS or email notifications for appointment confirmations and reminders. The 'technician on the way' alert will include a precise, real-time ETA based on live traffic data.",
       icon: MessageSquare,
-      status: "Planned",
-    },
-    {
-      title: "Customer Live Tracking Portal",
-      description: "Allows dispatchers to send a unique, secure link to customers, enabling them to see their technician's real-time location and updated ETA on a map as they approach the job site.",
-      icon: Navigation,
       status: "Planned",
     },
     {

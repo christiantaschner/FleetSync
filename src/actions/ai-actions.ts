@@ -266,17 +266,26 @@ export async function notifyCustomerAction(
   input: NotifyCustomerInput
 ): Promise<{ data: { message: string } | null; error: string | null }> {
   try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+
+    const token = crypto.randomUUID();
+    const expiresAt = addHours(new Date(), 4);
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+    
+    const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, input.jobId);
+    
+    await updateDoc(jobDocRef, {
+        trackingToken: token,
+        trackingTokenExpiresAt: expiresAt.toISOString(),
+    });
+
+    const trackingUrl = `${appUrl}/track/${token}?appId=${appId}`;
+
     // Have an AI generate the message for a more professional touch
     const notificationResult = await generateCustomerNotificationFlow({
-        customerName: input.customerName,
-        technicianName: input.technicianName,
-        jobTitle: input.jobTitle,
-        delayMinutes: input.delayMinutes,
-        newTime: input.newTime,
-        reasonForChange: input.reasonForChange,
-        companyName: input.companyName,
-        appointmentTime: input.appointmentTime,
-        estimatedDurationMinutes: input.estimatedDurationMinutes,
+        ...input,
+        trackingUrl,
     });
 
     const message = notificationResult.message;

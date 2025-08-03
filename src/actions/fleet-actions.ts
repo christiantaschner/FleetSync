@@ -456,7 +456,7 @@ export async function reassignJobAction(
   input: z.infer<typeof ReassignJobInputSchema> & { newScheduledTime?: string }
 ): Promise<{ error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        return { error: "Mock mode: Data is not saved." };
+        return { error: null };
     }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");

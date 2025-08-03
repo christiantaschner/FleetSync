@@ -37,11 +37,16 @@ const ShareTrackingDialog: React.FC<ShareTrackingDialogProps> = ({ isOpen, setIs
         toast({ title: "Error", description: "Company information not available.", variant: "destructive"});
         return;
     }
+    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    if (!appId) {
+        toast({ title: "Error", description: "Application ID not configured.", variant: "destructive"});
+        return;
+    }
     setIsLoading(true);
     setTrackingUrl('');
     setIsCopied(false);
 
-    const result = await generateTrackingLinkAction({ jobId: currentJob.id, companyId: userProfile.companyId });
+    const result = await generateTrackingLinkAction({ jobId: currentJob.id, companyId: userProfile.companyId, appId });
     setIsLoading(false);
 
     if (result.error) {

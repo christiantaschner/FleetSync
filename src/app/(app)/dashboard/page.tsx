@@ -49,6 +49,8 @@ import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
+import ShareTrackingDialog from './components/ShareTrackingDialog';
+
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -134,6 +136,9 @@ export default function DashboardPage() {
   const [technicianToOptimize, setTechnicianToOptimize] = useState<string | undefined>(undefined);
   
   const [showGettingStarted, setShowGettingStarted] = useState(false);
+
+  const [isShareTrackingOpen, setIsShareTrackingOpen] = useState(false);
+  const [jobToShare, setJobToShare] = useState<Job | null>(null);
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
@@ -881,6 +886,11 @@ export default function DashboardPage() {
     // like refreshing a specific part of the data. For now, onSnapshot handles it.
   };
 
+  const handleShareTracking = (job: Job) => {
+    setJobToShare(job);
+    setIsShareTrackingOpen(true);
+  };
+
   if (authLoading || isLoadingData) { 
     return (
       <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
@@ -960,6 +970,11 @@ export default function DashboardPage() {
           job={selectedChatJob} 
           technician={technicians.find(t => t.id === selectedChatJob?.assignedTechnicianId) || null}
           appId={appId}
+      />}
+      {appId && <ShareTrackingDialog 
+          isOpen={isShareTrackingOpen}
+          setIsOpen={setIsShareTrackingOpen}
+          job={jobToShare}
       />}
        {riskAlerts.map(alert => (
           <ScheduleRiskAlert 
@@ -1140,9 +1155,9 @@ export default function DashboardPage() {
                       onOpenChat={handleOpenChat}
                       onAIAssign={handleAIAssign}
                       onOpenDetails={handleOpenEditJob}
-                      onReOptimize={handleOpenOptimizeRoute}
                       onDraftNotification={handleDraftNotificationForJob}
                       onViewOnMap={handleViewOnMap}
+                      onShareTracking={handleShareTracking}
                     />
                   ))
                 ) : (

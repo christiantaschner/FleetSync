@@ -23,7 +23,7 @@ interface JobListItemProps {
   onOpenDetails: (job: Job) => void;
   onDraftNotification: (job: Job) => Promise<void>;
   onViewOnMap: (location: Location) => void;
-  onReOptimize: (technicianId: string) => void;
+  onShareTracking: (job: Job) => void;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ 
@@ -33,7 +33,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onAIAssign, 
     onOpenDetails,
     onDraftNotification,
-    onViewOnMap
+    onViewOnMap,
+    onShareTracking,
 }) => {
   const [isNotifying, setIsNotifying] = useState(false);
 
@@ -147,6 +148,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
         )}
         {isRoutable && (
           <>
+            <Button variant="outline" size="sm" onClick={() => onShareTracking(job)}>
+                <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
+            </Button>
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
                 <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
             </Button>

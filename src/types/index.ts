@@ -216,6 +216,7 @@ export type AITechnician = {
   homeBaseLocation: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
+  hasCustomerHistory?: boolean;
 };
 
 export type ProfileChangeRequest = {
@@ -326,6 +327,7 @@ export type DispatcherFeedback = z.infer<typeof DispatcherFeedbackSchema>;
 
 export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
+  customerPhone: z.string().optional().describe('The customer\'s phone number, used to find their service history.'),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
@@ -346,6 +348,7 @@ export const AllocateJobInputSchema = z.object({
         scheduledTime: z.string().optional().nullable(),
         priority: z.enum(['High', 'Medium', 'Low']),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
+      hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
@@ -697,3 +700,5 @@ export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'sch
 
 // Re-export AllocateJobInput to be used in server actions without circular dependencies.
 export type AllocateJobActionInput = z.infer<typeof AllocateJobInputSchema>;
+
+    

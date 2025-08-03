@@ -99,7 +99,28 @@ export async function allocateJobAction(
   }
 
   try {
-    const { appId, ...flowInput } = input;
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+    
+    const { appId, customerPhone, ...flowInput } = AllocateJobInputSchema.parse(input);
+
+    if (customerPhone) {
+        // Find technicians with history for this customer
+        const jobsQuery = query(
+            collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
+            where("customerPhone", "==", customerPhone),
+            where("status", "==", "Completed")
+        );
+        const historySnapshot = await getDocs(jobsQuery);
+        const techIdsWithHistory = new Set(historySnapshot.docs.map(doc => doc.data().assignedTechnicianId));
+
+        // Augment the technician availability data
+        flowInput.technicianAvailability.forEach(tech => {
+            if (techIdsWithHistory.has(tech.technicianId)) {
+                tech.hasCustomerHistory = true;
+            }
+        });
+    }
+
     const result = await allocateJobFlow(flowInput, appId);
     return { data: result, error: null };
   } catch (e) {
@@ -669,3 +690,5 @@ export async function answerUserQuestionAction(
     return { data: null, error: errorMessage };
   }
 }
+
+    

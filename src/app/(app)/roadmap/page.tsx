@@ -152,6 +152,12 @@ const roadmapFeatures = {
       icon: Navigation,
       status: "Completed",
     },
+    {
+      title: "AI-Powered Triage",
+      description: "Dispatchers can send customers a unique link to upload photos of an issue before a visit. The AI then analyzes these images to suggest required parts and preliminary repair steps, increasing the first-time fix rate.",
+      icon: ImageIcon,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],

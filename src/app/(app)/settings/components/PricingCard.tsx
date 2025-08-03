@@ -76,5 +76,3 @@ const PricingCard: React.FC<PricingCardProps> = ({
 };
 
 export default PricingCard;
-
-    

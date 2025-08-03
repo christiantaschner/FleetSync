@@ -693,3 +693,6 @@ export const AnswerUserQuestionOutputSchema = z.object({
 export type AnswerUserQuestionOutput = z.infer<typeof AnswerUserQuestionOutputSchema>;
 
 export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
+
+// Re-export AllocateJobInput to be used in server actions without circular dependencies.
+export type AllocateJobActionInput = z.infer<typeof AllocateJobInputSchema>;

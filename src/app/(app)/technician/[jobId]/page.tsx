@@ -399,6 +399,41 @@ export default function TechnicianJobDetailPage() {
         setIsUpdating(false);
       }
   };
+
+  const isViewingOwnPage = user?.uid === job?.assignedTechnicianId;
+  const isAdminView = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isViewingOwnPage;
+  const isJobConcluded = job?.status === 'Completed' || job?.status === 'Cancelled';
+  
+  useEffect(() => {
+    if (isUpdating || !isViewingOwnPage || isJobConcluded || !technician?.id || !appId || !db) {
+      return;
+    }
+
+    const updateLocation = async () => {
+      try {
+        if (!navigator.geolocation) return;
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          });
+        });
+        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technician.id);
+        await updateDoc(techDocRef, {
+          "location.latitude": position.coords.latitude,
+          "location.longitude": position.coords.longitude,
+        });
+      } catch (locationError) {
+        console.warn("Periodic location update failed:", locationError);
+      }
+    };
+    
+    updateLocation(); // Initial update
+    const intervalId = setInterval(updateLocation, 60000); // Update every 60 seconds
+
+    return () => clearInterval(intervalId);
+  }, [isUpdating, isViewingOwnPage, isJobConcluded, technician, appId, db]);
   
   if (isLoading) {
     return (
@@ -424,9 +459,6 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
-  const isViewingOwnPage = user?.uid === job.assignedTechnicianId;
-  const isAdminView = (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && !isViewingOwnPage;
-  const isJobConcluded = job.status === 'Completed' || job.status === 'Cancelled';
   const allPhotos = [...(job.photos || []), ...(job.triageImages || [])];
 
 

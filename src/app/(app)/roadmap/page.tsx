@@ -164,16 +164,16 @@ const roadmapFeatures = {
       icon: ImageIcon,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Real-Time Technician Location Tracking",
       description: "Provides live GPS location updates of all active field technicians on the dispatcher's map view, fed directly from the technician's mobile app. This feature is the foundation for automated status updates.",
       icon: MapPin,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
     {
       title: "Automated Customer Communication",
       description: "Automatically trigger and intelligently word SMS or email notifications for appointment confirmations and reminders. The 'technician on the way' alert will include a precise, real-time ETA based on live traffic data.",

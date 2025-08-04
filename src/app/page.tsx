@@ -19,25 +19,45 @@ export default function MarketingPage() {
 
   const features = [
     {
-      icon: <UserCheck className="h-8 w-8 text-primary" />,
-      title: "The Right Tech, Every Time",
-      description: "One click is all it takes. Our AI analyzes skills, availability, and live location to suggest the perfect technician, eliminating hours of guesswork.",
+      icon: <Bot className="h-8 w-8 text-primary" />,
+      title: "AI-Powered Dispatch",
+      description: "Let our AI analyze skills, live location, and customer history to suggest the optimal technician for any job in seconds. Eliminate guesswork and manual scheduling.",
     },
     {
       icon: <Smartphone className="h-8 w-8 text-primary" />,
-      title: "An App Your Team Will Use",
-      description: "Finally, a mobile app that's as easy to use as their favorite social media. Clear schedules, simple status updates, and direct communication with dispatch.",
+      title: "Intuitive Technician App",
+      description: "A simple, powerful mobile view for your team. They get clear daily schedules, can update job statuses with a tap, and communicate directly with dispatch.",
     },
     {
       icon: <Shuffle className="h-8 w-8 text-primary" />,
-      title: "Turn Chaos into Cash",
-      description: "A last-minute cancellation just opened a gap in the schedule. One click re-optimizes your technician's route to pull in a nearby job, turning downtime into revenue.",
+      title: "Dynamic Route Optimization",
+      description: "A last-minute cancellation? A new emergency? Re-optimize any technician's route with a single click to fill gaps and minimize travel time.",
     },
      {
       icon: <AlertTriangle className="h-8 w-8 text-primary" />,
-      title: "Solve Problems Before They Happen",
-      description: "Our AI proactively warns you if a technician is at risk of running late, giving you time to notify the customer or reassign the job before it becomes a complaint.",
+      title: "Proactive Risk Alerts",
+      description: "Our system constantly monitors active jobs and warns you if a technician is at risk of being late, giving you time to act before it becomes a customer complaint.",
     },
+    {
+      icon: <Repeat className="h-8 w-8 text-primary" />,
+      title: "Recurring Service Contracts",
+      description: "Manage maintenance agreements with ease. Automatically generate recurring jobs and use AI to help schedule the next appointment.",
+    },
+    {
+      icon: <ClipboardList className="h-8 w-8 text-primary" />,
+      title: "Complete Digital Work Orders",
+      description: "From pre-work safety checklists to adding notes, capturing photos, and getting customer signatures, everything is handled digitally.",
+    },
+    {
+      icon: <Target className="h-8 w-8 text-primary" />,
+      title: "Customer Live Tracking",
+      description: "Reduce 'where are you?' calls by sending customers a secure, live tracking link to see their technician's ETA on a map.",
+    },
+    {
+      icon: <TrendingUp className="h-8 w-8 text-primary" />,
+      title: "Actionable Reporting",
+      description: "Track key metrics like first-time-fix rate, on-time arrivals, and average job duration to understand your business performance at a glance.",
+    }
   ];
 
   const benefits = [
@@ -379,9 +399,9 @@ export default function MarketingPage() {
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <Badge variant="default">{t('our_solution')}</Badge>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">Features That Deliver Real Results</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">A Smarter Toolkit for a More Efficient Business</h2>
               <p className="mt-6 text-lg text-muted-foreground">
-                We focus on simple, powerful tools that directly impact your bottom line and make your daily operations easier.
+                We provide a focused set of powerful, easy-to-use features that solve your biggest operational headaches and deliver an immediate impact.
               </p>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
@@ -621,3 +641,4 @@ export default function MarketingPage() {
     </div>
   );
 }
+

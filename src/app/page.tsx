@@ -231,7 +231,7 @@ export default function MarketingPage() {
               Stop Drowning in Dispatch. Start Growing Your Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             FleetSync AI is the straightforward, affordable dispatch software for service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
+             FleetSync AI is the straightforward, affordable dispatch software for field service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">

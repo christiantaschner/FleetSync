@@ -82,11 +82,12 @@ export default function OnboardingPage() {
   const isOtherSelected = watchedSpecialties.includes('Other');
 
   const specialtyTranslations: { [key: string]: string } = {
-    "Plumbing": t('specialty_plumbing'),
-    "Electrical": t('specialty_electrical'),
-    "HVAC": t('specialty_hvac'),
-    "Appliance Repair": t('specialty_appliance_repair'),
-    "General Maintenance": t('specialty_general_maintenance'),
+    "Plumbing": "Plumbing",
+    "Electrical": "Electrical",
+    "HVAC": "HVAC",
+    "Pipefitting": "Pipefitting",
+    "Landscaping": "Landscaping",
+    "Pest Control": "Pest Control",
     "Other": t('specialty_other'),
   };
 

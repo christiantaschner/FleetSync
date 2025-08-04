@@ -295,8 +295,8 @@ export default function MarketingPage() {
                     <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Plumbing</Badge>
                     <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Electrical</Badge>
                     <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Landscaping</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Cleaning Services</Badge>
                     <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pest Control</Badge>
+                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pipefitting</Badge>
                 </div>
             </div>
         </section>

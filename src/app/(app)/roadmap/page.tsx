@@ -175,21 +175,15 @@ const roadmapFeatures = {
   ],
   planned: [
     {
-      title: "Automated Customer Communication",
-      description: "Automatically trigger and intelligently word SMS or email notifications for appointment confirmations and reminders. The 'technician on the way' alert will include a precise, real-time ETA based on live traffic data.",
-      icon: MessageSquare,
+      title: "Integrated Invoicing & Payments",
+      description: "Enable technicians to generate and send a professional invoice on the spot from pre-built templates. The system will support immediate payment processing via a secure online portal, closing the job loop instantly and improving cash flow.",
+      icon: DollarSign,
       status: "Planned",
     },
     {
       title: "Automated Geo-Fenced Status Updates",
       description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart for the next location.",
       icon: Target,
-      status: "Planned",
-    },
-    {
-      title: "Integrated Invoicing & Payment",
-      description: "Enable technicians to generate and send a professional invoice on the spot from pre-built templates. The system will support immediate payment processing via credit card, closing the job loop instantly and improving cash flow.",
-      icon: DollarSign,
       status: "Planned",
     },
   ],

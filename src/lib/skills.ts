@@ -26,18 +26,24 @@ export const SKILLS_BY_SPECIALTY: Record<string, string[]> = {
         "Thermostat Installation",
         "Boiler Repair",
     ],
-    "Appliance Repair": [
-        "Refrigerator Repair",
-        "Washing Machine Repair",
-        "Oven Repair",
-        "Dishwasher Repair",
+    Pipefitting: [
+        "Industrial Pipe Installation",
+        "Steam Systems",
+        "Process Piping",
+        "Pipe Fabrication",
     ],
-    "General Maintenance": [
-        "Painting",
-        "Drywall Repair",
-        "Carpentry",
-        "Tiling",
+    Landscaping: [
+        "Irrigation Systems",
+        "Hardscaping",
+        "Lawn Maintenance",
+        "Tree Trimming",
     ],
+    "Pest Control": [
+        "Rodent Control",
+        "Termite Treatment",
+        "Insect Management",
+        "Wildlife Removal",
+    ]
 };
 
 // A flat list of all skills for seeding if no specialty is chosen or for general use.

@@ -551,6 +551,7 @@ export const GenerateCustomerNotificationInputSchema = z.object({
   appointmentTime: z.string().optional().nullable(),
   estimatedDurationMinutes: z.number().optional(),
   trackingUrl: z.string().optional().describe("A live tracking URL for the customer."),
+  technicianPhotoUrl: z.string().url().optional().describe("A URL to the technician's photo."),
 });
 export type GenerateCustomerNotificationInput = z.infer<typeof GenerateCustomerNotificationInputSchema>;
 

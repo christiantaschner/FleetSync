@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import ChatCard from './components/ChatCard';
 import { useAuth } from '@/contexts/auth-context';
 import TroubleshootingCard from './components/TroubleshootingCard';
-import { calculateTravelMetricsAction } from '@/actions/ai-actions';
+import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import ChecklistCard from './components/ChecklistCard';
@@ -33,7 +33,7 @@ export default function TechnicianJobDetailPage() {
   const params = useParams();
   const jobId = params.jobId as string;
   const { toast } = useToast();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, company } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
   const [technician, setTechnician] = useState<Technician | null>(null);
@@ -198,6 +198,16 @@ export default function TechnicianJobDetailPage() {
       if (newStatus === 'En Route') {
         updatePayload.enRouteAt = serverTimestamp();
         updatedJobState.enRouteAt = newTimestamp;
+
+        // Fire-and-forget the notification
+        notifyCustomerAction({
+            jobId: job.id,
+            customerName: job.customerName,
+            technicianName: technician.name,
+            reasonForChange: `Your technician, ${technician.name}, is on their way.`,
+            companyName: company?.name || 'our team'
+        }).catch(err => console.error("Failed to send 'On My Way' notification:", err));
+
       }
       if (newStatus === 'In Progress') {
         updatePayload.inProgressAt = serverTimestamp();

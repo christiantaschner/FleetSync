@@ -41,6 +41,7 @@ const prompt = ai.definePrompt({
     **Customer & Job Details:**
     - Customer's Name: {{{customerName}}}
     - Technician's Name: {{{technicianName}}}
+    {{#if technicianPhotoUrl}}- Technician's Photo: {{media url=technicianPhotoUrl}}{{/if}}
     - Company Name: {{{companyName}}}
     {{#if jobTitle}}- Job: {{{jobTitle}}}{{/if}}
     {{#if appointmentTime}}- Appointment Time: {{{appointmentTime}}}{{/if}}
@@ -50,7 +51,7 @@ const prompt = ai.definePrompt({
     **TASK: Generate a notification based on the context.**
 
     **CONTEXT 1: Standard Appointment Confirmation with Tracking**
-    If the goal is to confirm an upcoming appointment (no delay or schedule change mentioned), create a comprehensive confirmation message.
+    If the goal is to confirm an upcoming appointment (no delay, reschedule, or "En Route" status mentioned), create a comprehensive confirmation message.
     - **Must include:** Greeting, technician's name, full appointment day and time, and the estimated duration.
     - **Must suggest:** Ask the customer to ensure the work area is clear and accessible.
     - **If 'trackingUrl' is provided, you MUST include it.** Phrase it as "You can see your technician's live location on the day of service here: [link]".
@@ -67,6 +68,12 @@ const prompt = ai.definePrompt({
     - **Must include:** Greeting, clear statement of the new appointment day/time, and an apology.
     - **DO NOT include a tracking link here**, as a new one will be sent with the confirmation for the new date.
     - **Example Structure:** "Hi [Customer Name], this is an important update from [Company Name] regarding your appointment for '[Job Title]'. We've had to reschedule your service to [New Time]. We sincerely apologize for this change. Please call our office if this new time is inconvenient."
+
+    **CONTEXT 4: "On My Way" Notification**
+    If the 'reasonForChange' includes "is on their way", this is an "On My Way" alert.
+    - **Must include:** Greeting, technician's name, and a statement that they are on their way.
+    - **You MUST include the 'trackingUrl'.** Phrase it as "You can follow their live location and ETA here: [link]".
+    - **Example Structure:** "Hi [Customer Name], good news from [Company Name]! Your technician, [Technician Name], is on their way for your '[Job Title]' service. You can follow their live location and ETA here: {{{trackingUrl}}}."
 
     ---
     **Always end the message with " - from {{{companyName}}}".**

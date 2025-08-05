@@ -303,10 +303,26 @@ export async function notifyCustomerAction(
 
     const trackingUrl = `${appUrl}/track/${token}?appId=${appId}`;
 
+    const jobSnap = await getDoc(jobDocRef);
+    if (!jobSnap.exists()) {
+        return { data: null, error: "Job not found." };
+    }
+    const job = jobSnap.data() as Job;
+    let technicianPhotoUrl: string | undefined;
+
+    if (job.assignedTechnicianId) {
+        const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+        const techSnap = await getDoc(techDocRef);
+        if (techSnap.exists()) {
+            technicianPhotoUrl = (techSnap.data() as Technician).avatarUrl;
+        }
+    }
+
     // Have an AI generate the message for a more professional touch
     const notificationResult = await generateCustomerNotificationFlow({
         ...input,
         trackingUrl,
+        technicianPhotoUrl,
     });
 
     const message = notificationResult.message;

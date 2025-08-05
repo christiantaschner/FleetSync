@@ -170,6 +170,12 @@ const roadmapFeatures = {
       icon: MapPin,
       status: "Completed",
     },
+     {
+      title: "Automated 'On My Way' Notifications",
+      description: "When a technician sets their status to 'En Route', the system can automatically send the customer a text or email with the technician's ETA, a photo of the technician, and a live tracking link.",
+      icon: Truck,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],

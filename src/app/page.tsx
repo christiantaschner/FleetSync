@@ -145,7 +145,7 @@ export default function MarketingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground shadow-md">
         <div className="container flex h-14 items-center">
           <div className="mr-4 flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -153,13 +153,13 @@ export default function MarketingPage() {
             </Link>
           </div>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-             <Link href="#why" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+             <Link href="#why" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
                 Why FleetSync?
               </Link>
-              <Link href="#features" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+              <Link href="#features" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
                 {t('nav_features')}
               </Link>
-             <Link href="#pricing" onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+             <Link href="#pricing" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
                 {t('pricing_title')}
               </Link>
           </nav>
@@ -168,7 +168,7 @@ export default function MarketingPage() {
             <div className="hidden md:flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-foreground/80 hover:bg-secondary hover:text-foreground px-2 font-semibold mr-2">
+                    <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground px-2 font-semibold mr-2">
                         <Globe className="h-4 w-4 mr-1.5" />
                         {language.toUpperCase()}
                     </Button>
@@ -179,17 +179,17 @@ export default function MarketingPage() {
                     <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button asChild variant="ghost">
+              <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
-              <Button asChild>
+              <Button asChild variant="secondary">
                   <Link href="/signup">{t('start_free_trial')}</Link>
               </Button>
             </div>
             {/* Mobile Menu */}
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" className="md:hidden">
+                    <Button variant="ghost" className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                         <Menu className="h-6 w-6" />
                         <span className="sr-only">Open menu</span>
                     </Button>
@@ -641,4 +641,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-

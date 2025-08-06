@@ -706,5 +706,3 @@ export async function answerUserQuestionAction(
     return { data: null, error: errorMessage };
   }
 }
-
-    

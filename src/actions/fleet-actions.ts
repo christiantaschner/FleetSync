@@ -721,60 +721,6 @@ export async function deleteJobAction(
     }
 }
     
-const GenerateTriageLinkInputSchema = z.object({
-    jobId: z.string(),
-    companyId: z.string(),
-    appId: z.string().min(1),
-});
-
-export async function generateTriageLinkAction(
-    input: z.infer<typeof GenerateTriageLinkInputSchema>
-): Promise<{ data: { triageUrl: string } | null; error: string | null }> {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        const token = crypto.randomUUID();
-        const triageUrl = `/triage/${token}?appId=${input.appId}`;
-        return { data: { triageUrl }, error: null };
-    }
-    try {
-        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
-        const { jobId, companyId, appId } = GenerateTriageLinkInputSchema.parse(input);
-
-        const token = crypto.randomUUID();
-        const expiresAt = addHours(new Date(), 24);
-
-        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
-        
-        const jobSnap = await getDoc(jobDocRef);
-        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
-            return { data: null, error: "Job not found or you do not have permission to modify it." };
-        }
-
-        await updateDoc(jobDocRef, {
-            triageToken: token,
-            triageTokenExpiresAt: expiresAt.toISOString(),
-        });
-        
-        const triageUrl = `/triage/${token}?appId=${appId}`;
-
-        return { data: { triageUrl }, error: null };
-
-    } catch (e) {
-        if (e instanceof z.ZodError) {
-            return { data: null, error: e.errors.map((err) => err.message).join(', ') };
-        }
-        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-        console.error(JSON.stringify({
-            message: 'Error generating triage link',
-            error: {
-                message: errorMessage,
-                stack: e instanceof Error ? e.stack : undefined,
-            },
-            severity: "ERROR"
-        }));
-        return { data: null, error: `Failed to generate link. ${errorMessage}` };
-    }
-}
-
 const GetTriageJobInfoInputSchema = z.object({
   token: z.string().min(1),
   appId: z.string().min(1),

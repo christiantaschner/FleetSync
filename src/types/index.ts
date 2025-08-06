@@ -58,7 +58,7 @@ export const CompanySettingsSchema = z.object({
     }
     return true;
 }, {
-    message: "Please specify your other specialty.",
+    message: "Please specify your specialty.",
     path: ["otherSpecialty"],
 });
 export type CompanySettings = z.infer<typeof CompanySettingsSchema>;
@@ -701,5 +701,3 @@ export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'sch
 
 // Re-export AllocateJobInput to be used in server actions without circular dependencies.
 export type AllocateJobActionInput = z.infer<typeof AllocateJobInputSchema>;
-
-    

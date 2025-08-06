@@ -4,7 +4,7 @@
   "contracts": "Verträge",
   "customers": "Kunden",
   "reports": "Berichte",
-  "settings": "Einstellungen",
+  "settings": "Paramètres",
   "technician_view": "Techniker-Ansicht",
   "my_account": "Mein Konto",
   "my_admin_profile": "Mein Admin-Profil",
@@ -92,7 +92,7 @@
   "our_solution": "Unsere Lösung",
   "meet_your_ai_codispatcher": "Dein neuer KI-Co-Disponent",
   "everything_you_need": "FleetSync AI macht komplexe Technologie einfach. Die KI läuft im Hintergrund und gibt dir simple, leistungsstarke Werkzeuge an die Hand, um vom ersten Tag an messbare Ergebnisse zu liefern.",
-  "feature_ai_dispatch_title": "KI-gestützte Disposition",
+  "feature_ai_dispatch_title": "KI-gestützte Einsatzplanung",
   "feature_ai_dispatch_desc": "Unsere KI analysiert Fähigkeiten, Verfügbarkeit und Live-Standort gleichzeitig, um sekundenschnell die optimale Wahl zu treffen und Rätselraten zu beenden.",
   "feature_dynamic_optimization_title": "Dynamische Routenoptimierung",
   "feature_dynamic_optimization_desc": "Wenn sich Pläne ändern, optimierst du die Route eines Technikers mit einem einzigen Klick neu. Die KI findet den effizientesten Weg, berücksichtigt feste Termine und minimiert die Reisezeit.",
@@ -105,7 +105,7 @@
   "benefit_satisfaction_title": "Begeistere deine Kunden",
   "benefit_satisfaction_desc": "Erhöhe die Pünktlichkeit drastisch. Kommuniziere proaktiv bei unvermeidbaren Verzögerungen und biete ein erstklassiges Serviceerlebnis.",
   "ready_to_transform": "Bereit, deinen Betrieb zu transformieren?",
-  "ready_to_transform_desc": "Melde dich noch heute für eine 30-tägige kostenlose Testphase an. Keine Kreditkarte erforderlich. Erlebe die Leistungsfähigkeit der KI-Disposition aus erster Hand.",
+  "ready_to_transform_desc": "Melde dich noch heute für eine 30-tägige kostenlose Testphase an. Keine Kreditkarte erforderlich. Erlebe die Leistungsfähigkeit der KI-Einsatzplanung aus erster Hand.",
   "start_free_trial_now": "Jetzt kostenlos testen",
   "all_rights_reserved": "Alle Rechte vorbehalten.",
   "privacy_policy": "Datenschutz",
@@ -153,7 +153,7 @@
   "how_it_works_3_desc": "Lehn dich zurück und sieh auf der Karte zu, wie die Arbeit erledigt wird. Du hast den vollen Überblick, ohne Mikromanagement.",
   "testimonials_title": "Was deine Kollegen sagen",
   "testimonials_subtitle": "Vertraue den Betrieben, die bereits ihre Effizienz mit FleetSync AI steigern.",
-  "testimonial_1_quote": "Seit wir FleetSync AI nutzen, sparen wir jeden Tag Stunden bei der Disposition. Die KI-Vorschläge sind unglaublich treffsicher. Wir erledigen mehr Aufträge mit weniger Stress.",
+  "testimonial_1_quote": "Seit wir FleetSync AI nutzen, sparen wir jeden Tag Stunden bei der Einsatzplanung. Die KI-Vorschläge sind unglaublich treffsicher. Wir erledigen mehr Aufträge mit weniger Stress.",
   "testimonial_1_author": "Markus Weber",
   "testimonial_1_role": "Geschäftsführer, Weber Klima & Sanitär",
   "testimonial_2_quote": "Die Routenoptimierung ist ein echter Game-Changer. Unsere Techniker verbringen weniger Zeit im Auto und mehr Zeit beim Kunden. Der Kraftstoffverbrauch ist deutlich gesunken.",
@@ -162,5 +162,3 @@
   "growth_title": "Von der täglichen Reparatur zur zukunftssicheren Flotte",
   "growth_desc": "FleetSync AI löst nicht nur die Probleme von heute. Jeder erledigte Auftrag, jede gefahrene Route und jedes Kundenfeedback wird zu wertvollen Daten. Unsere KI analysiert diese Informationen im Hintergrund und hilft dir, Muster zu erkennen, die Effizienz deines gesamten Betriebs über die Zeit zu steigern und dein Geschäft für zukünftiges Wachstum zu rüsten."
 }
-
-    

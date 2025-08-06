@@ -192,6 +192,12 @@ const roadmapFeatures = {
       icon: Target,
       status: "Planned",
     },
+    {
+      title: "Integrated Customer Notifications (SMS/Email)",
+      description: "Connect to a third-party service like Twilio to send automated notifications (e.g., confirmations, 'On My Way' alerts) directly to customers via SMS and email, replacing the current simulation.",
+      icon: MessageSquare,
+      status: "Planned",
+    },
   ],
   vision: [
      {

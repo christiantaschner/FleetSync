@@ -44,7 +44,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div>
-                    <h4 className="font-semibold text-xs text-muted-foreground mb-1">Job Title</h4>
+                    <h4 className="font-semibold text-xs text-muted-foreground mb-1">Job Title / Project Goal</h4>
                     <p>{contract.jobTemplate.title}</p>
                 </div>
                  <div>
@@ -64,7 +64,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                     <MessageSquare className="mr-2 h-4 w-4" /> Suggest Appointment
                 </Button>
                 <Button variant="secondary" size="sm" onClick={() => onEdit(contract)}>
-                    <Edit className="mr-2 h-4 w-4" /> Edit Contract
+                    <Edit className="mr-2 h-4 w-4" /> Edit
                 </Button>
             </CardContent>
         </Card>

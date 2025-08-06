@@ -12,7 +12,7 @@ import {
   SuggestNextAppointmentOutputSchema,
   type SuggestNextAppointmentOutput
 } from '@/types';
-import { addWeeks, addMonths, format } from 'date-fns';
+import { addWeeks, addMonths, format, addDays } from 'date-fns';
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -72,6 +72,7 @@ const suggestNextAppointmentFlow = ai.defineFlow(
         case 'Quarterly': nextDate = addMonths(nextDate, 3); break;
         case 'Semi-Annually': nextDate = addMonths(nextDate, 6); break;
         case 'Annually': nextDate = addMonths(nextDate, 12); break;
+        default: nextDate = addDays(nextDate, 1); // Default for non-recurring projects
     }
 
     // Basic business logic: if the date is a weekend, move to the next Monday
@@ -110,7 +111,7 @@ const suggestNextAppointmentFlow = ai.defineFlow(
         updatedAt: serverTimestamp(),
         scheduledTime: suggestedDateISO,
         sourceContractId: contract.id,
-        notes: `Draft generated from Contract ID: ${contract.id} via "Suggest Appointment" feature.`,
+        notes: `Draft generated from Project/Contract ID: ${contract.id} via "Suggest Appointment" feature.`,
     };
     const newJobRef = await addDoc(jobsCollectionRef, newJobPayload);
 

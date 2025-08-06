@@ -189,19 +189,19 @@ export default function ContractsPage() {
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <CardTitle className="font-headline flex items-center gap-2"><Repeat/> Recurring Service Contracts</CardTitle>
+                        <CardTitle className="font-headline flex items-center gap-2"><Repeat/> Projects / Contracts</CardTitle>
                         <CardDescription>
-                            Create contract templates for recurring services. After a template is created, a dispatcher can use the 'Generate Jobs' button to create all the necessary work orders for a specific time period.
+                            Use this section to manage multi-stage projects or recurring service contracts.
                         </CardDescription>
                     </div>
                     <div className="flex gap-2">
                         {userProfile?.role === 'admin' && (
                             <Button variant="outline" onClick={() => setIsGenerateJobsOpen(true)}>
-                                <CalendarPlus className="mr-2 h-4 w-4" /> Generate Jobs
+                                <CalendarPlus className="mr-2 h-4 w-4" /> Generate Recurring Jobs
                             </Button>
                         )}
                         <Button onClick={handleAddNewContract}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Contract
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Project / Contract
                         </Button>
                     </div>
                 </CardHeader>
@@ -220,13 +220,13 @@ export default function ContractsPage() {
                     ) : (
                         <Alert className="border-primary/30 bg-primary/5">
                             <Repeat className="h-4 w-4 text-primary" />
-                            <AlertTitle className="text-primary">No Contracts Yet</AlertTitle>
+                            <AlertTitle className="text-primary">No Projects or Contracts Yet</AlertTitle>
                             <AlertDescription>
-                              Create your first recurring service contract to start generating jobs automatically.
+                              Create your first project or recurring service contract to start generating jobs.
                             </AlertDescription>
                             <div className="mt-4">
                                 <Button onClick={handleAddNewContract}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Contract
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Project / Contract
                                 </Button>
                             </div>
                         </Alert>

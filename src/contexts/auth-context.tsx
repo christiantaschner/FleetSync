@@ -235,7 +235,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
       toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
-      // Reload to trigger the mock mode check in useEffect
+      // Set the flag to indicate a completed "onboarding" to show the dashboard
+      sessionStorage.setItem('mock_onboarding_complete', 'true');
       window.location.reload(); 
       return true;
     }

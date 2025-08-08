@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill, Contract } from '@/types';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
@@ -44,7 +44,7 @@ import OptimizeRouteDialog from './components/optimize-route-dialog';
 import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
-import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers } from '@/lib/mock-data';
+import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
 import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
@@ -87,6 +87,7 @@ export default function DashboardPage() {
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
@@ -168,6 +169,7 @@ export default function DashboardPage() {
     if (isMockMode) {
         setJobs(mockJobs);
         setTechnicians(mockTechnicians);
+        setContracts(mockContracts);
         setProfileChangeRequests(mockProfileChangeRequests);
         setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
         setIsLoadingData(false);
@@ -181,7 +183,7 @@ export default function DashboardPage() {
 
     const companyId = userProfile.companyId;
     let collectionsLoaded = 0;
-    const totalCollections = 3;
+    const totalCollections = 4;
 
     const checkLoadingComplete = () => {
         collectionsLoaded++;
@@ -194,6 +196,7 @@ export default function DashboardPage() {
 
     const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
     const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
+    const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId));
     const requestsQuery = query(collection(db, `artifacts/${appId}/public/data/profileChangeRequests`), where("companyId", "==", companyId));
 
     const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
@@ -225,6 +228,24 @@ export default function DashboardPage() {
         if (isLoadingData) checkLoadingComplete();
     });
 
+    const unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
+        const contractsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+             for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            return { id: doc.id, ...data } as Contract;
+        });
+        setContracts(contractsData);
+        if (isLoadingData) checkLoadingComplete();
+    }, (error) => {
+        console.error("Error fetching contracts:", error);
+        toast({ title: "Data Fetch Error", description: "Could not retrieve contracts.", variant: "destructive" });
+        if (isLoadingData) checkLoadingComplete();
+    });
+
     const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
         const requestsData = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -246,6 +267,7 @@ export default function DashboardPage() {
     return () => {
         unsubscribeJobs();
         unsubscribeTechnicians();
+        unsubscribeContracts();
         unsubscribeRequests();
     };
 }, [authLoading, userProfile, appId, fetchSkills, toast, isLoadingData, isMockMode]);
@@ -945,6 +967,7 @@ export default function DashboardPage() {
             technicians={technicians}
             allSkills={allSkills.map(s => s.name)}
             customers={customers}
+            contracts={contracts}
             jobs={jobs}
             onManageSkills={() => setIsManageSkillsOpen(true)}
         />

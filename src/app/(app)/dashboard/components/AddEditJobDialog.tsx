@@ -29,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, Customer } from '@/types';
+import type { Job, JobPriority, JobStatus, Technician, Customer, Contract } from '@/types';
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
@@ -59,12 +59,13 @@ interface AddEditJobDialogProps {
   jobs: Job[];
   technicians: Technician[];
   customers: Customer[];
+  contracts: Contract[];
   allSkills: string[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
   onManageSkills: () => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, customers, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, customers, contracts, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +90,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
   const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
+  const [selectedContractId, setSelectedContractId] = useState<string>('');
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
@@ -116,6 +118,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
     setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
+    setSelectedContractId(job?.sourceContractId || '');
     setAiSuggestion(null);
     setSkillSuggestionReasoning(null);
     setSuggestedTechnicianDetails(null);
@@ -151,6 +154,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCustomerName(value);
+    setSelectedContractId('');
     if (value.length > 1) {
         const filtered = customers.filter(c => c.name.toLowerCase().includes(value.toLowerCase()));
         setCustomerSuggestions(filtered);
@@ -168,6 +172,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setLocationAddress(customer.address || '');
       setIsCustomerPopoverOpen(false);
       setCustomerSuggestions([]);
+  };
+
+   const handleSelectContract = (contractId: string) => {
+    setSelectedContractId(contractId);
+    const contract = contracts.find(c => c.id === contractId);
+    if (contract) {
+      setCustomerName(contract.customerName);
+      setCustomerPhone(contract.customerPhone || '');
+      setLocationAddress(contract.customerAddress);
+      setCustomerEmail(''); // Contracts don't have email, clear it
+    }
   };
 
   const fetchAISkillSuggestion = useCallback(async (currentTitle: string, currentDescription: string) => {
@@ -383,7 +398,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         address: locationAddress 
       },
       scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
-      sourceContractId: job?.sourceContractId || null,
+      sourceContractId: selectedContractId || job?.sourceContractId || null,
     };
 
     try {
@@ -538,9 +553,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               {job?.sourceContractId && (
                 <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600">
                     <Repeat className="h-4 w-4"/>
-                    <AlertTitle>Contract Job</AlertTitle>
+                    <AlertTitle>Project / Contract Job</AlertTitle>
                     <AlertDescription>
-                        This job was generated from a recurring service contract. <Link href="/contracts" className="font-semibold underline">View contracts</Link>.
+                        This job was generated from a Project/Contract. <Link href="/contracts" className="font-semibold underline">View projects</Link>.
                     </AlertDescription>
                 </Alert>
               )}
@@ -549,6 +564,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <div>
                     <Label htmlFor="jobTitle">Job Title *</Label>
                     <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+                  </div>
+                   <div>
+                    <Label htmlFor="contractId">Link to Project / Contract (Optional)</Label>
+                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
+                        <SelectTrigger id="contractId">
+                            <SelectValue placeholder="None" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="">-- None --</SelectItem>
+                            {contracts.map(c => (
+                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="jobDescription">Job Description *</Label>

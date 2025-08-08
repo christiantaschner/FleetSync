@@ -572,7 +572,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <SelectValue placeholder="None" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="">-- None --</SelectItem>
+                            <SelectItem value="unlinked">-- None --</SelectItem>
                             {contracts.map(c => (
                                 <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
                             ))}

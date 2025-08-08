@@ -20,6 +20,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { Logo } from '@/components/common/logo';
 import { useTranslation } from '@/hooks/use-language';
+import Link from 'next/link';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,11 +174,12 @@ export default function OnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
         <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-            <div className="mx-auto flex items-center justify-between max-w-lg">
-                <Link href="/" className="flex-1">
+            <div className="mx-auto grid grid-cols-3 items-center max-w-lg">
+                <div className="flex-1"></div>
+                <Link href="/" className="flex justify-center">
                     <Logo />
                 </Link>
-                <div className="flex items-center justify-end flex-1">
+                <div className="flex items-center justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">

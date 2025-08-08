@@ -104,8 +104,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedMockMode = localStorage.getItem('mockMode');
     const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : false;
-    
-    if (mockModeActive) {
+    const mockSession = sessionStorage.getItem('mock_session');
+
+    if (mockModeActive || mockSession) {
       console.log("Auth Context: Running in MOCK DATA mode.");
       setUser(MOCK_ADMIN_USER);
       setUserProfile(MOCK_ADMIN_PROFILE);
@@ -219,8 +220,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
       toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
-      setUser(MOCK_ADMIN_USER);
-      setUserProfile(MOCK_ADMIN_PROFILE);
+      // Set a session storage item to persist mock login across reloads
+      sessionStorage.setItem('mock_session', 'admin');
       router.push('/dashboard');
       return true;
     }
@@ -259,8 +260,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
       toast({ title: "Signup Complete (Mock)", description: "Redirecting to mock dashboard..." });
-      setUser(MOCK_ADMIN_USER);
-      setUserProfile(MOCK_ADMIN_PROFILE);
+      sessionStorage.setItem('mock_session', 'admin');
       router.push('/dashboard');
       return true;
     }
@@ -305,6 +305,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     localStorage.removeItem('mockMode');
+    sessionStorage.removeItem('mock_session');
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return;

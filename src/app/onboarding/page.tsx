@@ -173,8 +173,11 @@ export default function OnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
         <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
-            <div className="mx-auto flex items-center justify-center max-w-lg relative">
-                <div className="absolute left-0">
+            <div className="mx-auto flex items-center justify-between max-w-lg">
+                <Link href="/" className="flex-1">
+                    <Logo />
+                </Link>
+                <div className="flex items-center justify-end flex-1">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
@@ -182,14 +185,13 @@ export default function OnboardingPage() {
                           {language.toUpperCase()}
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start">
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-                <Logo />
             </div>
         </header>
         <main className="flex flex-1 items-center justify-center p-4">

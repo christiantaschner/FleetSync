@@ -55,7 +55,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
         <div className="mx-auto flex items-center justify-between max-w-lg">
-            <div className="flex items-center">
+            <Link href="/" className="flex-1">
+                <Logo />
+            </Link>
+            <div className="flex items-center justify-end flex-1">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
@@ -63,17 +66,13 @@ export default function LoginPage() {
                             {language.toUpperCase()}
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
+                    <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <Link href="/">
-                <Logo />
-            </Link>
-             <div className="w-[80px]" /> {/* Spacer to balance the header */}
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center p-4">

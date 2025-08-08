@@ -722,7 +722,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             type="time"
                             onChange={handleTimeChange}
                             value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                            className="w-36 bg-card"
+                            className="w-32 bg-card"
                         />
                     </div>
                   </div>

@@ -69,7 +69,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(isDeleting);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
   
@@ -722,12 +722,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             type="time"
                             onChange={handleTimeChange}
                             value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                            className="w-32 bg-card"
+                            className="w-36 bg-card"
                         />
                     </div>
                   </div>
                   
-                  <div>
+                  <div className="flex flex-col space-y-2">
                     <div className="flex justify-between items-center mb-1">
                         <Label className="flex items-center gap-2">
                             <ListChecks className="h-3.5 w-3.5" />
@@ -759,7 +759,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             {skillSuggestionReasoning}
                         </div>
                     )}
-                    <ScrollArea className="rounded-md border p-3 max-h-36">
+                    <ScrollArea className="h-36 rounded-md border p-3">
                       <div className="space-y-2">
                         {allSkills.length === 0 ? (
                           <div className="text-center flex flex-col items-center justify-center h-full pt-8">
@@ -863,8 +863,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </div>
               </div>
             </div>
-            <DialogFooter className="flex-col sm:flex-row sm:justify-between items-center pt-4 border-t gap-2 px-6 pb-6 flex-shrink-0">
-              <div className="flex gap-2">
+            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-col sm:flex-row sm:justify-between items-center gap-2">
+              <div className="flex-shrink-0">
                 {job && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -932,3 +932,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+
+
+    

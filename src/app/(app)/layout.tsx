@@ -195,13 +195,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader className="bg-primary text-primary-foreground">
-            <div className="flex items-center justify-between">
-              <Logo />
-              <div className="md:hidden">
-                <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
-              </div>
-            </div>
+          <SidebarHeader>
+            <Logo />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
@@ -297,8 +292,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-primary-foreground/20 bg-primary px-4 text-primary-foreground md:hidden">
-            <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-card px-4 text-card-foreground md:hidden">
+            <SidebarTrigger className="text-foreground hover:bg-secondary" />
             <Logo />
             <div className="w-7"/>
           </header>

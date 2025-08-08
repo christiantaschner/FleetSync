@@ -176,6 +176,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
    const handleSelectContract = (contractId: string) => {
     setSelectedContractId(contractId);
+    if (contractId === 'unlinked') {
+      setSelectedContractId('');
+      return;
+    }
     const contract = contracts.find(c => c.id === contractId);
     if (contract) {
       setCustomerName(contract.customerName);
@@ -565,20 +569,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Label htmlFor="jobTitle">Job Title *</Label>
                     <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
                   </div>
-                   <div>
-                    <Label htmlFor="contractId">Link to Project / Contract (Optional)</Label>
-                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
-                        <SelectTrigger id="contractId">
-                            <SelectValue placeholder="None" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unlinked">-- None --</SelectItem>
-                            {contracts.map(c => (
-                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
                   <div>
                     <Label htmlFor="jobDescription">Job Description *</Label>
                     <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} />
@@ -631,6 +621,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </div>
                       </div>
                     )}
+                  </div>
+                  <div>
+                    <Label htmlFor="contractId">Link to Project / Contract (Optional)</Label>
+                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
+                        <SelectTrigger id="contractId">
+                            <SelectValue placeholder="None" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="unlinked">-- None --</SelectItem>
+                            {contracts.map(c => (
+                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="customerName">Customer Name</Label>

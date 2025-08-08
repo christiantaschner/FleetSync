@@ -98,13 +98,11 @@ export default function OnboardingPage() {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         toast({
           title: "Onboarding Complete!",
-          description: "Redirecting you to the dashboard as if you just completed checkout.",
+          description: "Redirecting you to the dashboard.",
         });
         sessionStorage.setItem('mock_onboarding_complete', 'true');
-        setTimeout(() => {
-          // Simulate a successful return from Stripe
-          router.push('/dashboard?onboarding=success');
-        }, 1500);
+        // Reload the page so the auth context can re-evaluate and redirect to the dashboard
+        window.location.href = '/dashboard';
         return;
     }
     

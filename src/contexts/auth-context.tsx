@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (mockOnboardingComplete) {
           setUserProfile(MOCK_ADMIN_PROFILE);
           setCompany(MOCK_COMPANY);
-          sessionStorage.removeItem('mock_onboarding_complete'); // Clean up flag
+          // Do not remove the flag here, as it might be needed on subsequent reloads within the same session
       } else {
           setUserProfile(MOCK_ONBOARDING_PROFILE);
           setCompany(null);
@@ -237,7 +237,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
       // Set the flag to indicate a completed "onboarding" to show the dashboard
       sessionStorage.setItem('mock_onboarding_complete', 'true');
-      window.location.reload(); 
+      window.location.reload();
       return true;
     }
     

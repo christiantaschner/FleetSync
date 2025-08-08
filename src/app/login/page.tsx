@@ -53,7 +53,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="w-full bg-primary p-4 text-primary-foreground shadow-md">
+      <header className="w-full bg-primary text-primary-foreground shadow-md">
         <div className="container flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center">
                 <Logo />

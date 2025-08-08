@@ -91,13 +91,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [contractsDueCount, setContractsDueCount] = useState(0);
 
-  const [isMockMode, setMockModeState] = useState(false);
+  const [isMockMode, setMockModeState] = useState(process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true');
 
   const router = useRouter();
   const { toast } = useToast();
 
   const setIsMockMode = (isMock: boolean) => {
     localStorage.setItem('mockMode', JSON.stringify(isMock));
+    sessionStorage.removeItem('mock_onboarding_complete'); // Clear onboarding state on mode switch
     setMockModeState(isMock);
     if (isMock) {
         toast({ title: "Mock Mode Activated", description: "You are now viewing sample data." });
@@ -110,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedMockMode = localStorage.getItem('mockMode');
-    const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : false;
+    const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
     const mockOnboardingComplete = sessionStorage.getItem('mock_onboarding_complete') === 'true';
 
     if (mockModeActive) {
@@ -120,7 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (mockOnboardingComplete) {
           setUserProfile(MOCK_ADMIN_PROFILE);
           setCompany(MOCK_COMPANY);
-          // Do not remove the flag here, as it might be needed on subsequent reloads within the same session
       } else {
           setUserProfile(MOCK_ONBOARDING_PROFILE);
           setCompany(null);
@@ -128,8 +128,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
-      setMockModeState(true); // Ensure state is synced
-      return; // Exit early for mock mode
+      setMockModeState(true);
+      return;
     }
 
     // --- REAL FIREBASE MODE ---
@@ -235,7 +235,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
       toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
-      // Set the flag to indicate a completed "onboarding" to show the dashboard
       sessionStorage.setItem('mock_onboarding_complete', 'true');
       window.location.reload();
       return true;

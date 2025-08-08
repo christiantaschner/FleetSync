@@ -48,6 +48,13 @@ const MOCK_ADMIN_PROFILE: UserProfile = {
   role: 'admin',
   onboardingStatus: 'completed',
 };
+const MOCK_ONBOARDING_PROFILE: UserProfile = {
+  uid: 'mock_admin_id',
+  email: 'admin@mock.com',
+  companyId: null,
+  role: null,
+  onboardingStatus: 'pending_onboarding',
+};
 const MOCK_COMPANY: Company = {
   id: 'mock_company_123',
   name: 'Mock Service Company',
@@ -104,13 +111,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedMockMode = localStorage.getItem('mockMode');
     const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : false;
-    const mockSession = sessionStorage.getItem('mock_session');
+    const mockOnboardingComplete = sessionStorage.getItem('mock_onboarding_complete') === 'true';
 
-    if (mockModeActive || mockSession) {
+    if (mockModeActive) {
       console.log("Auth Context: Running in MOCK DATA mode.");
       setUser(MOCK_ADMIN_USER);
-      setUserProfile(MOCK_ADMIN_PROFILE);
-      setCompany(MOCK_COMPANY);
+      
+      if (mockOnboardingComplete) {
+          setUserProfile(MOCK_ADMIN_PROFILE);
+          setCompany(MOCK_COMPANY);
+          sessionStorage.removeItem('mock_onboarding_complete'); // Clean up flag
+      } else {
+          setUserProfile(MOCK_ONBOARDING_PROFILE);
+          setCompany(null);
+      }
+
       setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
       setMockModeState(true); // Ensure state is synced
@@ -220,9 +235,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
       toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
-      // Set a session storage item to persist mock login across reloads
-      sessionStorage.setItem('mock_session', 'admin');
-      router.push('/dashboard');
+      // Reload to trigger the mock mode check in useEffect
+      window.location.reload(); 
       return true;
     }
     
@@ -259,9 +273,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
-      toast({ title: "Signup Complete (Mock)", description: "Redirecting to mock dashboard..." });
-      sessionStorage.setItem('mock_session', 'admin');
-      router.push('/dashboard');
+      toast({ title: "Signup Complete (Mock)", description: "Redirecting to mock onboarding..." });
+      router.push('/onboarding');
       return true;
     }
     
@@ -305,7 +318,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     localStorage.removeItem('mockMode');
-    sessionStorage.removeItem('mock_session');
+    sessionStorage.removeItem('mock_onboarding_complete');
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return;

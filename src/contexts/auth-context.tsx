@@ -220,6 +220,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast, router]);
 
   const login = async (email_address: string, pass_word: string) => {
+    if (isMockMode) {
+      toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
+      setUser(MOCK_ADMIN_USER);
+      setUserProfile(MOCK_ADMIN_PROFILE);
+      router.push('/dashboard');
+      return true;
+    }
+    
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;

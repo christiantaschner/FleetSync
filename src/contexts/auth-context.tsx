@@ -229,7 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return false;
     }
-    setLoading(true);
+    
     try {
       await signInWithEmailAndPassword(auth, email_address, pass_word);
       return true;
@@ -252,7 +252,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
       }
-      setLoading(false);
       return false;
     }
   };

@@ -102,21 +102,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    
-    // --- MOCK DATA MODE ---
     const storedMockMode = localStorage.getItem('mockMode');
     const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : false;
-    setMockModeState(mockModeActive);
     
     if (mockModeActive) {
       console.log("Auth Context: Running in MOCK DATA mode.");
-      
       setUser(MOCK_ADMIN_USER);
       setUserProfile(MOCK_ADMIN_PROFILE);
       setCompany(MOCK_COMPANY);
       setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
-      return;
+      setMockModeState(true); // Ensure state is synced
+      return; // Exit early for mock mode
     }
 
     // --- REAL FIREBASE MODE ---

@@ -90,9 +90,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
 
   const getNavItemsForRole = (role: UserProfile['role']) => {
+    // This is the critical check. If userProfile isn't loaded, don't try to build the menu.
     if (!role) return [];
     
-    // Filter the master list based on the user's role
     return allNavItems.filter(item => {
       // If roles are not defined, it's visible to everyone
       if (!item.roles) {

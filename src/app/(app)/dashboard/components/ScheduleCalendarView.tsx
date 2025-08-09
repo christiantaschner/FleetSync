@@ -376,7 +376,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     const timeDeltaMinutes = delta.x * minutesPerPixel;
 
     const originalStartTime = new Date(proposedChanges[job.id]?.scheduledTime || job.scheduledTime!);
-    const newStartTime = new Date(originalStartTime.getTime() + timeDeltaMinutes * 60000);
+    const timeWithDelta = new Date(originalStartTime.getTime() + timeDeltaMinutes * 60000);
+    
+    // Snap to the nearest 5-minute interval
+    const minutes = timeWithDelta.getMinutes();
+    const roundedMinutes = Math.round(minutes / 5) * 5;
+    const newStartTime = new Date(timeWithDelta);
+    newStartTime.setMinutes(roundedMinutes, 0, 0);
 
     setProposedChanges(prev => ({
         ...prev,

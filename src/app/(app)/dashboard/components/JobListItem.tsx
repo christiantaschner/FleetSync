@@ -104,6 +104,10 @@ const JobListItem: React.FC<JobListItemProps> = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3 text-sm pb-3">
+        <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">{job.customerName}</span>
+        </div>
         <p className="text-muted-foreground line-clamp-2">{job.description}</p>
         
         <div className="flex flex-wrap gap-x-4 gap-y-2">

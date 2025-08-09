@@ -94,6 +94,7 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string[]>(['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft']);
   const [priorityFilter, setPriorityFilter] = useState<string[]>(['Low', 'Medium', 'High']);
   const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
+  const [jobSearchTerm, setJobSearchTerm] = useState('');
 
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
@@ -548,13 +549,33 @@ export default function DashboardPage() {
   };
   
   const filteredJobs = useMemo(() => {
-    if (jobFilterId) {
-        return jobs.filter(job => job.id === jobFilterId);
+    let tempJobs = jobs;
+
+    // Filter by search term
+    if (jobSearchTerm) {
+        const lowercasedTerm = jobSearchTerm.toLowerCase();
+        tempJobs = tempJobs.filter(job => {
+            return (
+                job.title.toLowerCase().includes(lowercasedTerm) ||
+                job.description.toLowerCase().includes(lowercasedTerm) ||
+                job.customerName.toLowerCase().includes(lowercasedTerm) ||
+                (job.location.address && job.location.address.toLowerCase().includes(lowercasedTerm)) ||
+                (job.requiredSkills && job.requiredSkills.some(skill => skill.toLowerCase().includes(lowercasedTerm)))
+            );
+        });
     }
+
+    // Filter by ID if jobFilterId is present
+    if (jobFilterId) {
+        return tempJobs.filter(job => job.id === jobFilterId);
+    }
+    
+    // Filter by status and priority
     if (statusFilter.length === 0 && priorityFilter.length === 0) {
         return [];
     }
-    return jobs.filter(job => {
+
+    return tempJobs.filter(job => {
         const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
         const statusMatch = statusFilter.length === 0 || statusFilter.some(s => {
             if (s === 'Pending') {
@@ -564,7 +585,7 @@ export default function DashboardPage() {
         });
         return priorityMatch && statusMatch;
     });
-  }, [jobs, statusFilter, priorityFilter, jobFilterId]);
+}, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm]);
 
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
@@ -1125,7 +1146,18 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full md:flex-1">
+                    <div className="relative md:col-span-1">
+                      <Label htmlFor="job-search">Search</Label>
+                      <Search className="absolute left-2.5 top-8 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="job-search"
+                        placeholder="Search jobs..."
+                        value={jobSearchTerm}
+                        onChange={(e) => setJobSearchTerm(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
                     <div className="space-y-1">
                       <Label htmlFor="status-filter">{t('status')}</Label>
                        <MultiSelectFilter

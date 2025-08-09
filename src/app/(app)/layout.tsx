@@ -60,7 +60,27 @@ import { differenceInDays } from 'date-fns';
 import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MockModeBanner } from "@/components/common/MockModeBanner";
-import { Toaster } from "@/components/ui/toaster";
+
+type NavItem = {
+  href?: string;
+  label: string;
+  icon: React.ElementType;
+  badge?: number;
+  isSeparator?: boolean;
+  roles?: ('admin' | 'superAdmin' | 'technician' | 'csr')[]; // Roles that can see this item
+};
+
+const allNavItems: NavItem[] = [
+  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
+  { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+  { isSeparator: true, label: 'sep1' },
+  { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
+  { isSeparator: true, label: 'sep2' },
+  { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
+  { href: "/settings", label: 'settings', icon: Settings, roles: ['admin', 'superAdmin'] },
+];
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -68,19 +88,23 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
-  
-  const allNavItems = [
-      { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-      { href: "/customers", label: t('customers'), icon: ClipboardList },
-      { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
-      { href: "/reports", label: t('reports'), icon: BarChart },
-      { isSeparator: true },
-      { href: "/technician", label: t('technician_view'), icon: Smartphone },
-      { isSeparator: true },
-      { href: "/roadmap", label: "Roadmap", icon: ListChecks },
-      { href: "/settings", label: t('settings'), icon: Settings },
-  ];
 
+  const getNavItemsForRole = (role: UserProfile['role']) => {
+    if (!role) return [];
+    
+    // Filter the master list based on the user's role
+    return allNavItems.filter(item => {
+      // If roles are not defined, it's visible to everyone
+      if (!item.roles) {
+        return true;
+      }
+      // Otherwise, check if the user's role is in the item's roles array
+      return item.roles.includes(role);
+    });
+  };
+
+  const navItems = getNavItemsForRole(userProfile?.role);
+  
   React.useEffect(() => {
     if (loading || isMockMode) return;
 
@@ -176,25 +200,29 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {allNavItems.map((item, index) => {
+              {navItems.map((item, index) => {
                  if (item.isSeparator) {
                     return <SidebarSeparator key={`sep-${index}`} className="my-1" />;
                  }
                  const isActive = item.href === '/dashboard' 
                     ? pathname === '/dashboard' && !searchParams.get('view')
-                    : pathname.startsWith(item.href);
+                    : item.href && pathname.startsWith(item.href);
                  
+                 const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
+                 
+                 const badgeCount = item.label === 'contracts' ? contractsDueCount : item.badge;
+
                  return (
-                    <SidebarMenuItem key={item.href}>
-                    <Link href={item.href}>
+                    <SidebarMenuItem key={item.label}>
+                    <Link href={finalHref || '#'}>
                         <SidebarMenuButton
-                        isActive={isActive}
+                        isActive={!!isActive}
                         className="w-full justify-start"
-                        tooltip={item.label}
+                        tooltip={t(item.label)}
                         >
                         <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                        {item.badge && <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>}
+                        <span>{t(item.label)}</span>
+                        {badgeCount > 0 && <SidebarMenuBadge>{badgeCount}</SidebarMenuBadge>}
                         </SidebarMenuButton>
                     </Link>
                     </SidebarMenuItem>

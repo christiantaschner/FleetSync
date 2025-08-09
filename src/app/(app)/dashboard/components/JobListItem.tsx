@@ -134,7 +134,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
           <div>
             {assignedTechnician ? (
               <span className="flex items-center gap-1 font-medium text-foreground">
-                <User className="h-3 w-3" /> {assignedTechnician.name}
+                <Wrench className="h-3 w-3" /> {assignedTechnician.name}
               </span>
             ) : (
               <span className="flex items-center gap-1 font-semibold text-muted-foreground">
@@ -180,4 +180,5 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
+
 

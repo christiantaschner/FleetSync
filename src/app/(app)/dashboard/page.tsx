@@ -604,7 +604,11 @@ export default function DashboardPage() {
                 
                 return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'status':
-                return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
+                const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+                if (statusDiff !== 0) return statusDiff;
+                const priorityDiffStatus = priorityOrder[a.priority] - priorityOrder[b.priority];
+                if (priorityDiffStatus !== 0) return priorityDiffStatus;
+                return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'technician':
                 const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz';
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';

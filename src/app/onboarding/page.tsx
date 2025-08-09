@@ -172,11 +172,11 @@ export default function OnboardingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
         <header className="w-full bg-primary text-primary-foreground shadow-md">
-            <div className="container flex h-14 items-center">
+            <div className="container flex h-14 items-center justify-between">
                 <Link href="/" className="flex items-center">
                     <Logo />
                 </Link>
-                <div className="flex flex-1 items-center justify-end">
+                <div className="flex items-center justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">

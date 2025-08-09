@@ -54,27 +54,23 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="w-full bg-primary text-primary-foreground shadow-md">
-        <div className="container flex h-14 items-center">
-            <div className="mr-4 flex">
-                <Link href="/" className="mr-6 flex items-center space-x-2">
-                <Logo />
-                </Link>
-            </div>
-            <div className="flex flex-1 items-center justify-end space-x-2">
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
-                            <Globe className="h-4 w-4 mr-1.5" />
-                            {language.toUpperCase()}
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
+        <div className="container flex h-14 items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2">
+              <Logo />
+            </Link>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
+                        <Globe className="h-4 w-4 mr-1.5" />
+                        {language.toUpperCase()}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </header>
       <main className="flex flex-1 items-center justify-center p-4">

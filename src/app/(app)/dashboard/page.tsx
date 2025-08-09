@@ -954,7 +954,7 @@ export default function DashboardPage() {
 
   if (authLoading || isLoadingData) { 
     return (
-      <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
@@ -1094,7 +1094,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
@@ -1185,7 +1185,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
-                  <div className="md:col-span-2">
+                  <div className="md:col-span-2 space-y-1">
                       <Label htmlFor="job-search">Search</Label>
                       <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1198,7 +1198,7 @@ export default function DashboardPage() {
                         />
                       </div>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                       <Label htmlFor="status-filter">{t('status')}</Label>
                        <MultiSelectFilter
                         options={statusOptions}
@@ -1208,7 +1208,7 @@ export default function DashboardPage() {
                         disabled={showOpenTasksOnly}
                       />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                       <Label htmlFor="priority-filter">{t('priority')}</Label>
                        <MultiSelectFilter
                         options={priorityOptions}
@@ -1218,7 +1218,7 @@ export default function DashboardPage() {
                         disabled={showOpenTasksOnly}
                       />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                       <Label htmlFor="sort-order">{t('sort_by')}</Label>
                       <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
                         <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>

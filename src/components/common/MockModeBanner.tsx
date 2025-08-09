@@ -28,8 +28,8 @@ export const MockModeBanner = () => {
     <div className="sticky top-0 z-50">
        <Alert className="border-l-4 border-amber-500 bg-amber-50 rounded-none text-amber-900 [&>svg]:text-amber-600">
         <Bot className="h-4 w-4" />
-        <div className="flex items-center justify-between w-full flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
+        <div className="flex flex-col sm:flex-row items-center justify-between w-full flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px] text-center sm:text-left">
                  <AlertTitle className="font-semibold">Mock Mode is Active</AlertTitle>
                  <AlertDescription>
                     You are viewing sample data. No changes will be saved.

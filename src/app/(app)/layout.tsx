@@ -66,11 +66,11 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.ElementType;
-  badge?: number; 
+  badge?: () => number; 
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
 };
 
-function getNavItemsForRole(userProfile: UserProfile, contractsDueCount: number): NavItem[] {
+function getNavItemsForRole(userProfile: UserProfile | null): Omit<NavItem, 'badge'>[] {
   if (!userProfile?.role) return [];
 
   const allNavItems: Omit<NavItem, 'badge'>[] = [
@@ -82,14 +82,7 @@ function getNavItemsForRole(userProfile: UserProfile, contractsDueCount: number)
       { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
   ];
 
-  const mainNavItems = allNavItems
-      .filter(item => item.roles.includes(userProfile.role!))
-      .map(item => {
-          if (item.label === 'contracts') {
-              return { ...item, badge: contractsDueCount };
-          }
-          return { ...item, badge: 0 };
-      });
+  const mainNavItems = allNavItems.filter(item => item.roles.includes(userProfile.role!));
       
   return mainNavItems;
 };
@@ -102,15 +95,15 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
   
-  if (loading || !userProfile) {
+  const navItems = getNavItemsForRole(userProfile);
+
+  if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
-
-  const navItems = getNavItemsForRole(userProfile, contractsDueCount);
   
   if (pathname === '/onboarding') {
       return <>{children}</>;
@@ -193,7 +186,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  
-                 const badgeCount = item.badge || 0;
+                 const badgeCount = item.label === 'contracts' ? contractsDueCount : 0;
 
                  return (
                     <React.Fragment key={item.label}>
@@ -217,7 +210,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-             {userProfile.role !== 'technician' && (
+             {userProfile?.role !== 'technician' && (
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <Link href="/settings">
@@ -279,14 +272,14 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
             <SidebarTrigger />
-            <Logo />
+            <div className="flex-1 text-center"><Logo /></div>
             <div className="w-7"/>
           </header>
           <main className="flex-1 overflow-x-hidden">
             {isMockMode && <MockModeBanner />}
-            <div className="container mx-auto p-4 md:p-6 lg:p-8">
+            <div className="p-4 md:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6">
                       <CreditCard className="h-4 w-4" />

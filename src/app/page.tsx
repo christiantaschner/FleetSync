@@ -4,7 +4,7 @@
 import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/ui/logo';
+import { Logo } from '@/components/common/logo';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/use-language';
@@ -146,12 +146,10 @@ export default function MarketingPage() {
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground shadow-md">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 flex">
-            <Link href="/" className="mr-6 flex items-center space-x-2">
-              <Logo />
-            </Link>
-          </div>
+        <div className="container flex h-14 items-center justify-between">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <Logo />
+          </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
              <Link href="#why" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
                 Why FleetSync?
@@ -164,7 +162,7 @@ export default function MarketingPage() {
               </Link>
           </nav>
           
-          <div className="flex flex-1 items-center justify-end space-x-2">
+          <div className="flex items-center justify-end space-x-2">
             <div className="hidden md:flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

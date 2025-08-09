@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
+import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isToday, isAfter, isBefore } from 'date-fns';
 import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -64,9 +64,6 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
   const durationMinutes = (jobEnd.getTime() - jobStart.getTime()) / 60000;
 
-  const left = (offsetMinutes / totalMinutes) * 100;
-  const width = (durationMinutes / totalMinutes) * 100;
-
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
   const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
@@ -117,7 +114,6 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   );
 };
 
-
 const TravelBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
     const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
     const durationMinutes = (to.getTime() - from.getTime()) / 60000;
@@ -132,7 +128,7 @@ const TravelBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Dat
                 <TooltipTrigger asChild>
                     <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
                         <div className="relative w-full h-full flex items-center justify-center bg-gray-200/50">
-                            <Car className="h-4 w-4 text-gray-500" />
+                           <div className="h-full w-px bg-gray-400 border-r border-dashed border-gray-500"></div>
                         </div>
                     </div>
                 </TooltipTrigger>
@@ -144,13 +140,10 @@ const TravelBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Dat
     );
 };
 
-const BreakBlock = ({ breakItem, dayStart, totalMinutes }: { breakItem: {start: string, end?: string}, dayStart: Date, totalMinutes: number }) => {
-    if (!breakItem.end) return null; // Don't render ongoing breaks
-    const start = new Date(breakItem.start);
-    const end = new Date(breakItem.end);
-    const offsetMinutes = (start.getTime() - dayStart.getTime()) / 60000;
-    const durationMinutes = (end.getTime() - start.getTime()) / 60000;
-    if (durationMinutes <= 0) return null;
+const IdleTimeBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
+    const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
+    const durationMinutes = (to.getTime() - from.getTime()) / 60000;
+    if (durationMinutes <= 1) return null;
 
     const left = (offsetMinutes / totalMinutes) * 100;
     const width = (durationMinutes / totalMinutes) * 100;
@@ -159,19 +152,20 @@ const BreakBlock = ({ breakItem, dayStart, totalMinutes }: { breakItem: {start: 
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                     <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
-                        <div className="relative w-full h-full flex items-center justify-center bg-amber-200/60">
-                            <Coffee className="h-4 w-4 text-amber-700" />
+                    <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
+                         <div className="relative w-full h-full flex items-center justify-center bg-gray-200/20">
+                            {/* No icon needed for idle time, just empty space */}
                         </div>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Break: {formatDuration(start, end)}</p>
+                    <p>Idle Time: {formatDuration(from, to)}</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
     );
 };
+
 
 const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, totalMinutes: number }) => {
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -431,7 +425,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
       tasks: jobsForOptimization.map(job => ({
         taskId: job.id,
         location: job.location,
-        priority: job.priority,
+        priority: job.priority.toLowerCase() as 'high' | 'medium' | 'low',
         scheduledTime: job.scheduledTime,
       })),
     };
@@ -526,9 +520,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
             <Alert className="mt-4 text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600">
                 <Info className="h-4 w-4" />
-                <AlertTitle className="font-semibold">Fleetie's Proactive Monitoring</AlertTitle>
+                <AlertTitle className="font-semibold">Fleety's Proactive Monitoring</AlertTitle>
                 <AlertDescription>
-                    Fleetie continuously checks schedules in the background. If a potential delay or issue is detected, an alert will appear on the dashboard.
+                    Fleety continuously checks schedules in the background. If a potential delay or issue is detected, an alert will appear on the dashboard.
                 </AlertDescription>
             </Alert>
         </CardHeader>
@@ -550,6 +544,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 <div className="relative">
                     {technicians.length > 0 ? technicians.map((tech) => {
                         const techJobs = jobsByTechnician(tech.id);
+                        let lastEventTime = dayStart;
                         return (
                             <TechnicianRow 
                                 key={tech.id} 
@@ -564,33 +559,31 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     ))}
                                     </div>
                                     <div className="relative h-full p-1.5">
-                                        {techJobs.map((job, jobIndex) => {
-                                            const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
-                                            
-                                            let travelStartTime: Date | null = null;
-                                            if(prevJob?.enRouteAt && prevJob.inProgressAt) {
-                                                const travelDurationMs = new Date(prevJob.inProgressAt).getTime() - new Date(prevJob.enRouteAt).getTime();
-                                                const prevJobEndTime = new Date(new Date(prevJob.scheduledTime!).getTime() + (prevJob.estimatedDurationMinutes || 60) * 60000);
-                                                travelStartTime = new Date(prevJobEndTime.getTime() + travelDurationMs);
+                                        {techJobs.map((job) => {
+                                            const jobStart = new Date(job.scheduledTime!);
+                                            const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
+                                            // Mock travel time is 15 minutes for demo purposes
+                                            const travelTimeMs = 15 * 60 * 1000;
+                                            const travelStartTime = new Date(jobStart.getTime() - travelTimeMs);
+
+                                            const elements = [];
+                                            if (isAfter(travelStartTime, lastEventTime)) {
+                                                elements.push(<IdleTimeBlock key={`${job.id}-idle`} from={lastEventTime} to={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />);
                                             }
                                             
-                                            const travelEndTime = job.scheduledTime ? new Date(job.scheduledTime) : null;
-                                            
-                                            return (
-                                                <React.Fragment key={job.id}>
-                                                    {travelStartTime && travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
-                                                    <JobBlock 
-                                                        job={job} 
-                                                        dayStart={dayStart} 
-                                                        totalMinutes={totalMinutes} 
-                                                        onClick={onJobClick}
-                                                        isProposed={!!proposedChanges[job.id]}
-                                                     />
-                                                    {job.breaks?.map((breakItem, breakIndex) => (
-                                                        <BreakBlock key={breakIndex} breakItem={breakItem} dayStart={dayStart} totalMinutes={totalMinutes} />
-                                                    ))}
-                                                </React.Fragment>
-                                            );
+                                            elements.push(<TravelBlock key={`${job.id}-travel`} from={travelStartTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
+
+                                            elements.push(<JobBlock 
+                                                key={job.id}
+                                                job={job} 
+                                                dayStart={dayStart} 
+                                                totalMinutes={totalMinutes} 
+                                                onClick={onJobClick}
+                                                isProposed={!!proposedChanges[job.id]}
+                                             />);
+
+                                            lastEventTime = jobEnd;
+                                            return elements;
                                         })}
                                     </div>
                                 </div>

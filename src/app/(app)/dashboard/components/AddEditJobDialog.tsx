@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -566,6 +567,72 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                 <div className="space-y-4">
                   <div>
+                    <Label htmlFor="customerName">Customer Name</Label>
+                    <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                      <PopoverAnchor>
+                        <Input
+                          id="customerName"
+                          name="customerName"
+                          value={customerName}
+                          onChange={handleCustomerNameChange}
+                          placeholder="e.g., John Doe"
+                          autoComplete="off"
+                        />
+                      </PopoverAnchor>
+                      <PopoverContent
+                        className="w-[--radix-popover-trigger-width] p-0"
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
+                        <div className="max-h-60 overflow-y-auto">
+                          {customerSuggestions.map((customer) => (
+                            <div
+                              key={customer.id}
+                              className="p-3 text-sm cursor-pointer hover:bg-accent"
+                              onClick={() => handleSelectCustomer(customer)}
+                            >
+                              <p className="font-semibold">{customer.name}</p>
+                              <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="customerEmail">Customer Email</Label>
+                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
+                    </div>
+                    <div>
+                        <Label htmlFor="customerPhone">Customer Phone</Label>
+                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                    </div>
+                  </div>
+                   <div>
+                    <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
+                    <AddressAutocompleteInput
+                      value={locationAddress}
+                      onValueChange={setLocationAddress}
+                      onLocationSelect={handleLocationSelect}
+                      placeholder="Start typing job address..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contractId">Link to Contract (Optional)</Label>
+                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
+                        <SelectTrigger id="contractId">
+                            <SelectValue placeholder="None" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="unlinked">-- None --</SelectItem>
+                            {contracts.map(c => (
+                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                  </div>
+                   <div>
                     <Label htmlFor="jobTitle">Job Title *</Label>
                     <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
                   </div>
@@ -573,7 +640,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Label htmlFor="jobDescription">Job Description *</Label>
                     <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 
+                </div>
+                <div className="space-y-4">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <div className="flex items-center gap-1.5 mb-1">
                             <Label htmlFor="jobPriority">Job Priority *</Label>
@@ -623,75 +693,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="contractId">Link to Contract (Optional)</Label>
-                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
-                        <SelectTrigger id="contractId">
-                            <SelectValue placeholder="None" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unlinked">-- None --</SelectItem>
-                            {contracts.map(c => (
-                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="customerName">Customer Name</Label>
-                    <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
-                      <PopoverAnchor>
-                        <Input
-                          id="customerName"
-                          name="customerName"
-                          value={customerName}
-                          onChange={handleCustomerNameChange}
-                          placeholder="e.g., John Doe"
-                          autoComplete="off"
-                        />
-                      </PopoverAnchor>
-                      <PopoverContent
-                        className="w-[--radix-popover-trigger-width] p-0"
-                        onOpenAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <div className="max-h-60 overflow-y-auto">
-                          {customerSuggestions.map((customer) => (
-                            <div
-                              key={customer.id}
-                              className="p-3 text-sm cursor-pointer hover:bg-accent"
-                              onClick={() => handleSelectCustomer(customer)}
-                            >
-                              <p className="font-semibold">{customer.name}</p>
-                              <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="customerEmail">Customer Email</Label>
-                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
-                    </div>
-                    <div>
-                        <Label htmlFor="customerPhone">Customer Phone</Label>
-                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-                    <AddressAutocompleteInput
-                      value={locationAddress}
-                      onValueChange={setLocationAddress}
-                      onLocationSelect={handleLocationSelect}
-                      placeholder="Start typing job address..."
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  
-                  <div>
                     <Label>Schedule Time</Label>
                     <div className="flex gap-2">
                         <Popover>
@@ -731,7 +732,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <div className="flex justify-between items-center mb-1">
                         <Label className="flex items-center gap-2">
                             <ListChecks className="h-3.5 w-3.5" />
-                            Required Skills
+                            Required Skills (Optional)
                         </Label>
                            <Button
                                 type="button"

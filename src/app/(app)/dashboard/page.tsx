@@ -1,5 +1,3 @@
-
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -1159,12 +1157,12 @@ export default function DashboardPage() {
 
         <TabsContent value="job-list" className="mt-4">
           <Card>
-            <CardHeader className="flex flex-row justify-between items-center">
+            <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-2">
                 <div>
                     <CardTitle>{t('current_jobs')}</CardTitle>
                     <CardDescription>{t('current_jobs_desc')}</CardDescription>
                 </div>
-                <TooltipProvider>
+                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="flex items-center space-x-2">
@@ -1185,7 +1183,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-                    <div className="relative md:col-span-1">
+                    <div className="relative md:col-span-1 self-end">
                       <Label htmlFor="job-search">Search</Label>
                       <Search className="absolute left-2.5 top-8 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -1345,3 +1343,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

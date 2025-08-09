@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -73,35 +72,37 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     let items = [];
 
     if (userProfile?.role === 'technician') {
-        items.push({ href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone });
-    } else {
-        // Base items for admin and superAdmin
-        items.push(
-            { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-            { href: "/customers", label: t('customers'), icon: ClipboardList },
-            { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
-            { href: "/reports", label: t('reports'), icon: BarChart }
-        );
-        
-        // Items for admin and superAdmin
-        if (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') {
-             items.push(
-                { isSeparator: true },
-                { href: "/technician", label: t('technician_view'), icon: Smartphone },
-                { isSeparator: true }
-             );
-        }
-
-        // Specific items for superAdmin
-        if (userProfile?.role === 'superAdmin') {
-            items.push({ href: "/roadmap", label: "Roadmap", icon: ListChecks });
-        }
-        
-        // Settings for both admin and superAdmin
-        if (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') {
-            items.push({ href: "/settings", label: t('settings'), icon: Settings });
-        }
+      return [{ href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone }];
     }
+    
+    // Base items for all non-technician roles
+    items.push(
+      { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+      { href: "/customers", label: t('customers'), icon: ClipboardList },
+      { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
+      { href: "/reports", label: t('reports'), icon: BarChart }
+    );
+    
+    const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
+
+    if (isAdmin) {
+      items.push(
+        { isSeparator: true },
+        { href: "/technician", label: t('technician_view'), icon: Smartphone },
+        { isSeparator: true }
+      );
+    }
+    
+    // SuperAdmin specific items
+    if (userProfile?.role === 'superAdmin') {
+      items.push({ href: "/roadmap", label: "Roadmap", icon: ListChecks });
+    }
+    
+    // Settings for both admin and superAdmin
+    if (isAdmin) {
+        items.push({ href: "/settings", label: t('settings'), icon: Settings });
+    }
+    
     return items;
   };
 
@@ -311,7 +312,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               
               {children}
             </div>
-            <Toaster />
           </main>
         </SidebarInset>
       </SidebarProvider>
@@ -321,3 +321,4 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return <MainAppLayout>{children}</MainAppLayout>;
 }
+

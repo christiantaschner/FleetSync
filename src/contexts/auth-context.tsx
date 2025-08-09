@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { User } from "firebase/auth";
@@ -214,7 +213,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
         }, (err) => {
             console.error("Error fetching user profile:", err);
-            toast({ title: "Authentication Error", description: "Could not retrieve your profile. Please try logging in again.", variant: "destructive"});
+            if (err.code !== 'permission-denied') {
+              toast({ title: "Authentication Error", description: "Could not retrieve your profile. Please try logging in again.", variant: "destructive"});
+            }
             setUserProfile(null);
             setLoading(false);
         });
@@ -341,3 +342,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+

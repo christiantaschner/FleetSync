@@ -1,4 +1,3 @@
-
 import type { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import type Stripe from 'stripe';
@@ -148,3 +147,4 @@ export async function POST(req: NextRequest) {
 
   return new Response(null, { status: 200 });
 }
+

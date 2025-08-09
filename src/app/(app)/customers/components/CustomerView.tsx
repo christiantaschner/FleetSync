@@ -7,23 +7,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, MapPin, Briefcase, Repeat, Circle, Package, PackagePlus, UserPlus, Mail } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, Repeat, Circle, UserPlus, Mail, Edit, PlusCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import AddEquipmentDialog from './AddEquipmentDialog';
 import { Button } from '@/components/ui/button';
 import AddCustomerDialog from './AddCustomerDialog';
 import { mockCustomers } from '@/lib/mock-data';
+import AddEditJobDialog from '../../dashboard/components/AddEditJobDialog';
+import AddEditContractDialog from '../../contracts/components/AddEditContractDialog';
 
 interface CustomerViewProps {
     customers: CustomerData[];
     jobs: Job[];
     contracts: Contract[];
     equipment: Equipment[];
+    allSkills: string[];
     companyId?: string;
     onCustomerAdded: () => void;
-    onEquipmentAdded: () => void;
 }
 
 interface DisplayCustomer {
@@ -38,11 +39,14 @@ interface DisplayCustomer {
     isReal: boolean; // Flag to identify if it's from customers collection
 }
 
-export default function CustomerView({ customers: initialCustomers, jobs, contracts, equipment, companyId, onCustomerAdded, onEquipmentAdded }: CustomerViewProps) {
+export default function CustomerView({ customers: initialCustomers, jobs, contracts, allSkills, companyId, onCustomerAdded }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
-    const [isAddEquipmentOpen, setIsAddEquipmentOpen] = useState(false);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+    const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
+
+    const [isAddJobOpen, setIsAddJobOpen] = useState(false);
+    const [isAddContractOpen, setIsAddContractOpen] = useState(false);
 
     const customers = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ? mockCustomers : initialCustomers;
 
@@ -152,17 +156,35 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
             c.customerName.toLowerCase() === selectedCustomer.name.toLowerCase() &&
             (c.customerPhone && selectedCustomer.phone && c.customerPhone === selectedCustomer.phone)
         );
-
-        const customerEquipment = selectedCustomer.isReal 
-            ? equipment.filter(e => e.customerId === selectedCustomer.id)
-            : [];
         
         return {
             jobs: customerJobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
             contracts: customerContracts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
-            equipment: customerEquipment.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
         };
-    }, [selectedCustomer, jobs, contracts, equipment]);
+    }, [selectedCustomer, jobs, contracts]);
+    
+    const prefilledJob = useMemo(() => {
+      if (!selectedCustomer) return null;
+      return {
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone === 'N/A' ? '' : selectedCustomer.phone,
+        customerEmail: selectedCustomer.email === 'N/A' ? '' : selectedCustomer.email,
+        location: {
+          address: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
+          latitude: 0,
+          longitude: 0,
+        },
+      } as Partial<Job>;
+    }, [selectedCustomer]);
+
+    const prefilledContract = useMemo(() => {
+      if (!selectedCustomer) return null;
+      return {
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone === 'N/A' ? '' : selectedCustomer.phone,
+        customerAddress: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
+      } as Partial<Contract>;
+    }, [selectedCustomer]);
 
 
     return (
@@ -172,16 +194,31 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                 setIsOpen={setIsAddCustomerOpen}
                 onCustomerAdded={onCustomerAdded}
             />
-            {selectedCustomer && companyId && (
-                 <AddEquipmentDialog
-                    isOpen={isAddEquipmentOpen}
-                    setIsOpen={setIsAddEquipmentOpen}
-                    customerId={selectedCustomer.id}
-                    customerName={selectedCustomer.name}
-                    companyId={companyId}
-                    onEquipmentAdded={onEquipmentAdded}
+             {selectedCustomer?.isReal && (
+                <AddCustomerDialog
+                    isOpen={isEditCustomerOpen}
+                    setIsOpen={setIsEditCustomerOpen}
+                    onCustomerAdded={onCustomerAdded}
+                    customerToEdit={customers.find(c => c.id === selectedCustomer.id)}
                 />
             )}
+             <AddEditJobDialog
+                isOpen={isAddJobOpen}
+                onClose={() => setIsAddJobOpen(false)}
+                job={prefilledJob as Job}
+                jobs={jobs}
+                technicians={[]}
+                customers={customers}
+                contracts={contracts}
+                allSkills={allSkills}
+                onManageSkills={() => {}}
+            />
+            <AddEditContractDialog
+                isOpen={isAddContractOpen}
+                onClose={() => setIsAddContractOpen(false)}
+                contract={prefilledContract as Contract}
+                onContractUpdated={onCustomerAdded}
+            />
             <Card className="lg:col-span-1">
                 <CardHeader>
                     <div className="flex justify-between items-center">
@@ -226,7 +263,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                      <Card>
                         <CardHeader>
                             <div className="flex justify-between items-start">
-                                <div>
+                                <div className="flex-1">
                                     <CardTitle className="flex items-center gap-2"><User />{selectedCustomer.name}</CardTitle>
                                     <CardDescription className="space-y-1 mt-1">
                                         <p className="flex items-center gap-1"><Mail size={14}/>{selectedCustomer.email || 'No email'}</p>
@@ -234,14 +271,17 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                         <p className="flex items-center gap-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                <Button variant="outline" onClick={() => setIsAddEquipmentOpen(true)} disabled={!companyId || !selectedCustomer.isReal} title={!selectedCustomer.isReal ? "Create a customer record first to add equipment" : ""}>
-                                    <PackagePlus className="mr-2 h-4 w-4" /> Add Equipment
+                                <Button variant="outline" size="sm" onClick={() => setIsEditCustomerOpen(true)} disabled={!selectedCustomer.isReal}>
+                                    <Edit className="mr-2 h-4 w-4" /> Edit Customer
                                 </Button>
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
-                               <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Repeat/>Service Contracts ({selectedCustomerData.contracts.length})</h3>
+                               <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-lg font-semibold flex items-center gap-2"><Repeat/>Service Contracts ({selectedCustomerData.contracts.length})</h3>
+                                <Button variant="outline" size="sm" onClick={() => setIsAddContractOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Contract</Button>
+                               </div>
                                 <ScrollArea className="h-40 border rounded-md p-2">
                                     <div className="space-y-3 p-2">
                                     {selectedCustomerData.contracts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No active contracts.</p>}
@@ -261,7 +301,10 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                </ScrollArea>
                             </div>
                            <div>
-                                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Briefcase/>Job History ({selectedCustomerData.jobs.length})</h3>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-lg font-semibold flex items-center gap-2"><Briefcase/>Job History ({selectedCustomerData.jobs.length})</h3>
+                                    <Button variant="outline" size="sm" onClick={() => setIsAddJobOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Job</Button>
+                               </div>
                                <ScrollArea className="h-[40vh] border rounded-md p-2">
                                     <div className="space-y-3 p-2">
                                     {selectedCustomerData.jobs.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No job history.</p>}
@@ -278,21 +321,6 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                     </div>
                                </ScrollArea>
                            </div>
-                           <div>
-                                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Package/>Installed Equipment ({selectedCustomerData.equipment.length})</h3>
-                                <ScrollArea className="h-40 border rounded-md p-2">
-                                    <div className="space-y-3 p-2">
-                                    {selectedCustomerData.equipment.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No equipment logged.</p>}
-                                    {selectedCustomerData.equipment.map(item => (
-                                        <div key={item.id} className="p-3 rounded-md bg-secondary/50">
-                                            <p className="font-semibold text-sm">{item.name}</p>
-                                            <p className="text-xs text-muted-foreground">Model: {item.model || 'N/A'} | S/N: {item.serialNumber || 'N/A'}</p>
-                                            {item.installDate && <p className="text-xs text-muted-foreground">Installed: {new Date(item.installDate).toLocaleDateString()}</p>}
-                                        </div>
-                                    ))}
-                                    </div>
-                                </ScrollArea>
-                            </div>
                         </CardContent>
                     </Card>
                 ) : (

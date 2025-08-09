@@ -180,6 +180,12 @@ const roadmapFeatures = {
   inProgress: [
   ],
   planned: [
+     {
+      title: "Installed Equipment Tracking",
+      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
+      icon: Package,
+      status: "Planned",
+    },
     {
       title: "Integrated Invoicing & Payments",
       description: "Enable technicians to generate and send a professional invoice on the spot from pre-built templates. The system will support immediate payment processing via a secure online portal, closing the job loop instantly and improving cash flow.",

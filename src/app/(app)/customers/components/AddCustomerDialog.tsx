@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,14 +18,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { addCustomerAction } from '@/actions/customer-actions';
-import { AddCustomerInputSchema, type AddCustomerInput } from '@/types';
+import { AddCustomerInputSchema, type AddCustomerInput, type CustomerData } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus, Save } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AddCustomerDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onCustomerAdded: () => void;
+  customerToEdit?: CustomerData | null;
 }
 
 // Omitting companyId and appId from the form values, as they come from context
@@ -33,7 +36,7 @@ const FormSchema = AddCustomerInputSchema.omit({ companyId: true, appId: true })
 type AddCustomerFormValues = z.infer<typeof FormSchema>;
 
 
-const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded }) => {
+const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded, customerToEdit }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,9 +53,17 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
     },
   });
 
+  useEffect(() => {
+    if (customerToEdit) {
+      reset(customerToEdit);
+    } else {
+      reset({ name: '', phone: '', email: '', address: '' });
+    }
+  }, [customerToEdit, reset]);
+
   const onSubmitForm = async (data: AddCustomerFormValues) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        toast({ title: 'Success', description: 'Mock Customer added successfully.' });
+        toast({ title: 'Success', description: 'Mock Customer saved.' });
         onCustomerAdded();
         setIsOpen(false);
         reset();
@@ -68,15 +79,27 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
         return;
     }
     setIsSubmitting(true);
-    const result = await addCustomerAction({ ...data, companyId: userProfile.companyId, appId });
-    if (result.error) {
-      toast({ title: 'Error', description: result.error, variant: 'destructive' });
+    
+    if (customerToEdit) {
+      const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, customerToEdit.id);
+      try {
+        await updateDoc(customerDocRef, { ...data, updatedAt: serverTimestamp() });
+        toast({ title: 'Success', description: 'Customer details updated.' });
+      } catch (e: any) {
+        toast({ title: 'Error', description: `Failed to update customer: ${e.message}`, variant: 'destructive' });
+      }
     } else {
-      toast({ title: 'Success', description: 'Customer added successfully.' });
-      onCustomerAdded();
-      setIsOpen(false);
-      reset();
+      const result = await addCustomerAction({ ...data, companyId: userProfile.companyId, appId });
+      if (result.error) {
+        toast({ title: 'Error', description: result.error, variant: 'destructive' });
+      } else {
+        toast({ title: 'Success', description: 'Customer added successfully.' });
+      }
     }
+    
+    onCustomerAdded();
+    setIsOpen(false);
+    reset();
     setIsSubmitting(false);
   };
 
@@ -87,9 +110,9 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
     }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-headline">Add New Customer</DialogTitle>
+          <DialogTitle className="font-headline">{customerToEdit ? "Edit Customer" : "Add New Customer"}</DialogTitle>
           <DialogDescription>
-            Create a new customer profile. You can add jobs and equipment for them later.
+             {customerToEdit ? "Update this customer's profile." : "Create a new customer profile. You can add jobs and contracts for them later."}
           </DialogDescription>
         </DialogHeader>
         <form id="add-customer-form" onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 py-4">
@@ -120,7 +143,8 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
             <Button type="submit" form="add-customer-form" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <UserPlus className="mr-2 h-4 w-4" /> Add Customer
+              {customerToEdit ? <Save className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />} 
+              {customerToEdit ? "Save Changes" : "Add Customer"}
             </Button>
           </DialogFooter>
       </DialogContent>

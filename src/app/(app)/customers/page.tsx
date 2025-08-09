@@ -4,11 +4,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Job, Contract, Equipment, CustomerData } from '@/types';
+import type { Job, Contract, Equipment, CustomerData, Skill } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
 import { mockJobs, mockContracts, mockEquipment, mockCustomers } from '@/lib/mock-data';
+import { getSkillsAction } from '@/actions/skill-actions';
+import { PREDEFINED_SKILLS } from '@/lib/skills';
 
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
@@ -16,6 +18,7 @@ export default function CustomersPage() {
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [customers, setCustomers] = useState<CustomerData[]>([]);
+    const [allSkills, setAllSkills] = useState<Skill[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +32,7 @@ export default function CustomersPage() {
             setContracts(mockContracts);
             setEquipment(mockEquipment);
             setCustomers(mockCustomers);
+            setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
             setIsLoading(false);
             return;
         }
@@ -46,7 +50,7 @@ export default function CustomersPage() {
         }
 
         let loadedCount = 0;
-        const totalCollections = 4;
+        const totalCollections = 5;
         const companyId = userProfile.companyId;
 
         const updateLoadingState = () => {
@@ -55,6 +59,13 @@ export default function CustomersPage() {
                 setIsLoading(false);
             }
         }
+        
+        getSkillsAction({ companyId, appId }).then(result => {
+          if (result.data) {
+            setAllSkills(result.data);
+          }
+          if(isLoading) updateLoadingState();
+        });
 
         const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
         const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
@@ -146,5 +157,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} companyId={userProfile?.companyId} onCustomerAdded={fetchData} onEquipmentAdded={fetchData} />;
+    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} allSkills={allSkills.map(s => s.name)} companyId={userProfile?.companyId} onCustomerAdded={fetchData} />;
 }

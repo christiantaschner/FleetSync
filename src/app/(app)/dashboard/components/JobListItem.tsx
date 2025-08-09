@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Shuffle, Wrench, MapIcon, Loader2 } from 'lucide-react';
+import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Shuffle, Wrench, MapIcon, Loader2, UserCircle as UserCircleIcon, UserCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -53,7 +53,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
   const getStatusIcon = (status: Job['status']) => {
     switch (status) {
       case 'Pending': return <AlertTriangle className="text-amber-500" />;
-      case 'Assigned': return <User className="text-sky-500" />;
+      case 'Assigned': return <UserCheck className="text-sky-500" />;
       case 'En Route': return <Truck className="text-indigo-500" />;
       case 'In Progress': return <Wrench className="text-blue-500" />;
       case 'Completed': return <CheckCircle className="text-green-500" />;
@@ -91,7 +91,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                   <span onClick={(e) => e.preventDefault()}>{getStatusIcon(job.status)}</span>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{job.status}</p>
+                  <p>{job.status === 'Pending' ? 'Unassigned' : job.status}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -105,7 +105,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
       </CardHeader>
       <CardContent className="space-y-3 text-sm pb-3">
         <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
+            <UserCircleIcon className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{job.customerName}</span>
         </div>
         <p className="text-muted-foreground line-clamp-2">{job.description}</p>
@@ -180,3 +180,4 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
+

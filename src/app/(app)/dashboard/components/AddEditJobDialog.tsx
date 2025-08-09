@@ -589,7 +589,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <FilePenLine className="h-4 w-4" />
                   <AlertTitle className="font-semibold">Editing Draft</AlertTitle>
                   <AlertDescription>
-                    This is a draft job. Please complete all required fields and set a status to "Pending" to activate it.
+                    This is a draft job. Please complete all required fields and set a status such as "Unassigned" to activate it.
                   </AlertDescription>
                 </Alert>
               )}
@@ -966,4 +966,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-

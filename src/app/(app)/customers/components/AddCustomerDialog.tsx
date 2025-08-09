@@ -31,8 +31,8 @@ interface AddCustomerDialogProps {
   customerToEdit?: CustomerData | null;
 }
 
-// Re-using the full schema and letting the form handle the relevant parts
-type AddCustomerFormValues = Omit<AddCustomerInput, 'companyId' | 'appId'>;
+const FormSchema = AddCustomerInputSchema.omit({ companyId: true, appId: true });
+type AddCustomerFormValues = Zod.infer<typeof FormSchema>;
 
 
 const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded, customerToEdit }) => {
@@ -43,7 +43,7 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddCustomerFormValues>({
-    resolver: zodResolver(AddCustomerInputSchema.omit({ companyId: true, appId: true })),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       name: '',
       phone: '',

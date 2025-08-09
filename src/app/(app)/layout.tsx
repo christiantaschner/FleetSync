@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -195,7 +196,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader className="bg-primary text-primary-foreground">
+          <SidebarHeader>
             <Logo />
           </SidebarHeader>
           <SidebarContent>
@@ -339,3 +340,4 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return <MainAppLayout>{children}</MainAppLayout>;
 }
+

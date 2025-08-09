@@ -3,7 +3,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -50,6 +50,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import ShareTrackingDialog from './components/ShareTrackingDialog';
+import { Switch } from '@/components/ui/switch';
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -91,8 +92,9 @@ export default function DashboardPage() {
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [statusFilter, setStatusFilter] = useState<string[]>(['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft']);
-  const [priorityFilter, setPriorityFilter] = useState<string[]>(['Low', 'Medium', 'High']);
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
+  const [showOpenTasksOnly, setShowOpenTasksOnly] = useState(true);
   const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
 
@@ -545,6 +547,8 @@ export default function DashboardPage() {
     setIsChatOpen(true);
   };
   
+  const openTasksFilter: JobStatus[] = ['Pending', 'Draft'];
+
   const filteredJobs = useMemo(() => {
     let tempJobs = jobs;
 
@@ -567,25 +571,25 @@ export default function DashboardPage() {
         return tempJobs.filter(job => job.id === jobFilterId);
     }
     
-    // Filter by status and priority
-    if (statusFilter.length === 0 && priorityFilter.length === 0) {
-        return [];
+    // Filter by open tasks if toggled
+    if (showOpenTasksOnly) {
+        return tempJobs.filter(job => 
+            openTasksFilter.includes(job.status) || 
+            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+        );
     }
 
-    return tempJobs.filter(job => {
-        const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
-        const statusMatch = statusFilter.length === 0 || statusFilter.some(s => {
-            if (s === 'Pending') {
-                return job.status === 'Pending';
-            }
-             if (s === 'Triage Review') {
-                return job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft');
-            }
-            return job.status === s;
+    // Filter by status and priority if not showing open tasks only
+    if (statusFilter.length > 0 || priorityFilter.length > 0) {
+        return tempJobs.filter(job => {
+            const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
+            const statusMatch = statusFilter.length === 0 || statusFilter.includes(job.status);
+            return priorityMatch && statusMatch;
         });
-        return priorityMatch && statusMatch;
-    });
-}, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm]);
+    }
+
+    return tempJobs;
+}, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm, showOpenTasksOnly]);
 
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
@@ -945,7 +949,6 @@ export default function DashboardPage() {
   }
   
   const statusOptions = [
-    { value: "Triage Review", label: "Triage Ready" },
     { value: "Draft", label: "Draft" },
     { value: "Pending", label: "Unassigned" },
     { value: "Assigned", label: "Assigned" },
@@ -1128,7 +1131,7 @@ export default function DashboardPage() {
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 {t('job_list')}
-                {unassignedJobsCount > 0 && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
+                {unassignedJobsCount > 0 && !showOpenTasksOnly && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
                 {triageReadyCount > 0 && <Badge variant="accent" className="h-5"><ImageIcon className="mr-1 h-3 w-3"/>{triageReadyCount}</Badge>}
             </div>
           </TabsTrigger>
@@ -1169,6 +1172,7 @@ export default function DashboardPage() {
                         selected={statusFilter}
                         onChange={setStatusFilter}
                         placeholder="Filter by Status"
+                        disabled={showOpenTasksOnly}
                       />
                     </div>
                     <div className="space-y-1">
@@ -1178,6 +1182,7 @@ export default function DashboardPage() {
                         selected={priorityFilter}
                         onChange={setPriorityFilter}
                         placeholder="Filter by Priority"
+                        disabled={showOpenTasksOnly}
                       />
                     </div>
                     <div className="space-y-1">
@@ -1194,15 +1199,25 @@ export default function DashboardPage() {
                       </Select>
                     </div>
                 </div>
-                <Button 
-                  variant="accent" 
-                  onClick={handleBatchAIAssign} 
-                  disabled={pendingJobsCount === 0 || isBatchLoading}
-                  className="w-full md:w-auto flex-shrink-0"
-                >
-                  {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                  Fleety Batch Assign
-                </Button>
+                <div className="flex items-center gap-4 w-full md:w-auto flex-shrink-0">
+                    <div className="flex items-center space-x-2">
+                        <Switch
+                            id="open-tasks-toggle"
+                            checked={showOpenTasksOnly}
+                            onCheckedChange={setShowOpenTasksOnly}
+                        />
+                        <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
+                    </div>
+                    <Button 
+                      variant="accent" 
+                      onClick={handleBatchAIAssign} 
+                      disabled={pendingJobsCount === 0 || isBatchLoading}
+                      className="w-full md:w-auto"
+                    >
+                      {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                      Fleety Batch Assign
+                    </Button>
+                </div>
               </div>
               <div className="space-y-4">
                 {sortedJobs.length > 0 ? (
@@ -1309,3 +1324,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

@@ -1,4 +1,5 @@
 
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -40,7 +41,6 @@ import { getSkillsAction } from '@/actions/skill-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { serverTimestamp } from 'firebase/firestore'; 
 import { Copy } from 'lucide-react';
-import OptimizeRouteDialog from './components/optimize-route-dialog';
 import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
@@ -133,9 +133,6 @@ export default function DashboardPage() {
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
-
-  const [isOptimizeRouteOpen, setIsOptimizeRouteOpen] = useState(false);
-  const [technicianToOptimize, setTechnicianToOptimize] = useState<string | undefined>(undefined);
   
   const [showGettingStarted, setShowGettingStarted] = useState(false);
 
@@ -594,21 +591,19 @@ export default function DashboardPage() {
 
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
-            case 'priority':
-                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-                if (priorityDiff !== 0) return priorityDiff;
-
-                const assignmentA = a.assignedTechnicianId ? 1 : 0;
-                const assignmentB = b.assignedTechnicianId ? 1 : 0;
-                if (assignmentA !== assignmentB) return assignmentA - assignmentB;
-                
-                return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'status':
                 const statusDiff = statusOrder[a.status] - statusOrder[b.status];
                 if (statusDiff !== 0) return statusDiff;
                 const priorityDiffStatus = priorityOrder[a.priority] - priorityOrder[b.priority];
                 if (priorityDiffStatus !== 0) return priorityDiffStatus;
-                return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            case 'priority':
+                const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                if (priorityDiff !== 0) return priorityDiff;
+                const assignmentA = a.assignedTechnicianId ? 1 : 0;
+                const assignmentB = b.assignedTechnicianId ? 1 : 0;
+                if (assignmentA !== assignmentB) return assignmentA - assignmentB;
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             case 'technician':
                 const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz';
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
@@ -894,11 +889,6 @@ export default function DashboardPage() {
         duration: Infinity,
       });
     }
-  };
-
-  const handleOpenOptimizeRoute = (technicianId: string) => {
-    setTechnicianToOptimize(technicianId);
-    setIsOptimizeRouteOpen(true);
   };
   
   const handleViewOnMap = (location: Location) => {
@@ -1236,7 +1226,6 @@ export default function DashboardPage() {
             jobs={jobs}
             technicians={technicians}
             onJobClick={handleOpenEditJob}
-            onRouteDirty={handleOpenOptimizeRoute}
           />
         </TabsContent>
 
@@ -1306,16 +1295,6 @@ export default function DashboardPage() {
         onConfirmAssignments={handleConfirmBatchAssignments}
         isLoadingConfirmation={isLoadingBatchConfirmation}
       />
-      <OptimizeRouteDialog 
-        isOpen={isOptimizeRouteOpen}
-        onOpenChange={setIsOptimizeRouteOpen}
-        technicians={technicians} 
-        jobs={jobs}
-        defaultTechnicianId={technicianToOptimize}
-      >
-        {/* This is a controlled dialog, so the trigger is handled programmatically */}
-        <div />
-      </OptimizeRouteDialog>
       <HelpAssistant />
     </div>
   );

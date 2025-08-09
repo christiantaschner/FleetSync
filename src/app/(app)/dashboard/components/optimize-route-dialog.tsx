@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -23,6 +24,10 @@ import { Loader2, MapIcon, CheckCircle, Shuffle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
 import { Badge } from '@/components/ui/badge';
+
+// NOTE: This dialog is currently not in use. The optimization feature has been
+// moved to a direct button on the schedule view. This file is kept to avoid
+// breaking any potential file-based updates but can be removed in a future cleanup.
 
 interface OptimizeRouteDialogProps {
   children: React.ReactNode;

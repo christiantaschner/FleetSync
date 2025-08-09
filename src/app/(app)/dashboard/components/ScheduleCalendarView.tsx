@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Job, Technician, JobStatus, Location } from '@/types';
+import type { Job, Technician, JobStatus, Location, OptimizeRoutesInput } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isBefore, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2 } from 'lucide-react';
-import OptimizeRouteDialog from './optimize-route-dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -19,6 +18,7 @@ import Link from 'next/link';
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
 import { reassignJobAction } from '@/actions/fleet-actions';
+import { optimizeRoutesAction } from '@/actions/ai-actions';
 import { useAuth } from '@/contexts/auth-context';
 
 const getStatusAppearance = (status: JobStatus) => {
@@ -260,30 +260,32 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
     );
 };
 
-const TechnicianRow = ({ technician, children, onOptimize }: { technician: Technician, children: React.ReactNode, onOptimize: (technicianId: string) => void }) => {
+const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { technician: Technician, children: React.ReactNode, onOptimize: () => void, isOptimizing: boolean }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: technician.id,
     });
 
     return (
         <div ref={setNodeRef} className={cn("flex h-20 items-center border-t", isOver && "bg-primary/10")}>
-            <div className="w-32 sm:w-48 shrink-0 p-2 flex items-center gap-2 border-r h-full bg-background">
-                <Avatar className="h-9 w-9">
-                    <AvatarImage src={technician.avatarUrl} alt={technician.name} />
-                    <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div className="truncate">
-                    <span className="font-medium text-sm truncate block">{technician.name}</span>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Circle className={cn("h-2 w-2 fill-current", technician.isAvailable ? "text-green-500" : "text-red-500")} />
-                        <span>{technician.isAvailable ? 'Available' : 'Unavailable'}</span>
+            <div className="w-48 shrink-0 p-2 flex items-center justify-between gap-2 border-r h-full bg-background">
+                <div className="flex items-center gap-2 truncate">
+                    <Avatar className="h-9 w-9">
+                        <AvatarImage src={technician.avatarUrl} alt={technician.name} />
+                        <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div className="truncate">
+                        <span className="font-medium text-sm truncate block">{technician.name}</span>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Circle className={cn("h-2 w-2 fill-current", technician.isAvailable ? "text-green-500" : "text-red-500")} />
+                            <span>{technician.isAvailable ? 'Available' : 'Unavailable'}</span>
+                        </div>
                     </div>
                 </div>
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:bg-primary/10 hover:text-primary" onClick={() => onOptimize(technician.id)}>
-                                <Shuffle className="h-4 w-4" />
+                             <Button variant="accent" size="icon" className="h-8 w-8 text-white shrink-0" onClick={onOptimize} disabled={isOptimizing}>
+                                {isOptimizing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Shuffle className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -301,7 +303,6 @@ interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
   onJobClick: (job: Job) => void;
-  onRouteDirty: (technicianId: string) => void;
 }
 
 type ProposedChanges = Record<string, { scheduledTime: string; assignedTechnicianId: string; originalTechnicianId: string | null }>;
@@ -311,7 +312,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     jobs, 
     technicians,
     onJobClick,
-    onRouteDirty,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -319,6 +319,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const timelineGridRef = useRef<HTMLDivElement>(null);
   const [proposedChanges, setProposedChanges] = useState<ProposedChanges>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [optimizingTechId, setOptimizingTechId] = useState<string | null>(null);
   const { toast } = useToast();
   const { userProfile, isMockMode } = useAuth();
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -407,6 +408,57 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     }));
   };
   
+  const handleOptimize = async (technicianId: string) => {
+    setOptimizingTechId(technicianId);
+    
+    const technician = technicians.find(t => t.id === technicianId);
+    if (!technician) {
+      toast({ title: "Error", description: "Technician not found.", variant: "destructive" });
+      setOptimizingTechId(null);
+      return;
+    }
+    
+    const jobsForOptimization = jobs.filter(j => j.assignedTechnicianId === technicianId && (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress'));
+    if (jobsForOptimization.length === 0) {
+      toast({ title: "No Jobs to Optimize", description: `${technician.name} has no active jobs assigned for today.`, variant: "default" });
+      setOptimizingTechId(null);
+      return;
+    }
+
+    const input: OptimizeRoutesInput = {
+      technicianId,
+      currentLocation: technician.location,
+      tasks: jobsForOptimization.map(job => ({
+        taskId: job.id,
+        location: job.location,
+        priority: job.priority,
+        scheduledTime: job.scheduledTime,
+      })),
+    };
+    
+    const result = await optimizeRoutesAction(input);
+
+    if (result.data) {
+        const newProposedChanges: ProposedChanges = {};
+        result.data.optimizedRoute.forEach(step => {
+            const originalJob = jobs.find(j => j.id === step.taskId);
+            if (originalJob) {
+                newProposedChanges[step.taskId] = {
+                    scheduledTime: step.estimatedArrivalTime,
+                    assignedTechnicianId: technicianId,
+                    originalTechnicianId: originalJob.assignedTechnicianId || null
+                }
+            }
+        });
+        setProposedChanges(prev => ({ ...prev, ...newProposedChanges }));
+        toast({ title: "Route Optimized!", description: `Fleety has proposed a new schedule for ${technician.name}.`});
+    } else {
+        toast({ title: "Optimization Failed", description: result.error, variant: "destructive" });
+    }
+
+    setOptimizingTechId(null);
+  }
+
   const handleConfirmChanges = async () => {
     if (isMockMode) {
         toast({ title: 'Schedule Updated (Mock)', description: 'Changes have been applied in mock mode.'});
@@ -439,19 +491,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         toast({ title: "Some Changes Failed", description: `${failed.length} of ${promises.length} changes could not be saved.`, variant: "destructive"});
     } else {
         toast({ title: "Schedule Updated", description: "All changes have been saved successfully." });
-        
-        // Check if only one technician was affected
-        const affectedTechIds = new Set(Object.values(proposedChanges).map(c => c.assignedTechnicianId));
-        Object.values(proposedChanges).forEach(c => {
-          if (c.originalTechnicianId) {
-            affectedTechIds.add(c.originalTechnicianId);
-          }
-        });
-        
-        if (affectedTechIds.size === 1) {
-            const techId = affectedTechIds.values().next().value;
-            onRouteDirty(techId);
-        }
     }
 
     setProposedChanges({});
@@ -498,7 +537,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             <div ref={containerRef} className="overflow-x-auto">
             <div className="relative">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
-                    <div className="w-32 sm:w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
+                    <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                     <div ref={timelineGridRef} className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                     {hours.map((hour, index) => (
                         <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
@@ -512,7 +551,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     {technicians.length > 0 ? technicians.map((tech) => {
                         const techJobs = jobsByTechnician(tech.id);
                         return (
-                            <TechnicianRow key={tech.id} technician={tech} onOptimize={onRouteDirty}>
+                            <TechnicianRow 
+                                key={tech.id} 
+                                technician={tech} 
+                                onOptimize={() => handleOptimize(tech.id)}
+                                isOptimizing={optimizingTechId === tech.id}
+                            >
                                 <div className="flex-1 relative h-full">
                                     <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                                     {hours.map((_, index) => (
@@ -522,10 +566,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     <div className="relative h-full p-1.5">
                                         {techJobs.map((job, jobIndex) => {
                                             const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
-
-                                            // Revised Travel Time Logic
+                                            
                                             let travelStartTime: Date | null = null;
-                                            if (prevJob?.scheduledTime && prevJob.estimatedDurationMinutes) {
+                                            if(prevJob?.scheduledTime && prevJob.estimatedDurationMinutes) {
                                                 travelStartTime = new Date(new Date(prevJob.scheduledTime).getTime() + prevJob.estimatedDurationMinutes * 60000);
                                             }
                                             const travelEndTime = job.scheduledTime ? new Date(job.scheduledTime) : null;
@@ -614,4 +657,3 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 };
 
 export default ScheduleCalendarView;
-

@@ -9,7 +9,13 @@ export type Location = {
   address?: string;
 };
 
-export type TechnicianSkill = string; 
+export const TechnicianSkillSchema = z.object({
+  name: z.string(),
+  certificateUrl: z.string().url().optional(),
+  certificateFileName: z.string().optional(),
+});
+export type TechnicianSkill = z.infer<typeof TechnicianSkillSchema>;
+
 export type Skill = {
   id: string;
   name: string;
@@ -86,7 +92,7 @@ export type Technician = {
   companyId: string;
   name: string;
   isAvailable: boolean;
-  skills: string[]; 
+  skills: TechnicianSkill[]; 
   partsInventory?: string[];
   avatarUrl?: string;
   currentJobId?: string | null;

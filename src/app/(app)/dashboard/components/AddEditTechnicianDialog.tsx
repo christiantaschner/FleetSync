@@ -27,8 +27,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
-import type { Technician, BusinessDay } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera } from 'lucide-react';
+import type { Technician, BusinessDay, TechnicianSkill } from '@/types';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
@@ -39,6 +39,7 @@ import { uploadAvatarAction } from '@/actions/storage-actions';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
@@ -184,7 +185,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       name: data.name,
       email: data.email || "", 
       phone: data.phone || "",
-      skills: data.skills,
+      skills: data.skills.map((s: string | TechnicianSkill) => typeof s === 'string' ? { name: s } : s),
       location: {
         latitude: data.latitude ?? 0, 
         longitude: data.longitude ?? 0,
@@ -267,28 +268,41 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                 </div>
                 
                  <div>
-                    <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills</Label>
+                    <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills &amp; Certificates</Label>
                     <ScrollArea className="h-32 rounded-md border p-3 mt-1">
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {allSkills.map(skill => (
                           <Controller
                             key={skill}
                             name="skills"
                             control={control}
-                            render={({ field }) => (
-                               <div className="flex items-center space-x-2">
-                                <Checkbox
-                                    id={`skill-${skill}`}
-                                    checked={field.value?.includes(skill)}
-                                    onCheckedChange={(checked) => {
-                                        return checked
-                                            ? field.onChange([...(field.value || []), skill])
-                                            : field.onChange((field.value || [])?.filter((value) => value !== skill));
-                                    }}
-                                />
-                                <Label htmlFor={`skill-${skill}`} className="font-normal cursor-pointer">{skill}</Label>
-                               </div>
-                            )}
+                            render={({ field }) => {
+                               const currentSkill = field.value?.find(s => s.name === skill);
+                               return (
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`skill-${skill}`}
+                                        checked={!!currentSkill}
+                                        onCheckedChange={(checked) => {
+                                            const newSkills = checked
+                                                ? [...(field.value || []), { name: skill }]
+                                                : (field.value || []).filter((s) => s.name !== skill);
+                                            field.onChange(newSkills);
+                                        }}
+                                    />
+                                    <Label htmlFor={`skill-${skill}`} className="font-normal cursor-pointer">{skill}</Label>
+                                  </div>
+                                  {currentSkill?.certificateUrl ? (
+                                     <Link href={currentSkill.certificateUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
+                                        <Paperclip className="h-3 w-3" /> View Cert.
+                                    </Link>
+                                  ) : (
+                                    currentSkill && <span className="text-xs text-muted-foreground italic">No cert.</span>
+                                  )}
+                                </div>
+                               )
+                            }}
                           />
                         ))}
                         {allSkills.length === 0 && (

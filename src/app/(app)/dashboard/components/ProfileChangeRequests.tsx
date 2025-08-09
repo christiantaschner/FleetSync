@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import type { ProfileChangeRequest } from '@/types';
+import type { ProfileChangeRequest, TechnicianSkill } from '@/types';
 import {
   Accordion,
   AccordionContent,
@@ -13,12 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, X, Loader2, UserCog, History, ListChecks } from 'lucide-react';
+import { Check, X, Loader2, UserCog, History, ListChecks, Paperclip } from 'lucide-react';
 import { approveProfileChangeRequestAction, rejectProfileChangeRequestAction } from '@/actions/fleet-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth-context';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface ProfileChangeRequestsProps {
   requests: ProfileChangeRequest[];
@@ -92,6 +93,27 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
     }
     setProcessingId(null);
   };
+  
+  const renderValue = (value: any) => {
+    if (Array.isArray(value)) {
+        // This is for the new skills structure
+        return (
+            <div className="flex flex-wrap gap-1">
+                {value.length > 0 ? (value as TechnicianSkill[]).map(skill => (
+                    <Badge key={skill.name} variant="secondary" className="flex items-center gap-1.5">
+                        {skill.name}
+                        {skill.certificateUrl && (
+                            <Link href={skill.certificateUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                <Paperclip className="h-3 w-3" />
+                            </Link>
+                        )}
+                    </Badge>
+                )) : <span className="text-muted-foreground italic">No skills selected</span>}
+            </div>
+        );
+    }
+    return <span>{String(value)}</span>;
+  };
 
   if (requests.length === 0) {
     return null; // Don't render anything if there are no pending requests
@@ -137,13 +159,7 @@ const ProfileChangeRequests: React.FC<ProfileChangeRequestsProps> = ({ requests,
                                             {key}
                                         </Label>
                                         <div className="col-span-2 bg-background p-2 rounded-md border text-sm font-medium">
-                                          {key === 'skills' && Array.isArray(value) ? (
-                                              <div className="flex flex-wrap gap-1">
-                                                  {value.length > 0 ? value.map(skill => <Badge key={skill} variant="secondary">{skill}</Badge>) : <span className="text-muted-foreground italic">No skills selected</span>}
-                                              </div>
-                                          ) : (
-                                              <span>{String(value)}</span>
-                                          )}
+                                          {renderValue(value)}
                                         </div>
                                     </div>
                                 ))}

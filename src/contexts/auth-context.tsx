@@ -14,11 +14,11 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
 import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
+import type { UserProfile, Company, Contract, Job, JobStatus, Technician } from "@/types";
 import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
-import { mockJobs, mockContracts } from "@/lib/mock-data";
+import { mockJobs, mockContracts, MOCK_ADMIN_USER, MOCK_ADMIN_PROFILE, MOCK_COMPANY, mockTechnicians, mockTechnicianProfiles } from "@/lib/mock-data";
 import { createUserProfileAction } from "@/actions/user-actions";
 
 interface AuthContextType {
@@ -34,30 +34,13 @@ interface AuthContextType {
   contractsDueCount: number;
   isMockMode: boolean;
   setIsMockMode: (isMock: boolean) => void;
+  // Role-switching properties for mock mode
+  impersonatedUserId: string | null;
+  setImpersonatedUser: (userId: string | null) => void;
+  mockTechnicians: Technician[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// --- Mock Data Setup ---
-const MOCK_ADMIN_USER: User = { uid: 'mock_admin_id', email: 'admin@mock.com' } as User;
-const MOCK_ADMIN_PROFILE: UserProfile = {
-  uid: 'mock_admin_id',
-  email: 'admin@mock.com',
-  companyId: 'mock_company_123',
-  role: 'superAdmin',
-  onboardingStatus: 'completed',
-};
-const MOCK_COMPANY: Company = {
-  id: 'mock_company_123',
-  name: 'Mock Service Company',
-  ownerId: 'mock_admin_id',
-  subscriptionStatus: 'active',
-  technicianSeatCount: 10,
-  settings: {
-    companySpecialties: ["HVAC", "Plumbing"],
-    hideHelpButton: false
-  }
-};
 
 const getMockContractsDueCount = () => {
     return mockContracts.reduce((count, contract) => {
@@ -75,7 +58,6 @@ const getMockContractsDueCount = () => {
     }, 0);
 };
 
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -85,19 +67,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [contractsDueCount, setContractsDueCount] = useState(0);
 
   const [isMockMode, setMockModeState] = useState(process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true');
+  const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(null);
+  
   const { toast } = useToast();
   const router = useRouter();
 
+  const setImpersonatedUser = (userId: string | null) => {
+    if (userId) {
+      sessionStorage.setItem('impersonatedUserId', userId);
+    } else {
+      sessionStorage.removeItem('impersonatedUserId');
+    }
+    window.location.reload();
+  };
+
   const setIsMockMode = (isMock: boolean) => {
     localStorage.setItem('mockMode', JSON.stringify(isMock));
-    sessionStorage.removeItem('mock_onboarding_complete'); // Clear onboarding state on mode switch
+    sessionStorage.removeItem('impersonatedUserId'); 
     setMockModeState(isMock);
     if (isMock) {
         toast({ title: "Mock Mode Activated", description: "You are now viewing sample data." });
     } else {
         toast({ title: "Live Mode Activated", description: "You are now viewing your real data." });
     }
-    // Force a re-evaluation of data sources
     window.location.reload();
   };
 
@@ -107,8 +99,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (mockModeActive) {
       console.log("Auth Context: Running in MOCK DATA mode.");
-      setUser(MOCK_ADMIN_USER);
-      setUserProfile(MOCK_ADMIN_PROFILE);
+      
+      const impersonatedId = sessionStorage.getItem('impersonatedUserId');
+      setImpersonatedUserId(impersonatedId);
+
+      if (impersonatedId) {
+        const techProfile = mockTechnicianProfiles.find(p => p.uid === impersonatedId);
+        const techData = mockTechnicians.find(t => t.id === impersonatedId);
+        if (techProfile && techData) {
+            setUser({ uid: techData.id, email: techData.email } as User);
+            setUserProfile(techProfile);
+        } else {
+             setUser(MOCK_ADMIN_USER);
+             setUserProfile(MOCK_ADMIN_PROFILE);
+        }
+      } else {
+        setUser(MOCK_ADMIN_USER);
+        setUserProfile(MOCK_ADMIN_PROFILE);
+      }
+
       setCompany(MOCK_COMPANY);
       setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
@@ -193,8 +202,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     setLoading(false);
                 }
             } else {
-                setUserProfile(null);
-                setLoading(false);
+                 if (sessionStorage.getItem('mock_onboarding_complete') !== 'true') {
+                    // This could be a new user who just signed up.
+                    // The profile might not exist yet. We'll let the logic in signup handle it.
+                    // Or, if they are navigating away from signup, onboarding will catch them.
+                    setLoading(false);
+                 }
             }
         }, (err) => {
             console.error("Error fetching user profile:", err);
@@ -216,7 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
-  }, [toast, router, isMockMode]); // Added isMockMode to dependency array
+  }, [toast, router, isMockMode]); 
 
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
@@ -269,11 +282,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setLoading(true);
     try {
-      // Step 1: Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email_address, pass_word);
       const user = userCredential.user;
 
-      // Step 2: Call server action to create user profile in Firestore
       const profileResult = await createUserProfileAction({ uid: user.uid, email: user.email! });
 
       if (profileResult.error) {
@@ -303,7 +314,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     localStorage.removeItem('mockMode');
-    sessionStorage.removeItem('mock_onboarding_complete');
+    sessionStorage.removeItem('impersonatedUserId');
     if (!auth) {
       toast({ title: "Error", description: "Authentication service not available.", variant: "destructive" });
       return;
@@ -313,7 +324,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen, contractsDueCount, isMockMode, setIsMockMode }}>
+    <AuthContext.Provider value={{ user, userProfile, company, loading, login, signup, logout, isHelpOpen, setHelpOpen, contractsDueCount, isMockMode, setIsMockMode, impersonatedUserId, setImpersonatedUser, mockTechnicians }}>
       {children}
     </AuthContext.Provider>
   );

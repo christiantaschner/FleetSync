@@ -1,9 +1,32 @@
 
-import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus, ChatMessage, TechnicianSkill } from '@/types';
+import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus, ChatMessage, TechnicianSkill, UserProfile } from '@/types';
 import { addDays, subDays, subMinutes, subMonths, setHours, setMinutes } from 'date-fns';
+import type { User } from 'firebase/auth';
 
-const MOCK_COMPANY_ID = 'mock_company_123';
-const MOCK_ADMIN_ID = 'mock_admin_id';
+export const MOCK_COMPANY_ID = 'mock_company_123';
+export const MOCK_ADMIN_ID = 'mock_admin_id';
+
+// --- Base User & Company ---
+export const MOCK_ADMIN_USER: User = { uid: MOCK_ADMIN_ID, email: 'admin@mock.com' } as User;
+export const MOCK_ADMIN_PROFILE: UserProfile = {
+  uid: MOCK_ADMIN_ID,
+  email: 'admin@mock.com',
+  companyId: MOCK_COMPANY_ID,
+  role: 'superAdmin',
+  onboardingStatus: 'completed',
+};
+export const MOCK_COMPANY: Company = {
+  id: MOCK_COMPANY_ID,
+  name: 'Mock Service Company',
+  ownerId: MOCK_ADMIN_ID,
+  subscriptionStatus: 'active',
+  technicianSeatCount: 10,
+  settings: {
+    companySpecialties: ["HVAC", "Plumbing"],
+    hideHelpButton: false
+  }
+};
+
 
 export const mockTechnicians: Technician[] = [
   {
@@ -44,6 +67,16 @@ export const mockTechnicians: Technician[] = [
     currentJobId: null,
   },
 ];
+
+// --- Technician User Profiles for Impersonation ---
+export const mockTechnicianProfiles: UserProfile[] = mockTechnicians.map(tech => ({
+    uid: tech.id,
+    email: tech.email,
+    companyId: MOCK_COMPANY_ID,
+    role: 'technician',
+    onboardingStatus: 'completed',
+}));
+
 
 const today = new Date();
 const tomorrow = addDays(today, 1);

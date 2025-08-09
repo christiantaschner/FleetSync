@@ -640,7 +640,7 @@ export default function DashboardPage() {
                 const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
                 return timeA - timeB || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             default:
-                return new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }
     });
   }, [filteredJobs, sortOrder, technicians]);
@@ -1179,19 +1179,10 @@ export default function DashboardPage() {
                               </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                              <p>Shows all Draft, Unassigned, and Triage-Ready jobs.</p>
+                              <p>Shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep.</p>
                           </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <Button 
-                      variant="accent" 
-                      onClick={handleBatchAIAssign} 
-                      disabled={pendingJobsCount === 0 || isBatchLoading}
-                      className="w-full md:w-auto"
-                    >
-                      {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                      Fleety Batch Assign
-                    </Button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full md:flex-1">
                     <div className="relative md:col-span-1">
@@ -1239,6 +1230,15 @@ export default function DashboardPage() {
                       </Select>
                     </div>
                 </div>
+                 <Button 
+                      variant="accent" 
+                      onClick={handleBatchAIAssign} 
+                      disabled={pendingJobsCount === 0 || isBatchLoading}
+                      className="w-full md:w-auto"
+                    >
+                      {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                      Fleety Batch Assign
+                    </Button>
               </div>
               <div className="space-y-4">
                 {sortedJobs.length > 0 ? (

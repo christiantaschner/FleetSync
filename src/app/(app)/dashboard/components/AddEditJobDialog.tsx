@@ -340,15 +340,53 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
 
   const handleGenerateTriageLink = async () => {
-    if (!job || !userProfile?.companyId || !appId) return;
+    // This is a new or existing job, but it needs an ID to link to.
+    if (!title || !customerName) {
+      toast({ title: "Cannot Generate Link", description: "Please provide a Job Title and Customer Name first.", variant: "default" });
+      return;
+    }
+    if (!job && !userProfile?.companyId) {
+      toast({ title: "Cannot Generate Link", description: "Save this job first to create a photo request link.", variant: "default" });
+      return;
+    }
+
+    if (!userProfile?.companyId || !appId) return;
+    
     setIsGeneratingLink(true);
+
+    let jobIdToUse = job?.id;
+
+    // If it's a new job, we need to create it first to get an ID.
+    if (!jobIdToUse) {
+       const tempJobData = {
+          companyId: userProfile.companyId,
+          title, description, priority, requiredSkills, customerName, customerEmail, customerPhone,
+          location: { latitude: latitude ?? 0, longitude: longitude ?? 0, address: locationAddress },
+          scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
+          status: 'Draft' as const,
+          createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+      };
+      const newJobRef = await addDoc(collection(db, `artifacts/${appId}/public/data/jobs`), tempJobData);
+      jobIdToUse = newJobRef.id;
+      // We'll need a way to pass this new job object back up to the parent to avoid a full reload
+      if (onJobAddedOrUpdated) {
+        onJobAddedOrUpdated({ ...tempJobData, id: jobIdToUse, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Job, null);
+      }
+    }
+    
+    if (!jobIdToUse) {
+      setIsGeneratingLink(false);
+      return;
+    }
+
     const result = await generateTriageLinkAction({
-        jobId: job.id,
+        jobId: jobIdToUse,
         companyId: userProfile.companyId,
         appId,
         customerName: customerName || "Valued Customer",
         jobTitle: title || "Your Service",
     });
+
     if (result.error) {
       toast({ title: "Error", description: result.error, variant: "destructive" });
     } else if (result.data?.message) {
@@ -643,8 +681,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                  
                 </div>
                 <div className="space-y-4">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                   <div>
                         <div className="flex items-center gap-1.5 mb-1">
                             <Label htmlFor="jobPriority">Job Priority *</Label>
                             <TooltipProvider>
@@ -673,25 +710,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </SelectContent>
                       </Select>
                     </div>
-                    {job && (
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <Label htmlFor="jobStatus">Status</Label>
-                          <Select 
-                              value={status} 
-                              onValueChange={(value: JobStatus) => setStatus(value)}
-                          >
-                            <SelectTrigger id="jobStatus">
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s === 'Pending' ? 'Unassigned' : s}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    )}
-                  </div>
                   <div>
                     <Label>Schedule Time</Label>
                     <div className="flex gap-2">
@@ -820,47 +838,62 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           )}
                       </div>
                   </div>
-                  
                   {job && (
-                    <div className="space-y-2 rounded-md border p-4">
-                      <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze. The uploaded pictures and AI diagnosis will appear here.</p>
-                            </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-
-                      {job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide ? (
-                        <div className="text-sm space-y-2">
-                           <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
-                           <p><strong>Suggested Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
-                           <div>
-                             <p><strong>AI Repair Guide:</strong></p>
-                             <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
-                           </div>
-                        </div>
-                      ) : triageMessage ? (
-                        <div className="space-y-2">
-                           <Label htmlFor="triage-link">Customer Message</Label>
-                            <Textarea id="triage-message" readOnly value={triageMessage} rows={4} className="bg-secondary/50"/>
-                            <Button size="sm" type="button" onClick={handleCopyToClipboard} className="h-9">
-                                {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                                Copy Message
-                            </Button>
-                            <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
-                        </div>
-                      ) : (
-                        <Button type="button" size="sm" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
-                           {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
-                           Request Photos
-                        </Button>
-                      )}
+                    <div>
+                        <Label htmlFor="jobStatus">Status</Label>
+                        <Select 
+                            value={status} 
+                            onValueChange={(value: JobStatus) => setStatus(value)}
+                        >
+                        <SelectTrigger id="jobStatus">
+                            <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s === 'Pending' ? 'Unassigned' : s}</SelectItem>)}
+                        </SelectContent>
+                        </Select>
                     </div>
                   )}
+                  
+                  <div className="space-y-2 rounded-md border p-4">
+                    <TooltipProvider>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze. The uploaded pictures and AI diagnosis will appear here.</p>
+                          </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    {job && (job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide) ? (
+                      <div className="text-sm space-y-2">
+                          <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
+                          <p><strong>Suggested Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
+                          <div>
+                            <p><strong>AI Repair Guide:</strong></p>
+                            <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
+                          </div>
+                      </div>
+                    ) : triageMessage ? (
+                      <div className="space-y-2">
+                          <Label htmlFor="triage-link">Customer Message</Label>
+                          <Textarea id="triage-message" readOnly value={triageMessage} rows={4} className="bg-secondary/50"/>
+                          <Button size="sm" type="button" onClick={handleCopyToClipboard} className="h-9">
+                              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+                              Copy Message
+                          </Button>
+                          <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
+                      </div>
+                    ) : (
+                      <Button type="button" size="sm" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
+                          {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
+                          Request Photos
+                      </Button>
+                    )}
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -933,3 +966,4 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+

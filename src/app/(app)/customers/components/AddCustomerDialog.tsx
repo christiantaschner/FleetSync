@@ -4,7 +4,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { addCustomerAction } from '@/actions/customer-actions';
 import { AddCustomerInputSchema, type CustomerData } from '@/types';
+import type { AddCustomerInput } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, UserPlus, Save } from 'lucide-react';
 import { db } from '@/lib/firebase';
@@ -31,9 +31,8 @@ interface AddCustomerDialogProps {
   customerToEdit?: CustomerData | null;
 }
 
-// Omitting companyId and appId from the form values, as they come from context
-const FormSchema = AddCustomerInputSchema.omit({ companyId: true, appId: true });
-type AddCustomerFormValues = z.infer<typeof FormSchema>;
+// Re-using the full schema and letting the form handle the relevant parts
+type AddCustomerFormValues = Omit<AddCustomerInput, 'companyId' | 'appId'>;
 
 
 const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded, customerToEdit }) => {
@@ -44,7 +43,7 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AddCustomerFormValues>({
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(AddCustomerInputSchema.omit({ companyId: true, appId: true })),
     defaultValues: {
       name: '',
       phone: '',
@@ -155,3 +154,4 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
 };
 
 export default AddCustomerDialog;
+

@@ -77,8 +77,8 @@ function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
       { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
-      { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'], divider: true },
-      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
+      { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'], divider: true },
       { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
   ];
 
@@ -267,14 +267,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
           <SidebarRail />
         </Sidebar>
-        <SidebarInset>
+        <div className="flex flex-col flex-1">
           <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-primary px-4 text-primary-foreground md:hidden">
             <SidebarTrigger />
             <Logo className="absolute left-1/2 -translate-x-1/2"/>
           </header>
-          <main className="flex-1 overflow-x-hidden">
-             {isMockMode && <MockModeBanner />}
-            <div className="p-4 sm:p-6 lg:p-8">
+          {isMockMode && <MockModeBanner />}
+          <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6 mx-4 sm:mx-0">
                       <CreditCard className="h-4 w-4" />
@@ -304,9 +303,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               ) : null}
               
               {children}
-            </div>
           </main>
-        </SidebarInset>
+        </div>
       </SidebarProvider>
   );
 }

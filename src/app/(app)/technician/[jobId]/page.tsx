@@ -50,7 +50,7 @@ export default function TechnicianJobDetailPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
-    if (!jobId || !user || authLoading) { // Wait for user and auth state to be loaded
+    if (!jobId || authLoading) { 
       return;
     }
 
@@ -66,7 +66,7 @@ export default function TechnicianJobDetailPage() {
         return;
     }
 
-    if (!db || !appId) return;
+    if (!db || !appId || !user) return;
     
     setIsLoading(true);
     
@@ -75,39 +75,40 @@ export default function TechnicianJobDetailPage() {
         const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
         const jobDocSnap = await getDoc(jobDocRef);
 
-        if (jobDocSnap.exists()) {
-          const jobData = jobDocSnap.data();
-          for (const key in jobData) {
-              if (jobData[key] && typeof jobData[key].toDate === 'function') {
-                  jobData[key] = jobData[key].toDate().toISOString();
-              }
-          }
-          const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
-          
-          if (!fetchedJob.assignedTechnicianId) {
-            router.push('/dashboard');
+        if (!jobDocSnap.exists()) {
+            setJob(null);
             setIsLoading(false);
             return;
-          }
+        }
 
-          const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
-          const techDocSnap = await getDoc(techDocRef);
-          
-          if (!techDocSnap.exists()) {
-             setTechnician(null);
-          } else {
-            const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
-            setTechnician(fetchedTechnician);
-          }
-
-          setJob(fetchedJob);
-          
-          if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
+        const jobData = jobDocSnap.data();
+        for (const key in jobData) {
+            if (jobData[key] && typeof jobData[key].toDate === 'function') {
+                jobData[key] = jobData[key].toDate().toISOString();
+            }
+        }
+        const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
+        setJob(fetchedJob);
+        if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
             setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
-          }
-          
-           // Fetch customer history
-          if (fetchedJob.customerPhone) {
+        }
+
+        if (fetchedJob.assignedTechnicianId) {
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
+            const techDocSnap = await getDoc(techDocRef);
+            if (techDocSnap.exists()) {
+                const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
+                setTechnician(fetchedTechnician);
+            } else {
+                setTechnician(null);
+            }
+        } else {
+            setTechnician(null);
+            router.push('/dashboard');
+            return;
+        }
+
+        if (fetchedJob.customerPhone) {
             const historyQuery = query(
                 collection(db, `artifacts/${appId}/public/data/jobs`),
                 where("companyId", "==", fetchedJob.companyId),
@@ -120,7 +121,7 @@ export default function TechnicianJobDetailPage() {
             const historySnapshot = await getDocs(historyQuery);
             const pastJobs = historySnapshot.docs.map(doc => {
                 const data = doc.data();
-                 for (const key in data) {
+                    for (const key in data) {
                     if (data[key] && typeof data[key].toDate === 'function') {
                         data[key] = data[key].toDate().toISOString();
                     }
@@ -128,11 +129,8 @@ export default function TechnicianJobDetailPage() {
                 return { id: doc.id, ...data } as Job;
             });
             setHistoryJobs(pastJobs);
-          }
-
-        } else {
-          setJob(null);
         }
+
       } catch (error) {
         console.error("Error fetching job details:", error);
       } finally {

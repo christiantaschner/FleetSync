@@ -80,7 +80,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
+          <CardTitle className={cn("text-lg font-headline flex items-center gap-2 truncate", 
             isHighPriorityPending && "text-destructive",
             isMediumOrLowPriorityPending && "text-amber-900",
             isDraft && "text-gray-600"
@@ -144,7 +144,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2 border-t pt-3 pb-3">
+      <CardFooter className="flex flex-col sm:flex-row justify-end gap-2 border-t pt-3 pb-3">
          {isUnassigned && (
             <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
                 <Bot className="mr-1 h-3 w-3" /> Fleety Assign

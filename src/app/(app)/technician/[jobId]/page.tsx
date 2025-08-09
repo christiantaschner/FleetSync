@@ -45,7 +45,7 @@ export default function TechnicianJobDetailPage() {
   const [reasonForFollowUp, setReasonForFollowUp] = useState('');
 
   const isBreakActive = job?.status === 'In Progress' && job.breaks?.some(b => !b.end);
-  const backUrl = job?.assignedTechnicianId ? `/technician/jobs/${job.assignedTechnicianId}` : '/dashboard';
+  const backUrl = job?.assignedTechnicianId && user?.uid === job.assignedTechnicianId ? `/technician/jobs/${job.assignedTechnicianId}` : '/dashboard';
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -54,93 +54,95 @@ export default function TechnicianJobDetailPage() {
       return;
     }
 
-    if (isMockMode) {
-        const foundJob = mockJobs.find(j => j.id === jobId) || null;
-        setJob(foundJob);
-        if (foundJob?.assignedTechnicianId) {
-            setTechnician(mockTechnicians.find(t => t.id === foundJob.assignedTechnicianId) || null);
-            const pastJobs = mockJobs.filter(j => j.customerPhone === foundJob.customerPhone && j.status === 'Completed' && j.id !== jobId);
-            setHistoryJobs(pastJobs);
-        } else {
-          setTechnician(null);
-        }
-        setIsLoading(false);
-        return;
-    }
+    const fetchJobData = async () => {
+      setIsLoading(true);
+      
+      let fetchedJob: Job | null = null;
+      let pastJobs: Job[] = [];
 
-    if (!db || !appId) return;
-    
-    setIsLoading(true);
-    
-    const fetchJobAndTechnician = async () => {
-      try {
+      if (isMockMode) {
+          fetchedJob = mockJobs.find(j => j.id === jobId) || null;
+          if (fetchedJob?.customerPhone) {
+            pastJobs = mockJobs.filter(j => j.customerPhone === fetchedJob!.customerPhone && j.status === 'Completed' && j.id !== jobId);
+          }
+      } else {
+        if (!db || !appId) {
+            setIsLoading(false);
+            return;
+        };
         const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
         const jobDocSnap = await getDoc(jobDocRef);
+        if (jobDocSnap.exists()) {
+            const data = jobDocSnap.data();
+            for (const key in data) {
+                if (data[key] && typeof data[key].toDate === 'function') {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            }
+            fetchedJob = { id: jobDocSnap.id, ...data } as Job;
 
-        if (!jobDocSnap.exists()) {
-            setJob(null);
-            setIsLoading(false);
+            if (fetchedJob.customerPhone) {
+                const historyQuery = query(
+                    collection(db, `artifacts/${appId}/public/data/jobs`),
+                    where("companyId", "==", fetchedJob.companyId),
+                    where("customerPhone", "==", fetchedJob.customerPhone),
+                    where("status", "==", "Completed"),
+                    where("createdAt", "<", fetchedJob.createdAt),
+                    orderBy("createdAt", "desc"),
+                    limit(3)
+                );
+                const historySnapshot = await getDocs(historyQuery);
+                pastJobs = historySnapshot.docs.map(doc => {
+                    const data = doc.data();
+                    for (const key in data) {
+                        if (data[key] && typeof data[key].toDate === 'function') {
+                            data[key] = data[key].toDate().toISOString();
+                        }
+                    }
+                    return { id: doc.id, ...data } as Job;
+                });
+            }
+        }
+      }
+      
+      setJob(fetchedJob);
+      setHistoryJobs(pastJobs);
+      if (typeof fetchedJob?.isFirstTimeFix === 'boolean') {
+          setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
+      }
+      setIsLoading(false);
+    };
+
+    fetchJobData();
+  }, [jobId, user, authLoading, isMockMode, appId]);
+
+  useEffect(() => {
+    const fetchTechnicianData = async () => {
+        if (!job || !job.assignedTechnicianId) {
+            setTechnician(null);
             return;
         }
 
-        const jobData = jobDocSnap.data();
-        for (const key in jobData) {
-            if (jobData[key] && typeof jobData[key].toDate === 'function') {
-                jobData[key] = jobData[key].toDate().toISOString();
-            }
+        if (isMockMode) {
+            setTechnician(mockTechnicians.find(t => t.id === job.assignedTechnicianId) || null);
+            return;
         }
-        const fetchedJob = { id: jobDocSnap.id, ...jobData } as Job;
-        setJob(fetchedJob);
-        if (typeof fetchedJob.isFirstTimeFix === 'boolean') {
-            setIsFirstTimeFix(fetchedJob.isFirstTimeFix);
-        }
-
-        if (fetchedJob.assignedTechnicianId) {
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
-            const techDocSnap = await getDoc(techDocRef);
-            if (techDocSnap.exists()) {
-                const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
-                setTechnician(fetchedTechnician);
-            } else {
-                setTechnician(null);
-            }
+        
+        if (!db || !appId) return;
+        
+        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+        const techDocSnap = await getDoc(techDocRef);
+        if (techDocSnap.exists()) {
+            const fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
+            setTechnician(fetchedTechnician);
         } else {
             setTechnician(null);
-            // This condition is handled in the UI, no need to redirect here if job is unassigned.
         }
-
-        if (fetchedJob.customerPhone) {
-            const historyQuery = query(
-                collection(db, `artifacts/${appId}/public/data/jobs`),
-                where("companyId", "==", fetchedJob.companyId),
-                where("customerPhone", "==", fetchedJob.customerPhone),
-                where("status", "==", "Completed"),
-                where("createdAt", "<", fetchedJob.createdAt),
-                orderBy("createdAt", "desc"),
-                limit(3)
-            );
-            const historySnapshot = await getDocs(historyQuery);
-            const pastJobs = historySnapshot.docs.map(doc => {
-                const data = doc.data();
-                    for (const key in data) {
-                    if (data[key] && typeof data[key].toDate === 'function') {
-                        data[key] = data[key].toDate().toISOString();
-                    }
-                }
-                return { id: doc.id, ...data } as Job;
-            });
-            setHistoryJobs(pastJobs);
-        }
-
-      } catch (error) {
-        console.error("Error fetching job details:", error);
-      } finally {
-        setIsLoading(false);
-      }
     };
+    
+    fetchTechnicianData();
 
-    fetchJobAndTechnician();
-  }, [jobId, router, user, appId, authLoading, isMockMode]);
+  }, [job, isMockMode, appId]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (!job || !db || isUpdating || !technician || !appId) return;
@@ -467,24 +469,7 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
-  // Modified this check to be more robust. The error occurs when the technician is `null` even if the job is loaded.
-  if (!technician) {
-     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
-        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-xl font-semibold">Technician Not Found</h2>
-        <p className="text-muted-foreground mt-2">
-          The technician assigned to this job could not be loaded.
-        </p>
-        <Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
-        </Button>
-      </div>
-    );
-  }
-
   const allPhotos = [...(job.photos || []), ...(job.triageImages || [])];
-
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
@@ -512,9 +497,8 @@ export default function TechnicianJobDetailPage() {
       <JobDetailsDisplay job={job} />
       
       <CustomerHistoryCard jobs={historyJobs} />
-
-      {/* Conditionally render all action cards based on if it's the technician's own view */}
-      {isViewingOwnPage && (
+      
+      {isViewingOwnPage && technician && (
         <>
           {!isJobConcluded && (
             <>
@@ -544,7 +528,7 @@ export default function TechnicianJobDetailPage() {
             </>
           )}
 
-          {job && technician && !isJobConcluded && appId && (
+          {technician && !isJobConcluded && appId && (
             <ChatCard job={job} technician={technician} appId={appId} />
           )}
 
@@ -617,7 +601,8 @@ export default function TechnicianJobDetailPage() {
           )}
         </>
       )}
-
+      
+      {/* This section is visible to everyone */}
       {allPhotos && allPhotos.length > 0 && (
         <Card>
           <CardHeader>

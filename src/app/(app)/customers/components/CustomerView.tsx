@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -16,6 +17,7 @@ import { mockCustomers } from '@/lib/mock-data';
 import AddEditJobDialog from '../../dashboard/components/AddEditJobDialog';
 import AddEditContractDialog from '../../contracts/components/AddEditContractDialog';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 
 interface CustomerViewProps {
     customers: CustomerData[];
@@ -43,6 +45,8 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
     const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
+    const { userProfile } = useAuth();
+    const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
     const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
@@ -248,9 +252,11 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                             <CardTitle>All Customers</CardTitle>
                             <CardDescription>Select a customer to view their details.</CardDescription>
                         </div>
-                        <Button variant="accent" size="sm" onClick={handleAddCustomer}>
-                            <UserPlus className="mr-2 h-4 w-4" /> Add
-                        </Button>
+                        {isAdmin && (
+                            <Button variant="accent" size="sm" onClick={handleAddCustomer}>
+                                <UserPlus className="mr-2 h-4 w-4" /> Add
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-4">
@@ -293,16 +299,20 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                         <p className="flex items-center gap-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={handleEditCustomer} disabled={!selectedCustomer.isReal}>
-                                    <Edit className="mr-2 h-4 w-4" /> Edit Customer
-                                </Button>
+                                {isAdmin && (
+                                    <Button variant="outline" size="sm" onClick={handleEditCustomer} disabled={!selectedCustomer.isReal}>
+                                        <Edit className="mr-2 h-4 w-4" /> Edit Customer
+                                    </Button>
+                                )}
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div>
                                <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-lg font-semibold flex items-center gap-2"><Repeat/>Service Contracts ({selectedCustomerData.contracts.length})</h3>
+                                {isAdmin && (
                                 <Button variant="outline" size="sm" onClick={handleAddNewContract}><PlusCircle className="mr-2 h-4 w-4" /> Add Contract</Button>
+                                )}
                                </div>
                                 <ScrollArea className="h-40 border rounded-md p-2">
                                     <div className="space-y-3 p-2">
@@ -325,7 +335,9 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                            <div>
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="text-lg font-semibold flex items-center gap-2"><Briefcase/>Job History ({selectedCustomerData.jobs.length})</h3>
-                                    <Button variant="outline" size="sm" onClick={handleAddNewJob}><PlusCircle className="mr-2 h-4 w-4" /> Add Job</Button>
+                                    {isAdmin && (
+                                        <Button variant="outline" size="sm" onClick={handleAddNewJob}><PlusCircle className="mr-2 h-4 w-4" /> Add Job</Button>
+                                    )}
                                </div>
                                <ScrollArea className="h-[40vh] border rounded-md p-2">
                                     <div className="space-y-3 p-2">
@@ -358,4 +370,3 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
         </div>
     );
 }
-

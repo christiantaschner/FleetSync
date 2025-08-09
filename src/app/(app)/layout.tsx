@@ -60,48 +60,38 @@ import { differenceInDays } from 'date-fns';
 import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MockModeBanner } from "@/components/common/MockModeBanner";
+import { UserProfile } from "@/types";
 
 type NavItem = {
-  href?: string;
+  href: string;
   label: string;
   icon: React.ElementType;
-  badge?: number;
-  isSeparator?: boolean;
-  roles?: ('admin' | 'superAdmin' | 'technician' | 'csr')[]; // Roles that can see this item
+  badge?: () => number;
+  roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
 };
 
 const allNavItems: NavItem[] = [
-  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
+  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
   { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
-  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'], badge: () => useAuth().contractsDueCount },
   { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-  { isSeparator: true, label: 'sep1' },
-  { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
-  { isSeparator: true, label: 'sep2' },
+  { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['technician'] },
   { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
   { href: "/settings", label: 'settings', icon: Settings, roles: ['admin', 'superAdmin'] },
 ];
+
+function getNavItemsForRole(role: UserProfile['role']) {
+    if (!role) return [];
+    return allNavItems.filter(item => item.roles.includes(role));
+};
+
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
-
-  const getNavItemsForRole = (role: UserProfile['role']) => {
-    // This is the critical check. If userProfile isn't loaded, don't try to build the menu.
-    if (!role) return [];
-    
-    return allNavItems.filter(item => {
-      // If roles are not defined, it's visible to everyone
-      if (!item.roles) {
-        return true;
-      }
-      // Otherwise, check if the user's role is in the item's roles array
-      return item.roles.includes(role);
-    });
-  };
+  const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode } = useAuth();
 
   const navItems = getNavItemsForRole(userProfile?.role);
   
@@ -201,16 +191,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item, index) => {
-                 if (item.isSeparator) {
-                    return <SidebarSeparator key={`sep-${index}`} className="my-1" />;
-                 }
                  const isActive = item.href === '/dashboard' 
                     ? pathname === '/dashboard' && !searchParams.get('view')
                     : item.href && pathname.startsWith(item.href);
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  
-                 const badgeCount = item.label === 'contracts' ? contractsDueCount : item.badge;
+                 const badgeCount = item.badge ? item.badge() : 0;
 
                  return (
                     <SidebarMenuItem key={item.label}>

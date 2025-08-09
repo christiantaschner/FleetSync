@@ -19,6 +19,7 @@ import { Loader2, UserCheck, Bot } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface SmartJobAllocationDialogProps {
   jobToAssign: Job | null; 
@@ -42,6 +43,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isLoadingAssign, setIsLoadingAssign] = useState(false);
   const [suggestedTechnician, setSuggestedTechnician] = useState<AllocateJobOutput | null>(null);
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | null>(null);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -86,11 +88,12 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         setIsLoadingAI(false);
 
         if (result.error) {
-        toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
+            toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
         } else if (result.data) {
-        const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
-        toast({ title: "AI Suggestion Received", description: `Fleety suggests ${tech?.name || 'a technician'}.` });
-        setSuggestedTechnician(result.data);
+            const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
+            toast({ title: "AI Suggestion Received", description: `Fleety suggests ${tech?.name || 'a technician'}.` });
+            setSuggestedTechnician(result.data);
+            setSelectedTechnicianId(result.data.suggestedTechnicianId);
         }
     };
     
@@ -99,24 +102,27 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
     }
     if(!isOpen) {
         setSuggestedTechnician(null); 
+        setSelectedTechnicianId(null);
     }
   }, [isOpen, jobToAssign, technicians, jobs, company, suggestedTechnician, isLoadingAI, toast, appId]);
 
 
   const handleConfirmAssignJob = async () => {
-    if (!suggestedTechnician || !db || !jobToAssign || !appId) return;
+    if (!selectedTechnicianId || !db || !jobToAssign || !appId) return;
 
     setIsLoadingAssign(true);
 
-    const assignedTechDetails = technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId);
+    const assignedTechDetails = technicians.find(t => t.id === selectedTechnicianId);
     if (!assignedTechDetails) {
-        toast({ title: "Error", description: "Suggested technician details not found.", variant: "destructive" });
+        toast({ title: "Error", description: "Selected technician details not found.", variant: "destructive" });
         setIsLoadingAssign(false);
         return;
     }
-    if (!assignedTechDetails.isAvailable) {
-        toast({ title: "Assignment Error", description: `${assignedTechDetails.name} is no longer available. Please get a new suggestion.`, variant: "destructive" });
-        setSuggestedTechnician(null); // Clear suggestion as it's outdated
+    
+    const wasOriginallySuggested = suggestedTechnician?.suggestedTechnicianId === selectedTechnicianId;
+
+    if (!wasOriginallySuggested && !assignedTechDetails.isAvailable) {
+        toast({ title: "Assignment Error", description: `${assignedTechDetails.name} is not available. Please select an available technician.`, variant: "destructive" });
         setIsLoadingAssign(false);
         return;
     }
@@ -125,7 +131,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
     try {
       const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobToAssign.id);
       await updateDoc(jobDocRef, {
-        assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
+        assignedTechnicianId: selectedTechnicianId,
         status: 'Assigned' as Job['status'],
         updatedAt: serverTimestamp(),
         assignedAt: serverTimestamp(),
@@ -133,13 +139,13 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       
       const updatedJob: Job = { 
         ...jobToAssign, 
-        assignedTechnicianId: suggestedTechnician.suggestedTechnicianId,
+        assignedTechnicianId: selectedTechnicianId,
         status: 'Assigned',
         updatedAt: new Date().toISOString(),
         assignedAt: new Date().toISOString(),
       };
 
-      const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestedTechnician.suggestedTechnicianId);
+      const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, selectedTechnicianId);
       await updateDoc(techDocRef, {
         isAvailable: false,
         currentJobId: jobToAssign.id,
@@ -184,9 +190,26 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
 
         {suggestedTechnician && (
           <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2 border">
-            <h3 className="text-lg font-semibold">Fleety's Suggestion:</h3>
-            <p>Assign to: <strong>{technicians.find(t => t.id === suggestedTechnician.suggestedTechnicianId)?.name || 'Unknown'}</strong></p>
-            <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestedTechnician.reasoning}</em></p>
+            <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Fleety's Suggestion:</h3>
+            <p className="text-sm text-muted-foreground italic">"{suggestedTechnician.reasoning}"</p>
+            <div className="space-y-1 pt-2">
+                <Label htmlFor="technician-override">Assign To</Label>
+                <Select value={selectedTechnicianId || ''} onValueChange={setSelectedTechnicianId}>
+                    <SelectTrigger id="technician-override">
+                        <SelectValue placeholder="Select a technician" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {technicians.map(tech => (
+                            <SelectItem key={tech.id} value={tech.id}>
+                                <div className="flex items-center gap-2">
+                                    {tech.id === suggestedTechnician.suggestedTechnicianId && <Bot className="h-4 w-4 text-blue-600" />}
+                                    {tech.name}
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
           </div>
         )}
         
@@ -203,7 +226,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             <Button 
               onClick={handleConfirmAssignJob} 
               variant="default" 
-              disabled={isLoadingAssign || !suggestedTechnician?.suggestedTechnicianId}
+              disabled={isLoadingAssign || isLoadingAI || !selectedTechnicianId}
             >
               {isLoadingAssign ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
               Confirm & Assign Job

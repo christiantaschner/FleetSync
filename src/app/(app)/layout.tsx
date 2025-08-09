@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -69,24 +70,26 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
   const getNavItemsForRole = () => {
-    let items = [];
+    const navItems = [];
+    const role = userProfile?.role;
+    const isTechnician = role === 'technician';
+    const isAdmin = role === 'admin' || role === 'superAdmin';
 
-    if (userProfile?.role === 'technician') {
-      return [{ href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone }];
+    if (isTechnician) {
+      navItems.push({ href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone });
+      return navItems;
     }
-    
-    // Base items for all non-technician roles
-    items.push(
-      { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-      { href: "/customers", label: t('customers'), icon: ClipboardList },
-      { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
-      { href: "/reports", label: t('reports'), icon: BarChart }
-    );
-    
-    const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
+    // Common items for Admin & SuperAdmin
     if (isAdmin) {
-      items.push(
+      navItems.push(
+        { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+        { href: "/customers", label: t('customers'), icon: ClipboardList },
+        { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
+        { href: "/reports", label: t('reports'), icon: BarChart }
+      );
+      
+      navItems.push(
         { isSeparator: true },
         { href: "/technician", label: t('technician_view'), icon: Smartphone },
         { isSeparator: true }
@@ -94,16 +97,16 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     }
     
     // SuperAdmin specific items
-    if (userProfile?.role === 'superAdmin') {
-      items.push({ href: "/roadmap", label: "Roadmap", icon: ListChecks });
+    if (role === 'superAdmin') {
+      navItems.push({ href: "/roadmap", label: "Roadmap", icon: ListChecks });
     }
     
     // Settings for both admin and superAdmin
     if (isAdmin) {
-        items.push({ href: "/settings", label: t('settings'), icon: Settings });
+        navItems.push({ href: "/settings", label: t('settings'), icon: Settings });
     }
     
-    return items;
+    return navItems;
   };
 
   React.useEffect(() => {
@@ -321,4 +324,3 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return <MainAppLayout>{children}</MainAppLayout>;
 }
-

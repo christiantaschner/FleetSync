@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -561,7 +562,7 @@ export default function DashboardPage() {
   const openTasksCount = useMemo(() => {
     return jobs.filter(job => 
         openTasksFilter.includes(job.status) || 
-        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || j.status === 'Draft'))
+        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
     ).length;
   }, [jobs]);
 
@@ -1157,7 +1158,7 @@ export default function DashboardPage() {
 
         <TabsContent value="job-list" className="mt-4">
           <Card>
-            <CardHeader className="flex flex-col sm:flex-row justify-between items-start gap-2">
+            <CardHeader className="flex flex-col sm:flex-row justify-between items-center gap-2">
                 <div>
                     <CardTitle>{t('current_jobs')}</CardTitle>
                     <CardDescription>{t('current_jobs_desc')}</CardDescription>
@@ -1181,11 +1182,10 @@ export default function DashboardPage() {
                 </TooltipProvider>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-                    <div className="relative md:col-span-1 self-end">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-end">
+                  <div className="relative md:col-span-1">
                       <Label htmlFor="job-search">Search</Label>
-                      <Search className="absolute left-2.5 top-8 h-4 w-4 text-muted-foreground" />
+                      <Search className="absolute left-2.5 bottom-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
                         id="job-search"
                         placeholder="Search jobs..."
@@ -1193,8 +1193,8 @@ export default function DashboardPage() {
                         onChange={(e) => setJobSearchTerm(e.target.value)}
                         className="pl-8"
                       />
-                    </div>
-                    <div className="space-y-1">
+                  </div>
+                  <div className="space-y-1">
                       <Label htmlFor="status-filter">{t('status')}</Label>
                        <MultiSelectFilter
                         options={statusOptions}
@@ -1203,8 +1203,8 @@ export default function DashboardPage() {
                         placeholder="Filter by Status"
                         disabled={showOpenTasksOnly}
                       />
-                    </div>
-                    <div className="space-y-1">
+                  </div>
+                  <div className="space-y-1">
                       <Label htmlFor="priority-filter">{t('priority')}</Label>
                        <MultiSelectFilter
                         options={priorityOptions}
@@ -1213,8 +1213,8 @@ export default function DashboardPage() {
                         placeholder="Filter by Priority"
                         disabled={showOpenTasksOnly}
                       />
-                    </div>
-                    <div className="space-y-1">
+                  </div>
+                  <div className="space-y-1">
                       <Label htmlFor="sort-order">{t('sort_by')}</Label>
                       <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
                         <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
@@ -1226,17 +1226,16 @@ export default function DashboardPage() {
                           <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                </div>
-                 <Button 
-                      variant="accent" 
-                      onClick={handleBatchAIAssign} 
-                      disabled={pendingJobsCount === 0 || isBatchLoading}
-                      className="w-full md:w-auto"
-                    >
-                      {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                      Fleety Batch Assign
-                    </Button>
+                  </div>
+                   <Button 
+                        variant="accent" 
+                        onClick={handleBatchAIAssign} 
+                        disabled={pendingJobsCount === 0 || isBatchLoading}
+                        className="w-full md:w-auto"
+                      >
+                        {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                        Fleety Batch Assign
+                      </Button>
               </div>
               <div className="space-y-4">
                 {sortedJobs.length > 0 ? (
@@ -1343,4 +1342,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

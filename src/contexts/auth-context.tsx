@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { User } from "firebase/auth";
@@ -342,4 +343,3 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
-

@@ -16,6 +16,7 @@ import AddCustomerDialog from './AddCustomerDialog';
 import { mockCustomers } from '@/lib/mock-data';
 import AddEditJobDialog from '../../dashboard/components/AddEditJobDialog';
 import AddEditContractDialog from '../../contracts/components/AddEditContractDialog';
+import { useRouter } from 'next/navigation';
 
 interface CustomerViewProps {
     customers: CustomerData[];
@@ -48,6 +49,8 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
     const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
 
     const [isAddContractOpen, setIsAddContractOpen] = useState(false);
+    const [prefilledContract, setPrefilledContract] = useState<Partial<Contract> | null>(null);
+    const router = useRouter();
 
     const customers = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ? mockCustomers : initialCustomers;
 
@@ -164,14 +167,6 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
         };
     }, [selectedCustomer, jobs, contracts]);
     
-    const prefilledContract = useMemo(() => {
-      if (!selectedCustomer) return null;
-      return {
-        customerName: selectedCustomer.name,
-        customerPhone: selectedCustomer.phone === 'N/A' ? '' : selectedCustomer.phone,
-        customerAddress: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
-      } as Partial<Contract>;
-    }, [selectedCustomer]);
     
     const handleEditCustomer = () => {
         if (!selectedCustomer?.isReal) {
@@ -210,6 +205,16 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
       setSelectedJobForEdit(prefilledJob as Job);
       setIsAddJobOpen(true);
     };
+    
+    const handleAddNewContract = () => {
+      if (!selectedCustomer) return;
+      setPrefilledContract({
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone === 'N/A' ? '' : selectedCustomer.phone,
+        customerAddress: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
+      });
+      setIsAddContractOpen(true);
+    };
 
 
     return (
@@ -234,7 +239,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
             <AddEditContractDialog
                 isOpen={isAddContractOpen}
                 onClose={() => setIsAddContractOpen(false)}
-                contract={prefilledContract as Contract}
+                contract={prefilledContract as Contract | null}
                 onContractUpdated={onCustomerAdded}
             />
             <Card className="lg:col-span-1">
@@ -298,15 +303,13 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                             <div>
                                <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-lg font-semibold flex items-center gap-2"><Repeat/>Service Contracts ({selectedCustomerData.contracts.length})</h3>
-                                <Button variant="outline" size="sm" onClick={() => setIsAddContractOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Contract</Button>
+                                <Button variant="outline" size="sm" onClick={handleAddNewContract}><PlusCircle className="mr-2 h-4 w-4" /> Add Contract</Button>
                                </div>
                                 <ScrollArea className="h-40 border rounded-md p-2">
                                     <div className="space-y-3 p-2">
                                     {selectedCustomerData.contracts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No active contracts.</p>}
                                     {selectedCustomerData.contracts.map(contract => (
-                                        <button onClick={() => {
-                                            router.push(`/contracts?contract=${contract.id}`)
-                                        }} key={contract.id} className="w-full text-left block p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
+                                        <button onClick={() => router.push(`/contracts?contract=${contract.id}`)} key={contract.id} className="w-full text-left block p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
                                             <div className="flex justify-between items-start">
                                                 <p className="font-semibold text-sm">{contract.jobTemplate.title}</p>
                                                 <Badge variant={contract.isActive ? "secondary" : "destructive"}>

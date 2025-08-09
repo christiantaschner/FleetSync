@@ -45,7 +45,7 @@ const MOCK_ADMIN_PROFILE: UserProfile = {
   uid: 'mock_admin_id',
   email: 'admin@mock.com',
   companyId: 'mock_company_123',
-  role: 'admin',
+  role: 'superAdmin',
   onboardingStatus: 'completed',
 };
 const MOCK_ONBOARDING_PROFILE: UserProfile = {

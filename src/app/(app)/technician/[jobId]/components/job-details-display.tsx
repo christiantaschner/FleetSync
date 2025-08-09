@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { Job } from '@/types';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface JobDetailsDisplayProps {
   job: Job;
@@ -56,7 +57,9 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
           <h3 className="text-sm font-semibold mb-2 text-muted-foreground flex items-center gap-1"><MapPin/>Location &amp; Customer</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="font-medium text-foreground">{job.customerName}</p>
+               <Link href={`/customers?search=${encodeURIComponent(job.customerName)}`} className="font-medium text-foreground hover:underline hover:text-primary transition-colors">
+                {job.customerName}
+              </Link>
               <p className="text-muted-foreground">{job.location.address || `Lat: ${job.location.latitude.toFixed(4)}, Lon: ${job.location.longitude.toFixed(4)}`}</p>
             </div>
             <div>

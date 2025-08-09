@@ -198,7 +198,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                             </SidebarMenuButton>
                         </Link>
                         </SidebarMenuItem>
-                        {item.label === 'roadmap' && <SidebarSeparator />}
+                        {(item.label === 'Roadmap') && <SidebarSeparator />}
                     </React.Fragment>
                 );
               })}
@@ -267,14 +267,12 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-start border-b border-border bg-background px-4 md:hidden">
             <SidebarTrigger />
-            <div className="flex-1 text-center"><Logo /></div>
-            <div className="w-7"/>
           </header>
           <main className="flex-1 overflow-x-hidden">
             {isMockMode && <MockModeBanner />}
-            <div className="p-4 md:p-6 lg:p-8">
+            <div className="p-4 sm:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6">
                       <CreditCard className="h-4 w-4" />

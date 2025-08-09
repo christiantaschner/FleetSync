@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import type { Job, Contract, CustomerData, Customer } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ interface CustomerViewProps {
     contracts: Contract[];
     allSkills: string[];
     onCustomerAdded: () => void;
+    initialSearchTerm?: string;
 }
 
 interface DisplayCustomer {
@@ -39,8 +40,8 @@ interface DisplayCustomer {
     isReal: boolean; // Flag to identify if it's from customers collection
 }
 
-export default function CustomerView({ customers: initialCustomers, jobs, contracts, allSkills, onCustomerAdded }: CustomerViewProps) {
-    const [searchTerm, setSearchTerm] = useState('');
+export default function CustomerView({ customers: initialCustomers, jobs, contracts, allSkills, onCustomerAdded, initialSearchTerm = '' }: CustomerViewProps) {
+    const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
@@ -149,6 +150,14 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
             c.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [processedCustomers, searchTerm]);
+
+    useEffect(() => {
+        if (initialSearchTerm && filteredCustomers.length > 0) {
+            const match = filteredCustomers.find(c => c.name.toLowerCase() === initialSearchTerm.toLowerCase());
+            setSelectedCustomer(match || filteredCustomers[0]);
+        }
+    }, [initialSearchTerm, filteredCustomers]);
+
 
     const selectedCustomerData = useMemo(() => {
         if (!selectedCustomer) return null;

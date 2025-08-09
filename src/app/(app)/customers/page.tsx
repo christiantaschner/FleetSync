@@ -11,9 +11,11 @@ import { useAuth } from '@/contexts/auth-context';
 import { mockJobs, mockContracts, mockEquipment, mockCustomers } from '@/lib/mock-data';
 import { getSkillsAction } from '@/actions/skill-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
+import { useSearchParams } from 'next/navigation';
 
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
+    const searchParams = useSearchParams();
     const [jobs, setJobs] = useState<Job[]>([]);
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -21,6 +23,14 @@ export default function CustomersPage() {
     const [allSkills, setAllSkills] = useState<Skill[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        const urlSearchTerm = searchParams.get('search');
+        if(urlSearchTerm) {
+            setSearchTerm(urlSearchTerm);
+        }
+    }, [searchParams]);
 
     const fetchData = useCallback(() => {
         if (authLoading) {
@@ -156,5 +166,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} />;
+    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} initialSearchTerm={searchTerm} />;
 }

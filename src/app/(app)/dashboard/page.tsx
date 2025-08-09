@@ -1094,7 +1094,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
@@ -1184,54 +1184,54 @@ export default function DashboardPage() {
                 </div>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
-                  <div className="md:col-span-2 space-y-1">
-                      <Label htmlFor="job-search">Search</Label>
-                      <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            id="job-search"
-                            placeholder="Search jobs..."
-                            value={jobSearchTerm}
-                            onChange={(e) => setJobSearchTerm(e.target.value)}
-                            className="pl-8"
+                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] lg:grid-cols-5 gap-4 items-end">
+                    <div className="space-y-1 lg:col-span-2">
+                        <Label htmlFor="job-search">Search</Label>
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="job-search"
+                                placeholder="Search jobs, customers, skills..."
+                                value={jobSearchTerm}
+                                onChange={(e) => setJobSearchTerm(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <Label htmlFor="status-filter">{t('status')}</Label>
+                        <MultiSelectFilter
+                            options={statusOptions}
+                            selected={statusFilter}
+                            onChange={setStatusFilter}
+                            placeholder="Filter by Status"
+                            disabled={showOpenTasksOnly}
                         />
-                      </div>
-                  </div>
-                  <div className="space-y-1">
-                      <Label htmlFor="status-filter">{t('status')}</Label>
-                       <MultiSelectFilter
-                        options={statusOptions}
-                        selected={statusFilter}
-                        onChange={setStatusFilter}
-                        placeholder="Filter by Status"
-                        disabled={showOpenTasksOnly}
-                      />
-                  </div>
-                  <div className="space-y-1">
-                      <Label htmlFor="priority-filter">{t('priority')}</Label>
-                       <MultiSelectFilter
-                        options={priorityOptions}
-                        selected={priorityFilter}
-                        onChange={setPriorityFilter}
-                        placeholder="Filter by Priority"
-                        disabled={showOpenTasksOnly}
-                      />
-                  </div>
-                  <div className="space-y-1">
-                      <Label htmlFor="sort-order">{t('sort_by')}</Label>
-                      <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
-                        <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="status">{t('sort_by_status')}</SelectItem>
-                          <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
-                          <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
-                          <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
-                          <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                  </div>
-              </div>
+                    </div>
+                    <div className="space-y-1">
+                        <Label htmlFor="priority-filter">{t('priority')}</Label>
+                        <MultiSelectFilter
+                            options={priorityOptions}
+                            selected={priorityFilter}
+                            onChange={setPriorityFilter}
+                            placeholder="Filter by Priority"
+                            disabled={showOpenTasksOnly}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <Label htmlFor="sort-order">{t('sort_by')}</Label>
+                        <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
+                            <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
+                            <SelectContent>
+                            <SelectItem value="status">{t('sort_by_status')}</SelectItem>
+                            <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
+                            <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
+                            <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
+                            <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
               <div className="border-t pt-4">
                  <Button 
                     variant="accent" 

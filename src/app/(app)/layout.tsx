@@ -65,15 +65,14 @@ import { UserProfile } from "@/types";
 type NavItem = {
   href: string;
   label: string;
-  icon: React.ElementType;
-  badge?: () => number; 
+  icon: React.ElementType; 
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
 };
 
-function getNavItemsForRole(userProfile: UserProfile | null): Omit<NavItem, 'badge'>[] {
+function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
   if (!userProfile?.role) return [];
 
-  const allNavItems: Omit<NavItem, 'badge'>[] = [
+  const allNavItems: NavItem[] = [
       { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
@@ -82,9 +81,7 @@ function getNavItemsForRole(userProfile: UserProfile | null): Omit<NavItem, 'bad
       { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
   ];
 
-  const mainNavItems = allNavItems.filter(item => item.roles.includes(userProfile.role!));
-      
-  return mainNavItems;
+  return allNavItems.filter(item => item.roles.includes(userProfile.role!));
 };
 
 
@@ -169,17 +166,15 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
   
-  const techViewIndex = navItems.findIndex(item => item.label === 'technician_view');
-
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader>
+          <SidebarHeader className="bg-primary text-primary-foreground">
             <Logo />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item, index) => {
+              {navItems.map((item) => {
                  const isActive = item.href === '/dashboard' 
                     ? pathname === '/dashboard' && !searchParams.get('view')
                     : item.href && pathname.startsWith(item.href);
@@ -203,7 +198,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                             </SidebarMenuButton>
                         </Link>
                         </SidebarMenuItem>
-                        {item.label === 'technician_view' && <SidebarSeparator />}
+                        {item.label === 'roadmap' && <SidebarSeparator />}
                     </React.Fragment>
                 );
               })}
@@ -317,5 +312,14 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  // If in loading state, or if profile is still being determined, show loading.
+  const { loading, userProfile, user, isMockMode } = useAuth();
+  if (loading && !isMockMode) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
   return <MainAppLayout>{children}</MainAppLayout>;
 }

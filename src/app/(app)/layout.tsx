@@ -70,27 +70,28 @@ type NavItem = {
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
 };
 
-function getNavItemsForRole(userProfile: UserProfile | null, contractsDueCount: number) {
-    const allNavItems: Omit<NavItem, 'badge'>[] = [
+function getNavItemsForRole(userProfile: UserProfile, contractsDueCount: number): NavItem[] {
+  if (!userProfile?.role) return [];
+
+  const allNavItems: Omit<NavItem, 'badge'>[] = [
       { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['technician'] },
+      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
       { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
-      { href: "/settings", label: 'settings', icon: Settings, roles: ['admin', 'superAdmin'] },
-    ];
-    
-    if (!userProfile?.role) return [];
+  ];
 
-    return allNavItems
-        .filter(item => item.roles.includes(userProfile.role!))
-        .map(item => {
-            if (item.label === 'contracts') {
-                return { ...item, badge: contractsDueCount };
-            }
-            return { ...item, badge: 0 };
-        });
+  const mainNavItems = allNavItems
+      .filter(item => item.roles.includes(userProfile.role!))
+      .map(item => {
+          if (item.label === 'contracts') {
+              return { ...item, badge: contractsDueCount };
+          }
+          return { ...item, badge: 0 };
+      });
+      
+  return mainNavItems;
 };
 
 
@@ -100,16 +101,16 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
-
-  const navItems = getNavItemsForRole(userProfile, contractsDueCount);
   
-  if (loading) {
+  if (loading || !userProfile) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+
+  const navItems = getNavItemsForRole(userProfile, contractsDueCount);
   
   if (pathname === '/onboarding') {
       return <>{children}</>;
@@ -174,6 +175,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
+  
+  const techViewIndex = navItems.findIndex(item => item.label === 'technician_view');
 
   return (
       <SidebarProvider defaultOpen>
@@ -193,24 +196,43 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                  const badgeCount = item.badge || 0;
 
                  return (
-                    <SidebarMenuItem key={item.label}>
-                    <Link href={finalHref || '#'}>
-                        <SidebarMenuButton
-                        isActive={!!isActive}
-                        className="w-full justify-start"
-                        tooltip={t(item.label)}
-                        >
-                        <item.icon className="h-4 w-4" />
-                        <span>{t(item.label)}</span>
-                        {badgeCount > 0 && <SidebarMenuBadge>{badgeCount}</SidebarMenuBadge>}
-                        </SidebarMenuButton>
-                    </Link>
-                    </SidebarMenuItem>
+                    <React.Fragment key={item.label}>
+                        <SidebarMenuItem>
+                        <Link href={finalHref || '#'}>
+                            <SidebarMenuButton
+                            isActive={!!isActive}
+                            className="w-full justify-start"
+                            tooltip={t(item.label)}
+                            >
+                            <item.icon className="h-4 w-4" />
+                            <span>{t(item.label)}</span>
+                            {badgeCount > 0 && <SidebarMenuBadge>{badgeCount}</SidebarMenuBadge>}
+                            </SidebarMenuButton>
+                        </Link>
+                        </SidebarMenuItem>
+                        {item.label === 'technician_view' && <SidebarSeparator />}
+                    </React.Fragment>
                 );
               })}
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
+             {userProfile.role !== 'technician' && (
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <Link href="/settings">
+                            <SidebarMenuButton
+                                isActive={pathname.startsWith('/settings')}
+                                className="w-full justify-start"
+                                tooltip={t('settings')}
+                            >
+                                <Settings className="h-4 w-4" />
+                                <span>{t('settings')}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">

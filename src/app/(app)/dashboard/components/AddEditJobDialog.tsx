@@ -863,7 +863,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </div>
               </div>
             </div>
-            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-col sm:flex-row sm:justify-between items-center gap-2">
+            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2">
               <div className="flex-shrink-0">
                 {job && (
                   <AlertDialog>
@@ -888,7 +888,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </AlertDialog>
                 )}
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2">
                 <Button type="button" variant="ghost" onClick={onClose}>
                   Close
                 </Button>
@@ -932,5 +932,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-
-    

@@ -132,7 +132,6 @@ export default function DashboardPage() {
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
 
   const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false);
-  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
   
   const [jobForAIAssign, setJobForAIAssign] = useState<Job | null>(null);
   const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
@@ -298,22 +297,7 @@ export default function DashboardPage() {
   }, [jobFilterId]);
   
   const handleOpenAddJob = () => {
-    setSelectedJobForEdit(null);
     setIsAddJobDialogOpen(true);
-  };
-  
-  const handleOpenEditJob = (job: Job) => {
-    setSelectedJobForEdit(job);
-    setIsAddJobDialogOpen(true);
-  };
-
-  const handleOpenEditTechnician = (technician: Technician) => {
-    setSelectedTechnicianForEdit(technician);
-    setIsAddEditTechnicianDialogOpen(true);
-  };
-  const handleCloseAddEditTechnicianDialog = () => {
-    setIsAddEditTechnicianDialogOpen(false);
-    setSelectedTechnicianForEdit(null);
   };
 
   const customers = useMemo(() => {
@@ -951,14 +935,6 @@ export default function DashboardPage() {
     setJobToShare(job);
     setIsShareTrackingOpen(true);
   };
-
-  if (authLoading || isLoadingData) { 
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
-  }
   
   const statusOptions = [
     { value: "Draft", label: "Draft" },
@@ -982,6 +958,14 @@ export default function DashboardPage() {
       }
   };
 
+  if (authLoading || isLoadingData) { 
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
@@ -998,11 +982,8 @@ export default function DashboardPage() {
         )}
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
-            onClose={() => {
-              setIsAddJobDialogOpen(false);
-              setSelectedJobForEdit(null);
-            }}
-            job={selectedJobForEdit}
+            onClose={() => setIsAddJobDialogOpen(false)}
+            job={null} // Dialog is only for adding new jobs now
             technicians={technicians}
             allSkills={allSkills.map(s => s.name)}
             customers={customers}
@@ -1021,7 +1002,7 @@ export default function DashboardPage() {
         {isAdmin && (
             <AddEditTechnicianDialog
                 isOpen={isAddEditTechnicianDialogOpen}
-                onClose={handleCloseAddEditTechnicianDialog}
+                onClose={() => setIsAddEditTechnicianDialogOpen(false)}
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills.map(s => s.name)}
             />
@@ -1070,7 +1051,7 @@ export default function DashboardPage() {
                         {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
                         Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
                     </Button>
-                     <Button size="sm" variant="outline" onClick={() => handleOpenEditJob(proactiveSuggestion.job)}>
+                     <Button size="sm" variant="outline" onClick={() => router.push(`/technician/${proactiveSuggestion.job.id}`)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         View Details
                     </Button>
@@ -1184,8 +1165,8 @@ export default function DashboardPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr] lg:grid-cols-5 gap-4 items-end">
-                    <div className="space-y-1 lg:col-span-2">
+                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                    <div className="space-y-1 md:col-span-2">
                         <Label htmlFor="job-search">Search</Label>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1252,8 +1233,6 @@ export default function DashboardPage() {
                       technicians={technicians}
                       onOpenChat={handleOpenChat}
                       onAIAssign={handleAIAssign}
-                      onOpenDetails={handleOpenEditJob}
-                      onDraftNotification={handleDraftNotificationForJob}
                       onViewOnMap={handleViewOnMap}
                       onShareTracking={handleShareTracking}
                     />
@@ -1274,7 +1253,7 @@ export default function DashboardPage() {
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
-            onJobClick={handleOpenEditJob}
+            onJobClick={(job) => router.push(`/technician/${job.id}`)}
           />
         </TabsContent>
 

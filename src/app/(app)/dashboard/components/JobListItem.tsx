@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -14,13 +15,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface JobListItemProps {
   job: Job;
   technicians: Technician[];
   onOpenChat: (job: Job) => void;
   onAIAssign: (job: Job) => void;
-  onOpenDetails: (job: Job) => void;
   onDraftNotification: (job: Job) => Promise<void>;
   onViewOnMap: (location: Location) => void;
   onShareTracking: (job: Job) => void;
@@ -31,7 +32,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
     technicians, 
     onOpenChat, 
     onAIAssign, 
-    onOpenDetails,
     onDraftNotification,
     onViewOnMap,
     onShareTracking,
@@ -171,14 +171,14 @@ const JobListItem: React.FC<JobListItemProps> = ({
          <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)}>
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
-         <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm" onClick={() => onOpenDetails(job)}>
-            <Edit className="mr-1 h-3 w-3" /> View Details
-         </Button>
+         <Link href={`/technician/${job.id}`} className="w-full sm:w-auto">
+            <Button variant="secondary" className="bg-secondary hover:bg-muted w-full" size="sm">
+                <Edit className="mr-1 h-3 w-3" /> View Details
+            </Button>
+         </Link>
       </CardFooter>
     </Card>
   );
 };
 
 export default JobListItem;
-
-

@@ -67,6 +67,7 @@ type NavItem = {
   label: string;
   icon: React.ElementType; 
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
+  badge?: () => number;
 };
 
 function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
@@ -183,6 +184,26 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                  
                  const badgeCount = item.label === 'contracts' ? contractsDueCount : 0;
 
+                 if (item.label === 'Roadmap') {
+                     return (
+                        <React.Fragment key="roadmap-with-divider">
+                          <SidebarSeparator />
+                          <SidebarMenuItem>
+                            <Link href={finalHref || '#'}>
+                                <SidebarMenuButton
+                                isActive={!!isActive}
+                                className="w-full justify-start"
+                                tooltip={t(item.label)}
+                                >
+                                <item.icon className="h-4 w-4" />
+                                <span>{t(item.label)}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                           </SidebarMenuItem>
+                        </React.Fragment>
+                     )
+                 }
+
                  return (
                     <React.Fragment key={item.label}>
                         <SidebarMenuItem>
@@ -198,7 +219,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                             </SidebarMenuButton>
                         </Link>
                         </SidebarMenuItem>
-                        {(item.label === 'Roadmap') && <SidebarSeparator />}
                     </React.Fragment>
                 );
               })}
@@ -267,14 +287,15 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-start border-b border-border bg-background px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
             <SidebarTrigger />
+            <Logo className="absolute left-1/2 -translate-x-1/2"/>
           </header>
           <main className="flex-1 overflow-x-hidden">
             {isMockMode && <MockModeBanner />}
-            <div className="p-4 sm:p-6 lg:p-8">
+            <div className="p-0 sm:p-6 lg:p-8">
               {isSubscriptionExpired ? (
-                  <Alert variant="destructive" className="mb-6">
+                  <Alert variant="destructive" className="mb-6 mx-4 sm:mx-0">
                       <CreditCard className="h-4 w-4" />
                       <AlertTitle>
                           {company?.subscriptionStatus === 'trialing' ? 'Your Trial Has Ended' : 'Subscription Inactive'}
@@ -288,7 +309,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                       </AlertDescription>
                   </Alert>
               ) : isTrialActive ? (
-                  <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary">
+                  <Alert className="mb-6 border-primary/50 bg-primary/5 text-primary mx-4 sm:mx-0">
                       <Bot className="h-4 w-4" />
                       <AlertTitle className="font-headline text-primary">Welcome to your free trial!</AlertTitle>
                       <AlertDescription className="text-primary/90">
@@ -301,7 +322,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                   </Alert>
               ) : null}
               
-              {children}
+              <div className="p-4 sm:p-0">{children}</div>
             </div>
           </main>
         </SidebarInset>

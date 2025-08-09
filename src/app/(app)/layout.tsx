@@ -184,7 +184,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
         case 'technician':
             return getTechnicianNavItems(user!.uid);
         case 'superAdmin':
-            return [...adminNavItems, ...superAdminNavItems];
+            return [...adminNavItems, { isSeparator: true }, ...superAdminNavItems];
         case 'admin':
         default:
             return adminNavItems;

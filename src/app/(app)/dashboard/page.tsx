@@ -297,6 +297,12 @@ export default function DashboardPage() {
   }, [jobFilterId]);
   
   const handleOpenAddJob = () => {
+    setSelectedJobForEdit(null);
+    setIsAddJobDialogOpen(true);
+  };
+  
+  const handleOpenEditJob = (job: Job) => {
+    setSelectedJobForEdit(job);
     setIsAddJobDialogOpen(true);
   };
 
@@ -956,6 +962,7 @@ export default function DashboardPage() {
     { value: "Medium", label: "Medium" },
     { value: "Low", label: "Low" },
   ];
+  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
 
   const handleSkillsUpdated = (newSkills: Skill[]) => {
       if(userProfile?.companyId) {
@@ -988,7 +995,7 @@ export default function DashboardPage() {
         <AddEditJobDialog
             isOpen={isAddJobDialogOpen}
             onClose={() => setIsAddJobDialogOpen(false)}
-            job={null} // Dialog is only for adding new jobs now
+            job={selectedJobForEdit}
             technicians={technicians}
             allSkills={allSkills.map(s => s.name)}
             customers={customers}
@@ -1056,7 +1063,7 @@ export default function DashboardPage() {
                         {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
                         Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
                     </Button>
-                     <Button size="sm" variant="outline" onClick={() => router.push(`/technician/${proactiveSuggestion.job.id}`)}>
+                     <Button size="sm" variant="outline" onClick={() => handleOpenEditJob(proactiveSuggestion.job)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         View Details
                     </Button>
@@ -1259,7 +1266,7 @@ export default function DashboardPage() {
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
-            onJobClick={(job) => router.push(`/technician/${job.id}`)}
+            onJobClick={(job) => handleOpenEditJob(job)}
           />
         </TabsContent>
 

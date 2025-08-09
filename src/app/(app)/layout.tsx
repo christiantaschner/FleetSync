@@ -67,7 +67,6 @@ type NavItem = {
   label: string;
   icon: React.ElementType; 
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
-  badge?: () => number;
 };
 
 function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
@@ -93,8 +92,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
   
-  const navItems = getNavItemsForRole(userProfile);
-
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -148,6 +145,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
         </div>
     );
   }
+  
+  const navItems = getNavItemsForRole(userProfile);
 
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
@@ -225,8 +224,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-             {userProfile?.role !== 'technician' && (
-                <SidebarMenu>
+            <SidebarMenu>
+                 {userProfile?.role !== 'technician' && (
                     <SidebarMenuItem>
                         <Link href="/settings">
                             <SidebarMenuButton
@@ -239,8 +238,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
-                </SidebarMenu>
-            )}
+                )}
+            </SidebarMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
@@ -287,13 +286,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-primary px-4 text-primary-foreground md:hidden">
             <SidebarTrigger />
             <Logo className="absolute left-1/2 -translate-x-1/2"/>
           </header>
           <main className="flex-1 overflow-x-hidden">
-            {isMockMode && <MockModeBanner />}
-            <div className="p-0 sm:p-6 lg:p-8">
+             {isMockMode && <MockModeBanner />}
+            <div className="p-4 sm:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6 mx-4 sm:mx-0">
                       <CreditCard className="h-4 w-4" />
@@ -322,7 +321,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                   </Alert>
               ) : null}
               
-              <div className="p-4 sm:p-0">{children}</div>
+              {children}
             </div>
           </main>
         </SidebarInset>

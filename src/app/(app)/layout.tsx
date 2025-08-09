@@ -70,8 +70,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-    { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
+    { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/reports", label: t('reports'), icon: BarChart },
     { isSeparator: true },
     { href: "/technician", label: t('technician_view'), icon: Smartphone },
@@ -195,7 +195,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader>
+          <SidebarHeader className="bg-primary text-primary-foreground">
             <Logo />
           </SidebarHeader>
           <SidebarContent>

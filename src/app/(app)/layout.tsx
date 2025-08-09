@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -71,42 +70,39 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
   const getNavItemsForRole = () => {
-    const baseItems = [
-      { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-      { href: "/customers", label: t('customers'), icon: ClipboardList },
-      { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
-      { href: "/reports", label: t('reports'), icon: BarChart },
-    ];
-    
-    const technicianViewItem = { href: "/technician", label: t('technician_view'), icon: Smartphone };
-    const technicianSpecificItem = { href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone };
-    const adminSettingsItems = [
-        { isSeparator: true }, 
-        technicianViewItem, 
-        { isSeparator: true }, 
-    ];
+    let items = [];
 
-    switch (userProfile?.role) {
-      case 'technician':
-        return [technicianSpecificItem];
-      case 'superAdmin':
-        return [
-          ...baseItems,
-          ...adminSettingsItems,
-          { href: "/roadmap", label: "Roadmap", icon: ListChecks },
-          { href: "/settings", label: t('settings'), icon: Settings },
-        ];
-      case 'admin':
-        return [
-          ...baseItems,
-          ...adminSettingsItems,
-          { href: "/settings", label: t('settings'), icon: Settings },
-        ];
-      default:
-        // Return a default set of items if the role is null or unrecognized,
-        // which can happen during the initial loading phase.
-        return [];
+    if (userProfile?.role === 'technician') {
+        items.push({ href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone });
+    } else {
+        // Base items for admin and superAdmin
+        items.push(
+            { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+            { href: "/customers", label: t('customers'), icon: ClipboardList },
+            { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
+            { href: "/reports", label: t('reports'), icon: BarChart }
+        );
+        
+        // Items for admin and superAdmin
+        if (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') {
+             items.push(
+                { isSeparator: true },
+                { href: "/technician", label: t('technician_view'), icon: Smartphone },
+                { isSeparator: true }
+             );
+        }
+
+        // Specific items for superAdmin
+        if (userProfile?.role === 'superAdmin') {
+            items.push({ href: "/roadmap", label: "Roadmap", icon: ListChecks });
+        }
+        
+        // Settings for both admin and superAdmin
+        if (userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') {
+            items.push({ href: "/settings", label: t('settings'), icon: Settings });
+        }
     }
+    return items;
   };
 
   React.useEffect(() => {

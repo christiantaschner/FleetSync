@@ -196,7 +196,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader>
+          <SidebarHeader className="bg-primary text-primary-foreground">
             <Logo />
           </SidebarHeader>
           <SidebarContent>

@@ -70,18 +70,19 @@ type NavItem = {
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
 };
 
-const allNavItems: NavItem[] = [
-  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
-  { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
-  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'], badge: () => useAuth().contractsDueCount },
-  { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-  { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['technician'] },
-  { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
-  { href: "/settings", label: 'settings', icon: Settings, roles: ['admin', 'superAdmin'] },
-];
-
 function getNavItemsForRole(role: UserProfile['role']) {
+    const allNavItems: NavItem[] = [
+      { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
+      { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
+      { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'], badge: () => useAuth().contractsDueCount },
+      { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['technician'] },
+      { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
+      { href: "/settings", label: 'settings', icon: Settings, roles: ['admin', 'superAdmin'] },
+    ];
+    
     if (!role) return [];
+
     return allNavItems.filter(item => item.roles.includes(role));
 };
 

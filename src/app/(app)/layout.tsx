@@ -67,6 +67,7 @@ type NavItem = {
   label: string;
   icon: React.ElementType; 
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
+  divider?: boolean;
 };
 
 function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
@@ -76,7 +77,7 @@ function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
       { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
-      { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+      { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'], divider: true },
       { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
       { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
   ];
@@ -183,26 +184,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                  
                  const badgeCount = item.label === 'contracts' ? contractsDueCount : 0;
 
-                 if (item.label === 'Roadmap') {
-                     return (
-                        <React.Fragment key="roadmap-with-divider">
-                          <SidebarSeparator />
-                          <SidebarMenuItem>
-                            <Link href={finalHref || '#'}>
-                                <SidebarMenuButton
-                                isActive={!!isActive}
-                                className="w-full justify-start"
-                                tooltip={t(item.label)}
-                                >
-                                <item.icon className="h-4 w-4" />
-                                <span>{t(item.label)}</span>
-                                </SidebarMenuButton>
-                            </Link>
-                           </SidebarMenuItem>
-                        </React.Fragment>
-                     )
-                 }
-
                  return (
                     <React.Fragment key={item.label}>
                         <SidebarMenuItem>
@@ -218,6 +199,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                             </SidebarMenuButton>
                         </Link>
                         </SidebarMenuItem>
+                         {item.divider && <SidebarSeparator />}
                     </React.Fragment>
                 );
               })}

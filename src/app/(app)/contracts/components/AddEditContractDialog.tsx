@@ -103,20 +103,20 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
             if (contract) {
                 const contractRef = doc(db, contractsCollectionPath, contract.id!);
                 await updateDoc(contractRef, { ...data, updatedAt: serverTimestamp() });
-                toast({ title: "Success", description: "Project / Contract updated successfully." });
+                toast({ title: "Success", description: "Contract updated successfully." });
             } else {
                  if (!userProfile?.companyId) {
                     throw new Error("User not associated with a company.");
                 }
                 const contractsCollectionRef = collection(db, contractsCollectionPath);
                 await addDoc(contractsCollectionRef, { ...data, companyId: userProfile.companyId, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-                toast({ title: "Success", description: "Project / Contract created successfully." });
+                toast({ title: "Success", description: "Contract created successfully." });
             }
             onContractUpdated();
             onClose();
         } catch (error) {
             console.error("Error saving contract:", error);
-            const errorMessage = error instanceof Error ? error.message : "Could not save the project/contract.";
+            const errorMessage = error instanceof Error ? error.message : "Could not save the contract.";
             toast({ title: "Error", description: errorMessage, variant: "destructive" });
         } finally {
             setIsSubmitting(false);
@@ -127,9 +127,9 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90dvh] p-0">
                 <DialogHeader className="px-6 pt-6 flex-shrink-0">
-                    <DialogTitle className="font-headline">{contract ? 'Edit Project / Contract' : 'Create New Project / Contract'}</DialogTitle>
+                    <DialogTitle className="font-headline">{contract ? 'Edit Contract' : 'Create New Contract'}</DialogTitle>
                     <DialogDescription>
-                        {contract ? 'Update the details for this project or recurring service contract.' : 'Create a new project file or a template for recurring jobs.'}
+                        {contract ? 'Update the details for this recurring service contract.' : 'Create a new template for recurring jobs.'}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto px-6">
@@ -150,7 +150,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                             {errors.customerAddress && <p className="text-destructive text-sm mt-1">{errors.customerAddress.message}</p>}
                         </div>
 
-                        <h3 className="text-lg font-semibold flex items-center gap-2 pt-2"><Repeat/>Recurrence (for Contracts)</h3>
+                        <h3 className="text-lg font-semibold flex items-center gap-2 pt-2"><Repeat/>Recurrence Details</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <Label htmlFor="frequency">Frequency *</Label>
@@ -249,7 +249,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                     />
                                 )}
                             />
-                            <Label htmlFor="isActive">Project / Contract is Active</Label>
+                            <Label htmlFor="isActive">Contract is Active</Label>
                         </div>
                     </form>
                 </div>
@@ -257,7 +257,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
                     <Button type="submit" form="contract-form" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {contract ? 'Save Changes' : 'Create Project / Contract'}
+                        {contract ? 'Save Changes' : 'Create Contract'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

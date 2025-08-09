@@ -557,9 +557,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               {job?.sourceContractId && (
                 <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600">
                     <Repeat className="h-4 w-4"/>
-                    <AlertTitle>Project / Contract Job</AlertTitle>
+                    <AlertTitle>Contract Job</AlertTitle>
                     <AlertDescription>
-                        This job was generated from a Project/Contract. <Link href="/contracts" className="font-semibold underline">View projects</Link>.
+                        This job was generated from a Service Contract. <Link href="/contracts" className="font-semibold underline">View contracts</Link>.
                     </AlertDescription>
                 </Alert>
               )}
@@ -623,7 +623,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="contractId">Link to Project / Contract (Optional)</Label>
+                    <Label htmlFor="contractId">Link to Contract (Optional)</Label>
                     <Select value={selectedContractId} onValueChange={handleSelectContract}>
                         <SelectTrigger id="contractId">
                             <SelectValue placeholder="None" />

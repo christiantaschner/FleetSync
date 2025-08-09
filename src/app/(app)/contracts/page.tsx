@@ -189,9 +189,9 @@ export default function ContractsPage() {
             <Card>
                 <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <CardTitle className="font-headline flex items-center gap-2"><Repeat/> Projects / Contracts</CardTitle>
+                        <CardTitle className="font-headline flex items-center gap-2"><Repeat/> Service Contracts</CardTitle>
                         <CardDescription>
-                            Use this section to manage multi-stage projects or recurring service contracts.
+                            Manage recurring service agreements that automatically generate jobs.
                         </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -201,7 +201,7 @@ export default function ContractsPage() {
                             </Button>
                         )}
                         <Button onClick={handleAddNewContract}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Project / Contract
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add New Contract
                         </Button>
                     </div>
                 </CardHeader>
@@ -220,13 +220,13 @@ export default function ContractsPage() {
                     ) : (
                         <Alert className="border-primary/30 bg-primary/5">
                             <Repeat className="h-4 w-4 text-primary" />
-                            <AlertTitle className="text-primary">No Projects or Contracts Yet</AlertTitle>
+                            <AlertTitle className="text-primary">No Contracts Yet</AlertTitle>
                             <AlertDescription>
-                              Create your first project or recurring service contract to start generating jobs.
+                              Create your first recurring service contract to start generating jobs automatically.
                             </AlertDescription>
                             <div className="mt-4">
                                 <Button onClick={handleAddNewContract}>
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Project / Contract
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Contract
                                 </Button>
                             </div>
                         </Alert>

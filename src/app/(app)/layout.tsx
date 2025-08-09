@@ -70,7 +70,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   
   const adminNavItems = [
     { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-    { href: "/contracts", label: "Projects / Contracts", icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
+    { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
     { href: "/customers", label: t('customers'), icon: ClipboardList },
     { href: "/reports", label: t('reports'), icon: BarChart },
     { isSeparator: true },

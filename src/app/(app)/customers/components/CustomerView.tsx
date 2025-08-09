@@ -295,7 +295,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                         <p className="flex items-center gap-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={handleEditCustomer} disabled={!selectedCustomer.isReal}>
+                                <Button variant="outline" size="sm" onClick={handleEditCustomer} disabled={!customers.some(c => c.id === selectedCustomer.id)}>
                                     <Edit className="mr-2 h-4 w-4" /> Edit Customer
                                 </Button>
                             </div>

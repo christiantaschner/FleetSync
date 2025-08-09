@@ -581,7 +581,7 @@ export default function DashboardPage() {
                 const assignmentB = b.assignedTechnicianId ? 1 : 0;
                 if (assignmentA !== assignmentB) return assignmentA - assignmentB;
                 
-                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'status':
                 return statusOrder[a.status] - statusOrder[b.status] || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'technician':
@@ -1043,13 +1043,13 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight font-headline">
           {t('dashboard')}
         </h1>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
            {isAdmin && (
-            <Button variant="outline" className="hover:bg-secondary" onClick={() => setIsImportJobsOpen(true)}>
+            <Button variant="outline" className="hover:bg-secondary w-full sm:w-auto" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('import_jobs')}
             </Button>
            )}
-           <Button onClick={handleOpenAddJob}>
+           <Button onClick={handleOpenAddJob} className="w-full sm:w-auto">
              <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
            </Button>
         </div>

@@ -1177,8 +1177,8 @@ export default function DashboardPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
-                    <div className="space-y-1 md:col-span-2">
+                <div className="mb-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                    <div className="space-y-1 lg:col-span-2">
                         <Label htmlFor="job-search">Search</Label>
                         <div className="relative">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

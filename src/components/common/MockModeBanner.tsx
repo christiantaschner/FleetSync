@@ -35,11 +35,11 @@ export const MockModeBanner = () => {
                     You are viewing sample data. No changes will be saved.
                  </AlertDescription>
             </div>
-            <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                    <Label htmlFor="role-switcher" className="text-sm font-medium">Viewing as:</Label>
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                <div className="flex items-center space-x-2 w-full sm:w-auto">
+                    <Label htmlFor="role-switcher" className="text-sm font-medium flex-shrink-0">Viewing as:</Label>
                      <Select value={impersonatedUserId || 'admin'} onValueChange={handleRoleChange}>
-                        <SelectTrigger className="w-[180px] h-8 bg-white/70">
+                        <SelectTrigger className="w-full sm:w-[180px] h-8 bg-white/70">
                             <SelectValue placeholder="Select a role" />
                         </SelectTrigger>
                         <SelectContent>
@@ -50,7 +50,7 @@ export const MockModeBanner = () => {
                         </SelectContent>
                     </Select>
                 </div>
-                 <div className="flex items-center space-x-2">
+                 <div className="flex items-center space-x-2 w-full sm:w-auto justify-center">
                     <Switch
                         id="mock-mode-toggle"
                         checked={!isMockMode}

@@ -66,24 +66,31 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.ElementType;
-  badge?: () => number;
+  badge?: number; 
   roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
 };
 
-function getNavItemsForRole(role: UserProfile['role']) {
-    const allNavItems: NavItem[] = [
+function getNavItemsForRole(userProfile: UserProfile | null, contractsDueCount: number) {
+    const allNavItems: Omit<NavItem, 'badge'>[] = [
       { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
-      { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'], badge: () => useAuth().contractsDueCount },
+      { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
       { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['technician'] },
       { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
       { href: "/settings", label: 'settings', icon: Settings, roles: ['admin', 'superAdmin'] },
     ];
     
-    if (!role) return [];
+    if (!userProfile?.role) return [];
 
-    return allNavItems.filter(item => item.roles.includes(role));
+    return allNavItems
+        .filter(item => item.roles.includes(userProfile.role!))
+        .map(item => {
+            if (item.label === 'contracts') {
+                return { ...item, badge: contractsDueCount };
+            }
+            return { ...item, badge: 0 };
+        });
 };
 
 
@@ -92,58 +99,11 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { t } = useTranslation();
-  const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode } = useAuth();
+  const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
 
-  const navItems = getNavItemsForRole(userProfile?.role);
+  const navItems = getNavItemsForRole(userProfile, contractsDueCount);
   
-  React.useEffect(() => {
-    if (loading || isMockMode) return;
-
-    if (!user) {
-        router.replace("/login");
-        return;
-    }
-
-    if (userProfile) {
-        if (userProfile.onboardingStatus === 'pending_onboarding') {
-            if (pathname !== '/onboarding') {
-                router.replace('/onboarding');
-            }
-            return;
-        }
-
-        if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
-            if (pathname === '/onboarding') { 
-                router.replace('/dashboard');
-            }
-            if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
-                 router.replace(`/technician/jobs/${user.uid}`);
-            }
-            return;
-        }
-
-        if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
-            return;
-        }
-    }
-}, [user, userProfile, loading, router, pathname, isMockMode]);
-
-  let trialDaysLeft: number | null = null;
-  if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
-      const days = differenceInDays(new Date(company.trialEndsAt), new Date());
-      trialDaysLeft = Math.max(0, days);
-  }
-
-  const isTrialActive = company?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft >= 0;
-
-  const isSubscriptionExpired = 
-    company &&
-    pathname !== '/settings' && 
-    company.subscriptionStatus !== 'active' &&
-    !isTrialActive;
-
-
-  if (loading || (!isMockMode && !userProfile) || (!isMockMode && userProfile?.onboardingStatus === 'pending_onboarding' && pathname !== '/onboarding')) {
+  if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -153,6 +113,24 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   
   if (pathname === '/onboarding') {
       return <>{children}</>;
+  }
+  
+  if (!isMockMode && !user) {
+    router.replace('/login');
+    return (
+       <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  if (!isMockMode && userProfile?.onboardingStatus === 'pending_onboarding') {
+    router.replace('/onboarding');
+    return (
+       <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
   }
   
   if (!isMockMode && userProfile?.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
@@ -179,6 +157,21 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  let trialDaysLeft: number | null = null;
+  if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
+      const days = differenceInDays(new Date(company.trialEndsAt), new Date());
+      trialDaysLeft = Math.max(0, days);
+  }
+
+  const isTrialActive = company?.subscriptionStatus === 'trialing' && trialDaysLeft !== null && trialDaysLeft >= 0;
+
+  const isSubscriptionExpired = 
+    company &&
+    pathname !== '/settings' && 
+    company.subscriptionStatus !== 'active' &&
+    !isTrialActive;
+
+
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
 
@@ -197,7 +190,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  
-                 const badgeCount = item.badge ? item.badge() : 0;
+                 const badgeCount = item.badge || 0;
 
                  return (
                     <SidebarMenuItem key={item.label}>

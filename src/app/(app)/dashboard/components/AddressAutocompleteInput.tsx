@@ -83,6 +83,7 @@ const AddressAutocompleteInput: React.FC<AddressAutocompleteInputProps> = ({ val
           onChange={handleInputChange}
           onFocus={() => { if (value) setShowPredictions(true); }}
           className={cn(className)}
+          autoComplete="off"
         />
       </PopoverAnchor>
       <PopoverContent 

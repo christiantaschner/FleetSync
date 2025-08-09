@@ -178,7 +178,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
             alert("Cannot edit a customer profile that was derived from a job. Please create a formal customer profile for them first.");
             return;
         }
-        const foundCustomer = customers.find(c => c.id === selectedCustomer.id);
+        const foundCustomer = initialCustomers.find(c => c.id === selectedCustomer.id);
         if (foundCustomer) {
             setCustomerToEdit(foundCustomer);
             setIsAddCustomerOpen(true);
@@ -304,7 +304,9 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                     <div className="space-y-3 p-2">
                                     {selectedCustomerData.contracts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No active contracts.</p>}
                                     {selectedCustomerData.contracts.map(contract => (
-                                        <Link href="/contracts" key={contract.id} className="block p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
+                                        <button onClick={() => {
+                                            router.push(`/contracts?contract=${contract.id}`)
+                                        }} key={contract.id} className="w-full text-left block p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
                                             <div className="flex justify-between items-start">
                                                 <p className="font-semibold text-sm">{contract.jobTemplate.title}</p>
                                                 <Badge variant={contract.isActive ? "secondary" : "destructive"}>
@@ -313,7 +315,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                                 </Badge>
                                             </div>
                                             <p className="text-xs text-muted-foreground">{contract.frequency} - Starts {format(new Date(contract.startDate), "PPP")}</p>
-                                        </Link>
+                                        </button>
                                     ))}
                                     </div>
                                </ScrollArea>

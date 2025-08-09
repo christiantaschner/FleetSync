@@ -51,6 +51,12 @@ import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -548,6 +554,18 @@ export default function DashboardPage() {
   };
   
   const openTasksFilter: JobStatus[] = ['Pending', 'Draft'];
+  
+  const triageReadyCount = useMemo(() => 
+    jobs.filter(j => j.triageImages && j.triageImages.length > 0 && (j.status === 'Pending' || j.status === 'Draft')).length,
+    [jobs]
+  );
+
+  const openTasksCount = useMemo(() => {
+    return jobs.filter(job => 
+        openTasksFilter.includes(job.status) || 
+        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+    ).length;
+  }, [jobs]);
 
   const filteredJobs = useMemo(() => {
     let tempJobs = jobs;
@@ -603,7 +621,7 @@ export default function DashboardPage() {
                 if (statusDiff !== 0) return statusDiff;
                 const priorityDiffStatus = priorityOrder[a.priority] - priorityOrder[b.priority];
                 if (priorityDiffStatus !== 0) return priorityDiffStatus;
-                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'priority':
                 const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
                 if (priorityDiff !== 0) return priorityDiff;
@@ -851,11 +869,6 @@ export default function DashboardPage() {
     [jobs]
   );
   
-  const triageReadyCount = useMemo(() => 
-    jobs.filter(j => j.triageImages && j.triageImages.length > 0 && (j.status === 'Pending' || j.status === 'Draft')).length,
-    [jobs]
-  );
-
   const jobsTodayCount = useMemo(() => 
     jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
     [jobs]
@@ -1131,8 +1144,7 @@ export default function DashboardPage() {
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 {t('job_list')}
-                {unassignedJobsCount > 0 && !showOpenTasksOnly && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
-                {triageReadyCount > 0 && <Badge variant="accent" className="h-5"><ImageIcon className="mr-1 h-3 w-3"/>{triageReadyCount}</Badge>}
+                {openTasksCount > 0 && <Badge variant="default" className="h-5">{openTasksCount}</Badge>}
             </div>
           </TabsTrigger>
           <TabsTrigger value="schedule" className="hover:bg-secondary">{t('schedule')}</TabsTrigger>
@@ -1153,6 +1165,34 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
+                <div className="flex items-center gap-4 w-full md:w-auto flex-shrink-0">
+                    <TooltipProvider>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                              <div className="flex items-center space-x-2">
+                                  <Switch
+                                      id="open-tasks-toggle"
+                                      checked={showOpenTasksOnly}
+                                      onCheckedChange={setShowOpenTasksOnly}
+                                  />
+                                  <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
+                              </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                              <p>Shows all Draft, Unassigned, and Triage-Ready jobs.</p>
+                          </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <Button 
+                      variant="accent" 
+                      onClick={handleBatchAIAssign} 
+                      disabled={pendingJobsCount === 0 || isBatchLoading}
+                      className="w-full md:w-auto"
+                    >
+                      {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                      Fleety Batch Assign
+                    </Button>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full md:flex-1">
                     <div className="relative md:col-span-1">
                       <Label htmlFor="job-search">Search</Label>
@@ -1198,25 +1238,6 @@ export default function DashboardPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                </div>
-                <div className="flex items-center gap-4 w-full md:w-auto flex-shrink-0">
-                    <div className="flex items-center space-x-2">
-                        <Switch
-                            id="open-tasks-toggle"
-                            checked={showOpenTasksOnly}
-                            onCheckedChange={setShowOpenTasksOnly}
-                        />
-                        <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
-                    </div>
-                    <Button 
-                      variant="accent" 
-                      onClick={handleBatchAIAssign} 
-                      disabled={pendingJobsCount === 0 || isBatchLoading}
-                      className="w-full md:w-auto"
-                    >
-                      {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                      Fleety Batch Assign
-                    </Button>
                 </div>
               </div>
               <div className="space-y-4">

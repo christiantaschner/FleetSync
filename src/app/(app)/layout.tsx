@@ -229,9 +229,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarContent>
           <SidebarFooter>
              {canSeeAdminViews && (
-              <>
-                <SidebarSeparator />
                 <SidebarMenu>
+                  <SidebarSeparator />
                   <SidebarMenuItem>
                     <Link href="/settings">
                       <SidebarMenuButton
@@ -245,8 +244,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                     </Link>
                   </SidebarMenuItem>
                 </SidebarMenu>
-              </>
-            )}
+             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
@@ -340,4 +338,3 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return <MainAppLayout>{children}</MainAppLayout>;
 }
-

@@ -69,27 +69,17 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
-  const getNavItemsForRole = () => {
-    const role = userProfile?.role;
-    const isTechnician = role === 'technician';
-    const isAdmin = role === 'admin' || role === 'superAdmin';
-    const isSuperAdmin = role === 'superAdmin';
-
-    const allItems = [
-        { href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone, show: isTechnician },
-        { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard, show: isAdmin },
-        { href: "/customers", label: t('customers'), icon: ClipboardList, show: isAdmin },
-        { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined, show: isAdmin },
-        { href: "/reports", label: t('reports'), icon: BarChart, show: isAdmin },
-        { isSeparator: true, show: isAdmin },
-        { href: "/technician", label: t('technician_view'), icon: Smartphone, show: isAdmin },
-        { isSeparator: true, show: isAdmin },
-        { href: "/roadmap", label: "Roadmap", icon: ListChecks, show: isSuperAdmin },
-        { href: "/settings", label: t('settings'), icon: Settings, show: isAdmin },
-    ];
-
-    return allItems.filter(item => item.show);
-  };
+  const allNavItems = [
+      { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+      { href: "/customers", label: t('customers'), icon: ClipboardList },
+      { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
+      { href: "/reports", label: t('reports'), icon: BarChart },
+      { isSeparator: true },
+      { href: "/technician", label: t('technician_view'), icon: Smartphone },
+      { isSeparator: true },
+      { href: "/roadmap", label: "Roadmap", icon: ListChecks },
+      { href: "/settings", label: t('settings'), icon: Settings },
+  ];
 
   React.useEffect(() => {
     if (loading || isMockMode) return;
@@ -111,9 +101,10 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             if (pathname === '/onboarding') { 
                 router.replace('/dashboard');
             }
-            if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
-                router.replace(`/technician/jobs/${user.uid}`);
-            }
+            // Temporarily disable technician redirect for debugging
+            // if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
+            //     router.replace(`/technician/jobs/${user.uid}`);
+            // }
             return;
         }
 
@@ -176,7 +167,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
-  const navItems = getNavItemsForRole();
 
   return (
       <SidebarProvider defaultOpen>
@@ -186,7 +176,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item, index) => {
+              {allNavItems.map((item, index) => {
                  if (item.isSeparator) {
                     return <SidebarSeparator key={`sep-${index}`} className="my-1" />;
                  }

@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
-import type { Job, Contract, CustomerData } from '@/types';
+import type { Job, Contract, CustomerData, Customer } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -173,7 +174,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
             alert("Cannot edit a customer profile that was derived from a job. Please create a formal customer profile for them first.");
             return;
         }
-        const foundCustomer = initialCustomers.find(c => c.id === selectedCustomer.id);
+        const foundCustomer = customers.find(c => c.id === selectedCustomer.id);
         if (foundCustomer) {
             setCustomerToEdit(foundCustomer);
             setIsAddCustomerOpen(true);
@@ -231,7 +232,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                 job={selectedJobForEdit}
                 jobs={jobs}
                 technicians={[]}
-                customers={customers}
+                customers={customers as Customer[]}
                 contracts={contracts}
                 allSkills={allSkills}
                 onManageSkills={() => {}}

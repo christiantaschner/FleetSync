@@ -1,5 +1,5 @@
 
-import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus, ChatMessage } from '@/types';
+import type { Job, Technician, Contract, Equipment, CustomerData, ProfileChangeRequest, JobStatus, ChatMessage, TechnicianSkill } from '@/types';
 import { addDays, subDays, subMinutes, subMonths, setHours, setMinutes } from 'date-fns';
 
 const MOCK_COMPANY_ID = 'mock_company_123';

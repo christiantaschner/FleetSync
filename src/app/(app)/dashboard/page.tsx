@@ -563,7 +563,7 @@ export default function DashboardPage() {
   const openTasksCount = useMemo(() => {
     return jobs.filter(job => 
         openTasksFilter.includes(job.status) || 
-        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || j.status === 'Draft'))
     ).length;
   }, [jobs]);
 
@@ -593,7 +593,7 @@ export default function DashboardPage() {
     if (showOpenTasksOnly) {
         return tempJobs.filter(job => 
             openTasksFilter.includes(job.status) || 
-            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || j.status === 'Draft'))
         );
     }
 
@@ -1177,14 +1177,14 @@ export default function DashboardPage() {
                             </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep.</p>
+                            <p>Only shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep.</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 flex-1">
                     <div className="relative md:col-span-1">
                       <Label htmlFor="job-search">Search</Label>
                       <Search className="absolute left-2.5 top-8 h-4 w-4 text-muted-foreground" />
@@ -1345,4 +1345,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

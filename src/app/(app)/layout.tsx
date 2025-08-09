@@ -291,7 +291,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-primary text-primary-foreground px-4 text-card-foreground md:hidden">
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-primary text-primary-foreground px-4 md:hidden">
             <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
             <Logo />
             <div className="w-7"/>

@@ -3,7 +3,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -578,6 +578,9 @@ export default function DashboardPage() {
             if (s === 'Pending') {
                 return job.status === 'Pending';
             }
+             if (s === 'Triage Review') {
+                return job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft');
+            }
             return job.status === s;
         });
         return priorityMatch && statusMatch;
@@ -603,7 +606,7 @@ export default function DashboardPage() {
                 const assignmentA = a.assignedTechnicianId ? 1 : 0;
                 const assignmentB = b.assignedTechnicianId ? 1 : 0;
                 if (assignmentA !== assignmentB) return assignmentA - assignmentB;
-                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
             case 'technician':
                 const techA = a.assignedTechnicianId ? technicianMap.get(a.assignedTechnicianId) || 'Zz' : 'Zz';
                 const techB = b.assignedTechnicianId ? technicianMap.get(b.assignedTechnicianId) || 'Zz' : 'Zz';
@@ -843,6 +846,11 @@ export default function DashboardPage() {
     jobs.filter(j => j.status === 'Pending' && !j.assignedTechnicianId).length, 
     [jobs]
   );
+  
+  const triageReadyCount = useMemo(() => 
+    jobs.filter(j => j.triageImages && j.triageImages.length > 0 && (j.status === 'Pending' || j.status === 'Draft')).length,
+    [jobs]
+  );
 
   const jobsTodayCount = useMemo(() => 
     jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
@@ -937,6 +945,7 @@ export default function DashboardPage() {
   }
   
   const statusOptions = [
+    { value: "Triage Review", label: "Triage Ready" },
     { value: "Draft", label: "Draft" },
     { value: "Pending", label: "Unassigned" },
     { value: "Assigned", label: "Assigned" },
@@ -1120,6 +1129,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
                 {t('job_list')}
                 {unassignedJobsCount > 0 && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
+                {triageReadyCount > 0 && <Badge variant="accent" className="h-5"><ImageIcon className="mr-1 h-3 w-3"/>{triageReadyCount}</Badge>}
             </div>
           </TabsTrigger>
           <TabsTrigger value="schedule" className="hover:bg-secondary">{t('schedule')}</TabsTrigger>

@@ -47,13 +47,6 @@ const MOCK_ADMIN_PROFILE: UserProfile = {
   role: 'superAdmin',
   onboardingStatus: 'completed',
 };
-const MOCK_ONBOARDING_PROFILE: UserProfile = {
-  uid: 'mock_admin_id',
-  email: 'admin@mock.com',
-  companyId: null,
-  role: null,
-  onboardingStatus: 'pending_onboarding',
-};
 const MOCK_COMPANY: Company = {
   id: 'mock_company_123',
   name: 'Mock Service Company',
@@ -111,20 +104,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedMockMode = localStorage.getItem('mockMode');
     const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
-    const mockOnboardingComplete = sessionStorage.getItem('mock_onboarding_complete') === 'true';
 
     if (mockModeActive) {
       console.log("Auth Context: Running in MOCK DATA mode.");
       setUser(MOCK_ADMIN_USER);
-      
-      if (mockOnboardingComplete) {
-          setUserProfile(MOCK_ADMIN_PROFILE);
-          setCompany(MOCK_COMPANY);
-      } else {
-          setUserProfile(MOCK_ONBOARDING_PROFILE);
-          setCompany(null);
-      }
-
+      setUserProfile(MOCK_ADMIN_PROFILE);
+      setCompany(MOCK_COMPANY);
       setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
       setMockModeState(true);
@@ -236,7 +221,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {
       toast({ title: "Login Successful (Mock Mode)", description: "Redirecting to the dashboard..." });
-      sessionStorage.setItem('mock_onboarding_complete', 'true');
       window.location.reload();
       return true;
     }

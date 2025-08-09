@@ -70,43 +70,25 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
   const getNavItemsForRole = () => {
-    const navItems = [];
     const role = userProfile?.role;
     const isTechnician = role === 'technician';
     const isAdmin = role === 'admin' || role === 'superAdmin';
+    const isSuperAdmin = role === 'superAdmin';
 
-    if (isTechnician) {
-      navItems.push({ href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone });
-      return navItems;
-    }
+    const allItems = [
+        { href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone, show: isTechnician },
+        { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard, show: isAdmin },
+        { href: "/customers", label: t('customers'), icon: ClipboardList, show: isAdmin },
+        { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined, show: isAdmin },
+        { href: "/reports", label: t('reports'), icon: BarChart, show: isAdmin },
+        { isSeparator: true, show: isAdmin },
+        { href: "/technician", label: t('technician_view'), icon: Smartphone, show: isAdmin },
+        { isSeparator: true, show: isAdmin },
+        { href: "/roadmap", label: "Roadmap", icon: ListChecks, show: isSuperAdmin },
+        { href: "/settings", label: t('settings'), icon: Settings, show: isAdmin },
+    ];
 
-    // Common items for Admin & SuperAdmin
-    if (isAdmin) {
-      navItems.push(
-        { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-        { href: "/customers", label: t('customers'), icon: ClipboardList },
-        { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
-        { href: "/reports", label: t('reports'), icon: BarChart }
-      );
-      
-      navItems.push(
-        { isSeparator: true },
-        { href: "/technician", label: t('technician_view'), icon: Smartphone },
-        { isSeparator: true }
-      );
-    }
-    
-    // SuperAdmin specific items
-    if (role === 'superAdmin') {
-      navItems.push({ href: "/roadmap", label: "Roadmap", icon: ListChecks });
-    }
-    
-    // Settings for both admin and superAdmin
-    if (isAdmin) {
-        navItems.push({ href: "/settings", label: t('settings'), icon: Settings });
-    }
-    
-    return navItems;
+    return allItems.filter(item => item.show);
   };
 
   React.useEffect(() => {

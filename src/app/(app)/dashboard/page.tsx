@@ -1158,43 +1158,47 @@ export default function DashboardPage() {
 
         <TabsContent value="job-list" className="mt-4">
           <Card>
-            <CardHeader className="flex flex-col sm:flex-row justify-between items-center gap-2">
-                <div>
-                    <CardTitle>{t('current_jobs')}</CardTitle>
-                    <CardDescription>{t('current_jobs_desc')}</CardDescription>
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <CardTitle>{t('current_jobs')}</CardTitle>
+                        <CardDescription>{t('current_jobs_desc')}</CardDescription>
+                    </div>
+                     <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex items-center space-x-2">
+                                    <Switch
+                                        id="open-tasks-toggle"
+                                        checked={showOpenTasksOnly}
+                                        onCheckedChange={setShowOpenTasksOnly}
+                                    />
+                                    <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Only shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
-                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="flex items-center space-x-2">
-                                <Switch
-                                    id="open-tasks-toggle"
-                                    checked={showOpenTasksOnly}
-                                    onCheckedChange={setShowOpenTasksOnly}
-                                />
-                                <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Only shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[1fr_auto_auto_auto_auto] gap-4 items-end">
-                  <div className="relative md:col-span-1">
+              <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                  <div className="md:col-span-2">
                       <Label htmlFor="job-search">Search</Label>
-                      <Search className="absolute left-2.5 bottom-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="job-search"
-                        placeholder="Search jobs..."
-                        value={jobSearchTerm}
-                        onChange={(e) => setJobSearchTerm(e.target.value)}
-                        className="pl-8"
-                      />
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            id="job-search"
+                            placeholder="Search jobs..."
+                            value={jobSearchTerm}
+                            onChange={(e) => setJobSearchTerm(e.target.value)}
+                            className="pl-8"
+                        />
+                      </div>
                   </div>
-                  <div className="space-y-1">
+                  <div>
                       <Label htmlFor="status-filter">{t('status')}</Label>
                        <MultiSelectFilter
                         options={statusOptions}
@@ -1204,7 +1208,7 @@ export default function DashboardPage() {
                         disabled={showOpenTasksOnly}
                       />
                   </div>
-                  <div className="space-y-1">
+                  <div>
                       <Label htmlFor="priority-filter">{t('priority')}</Label>
                        <MultiSelectFilter
                         options={priorityOptions}
@@ -1214,7 +1218,7 @@ export default function DashboardPage() {
                         disabled={showOpenTasksOnly}
                       />
                   </div>
-                  <div className="space-y-1">
+                  <div>
                       <Label htmlFor="sort-order">{t('sort_by')}</Label>
                       <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
                         <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
@@ -1227,17 +1231,19 @@ export default function DashboardPage() {
                         </SelectContent>
                       </Select>
                   </div>
-                   <Button 
-                        variant="accent" 
-                        onClick={handleBatchAIAssign} 
-                        disabled={pendingJobsCount === 0 || isBatchLoading}
-                        className="w-full md:w-auto"
-                      >
-                        {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                        Fleety Batch Assign
-                      </Button>
               </div>
-              <div className="space-y-4">
+              <div className="border-t pt-4">
+                 <Button 
+                    variant="accent" 
+                    onClick={handleBatchAIAssign} 
+                    disabled={pendingJobsCount === 0 || isBatchLoading}
+                    className="w-full sm:w-auto"
+                    >
+                    {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                    Fleety Batch Assign ({pendingJobsCount})
+                </Button>
+              </div>
+              <div className="space-y-4 mt-4">
                 {sortedJobs.length > 0 ? (
                   sortedJobs.map(job => (
                     <JobListItem 

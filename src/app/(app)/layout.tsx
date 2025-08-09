@@ -61,6 +61,7 @@ import { differenceInDays } from 'date-fns';
 import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MockModeBanner } from "@/components/common/MockModeBanner";
+import { Toaster } from "@/components/ui/toaster";
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -70,7 +71,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
   const getNavItemsForRole = () => {
-    const baseAdminItems = [
+    const baseItems = [
       { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
       { href: "/customers", label: t('customers'), icon: ClipboardList },
       { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
@@ -78,33 +79,32 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     ];
     
     const technicianViewItem = { href: "/technician", label: t('technician_view'), icon: Smartphone };
-    
-    const settingsItem = { href: "/settings", label: t('settings'), icon: Settings };
-    const roadmapItem = { href: "/roadmap", label: "Roadmap", icon: ListChecks };
+    const technicianSpecificItem = { href: `/technician/jobs/${user?.uid}`, label: t('my_active_jobs'), icon: Smartphone };
+    const adminSettingsItems = [
+        { isSeparator: true }, 
+        technicianViewItem, 
+        { isSeparator: true }, 
+    ];
 
     switch (userProfile?.role) {
       case 'technician':
-        return [
-          { href: `/technician/jobs/${user!.uid}`, label: t('my_active_jobs'), icon: Smartphone },
-        ];
+        return [technicianSpecificItem];
       case 'superAdmin':
         return [
-            ...baseAdminItems, 
-            { isSeparator: true }, 
-            technicianViewItem, 
-            { isSeparator: true }, 
-            roadmapItem,
-            settingsItem
+          ...baseItems,
+          ...adminSettingsItems,
+          { href: "/roadmap", label: "Roadmap", icon: ListChecks },
+          { href: "/settings", label: t('settings'), icon: Settings },
         ];
       case 'admin':
         return [
-            ...baseAdminItems, 
-            { isSeparator: true }, 
-            technicianViewItem, 
-            { isSeparator: true }, 
-            settingsItem
+          ...baseItems,
+          ...adminSettingsItems,
+          { href: "/settings", label: t('settings'), icon: Settings },
         ];
       default:
+        // Return a default set of items if the role is null or unrecognized,
+        // which can happen during the initial loading phase.
         return [];
     }
   };
@@ -118,7 +118,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     }
 
     if (userProfile) {
-        // Priority 1: If onboarding is pending, they MUST go to onboarding.
         if (userProfile.onboardingStatus === 'pending_onboarding') {
             if (pathname !== '/onboarding') {
                 router.replace('/onboarding');
@@ -126,22 +125,17 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        // Priority 2: If onboarding is complete, check their role and route accordingly.
         if (userProfile.onboardingStatus === 'completed' && userProfile.companyId) {
-            if (pathname === '/onboarding') { // Don't let them go back to onboarding
+            if (pathname === '/onboarding') { 
                 router.replace('/dashboard');
             }
-            // If user is a technician but not on a technician page, redirect them.
             if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
                 router.replace(`/technician/jobs/${user.uid}`);
             }
             return;
         }
 
-        // Priority 3: If their profile is created but they have no company/role yet.
         if (userProfile.onboardingStatus === 'pending_creation' && !userProfile.companyId) {
-            // This is the "waiting for invite" state. The UI for this is handled below.
-            // No redirect needed if they are on a valid app page (which will show the message).
             return;
         }
     }
@@ -206,7 +200,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
           <SidebarHeader className="bg-primary text-primary-foreground">
-            <Logo />
+            <Logo className="text-primary-foreground" />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
@@ -285,7 +279,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
         <SidebarInset>
           <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-primary text-primary-foreground px-4 md:hidden">
             <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
-            <Logo />
+            <Logo className="text-primary-foreground" />
             <div className="w-7"/>
           </header>
           <main className="flex-1 overflow-x-hidden">
@@ -321,6 +315,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               
               {children}
             </div>
+            <Toaster />
           </main>
         </SidebarInset>
       </SidebarProvider>

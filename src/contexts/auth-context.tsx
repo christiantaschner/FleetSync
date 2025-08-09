@@ -60,6 +60,7 @@ const MOCK_COMPANY: Company = {
   name: 'Mock Service Company',
   ownerId: 'mock_admin_id',
   subscriptionStatus: 'active',
+  technicianSeatCount: 10,
   settings: {
     companySpecialties: ["HVAC", "Plumbing"],
     hideHelpButton: false

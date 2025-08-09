@@ -45,6 +45,8 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
     const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
 
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
+    const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
+
     const [isAddContractOpen, setIsAddContractOpen] = useState(false);
 
     const customers = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true' ? mockCustomers : initialCustomers;
@@ -162,20 +164,6 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
         };
     }, [selectedCustomer, jobs, contracts]);
     
-    const prefilledJob = useMemo(() => {
-      if (!selectedCustomer) return null;
-      return {
-        customerName: selectedCustomer.name,
-        customerPhone: selectedCustomer.phone === 'N/A' ? '' : selectedCustomer.phone,
-        customerEmail: selectedCustomer.email === 'N/A' ? '' : selectedCustomer.email,
-        location: {
-          address: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
-          latitude: 0,
-          longitude: 0,
-        },
-      } as Partial<Job>;
-    }, [selectedCustomer]);
-
     const prefilledContract = useMemo(() => {
       if (!selectedCustomer) return null;
       return {
@@ -200,7 +188,28 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
     const handleAddCustomer = () => {
         setCustomerToEdit(null);
         setIsAddCustomerOpen(true);
-    }
+    };
+
+    const handleOpenEditJob = (job: Job) => {
+      setSelectedJobForEdit(job);
+      setIsAddJobOpen(true);
+    };
+
+    const handleAddNewJob = () => {
+      if (!selectedCustomer) return;
+      const prefilledJob = {
+        customerName: selectedCustomer.name,
+        customerPhone: selectedCustomer.phone === 'N/A' ? '' : selectedCustomer.phone,
+        customerEmail: selectedCustomer.email === 'N/A' ? '' : selectedCustomer.email,
+        location: {
+          address: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
+          latitude: 0,
+          longitude: 0,
+        },
+      } as Partial<Job>;
+      setSelectedJobForEdit(prefilledJob as Job);
+      setIsAddJobOpen(true);
+    };
 
 
     return (
@@ -214,7 +223,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
              <AddEditJobDialog
                 isOpen={isAddJobOpen}
                 onClose={() => setIsAddJobOpen(false)}
-                job={prefilledJob as Job}
+                job={selectedJobForEdit}
                 jobs={jobs}
                 technicians={[]}
                 customers={customers}
@@ -312,20 +321,20 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                            <div>
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="text-lg font-semibold flex items-center gap-2"><Briefcase/>Job History ({selectedCustomerData.jobs.length})</h3>
-                                    <Button variant="outline" size="sm" onClick={() => setIsAddJobOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Add Job</Button>
+                                    <Button variant="outline" size="sm" onClick={handleAddNewJob}><PlusCircle className="mr-2 h-4 w-4" /> Add Job</Button>
                                </div>
                                <ScrollArea className="h-[40vh] border rounded-md p-2">
                                     <div className="space-y-3 p-2">
                                     {selectedCustomerData.jobs.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No job history.</p>}
                                     {selectedCustomerData.jobs.map(job => (
-                                        <div key={job.id} className="p-3 rounded-md bg-secondary/50">
+                                        <button key={job.id} onClick={() => handleOpenEditJob(job)} className="w-full text-left p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
                                             <div className="flex justify-between items-start">
                                                 <p className="font-semibold">{job.title}</p>
                                                 <Badge variant={job.status === 'Completed' ? 'secondary' : job.status === 'Cancelled' ? 'destructive' : 'default'}>{job.status}</Badge>
                                             </div>
                                             <p className="text-xs text-muted-foreground">{new Date(job.createdAt).toLocaleString()}</p>
                                             <p className="text-sm mt-1">{job.description}</p>
-                                        </div>
+                                        </button>
                                     ))}
                                     </div>
                                </ScrollArea>

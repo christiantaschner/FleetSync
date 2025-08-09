@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { addCustomerAction, AddCustomerInputSchema, type AddCustomerInput } from '@/actions/customer-actions';
+import { addCustomerAction } from '@/actions/customer-actions';
+import { AddCustomerInputSchema, type AddCustomerInput } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, UserPlus } from 'lucide-react';
 
@@ -28,7 +30,7 @@ interface AddCustomerDialogProps {
 
 // Omitting companyId and appId from the form values, as they come from context
 const FormSchema = AddCustomerInputSchema.omit({ companyId: true, appId: true });
-type AddCustomerFormValues = Zod.infer<typeof FormSchema>;
+type AddCustomerFormValues = z.infer<typeof FormSchema>;
 
 
 const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded }) => {

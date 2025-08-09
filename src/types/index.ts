@@ -328,6 +328,15 @@ export const DispatcherFeedbackSchema = z.object({
 });
 export type DispatcherFeedback = z.infer<typeof DispatcherFeedbackSchema>;
 
+export const AddCustomerInputSchema = z.object({
+  companyId: z.string().min(1, 'Company ID is required.'),
+  appId: z.string().min(1, 'App ID is required.'),
+  name: z.string().min(1, 'Customer name is required.'),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  address: z.string().optional(),
+});
+export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
 
 // --- AI Flow Schemas ---
 

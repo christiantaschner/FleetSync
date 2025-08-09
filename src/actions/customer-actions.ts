@@ -5,6 +5,9 @@ import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
 import type { Job, Technician, PublicTrackingInfo } from '@/types';
 import * as admin from 'firebase-admin';
+import { AddCustomerInputSchema } from '@/types';
+import type { AddCustomerInput } from '@/types';
+
 
 export const AddEquipmentInputSchema = z.object({
   customerId: z.string().min(1, 'Customer ID is required.'),
@@ -138,16 +141,6 @@ export async function getTrackingInfoAction(
     return { data: null, error: errorMessage };
   }
 }
-
-export const AddCustomerInputSchema = z.object({
-  companyId: z.string().min(1, 'Company ID is required.'),
-  appId: z.string().min(1, 'App ID is required.'),
-  name: z.string().min(1, 'Customer name is required.'),
-  phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  address: z.string().optional(),
-});
-export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
 
 export async function addCustomerAction(
   input: AddCustomerInput

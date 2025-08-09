@@ -568,9 +568,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                             const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
                                             
                                             let travelStartTime: Date | null = null;
-                                            if(prevJob?.scheduledTime && prevJob.estimatedDurationMinutes) {
-                                                travelStartTime = new Date(new Date(prevJob.scheduledTime).getTime() + prevJob.estimatedDurationMinutes * 60000);
+                                            if(prevJob?.enRouteAt && prevJob.inProgressAt) {
+                                                const travelDurationMs = new Date(prevJob.inProgressAt).getTime() - new Date(prevJob.enRouteAt).getTime();
+                                                const prevJobEndTime = new Date(new Date(prevJob.scheduledTime!).getTime() + (prevJob.estimatedDurationMinutes || 60) * 60000);
+                                                travelStartTime = new Date(prevJobEndTime.getTime() + travelDurationMs);
                                             }
+                                            
                                             const travelEndTime = job.scheduledTime ? new Date(job.scheduledTime) : null;
                                             
                                             return (

@@ -93,7 +93,7 @@ export default function DashboardPage() {
   
   const [statusFilter, setStatusFilter] = useState<string[]>(['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft']);
   const [priorityFilter, setPriorityFilter] = useState<string[]>(['Low', 'Medium', 'High']);
-  const [sortOrder, setSortOrder] = useState<SortOrder>('priority');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
 
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
@@ -644,7 +644,7 @@ export default function DashboardPage() {
       const isAvailableMatch = lowercasedTerm === 'available' && tech.isAvailable;
       const isUnavailableMatch = (lowercasedTerm === 'unavailable' || lowercasedTerm === 'busy') && !tech.isAvailable;
       const nameMatch = tech.name.toLowerCase().includes(lowercasedTerm);
-      const skillMatch = tech.skills?.some(skill => skill.toLowerCase().includes(lowercasedTerm));
+      const skillMatch = tech.skills?.some(skill => skill.name.toLowerCase().includes(lowercasedTerm));
       return isAvailableMatch || isUnavailableMatch || nameMatch || skillMatch;
     });
   }, [technicians, technicianSearchTerm]);
@@ -671,7 +671,7 @@ export default function DashboardPage() {
       const suggestions: AssignmentSuggestion[] = currentPendingJobs.map(job => {
         const { requiredSkills = [] } = job;
         const suitableTechIndex = tempTechnicianPool.findIndex((tech: Technician) => 
-            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill))
+            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.some(s => s.name === skill))
         );
 
         if (suitableTechIndex !== -1) {
@@ -719,7 +719,7 @@ export default function DashboardPage() {
             technicianId: t.id,
             technicianName: t.name,
             isAvailable: t.isAvailable,
-            skills: t.skills || [],
+            skills: t.skills.map(s => s.name) || [],
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
@@ -1185,8 +1185,8 @@ export default function DashboardPage() {
                       <Select value={sortOrder} onValueChange={(value: SortOrder) => setSortOrder(value)}>
                         <SelectTrigger id="sort-order"><div className="flex items-center gap-1.5"><ArrowDownUp className="h-3 w-3"/> <SelectValue placeholder="Sort Order" /></div></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
                           <SelectItem value="status">{t('sort_by_status')}</SelectItem>
+                          <SelectItem value="priority">{t('sort_by_priority')}</SelectItem>
                           <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
                           <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
                           <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>

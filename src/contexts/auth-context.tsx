@@ -92,9 +92,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [contractsDueCount, setContractsDueCount] = useState(0);
 
   const [isMockMode, setMockModeState] = useState(process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true');
-
-  const router = useRouter();
   const { toast } = useToast();
+  const router = useRouter();
 
   const setIsMockMode = (isMock: boolean) => {
     localStorage.setItem('mockMode', JSON.stringify(isMock));
@@ -230,7 +229,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
-  }, [toast, router]);
+  }, [toast, router, isMockMode]); // Added isMockMode to dependency array
 
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {

@@ -69,22 +69,45 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, contractsDueCount, isMockMode } = useAuth();
   
-  const adminNavItems = [
-    { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
-    { href: "/customers", label: t('customers'), icon: ClipboardList },
-    { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
-    { href: "/reports", label: t('reports'), icon: BarChart },
-    { isSeparator: true },
-    { href: "/technician", label: t('technician_view'), icon: Smartphone },
-  ];
-  
-  const getTechnicianNavItems = (uid: string) => [
-    { href: `/technician/jobs/${uid}`, label: t('my_active_jobs'), icon: Smartphone },
-  ];
-  
-  const superAdminNavItems = [
-    { href: "/roadmap", label: "Roadmap", icon: ListChecks },
-  ];
+  const getNavItemsForRole = () => {
+    const baseAdminItems = [
+      { href: "/dashboard", label: t('dashboard'), icon: LayoutDashboard },
+      { href: "/customers", label: t('customers'), icon: ClipboardList },
+      { href: "/contracts", label: t('contracts'), icon: Repeat, badge: contractsDueCount > 0 ? contractsDueCount : undefined },
+      { href: "/reports", label: t('reports'), icon: BarChart },
+    ];
+    
+    const technicianViewItem = { href: "/technician", label: t('technician_view'), icon: Smartphone };
+    
+    const settingsItem = { href: "/settings", label: t('settings'), icon: Settings };
+    const roadmapItem = { href: "/roadmap", label: "Roadmap", icon: ListChecks };
+
+    switch (userProfile?.role) {
+      case 'technician':
+        return [
+          { href: `/technician/jobs/${user!.uid}`, label: t('my_active_jobs'), icon: Smartphone },
+        ];
+      case 'superAdmin':
+        return [
+            ...baseAdminItems, 
+            { isSeparator: true }, 
+            technicianViewItem, 
+            { isSeparator: true }, 
+            roadmapItem,
+            settingsItem
+        ];
+      case 'admin':
+        return [
+            ...baseAdminItems, 
+            { isSeparator: true }, 
+            technicianViewItem, 
+            { isSeparator: true }, 
+            settingsItem
+        ];
+      default:
+        return [];
+    }
+  };
 
   React.useEffect(() => {
     if (loading || isMockMode) return;
@@ -177,20 +200,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
-  const canSeeAdminViews = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
-
-  const getNavItemsForRole = () => {
-    switch (userProfile?.role) {
-        case 'technician':
-            return getTechnicianNavItems(user!.uid);
-        case 'superAdmin':
-            return [...adminNavItems, { isSeparator: true }, ...superAdminNavItems];
-        case 'admin':
-        default:
-            return adminNavItems;
-    }
-  };
-  
   const navItems = getNavItemsForRole();
 
   return (
@@ -228,23 +237,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-             {canSeeAdminViews && (
-                <SidebarMenu>
-                  <SidebarSeparator />
-                  <SidebarMenuItem>
-                    <Link href="/settings">
-                      <SidebarMenuButton
-                        isActive={pathname.startsWith('/settings')}
-                        className="w-full justify-start"
-                        tooltip={t('settings')}
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>{t('settings')}</span>
-                      </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">

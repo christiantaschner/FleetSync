@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -521,12 +522,17 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     <div className="relative h-full p-1.5">
                                         {techJobs.map((job, jobIndex) => {
                                             const prevJob = jobIndex > 0 ? techJobs[jobIndex - 1] : null;
-                                            const travelStartTime = prevJob?.completedAt ? new Date(prevJob.completedAt) : dayStart;
-                                            const travelEndTime = job.enRouteAt ? new Date(job.enRouteAt) : (job.inProgressAt ? new Date(job.inProgressAt) : null);
+
+                                            // Revised Travel Time Logic
+                                            let travelStartTime: Date | null = null;
+                                            if (prevJob?.scheduledTime && prevJob.estimatedDurationMinutes) {
+                                                travelStartTime = new Date(new Date(prevJob.scheduledTime).getTime() + prevJob.estimatedDurationMinutes * 60000);
+                                            }
+                                            const travelEndTime = job.scheduledTime ? new Date(job.scheduledTime) : null;
                                             
                                             return (
                                                 <React.Fragment key={job.id}>
-                                                    {travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
+                                                    {travelStartTime && travelEndTime && <TravelBlock from={travelStartTime} to={travelEndTime} dayStart={dayStart} totalMinutes={totalMinutes} />}
                                                     <JobBlock 
                                                         job={job} 
                                                         dayStart={dayStart} 
@@ -608,3 +614,4 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 };
 
 export default ScheduleCalendarView;
+

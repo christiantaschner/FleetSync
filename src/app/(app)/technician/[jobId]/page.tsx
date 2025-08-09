@@ -33,7 +33,7 @@ export default function TechnicianJobDetailPage() {
   const params = useParams();
   const jobId = params.jobId as string;
   const { toast } = useToast();
-  const { user, userProfile, company } = useAuth();
+  const { user, userProfile, company, loading: authLoading, isMockMode } = useAuth();
 
   const [job, setJob] = useState<Job | null>(null);
   const [technician, setTechnician] = useState<Technician | null>(null);
@@ -50,12 +50,11 @@ export default function TechnicianJobDetailPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
-    if (!jobId || !user) {
-      setIsLoading(false);
+    if (!jobId || !user || authLoading) { // Wait for user and auth state to be loaded
       return;
     }
 
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    if (isMockMode) {
         const foundJob = mockJobs.find(j => j.id === jobId) || null;
         setJob(foundJob);
         if (foundJob?.assignedTechnicianId) {
@@ -132,7 +131,7 @@ export default function TechnicianJobDetailPage() {
           }
 
         } else {
-          router.push('/technician');
+          setJob(null);
         }
       } catch (error) {
         console.error("Error fetching job details:", error);
@@ -142,7 +141,7 @@ export default function TechnicianJobDetailPage() {
     };
 
     fetchJobAndTechnician();
-  }, [jobId, router, user, appId]);
+  }, [jobId, router, user, appId, authLoading, isMockMode]);
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (!job || !db || isUpdating || !technician || !appId) return;
@@ -454,13 +453,28 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
-  if (!job || !technician) {
+  if (!job) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold">Job Not Found</h2>
         <p className="text-muted-foreground mt-2">
           The job you are looking for does not exist or could not be loaded.
+        </p>
+        <Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  if (!technician) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
+        <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold">Technician Not Found</h2>
+        <p className="text-muted-foreground mt-2">
+          The technician assigned to this job could not be loaded.
         </p>
         <Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6">
           <ArrowLeft className="mr-2 h-4 w-4" /> Go Back

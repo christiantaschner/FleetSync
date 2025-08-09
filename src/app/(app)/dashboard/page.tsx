@@ -1159,32 +1159,32 @@ export default function DashboardPage() {
 
         <TabsContent value="job-list" className="mt-4">
           <Card>
-            <CardHeader>
-                <CardTitle>{t('current_jobs')}</CardTitle>
-                <CardDescription>{t('current_jobs_desc')}</CardDescription>
+            <CardHeader className="flex flex-row justify-between items-center">
+                <div>
+                    <CardTitle>{t('current_jobs')}</CardTitle>
+                    <CardDescription>{t('current_jobs_desc')}</CardDescription>
+                </div>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                    id="open-tasks-toggle"
+                                    checked={showOpenTasksOnly}
+                                    onCheckedChange={setShowOpenTasksOnly}
+                                />
+                                <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
+                            </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row gap-4 mb-4 items-start md:items-end">
-                <div className="flex items-center gap-4 w-full md:w-auto flex-shrink-0">
-                    <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <div className="flex items-center space-x-2">
-                                  <Switch
-                                      id="open-tasks-toggle"
-                                      checked={showOpenTasksOnly}
-                                      onCheckedChange={setShowOpenTasksOnly}
-                                  />
-                                  <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
-                              </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p>Shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep.</p>
-                          </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full md:flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 w-full">
                     <div className="relative md:col-span-1">
                       <Label htmlFor="job-search">Search</Label>
                       <Search className="absolute left-2.5 top-8 h-4 w-4 text-muted-foreground" />

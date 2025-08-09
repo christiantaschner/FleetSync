@@ -300,6 +300,11 @@ export default function DashboardPage() {
     setIsAddJobDialogOpen(true);
   };
 
+  const handleOpenEditTechnician = (technician: Technician) => {
+    setSelectedTechnicianForEdit(technician);
+    setIsAddEditTechnicianDialogOpen(true);
+  };
+
   const customers = useMemo(() => {
     const data = isMockMode ? mockCustomers : []; // Need to derive from jobs if not mock
     
@@ -546,7 +551,7 @@ export default function DashboardPage() {
   const openTasksCount = useMemo(() => {
     return jobs.filter(job => 
         openTasksFilter.includes(job.status) || 
-        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || j.status === 'Draft'))
     ).length;
   }, [jobs]);
 
@@ -1075,7 +1080,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
@@ -1233,6 +1238,7 @@ export default function DashboardPage() {
                       technicians={technicians}
                       onOpenChat={handleOpenChat}
                       onAIAssign={handleAIAssign}
+                      onDraftNotification={handleDraftNotificationForJob}
                       onViewOnMap={handleViewOnMap}
                       onShareTracking={handleShareTracking}
                     />

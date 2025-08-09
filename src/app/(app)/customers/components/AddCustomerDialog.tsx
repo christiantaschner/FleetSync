@@ -18,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { addCustomerAction } from '@/actions/customer-actions';
-import { AddCustomerInputSchema, type AddCustomerInput, type CustomerData } from '@/types';
+import { AddCustomerInputSchema, type CustomerData } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, UserPlus, Save } from 'lucide-react';
 import { db } from '@/lib/firebase';
@@ -54,12 +54,14 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
   });
 
   useEffect(() => {
-    if (customerToEdit) {
-      reset(customerToEdit);
-    } else {
-      reset({ name: '', phone: '', email: '', address: '' });
+    if (isOpen) {
+        if (customerToEdit) {
+            reset(customerToEdit);
+        } else {
+            reset({ name: '', phone: '', email: '', address: '' });
+        }
     }
-  }, [customerToEdit, reset]);
+  }, [isOpen, customerToEdit, reset]);
 
   const onSubmitForm = async (data: AddCustomerFormValues) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {

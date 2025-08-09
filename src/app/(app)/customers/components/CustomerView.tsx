@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from 'react';
-import type { Job, Contract, Equipment, CustomerData } from '@/types';
+import type { Job, Contract, CustomerData } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,7 +21,6 @@ interface CustomerViewProps {
     customers: CustomerData[];
     jobs: Job[];
     contracts: Contract[];
-    equipment: Equipment[];
     allSkills: string[];
     companyId?: string;
     onCustomerAdded: () => void;
@@ -43,7 +42,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
-    const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
+    const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
 
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
     const [isAddContractOpen, setIsAddContractOpen] = useState(false);
@@ -185,6 +184,23 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
         customerAddress: selectedCustomer.address === 'N/A' ? '' : selectedCustomer.address,
       } as Partial<Contract>;
     }, [selectedCustomer]);
+    
+    const handleEditCustomer = () => {
+        if (!selectedCustomer?.isReal) {
+            alert("Cannot edit a customer profile that was derived from a job. Please create a formal customer profile for them first.");
+            return;
+        }
+        const foundCustomer = customers.find(c => c.id === selectedCustomer.id);
+        if (foundCustomer) {
+            setCustomerToEdit(foundCustomer);
+            setIsAddCustomerOpen(true);
+        }
+    };
+    
+    const handleAddCustomer = () => {
+        setCustomerToEdit(null);
+        setIsAddCustomerOpen(true);
+    }
 
 
     return (
@@ -193,15 +209,8 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                 isOpen={isAddCustomerOpen}
                 setIsOpen={setIsAddCustomerOpen}
                 onCustomerAdded={onCustomerAdded}
+                customerToEdit={customerToEdit}
             />
-             {selectedCustomer?.isReal && (
-                <AddCustomerDialog
-                    isOpen={isEditCustomerOpen}
-                    setIsOpen={setIsEditCustomerOpen}
-                    onCustomerAdded={onCustomerAdded}
-                    customerToEdit={customers.find(c => c.id === selectedCustomer.id)}
-                />
-            )}
              <AddEditJobDialog
                 isOpen={isAddJobOpen}
                 onClose={() => setIsAddJobOpen(false)}
@@ -226,7 +235,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                             <CardTitle>All Customers</CardTitle>
                             <CardDescription>Select a customer to view their details.</CardDescription>
                         </div>
-                        <Button variant="accent" size="sm" onClick={() => setIsAddCustomerOpen(true)}>
+                        <Button variant="accent" size="sm" onClick={handleAddCustomer}>
                             <UserPlus className="mr-2 h-4 w-4" /> Add
                         </Button>
                     </div>
@@ -271,7 +280,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                                         <p className="flex items-center gap-1"><MapPin size={14}/>Last Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => setIsEditCustomerOpen(true)} disabled={!selectedCustomer.isReal}>
+                                <Button variant="outline" size="sm" onClick={handleEditCustomer} disabled={!selectedCustomer.isReal}>
                                     <Edit className="mr-2 h-4 w-4" /> Edit Customer
                                 </Button>
                             </div>

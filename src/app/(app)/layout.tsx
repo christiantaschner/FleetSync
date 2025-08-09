@@ -115,10 +115,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             if (pathname === '/onboarding') { 
                 router.replace('/dashboard');
             }
-            // Temporarily disable technician redirect for debugging
-            // if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
-            //     router.replace(`/technician/jobs/${user.uid}`);
-            // }
+            if (userProfile.role === 'technician' && !pathname.startsWith('/technician')) {
+                 router.replace(`/technician/jobs/${user.uid}`);
+            }
             return;
         }
 
@@ -185,8 +184,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader className="bg-primary text-primary-foreground">
-            <Logo className="text-primary-foreground" />
+          <SidebarHeader>
+            <Logo />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
@@ -264,9 +263,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <SidebarInset>
-          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-primary text-primary-foreground px-4 md:hidden">
-            <SidebarTrigger className="text-primary-foreground hover:bg-primary/80" />
-            <Logo className="text-primary-foreground" />
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b border-border bg-background px-4 md:hidden">
+            <SidebarTrigger />
+            <Logo />
             <div className="w-7"/>
           </header>
           <main className="flex-1 overflow-x-hidden">

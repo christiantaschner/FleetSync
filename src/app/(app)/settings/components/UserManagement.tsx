@@ -57,6 +57,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
+        if (!companyId) {
+            setIsLoading(false);
+            return;
+        }
+
         const [usersResult, invitesResult] = await Promise.all([
             getCompanyUsersAction(companyId),
             getCompanyInvitesAction(companyId),

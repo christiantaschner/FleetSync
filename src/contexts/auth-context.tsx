@@ -18,8 +18,7 @@ import type { UserProfile, Company, Contract, Job, JobStatus } from "@/types";
 import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
-import { mockJobs, mockContracts, mockTechnicians } from "@/lib/mock-data";
-import { PREDEFINED_SKILLS } from "@/lib/skills";
+import { mockJobs, mockContracts } from "@/lib/mock-data";
 import { createUserProfileAction } from "@/actions/user-actions";
 
 interface AuthContextType {

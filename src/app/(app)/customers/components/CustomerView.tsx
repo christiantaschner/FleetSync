@@ -24,7 +24,6 @@ interface CustomerViewProps {
     jobs: Job[];
     contracts: Contract[];
     allSkills: string[];
-    companyId?: string;
     onCustomerAdded: () => void;
 }
 
@@ -40,7 +39,7 @@ interface DisplayCustomer {
     isReal: boolean; // Flag to identify if it's from customers collection
 }
 
-export default function CustomerView({ customers: initialCustomers, jobs, contracts, allSkills, companyId, onCustomerAdded }: CustomerViewProps) {
+export default function CustomerView({ customers: initialCustomers, jobs, contracts, allSkills, onCustomerAdded }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState<DisplayCustomer | null>(null);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);

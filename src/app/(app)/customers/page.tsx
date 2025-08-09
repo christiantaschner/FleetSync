@@ -50,7 +50,7 @@ export default function CustomersPage() {
         }
 
         let loadedCount = 0;
-        const totalCollections = 5;
+        const totalCollections = 4;
         const companyId = userProfile.companyId;
 
         const updateLoadingState = () => {
@@ -64,7 +64,6 @@ export default function CustomersPage() {
           if (result.data) {
             setAllSkills(result.data);
           }
-          if(isLoading) updateLoadingState();
         });
 
         const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
@@ -157,5 +156,5 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} equipment={equipment} allSkills={allSkills.map(s => s.name)} companyId={userProfile?.companyId} onCustomerAdded={fetchData} />;
+    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} />;
 }

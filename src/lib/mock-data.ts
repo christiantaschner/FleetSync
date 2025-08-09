@@ -332,7 +332,7 @@ export const mockJobs: Job[] = [
     description: 'This is a job created by a CSR that needs dispatcher review.',
     priority: 'Medium',
     status: 'Draft',
-    assignedTechnicianId: null,
+    assignedTechnicianId: 'tech_3',
     location: { latitude: 34.0, longitude: -118.2, address: '777 Draft Dr, Los Angeles, CA' },
     customerName: 'Tina Turner',
     customerPhone: '555-0215',

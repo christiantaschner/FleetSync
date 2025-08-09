@@ -78,8 +78,8 @@ function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'], divider: true },
-      { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'] },
+      { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'], divider: true },
+      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
   ];
 
   return allNavItems.filter(item => item.roles.includes(userProfile.role!));
@@ -272,8 +272,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger />
             <Logo className="absolute left-1/2 -translate-x-1/2"/>
           </header>
-          {isMockMode && <MockModeBanner />}
-          <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+           <main className="flex-1 overflow-x-hidden">
+                {isMockMode && <MockModeBanner />}
+                <div className="p-4 sm:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6 mx-4 sm:mx-0">
                       <CreditCard className="h-4 w-4" />
@@ -303,6 +304,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               ) : null}
               
               {children}
+              </div>
           </main>
         </div>
       </SidebarProvider>

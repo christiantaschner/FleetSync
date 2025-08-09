@@ -50,7 +50,7 @@ export default function TechnicianJobDetailPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
-    if (!jobId || authLoading) { 
+    if (!jobId || authLoading || !user) { 
       return;
     }
 
@@ -61,12 +61,14 @@ export default function TechnicianJobDetailPage() {
             setTechnician(mockTechnicians.find(t => t.id === foundJob.assignedTechnicianId) || null);
             const pastJobs = mockJobs.filter(j => j.customerPhone === foundJob.customerPhone && j.status === 'Completed' && j.id !== jobId);
             setHistoryJobs(pastJobs);
+        } else {
+          setTechnician(null);
         }
         setIsLoading(false);
         return;
     }
 
-    if (!db || !appId || !user) return;
+    if (!db || !appId) return;
     
     setIsLoading(true);
     
@@ -104,8 +106,7 @@ export default function TechnicianJobDetailPage() {
             }
         } else {
             setTechnician(null);
-            router.push('/dashboard');
-            return;
+            // This condition is handled in the UI, no need to redirect here if job is unassigned.
         }
 
         if (fetchedJob.customerPhone) {
@@ -466,8 +467,9 @@ export default function TechnicianJobDetailPage() {
     );
   }
 
+  // Modified this check to be more robust. The error occurs when the technician is `null` even if the job is loaded.
   if (!technician) {
-    return (
+     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold">Technician Not Found</h2>

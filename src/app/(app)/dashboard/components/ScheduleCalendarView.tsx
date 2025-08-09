@@ -259,7 +259,7 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
     );
 };
 
-const TechnicianRow = ({ technician, children }: { technician: Technician, children: React.ReactNode }) => {
+const TechnicianRow = ({ technician, children, onOptimize }: { technician: Technician, children: React.ReactNode, onOptimize: (technicianId: string) => void }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: technician.id,
     });
@@ -278,6 +278,18 @@ const TechnicianRow = ({ technician, children }: { technician: Technician, child
                         <span>{technician.isAvailable ? 'Available' : 'Unavailable'}</span>
                     </div>
                 </div>
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:bg-primary/10 hover:text-primary" onClick={() => onOptimize(technician.id)}>
+                                <Shuffle className="h-4 w-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Re-optimize {technician.name}'s schedule</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
             {children}
         </div>
@@ -461,11 +473,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     <CardDescription>Daily timeline view of technician assignments. Drag and drop jobs to reschedule.</CardDescription>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
-                    <OptimizeRouteDialog technicians={technicians} jobs={jobs}>
-                        <Button variant="outline" className="hover:bg-primary hover:text-primary-foreground">
-                            <Shuffle className="mr-2 h-4 w-4" /> Re-Optimize Schedule
-                        </Button>
-                    </OptimizeRouteDialog>
                     <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
                         <Button size="icon" variant={viewMode === 'day' ? 'default' : 'ghost'} onClick={() => setViewMode('day')}><Grid3x3 className="h-4 w-4" /></Button>
                         <Button size="icon" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}><Calendar className="h-4 w-4" /></Button>
@@ -504,7 +511,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     {technicians.length > 0 ? technicians.map((tech) => {
                         const techJobs = jobsByTechnician(tech.id);
                         return (
-                            <TechnicianRow key={tech.id} technician={tech}>
+                            <TechnicianRow key={tech.id} technician={tech} onOptimize={onRouteDirty}>
                                 <div className="flex-1 relative h-full">
                                     <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                                     {hours.map((_, index) => (

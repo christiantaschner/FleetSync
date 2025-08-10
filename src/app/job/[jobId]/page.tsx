@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician, ChecklistResult, CustomerData } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye, History, User, MessageSquare, Users } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye, History, User, MessageSquare, Users, MapIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
@@ -288,7 +288,15 @@ export default function UnifiedJobDetailPage() {
                     <Button variant="outline" size="sm"><Users className="mr-2 h-4 w-4"/> Customer History</Button>
                 </Link>
             )}
-            <Button variant="default" size="sm" onClick={handleNavigate}><Navigation className="mr-2 h-4 w-4" /> Navigate</Button>
+            
+            {isAdmin ? (
+                <Link href={`/dashboard?tab=overview-map&jobFilter=${job.id}`}>
+                    <Button variant="default" size="sm"><MapIcon className="mr-2 h-4 w-4" /> View on Map</Button>
+                </Link>
+            ) : (
+                <Button variant="default" size="sm" onClick={handleNavigate}><Navigation className="mr-2 h-4 w-4" /> Navigate</Button>
+            )}
+
         </div>
       </div>
       
@@ -338,3 +346,4 @@ export default function UnifiedJobDetailPage() {
     </div>
   );
 }
+

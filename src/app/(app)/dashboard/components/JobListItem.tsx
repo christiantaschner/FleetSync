@@ -2,8 +2,8 @@
 
 "use client";
 
-import React, { useState } from 'react';
-import { Briefcase, MapPin, User, Clock, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Shuffle, Wrench, MapIcon, Loader2, UserCircle as UserCircleIcon, UserCheck } from 'lucide-react';
+import React, from 'react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -22,7 +22,6 @@ interface JobListItemProps {
   technicians: Technician[];
   onOpenChat: (job: Job) => void;
   onAIAssign: (job: Job) => void;
-  onDraftNotification: (job: Job) => Promise<void>;
   onViewOnMap: (location: Location) => void;
   onShareTracking: (job: Job) => void;
   onEdit: (job: Job) => void;
@@ -33,18 +32,10 @@ const JobListItem: React.FC<JobListItemProps> = ({
     technicians, 
     onOpenChat, 
     onAIAssign, 
-    onDraftNotification,
     onViewOnMap,
     onShareTracking,
     onEdit,
 }) => {
-  const [isNotifying, setIsNotifying] = useState(false);
-
-  const handleDraftNotification = async () => {
-    setIsNotifying(true);
-    await onDraftNotification(job);
-    setIsNotifying(false);
-  };
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
@@ -80,34 +71,35 @@ const JobListItem: React.FC<JobListItemProps> = ({
       isMediumOrLowPriorityPending && "border-amber-400 bg-amber-50",
       isDraft && "border-dashed border-gray-400 bg-gray-50/50"
     )}>
-      <CardHeader className="pb-3 cursor-pointer" onClick={() => onEdit(job)}>
-        <div className="flex items-center justify-between">
-          <CardTitle className={cn("text-lg font-headline flex items-center gap-2 truncate", 
-            isHighPriorityPending && "text-destructive",
-            isMediumOrLowPriorityPending && "text-amber-900",
-            isDraft && "text-gray-600"
-          )}>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span onClick={(e) => e.stopPropagation()}>{getStatusIcon(job.status)}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{job.status === 'Pending' ? 'Unassigned' : job.status}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {job.title}
-          </CardTitle>
-          <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
+              isHighPriorityPending && "text-destructive",
+              isMediumOrLowPriorityPending && "text-amber-900",
+              isDraft && "text-gray-600"
+            )}>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>{getStatusIcon(job.status)}</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{job.status === 'Pending' ? 'Unassigned' : job.status}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <span className="truncate">{job.title}</span>
+            </CardTitle>
+            <CardDescription className="flex items-center gap-1 text-sm mt-1">
+              <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}</span>
+            </CardDescription>
+          </div>
+          <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
         </div>
-        <CardDescription className="flex items-center gap-1 text-sm">
-          <MapPin className="h-3 w-3" /> {job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}
-        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm pb-3 cursor-pointer" onClick={() => onEdit(job)}>
+      <CardContent className="space-y-3 text-sm pb-3">
         <div className="flex items-center gap-2">
-            <UserCircleIcon className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{job.customerName}</span>
         </div>
         <p className="text-muted-foreground line-clamp-2">{job.description}</p>
@@ -146,7 +138,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row justify-end gap-2 border-t pt-3 pb-3">
+      <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-3 pb-3">
          {isUnassigned && (
             <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
                 <Bot className="mr-1 h-3 w-3" /> Fleety Assign
@@ -160,25 +152,20 @@ const JobListItem: React.FC<JobListItemProps> = ({
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
                 <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
             </Button>
-            <Button variant="outline" size="sm" onClick={handleDraftNotification} disabled={isNotifying}>
-                {isNotifying ? (
-                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                ) : (
-                  <Bot className="mr-1 h-3 w-3 text-primary" />
-                )}
-                Notify Customer
-            </Button>
           </>
         )}
          <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)}>
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
-         <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm" onClick={() => onEdit(job)}>
-            <Edit className="mr-1 h-3 w-3" /> Edit Details
-        </Button>
+        <Link href={`/job/${job.id}`}>
+          <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm">
+            <Eye className="mr-2 h-4 w-4" /> View Details
+          </Button>
+        </Link>
       </CardFooter>
     </Card>
   );
 };
 
 export default JobListItem;
+

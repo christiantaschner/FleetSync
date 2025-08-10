@@ -3,7 +3,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -878,39 +878,6 @@ export default function DashboardPage() {
         longitude: location.lng,
     });
   };
-
-  const handleDraftNotificationForJob = async (job: Job) => {
-    if (!job.assignedTechnicianId || !company?.name) {
-        toast({ title: "Cannot Notify", description: "Job is not assigned or company name is missing.", variant: "destructive" });
-        return;
-    }
-    const tech = technicians.find(t => t.id === job.assignedTechnicianId);
-    if (!tech) {
-        toast({ title: "Cannot Notify", description: "Assigned technician not found.", variant: "destructive" });
-        return;
-    }
-
-    const result = await notifyCustomerAction({
-      jobId: job.id,
-      customerName: job.customerName,
-      technicianName: tech.name,
-      jobTitle: job.title,
-      reasonForChange: `Regarding your upcoming appointment.`,
-      companyName: company.name,
-      appointmentTime: job.scheduledTime,
-      estimatedDurationMinutes: job.estimatedDurationMinutes,
-    });
-
-    if (result.error) {
-      toast({ title: 'Error', description: result.error, variant: 'destructive' });
-    } else if (result.data?.message) {
-      const { dismiss } = toast({
-        title: "Fleety's Message Draft",
-        description: <ToastWithCopy message={result.data.message} onDismiss={() => dismiss()} />,
-        duration: Infinity,
-      });
-    }
-  };
   
   const handleViewOnMap = (location: Location) => {
     setActiveTab('overview-map');
@@ -1246,7 +1213,6 @@ export default function DashboardPage() {
                       technicians={technicians}
                       onOpenChat={handleOpenChat}
                       onAIAssign={handleAIAssign}
-                      onDraftNotification={handleDraftNotificationForJob}
                       onViewOnMap={handleViewOnMap}
                       onShareTracking={handleShareTracking}
                       onEdit={handleOpenEditJob}

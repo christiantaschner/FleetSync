@@ -7,13 +7,13 @@ import type { Job, JobStatus, Technician, ChecklistResult, CustomerData } from '
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye, History, User, MessageSquare, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import JobDetailsDisplay from '@/app/(app)/technician/[jobId]/components/job-details-display';
-import StatusUpdateActions from '@/app/(app)/technician/[jobId]/components/status-update-actions';
-import WorkDocumentationForm from '@/app/(app)/technician/[jobId]/components/work-documentation-form';
-import ChecklistCard from '@/app/(app)/technician/[jobId]/components/ChecklistCard';
-import TroubleshootingCard from '@/app/(app)/technician/[jobId]/components/TroubleshootingCard';
-import CustomerHistoryCard from '@/app/(app)/technician/[jobId]/components/CustomerHistoryCard';
-import ChatCard from '@/app/(app)/technician/[jobId]/components/ChatCard';
+import JobDetailsDisplay from './components/JobDetailsDisplay';
+import StatusUpdateActions from './components/StatusUpdateActions';
+import WorkDocumentationForm from './components/WorkDocumentationForm';
+import ChecklistCard from './components/ChecklistCard';
+import TroubleshootingCard from './components/TroubleshootingCard';
+import CustomerHistoryCard from './components/CustomerHistoryCard';
+import ChatCard from './components/ChatCard';
 import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog';
 
 import { db, storage } from '@/lib/firebase';
@@ -295,7 +295,18 @@ export default function UnifiedJobDetailPage() {
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
 
       <JobDetailsDisplay job={job} />
-      <CustomerHistoryCard jobs={historyJobs} />
+      
+      {technician ? (
+         <CustomerHistoryCard jobs={historyJobs} />
+      ) : (
+        !isLoading && <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Job is Unassigned</AlertTitle>
+            <AlertDescription>
+                Assign a technician to this job to view chat and enable status updates.
+            </AlertDescription>
+        </Alert>
+      )}
       
       {technician && !isJobConcluded && appId && (
         <ChatCard job={job} technician={technician} appId={appId} />

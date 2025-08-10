@@ -3,7 +3,7 @@
 "use client";
 
 import React, from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -73,8 +73,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <CardTitle className={cn("text-lg font-headline flex items-center gap-2", 
+          <div className="flex-1 min-w-0">
+            <CardTitle className={cn("text-lg font-headline flex items-start gap-2", 
               isHighPriorityPending && "text-destructive",
               isMediumOrLowPriorityPending && "text-amber-900",
               isDraft && "text-gray-600"
@@ -82,7 +82,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span>{getStatusIcon(job.status)}</span>
+                    <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>{job.status === 'Pending' ? 'Unassigned' : job.status}</p>
@@ -138,7 +138,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-3 pb-3">
+      <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
          {isUnassigned && (
             <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
                 <Bot className="mr-1 h-3 w-3" /> Fleety Assign

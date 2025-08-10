@@ -78,7 +78,7 @@ function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-      { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'], divider: false },
+      { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'], divider: true },
       { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
   ];
 
@@ -273,6 +273,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             <Logo className="absolute left-1/2 -translate-x-1/2"/>
           </header>
            <main className="flex-1 overflow-x-hidden">
+                <MockModeBanner />
                 <div className="p-4 sm:p-6 lg:p-8">
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6 mx-4 sm:mx-0">

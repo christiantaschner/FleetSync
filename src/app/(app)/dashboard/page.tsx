@@ -56,7 +56,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { MockModeBanner } from '@/components/common/MockModeBanner';
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -981,7 +980,6 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-6">
-        <MockModeBanner />
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
             onOpenAddJobDialog={handleOpenAddJob}

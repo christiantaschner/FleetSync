@@ -981,7 +981,6 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-6">
-        <MockModeBanner />
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
             onOpenAddJobDialog={handleOpenAddJob}

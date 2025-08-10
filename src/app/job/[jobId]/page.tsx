@@ -62,8 +62,12 @@ export default function UnifiedJobDetailPage() {
           if (fetchedJob?.assignedTechnicianId) {
             fetchedTechnician = mockTechnicians.find(t => t.id === fetchedJob!.assignedTechnicianId) || null;
           }
-          if (fetchedJob?.customerPhone) {
-            pastJobs = mockJobs.filter(j => j.customerPhone === fetchedJob!.customerPhone && j.status === 'Completed' && j.id !== jobId);
+          if (fetchedJob?.customerName) {
+            pastJobs = mockJobs.filter(j => 
+                j.customerName === fetchedJob!.customerName && 
+                j.status === 'Completed' && 
+                j.id !== jobId
+            );
           }
       } else {
         if (!db || !appId) {
@@ -90,18 +94,35 @@ export default function UnifiedJobDetailPage() {
                 fetchedTechnician = allTechnicians.find(t => t.id === fetchedJob!.assignedTechnicianId) || null;
             }
 
-            if (fetchedJob.customerPhone) {
-                const historyQuery = query(
-                    collection(db, `artifacts/${appId}/public/data/jobs`),
+            if (fetchedJob.customerName) {
+                let historyQuery;
+                const baseQueryConstraints = [
                     where("companyId", "==", fetchedJob.companyId),
-                    where("customerPhone", "==", fetchedJob.customerPhone),
+                    where("customerName", "==", fetchedJob.customerName),
                     where("status", "==", "Completed"),
                     where("createdAt", "<", fetchedJob.createdAt),
                     orderBy("createdAt", "desc"),
                     limit(3)
-                );
-                const historySnapshot = await getDocs(historyQuery);
-                pastJobs = historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job));
+                ];
+
+                if (fetchedJob.customerEmail) {
+                    historyQuery = query(
+                        collection(db, `artifacts/${appId}/public/data/jobs`),
+                        where("customerEmail", "==", fetchedJob.customerEmail),
+                        ...baseQueryConstraints
+                    );
+                } else if (fetchedJob.customerPhone) {
+                     historyQuery = query(
+                        collection(db, `artifacts/${appId}/public/data/jobs`),
+                        where("customerPhone", "==", fetchedJob.customerPhone),
+                        ...baseQueryConstraints
+                    );
+                }
+
+                if (historyQuery) {
+                    const historySnapshot = await getDocs(historyQuery);
+                    pastJobs = historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job));
+                }
             }
         }
       }

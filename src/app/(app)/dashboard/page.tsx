@@ -1,4 +1,5 @@
 
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -132,6 +133,7 @@ export default function DashboardPage() {
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
 
   const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false);
+  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
   
   const [jobForAIAssign, setJobForAIAssign] = useState<Job | null>(null);
   const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
@@ -962,7 +964,6 @@ export default function DashboardPage() {
     { value: "Medium", label: "Medium" },
     { value: "Low", label: "Low" },
   ];
-  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
 
   const handleSkillsUpdated = (newSkills: Skill[]) => {
       if(userProfile?.companyId) {
@@ -980,6 +981,7 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-6">
+        <MockModeBanner />
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
             onOpenAddJobDialog={handleOpenAddJob}
@@ -1248,6 +1250,7 @@ export default function DashboardPage() {
                       onDraftNotification={handleDraftNotificationForJob}
                       onViewOnMap={handleViewOnMap}
                       onShareTracking={handleShareTracking}
+                      onEdit={handleOpenEditJob}
                     />
                   ))
                 ) : (

@@ -25,6 +25,7 @@ interface JobListItemProps {
   onDraftNotification: (job: Job) => Promise<void>;
   onViewOnMap: (location: Location) => void;
   onShareTracking: (job: Job) => void;
+  onEdit: (job: Job) => void;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ 
@@ -35,6 +36,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onDraftNotification,
     onViewOnMap,
     onShareTracking,
+    onEdit,
 }) => {
   const [isNotifying, setIsNotifying] = useState(false);
 
@@ -78,7 +80,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
       isMediumOrLowPriorityPending && "border-amber-400 bg-amber-50",
       isDraft && "border-dashed border-gray-400 bg-gray-50/50"
     )}>
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 cursor-pointer" onClick={() => onEdit(job)}>
         <div className="flex items-center justify-between">
           <CardTitle className={cn("text-lg font-headline flex items-center gap-2 truncate", 
             isHighPriorityPending && "text-destructive",
@@ -88,7 +90,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span onClick={(e) => e.preventDefault()}>{getStatusIcon(job.status)}</span>
+                  <span onClick={(e) => e.stopPropagation()}>{getStatusIcon(job.status)}</span>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>{job.status === 'Pending' ? 'Unassigned' : job.status}</p>
@@ -103,7 +105,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
           <MapPin className="h-3 w-3" /> {job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm pb-3">
+      <CardContent className="space-y-3 text-sm pb-3 cursor-pointer" onClick={() => onEdit(job)}>
         <div className="flex items-center gap-2">
             <UserCircleIcon className="h-4 w-4 text-muted-foreground" />
             <span className="font-medium">{job.customerName}</span>
@@ -171,11 +173,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
          <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)}>
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
-         <Link href={`/technician/${job.id}`} className="w-full sm:w-auto">
-            <Button variant="secondary" className="bg-secondary hover:bg-muted w-full" size="sm">
-                <Edit className="mr-1 h-3 w-3" /> View Details
-            </Button>
-         </Link>
+         <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm" onClick={() => onEdit(job)}>
+            <Edit className="mr-1 h-3 w-3" /> Edit Details
+        </Button>
       </CardFooter>
     </Card>
   );

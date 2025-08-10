@@ -4,17 +4,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician, ChecklistResult, CustomerData } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye, History, User, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, Eye, History, User, MessageSquare, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import JobDetailsDisplay from '@/app/(app)/technician/[jobId]/components/job-details-display'; // Re-using this component for display
-import StatusUpdateActions from '@/app/(app)/technician/[jobId]/components/status-update-actions'; // Re-using this component
-import WorkDocumentationForm from '@/app/(app)/technician/[jobId]/components/work-documentation-form'; // Re-using this component
+import JobDetailsDisplay from '@/app/(app)/technician/[jobId]/components/job-details-display';
+import StatusUpdateActions from '@/app/(app)/technician/[jobId]/components/status-update-actions';
+import WorkDocumentationForm from '@/app/(app)/technician/[jobId]/components/work-documentation-form';
 import ChecklistCard from '@/app/(app)/technician/[jobId]/components/ChecklistCard';
 import TroubleshootingCard from '@/app/(app)/technician/[jobId]/components/TroubleshootingCard';
 import CustomerHistoryCard from '@/app/(app)/technician/[jobId]/components/CustomerHistoryCard';
 import ChatCard from '@/app/(app)/technician/[jobId]/components/ChatCard';
-import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog'; // To edit job
+import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -25,6 +25,7 @@ import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
+import Link from 'next/link';
 
 export default function UnifiedJobDetailPage() {
   const router = useRouter();
@@ -46,7 +47,7 @@ export default function UnifiedJobDetailPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
-    if (!jobId || authLoading) return;
+    if (!jobId || authLoading || !user) return;
 
     const fetchJobAndRelatedData = async () => {
       setIsLoading(true);
@@ -54,11 +55,9 @@ export default function UnifiedJobDetailPage() {
       let fetchedJob: Job | null = null;
       let fetchedTechnician: Technician | null = null;
       let pastJobs: Job[] = [];
-      let allTechnicians: Technician[] = [];
 
       if (isMockMode) {
           fetchedJob = mockJobs.find(j => j.id === jobId) || null;
-          allTechnicians = mockTechnicians;
           if (fetchedJob?.assignedTechnicianId) {
             fetchedTechnician = mockTechnicians.find(t => t.id === fetchedJob!.assignedTechnicianId) || null;
           }
@@ -86,43 +85,37 @@ export default function UnifiedJobDetailPage() {
             }
             fetchedJob = { id: jobDocSnap.id, ...data } as Job;
 
-            const techQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", fetchedJob.companyId));
-            const techsSnapshot = await getDocs(techQuery);
-            allTechnicians = techsSnapshot.docs.map(d => ({id: d.id, ...d.data()}) as Technician);
-
             if (fetchedJob.assignedTechnicianId) {
-                fetchedTechnician = allTechnicians.find(t => t.id === fetchedJob!.assignedTechnicianId) || null;
+                const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
+                const techDocSnap = await getDoc(techDocRef);
+                if (techDocSnap.exists()) {
+                    fetchedTechnician = { id: techDocSnap.id, ...techDocSnap.data() } as Technician;
+                }
             }
-
-            if (fetchedJob.customerName) {
-                let historyQuery;
-                const baseQueryConstraints = [
-                    where("companyId", "==", fetchedJob.companyId),
-                    where("customerName", "==", fetchedJob.customerName),
+            
+            // Fetch history using customer ID if available, otherwise fallback
+            if (fetchedJob.customerId) {
+                const historyQuery = query(
+                    collection(db, `artifacts/${appId}/public/data/jobs`),
+                    where("customerId", "==", fetchedJob.customerId),
                     where("status", "==", "Completed"),
                     where("createdAt", "<", fetchedJob.createdAt),
                     orderBy("createdAt", "desc"),
                     limit(3)
-                ];
-
-                if (fetchedJob.customerEmail) {
-                    historyQuery = query(
-                        collection(db, `artifacts/${appId}/public/data/jobs`),
-                        where("customerEmail", "==", fetchedJob.customerEmail),
-                        ...baseQueryConstraints
-                    );
-                } else if (fetchedJob.customerPhone) {
-                     historyQuery = query(
-                        collection(db, `artifacts/${appId}/public/data/jobs`),
-                        where("customerPhone", "==", fetchedJob.customerPhone),
-                        ...baseQueryConstraints
-                    );
-                }
-
-                if (historyQuery) {
-                    const historySnapshot = await getDocs(historyQuery);
-                    pastJobs = historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job));
-                }
+                );
+                const historySnapshot = await getDocs(historyQuery);
+                pastJobs = historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job));
+            } else if (fetchedJob.customerEmail) { // Fallback to email
+                 const historyQuery = query(
+                    collection(db, `artifacts/${appId}/public/data/jobs`),
+                    where("customerEmail", "==", fetchedJob.customerEmail),
+                    where("status", "==", "Completed"),
+                    where("createdAt", "<", fetchedJob.createdAt),
+                    orderBy("createdAt", "desc"),
+                    limit(3)
+                );
+                const historySnapshot = await getDocs(historyQuery);
+                pastJobs = historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job));
             }
         }
       }
@@ -134,7 +127,7 @@ export default function UnifiedJobDetailPage() {
     };
 
     fetchJobAndRelatedData();
-  }, [jobId, authLoading, isMockMode, appId]);
+  }, [jobId, authLoading, isMockMode, appId, user]);
   
   const handleStatusUpdate = async (newStatus: JobStatus) => {
     if (!job || !db || isUpdating || !technician || !appId) return;
@@ -290,6 +283,11 @@ export default function UnifiedJobDetailPage() {
         <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to List</Button>
         <div className="flex items-center gap-2">
             {isAdmin && <Button variant="secondary" size="sm" onClick={() => setIsAddJobDialogOpen(true)}><Edit3 className="mr-2 h-4 w-4" /> Edit Job</Button>}
+            {job.customerId && isAdmin && (
+                <Link href={`/customers?search=${encodeURIComponent(job.customerName)}`}>
+                    <Button variant="outline" size="sm"><Users className="mr-2 h-4 w-4"/> Customer History</Button>
+                </Link>
+            )}
             <Button variant="default" size="sm" onClick={handleNavigate}><Navigation className="mr-2 h-4 w-4" /> Navigate</Button>
         </div>
       </div>

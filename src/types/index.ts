@@ -124,6 +124,7 @@ export type Job = {
   priority: JobPriority;
   status: JobStatus;
   assignedTechnicianId?: string | null;
+  customerId?: string | null;
   location: Location;
   customerName: string;
   customerEmail?: string;

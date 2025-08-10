@@ -92,6 +92,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
   const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
   const [selectedContractId, setSelectedContractId] = useState<string>('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
@@ -120,6 +121,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
     setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
     setSelectedContractId(job?.sourceContractId || '');
+    setSelectedCustomerId(job?.customerId || null);
     setAiSuggestion(null);
     setSkillSuggestionReasoning(null);
     setSuggestedTechnicianDetails(null);
@@ -156,6 +158,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     const value = e.target.value;
     setCustomerName(value);
     setSelectedContractId('');
+    setSelectedCustomerId(null);
     if (value.length > 1) {
         const filtered = customers.filter(c => c.name.toLowerCase().includes(value.toLowerCase()));
         setCustomerSuggestions(filtered);
@@ -171,6 +174,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setCustomerEmail(customer.email || '');
       setCustomerPhone(customer.phone || '');
       setLocationAddress(customer.address || '');
+      setSelectedCustomerId(customer.id);
       setIsCustomerPopoverOpen(false);
       setCustomerSuggestions([]);
   };
@@ -187,6 +191,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setCustomerPhone(contract.customerPhone || '');
       setLocationAddress(contract.customerAddress);
       setCustomerEmail(''); // Contracts don't have email, clear it
+      setSelectedCustomerId(null); // Contracts don't have a direct customer ID link yet
     }
   };
 
@@ -360,6 +365,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     if (!jobIdToUse) {
        const tempJobData = {
           companyId: userProfile.companyId,
+          customerId: selectedCustomerId,
           title, description, priority, requiredSkills, customerName, customerEmail, customerPhone,
           location: { latitude: latitude ?? 0, longitude: longitude ?? 0, address: locationAddress },
           scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
@@ -428,6 +434,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
     const jobData: any = {
       companyId: userProfile.companyId,
+      customerId: selectedCustomerId,
       title,
       description,
       priority,

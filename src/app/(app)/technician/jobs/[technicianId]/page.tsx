@@ -293,7 +293,7 @@ export default function TechnicianJobListPage() {
                 )}
               </CardContent>
               <CardFooter className="bg-secondary/50 p-3">
-                <Link href={`/technician/${job.id}`} className="w-full">
+                <Link href={`/job/${job.id}`} className="w-full">
                   <Button className="w-full" variant="default">
                     View Details & Update Status
                   </Button>

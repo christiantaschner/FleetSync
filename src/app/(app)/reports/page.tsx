@@ -1,7 +1,9 @@
+
 "use client";
 
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
+import { MockModeBanner } from '@/components/common/MockModeBanner';
 
 const ReportClientView = dynamic(() => import('./components/ReportClientView'), {
   ssr: false,

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -12,6 +13,7 @@ import { mockJobs, mockContracts, mockEquipment, mockCustomers } from '@/lib/moc
 import { getSkillsAction } from '@/actions/skill-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { useSearchParams } from 'next/navigation';
+import { MockModeBanner } from '@/components/common/MockModeBanner';
 
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
@@ -166,5 +168,9 @@ export default function CustomersPage() {
         );
     }
     
-    return <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} initialSearchTerm={searchTerm} />;
+    return (
+        <div>
+            <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} initialSearchTerm={searchTerm} />
+        </div>
+    );
 }

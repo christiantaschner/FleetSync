@@ -140,25 +140,25 @@ const JobListItem: React.FC<JobListItemProps> = ({
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
          {isUnassigned && (
-            <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }}>
+            <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
                 <Bot className="mr-1 h-3 w-3" /> Fleety Assign
             </Button>
         )}
         {isRoutable && (
           <>
-            <Button variant="outline" size="sm" onClick={() => onShareTracking(job)}>
+            <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
                 <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
             </Button>
-            <Button variant="outline" size="sm" onClick={() => onOpenChat(job)}>
+            <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
                 <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
             </Button>
           </>
         )}
-         <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)}>
+         <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
-        <Link href={`/job/${job.id}`}>
-          <Button variant="secondary" className="bg-secondary hover:bg-muted" size="sm">
+        <Link href={`/job/${job.id}`} className="w-full">
+          <Button variant="secondary" className="bg-secondary hover:bg-muted w-full" size="sm">
             <Eye className="mr-2 h-4 w-4" /> View Details
           </Button>
         </Link>
@@ -168,4 +168,5 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
+
 

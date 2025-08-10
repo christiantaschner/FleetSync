@@ -21,6 +21,7 @@ interface MultiSelectFilterProps {
   onChange: (selected: string[]) => void;
   placeholder: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function MultiSelectFilter({
@@ -29,6 +30,7 @@ export function MultiSelectFilter({
   onChange,
   placeholder,
   className,
+  disabled = false,
 }: MultiSelectFilterProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -54,6 +56,7 @@ export function MultiSelectFilter({
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between bg-card", className)}
+          disabled={disabled}
         >
           <span className="truncate">
             {selected.length === 0

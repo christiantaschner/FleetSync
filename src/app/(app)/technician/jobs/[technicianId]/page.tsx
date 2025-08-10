@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -17,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
+import { MockModeBanner } from '@/components/common/MockModeBanner';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();

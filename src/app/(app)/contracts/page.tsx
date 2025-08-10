@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -17,6 +18,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { mockContracts, mockJobs } from '@/lib/mock-data';
 import { addDays, isBefore } from 'date-fns';
 import { getNextDueDate } from '@/lib/utils';
+import { MockModeBanner } from '@/components/common/MockModeBanner';
 
 export default function ContractsPage() {
     const { userProfile, loading: authLoading } = useAuth();

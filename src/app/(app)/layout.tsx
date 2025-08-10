@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -273,8 +274,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             <Logo className="absolute left-1/2 -translate-x-1/2"/>
           </header>
            <main className="flex-1 overflow-x-hidden">
-                <MockModeBanner />
                 <div className="p-4 sm:p-6 lg:p-8">
+                <MockModeBanner />
               {isSubscriptionExpired ? (
                   <Alert variant="destructive" className="mb-6 mx-4 sm:mx-0">
                       <CreditCard className="h-4 w-4" />

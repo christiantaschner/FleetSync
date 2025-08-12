@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -283,11 +284,6 @@ export default function UnifiedJobDetailPage() {
         <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to List</Button>
         <div className="flex items-center gap-2">
             {isAdmin && <Button variant="outline" size="sm" onClick={() => setIsAddJobDialogOpen(true)}><Edit3 className="mr-2 h-4 w-4" /> Edit Job</Button>}
-            {job.customerId && isAdmin && (
-                <Link href={`/customers?search=${encodeURIComponent(job.customerName)}`}>
-                    <Button variant="outline" size="sm"><Users className="mr-2 h-4 w-4"/> Customer History</Button>
-                </Link>
-            )}
             
             {isAdmin ? (
                 <Link href={`/dashboard?tab=overview-map&jobFilter=${job.id}`}>
@@ -304,9 +300,9 @@ export default function UnifiedJobDetailPage() {
 
       <JobDetailsDisplay job={job} />
       
-      {technician ? (
+      {historyJobs.length > 0 ? (
          <CustomerHistoryCard jobs={historyJobs} />
-      ) : (
+      ) : technician ? null : (
         !isLoading && <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Job is Unassigned</AlertTitle>
@@ -346,5 +342,3 @@ export default function UnifiedJobDetailPage() {
     </div>
   );
 }
-
-    

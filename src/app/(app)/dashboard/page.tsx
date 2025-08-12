@@ -45,7 +45,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
+import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -1045,7 +1045,7 @@ export default function DashboardPage() {
         </h1>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
            {isAdmin && (
-            <Button variant="outline" className="hover:bg-secondary w-full sm:w-auto" onClick={() => setIsImportJobsOpen(true)}>
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setIsImportJobsOpen(true)}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('import_jobs')}
             </Button>
            )}

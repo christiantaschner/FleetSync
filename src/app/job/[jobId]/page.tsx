@@ -61,9 +61,9 @@ export default function UnifiedJobDetailPage() {
           if (fetchedJob?.assignedTechnicianId) {
             fetchedTechnician = mockTechnicians.find(t => t.id === fetchedJob!.assignedTechnicianId) || null;
           }
-          if (fetchedJob?.customerName) {
+          if (fetchedJob) {
             pastJobs = mockJobs.filter(j => 
-                j.customerName === fetchedJob!.customerName && 
+                (j.customerId && j.customerId === fetchedJob!.customerId) &&
                 j.status === 'Completed' && 
                 j.id !== jobId
             );
@@ -346,3 +346,5 @@ export default function UnifiedJobDetailPage() {
     </div>
   );
 }
+
+    

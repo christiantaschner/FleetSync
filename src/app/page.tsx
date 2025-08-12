@@ -180,7 +180,7 @@ export default function MarketingPage() {
               <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
-              <Button asChild variant="secondary">
+              <Button asChild variant="outline" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                   <Link href="/signup">{t('start_free_trial')}</Link>
               </Button>
             </div>

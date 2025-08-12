@@ -63,7 +63,7 @@ const ContractListItem: React.FC<ContractListItemProps> = ({ contract, onEdit, o
                 <Button variant={contract.isDue ? "accent" : "outline"} size="sm" onClick={() => onSuggestAppointment(contract)}>
                     <MessageSquare className="mr-2 h-4 w-4" /> Suggest Appointment
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => onEdit(contract)}>
+                <Button variant="outline" size="sm" onClick={() => onEdit(contract)}>
                     <Edit className="mr-2 h-4 w-4" /> Edit
                 </Button>
             </CardContent>

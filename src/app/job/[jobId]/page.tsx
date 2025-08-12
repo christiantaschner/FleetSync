@@ -282,7 +282,7 @@ export default function UnifiedJobDetailPage() {
       <div className="flex items-center justify-between mb-4">
         <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to List</Button>
         <div className="flex items-center gap-2">
-            {isAdmin && <Button variant="secondary" size="sm" onClick={() => setIsAddJobDialogOpen(true)}><Edit3 className="mr-2 h-4 w-4" /> Edit Job</Button>}
+            {isAdmin && <Button variant="outline" size="sm" onClick={() => setIsAddJobDialogOpen(true)}><Edit3 className="mr-2 h-4 w-4" /> Edit Job</Button>}
             {job.customerId && isAdmin && (
                 <Link href={`/customers?search=${encodeURIComponent(job.customerName)}`}>
                     <Button variant="outline" size="sm"><Users className="mr-2 h-4 w-4"/> Customer History</Button>
@@ -291,7 +291,7 @@ export default function UnifiedJobDetailPage() {
             
             {isAdmin ? (
                 <Link href={`/dashboard?tab=overview-map&jobFilter=${job.id}`}>
-                    <Button variant="default" size="sm"><MapIcon className="mr-2 h-4 w-4" /> View on Map</Button>
+                    <Button variant="outline" size="sm"><MapIcon className="mr-2 h-4 w-4" /> View on Map</Button>
                 </Link>
             ) : (
                 <Button variant="default" size="sm" onClick={handleNavigate}><Navigation className="mr-2 h-4 w-4" /> Navigate</Button>
@@ -346,4 +346,3 @@ export default function UnifiedJobDetailPage() {
     </div>
   );
 }
-

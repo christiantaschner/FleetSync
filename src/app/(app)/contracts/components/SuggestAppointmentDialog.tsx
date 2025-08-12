@@ -118,7 +118,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
                     </AlertDescription>
                      <div className="mt-3">
                         <Link href={`/dashboard?jobFilter=${suggestion.createdJobId}`}>
-                            <Button variant="secondary" size="sm" onClick={onClose}>
+                            <Button variant="outline" size="sm" onClick={onClose}>
                                 View Draft Job <ArrowRight className="ml-2 h-4 w-4" />
                             </Button>
                         </Link>

@@ -233,7 +233,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                     <Button
                       type="button"
                       size="icon"
-                      variant="secondary"
+                      variant="outline"
                       className="absolute bottom-0 right-0 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}

@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, from 'react';
+import React, { useState, useEffect } from 'react';
 import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -127,9 +127,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
           </div>
           <div>
             {assignedTechnician ? (
-              <span className="flex items-center gap-1 font-medium text-foreground">
+              <Link href={`/technician/jobs/${assignedTechnician.id}`} className="flex items-center gap-1 font-medium text-primary hover:underline">
                 <Wrench className="h-3 w-3" /> {assignedTechnician.name}
-              </span>
+              </Link>
             ) : (
               <span className="flex items-center gap-1 font-semibold text-muted-foreground">
                 Unassigned
@@ -157,11 +157,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
          <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
-        <Link href={`/job/${job.id}`} className="w-full">
-          <Button variant="outline" className="w-full" size="sm">
-            <Eye className="mr-2 h-4 w-4" /> View Details
-          </Button>
-        </Link>
+        <Button variant="outline" size="sm" onClick={() => onEdit(job)} className="w-full">
+           <Eye className="mr-2 h-4 w-4" /> View/Edit
+        </Button>
       </CardFooter>
     </Card>
   );

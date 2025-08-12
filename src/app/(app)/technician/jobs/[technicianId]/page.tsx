@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -295,7 +294,7 @@ export default function TechnicianJobListPage() {
                 )}
               </CardContent>
               <CardFooter className="bg-secondary/50 p-3">
-                <Link href={`/job/${job.id}`} className="w-full">
+                <Link href={`/technician/${job.id}`} className="w-full">
                   <Button className="w-full" variant="default">
                     View Details & Update Status
                   </Button>
@@ -308,3 +307,5 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
+
+    

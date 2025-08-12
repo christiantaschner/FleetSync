@@ -73,3 +73,5 @@ const CustomerHistoryCard: React.FC<CustomerHistoryCardProps> = ({ jobs }) => {
 };
 
 export default CustomerHistoryCard;
+
+    

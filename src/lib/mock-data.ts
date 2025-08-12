@@ -95,6 +95,7 @@ export const mockJobs: Job[] = [
     location: { latitude: 34.0622, longitude: -118.2537, address: '123 Maple St, Los Angeles, CA' },
     customerName: 'Eve Davis',
     customerPhone: '555-0201',
+    customerEmail: 'eve.d@example.com',
     requiredSkills: ['Water Heater Repair', 'Plumbing'],
     createdAt: subDays(today, 2).toISOString(),
     updatedAt: today.toISOString(),
@@ -112,6 +113,7 @@ export const mockJobs: Job[] = [
     location: { latitude: 34.0422, longitude: -118.2337, address: '456 Oak Ave, Los Angeles, CA' },
     customerName: 'Frank Miller',
     customerPhone: '555-0202',
+    customerEmail: 'frank.m@example.com',
     requiredSkills: ['HVAC', 'AC Repair'],
     createdAt: subDays(today, 1).toISOString(),
     updatedAt: today.toISOString(),
@@ -129,6 +131,7 @@ export const mockJobs: Job[] = [
     location: { latitude: 34.0422, longitude: -118.2337, address: '456 Oak Ave, Los Angeles, CA' },
     customerName: 'Frank Miller',
     customerPhone: '555-0202',
+    customerEmail: 'frank.m@example.com',
     requiredSkills: ['HVAC', 'AC Repair'],
     createdAt: subDays(today, 7).toISOString(),
     updatedAt: subDays(today, 7).toISOString(),
@@ -463,3 +466,5 @@ export const mockChatMessages: ChatMessage[] = [
         isRead: false,
     },
 ];
+
+    

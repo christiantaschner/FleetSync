@@ -158,7 +158,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
         <Link href={`/job/${job.id}`} className="w-full">
-          <Button variant="secondary" className="bg-secondary hover:bg-muted w-full" size="sm">
+          <Button variant="outline" className="w-full" size="sm">
             <Eye className="mr-2 h-4 w-4" /> View Details
           </Button>
         </Link>
@@ -169,4 +169,4 @@ const JobListItem: React.FC<JobListItemProps> = ({
 
 export default JobListItem;
 
-
+    

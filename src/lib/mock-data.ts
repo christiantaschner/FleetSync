@@ -119,6 +119,28 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 120,
   },
   {
+    id: 'job_16_frank',
+    companyId: MOCK_COMPANY_ID,
+    title: 'Initial AC Diagnostic',
+    description: 'Performed initial check on AC unit. It is running but not cooling. Customer approved a follow-up repair visit.',
+    priority: 'Medium',
+    status: 'Completed',
+    assignedTechnicianId: 'tech_1',
+    location: { latitude: 34.0422, longitude: -118.2337, address: '456 Oak Ave, Los Angeles, CA' },
+    customerName: 'Frank Miller',
+    customerPhone: '555-0202',
+    requiredSkills: ['HVAC', 'AC Repair'],
+    createdAt: subDays(today, 7).toISOString(),
+    updatedAt: subDays(today, 7).toISOString(),
+    scheduledTime: subDays(today, 7).toISOString(),
+    completedAt: subDays(today, 7).toISOString(),
+    notes: 'Confirmed refrigerant levels are low and capacitor is weak. Will need to bring replacement parts on next visit.',
+    photos: [
+      'https://placehold.co/600x400.png',
+      'https://placehold.co/600x400.png'
+    ]
+  },
+  {
     id: 'job_3',
     companyId: MOCK_COMPANY_ID,
     title: 'Outlet Sparking',

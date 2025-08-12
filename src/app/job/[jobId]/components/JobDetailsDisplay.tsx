@@ -5,7 +5,7 @@ import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, AlertTriangle, Construction, Camera, Bot } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +31,14 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
         if (priority === 'Medium') return 'default';
         return 'secondary';
     }
+    
+    const satisfactionIcons = [
+        { icon: ThumbsDown, color: 'text-red-500', label: 'Poor' },
+        { icon: Star, color: 'text-orange-400', label: 'Fair' },
+        { icon: Star, color: 'text-yellow-400', label: 'Good' },
+        { icon: Star, color: 'text-lime-500', label: 'Very Good' },
+        { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
+    ];
 
     return (
         <Card className="shadow-lg">
@@ -83,15 +91,29 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                     </div>
                 )}
                 
-                {(job.aiIdentifiedModel || job.aiSuggestedParts?.length || job.aiRepairGuide) && (
+                {(job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide || (job.triageImages && job.triageImages.length > 0)) && (
                     <>
                         <Separator />
                         <div>
                             <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Bot className="h-4 w-4"/> AI Triage Analysis</h3>
+                            {job.triageImages && job.triageImages.length > 0 && (
+                                <div className="mb-3">
+                                    <h4 className="text-xs font-semibold mb-1 text-muted-foreground">Customer Photos</h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                        {job.triageImages.map((photoUrl, index) => (
+                                            <a href={photoUrl} key={index} target="_blank" rel="noopener noreferrer">
+                                                <div className="relative aspect-square rounded-md overflow-hidden border transition-transform hover:scale-105">
+                                                    <Image src={photoUrl} alt={`Triage photo ${index + 1}`} layout="fill" objectFit="cover" />
+                                                </div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             <div className="space-y-2 text-sm p-3 bg-secondary/50 rounded-md border">
                                 <p><strong>Identified Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
                                 <p><strong>Suggested Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None'}</p>
-                                {job.aiRepairGuide && <div><p><strong>Repair Guide:</p></strong><p className="whitespace-pre-wrap text-muted-foreground text-xs italic">{job.aiRepairGuide}</p></div>}
+                                {job.aiRepairGuide && <div><p><strong>Repair Guide:</strong></p><p className="whitespace-pre-wrap text-muted-foreground text-xs italic">{job.aiRepairGuide}</p></div>}
                             </div>
                         </div>
                     </>
@@ -111,7 +133,7 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                      <>
                         <Separator />
                         <div>
-                            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Camera className="h-4 w-4"/>Attached Photos</h3>
+                            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Camera className="h-4 w-4"/>Technician's Photos</h3>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                                 {job.photos.map((photoUrl, index) => (
                                     <a href={photoUrl} key={index} target="_blank" rel="noopener noreferrer">
@@ -120,6 +142,55 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                                         </div>
                                     </a>
                                 ))}
+                            </div>
+                        </div>
+                    </>
+                )}
+                
+                {(job.customerSignatureUrl || typeof job.customerSatisfactionScore === 'number') && (
+                    <>
+                        <Separator />
+                        <div>
+                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><FileSignature className="h-4 w-4"/>Completion Details</h3>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {job.customerSignatureUrl && (
+                                    <div>
+                                        <h4 className="text-xs font-semibold mb-1 text-muted-foreground">Customer Signature</h4>
+                                        <a href={job.customerSignatureUrl} target="_blank" rel="noopener noreferrer">
+                                            <div className="border rounded-md bg-white p-2 flex justify-center items-center">
+                                                <Image src={job.customerSignatureUrl} alt="Customer Signature" width={200} height={100} style={{ objectFit: 'contain' }} />
+                                            </div>
+                                        </a>
+                                        {job.customerSignatureTimestamp && <p className="text-xs text-muted-foreground mt-1">Signed on: {format(new Date(job.customerSignatureTimestamp), 'PPp')}</p>}
+                                    </div>
+                                )}
+                                {typeof job.customerSatisfactionScore === 'number' && job.customerSatisfactionScore > 0 && (
+                                    <div>
+                                        <h4 className="text-xs font-semibold mb-1 text-muted-foreground">Customer Satisfaction</h4>
+                                        <div className="flex items-center gap-2 p-3 border rounded-md">
+                                            {React.createElement(satisfactionIcons[job.customerSatisfactionScore - 1].icon, {
+                                                className: `h-8 w-8 ${satisfactionIcons[job.customerSatisfactionScore - 1].color}`
+                                            })}
+                                            <span className="font-bold text-lg">{job.customerSatisfactionScore}/5</span>
+                                            <span className="text-muted-foreground">({satisfactionIcons[job.customerSatisfactionScore - 1].label})</span>
+                                        </div>
+                                    </div>
+                                )}
+                           </div>
+                        </div>
+                    </>
+                )}
+                
+                {typeof job.isFirstTimeFix === 'boolean' && (
+                     <>
+                        <Separator />
+                        <div>
+                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><ThumbsUp className="h-4 w-4"/>Follow-up Information</h3>
+                            <div className="space-y-2 text-sm p-3 bg-secondary/50 rounded-md border">
+                                <p><strong>First-Time Fix:</strong> {job.isFirstTimeFix ? 'Yes' : 'No'}</p>
+                                {!job.isFirstTimeFix && job.reasonForFollowUp && (
+                                    <p><strong>Reason for Follow-up:</strong> {job.reasonForFollowUp}</p>
+                                )}
                             </div>
                         </div>
                     </>

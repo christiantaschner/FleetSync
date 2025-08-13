@@ -130,7 +130,8 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDurationMinutes?: number;
+  estimatedDuration?: number;
+  durationUnit?: 'hours' | 'days';
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -266,7 +267,8 @@ export const ContractSchema = z.object({
         title: z.string().min(1, "Job title is required."),
         description: z.string().min(1, "Job description is required."),
         priority: z.enum(['High', 'Medium', 'Low']),
-        estimatedDurationMinutes: z.number().positive("Duration must be positive.").optional(),
+        estimatedDuration: z.number().positive("Duration must be positive.").optional(),
+        durationUnit: z.enum(['hours', 'days']).optional(),
         requiredSkills: z.array(z.string()).optional(),
         requiredParts: z.array(z.string()).optional(),
     }),

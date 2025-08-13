@@ -55,7 +55,8 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 title: '',
                 description: '',
                 priority: 'Medium',
-                estimatedDurationMinutes: 60,
+                estimatedDuration: 1,
+                durationUnit: 'hours',
                 requiredSkills: [],
             }
         };
@@ -79,7 +80,8 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                     title: '',
                     description: '',
                     priority: 'Medium',
-                    estimatedDurationMinutes: 60,
+                    estimatedDuration: 1,
+                    durationUnit: 'hours',
                     requiredSkills: [],
                 }
             };
@@ -233,8 +235,23 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="jobTemplate.estimatedDurationMinutes">Estimated Duration (mins)</Label>
-                                <Input id="jobTemplate.estimatedDurationMinutes" type="number" {...register('jobTemplate.estimatedDurationMinutes', { valueAsNumber: true })} />
+                                <Label htmlFor="jobTemplate.estimatedDuration">Estimated Duration</Label>
+                                <div className="flex items-center gap-2">
+                                <Input id="jobTemplate.estimatedDuration" type="number" {...register('jobTemplate.estimatedDuration', { valueAsNumber: true })} />
+                                <Controller
+                                    name="jobTemplate.durationUnit"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="hours">Hours</SelectItem>
+                                                <SelectItem value="days">Days</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
+                                </div>
                             </div>
                         </div>
                         <div className="flex items-center space-x-2 pt-2">

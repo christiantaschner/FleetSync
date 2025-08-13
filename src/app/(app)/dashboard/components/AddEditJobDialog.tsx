@@ -90,6 +90,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
+  const [estimatedDuration, setEstimatedDuration] = useState<number | undefined>();
+  const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
   const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -119,6 +121,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLatitude(job?.location.latitude || null);
     setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
+    setEstimatedDuration(job?.estimatedDuration);
+    setDurationUnit(job?.durationUnit || 'hours');
     setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
     setSelectedContractId(job?.sourceContractId || '');
     setSelectedCustomerId(job?.customerId || null);
@@ -448,6 +452,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         address: locationAddress 
       },
       scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
+      estimatedDuration,
+      durationUnit,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
     };
 
@@ -523,7 +529,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           updatedAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDurationMinutes: 0,
+          estimatedDuration: estimatedDuration || 0,
         };
 
         if(techToAssignId) {
@@ -751,6 +757,28 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             className="w-36 bg-card"
                         />
                     </div>
+                  </div>
+                   <div>
+                      <Label>Estimated Duration</Label>
+                      <div className="flex items-center gap-2">
+                          <Input
+                              id="estimatedDuration"
+                              type="number"
+                              value={estimatedDuration || ''}
+                              onChange={(e) => setEstimatedDuration(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                              min="0"
+                              placeholder="e.g., 2"
+                          />
+                          <Select value={durationUnit} onValueChange={(value: 'hours' | 'days') => setDurationUnit(value)}>
+                              <SelectTrigger className="w-[120px]">
+                                  <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="hours">Hours</SelectItem>
+                                  <SelectItem value="days">Days</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
                   </div>
                   
                   <div className="flex flex-col space-y-2">

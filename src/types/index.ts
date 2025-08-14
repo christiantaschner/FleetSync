@@ -219,6 +219,8 @@ export type AITechnician = {
     location: Location;
     scheduledTime?: string | null;
     priority: JobPriority;
+    startedAt?: string | null;
+    estimatedDurationMinutes?: number;
   }[];
   liveLocation: Location;
   homeBaseLocation: Location;
@@ -365,6 +367,8 @@ export const AllocateJobInputSchema = z.object({
         location: z.any().describe("The location of this scheduled job."),
         scheduledTime: z.string().optional().nullable(),
         priority: z.enum(['High', 'Medium', 'Low']),
+        startedAt: z.string().optional().nullable().describe("ISO 8601 timestamp of when the job started."),
+        estimatedDurationMinutes: z.number().optional(),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
     })

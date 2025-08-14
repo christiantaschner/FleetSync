@@ -60,17 +60,17 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
         setSuggestion(null);
 
         // 1. Try to find an alternative technician
-        const availableTechnicians = technicians.filter(t => t.id !== jobToReassign.assignedTechnicianId && t.isAvailable);
+        const otherTechnicians = technicians.filter(t => t.id !== jobToReassign.assignedTechnicianId);
 
-        if (availableTechnicians.length > 0) {
-            const aiTechnicians: AITechnician[] = availableTechnicians.map(t => ({
+        if (otherTechnicians.length > 0) {
+            const aiTechnicians: AITechnician[] = otherTechnicians.map(t => ({
                 technicianId: t.id,
                 technicianName: t.name,
                 isAvailable: t.isAvailable,
                 skills: t.skills.map(s => s.name),
                 liveLocation: t.location,
                 homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
-                currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
+                currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location, startedAt: j.inProgressAt, estimatedDurationMinutes: j.estimatedDurationMinutes || 60 })),
             }));
 
             const result = await allocateJobAction({

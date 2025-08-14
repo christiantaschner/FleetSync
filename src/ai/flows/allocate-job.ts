@@ -83,8 +83,10 @@ Given the following job and technician data, suggest the most suitable technicia
   {{#if currentJobs.length}}
   - Current Assigned Jobs for Today/Tomorrow:
     {{#each currentJobs}}
-    - Job ID: {{{jobId}}}, Location: ({{{location.latitude}}}, {{{location.longitude}}}), Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled: {{{scheduledTime}}}{{/if}}
+    - Job ID: {{{jobId}}}, Location: ({{{location.latitude}}}, {{{location.longitude}}}), Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled: {{{scheduledTime}}}{{/if}}, Started At: {{#if startedAt}}{{{startedAt}}}{{else}}Not Started{{/if}}, Est. Duration: {{{estimatedDurationMinutes}}} mins
     {{/each}}
+  {{else}}
+  - No jobs currently assigned.
   {{/if}}
   {{#if workingHours}}
   - Working Hours:
@@ -109,29 +111,29 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
 **DECISION-MAKING LOGIC:**
 
 1.  **Customer History Preference**: If a technician has 'Previous Customer History', they should be **strongly prioritized** over others, provided they meet all other critical requirements (skills, availability). This reflects an established customer relationship which is very valuable.
-2.  **Determine Job Day**: First, decide if the job is for today or a future day by comparing its scheduled time to the current time.
-3.  **Determine Starting Location for Travel Calculation:**
+2.  **Estimate Availability**: For technicians who are NOT 'Available Now', you must calculate their estimated availability time. Do this by taking the 'startedAt' time of their current job and adding its 'estimatedDurationMinutes'. If 'startedAt' is not available, assume it started at '{{{currentTime}}}'.
+3.  **Determine Job Day**: First, decide if the job is for today or a future day by comparing its scheduled time to the current time.
+4.  **Determine Starting Location for Travel Calculation:**
     *   If the job is for **today**: The starting point is the technician's **Live Location**.
     *   If the job is for a **future day**:
         *   Look at the technician's currentJobs for that future day.
         *   If they have jobs scheduled, the starting point is the location of the **last job** in their schedule for that day.
         *   If they have no jobs scheduled for that future day, the starting point is their **Home Base**.
-4.  **Learn from Feedback**: Analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Let these examples heavily influence your final choice.
-5.  **Skill Match**: The technician MUST have ALL 'requiredSkills'. If no technician has the required skills, no one is suitable.
-6.  **Job Priority & Scheduling Logic:**
+5.  **Learn from Feedback**: Analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Let these examples heavily influence your final choice.
+6.  **Skill Match**: The technician MUST have ALL 'requiredSkills'. If no technician has the required skills, no one is suitable.
+7.  **Job Priority & Scheduling Logic:**
     *   **If the job priority is 'High':**
         *   Your absolute top priority is to find an available technician who is marked as 'isOnCall: true'. If one exists and is skilled, suggest them immediately.
-        *   If no 'On Call' technician is available, STRONGLY prefer any other technician who is 'isAvailable: true' and skilled. Choose the one with customer history first, then the closest one based on the starting location determined in Step 3.
-        *   If NO technician is 'isAvailable: true', you MAY suggest a technician who is 'isAvailable: false' BUT is currently working on a 'Low' priority job. This is an interruption.
-        *   If no technicians are available or on 'Low' priority jobs, you MAY suggest interrupting a technician on a 'Medium' priority job.
-        *   NEVER suggest interrupting a technician on a 'High' priority job.
+        *   If no 'On Call' technician is available, consider ALL skilled technicians (both 'isAvailable: true' and 'isAvailable: false'). Choose the one who can get to the job the soonest, considering their estimated availability time (from step 2) plus travel time.
+        *   If the best choice is a technician who is NOT 'isAvailable: true', you are suggesting an interruption of their current work. State this clearly in your reasoning.
+        *   NEVER suggest interrupting a technician currently on a 'High' priority job.
     *   **If the job priority is 'Medium' or 'Low':**
-        *   Only consider technicians who are 'isAvailable: true' and skilled.
+        *   Only consider technicians who are 'isAvailable: true' OR will become available within a reasonable time frame today.
         *   The suggested assignment time MUST respect the technician's individual 'workingHours'.
-        *   Consider their 'currentJobs' to ensure they have capacity.
+        *   Consider their 'currentJobs' to ensure they have capacity. Choose the skilled technician who can best fit the job into their schedule.
 
 ---
-Provide a clear reasoning for your choice, explicitly mentioning how customer history, past feedback, and the chosen starting location (Live, Home Base, or Previous Job's Location) influenced your decision. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
+Provide a clear reasoning for your choice, explicitly mentioning how customer history, skill match, and availability (current or estimated future) influenced your decision. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
 `,
 });
 
@@ -168,5 +170,3 @@ const allocateJobFlow = ai.defineFlow(
     }
   }
 );
-
-    

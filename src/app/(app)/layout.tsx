@@ -179,7 +179,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            variant={isActive ? "secondary" : "ghost"}
+                            variant={isActive ? "secondary" : "default"}
                             isActive={isActive}
                             className="w-full justify-start"
                             tooltip={t(item.label)}
@@ -203,7 +203,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <Link href="/settings">
                             <SidebarMenuButton
                                 isActive={pathname === '/settings'}
-                                variant={pathname.startsWith('/settings') ? "secondary" : "ghost"}
+                                variant={pathname.startsWith('/settings') ? "secondary" : "default"}
                                 className="w-full justify-start"
                                 tooltip={t('settings')}
                             >

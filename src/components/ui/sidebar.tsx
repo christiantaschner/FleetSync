@@ -535,12 +535,9 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-sidebar-foreground hover:text-sidebar-accent-foreground",
-        outline:
-          "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
-        secondary:
-          "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/80",
-        ghost: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground"
+        default: "text-sidebar-foreground bg-sidebar-accent/80 hover:bg-sidebar-accent",
+        secondary: "bg-sidebar-accent text-sidebar-accent-foreground",
+        ghost: "hover:bg-sidebar-accent/80 hover:text-sidebar-accent-foreground text-sidebar-foreground",
       },
       size: {
         default: "h-10 text-sm",
@@ -549,7 +546,7 @@ const sidebarMenuButtonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "ghost",
+      variant: "default",
       size: "default",
     },
   }
@@ -566,7 +563,7 @@ const SidebarMenuButton = React.forwardRef<
 >(
   (
     {
-      variant = "ghost",
+      variant = "default",
       size = "default",
       isActive = false,
       tooltip,
@@ -586,7 +583,7 @@ const SidebarMenuButton = React.forwardRef<
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       >
-        {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />}
+        {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-sidebar-foreground" />}
         {children}
       </Button>
     )
@@ -654,7 +651,7 @@ const SidebarMenuBadge = React.forwardRef<
     data-sidebar="menu-badge"
     className={cn(
       "ml-auto h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 text-xs font-medium tabular-nums select-none pointer-events-none",
-      "bg-primary text-primary-foreground", // Solid background and contrasting text
+      "bg-white text-blue-600", // Solid background and contrasting text
       "group-data-[collapsible=icon]:absolute group-data-[collapsible=icon]:top-0.5 group-data-[collapsible=icon]:right-0.5 group-data-[collapsible=icon]:h-4 group-data-[collapsible=icon]:min-w-4",
       className
     )}

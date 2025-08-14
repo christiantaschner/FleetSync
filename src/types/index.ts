@@ -667,6 +667,7 @@ export const SuggestScheduleTimeInputSchema = z.object({
   requiredSkills: z.array(z.string()).describe("A list of skills required for the job."),
   currentTime: z.string().describe("The current time in ISO 8601 format."),
   businessHours: z.array(BusinessDaySchema).length(7).describe("The company's operating hours for each day of the week."),
+  excludedTimes: z.array(z.string()).optional().describe("A list of ISO 8601 timestamps that should not be suggested."),
   technicians: z.array(z.object({
     id: z.string(),
     name: z.string(),

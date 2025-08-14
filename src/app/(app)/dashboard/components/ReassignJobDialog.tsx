@@ -15,9 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction, suggestScheduleTimeAction } from "@/actions/ai-actions";
 import { reassignJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, SuggestScheduleTimeOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
-import { Loader2, Bot, UserCheck, AlertTriangle } from 'lucide-react';
+import { Loader2, Bot, UserCheck, AlertTriangle, Phone, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { format } from 'date-fns';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
@@ -51,9 +52,10 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     const [isLoadingAI, setIsLoadingAI] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
     const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+    const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-    const getSuggestion = useCallback(async () => {
+    const getSuggestion = useCallback(async (excludedTimes: string[] = []) => {
         if (!jobToReassign || !userProfile?.companyId || !appId) return;
 
         setIsLoadingAI(true);
@@ -62,7 +64,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
         // 1. Try to find an alternative technician
         const otherTechnicians = technicians.filter(t => t.id !== jobToReassign.assignedTechnicianId);
 
-        if (otherTechnicians.length > 0) {
+        if (otherTechnicians.length > 0 && excludedTimes.length === 0) { // Only try reassignment on the first attempt
             const aiTechnicians: AITechnician[] = otherTechnicians.map(t => ({
                 technicianId: t.id,
                 technicianName: t.name,
@@ -107,6 +109,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                 requiredSkills: jobToReassign.requiredSkills || [],
                 currentTime: new Date().toISOString(),
                 businessHours: company?.settings?.businessHours || [],
+                excludedTimes: excludedTimes,
                 technicians: [
                     {
                         id: originalTechnician.id,
@@ -128,7 +131,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                     newScheduledTime: firstSuggestion.time,
                 });
             } else {
-                toast({ title: "No Solution Found", description: "AI could not find an alternative technician or a suitable new time slot.", variant: "default" });
+                toast({ title: "No More Alternatives", description: "The AI could not find any other suitable time slots.", variant: "default" });
             }
         }
 
@@ -138,8 +141,21 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     useEffect(() => {
         if (isOpen) {
             getSuggestion();
+        } else {
+            // Reset state when dialog closes
+            setRejectedTimes([]);
+            setSuggestion(null);
         }
     }, [isOpen, getSuggestion]);
+
+    const handleFindNext = () => {
+        if (suggestion?.type === 'reschedule' && suggestion.newScheduledTime) {
+            const newRejectedTimes = [...rejectedTimes, suggestion.newScheduledTime];
+            setRejectedTimes(newRejectedTimes);
+            getSuggestion(newRejectedTimes);
+        }
+    };
+
 
     const handleConfirm = async () => {
         if (!suggestion || !userProfile?.companyId || !appId) return;
@@ -199,6 +215,16 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                         For job "<strong>{jobToReassign.title}</strong>", Fleety suggests the following action to avoid a potential delay.
                     </DialogDescription>
                 </DialogHeader>
+                 
+                {jobToReassign.customerName && (
+                  <Alert variant="default" className="border-blue-200 bg-blue-50">
+                    <Phone className="h-4 w-4 text-blue-600"/>
+                    <AlertTitle className="font-semibold text-blue-800">Contact Customer</AlertTitle>
+                    <AlertDescription className="text-blue-700">
+                        Please call <strong>{jobToReassign.customerName}</strong> at <a href={`tel:${jobToReassign.customerPhone}`} className="font-bold underline">{jobToReassign.customerPhone}</a> to confirm the new time.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
                 {isLoadingAI && (
                     <div className="flex items-center justify-center p-8 space-x-2">
@@ -213,16 +239,27 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                     </div>
                 )}
 
-                <DialogFooter className="sm:justify-end gap-2 mt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                    <Button 
+                <DialogFooter className="sm:justify-between items-center mt-4 gap-2">
+                     <Button 
                         type="button" 
-                        onClick={handleConfirm}
-                        disabled={!suggestion || isConfirming || isLoadingAI}
+                        variant="ghost" 
+                        onClick={handleFindNext}
+                        disabled={isLoadingAI || suggestion?.type !== 'reschedule'}
+                        className="text-primary"
                     >
-                        {isConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                        Confirm Suggestion
+                        <RefreshCw className="mr-2 h-4 w-4" /> Find Next Suggestion
                     </Button>
+                    <div className="flex gap-2">
+                        <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                        <Button 
+                            type="button" 
+                            onClick={handleConfirm}
+                            disabled={!suggestion || isConfirming || isLoadingAI}
+                        >
+                            {isConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
+                            Confirm Suggestion
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -230,3 +267,4 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
 };
 
 export default ReassignJobDialog;
+

@@ -35,6 +35,12 @@ Company Business Hours:
 - {{dayOfWeek}}: {{#if isOpen}}{{startTime}} - {{endTime}}{{else}}Closed{{/if}}
 {{/each}}
 
+{{#if excludedTimes.length}}
+The following time slots have been rejected by the customer. Do NOT suggest them again:
+{{#each excludedTimes}}
+- {{this}}
+{{/each}}
+{{/if}}
 
 Here is the list of all technicians, their skills, and their currently scheduled jobs for the next few days:
 {{#each technicians}}
@@ -51,13 +57,14 @@ Here is the list of all technicians, their skills, and their currently scheduled
 {{/each}}
 
 Follow these rules for your suggestions:
-1.  **Respect Business Hours**: ALL suggestions MUST fall within the company's open business hours. Do not suggest times on days the business is closed.
-2.  **Filter Technicians**: Only consider technicians who possess ALL of the "Required Skills". If no technicians have the skills, you cannot make a suggestion.
-3.  **High Priority Jobs**: If the job priority is 'High', you MUST suggest the soonest possible time slots for TODAY, respecting business hours. Find the first available and skilled technician(s) and suggest up to 5 time slots (e.g., in the next hour), avoiding conflicts with their existing scheduled jobs.
-4.  **Medium or Low Priority Jobs**: If the job priority is 'Medium' or 'Low', you MUST suggest times for TOMORROW or later. Find skilled technicians with availability and suggest standard morning start times (e.g., 9:00 AM, 10:00 AM) or the next available slots, within business hours.
-5.  **Output Format**: Your response must be a JSON object containing a "suggestions" array. Each item in the array should have a "time" (in ISO 8601 format) and a "reasoning".
-6.  **Reasoning**: For each suggestion, provide a brief reasoning, mentioning which technician is available. For example: "Tomorrow at 9:00 AM. John Doe (HVAC, Electrical) has a clear schedule."
-7.  If no suitable time slots can be found across all skilled technicians that respect business hours, return an empty "suggestions" array.
+1.  **Respect Exclusions**: Absolutely do not suggest any time from the 'excludedTimes' list.
+2.  **Respect Business Hours**: ALL suggestions MUST fall within the company's open business hours. Do not suggest times on days the business is closed.
+3.  **Filter Technicians**: Only consider technicians who possess ALL of the "Required Skills". If no technicians have the skills, you cannot make a suggestion.
+4.  **High Priority Jobs**: If the job priority is 'High', you MUST suggest the soonest possible time slots for TODAY, respecting business hours. Find the first available and skilled technician(s) and suggest up to 5 time slots (e.g., in the next hour), avoiding conflicts with their existing scheduled jobs and excluded times.
+5.  **Medium or Low Priority Jobs**: If the job priority is 'Medium' or 'Low', you MUST suggest times for TOMORROW or later. Find skilled technicians with availability and suggest standard morning start times (e.g., 9:00 AM, 10:00 AM) or the next available slots, within business hours.
+6.  **Output Format**: Your response must be a JSON object containing a "suggestions" array. Each item in the array should have a "time" (in ISO 8601 format) and a "reasoning".
+7.  **Reasoning**: For each suggestion, provide a brief reasoning, mentioning which technician is available. For example: "Tomorrow at 9:00 AM. John Doe (HVAC, Electrical) has a clear schedule."
+8.  If no suitable time slots can be found across all skilled technicians that respect business hours and exclusions, return an empty "suggestions" array.
 `,
 });
 

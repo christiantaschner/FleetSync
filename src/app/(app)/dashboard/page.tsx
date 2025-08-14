@@ -558,16 +558,8 @@ export default function DashboardPage() {
   
   const openTasksFilter: JobStatus[] = ['Unassigned', 'Draft'];
   
-  const triageReadyCount = useMemo(() => 
-    jobs.filter(j => j.triageImages && j.triageImages.length > 0 && (j.status === 'Unassigned' || j.status === 'Draft')).length,
-    [jobs]
-  );
-
   const openTasksCount = useMemo(() => {
-    return jobs.filter(job => 
-        openTasksFilter.includes(job.status) || 
-        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Unassigned' || job.status === 'Draft'))
-    ).length;
+    return jobs.filter(job => openTasksFilter.includes(job.status)).length;
   }, [jobs]);
 
   const filteredJobs = useMemo(() => {
@@ -595,8 +587,7 @@ export default function DashboardPage() {
     // Filter by open tasks if toggled
     if (showOpenTasksOnly) {
         return tempJobs.filter(job => 
-            openTasksFilter.includes(job.status) || 
-            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Unassigned' || job.status === 'Draft'))
+            openTasksFilter.includes(job.status)
         );
     }
 
@@ -862,16 +853,6 @@ export default function DashboardPage() {
   const handleDismissRiskAlert = (technicianId: string) => {
     setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
   };
-  
-  const highPriorityUnassignedCount = useMemo(() => 
-    jobs.filter(j => j.status === 'Unassigned' && j.priority === 'High').length, 
-    [jobs]
-  );
-  
-  const jobsTodayCount = useMemo(() => 
-    jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length,
-    [jobs]
-  );
   
   const handleLocationSearch = (location: { address: string; lat: number; lng: number }) => {
     setActiveTab('overview-map');
@@ -1142,50 +1123,6 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
-                <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
-                <div className="text-xl lg:text-2xl font-bold">{highPriorityUnassignedCount}</div>
-                <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
-                <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
-                <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
-                <div className="text-xl lg:text-2xl font-bold">{unassignedJobsCount}</div>
-                <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
-                <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
-                <div className="text-xl lg:text-2xl font-bold">{technicians.filter(t => t.isAvailable).length} / {technicians.length}</div>
-                <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
-                <CardTitle className="text-sm font-medium">{t('jobs_scheduled_today')}</CardTitle>
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
-                <div className="text-xl lg:text-2xl font-bold">{jobsTodayCount}</div>
-                <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
-            </CardContent>
-        </Card>
-    </div>
-
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="h-auto w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="job-list" className="hover:bg-secondary">
@@ -1212,23 +1149,6 @@ export default function DashboardPage() {
                         <CardTitle>{t('current_jobs')}</CardTitle>
                         <CardDescription>{t('current_jobs_desc')}</CardDescription>
                     </div>
-                     <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div className="flex items-center space-x-2">
-                                    <Switch
-                                        id="open-tasks-toggle"
-                                        checked={showOpenTasksOnly}
-                                        onCheckedChange={setShowOpenTasksOnly}
-                                    />
-                                    <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Open Tasks</Label>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Only shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
                 </div>
             </CardHeader>
             <CardContent>
@@ -1280,7 +1200,15 @@ export default function DashboardPage() {
                         </Select>
                     </div>
                 </div>
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id="open-tasks-toggle"
+                        checked={showOpenTasksOnly}
+                        onCheckedChange={setShowOpenTasksOnly}
+                    />
+                    <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Show Open Tasks Only</Label>
+                </div>
                  <Button 
                     variant="accent" 
                     onClick={handleBatchAIAssign} 

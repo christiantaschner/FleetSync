@@ -558,9 +558,16 @@ export default function DashboardPage() {
   
   const openTasksFilter: JobStatus[] = ['Unassigned', 'Draft'];
   
-  const openTasksCount = useMemo(() => {
-    return jobs.filter(job => openTasksFilter.includes(job.status)).length;
-  }, [jobs]);
+  const kpiData = useMemo(() => {
+    const unassignedJobs = jobs.filter(j => j.status === 'Unassigned');
+    const today = new Date();
+    return {
+        highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
+        pendingCount: unassignedJobs.length,
+        availableTechnicians: technicians.filter(t => t.isAvailable).length,
+        jobsToday: jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length
+    };
+  }, [jobs, technicians]);
 
   const filteredJobs = useMemo(() => {
     let tempJobs = jobs;
@@ -601,7 +608,7 @@ export default function DashboardPage() {
     }
 
     return tempJobs;
-}, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm, showOpenTasksOnly]);
+}, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm, showOpenTasksOnly, openTasksFilter]);
 
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
@@ -1123,12 +1130,55 @@ export default function DashboardPage() {
         </div>
       </div>
       
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{kpiData.highPriorityCount}</div>
+              <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{kpiData.pendingCount}</div>
+              <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
+              <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{t('jobs_scheduled_today')}</CardTitle>
+              <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{kpiData.jobsToday}</div>
+              <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
+            </CardContent>
+          </Card>
+        </div>
+      
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="h-auto w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           <TabsTrigger value="job-list" className="hover:bg-secondary">
             <div className="flex items-center gap-2">
                 {t('job_list')}
-                {openTasksCount > 0 && <Badge variant="default" className="h-5">{openTasksCount}</Badge>}
+                {unassignedJobsCount > 0 && <Badge variant="default" className="h-5">{unassignedJobsCount}</Badge>}
             </div>
           </TabsTrigger>
           <TabsTrigger value="schedule" className="hover:bg-secondary">{t('schedule')}</TabsTrigger>

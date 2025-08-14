@@ -66,26 +66,18 @@ type NavItem = {
   href: string;
   label: string;
   icon: React.ElementType; 
-  roles: ('admin' | 'superAdmin' | 'technician' | 'csr')[];
   divider?: boolean;
 };
 
+// Simplified navigation: show all items to all logged-in users.
 const ALL_NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'csr'] },
-  { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
-  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
-  { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-  { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'], divider: true },
-  { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
+  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
+  { href: "/customers", label: 'customers', icon: ClipboardList },
+  { href: "/contracts", label: 'contracts', icon: Repeat },
+  { href: "/reports", label: 'reports', icon: BarChart },
+  { href: "/technician", label: 'technician_view', icon: Smartphone },
+  { href: "/roadmap", label: "Roadmap", icon: ListChecks, divider: true },
 ];
-
-function getNavItemsForRole(role: UserProfile['role']): NavItem[] {
-  if (!role) return [];
-  // A superAdmin should see everything an admin sees.
-  const effectiveRoles = role === 'superAdmin' ? ['admin', 'superAdmin'] : [role];
-  return ALL_NAV_ITEMS.filter(item => item.roles.some(itemRole => effectiveRoles.includes(itemRole)));
-};
-
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -148,8 +140,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  const navItems = getNavItemsForRole(userProfile?.role || null);
-
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {
       const days = differenceInDays(new Date(company.trialEndsAt), new Date());
@@ -176,7 +166,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {ALL_NAV_ITEMS.map((item) => {
                  const isActive = (item.href === '/dashboard' && pathname === '/dashboard') || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;

@@ -73,13 +73,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
-  const [isFetchingTimeSuggestion, setIsFetchingTimeSuggestion] = useState(false);
   
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
   const [skillSuggestionReasoning, setSkillSuggestionReasoning] = useState<string | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
-  const [timeSuggestions, setTimeSuggestions] = useState<any[]>([]);
-  const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -138,8 +135,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setTriageMessage(null);
     setIsGeneratingLink(false);
     setIsCopied(false);
-    setTimeSuggestions([]);
-    setRejectedTimes([]);
   }, [job]);
 
   useEffect(() => {
@@ -416,51 +411,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setIsCopied(true);
       toast({ title: "Copied!", description: "Message copied to clipboard." });
       setTimeout(() => setIsCopied(false), 2000);
-    }
-  };
-
-  const handleFetchTimeSuggestions = async () => {
-    if (!userProfile?.companyId) return;
-    setIsFetchingTimeSuggestion(true);
-    
-    const result = await suggestScheduleTimeAction({
-      companyId: userProfile.companyId,
-      jobPriority: priority,
-      requiredSkills,
-      currentTime: new Date().toISOString(),
-      excludedTimes: rejectedTimes,
-      technicians: technicians.map(t => ({
-        id: t.id,
-        name: t.name,
-        skills: t.skills.map(s => s.name),
-        jobs: jobs.filter(j => j.assignedTechnicianId === t.id && j.scheduledTime).map(j => ({ id: j.id, scheduledTime: j.scheduledTime! })),
-      })),
-    });
-
-    if (result.error) {
-      toast({ title: "AI Suggestion Error", description: result.error, variant: "destructive" });
-      setTimeSuggestions([]);
-    } else if (result.data?.suggestions && result.data.suggestions.length > 0) {
-      setTimeSuggestions(result.data.suggestions);
-    } else {
-      toast({ title: "No Slots Found", description: "The AI couldn't find any available slots with the current criteria.", variant: "default" });
-      setTimeSuggestions([]);
-    }
-    setIsFetchingTimeSuggestion(false);
-  };
-
-  const handleTimeSuggestionSelect = (time: string) => {
-    setScheduledTime(new Date(time));
-    setTimeSuggestions([]);
-  };
-  
-  const handleMoreTimeSuggestions = () => {
-    const lastSuggestionTime = timeSuggestions.length > 0 ? timeSuggestions[timeSuggestions.length - 1].time : undefined;
-    if (lastSuggestionTime) {
-      setRejectedTimes(prev => [...prev, ...timeSuggestions.map(s => s.time)]);
-      setTimeSuggestions([]); // Clear current suggestions
-      // Re-fetch, which will now use the updated rejectedTimes
-      handleFetchTimeSuggestions();
     }
   };
 
@@ -807,26 +757,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
                             className="w-36 bg-card"
                         />
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button type="button" variant="accent" size="sm" disabled={isFetchingTimeSuggestion} onClick={handleFetchTimeSuggestions}>
-                              {isFetchingTimeSuggestion ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
-                              <span className="sr-only sm:not-sr-only sm:ml-2">Fleety Suggest</span>
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width]">
-                            <div className="space-y-2">
-                              <p className="font-medium text-sm">Suggested Times</p>
-                              {timeSuggestions.length === 0 && <p className="text-xs text-muted-foreground">No suggestions available. Try changing skills or priority.</p>}
-                              {timeSuggestions.map((suggestion, index) => (
-                                <Button key={index} variant="outline" size="sm" className="w-full justify-start" onClick={() => handleTimeSuggestionSelect(suggestion.time)}>
-                                  {format(new Date(suggestion.time), 'eee, MMM d @ p')}
-                                </Button>
-                              ))}
-                              {timeSuggestions.length > 0 && <Button variant="link" size="sm" onClick={handleMoreTimeSuggestions}>More suggestions...</Button>}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
                     </div>
                   </div>
                    <div>
@@ -930,18 +860,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               ))}
                             </SelectContent>
                           </Select>
-                          {manualTechnicianId === UNASSIGNED_VALUE && (
-                            <Button
-                                type="button"
-                                variant="accent"
-                                size="sm"
-                                onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
-                                disabled={isFetchingAISuggestion || !description}
-                            >
-                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                                Fleety Assign
-                            </Button>
-                          )}
+                          <Button
+                              type="button"
+                              variant="accent"
+                              size="sm"
+                              onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
+                              disabled={isFetchingAISuggestion || !description}
+                          >
+                              {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                              Fleety Suggest
+                          </Button>
                       </div>
                   </div>
                   {job && (
@@ -1072,4 +1000,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-

@@ -177,9 +177,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                 const isActive = item.href === '/dashboard' 
-                    ? pathname === '/dashboard' && !searchParams.get('view')
-                    : item.href && pathname.startsWith(item.href);
+                 const isActive = pathname === item.href;
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  

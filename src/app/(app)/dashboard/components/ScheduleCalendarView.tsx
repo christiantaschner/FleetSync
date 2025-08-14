@@ -294,7 +294,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                                 {isOptimizing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Shuffle className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
+                        <TooltipContent>
                             <p>Re-optimize {technician.name}'s schedule</p>
                         </TooltipContent>
                     </Tooltip>
@@ -538,15 +538,15 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     onReassignmentComplete={() => {}}
                 />
             )}
-             <DndContext 
+            {viewMode === 'day' ? (
+            <DndContext 
                 onDragEnd={handleDragEnd} 
                 autoScroller={{
                     canScroll: (element) => element === containerRef.current
                 }}
             >
-            {viewMode === 'day' ? (
             <div ref={containerRef} className="overflow-auto">
-            <div className="relative">
+            <div className="relative min-w-[1200px]">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                     <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                     <div ref={timelineGridRef} className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
@@ -598,10 +598,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
 
-                                            elements.push(<TravelBlock key={`${job.id}-travel`} from={jobEnd} dayStart={dayStart} totalMinutes={totalMinutes} />);
-                                            
-                                            // Correctly update lastEventTime
-                                            lastEventTime = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
+                                            lastEventTime = jobEnd;
+                                            if (isAfter(dayEnd, jobEnd)) { // Only add travel if it doesn't go past the day
+                                                const travelEndTime = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
+                                                elements.push(<TravelBlock key={`${job.id}-travel`} from={jobEnd} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                                lastEventTime = travelEndTime;
+                                            }
                                             
                                             return elements;
                                         })}
@@ -631,6 +633,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 </div>
             </div>
             </div>
+            </DndContext>
             ) : (
                 technicians.length > 0 ? (
                     <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={onJobClick} />
@@ -653,7 +656,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     </div>
                 )
             )}
-            </DndContext>
             {hasProposedChanges && viewMode === 'day' && (
                 <div className="sticky bottom-4 z-30 mx-auto w-fit flex items-center gap-2 rounded-full border bg-background p-2 shadow-lg animate-in fade-in-50">
                     <p className="text-sm font-medium px-2">You have unsaved schedule changes.</p>

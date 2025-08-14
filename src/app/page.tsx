@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe } from 'lucide-react';
@@ -139,6 +140,21 @@ export default function MarketingPage() {
     { title: 'Simple & Powerful:', description: 'All the essential tools you need, with one-click AI to handle the complexity for you.' },
     { title: 'Fair & Scalable Pricing:', description: 'Simple per-technician pricing that grows with you. No hidden fees. No long-term commitments.' },
     { title: 'Loved by Technicians:', description: 'An intuitive mobile app designed for speed and simplicity, ensuring your whole team is on board.' }
+  ];
+
+  const testimonials = [
+    {
+        quote: "This is exactly what I need with my morning coffee. The Job List and the 'Fleety Batch Assign' button could genuinely save me an hour every morning. The AI suggestions for new jobs remove the guesswork. It feels like it was designed by someone who actually understands my job.",
+        author: "Alex Carter",
+        role: "Dispatcher, Summit Mechanical",
+        avatar: "https://placehold.co/40x40.png"
+    },
+    {
+        quote: "Finally, an app that doesn't get in my way. I see my jobs for the day, in order. Tapping to update my status is simple, and seeing customer-uploaded photos before I arrive is a massive help. The digital signature capture beats paperwork any day.",
+        author: "Maria Garcia",
+        role: "Lead Technician, Reliance Electrical",
+        avatar: "https://placehold.co/40x40.png"
+    }
   ];
 
 
@@ -484,54 +500,34 @@ export default function MarketingPage() {
         <section className="py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('testimonials_title')}</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">{t('testimonials_subtitle')}</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the People in the Field and in the Office</h2>
+                    <p className="mt-6 text-lg text-muted-foreground">Don't just take our word for it. Here's how FleetSync AI is changing the game for dispatchers and technicians.</p>
                 </div>
                 <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
-                    <Card className="flex flex-col text-center p-8 bg-background">
-                      <CardContent className="flex-grow p-0">
-                        <p className="relative text-xl font-medium leading-8 text-foreground">
-                            <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
-                                <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
-                            </svg>
-                            {t('testimonial_1_quote')}
-                        </p>
-                      </CardContent>
-                      <footer className="mt-8">
-                          <div className="flex items-center justify-center gap-x-3">
-                              <Avatar>
-                                  <AvatarImage src="https://placehold.co/40x40.png" alt="Dispatcher" data-ai-hint="person"/>
-                                  <AvatarFallback>DH</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                  <div className="text-base font-semibold">{t('testimonial_1_author')}</div>
-                                  <div className="text-sm text-muted-foreground">{t('testimonial_1_role')}</div>
-                              </div>
-                          </div>
-                      </footer>
-                    </Card>
-                     <Card className="flex flex-col text-center p-8 bg-background">
-                      <CardContent className="flex-grow p-0">
-                        <p className="relative text-xl font-medium leading-8 text-foreground">
-                            <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
-                                <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
-                            </svg>
-                           {t('testimonial_2_quote')}
-                        </p>
-                      </CardContent>
-                      <footer className="mt-8">
-                          <div className="flex items-center justify-center gap-x-3">
-                              <Avatar>
-                                  <AvatarImage src="https://placehold.co/40x40.png" alt="Technician" data-ai-hint="person" />
-                                  <AvatarFallback>MR</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                  <div className="text-base font-semibold">{t('testimonial_2_author')}</div>
-                                  <div className="text-sm text-muted-foreground">{t('testimonial_2_role')}</div>
-                              </div>
-                          </div>
-                      </footer>
-                    </Card>
+                    {testimonials.map((testimonial, index) => (
+                        <Card key={index} className="flex flex-col text-center p-8 bg-background">
+                        <CardContent className="flex-grow p-0">
+                            <p className="relative text-xl font-medium leading-8 text-foreground">
+                                <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
+                                    <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
+                                </svg>
+                                {testimonial.quote}
+                            </p>
+                        </CardContent>
+                        <footer className="mt-8">
+                            <div className="flex items-center justify-center gap-x-3">
+                                <Avatar>
+                                    <AvatarImage src={testimonial.avatar} alt={testimonial.author} data-ai-hint="person"/>
+                                    <AvatarFallback>{testimonial.author.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <div className="text-base font-semibold">{testimonial.author}</div>
+                                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                                </div>
+                            </div>
+                        </footer>
+                        </Card>
+                    ))}
                 </div>
             </div>
         </section>

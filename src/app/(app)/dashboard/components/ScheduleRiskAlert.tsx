@@ -78,7 +78,7 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
         </AlertDescription>
         <div className="mt-3 flex flex-wrap gap-2">
            <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100 text-amber-800" onClick={() => setIsReassignOpen(true)}>
-              <Bot className="mr-2 h-4 w-4" /> Resolve with AI
+              <Bot className="mr-2 h-4 w-4" /> Fleety Resolve
           </Button>
           <Button size="sm" variant="default" className="bg-amber-500 hover:bg-amber-600 text-white" onClick={handleDraftNotification} disabled={isNotifying}>
             {isNotifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
 import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company, DispatcherFeedback } from "@/types";
-import { add, addDays, addMonths, addWeeks, addHours } from 'date-fns';
+import { add, addDays, addMonths, addWeeks, addHours, isSameDay } from 'date-fns';
 import crypto from 'crypto';
 
 // Import all required schemas and types from the central types file
@@ -89,7 +89,7 @@ export async function importJobsAction(
         return { data: { successCount }, error: null };
     } catch (e) {
         if (e instanceof z.ZodError) {
-            return { data: null, error: e.errors.map(err => err.message).join(", ") };
+            return { data: { successCount: 0 }, error: e.errors.map(err => err.message).join(", ") };
         }
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         console.error(JSON.stringify({
@@ -100,7 +100,7 @@ export async function importJobsAction(
             },
             severity: "ERROR"
         }));
-        return { data: null, error: `Failed to import jobs. ${errorMessage}` };
+        return { data: { successCount: 0 }, error: `Failed to import jobs. ${errorMessage}` };
     }
 }
 
@@ -470,6 +470,46 @@ export async function reassignJobAction(
         return { error: "Job not found or you do not have permission to modify it." };
     }
     const originalJob = jobSnap.data() as Job;
+    const technicianId = newTechnicianId || originalJob.assignedTechnicianId;
+    if (!technicianId) {
+      return { error: "Technician ID is missing for this operation." };
+    }
+
+    // --- Start of Cascading Update Logic ---
+    let timeDelta = 0;
+    if (newScheduledTime && originalJob.scheduledTime) {
+        const newTime = new Date(newScheduledTime);
+        const originalTime = new Date(originalJob.scheduledTime);
+        timeDelta = newTime.getTime() - originalTime.getTime();
+
+        // Query for subsequent jobs on the same day for the same technician
+        const allJobsQuery = query(
+          collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
+          where("companyId", "==", companyId),
+          where("assignedTechnicianId", "==", technicianId)
+        );
+
+        const allJobsSnap = await getDocs(allJobsQuery);
+        const subsequentJobs = allJobsSnap.docs
+            .map(d => d.data() as Job)
+            .filter(j => 
+                j.id !== jobId &&
+                j.scheduledTime &&
+                isSameDay(new Date(j.scheduledTime), originalTime) &&
+                new Date(j.scheduledTime) > originalTime
+            );
+        
+        // Update each subsequent job
+        for (const subsequentJob of subsequentJobs) {
+            const subsequentJobRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, subsequentJob.id);
+            const updatedTime = new Date(new Date(subsequentJob.scheduledTime!).getTime() + timeDelta);
+            batch.update(subsequentJobRef, {
+                scheduledTime: updatedTime.toISOString(),
+                updatedAt: serverTimestamp(),
+            });
+        }
+    }
+    // --- End of Cascading Update Logic ---
 
     const updatePayload: any = {
       assignedTechnicianId: newTechnicianId,
@@ -489,8 +529,8 @@ export async function reassignJobAction(
 
     batch.update(jobDocRef, updatePayload);
 
-    // Free up old technician if they were assigned
-    if (originalJob.assignedTechnicianId) {
+    // Free up old technician if they were assigned and changed
+    if (originalJob.assignedTechnicianId && originalJob.assignedTechnicianId !== newTechnicianId) {
         const oldTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, originalJob.assignedTechnicianId);
         batch.update(oldTechDocRef, {
             isAvailable: true,
@@ -498,12 +538,14 @@ export async function reassignJobAction(
         });
     }
 
-    // Assign new technician
-    const newTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, newTechnicianId);
-    batch.update(newTechDocRef, {
-        isAvailable: false,
-        currentJobId: jobId,
-    });
+    // Assign new technician if not already assigned
+    if (originalJob.assignedTechnicianId !== newTechnicianId) {
+      const newTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, newTechnicianId);
+      batch.update(newTechDocRef, {
+          isAvailable: false,
+          currentJobId: jobId,
+      });
+    }
 
     await batch.commit();
     return { error: null };
@@ -594,7 +636,7 @@ export async function generateRecurringJobsAction(
     
   } catch (e) {
     if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+      return { data: { jobsCreated: 0 }, error: e.errors.map(err => err.message).join(", ") };
     }
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     console.error(JSON.stringify({
@@ -605,7 +647,7 @@ export async function generateRecurringJobsAction(
         },
         severity: "ERROR"
     }));
-    return { data: null, error: `Failed to generate jobs. ${errorMessage}` };
+    return { data: { jobsCreated: 0 }, error: `Failed to generate jobs. ${errorMessage}` };
   }
 }
 

@@ -93,6 +93,8 @@ Given the following job and technician data, suggest the most suitable technicia
     {{#each workingHours}}
     - {{dayOfWeek}}: {{#if isOpen}}{{startTime}} - {{endTime}}{{else}}Off{{/if}}
     {{/each}}
+  {{else}}
+  - No defined working hours. Assume standard 8 AM to 5 PM.
   {{/if}}
 {{/each}}
 
@@ -129,7 +131,7 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
         *   NEVER suggest interrupting a technician currently on a 'High' priority job.
     *   **If the job priority is 'Medium' or 'Low':**
         *   Only consider technicians who are 'isAvailable: true' OR will become available within a reasonable time frame today.
-        *   The suggested assignment time MUST respect the technician's individual 'workingHours'.
+        *   The suggested assignment time MUST respect the technician's individual 'workingHours'. However, be flexible; if a full day's work is scheduled, it's acceptable for the last job to end slightly after the official 'endTime', up to about 2 hours, to accommodate real-world conditions.
         *   Consider their 'currentJobs' to ensure they have capacity. Choose the skilled technician who can best fit the job into their schedule.
 
 ---

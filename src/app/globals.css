@@ -5,13 +5,13 @@
 
 @layer base {
   :root {
-    --background: 220 20% 96%;
+    --background: 240 10% 98%; /* A very light, almost white grey for the main content area */
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 220 9% 46%;
+    --primary: 204 80% 50%; /* The main blue color from the screenshot */
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 91%;
     --secondary-foreground: 222 47% 11%;
@@ -23,7 +23,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 89%;
     --input: 220 13% 94%;
-    --ring: 220 9% 46%;
+    --ring: 204 80% 50%; /* Ring color to match the primary blue */
     --radius: 0.5rem;
   }
   .dark {
@@ -33,8 +33,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 204 80% 50%; /* Keeping the same primary blue for dark mode */
+    --primary-foreground: 0 0% 100%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
@@ -45,19 +45,19 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 22%;
     --input: 217 33% 20%;
-    --ring: 217 33% 27%;
+    --ring: 204 80% 50%;
     --radius: 0.5rem;
   }
 
   :root, .dark {
      /* Sidebar specific colors */
-    --sidebar-background: 222 47% 11%; /* Dark blue-gray */
-    --sidebar-foreground: 210 40% 98%; /* Almost white */
+    --sidebar-background: 240 10% 98%; /* Light grey as seen in the screenshot */
+    --sidebar-foreground: 222 47% 11%; /* Dark text for menu items */
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: hsl(var(--secondary));
+    --sidebar-accent: hsl(var(--secondary)); /* Light grey for active/hover items */
     --sidebar-accent-foreground: hsl(var(--secondary-foreground));
-    --sidebar-border: 217 33% 22%;
+    --sidebar-border: hsl(var(--border));
     --sidebar-ring: hsl(var(--ring));
   }
 }

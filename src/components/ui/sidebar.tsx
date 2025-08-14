@@ -551,72 +551,50 @@ const sidebarMenuButtonVariants = cva(
   }
 )
 
-// Combined props for button and anchor, plus custom props
-interface SidebarMenuButtonCombinedProps extends 
-  Omit<React.ComponentPropsWithoutRef<"button">, "type">, // Omit type from button props if we conditionally add it
-  Omit<React.ComponentPropsWithoutRef<"a">, "href"> { // Omit href from anchor props as it's explicitly handled
-  asChild?: boolean;
-  isActive?: boolean;
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-  href?: string; // Explicitly add href
-  // variant and size will be handled by VariantProps
+type SidebarMenuButtonProps = React.ComponentProps<typeof Button> & {
+  isActive?: boolean
+  tooltip?: string | React.ComponentProps<typeof TooltipContent>
 }
 
 const SidebarMenuButton = React.forwardRef<
-  HTMLElement, // Ref can be button or anchor
-  SidebarMenuButtonCombinedProps & VariantProps<typeof sidebarMenuButtonVariants>
+  React.ElementRef<typeof Button>,
+  SidebarMenuButtonProps & VariantProps<typeof sidebarMenuButtonVariants>
 >(
   (
     {
-      asChild = false,
-      isActive = false,
       variant = "default",
       size = "default",
+      isActive = false,
       tooltip,
       className,
-      children, // Ensure children is destructured
-      href,     // Ensure href is destructured
-      ...rest // Keep rest of the props
+      ...props
     },
     ref
   ) => {
-    const { isMobile, state } = useSidebar();
-    
-    // Determine the component type
-    // If asChild is true, always use Slot.
-    // If href is present (and not asChild), use 'a'.
-    // Otherwise (not asChild and no href), use 'button'.
-    const Comp = asChild ? Slot : (href ? 'a' : 'button');
-
+    const { isMobile, state } = useSidebar()
     const buttonContent = (
-      <Comp
-        ref={ref as React.Ref<any>} // Use 'any' for ref with polymorphic Comp, or manage types carefully
+      <Button
+        ref={ref}
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
         className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-        href={Comp === 'a' ? href : undefined} // Only pass href if Comp is 'a'
-        type={Comp === 'button' ? (rest as React.ComponentPropsWithoutRef<"button">).type || 'button' : undefined} // Only pass type if Comp is 'button'
-        {...(Comp === 'button' ? rest as Omit<React.ComponentPropsWithoutRef<"button">, "href"> : rest as Omit<React.ComponentPropsWithoutRef<"a">, "type">)}
-        // The above spread might need more careful type handling if strictness is high
-        // A simpler spread for now, assuming attributes are mostly compatible or ignored:
-        // {...rest} 
-        // This line below uses the destructured children:
+        {...props}
       >
         {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />}
-        {children} 
-      </Comp>
-    );
+        {props.children}
+      </Button>
+    )
 
     if (!tooltip) {
-      return buttonContent;
+      return buttonContent
     }
 
-    let tooltipContentProps: React.ComponentProps<typeof TooltipContent>;
+    let tooltipContentProps: React.ComponentProps<typeof TooltipContent>
     if (typeof tooltip === "string") {
-      tooltipContentProps = { children: tooltip };
+      tooltipContentProps = { children: tooltip }
     } else {
-      tooltipContentProps = tooltip;
+      tooltipContentProps = tooltip
     }
 
     return (
@@ -633,7 +611,6 @@ const SidebarMenuButton = React.forwardRef<
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
-
 
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,

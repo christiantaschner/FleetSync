@@ -265,7 +265,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" onClick={onOptimize} disabled={isOptimizing}>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-secondary hover:text-primary shrink-0" onClick={onOptimize} disabled={isOptimizing}>
                                 {isOptimizing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Shuffle className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
@@ -460,13 +460,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const hasProposedChanges = Object.keys(proposedChanges).length > 0;
 
   return (
-    <DndContext 
-        onDragEnd={handleDragEnd} 
-        autoScroller={{
-            // This is the fix. It tells DndContext to only scroll within the containerRef element.
-            canScroll: (element) => element === containerRef.current
-        }}
-    >
         <Card>
         <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -520,6 +513,12 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     onReassignmentComplete={() => {}}
                 />
             )}
+             <DndContext 
+                onDragEnd={handleDragEnd} 
+                autoScroller={{
+                    canScroll: (element) => element === containerRef.current
+                }}
+            >
             {viewMode === 'day' ? (
             <div ref={containerRef} className="overflow-auto">
             <div className="relative">
@@ -625,6 +624,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     </div>
                 )
             )}
+            </DndContext>
             {hasProposedChanges && viewMode === 'day' && (
                 <div className="sticky bottom-4 z-30 mx-auto w-fit flex items-center gap-2 rounded-full border bg-background p-2 shadow-lg animate-in fade-in-50">
                     <p className="text-sm font-medium px-2">You have unsaved schedule changes.</p>
@@ -640,7 +640,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             )}
         </CardContent>
         </Card>
-    </DndContext>
   );
 };
 

@@ -27,7 +27,7 @@ const getStatusAppearance = (status: JobStatus) => {
       case 'In Progress': return 'bg-blue-100 border-l-4 border-blue-500 text-blue-800';
       case 'En Route': return 'bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800';
       case 'Assigned': return 'bg-sky-100 border-l-4 border-sky-500 text-sky-800';
-      case 'Pending': return 'bg-amber-100 border-l-4 border-amber-500 text-amber-800';
+      case 'Unassigned': return 'bg-amber-100 border-l-4 border-amber-500 text-amber-800';
       case 'Cancelled': return 'bg-red-100/70 border-l-4 border-red-500 text-red-800 line-through';
       default: return 'bg-gray-100 border-l-4 border-gray-400 text-gray-700';
     }
@@ -69,7 +69,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
   const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
-  const isPendingOrAssigned = job.status === 'Pending' || job.status === 'Assigned';
+  const isPendingOrAssigned = job.status === 'Unassigned' || job.status === 'Assigned';
 
   return (
     <TooltipProvider>
@@ -131,9 +131,17 @@ const TravelOrIdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, t
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
-                        <div className="relative w-full h-full flex items-center justify-center bg-gray-200/50">
-                           <div className="h-full w-px bg-gray-400 border-r border-dashed border-gray-500"></div>
+                    <div 
+                        className="absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center bg-gray-100 border-l-4 border-gray-400 text-gray-700"
+                        style={{ 
+                            left: `${left}%`, 
+                            width: `${width}%`,
+                            height: '100%',
+                        }}
+                    >
+                         <div className="flex w-full truncate items-center justify-center">
+                            <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
+                            <span className="text-muted-foreground truncate italic">{formatDuration(to, new Date(from.getTime() + bufferMinutes * 60000))}</span>
                         </div>
                     </div>
                 </TooltipTrigger>

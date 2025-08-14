@@ -524,7 +524,7 @@ export default function DashboardPage() {
         batch.update(oldJobRef, {
             status: 'Pending',
             assignedTechnicianId: null,
-            notes: arrayUnion(`(Auto-Reassigned: Technician interrupted for high-priority job ${job.title})`),
+            notes: arrayUnion(`(Auto-Reassigned: Technician interrupted for high-priority job ${job.title})`) as any,
             updatedAt: serverTimestamp(),
         });
     }

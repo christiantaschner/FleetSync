@@ -724,3 +724,27 @@ export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'sch
 
 // Re-export AllocateJobInput to be used in server actions without circular dependencies.
 export type AllocateJobActionInput = z.infer<typeof AllocateJobInputSchema> & { appId: string };
+
+export const OptimizationSuggestionSchema = z.object({
+    jobId: z.string(),
+    originalTechnicianId: z.string().nullable(),
+    newTechnicianId: z.string().nullable(),
+    newScheduledTime: z.string().optional(),
+    justification: z.string(),
+});
+export type OptimizationSuggestion = z.infer<typeof OptimizationSuggestionSchema>;
+
+export const RunFleetOptimizationInputSchema = z.object({
+    companyId: z.string(),
+    appId: z.string(),
+    currentTime: z.string(),
+    pendingJobs: z.array(z.any()), // Simplified for now
+    technicians: z.array(z.any()), // Simplified for now
+});
+export type RunFleetOptimizationInput = z.infer<typeof RunFleetOptimizationInputSchema>;
+
+export const RunFleetOptimizationOutputSchema = z.object({
+    suggestedChanges: z.array(OptimizationSuggestionSchema),
+    overallReasoning: z.string(),
+});
+export type RunFleetOptimizationOutput = z.infer<typeof RunFleetOptimizationOutputSchema>;

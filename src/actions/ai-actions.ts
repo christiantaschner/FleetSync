@@ -16,6 +16,7 @@ import { triageJob as triageJobFlow } from "@/ai/flows/triage-job-flow";
 import { summarizeFtfr as summarizeFtfrFlow } from "@/ai/flows/summarize-ftfr-flow";
 import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-assistant-flow";
 import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/ai/flows/generate-service-prep-message-flow";
+import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
@@ -50,7 +51,9 @@ import type {
   TriageJobOutput,
   SummarizeFtfrOutput,
   AnswerUserQuestionInput,
-  AnswerUserQuestionOutput
+  AnswerUserQuestionOutput,
+  RunFleetOptimizationInput,
+  RunFleetOptimizationOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -705,4 +708,24 @@ export async function answerUserQuestionAction(
     }));
     return { data: null, error: errorMessage };
   }
+}
+
+export async function runFleetOptimizationAction(
+    input: RunFleetOptimizationInput
+): Promise<{ data: RunFleetOptimizationOutput | null; error: string | null }> {
+    try {
+        const result = await runFleetOptimizationFlow(input);
+        return { data: result, error: null };
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map((err) => err.message).join(", ") };
+        }
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error running fleet optimization',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { data: null, error: errorMessage };
+    }
 }

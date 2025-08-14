@@ -64,9 +64,6 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
   const durationMinutes = (jobEnd.getTime() - jobStart.getTime()) / 60000;
 
-  const left = (offsetMinutes / totalMinutes) * 100;
-  const width = (durationMinutes / totalMinutes) * 100;
-
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
   const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
@@ -255,7 +252,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="accent" size="icon" className="h-8 w-8 text-white shrink-0" onClick={onOptimize} disabled={isOptimizing}>
+                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary shrink-0" onClick={onOptimize} disabled={isOptimizing}>
                                 {isOptimizing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Shuffle className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
@@ -516,9 +513,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     <div className="relative h-full p-1.5">
                                         {techJobs.map((job) => {
                                             const jobStart = new Date(job.scheduledTime!);
-                                            const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
                                             const tenMinuteBuffer = 10 * 60 * 1000;
                                             const travelStartTime = new Date(jobStart.getTime() - tenMinuteBuffer);
+                                            const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
 
                                             const elements = [];
                                             if (isAfter(travelStartTime, lastEventTime)) {

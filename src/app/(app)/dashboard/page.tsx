@@ -921,42 +921,6 @@ export default function DashboardPage() {
     setJobToShare(job);
     setIsShareTrackingOpen(true);
   };
-
-  const handleFleetOptimize = async () => {
-    if (!appId || !userProfile) return;
-    setIsFleetOptimizing(true);
-    setFleetOptimizationResult(null);
-
-    const result = await runFleetOptimizationAction({
-      appId: appId,
-      companyId: userProfile.companyId,
-      currentTime: new Date().toISOString(),
-      pendingJobs: jobs.filter(j => j.status === 'Pending'),
-      technicians: technicians.map(t => ({
-        id: t.id,
-        name: t.name,
-        skills: t.skills.map(s => s.name),
-        isOnCall: t.isOnCall,
-        jobs: jobs.filter(j => j.assignedTechnicianId === t.id && isToday(new Date(j.scheduledTime || 0)))
-      }))
-    });
-
-    if (result.error) {
-        toast({ title: "Optimization Failed", description: result.error, variant: 'destructive' });
-    } else if (result.data) {
-        setFleetOptimizationResult(result.data);
-        setSelectedFleetChanges(result.data.suggestedChanges || []);
-        setIsFleetOptimizationDialogOpen(true);
-    }
-    setIsFleetOptimizing(false);
-  };
-  
-  const handleConfirmFleetOptimization = async (changes: OptimizationSuggestion[]) => {
-      // This function would be similar to handleConfirmBatchAssignments
-      // It would iterate through `changes` and create a Firestore batch write.
-      toast({ title: "Confirmed", description: `${changes.length} schedule changes have been applied.`});
-      setIsFleetOptimizationDialogOpen(false);
-  };
   
   const statusOptions = [
     { value: "Draft", label: "Draft" },
@@ -1097,7 +1061,7 @@ export default function DashboardPage() {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
                 <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
@@ -1136,18 +1100,6 @@ export default function DashboardPage() {
             <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
                 <div className="text-xl lg:text-2xl font-bold">{jobsTodayCount}</div>
                 <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
-            </CardContent>
-        </Card>
-        <Card className="col-span-1 sm:col-span-2 lg:col-span-1 border-primary/30 bg-primary/5">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 sm:p-4">
-                <CardTitle className="text-sm font-medium text-primary">Fleet Optimizer</CardTitle>
-                <Bot className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
-                <Button size="sm" className="w-full" onClick={handleFleetOptimize} disabled={isFleetOptimizing}>
-                    {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
-                    Analyze Fleet Schedule
-                </Button>
             </CardContent>
         </Card>
     </div>
@@ -1357,17 +1309,6 @@ export default function DashboardPage() {
         technicians={technicians}
         onConfirmAssignments={handleConfirmBatchAssignments}
         isLoadingConfirmation={isLoadingBatchConfirmation}
-      />
-      <FleetOptimizationReviewDialog
-        isOpen={isFleetOptimizationDialogOpen}
-        setIsOpen={setIsFleetOptimizationDialogOpen}
-        optimizationResult={fleetOptimizationResult}
-        technicians={technicians}
-        jobs={jobs}
-        onConfirmChanges={handleConfirmFleetOptimization}
-        isLoadingConfirmation={isLoadingBatchConfirmation}
-        selectedChanges={selectedFleetChanges}
-        setSelectedChanges={setSelectedFleetChanges}
       />
       <HelpAssistant />
     </div>

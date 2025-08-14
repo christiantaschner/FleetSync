@@ -460,7 +460,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const hasProposedChanges = Object.keys(proposedChanges).length > 0;
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext 
+        onDragEnd={handleDragEnd} 
+        autoScroller={{
+            // This is the fix. It tells DndContext to only scroll within the containerRef element.
+            canScroll: (element) => element === containerRef.current
+        }}
+    >
         <Card>
         <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -515,7 +521,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 />
             )}
             {viewMode === 'day' ? (
-            <div ref={containerRef} className="overflow-x-auto">
+            <div ref={containerRef} className="overflow-auto">
             <div className="relative">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                     <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>

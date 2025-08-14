@@ -470,46 +470,6 @@ export async function reassignJobAction(
         return { error: "Job not found or you do not have permission to modify it." };
     }
     const originalJob = jobSnap.data() as Job;
-    const technicianId = newTechnicianId || originalJob.assignedTechnicianId;
-    if (!technicianId) {
-      return { error: "Technician ID is missing for this operation." };
-    }
-
-    // --- Start of Cascading Update Logic ---
-    let timeDelta = 0;
-    if (newScheduledTime && originalJob.scheduledTime) {
-        const newTime = new Date(newScheduledTime);
-        const originalTime = new Date(originalJob.scheduledTime);
-        timeDelta = newTime.getTime() - originalTime.getTime();
-
-        // Query for subsequent jobs on the same day for the same technician
-        const allJobsQuery = query(
-          collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
-          where("companyId", "==", companyId),
-          where("assignedTechnicianId", "==", technicianId)
-        );
-
-        const allJobsSnap = await getDocs(allJobsQuery);
-        const subsequentJobs = allJobsSnap.docs
-            .map(d => d.data() as Job)
-            .filter(j => 
-                j.id !== jobId &&
-                j.scheduledTime &&
-                isSameDay(new Date(j.scheduledTime), originalTime) &&
-                new Date(j.scheduledTime) > originalTime
-            );
-        
-        // Update each subsequent job
-        for (const subsequentJob of subsequentJobs) {
-            const subsequentJobRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, subsequentJob.id);
-            const updatedTime = new Date(new Date(subsequentJob.scheduledTime!).getTime() + timeDelta);
-            batch.update(subsequentJobRef, {
-                scheduledTime: updatedTime.toISOString(),
-                updatedAt: serverTimestamp(),
-            });
-        }
-    }
-    // --- End of Cascading Update Logic ---
 
     const updatePayload: any = {
       assignedTechnicianId: newTechnicianId,

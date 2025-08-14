@@ -75,8 +75,8 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/customers", label: 'customers', icon: ClipboardList },
   { href: "/contracts", label: 'contracts', icon: Repeat },
   { href: "/reports", label: 'reports', icon: BarChart },
-  { href: "/technician", label: 'technician_view', icon: Smartphone },
-  { href: "/roadmap", label: "Roadmap", icon: ListChecks, divider: true },
+  { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true },
+  { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
@@ -161,8 +161,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader className="bg-primary text-primary-foreground">
-            <Logo />
+          <SidebarHeader className="bg-sidebar">
+            <Logo className="text-sidebar-foreground" />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
@@ -178,7 +178,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            isActive={!!isActive}
+                            variant={isActive ? "secondary" : "ghost"}
+                            isActive={isActive}
                             className="w-full justify-start"
                             tooltip={t(item.label)}
                             >
@@ -201,6 +202,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <Link href="/settings">
                             <SidebarMenuButton
                                 isActive={pathname === '/settings'}
+                                variant={pathname.startsWith('/settings') ? "secondary" : "ghost"}
                                 className="w-full justify-start"
                                 tooltip={t('settings')}
                             >

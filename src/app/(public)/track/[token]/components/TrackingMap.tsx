@@ -45,7 +45,7 @@ const TrackingMap: React.FC<TrackingMapProps> = ({ technicianLocation, jobLocati
             position={{ lat: technicianLocation.latitude, lng: technicianLocation.longitude }}
             title="Technician"
         >
-            <Pin background={'#1d4ed8'} borderColor={'#1e40af'} glyphColor={'#fff'}>
+            <Pin background={'#4f46e5'} borderColor={'#4338ca'} glyphColor={'#fff'}>
                 <User />
             </Pin>
         </AdvancedMarker>

@@ -87,7 +87,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
             {...attributes}
             onClick={() => onClick(job)}
             className={cn(
-              "absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
+              "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
               getStatusAppearance(job.status),
               priorityColor,
               isPendingOrAssigned && "border-dashed",

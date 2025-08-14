@@ -559,7 +559,7 @@ export default function DashboardPage() {
   const openTasksCount = useMemo(() => {
     return jobs.filter(job => 
         openTasksFilter.includes(job.status) || 
-        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || j.status === 'Draft'))
+        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
     ).length;
   }, [jobs]);
 
@@ -589,7 +589,7 @@ export default function DashboardPage() {
     if (showOpenTasksOnly) {
         return tempJobs.filter(job => 
             openTasksFilter.includes(job.status) || 
-            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || j.status === 'Draft'))
+            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
         );
     }
 

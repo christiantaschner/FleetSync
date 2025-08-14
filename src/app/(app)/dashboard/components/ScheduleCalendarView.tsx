@@ -582,16 +582,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                             const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
                                             
                                             const TRAVEL_TIME_MINUTES = 30; // Placeholder
-                                            const travelAndJobEnd = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
-
+                                            
                                             const elements = [];
 
-                                            // Idle time before the first job
                                             if (isAfter(jobStart, lastEventTime)) {
                                                 elements.push(<IdleBlock key={`${job.id}-idle-before`} from={lastEventTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
                                             }
                                             
-                                            // The job itself
                                             elements.push(<JobBlock 
                                                 key={job.id}
                                                 job={job} 
@@ -601,10 +598,11 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
 
-                                            // Travel time after the job
                                             elements.push(<TravelBlock key={`${job.id}-travel`} from={jobEnd} dayStart={dayStart} totalMinutes={totalMinutes} />);
                                             
-                                            lastEventTime = travelAndJobEnd;
+                                            // Correctly update lastEventTime
+                                            lastEventTime = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
+                                            
                                             return elements;
                                         })}
                                     </div>

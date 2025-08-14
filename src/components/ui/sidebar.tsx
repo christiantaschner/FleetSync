@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -567,6 +568,7 @@ const SidebarMenuButton = React.forwardRef<
       isActive = false,
       tooltip,
       className,
+      children,
       ...props
     },
     ref
@@ -582,7 +584,7 @@ const SidebarMenuButton = React.forwardRef<
         {...props}
       >
         {isActive && <div className="absolute left-0 h-6 w-1 rounded-r-full bg-primary" />}
-        {props.children}
+        {children}
       </Button>
     )
 

@@ -43,9 +43,6 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
-    if (variant === "secondary") {
-      variant = "outline";
-    }
     const Comp = asChild ? Slot : "button"
     return (
       <Comp

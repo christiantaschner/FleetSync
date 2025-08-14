@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
@@ -135,7 +134,7 @@ const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: D
                 <TooltipTrigger asChild>
                     <div 
                         className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
-                        style={{ left: `${offsetMinutes}%`, width: `${width}%` }}
+                        style={{ left: `${offsetMinutes / totalMinutes * 100}%`, width: `${width}%` }}
                     >
                          <div className="flex w-full truncate items-center justify-center">
                             <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
@@ -603,12 +602,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
 
-                                            if (isAfter(dayEnd, travelEndTime)) {
-                                                elements.push(<TravelBlock key={`${job.id}-travel`} from={jobEnd} dayStart={dayStart} totalMinutes={totalMinutes} />);
-                                                lastEventTime = travelEndTime;
-                                            } else {
-                                                lastEventTime = jobEnd;
-                                            }
+                                            
+                                            lastEventTime = jobEnd;
                                             
                                             return elements;
                                         })}

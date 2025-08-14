@@ -70,19 +70,18 @@ type NavItem = {
   divider?: boolean;
 };
 
-function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
-  if (!userProfile?.role) return [];
+const ALL_NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+  { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'], divider: true },
+  { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
+];
 
-  const allNavItems: NavItem[] = [
-      { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'csr'] },
-      { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
-      { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
-      { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-      { href: "/roadmap", label: "Roadmap", icon: ListChecks, roles: ['admin', 'superAdmin'], divider: true },
-      { href: "/technician", label: 'technician_view', icon: Smartphone, roles: ['admin', 'superAdmin', 'technician'] },
-  ];
-
-  return allNavItems.filter(item => item.roles.includes(userProfile.role!));
+function getNavItemsForRole(role: UserProfile['role']): NavItem[] {
+  if (!role) return [];
+  return ALL_NAV_ITEMS.filter(item => item.roles.includes(role));
 };
 
 
@@ -147,7 +146,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  const navItems = getNavItemsForRole(userProfile);
+  const navItems = getNavItemsForRole(userProfile?.role || null);
 
   let trialDaysLeft: number | null = null;
   if (company?.subscriptionStatus === 'trialing' && company.trialEndsAt) {

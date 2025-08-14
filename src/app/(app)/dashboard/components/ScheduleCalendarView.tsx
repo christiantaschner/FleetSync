@@ -64,6 +64,9 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
   const durationMinutes = (jobEnd.getTime() - jobStart.getTime()) / 60000;
 
+  const left = (offsetMinutes / totalMinutes) * 100;
+  const width = (durationMinutes / totalMinutes) * 100;
+
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
   const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';

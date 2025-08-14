@@ -76,7 +76,6 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/contracts", label: 'contracts', icon: Repeat },
   { href: "/reports", label: 'reports', icon: BarChart },
   { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true },
-  { href: "/roadmap", label: "Roadmap", icon: ListChecks },
 ];
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
@@ -179,7 +178,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            variant={isActive ? "secondary" : "ghost"}
+                            variant={isActive ? 'secondary' : 'ghost'}
                             isActive={isActive}
                             className="w-full justify-start"
                             tooltip={t(item.label)}

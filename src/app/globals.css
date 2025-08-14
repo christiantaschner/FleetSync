@@ -11,13 +11,13 @@
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%; /* A nice, strong blue */
+    --primary: 217 91% 60%; 
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%; /* A light grey, good for secondary backgrounds */
+    --secondary: 220 14% 96%;
     --secondary-foreground: 222 47% 11%;
     --muted: 220 14% 96%;
     --muted-foreground: 215 20% 45%;
-    --accent: 201 100% 43%; /* A brighter, more saturated blue for accents */
+    --accent: 201 100% 43%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
@@ -49,13 +49,10 @@
     --radius: 0.5rem;
   }
 
+  /* Simplified Sidebar variables based on root theme */
   :root, .dark {
     --sidebar-background: hsl(var(--secondary));
     --sidebar-foreground: hsl(var(--foreground));
-    --sidebar-primary: hsl(var(--primary));
-    --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: hsl(var(--primary)); /* Active item background */
-    --sidebar-accent-foreground: hsl(var(--primary-foreground)); /* Active item text */
     --sidebar-border: hsl(var(--border));
     --sidebar-ring: hsl(var(--ring));
   }

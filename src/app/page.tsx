@@ -494,18 +494,18 @@ export default function MarketingPage() {
                             <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
                                 <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
                             </svg>
-                            "The 'Fleety Suggest' button is genius. It answers my main question: 'Who should do this job, and when?' I don't have to think; I get a solid, data-driven starting point, and the 'Open Tasks' view cuts right through the noise."
+                            {t('testimonial_1_quote')}
                         </p>
                       </CardContent>
                       <footer className="mt-8">
                           <div className="flex items-center justify-center gap-x-3">
                               <Avatar>
                                   <AvatarImage src="https://placehold.co/40x40.png" alt="Dispatcher" data-ai-hint="person"/>
-                                  <AvatarFallback>D</AvatarFallback>
+                                  <AvatarFallback>DH</AvatarFallback>
                               </Avatar>
                               <div>
-                                  <div className="text-base font-semibold">A Field Service Dispatcher</div>
-                                  <div className="text-sm text-muted-foreground">First-Time User</div>
+                                  <div className="text-base font-semibold">{t('testimonial_1_author')}</div>
+                                  <div className="text-sm text-muted-foreground">{t('testimonial_1_role')}</div>
                               </div>
                           </div>
                       </footer>
@@ -516,18 +516,18 @@ export default function MarketingPage() {
                             <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
                                 <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
                             </svg>
-                            "Finally, an app that doesn't get in my way. My job list is simple, I know where I'm going, and I can see past job photos to know what I'm walking into. Documenting work on my phone is so much faster than paperwork."
+                           {t('testimonial_2_quote')}
                         </p>
                       </CardContent>
                       <footer className="mt-8">
                           <div className="flex items-center justify-center gap-x-3">
                               <Avatar>
                                   <AvatarImage src="https://placehold.co/40x40.png" alt="Technician" data-ai-hint="person" />
-                                  <AvatarFallback>T</AvatarFallback>
+                                  <AvatarFallback>MR</AvatarFallback>
                               </Avatar>
                               <div>
-                                  <div className="text-base font-semibold">A Field Technician</div>
-                                  <div className="text-sm text-muted-foreground">First-Time User</div>
+                                  <div className="text-base font-semibold">{t('testimonial_2_author')}</div>
+                                  <div className="text-sm text-muted-foreground">{t('testimonial_2_role')}</div>
                               </div>
                           </div>
                       </footer>

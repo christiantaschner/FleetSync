@@ -59,7 +59,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { differenceInDays } from 'date-fns';
 import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { MockModeBanner } from "@/components/common/MockModeBanner";
+import { MockModeBanner } from '@/components/common/MockModeBanner';
 import { UserProfile } from "@/types";
 
 type NavItem = {
@@ -81,7 +81,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
 
 function getNavItemsForRole(role: UserProfile['role']): NavItem[] {
   if (!role) return [];
-  return ALL_NAV_ITEMS.filter(item => item.roles.includes(role));
+  // Ensure that even if the role is 'superAdmin', it is treated as 'admin' for navigation purposes.
+  const effectiveRoles = role === 'superAdmin' ? ['admin', 'superAdmin'] : [role];
+  return ALL_NAV_ITEMS.filter(item => item.roles.some(r => effectiveRoles.includes(r)));
 };
 
 
@@ -175,7 +177,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                 const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
+                 const isActive = item.href === '/dashboard' ? pathname === '/' || pathname === '/dashboard' : pathname.startsWith(item.href);
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  

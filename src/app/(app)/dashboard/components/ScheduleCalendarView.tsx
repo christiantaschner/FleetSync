@@ -121,7 +121,6 @@ const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: D
     
     const jobEndTime = from.getTime();
     const travelStartTime = jobEndTime;
-    const travelEndTime = travelStartTime + (TRAVEL_TIME_MINUTES * 60000);
 
     const offsetMinutes = (travelStartTime - dayStart.getTime()) / 60000;
     const width = (TRAVEL_TIME_MINUTES / totalMinutes) * 100;
@@ -585,12 +584,20 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                             const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
                                             
                                             const TRAVEL_TIME_MINUTES = 30; // Placeholder
-                                            const travelEndTime = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
+                                            const travelStartTime = lastEventTime;
+                                            const travelEndTime = new Date(travelStartTime.getTime() + TRAVEL_TIME_MINUTES * 60000);
                                             
                                             const elements = [];
 
                                             if (isAfter(jobStart, lastEventTime)) {
-                                                elements.push(<IdleBlock key={`${job.id}-idle-before`} from={lastEventTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                                // Check if there is time for travel between last event and this job
+                                                if (isAfter(jobStart, travelEndTime)) {
+                                                    elements.push(<TravelBlock key={`${job.id}-travel`} from={lastEventTime} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                                    elements.push(<IdleBlock key={`${job.id}-idle-before`} from={travelEndTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                                } else {
+                                                    // Not enough time for full travel + idle, show only idle/travel up to job start
+                                                    elements.push(<IdleBlock key={`${job.id}-idle-before`} from={lastEventTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                                }
                                             }
                                             
                                             elements.push(<JobBlock 
@@ -601,7 +608,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 onClick={onJobClick}
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
-
                                             
                                             lastEventTime = jobEnd;
                                             

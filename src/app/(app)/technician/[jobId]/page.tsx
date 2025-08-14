@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician, ChecklistResult } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
@@ -21,6 +21,31 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/auth-context';
 import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
+
+const JobActionsCard = ({ job, onToggleBreak, onNavigate, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
+    <Card>
+        <CardHeader>
+            <CardTitle className="font-headline">Job Actions</CardTitle>
+            <CardDescription>Tools for your active job.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+             <div className="flex flex-wrap gap-2 items-center">
+                <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating}>
+                    {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+                    {isBreakActive ? 'End Break' : 'Start Break'}
+                </Button>
+                 <Button variant="outline" onClick={onNavigate}>
+                    <Navigation className="mr-2 h-4 w-4" /> Navigate
+                </Button>
+            </div>
+            <div className="border-t pt-4">
+                <TroubleshootingCard jobTitle={job.title} />
+            </div>
+        </CardContent>
+    </Card>
+);
+
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -34,6 +59,7 @@ export default function TechnicianJobDetailPage() {
   const [historyJobs, setHistoryJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
   const backUrl = userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : '/dashboard';
@@ -222,6 +248,8 @@ export default function TechnicianJobDetailPage() {
 
   const isAssignedToCurrentUser = user?.uid === job?.assignedTechnicianId;
   const isJobConcluded = job?.status === 'Completed' || job?.status === 'Cancelled';
+  
+  const canUpdateStatus = isAssignedToCurrentUser && job?.status !== 'Completed' && job?.status !== 'Cancelled';
 
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
@@ -229,11 +257,24 @@ export default function TechnicianJobDetailPage() {
   if (!job) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The job you are looking for does not exist or could not be loaded.</p><Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
   }
+  if (!technician) {
+      return <div className="p-4 text-center text-destructive">Could not load technician details for this job.</div>
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-4 space-y-6">
+      {appId && <ChatSheet 
+          isOpen={isChatOpen} 
+          setIsOpen={setIsChatOpen} 
+          job={job} 
+          technician={technician}
+          appId={appId}
+      />}
       <div className="flex items-center justify-between mb-4">
         <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
+         <Button variant="outline" size="sm" onClick={() => setIsChatOpen(true)}>
+          <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
+        </Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
@@ -242,44 +283,56 @@ export default function TechnicianJobDetailPage() {
       
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
 
-      {!isJobConcluded && (
+      {!isJobConcluded && job.status === 'Assigned' && <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />}
+
+      {canUpdateStatus && (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">Update Job Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
+            </CardContent>
+        </Card>
+      )}
+
+      {job.status === 'In Progress' && (
         <>
-            <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />
+            <JobActionsCard 
+                job={job}
+                onToggleBreak={handleToggleBreak}
+                onNavigate={handleNavigate}
+                isBreakActive={isBreakActive ?? false}
+                isUpdating={isUpdating}
+            />
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2">Actions & Support</CardTitle>
+                    <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work</CardTitle>
+                    <CardDescription>Add notes and photos before completing the job.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div>
-                        <h3 className="text-sm font-semibold mb-2">Update Status</h3>
-                        <div className="flex flex-wrap gap-2 items-center">
-                            <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
-                            {job.status === 'In Progress' && <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>{isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}{isBreakActive ? 'End Break' : 'Start Break'}</Button>}
-                        </div>
-                    </div>
-                    <div className="border-t pt-4">
-                        <TroubleshootingCard jobTitle={job.title} />
-                    </div>
-                </CardContent>
+                <CardContent><WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} /></CardContent>
             </Card>
         </>
       )}
 
-      {job.status === 'In Progress' && (
-        <Card>
-          <CardHeader><CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work</CardTitle><CardDescription>Add notes and photos before completing the job.</CardDescription></CardHeader>
-          <CardContent><WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} /></CardContent>
+      {job.status === 'Completed' && (
+        <Card className="bg-green-50 border-green-200">
+            <CardHeader>
+                <CardTitle className="font-headline text-green-800">Job Complete</CardTitle>
+                <CardDescription className="text-green-700">This job has been marked as completed.</CardDescription>
+            </CardHeader>
         </Card>
       )}
-
-      {job.status === 'Completed' && (
-        <Card>
-            <CardHeader><CardTitle className="font-headline">Job Complete</CardTitle></CardHeader>
+      
+       {job.status === 'Cancelled' && (
+        <Card className="bg-red-50 border-red-200">
+            <CardHeader>
+                <CardTitle className="font-headline text-red-800">Job Cancelled</CardTitle>
+                 <CardDescription className="text-red-700">This job was cancelled.</CardDescription>
+            </CardHeader>
         </Card>
       )}
     </div>
   );
 }
-
-    

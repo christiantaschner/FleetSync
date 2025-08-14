@@ -345,6 +345,12 @@ export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
 
 // --- AI Flow Schemas ---
 
+export const AllocateJobOutputSchema = z.object({
+  suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
+  reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
+});
+export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
+
 export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
   customerPhone: z.string().optional().describe('The customer\'s phone number, used to find their service history.'),
@@ -374,14 +380,9 @@ export const AllocateJobInputSchema = z.object({
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
+  rejectedSuggestions: z.array(AllocateJobOutputSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
 });
 export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
-
-export const AllocateJobOutputSchema = z.object({
-  suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
-  reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
-});
-export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 
 
 export const OptimizeRoutesInputSchema = z.object({

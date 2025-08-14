@@ -31,7 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, AITechnician } from "@/types";
@@ -75,6 +75,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
   
   const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
+  const [rejectedSuggestions, setRejectedSuggestions] = useState<AllocateJobOutput[]>([]);
   const [skillSuggestionReasoning, setSkillSuggestionReasoning] = useState<string | null>(null);
   const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
 
@@ -135,6 +136,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setTriageMessage(null);
     setIsGeneratingLink(false);
     setIsCopied(false);
+    setRejectedSuggestions([]);
   }, [job]);
 
   useEffect(() => {
@@ -231,8 +233,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingSkillSuggestion(false);
   }, [allSkills, toast]);
 
-  const fetchAIAssignmentSuggestion = useCallback(async (currentDescription: string, currentPriority: JobPriority, currentRequiredSkills: string[], currentScheduledTime?: Date) => {
-    if (!currentDescription || !currentPriority || technicians.length === 0) {
+  const fetchAIAssignmentSuggestion = useCallback(async (isNextSuggestion: boolean = false) => {
+    if (!description || !priority || technicians.length === 0) {
       setAiSuggestion(null);
       setSuggestedTechnicianDetails(null);
       return;
@@ -272,11 +274,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     const input: AllocateJobActionInput = {
       appId,
       currentTime: new Date().toISOString(),
-      jobDescription: currentDescription,
-      jobPriority: currentPriority,
-      requiredSkills: currentRequiredSkills,
+      jobDescription: description,
+      jobPriority: priority,
+      requiredSkills: requiredSkills,
       technicianAvailability: aiTechnicians,
-      scheduledTime: currentScheduledTime?.toISOString(),
+      scheduledTime: scheduledTime?.toISOString(),
+      rejectedSuggestions: isNextSuggestion ? rejectedSuggestions : undefined
     };
 
     const result = await allocateJobAction(input);
@@ -286,14 +289,23 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
       setAiSuggestion(null);
     } else if (result.data) {
-      setAiSuggestion(result.data);
       if (result.data.suggestedTechnicianId) {
+        setAiSuggestion(result.data);
         const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
         setSuggestedTechnicianDetails(tech || null);
-        setManualTechnicianId(result.data.suggestedTechnicianId); // Pre-select the suggested technician
+        setManualTechnicianId(result.data.suggestedTechnicianId);
+      } else {
+        setAiSuggestion({ suggestedTechnicianId: null, reasoning: 'No other suitable suggestions found.' });
       }
     }
-  }, [technicians, toast, jobs, appId]);
+  }, [description, priority, technicians, jobs, appId, toast, requiredSkills, scheduledTime, rejectedSuggestions]);
+
+  const handleNextSuggestion = () => {
+    if (aiSuggestion) {
+      setRejectedSuggestions(prev => [...prev, aiSuggestion]);
+      fetchAIAssignmentSuggestion(true);
+    }
+  };
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -349,7 +361,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
 
   const handleGenerateTriageLink = async () => {
-    // This is a new or existing job, but it needs an ID to link to.
     if (!title || !customerName) {
       toast({ title: "Cannot Generate Link", description: "Please provide a Job Title and Customer Name first.", variant: "default" });
       return;
@@ -365,7 +376,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
     let jobIdToUse = job?.id;
 
-    // If it's a new job, we need to create it first to get an ID.
     if (!jobIdToUse) {
        const tempJobData = {
           companyId: userProfile.companyId,
@@ -378,7 +388,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       };
       const newJobRef = await addDoc(collection(db, `artifacts/${appId}/public/data/jobs`), tempJobData);
       jobIdToUse = newJobRef.id;
-      // We'll need a way to pass this new job object back up to the parent to avoid a full reload
       if (onJobAddedOrUpdated) {
         onJobAddedOrUpdated({ ...tempJobData, id: jobIdToUse, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Job, null);
       }
@@ -413,7 +422,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setTimeout(() => setIsCopied(false), 2000);
     }
   };
-
 
   const handleSubmit = async (assignTechId: string | null = null) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
@@ -860,18 +868,38 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               ))}
                             </SelectContent>
                           </Select>
-                          <Button
-                              type="button"
-                              variant="accent"
-                              size="sm"
-                              onClick={() => fetchAIAssignmentSuggestion(description, priority, requiredSkills, scheduledTime)}
-                              disabled={isFetchingAISuggestion || !description}
-                          >
-                              {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                              Fleety Suggest
-                          </Button>
                       </div>
                   </div>
+                  {aiSuggestion ? (
+                      <Alert variant="default" className="border-primary/20 bg-primary/5">
+                        <Bot className="h-4 w-4 text-primary" />
+                        <AlertTitle className="font-semibold text-primary">Fleety's Suggestion</AlertTitle>
+                        <AlertDescription className="text-primary/90">
+                            {aiSuggestion.reasoning}
+                        </AlertDescription>
+                        <div className="mt-3 flex gap-2">
+                          <Button size="sm" type="button" onClick={() => handleSubmit(aiSuggestion.suggestedTechnicianId)} disabled={!aiSuggestion.suggestedTechnicianId}>
+                            <UserCheck className="mr-2 h-4 w-4"/>
+                            Accept &amp; Assign
+                          </Button>
+                          <Button size="sm" type="button" variant="outline" onClick={handleNextSuggestion} disabled={isFetchingAISuggestion}>
+                            <RefreshCw className="mr-2 h-4 w-4"/>
+                            Next Suggestion
+                          </Button>
+                        </div>
+                      </Alert>
+                    ) : (
+                      <Button
+                          type="button"
+                          variant="accent"
+                          className="w-full"
+                          onClick={() => fetchAIAssignmentSuggestion()}
+                          disabled={isFetchingAISuggestion || !description}
+                      >
+                          {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                          Fleety Suggest Technician
+                      </Button>
+                    )}
                   {job && (
                     <div>
                         <Label htmlFor="jobStatus">Status</Label>

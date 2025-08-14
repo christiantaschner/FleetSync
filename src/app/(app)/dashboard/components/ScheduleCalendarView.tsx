@@ -33,9 +33,9 @@ const getStatusAppearance = (status: JobStatus) => {
     }
 };
 
-const formatDuration = (end: Date, start: Date): string => {
-    if (end <= start) return "0m";
-    const totalMinutes = Math.floor((end.getTime() - start.getTime()) / 60000);
+const formatDuration = (milliseconds: number): string => {
+    if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
+    const totalMinutes = Math.floor(milliseconds / 60000);
     const hours = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
     if (hours > 0) {
@@ -116,43 +116,68 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   );
 };
 
-const TravelOrIdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
+const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: Date, totalMinutes: number }) => {
+    // For now, a fixed 30-minute travel time estimate
+    const TRAVEL_TIME_MINUTES = 30;
+
     const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
-    const durationMinutes = (to.getTime() - from.getTime()) / 60000;
+    const width = (TRAVEL_TIME_MINUTES / totalMinutes) * 100;
     
-    // Add a 10-minute buffer implicitly before the 'to' time
-    const bufferMinutes = 10;
-    if (durationMinutes <= bufferMinutes) return null; // Don't show if gap is smaller than buffer
-    
-    const left = (offsetMinutes / totalMinutes) * 100;
-    const width = ((durationMinutes - bufferMinutes) / totalMinutes) * 100;
+    if (offsetMinutes < 0) return null;
 
     return (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
                     <div 
-                        className="absolute top-0 p-2 rounded-md text-xs overflow-hidden flex items-center bg-gray-100 border-l-4 border-gray-400 text-gray-700"
-                        style={{ 
-                            left: `${left}%`, 
-                            width: `${width}%`,
-                            height: '100%',
-                        }}
+                        className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
+                        style={{ left: `${offsetMinutes}%`, width: `${width}%` }}
                     >
                          <div className="flex w-full truncate items-center justify-center">
                             <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
-                            <span className="text-muted-foreground truncate italic">{formatDuration(to, new Date(from.getTime() + bufferMinutes * 60000))}</span>
+                            <span className="truncate italic">{TRAVEL_TIME_MINUTES}m</span>
                         </div>
                     </div>
                 </TooltipTrigger>
-                <TooltipContent>
-                    <p>Travel / Idle Time: {formatDuration(to, new Date(from.getTime() + bufferMinutes * 60000))}</p>
+                <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
+                    <p>Estimated Travel Time: {TRAVEL_TIME_MINUTES} minutes</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
     );
 };
 
+const IdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
+    const durationMs = to.getTime() - from.getTime();
+    if (durationMs <= 0) return null;
+    
+    const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
+    const durationMinutes = durationMs / 60000;
+    
+    const left = (offsetMinutes / totalMinutes) * 100;
+    const width = (durationMinutes / totalMinutes) * 100;
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div 
+                        className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-gray-100 border-l-4 border-gray-300 text-gray-500"
+                        style={{ left: `${left}%`, width: `${width}%`}}
+                    >
+                        <div className="flex w-full truncate items-center justify-center">
+                            <Coffee className="inline h-3 w-3 mr-1.5 shrink-0" />
+                            <span className="truncate italic">{formatDuration(durationMs)}</span>
+                        </div>
+                    </div>
+                </TooltipTrigger>
+                 <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
+                    <p>Idle Time: {formatDuration(durationMs)}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
 
 const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, totalMinutes: number }) => {
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -269,7 +294,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                                 {isOptimizing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Shuffle className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
+                        <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
                             <p>Re-optimize {technician.name}'s schedule</p>
                         </TooltipContent>
                     </Tooltip>
@@ -554,16 +579,19 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                         {techJobs.map((job) => {
                                             if (!job.scheduledTime) return null;
                                             const jobStart = new Date(job.scheduledTime);
-                                            // The travel block now implicitly includes the 10-minute buffer after the previous job.
-                                            const travelStartTime = lastEventTime;
-                                            
                                             const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
+                                            
+                                            const TRAVEL_TIME_MINUTES = 30; // Placeholder
+                                            const travelAndJobEnd = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
 
                                             const elements = [];
-                                            if (isAfter(jobStart, travelStartTime)) {
-                                                elements.push(<TravelOrIdleBlock key={`${job.id}-idle`} from={travelStartTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
-                                            }
 
+                                            // Idle time before the first job
+                                            if (isAfter(jobStart, lastEventTime)) {
+                                                elements.push(<IdleBlock key={`${job.id}-idle-before`} from={lastEventTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                            }
+                                            
+                                            // The job itself
                                             elements.push(<JobBlock 
                                                 key={job.id}
                                                 job={job} 
@@ -573,7 +601,10 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
 
-                                            lastEventTime = jobEnd;
+                                            // Travel time after the job
+                                            elements.push(<TravelBlock key={`${job.id}-travel`} from={jobEnd} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                            
+                                            lastEventTime = travelAndJobEnd;
                                             return elements;
                                         })}
                                     </div>
@@ -644,4 +675,3 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 };
 
 export default ScheduleCalendarView;
-

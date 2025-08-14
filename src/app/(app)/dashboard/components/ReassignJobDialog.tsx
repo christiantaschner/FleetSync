@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { allocateJobAction } from "@/actions/ai-actions";
+import { allocateJobAction, suggestScheduleTimeAction } from "@/actions/ai-actions";
 import { reassignJobAction } from '@/actions/fleet-actions';
-import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
+import type { AllocateJobOutput, SuggestScheduleTimeOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Loader2, Bot, UserCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { format } from 'date-fns';
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
 
@@ -24,10 +25,18 @@ interface ReassignJobDialogProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
     jobToReassign: Job;
-    allJobs: Job[]; // Pass all jobs to calculate current load
+    allJobs: Job[];
     technicians: Technician[];
     onReassignmentComplete: () => void;
 }
+
+type Suggestion = {
+    type: 'reassign' | 'reschedule';
+    technician: Technician;
+    reasoning: string;
+    newTechnicianId?: string;
+    newScheduledTime?: string;
+};
 
 const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({ 
     isOpen, 
@@ -37,60 +46,94 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     technicians, 
     onReassignmentComplete 
 }) => {
-    const { userProfile } = useAuth();
+    const { userProfile, company } = useAuth();
     const { toast } = useToast();
     const [isLoadingAI, setIsLoadingAI] = useState(false);
     const [isConfirming, setIsConfirming] = useState(false);
-    const [suggestion, setSuggestion] = useState<AllocateJobOutput | null>(null);
-    const [suggestedTech, setSuggestedTech] = useState<Technician | null>(null);
+    const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const getSuggestion = useCallback(async () => {
+        if (!jobToReassign || !userProfile?.companyId || !appId) return;
+
         setIsLoadingAI(true);
         setSuggestion(null);
-        setSuggestedTech(null);
 
-        // Find available technicians, excluding the one currently assigned
-        const technicianPool = technicians.filter(t => t.id !== jobToReassign.assignedTechnicianId && t.isAvailable);
+        // 1. Try to find an alternative technician
+        const availableTechnicians = technicians.filter(t => t.id !== jobToReassign.assignedTechnicianId && t.isAvailable);
 
-        if (technicianPool.length === 0) {
-            toast({ title: "No available technicians found for reassignment.", variant: "default" });
-            setIsLoadingAI(false);
-            return;
+        if (availableTechnicians.length > 0) {
+            const aiTechnicians: AITechnician[] = availableTechnicians.map(t => ({
+                technicianId: t.id,
+                technicianName: t.name,
+                isAvailable: t.isAvailable,
+                skills: t.skills.map(s => s.name),
+                liveLocation: t.location,
+                homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
+                currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
+            }));
+
+            const result = await allocateJobAction({
+                appId,
+                jobDescription: jobToReassign.description,
+                jobPriority: jobToReassign.priority,
+                requiredSkills: jobToReassign.requiredSkills || [],
+                scheduledTime: jobToReassign.scheduledTime,
+                technicianAvailability: aiTechnicians,
+                currentTime: new Date().toISOString(),
+            });
+
+            if (result.data?.suggestedTechnicianId) {
+                const techDetails = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
+                if (techDetails) {
+                    setSuggestion({
+                        type: 'reassign',
+                        technician: techDetails,
+                        reasoning: result.data.reasoning,
+                        newTechnicianId: techDetails.id,
+                    });
+                    setIsLoadingAI(false);
+                    return;
+                }
+            }
         }
 
-        const aiTechnicians: AITechnician[] = technicianPool.map(t => ({
-            technicianId: t.id,
-            technicianName: t.name,
-            isAvailable: t.isAvailable,
-            skills: t.skills as string[],
-            location: {
-                latitude: t.location.latitude,
-                longitude: t.location.longitude,
-            },
-            currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority })),
-        }));
+        // 2. If no tech found, suggest a new time for the original tech
+        const originalTechnician = technicians.find(t => t.id === jobToReassign.assignedTechnicianId);
+        if (originalTechnician) {
+            const result = await suggestScheduleTimeAction({
+                companyId: userProfile.companyId,
+                jobPriority: jobToReassign.priority,
+                requiredSkills: jobToReassign.requiredSkills || [],
+                currentTime: new Date().toISOString(),
+                businessHours: company?.settings?.businessHours || [],
+                technicians: [
+                    {
+                        id: originalTechnician.id,
+                        name: originalTechnician.name,
+                        skills: originalTechnician.skills.map(s => s.name),
+                        jobs: allJobs
+                            .filter(j => j.assignedTechnicianId === originalTechnician.id && j.id !== jobToReassign.id)
+                            .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! })),
+                    },
+                ],
+            });
 
-        const input = {
-            jobDescription: jobToReassign.description,
-            jobPriority: jobToReassign.priority,
-            requiredSkills: jobToReassign.requiredSkills || [],
-            scheduledTime: jobToReassign.scheduledTime,
-            technicianAvailability: aiTechnicians,
-        };
-
-        const result = await allocateJobAction(input);
-
-        if (result.data) {
-            const techDetails = technicians.find(t => t.id === result.data!.suggestedTechnicianId) || null;
-            setSuggestion(result.data);
-            setSuggestedTech(techDetails);
-        } else {
-            toast({ title: "Fleety Suggestion Failed", description: result.error, variant: "destructive" });
+            if (result.data?.suggestions && result.data.suggestions.length > 0) {
+                const firstSuggestion = result.data.suggestions[0];
+                setSuggestion({
+                    type: 'reschedule',
+                    technician: originalTechnician,
+                    reasoning: firstSuggestion.reasoning,
+                    newScheduledTime: firstSuggestion.time,
+                });
+            } else {
+                toast({ title: "No Solution Found", description: "AI could not find an alternative technician or a suitable new time slot.", variant: "default" });
+            }
         }
 
         setIsLoadingAI(false);
-    }, [jobToReassign, technicians, allJobs, toast]);
+    }, [jobToReassign, technicians, allJobs, toast, company, userProfile, appId]);
 
     useEffect(() => {
         if (isOpen) {
@@ -99,56 +142,74 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
     }, [isOpen, getSuggestion]);
 
     const handleConfirm = async () => {
-        if (!suggestedTech || !userProfile?.companyId || !appId) return;
+        if (!suggestion || !userProfile?.companyId || !appId) return;
         setIsConfirming(true);
 
         const result = await reassignJobAction({
             companyId: userProfile.companyId,
             jobId: jobToReassign.id,
-            newTechnicianId: suggestedTech.id,
-            reason: `Job at risk of delay. Reassigned from another technician.`,
+            newTechnicianId: suggestion.newTechnicianId || jobToReassign.assignedTechnicianId!,
+            newScheduledTime: suggestion.newScheduledTime,
+            reason: `Job at risk of delay. Resolved via AI suggestion.`,
             appId,
         });
         
         setIsConfirming(false);
 
         if (result.error) {
-            toast({ title: "Reassignment Failed", description: result.error, variant: "destructive" });
+            toast({ title: "Update Failed", description: result.error, variant: "destructive" });
         } else {
-            toast({ title: "Job Reassigned", description: `Successfully reassigned "${jobToReassign.title}" to ${suggestedTech.name}.` });
+            toast({ title: "Schedule Updated", description: `Successfully resolved conflict for "${jobToReassign.title}".` });
             onReassignmentComplete();
             setIsOpen(false);
         }
     };
 
+    const renderSuggestion = () => {
+        if (!suggestion) return <p className="text-muted-foreground">Could not find a suitable resolution at this time.</p>;
+
+        if (suggestion.type === 'reassign') {
+            return (
+                <>
+                    <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Suggestion: Reassign Job</h3>
+                    <p>To avoid delay, assign this job to: <strong>{suggestion.technician.name}</strong></p>
+                    <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestion.reasoning}</em></p>
+                </>
+            )
+        }
+        if (suggestion.type === 'reschedule') {
+             return (
+                <>
+                    <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Suggestion: Reschedule Job</h3>
+                    <p>No other technicians are available. Suggest rescheduling for <strong>{suggestion.technician.name}</strong> to a new time:</p>
+                    <p className="font-bold text-center text-lg my-2 p-2 bg-background rounded-md border">{format(new Date(suggestion.newScheduledTime!), 'PPp')}</p>
+                    <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestion.reasoning}</em></p>
+                </>
+            )
+        }
+    }
+
+
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="font-headline">Fleety's Reassignment Suggestion</DialogTitle>
+                    <DialogTitle className="font-headline">AI Schedule Resolution</DialogTitle>
                     <DialogDescription>
-                        For job "<strong>{jobToReassign.title}</strong>", Fleety suggests an alternative technician to avoid a potential delay.
+                        For job "<strong>{jobToReassign.title}</strong>", Fleety suggests the following action to avoid a potential delay.
                     </DialogDescription>
                 </DialogHeader>
 
                 {isLoadingAI && (
                     <div className="flex items-center justify-center p-8 space-x-2">
                         <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        <p className="text-muted-foreground">Finding best available technician...</p>
+                        <p className="text-muted-foreground">Analyzing schedule...</p>
                     </div>
                 )}
 
-                {!isLoadingAI && suggestedTech && suggestion && (
+                {!isLoadingAI && (
                     <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2">
-                         <h3 className="text-lg font-semibold font-headline flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Fleety's Suggestion:</h3>
-                         <p>Assign to: <strong>{suggestedTech.name}</strong></p>
-                         <p className="text-sm text-muted-foreground">Reasoning: <em>{suggestion.reasoning}</em></p>
-                    </div>
-                )}
-
-                {!isLoadingAI && !suggestedTech && (
-                    <div className="text-center p-8">
-                        <p className="text-muted-foreground">Could not find a suitable alternative technician at this time.</p>
+                         {renderSuggestion()}
                     </div>
                 )}
 
@@ -157,10 +218,10 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                     <Button 
                         type="button" 
                         onClick={handleConfirm}
-                        disabled={!suggestedTech || isConfirming || isLoadingAI}
+                        disabled={!suggestion || isConfirming || isLoadingAI}
                     >
                         {isConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                        Confirm Reassignment
+                        Confirm Suggestion
                     </Button>
                 </DialogFooter>
             </DialogContent>

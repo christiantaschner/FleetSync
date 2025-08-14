@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Loader2, MessageSquare, X, UserPlus, Info } from 'lucide-react';
+import { AlertTriangle, Loader2, MessageSquare, X, UserPlus, Info, Bot } from 'lucide-react';
 import type { CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { notifyCustomerAction } from '@/actions/ai-actions';
 import { useToast } from '@/hooks/use-toast';
@@ -77,12 +77,12 @@ export const ScheduleRiskAlert: React.FC<ScheduleRiskAlertProps> = ({ riskAlert,
           <p className="text-xs"><strong>AI Reason:</strong> {risk.reasoning}</p>
         </AlertDescription>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100 text-amber-800" onClick={() => setIsReassignOpen(true)}>
-              <UserPlus className="mr-2 h-4 w-4" /> Find Alternative
+           <Button size="sm" variant="outline" className="border-amber-300 hover:bg-amber-100 text-amber-800" onClick={() => setIsReassignOpen(true)}>
+              <Bot className="mr-2 h-4 w-4" /> Resolve with AI
           </Button>
           <Button size="sm" variant="default" className="bg-amber-500 hover:bg-amber-600 text-white" onClick={handleDraftNotification} disabled={isNotifying}>
             {isNotifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquare className="mr-2 h-4 w-4" />}
-            Draft Notification
+            Notify Customer
           </Button>
         </div>
       </Alert>

@@ -480,10 +480,19 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                         Fleety continuously checks schedules. If a delay risk is detected, an alert will appear on the dashboard.
                     </AlertDescription>
                 </Alert>
-                <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
-                    {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
-                    Optimize Fleet
-                </Button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
+                                {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
+                                Optimize Fleet
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Optimize the schedule for the currently selected day.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 relative">

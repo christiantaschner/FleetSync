@@ -18,7 +18,7 @@ import Link from 'next/link';
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
 import { reassignJobAction } from '@/actions/fleet-actions';
-import { optimizeRoutesAction } from '@/actions/ai-actions';
+import ReassignJobDialog from './ReassignJobDialog';
 import { useAuth } from '@/contexts/auth-context';
 
 const getStatusAppearance = (status: JobStatus) => {
@@ -291,6 +291,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const [proposedChanges, setProposedChanges] = useState<ProposedChanges>({});
   const [isSaving, setIsSaving] = useState(false);
   const [optimizingTechId, setOptimizingTechId] = useState<string | null>(null);
+
+  const [isReassignOpen, setIsReassignOpen] = useState(false);
+  const [jobToReassign, setJobToReassign] = useState<Job | null>(null);
   const { toast } = useToast();
   const { userProfile, isMockMode } = useAuth();
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -379,56 +382,21 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     }));
   };
   
-  const handleOptimize = async (technicianId: string) => {
-    setOptimizingTechId(technicianId);
-    
-    const technician = technicians.find(t => t.id === technicianId);
-    if (!technician) {
-      toast({ title: "Error", description: "Technician not found.", variant: "destructive" });
-      setOptimizingTechId(null);
-      return;
-    }
-    
-    const jobsForOptimization = jobs.filter(j => j.assignedTechnicianId === technicianId && (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress'));
+  const handleOptimize = (technicianId: string) => {
+    const jobsForOptimization = jobs.filter(j => 
+        j.assignedTechnicianId === technicianId && 
+        isSameDay(new Date(j.scheduledTime || 0), currentDate) &&
+        (j.status === 'Assigned' || j.status === 'En Route')
+    );
+
     if (jobsForOptimization.length === 0) {
-      toast({ title: "No Jobs to Optimize", description: `${technician.name} has no active jobs assigned for today.`, variant: "default" });
-      setOptimizingTechId(null);
-      return;
+        toast({ title: "No Jobs to Optimize", description: `No optimizable jobs found for this technician today.`, variant: "default" });
+        return;
     }
 
-    const input: OptimizeRoutesInput = {
-      technicianId,
-      currentLocation: technician.location,
-      tasks: jobsForOptimization.map(job => ({
-        taskId: job.id,
-        location: job.location,
-        priority: job.priority.toLowerCase() as 'high' | 'medium' | 'low',
-        scheduledTime: job.scheduledTime,
-      })),
-    };
-    
-    const result = await optimizeRoutesAction(input);
-
-    if (result.data) {
-        const newProposedChanges: ProposedChanges = {};
-        result.data.optimizedRoute.forEach(step => {
-            const originalJob = jobs.find(j => j.id === step.taskId);
-            if (originalJob) {
-                newProposedChanges[step.taskId] = {
-                    scheduledTime: step.estimatedArrivalTime,
-                    assignedTechnicianId: technicianId,
-                    originalTechnicianId: originalJob.assignedTechnicianId || null
-                }
-            }
-        });
-        setProposedChanges(prev => ({ ...prev, ...newProposedChanges }));
-        toast({ title: "Route Optimized!", description: `Fleety has proposed a new schedule for ${technician.name}.`});
-    } else {
-        toast({ title: "Optimization Failed", description: result.error, variant: "destructive" });
-    }
-
-    setOptimizingTechId(null);
-  }
+    setJobToReassign(jobsForOptimization[0]);
+    setIsReassignOpen(true);
+  };
 
   const handleConfirmChanges = async () => {
     if (isMockMode) {
@@ -504,6 +472,16 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </Alert>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 relative">
+            {jobToReassign && (
+                <ReassignJobDialog
+                    isOpen={isReassignOpen}
+                    setIsOpen={setIsReassignOpen}
+                    jobToReassign={jobToReassign}
+                    allJobs={jobs}
+                    technicians={technicians}
+                    onReassignmentComplete={() => {}}
+                />
+            )}
             {viewMode === 'day' ? (
             <div ref={containerRef} className="overflow-x-auto">
             <div className="relative">

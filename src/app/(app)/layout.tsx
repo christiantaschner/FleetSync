@@ -70,7 +70,6 @@ type NavItem = {
   divider?: boolean;
 };
 
-// All nav items are now shown to all users.
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
   { href: "/customers", label: 'customers', icon: ClipboardList },
@@ -179,7 +178,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            variant="ghost"
                             isActive={isActive}
                             tooltip={t(item.label)}
                             >
@@ -201,7 +199,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <Link href="/settings">
                             <SidebarMenuButton
                                 isActive={pathname.startsWith('/settings')}
-                                variant="ghost"
                                 tooltip={t('settings')}
                             >
                                 <Settings className="h-4 w-4" />

@@ -367,7 +367,7 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 border-b border-border bg-primary text-primary-foreground p-3", className)}
+      className={cn("flex flex-col gap-2 border-b border-border p-3", className)}
       {...props}
     />
   )
@@ -531,11 +531,11 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-base outline-none ring-ring transition-all focus-visible:ring-2 active:bg-background/90 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-foreground data-[active=true]:bg-background/95 data-[active=true]:border-l-4 data-[active=true]:border-primary data-[active=true]:pl-3 data-[state=open]:bg-background group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-base outline-none ring-ring transition-all focus-visible:ring-2 active:bg-background/90 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-secondary-foreground data-[active=true]:bg-background/95 data-[active=true]:border-l-4 data-[active=true]:border-primary data-[active=true]:pl-3 data-[state=open]:bg-background group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "text-secondary-foreground bg-secondary",
+        default: "text-secondary-foreground bg-transparent hover:bg-background",
         secondary: "bg-primary text-primary-foreground hover:bg-primary/90",
         ghost: "hover:bg-background hover:text-foreground text-secondary-foreground",
       },
@@ -546,7 +546,7 @@ const sidebarMenuButtonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "ghost",
+      variant: "default",
       size: "default",
     },
   }
@@ -563,7 +563,7 @@ const SidebarMenuButton = React.forwardRef<
 >(
   (
     {
-      variant = "ghost",
+      variant = "default",
       size = "default",
       isActive = false,
       tooltip,

@@ -5,25 +5,25 @@
 
 @layer base {
   :root {
-    --background: 240 10% 98%; /* A very light, almost white grey for the main content area */
+    --background: 240 10% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 204 80% 50%; /* The main blue color from the screenshot */
+    --primary: 204 80% 50%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 91%;
     --secondary-foreground: 222 47% 11%;
     --muted: 220 14% 91%;
     --muted-foreground: 215 20% 45%;
-    --accent: 220 13% 80%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 204 80% 50%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 89%;
     --input: 220 13% 94%;
-    --ring: 204 80% 50%; /* Ring color to match the primary blue */
+    --ring: 204 80% 50%;
     --radius: 0.5rem;
   }
   .dark {
@@ -33,7 +33,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 204 80% 50%; /* Keeping the same primary blue for dark mode */
+    --primary: 204 80% 50%;
     --primary-foreground: 0 0% 100%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
@@ -51,12 +51,12 @@
 
   :root, .dark {
      /* Sidebar specific colors */
-    --sidebar-background: 240 10% 98%; /* Light grey as seen in the screenshot */
-    --sidebar-foreground: 222 47% 11%; /* Dark text for menu items */
+    --sidebar-background: 240 10% 98%;
+    --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: hsl(var(--primary));
     --sidebar-primary-foreground: hsl(var(--primary-foreground));
-    --sidebar-accent: hsl(var(--secondary)); /* Light grey for active/hover items */
-    --sidebar-accent-foreground: hsl(var(--secondary-foreground));
+    --sidebar-accent: hsl(var(--primary));
+    --sidebar-accent-foreground: hsl(var(--primary-foreground));
     --sidebar-border: hsl(var(--border));
     --sidebar-ring: hsl(var(--ring));
   }

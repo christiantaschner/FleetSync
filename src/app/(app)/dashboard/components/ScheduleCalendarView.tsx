@@ -117,7 +117,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
 
 const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: Date, totalMinutes: number }) => {
     // For now, a fixed 30-minute travel time estimate
-    const TRAVEL_TIME_MINUTES = 30;
+    const TRAVEL_TIME_MINUTES = useMemo(() => Math.floor(Math.random() * (45 - 15 + 1)) + 15, [from]);
     
     const jobEndTime = from.getTime();
     const travelStartTime = jobEndTime;

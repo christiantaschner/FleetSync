@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -75,7 +74,7 @@ function getNavItemsForRole(userProfile: UserProfile | null): NavItem[] {
   if (!userProfile?.role) return [];
 
   const allNavItems: NavItem[] = [
-      { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'technician', 'csr'] },
+      { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
       { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
@@ -177,7 +176,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                 const isActive = pathname === item.href;
+                 const isActive = pathname === item.href || (item.href === "/dashboard" && pathname === "/");
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  

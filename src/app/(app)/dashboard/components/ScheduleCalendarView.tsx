@@ -119,11 +119,15 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
 const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: Date, totalMinutes: number }) => {
     // For now, a fixed 30-minute travel time estimate
     const TRAVEL_TIME_MINUTES = 30;
+    
+    const jobEndTime = from.getTime();
+    const travelStartTime = jobEndTime;
+    const travelEndTime = travelStartTime + (TRAVEL_TIME_MINUTES * 60000);
 
-    const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
+    const offsetMinutes = (travelStartTime - dayStart.getTime()) / 60000;
     const width = (TRAVEL_TIME_MINUTES / totalMinutes) * 100;
     
-    if (offsetMinutes < 0) return null;
+    if (offsetMinutes < 0 || offsetMinutes > totalMinutes) return null;
 
     return (
         <TooltipProvider>
@@ -545,7 +549,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     canScroll: (element) => element === containerRef.current
                 }}
             >
-            <div ref={containerRef} className="overflow-auto">
+            <div ref={containerRef} className="overflow-x-auto">
             <div className="relative min-w-[1200px]">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                     <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
@@ -582,6 +586,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                             const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
                                             
                                             const TRAVEL_TIME_MINUTES = 30; // Placeholder
+                                            const travelEndTime = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
                                             
                                             const elements = [];
 
@@ -598,11 +603,11 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
 
-                                            lastEventTime = jobEnd;
-                                            if (isAfter(dayEnd, jobEnd)) { // Only add travel if it doesn't go past the day
-                                                const travelEndTime = new Date(jobEnd.getTime() + TRAVEL_TIME_MINUTES * 60000);
+                                            if (isAfter(dayEnd, travelEndTime)) {
                                                 elements.push(<TravelBlock key={`${job.id}-travel`} from={jobEnd} dayStart={dayStart} totalMinutes={totalMinutes} />);
                                                 lastEventTime = travelEndTime;
+                                            } else {
+                                                lastEventTime = jobEnd;
                                             }
                                             
                                             return elements;

@@ -224,7 +224,7 @@ export default function ContractsPage() {
                             <Repeat className="h-4 w-4 text-primary" />
                             <AlertTitle className="text-primary">No Contracts Yet</AlertTitle>
                             <AlertDescription>
-                              Create your first recurring service contract to start generating jobs automatically.
+                              Create your first recurring service contract to start generating unassigned jobs automatically.
                             </AlertDescription>
                             <div className="mt-4">
                                 <Button onClick={handleAddNewContract}>

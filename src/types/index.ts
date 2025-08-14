@@ -1,4 +1,5 @@
 
+
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -25,7 +26,7 @@ export const UserProfileSchema = z.object({
     uid: z.string(),
     email: z.string(),
     companyId: z.string().nullable(),
-    role: z.enum(['admin', 'technician', 'superAdmin', 'accountant']).nullable(),
+    role: z.enum(['admin', 'technician', 'superAdmin', 'csr']).nullable(),
     onboardingStatus: z.enum(['pending_creation', 'pending_onboarding', 'completed']),
 });
 export type UserProfile = z.infer<typeof UserProfileSchema>;
@@ -33,7 +34,7 @@ export type UserProfile = z.infer<typeof UserProfileSchema>;
 export const InviteSchema = z.object({
     id: z.string(),
     email: z.string(),
-    role: z.enum(['admin', 'technician', 'accountant']),
+    role: z.enum(['admin', 'technician', 'csr']),
     companyId: z.string(),
     status: z.enum(['pending', 'accepted']),
     createdAt: z.string(),
@@ -109,7 +110,7 @@ export type Technician = {
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
-export type JobStatus = 'Pending' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
+export type JobStatus = 'Unassigned' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
 
 export type ChecklistResult = {
     item: string;

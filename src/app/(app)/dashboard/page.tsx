@@ -45,7 +45,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
+import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -160,7 +160,7 @@ export default function DashboardPage() {
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+  const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
   
   const fetchSkills = useCallback(async (companyId: string) => {
     if (isMockMode) {
@@ -392,7 +392,7 @@ export default function DashboardPage() {
     }
 
     const highPriorityPendingJob = newJobs.find(
-      j => j.priority === 'High' && j.status === 'Pending'
+      j => j.priority === 'High' && j.status === 'Unassigned'
     );
     
     if (highPriorityPendingJob && !proactiveSuggestion && !isFetchingProactiveSuggestion) {
@@ -523,7 +523,7 @@ export default function DashboardPage() {
     if (isInterruption) {
         const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, suggestedTechnicianDetails.currentJobId!);
         batch.update(oldJobRef, {
-            status: 'Pending',
+            status: 'Unassigned',
             assignedTechnicianId: null,
             notes: arrayUnion(`(Auto-Reassigned: Technician interrupted for high-priority job ${job.title})`) as any,
             updatedAt: serverTimestamp(),
@@ -556,17 +556,17 @@ export default function DashboardPage() {
     setIsChatOpen(true);
   };
   
-  const openTasksFilter: JobStatus[] = ['Pending', 'Draft'];
+  const openTasksFilter: JobStatus[] = ['Unassigned', 'Draft'];
   
   const triageReadyCount = useMemo(() => 
-    jobs.filter(j => j.triageImages && j.triageImages.length > 0 && (j.status === 'Pending' || j.status === 'Draft')).length,
+    jobs.filter(j => j.triageImages && j.triageImages.length > 0 && (j.status === 'Unassigned' || j.status === 'Draft')).length,
     [jobs]
   );
 
   const openTasksCount = useMemo(() => {
     return jobs.filter(job => 
         openTasksFilter.includes(job.status) || 
-        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+        (job.triageImages && job.triageImages.length > 0 && (job.status === 'Unassigned' || job.status === 'Draft'))
     ).length;
   }, [jobs]);
 
@@ -596,7 +596,7 @@ export default function DashboardPage() {
     if (showOpenTasksOnly) {
         return tempJobs.filter(job => 
             openTasksFilter.includes(job.status) || 
-            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Pending' || job.status === 'Draft'))
+            (job.triageImages && job.triageImages.length > 0 && (job.status === 'Unassigned' || job.status === 'Draft'))
         );
     }
 
@@ -615,7 +615,7 @@ export default function DashboardPage() {
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
     const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 } as Record<JobPriority, number>;
-    const statusOrder = { 'Draft': 0, 'Pending': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Pending Invoice': 6, 'Finished': 7, 'Cancelled': 8 } as Record<JobStatus, number>;
+    const statusOrder = { 'Draft': 0, 'Unassigned': 1, 'Assigned': 2, 'En Route': 3, 'In Progress': 4, 'Completed': 5, 'Pending Invoice': 6, 'Finished': 7, 'Cancelled': 8 } as Record<JobStatus, number>;
 
     return [...filteredJobs].sort((a, b) => {
         switch (sortOrder) {
@@ -672,8 +672,8 @@ export default function DashboardPage() {
     });
   }, [technicians, technicianSearchTerm]);
 
-  const pendingJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Pending'), [jobs]);
-  const pendingJobsCount = pendingJobsForBatchAssign.length;
+  const unassignedJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Unassigned'), [jobs]);
+  const unassignedJobsCount = unassignedJobsForBatchAssign.length;
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
     ? { lat: technicians[0].location.latitude, lng: technicians[0].location.longitude }
@@ -682,16 +682,16 @@ export default function DashboardPage() {
   const handleBatchAIAssign = useCallback(async () => {
     if (isMockMode) {
       // Mock logic
-      const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
-      if (currentPendingJobs.length === 0 || technicians.length === 0) {
-        toast({ title: "Fleety Batch Assign", description: "No pending jobs or technicians available.", variant: "default" });
+      const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
+      if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
+        toast({ title: "Fleety Batch Assign", description: "No unassigned jobs or technicians available.", variant: "default" });
         return;
       }
       setIsBatchLoading(true);
       
       let tempTechnicianPool = JSON.parse(JSON.stringify(technicians.filter(t => t.isAvailable)));
       
-      const suggestions: AssignmentSuggestion[] = currentPendingJobs.map(job => {
+      const suggestions: AssignmentSuggestion[] = currentUnassignedJobs.map(job => {
         const { requiredSkills = [] } = job;
         const suitableTechIndex = tempTechnicianPool.findIndex((tech: Technician) => 
             requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.some(s => s.name === skill))
@@ -727,9 +727,9 @@ export default function DashboardPage() {
 
     // Live logic
     if (!appId) return;
-    const currentPendingJobs = jobs.filter(job => job.status === 'Pending');
-    if (currentPendingJobs.length === 0 || technicians.length === 0) {
-      toast({ title: "Fleety Batch Assign", description: "No pending jobs or no technicians available for assignment.", variant: "default" });
+    const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
+    if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
+      toast({ title: "Fleety Batch Assign", description: "No unassigned jobs or no technicians available for assignment.", variant: "default" });
       return;
     }
     setIsBatchLoading(true);
@@ -737,7 +737,7 @@ export default function DashboardPage() {
     
     let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
 
-    const suggestions = await Promise.all(currentPendingJobs.map(async (job) => {
+    const suggestions = await Promise.all(currentUnassignedJobs.map(async (job) => {
         const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => ({
             technicianId: t.id,
             technicianName: t.name,
@@ -850,7 +850,7 @@ export default function DashboardPage() {
     
     toast({
       title: "Technician Marked Unavailable",
-      description: "Their active jobs are now pending and ready for reassignment.",
+      description: "Their active jobs are now ready for reassignment.",
     });
     
     setTimeout(() => {
@@ -863,12 +863,8 @@ export default function DashboardPage() {
     setRiskAlerts(prev => prev.filter(alert => alert.technician.id !== technicianId));
   };
   
-  const highPriorityPendingCount = useMemo(() => 
-    jobs.filter(j => j.status === 'Pending' && j.priority === 'High').length, 
-    [jobs]
-  );
-  const unassignedJobsCount = useMemo(() => 
-    jobs.filter(j => j.status === 'Pending' && !j.assignedTechnicianId).length, 
+  const highPriorityUnassignedCount = useMemo(() => 
+    jobs.filter(j => j.status === 'Unassigned' && j.priority === 'High').length, 
     [jobs]
   );
   
@@ -925,7 +921,7 @@ export default function DashboardPage() {
   
   const statusOptions = [
     { value: "Draft", label: "Draft" },
-    { value: "Pending", label: "Pending" },
+    { value: "Unassigned", label: "Unassigned" },
     { value: "Assigned", label: "Assigned" },
     { value: "En Route", label: "En Route" },
     { value: "In Progress", label: "In Progress" },
@@ -960,14 +956,14 @@ export default function DashboardPage() {
         return jobDate >= start && jobDate <= end;
     });
     
-    const pendingJobsForToday = jobsForToday.filter(j => j.status === 'Pending');
+    const unassignedJobsForToday = jobsForToday.filter(j => j.status === 'Unassigned');
     const assignedJobsForToday = jobsForToday.filter(j => j.status === 'Assigned' || j.status === 'In Progress');
 
     const result = await runFleetOptimizationAction({
       companyId: userProfile.companyId,
       appId,
       currentTime: new Date().toISOString(),
-      pendingJobs: pendingJobsForToday,
+      pendingJobs: unassignedJobsForToday,
       technicians: technicians.map(t => ({
         ...t,
         jobs: assignedJobsForToday.filter(j => j.assignedTechnicianId === t.id)
@@ -1153,7 +1149,7 @@ export default function DashboardPage() {
                 <AlertTriangle className="h-4 w-4 text-destructive" />
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-4 sm:pt-0">
-                <div className="text-xl lg:text-2xl font-bold">{highPriorityPendingCount}</div>
+                <div className="text-xl lg:text-2xl font-bold">{highPriorityUnassignedCount}</div>
                 <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
             </CardContent>
         </Card>
@@ -1229,7 +1225,7 @@ export default function DashboardPage() {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Only shows all Draft, Pending jobs, and jobs ready for review from Fleety's Service Prep</p>
+                                <p>Only shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -1288,11 +1284,11 @@ export default function DashboardPage() {
                  <Button 
                     variant="accent" 
                     onClick={handleBatchAIAssign} 
-                    disabled={pendingJobsCount === 0 || isBatchLoading}
+                    disabled={unassignedJobsCount === 0 || isBatchLoading}
                     className="w-full sm:w-auto"
                     >
                     {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                    Fleety Batch Assign ({pendingJobsCount})
+                    Fleety Batch Assign ({unassignedJobsCount})
                 </Button>
               </div>
               <div className="space-y-4 mt-4">
@@ -1401,4 +1397,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -49,8 +49,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import Link from 'next/link';
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
-const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Pending', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
-const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Unassigned', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
 
 interface AddEditJobDialogProps {
@@ -82,7 +82,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<JobPriority>('Medium');
-  const [status, setStatus] = useState<JobStatus>('Pending');
+  const [status, setStatus] = useState<JobStatus>('Unassigned');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -113,7 +113,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setTitle(job?.title || '');
     setDescription(job?.description || '');
     setPriority(job?.priority || 'Medium');
-    setStatus(job?.status || 'Pending');
+    setStatus(job?.status || 'Unassigned');
     setRequiredSkills(job?.requiredSkills || []);
     setCustomerName(job?.customerName || '');
     setCustomerEmail(job?.customerEmail || '');
@@ -148,14 +148,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   // Handle smart status updates
   useEffect(() => {
     if (manualTechnicianId === UNASSIGNED_VALUE && (status === 'Assigned' || status === 'En Route' || status === 'In Progress')) {
-        setStatus('Pending');
+        setStatus('Unassigned');
     }
 
-    if (manualTechnicianId !== UNASSIGNED_VALUE && (status === 'Pending' || status === 'Draft')) {
+    if (manualTechnicianId !== UNASSIGNED_VALUE && (status === 'Unassigned' || status === 'Draft')) {
         setStatus('Assigned');
     }
     
-    if (status === 'Pending' && manualTechnicianId !== UNASSIGNED_VALUE) {
+    if (status === 'Unassigned' && manualTechnicianId !== UNASSIGNED_VALUE) {
         setManualTechnicianId(UNASSIGNED_VALUE);
     }
   }, [status, manualTechnicianId]);
@@ -481,7 +481,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         if (technicianHasChanged) {
             if (newAssignedTechId === null) { // Un-assigning
                 updatePayload.assignedTechnicianId = null;
-                updatePayload.status = 'Pending';
+                updatePayload.status = 'Unassigned';
                 if(job.assignedTechnicianId) {
                     const oldTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
@@ -532,7 +532,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         
         const newJobPayload: any = {
           ...jobData,
-          status: techToAssignId ? 'Assigned' as JobStatus : 'Pending' as JobStatus,
+          status: techToAssignId ? 'Assigned' as JobStatus : 'Unassigned' as JobStatus,
           assignedTechnicianId: techToAssignId || null,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
@@ -557,7 +557,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           if (isInterruption) {
               const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, techToAssign.currentJobId!);
               batch.update(oldJobRef, {
-                  status: 'Pending' as JobStatus,
+                  status: 'Unassigned' as JobStatus,
                   assignedTechnicianId: null,
                   notes: 'This job was unassigned due to a higher priority interruption.',
               });
@@ -911,7 +911,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                            {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s === 'Pending' ? 'Unassigned' : s}</SelectItem>)}
+                            {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                         </SelectContent>
                         </Select>
                     </div>
@@ -1014,7 +1014,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         variant={'outline'}
                       >
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Pending'}
+                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Unassigned'}
                       </Button>
                     </>
                   )}

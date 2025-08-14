@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState } from 'react';
@@ -189,7 +190,7 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline flex items-center gap-2"><FileSpreadsheet /> Import Jobs from CSV</DialogTitle>
           <DialogDescription>
-            Upload a CSV file to batch-create pending jobs. Download the template for the required format.
+            Upload a CSV file to batch-create unassigned jobs. Download the template for the required format.
           </DialogDescription>
         </DialogHeader>
         
@@ -296,5 +297,3 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
 };
 
 export default ImportJobsDialog;
-
-    

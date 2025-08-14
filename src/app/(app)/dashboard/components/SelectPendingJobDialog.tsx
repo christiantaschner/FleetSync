@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -33,21 +34,21 @@ const SelectPendingJobDialog: React.FC<SelectPendingJobDialogProps> = ({
   jobs,
   onJobSelected,
 }) => {
-  const pendingJobs = jobs.filter(job => job.status === 'Pending').sort((a, b) => {
+  const pendingJobs = jobs.filter(job => job.status === 'Unassigned').sort((a, b) => {
     const priorityOrder: Record<Job['priority'], number> = { High: 1, Medium: 2, Low: 3 };
     if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     }
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-headline">Select Pending Job for AI Assignment</DialogTitle>
+          <DialogTitle className="font-headline">Select Unassigned Job for AI Assignment</DialogTitle>
           <DialogDescription>
-            Choose a pending job from the list below to get an AI technician suggestion.
+            Choose an unassigned job from the list below to get an AI technician suggestion.
             (This dialog might be deprecated if assignment is done contextually)
           </DialogDescription>
         </DialogHeader>
@@ -78,7 +79,7 @@ const SelectPendingJobDialog: React.FC<SelectPendingJobDialogProps> = ({
               ))}
             </div>
           ) : (
-            <p className="text-muted-foreground text-center py-6">No pending jobs available for assignment.</p>
+            <p className="text-muted-foreground text-center py-6">No unassigned jobs available for assignment.</p>
           )}
         </ScrollArea>
         <DialogFooter className="sm:justify-start">
@@ -92,4 +93,3 @@ const SelectPendingJobDialog: React.FC<SelectPendingJobDialogProps> = ({
 };
 
 export default SelectPendingJobDialog;
-

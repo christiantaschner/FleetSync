@@ -1,4 +1,5 @@
 
+
 "use server";
 
 import { z } from "zod";
@@ -62,7 +63,7 @@ export async function importJobsAction(
               title: jobData.title,
               description: jobData.description,
               priority: jobData.priority,
-              status: 'Pending' as JobStatus,
+              status: 'Unassigned' as JobStatus,
               customerName: jobData.customerName || "N/A",
               customerPhone: jobData.customerPhone || "N/A",
               location: {
@@ -151,7 +152,7 @@ export async function handleTechnicianUnavailabilityAction(
 
     querySnapshot.forEach((jobDoc) => {
       batch.update(jobDoc.ref, {
-        status: "Pending" as JobStatus,
+        status: "Unassigned" as JobStatus,
         assignedTechnicianId: null,
         notes: arrayUnion(`(Reassigned: Technician marked as unavailable${reason ? `: ${reason}` : ''})`)
       });
@@ -565,7 +566,7 @@ export async function generateRecurringJobsAction(
           customerName: contract.customerName,
           customerPhone: contract.customerPhone,
           location: { address: contract.customerAddress, latitude: 0, longitude: 0 },
-          status: 'Pending' as JobStatus,
+          status: 'Unassigned' as JobStatus,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           scheduledTime: currentDate.toISOString(),

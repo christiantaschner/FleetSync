@@ -33,7 +33,7 @@ const getStatusAppearance = (status: JobStatus) => {
     }
 };
 
-const formatDuration = (start: Date, end: Date): string => {
+const formatDuration = (end: Date, start: Date): string => {
     if (end <= start) return "0m";
     const totalMinutes = Math.floor((end.getTime() - start.getTime()) / 60000);
     const hours = Math.floor(totalMinutes / 60);
@@ -117,7 +117,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   );
 };
 
-const TravelBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
+const TravelOrIdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
     const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
     const durationMinutes = (to.getTime() - from.getTime()) / 60000;
     if (durationMinutes <= 1) return null;
@@ -136,33 +136,7 @@ const TravelBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Dat
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Travel Time: {formatDuration(from, to)}</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-};
-
-const IdleTimeBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
-    const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
-    const durationMinutes = (to.getTime() - from.getTime()) / 60000;
-    if (durationMinutes <= 1) return null;
-
-    const left = (offsetMinutes / totalMinutes) * 100;
-    const width = (durationMinutes / totalMinutes) * 100;
-
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div className="absolute top-0 h-full" style={{ left: `${left}%`, width: `${width}%` }}>
-                         <div className="relative w-full h-full flex items-center justify-center bg-gray-200/20">
-                            {/* No icon needed for idle time, just empty space */}
-                        </div>
-                    </div>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>Idle Time: {formatDuration(from, to)}</p>
+                    <p>Travel / Buffer Time: {formatDuration(to, from)}</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
@@ -565,16 +539,13 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                         {techJobs.map((job) => {
                                             const jobStart = new Date(job.scheduledTime!);
                                             const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
-                                            // Mock travel time is 15 minutes for demo purposes
-                                            const travelTimeMs = 15 * 60 * 1000;
-                                            const travelStartTime = new Date(jobStart.getTime() - travelTimeMs);
+                                            const tenMinuteBuffer = 10 * 60 * 1000;
+                                            const travelStartTime = new Date(jobStart.getTime() - tenMinuteBuffer);
 
                                             const elements = [];
                                             if (isAfter(travelStartTime, lastEventTime)) {
-                                                elements.push(<IdleTimeBlock key={`${job.id}-idle`} from={lastEventTime} to={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                                elements.push(<TravelOrIdleBlock key={`${job.id}-idle`} from={lastEventTime} to={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />);
                                             }
-                                            
-                                            elements.push(<TravelBlock key={`${job.id}-travel`} from={travelStartTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
 
                                             elements.push(<JobBlock 
                                                 key={job.id}

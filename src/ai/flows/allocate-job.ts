@@ -113,7 +113,7 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
 **DECISION-MAKING LOGIC:**
 
 1.  **Customer History Preference**: If a technician has 'Previous Customer History', they should be **strongly prioritized** over others, provided they meet all other critical requirements (skills, availability). This reflects an established customer relationship which is very valuable.
-2.  **Estimate Availability**: For technicians who are NOT 'Available Now', you must calculate their estimated availability time. Do this by taking the 'startedAt' time of their current job and adding its 'estimatedDurationMinutes'. If 'startedAt' is not available, assume it started at '{{{currentTime}}}'.
+2.  **Estimate Availability**: For technicians who are NOT 'Available Now', you must calculate their estimated availability time. To do this, take the 'startedAt' time of their current job and add its 'estimatedDurationMinutes'. **Crucially, ALWAYS add a 10-minute buffer** to this completion time to account for wrap-up and travel. If 'startedAt' is not available, assume it started at '{{{currentTime}}}'.
 3.  **Determine Job Day**: First, decide if the job is for today or a future day by comparing its scheduled time to the current time.
 4.  **Determine Starting Location for Travel Calculation:**
     *   If the job is for **today**: The starting point is the technician's **Live Location**.

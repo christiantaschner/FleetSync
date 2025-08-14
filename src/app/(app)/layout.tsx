@@ -179,9 +179,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            variant={isActive ? 'default' : 'ghost'}
+                            variant="ghost"
                             isActive={isActive}
-                            className={cn("w-full justify-start", isActive && "bg-primary text-primary-foreground hover:bg-primary/90")}
                             tooltip={t(item.label)}
                             >
                             <item.icon className="h-4 w-4" />
@@ -202,8 +201,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <Link href="/settings">
                             <SidebarMenuButton
                                 isActive={pathname.startsWith('/settings')}
-                                variant={pathname.startsWith('/settings') ? "default" : "ghost"}
-                                className={cn("w-full justify-start", pathname.startsWith('/settings') && "bg-primary text-primary-foreground hover:bg-primary/90")}
+                                variant="ghost"
                                 tooltip={t('settings')}
                             >
                                 <Settings className="h-4 w-4" />

@@ -293,7 +293,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                  <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                             <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-secondary hover:text-primary shrink-0" onClick={onOptimize} disabled={isOptimizing}>
+                             <Button variant="outline" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-secondary hover:text-primary shrink-0" onClick={onOptimize} disabled={isOptimizing}>
                                 {isOptimizing ? <Loader2 className="h-4 w-4 animate-spin"/> : <Shuffle className="h-4 w-4" />}
                             </Button>
                         </TooltipTrigger>

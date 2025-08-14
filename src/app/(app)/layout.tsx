@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -70,7 +69,7 @@ type NavItem = {
   divider?: boolean;
 };
 
-// Simplified navigation: show all items to all logged-in users.
+// All nav items are now shown to all users.
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
   { href: "/customers", label: 'customers', icon: ClipboardList },
@@ -163,7 +162,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
           <SidebarHeader>
-            <Logo className="text-sidebar-foreground" />
+            <Logo />
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
@@ -176,10 +175,11 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
 
                  return (
                     <React.Fragment key={item.label}>
+                        {item.divider && <SidebarSeparator className="my-2"/>}
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            variant={isActive ? "secondary" : "default"}
+                            variant={isActive ? "secondary" : "ghost"}
                             isActive={isActive}
                             className="w-full justify-start"
                             tooltip={t(item.label)}
@@ -190,7 +190,6 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                             </SidebarMenuButton>
                         </Link>
                         </SidebarMenuItem>
-                         {item.divider && <SidebarSeparator />}
                     </React.Fragment>
                 );
               })}
@@ -202,8 +201,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                     <SidebarMenuItem>
                         <Link href="/settings">
                             <SidebarMenuButton
-                                isActive={pathname === '/settings'}
-                                variant={pathname.startsWith('/settings') ? "secondary" : "default"}
+                                isActive={pathname.startsWith('/settings')}
+                                variant={pathname.startsWith('/settings') ? "secondary" : "ghost"}
                                 className="w-full justify-start"
                                 tooltip={t('settings')}
                             >
@@ -216,7 +215,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 hover:bg-sidebar-accent">
+                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 hover:bg-secondary">
                   <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>

@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Job, Technician, JobStatus, Location, OptimizeRoutesInput } from '@/types';
+import type { Job, Technician, JobStatus, Location, OptimizeRoutesInput, OptimizationSuggestion } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -62,7 +62,9 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
 
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
+  const left = (offsetMinutes / totalMinutes) * 100;
   const durationMinutes = (jobEnd.getTime() - jobStart.getTime()) / 60000;
+  const width = (durationMinutes / totalMinutes) * 100;
 
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
@@ -117,10 +119,13 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
 const TravelOrIdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
     const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
     const durationMinutes = (to.getTime() - from.getTime()) / 60000;
-    if (durationMinutes <= 1) return null;
-
+    
+    // Add a 10-minute buffer implicitly before the 'to' time
+    const bufferMinutes = 10;
+    if (durationMinutes <= bufferMinutes) return null; // Don't show if gap is smaller than buffer
+    
     const left = (offsetMinutes / totalMinutes) * 100;
-    const width = (durationMinutes / totalMinutes) * 100;
+    const width = ((durationMinutes - bufferMinutes) / totalMinutes) * 100;
 
     return (
         <TooltipProvider>
@@ -133,7 +138,7 @@ const TravelOrIdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, t
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                    <p>Travel / Buffer Time: {formatDuration(to, from)}</p>
+                    <p>Travel / Idle Time: {formatDuration(to, new Date(from.getTime() + bufferMinutes * 60000))}</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
@@ -271,6 +276,8 @@ interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
   onJobClick: (job: Job) => void;
+  onFleetOptimize: () => void;
+  isFleetOptimizing: boolean;
 }
 
 type ProposedChanges = Record<string, { scheduledTime: string; assignedTechnicianId: string; originalTechnicianId: string | null }>;
@@ -280,6 +287,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     jobs, 
     technicians,
     onJobClick,
+    onFleetOptimize,
+    isFleetOptimizing
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -380,6 +389,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   };
   
   const handleOptimize = (technicianId: string) => {
+    // This function will now trigger the single-technician optimization dialog.
+    // The fleet-wide optimization is handled by a separate button.
     const jobsForOptimization = jobs.filter(j => 
         j.assignedTechnicianId === technicianId && 
         isSameDay(new Date(j.scheduledTime || 0), currentDate) &&
@@ -390,7 +401,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         toast({ title: "No Jobs to Optimize", description: `No optimizable jobs found for this technician today.`, variant: "default" });
         return;
     }
-
+    
+    // The logic inside ReassignJobDialog is now what we want for single-tech optimization.
     setJobToReassign(jobsForOptimization[0]);
     setIsReassignOpen(true);
   };
@@ -460,13 +472,19 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </div>
-            <Alert className="mt-4 text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600">
-                <Info className="h-4 w-4" />
-                <AlertTitle className="font-semibold">Fleety's Proactive Monitoring</AlertTitle>
-                <AlertDescription>
-                    Fleety continuously checks schedules in the background. If a potential delay or issue is detected, an alert will appear on the dashboard.
-                </AlertDescription>
-            </Alert>
+            <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                 <Alert className="text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600 flex-1">
+                    <Info className="h-4 w-4" />
+                    <AlertTitle className="font-semibold">Fleety's Proactive Monitoring</AlertTitle>
+                    <AlertDescription>
+                        Fleety continuously checks schedules. If a delay risk is detected, an alert will appear on the dashboard.
+                    </AlertDescription>
+                </Alert>
+                <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
+                    {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
+                    Optimize Fleet
+                </Button>
+            </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 relative">
             {jobToReassign && (
@@ -512,14 +530,16 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     </div>
                                     <div className="relative h-full p-1.5">
                                         {techJobs.map((job) => {
-                                            const jobStart = new Date(job.scheduledTime!);
-                                            const tenMinuteBuffer = 10 * 60 * 1000;
-                                            const travelStartTime = new Date(jobStart.getTime() - tenMinuteBuffer);
+                                            if (!job.scheduledTime) return null;
+                                            const jobStart = new Date(job.scheduledTime);
+                                            // The travel block now implicitly includes the 10-minute buffer after the previous job.
+                                            const travelStartTime = lastEventTime;
+                                            
                                             const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
 
                                             const elements = [];
-                                            if (isAfter(travelStartTime, lastEventTime)) {
-                                                elements.push(<TravelOrIdleBlock key={`${job.id}-idle`} from={lastEventTime} to={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />);
+                                            if (isAfter(jobStart, travelStartTime)) {
+                                                elements.push(<TravelOrIdleBlock key={`${job.id}-idle`} from={travelStartTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
                                             }
 
                                             elements.push(<JobBlock 

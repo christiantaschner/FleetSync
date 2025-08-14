@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
-import { isToday } from 'date-fns';
+import { isToday, startOfDay, endOfDay } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -943,6 +943,77 @@ export default function DashboardPage() {
         fetchSkills(userProfile.companyId);
       }
   };
+  
+  const handleFleetOptimize = async () => {
+    if (!userProfile?.companyId || !appId) return;
+
+    setIsFleetOptimizing(true);
+    setFleetOptimizationResult(null);
+
+    const start = startOfDay(new Date());
+    const end = endOfDay(new Date());
+
+    const jobsForToday = jobs.filter(job => {
+        if (!job.scheduledTime) return false;
+        const jobDate = new Date(job.scheduledTime);
+        return jobDate >= start && jobDate <= end;
+    });
+    
+    const pendingJobsForToday = jobsForToday.filter(j => j.status === 'Pending');
+    const assignedJobsForToday = jobsForToday.filter(j => j.status === 'Assigned' || j.status === 'In Progress');
+
+    const result = await runFleetOptimizationAction({
+      companyId: userProfile.companyId,
+      appId,
+      currentTime: new Date().toISOString(),
+      pendingJobs: pendingJobsForToday,
+      technicians: technicians.map(t => ({
+        ...t,
+        jobs: assignedJobsForToday.filter(j => j.assignedTechnicianId === t.id)
+      })),
+    });
+
+    setIsFleetOptimizing(false);
+    if (result.error) {
+      toast({ title: 'Optimization Failed', description: result.error, variant: 'destructive' });
+    } else {
+      setFleetOptimizationResult(result.data);
+      if(result.data?.suggestedChanges) {
+        setSelectedFleetChanges(result.data.suggestedChanges);
+      }
+      setIsFleetOptimizationDialogOpen(true);
+    }
+  };
+
+  const handleConfirmFleetOptimization = async (changes: OptimizationSuggestion[]) => {
+    if (!userProfile?.companyId || !appId || !db) return;
+    setIsLoadingBatchConfirmation(true);
+    
+    const batch = writeBatch(db);
+    changes.forEach(change => {
+        const jobRef = doc(db, `artifacts/${appId}/public/data/jobs`, change.jobId);
+        const payload: Partial<Job> = {
+            assignedTechnicianId: change.newTechnicianId,
+            status: 'Assigned',
+            notes: arrayUnion(`(Reassigned via Fleet Optimizer: ${change.justification})`) as any,
+        };
+        if(change.newScheduledTime) {
+            payload.scheduledTime = change.newScheduledTime;
+        }
+        batch.update(jobRef, payload);
+    });
+
+    try {
+        await batch.commit();
+        toast({ title: 'Fleet Schedule Updated', description: `${changes.length} change(s) have been applied successfully.` });
+    } catch (e: any) {
+        toast({ title: 'Error Applying Changes', description: e.message, variant: 'destructive' });
+    } finally {
+        setIsLoadingBatchConfirmation(false);
+        setIsFleetOptimizationDialogOpen(false);
+    }
+  };
+
 
   if (authLoading || isLoadingData) { 
     return (
@@ -1005,6 +1076,17 @@ export default function DashboardPage() {
           setIsOpen={setIsShareTrackingOpen}
           job={jobToShare}
       />}
+      <FleetOptimizationReviewDialog
+        isOpen={isFleetOptimizationDialogOpen}
+        setIsOpen={setIsFleetOptimizationDialogOpen}
+        optimizationResult={fleetOptimizationResult}
+        technicians={technicians}
+        jobs={jobs}
+        onConfirmChanges={handleConfirmFleetOptimization}
+        isLoadingConfirmation={isLoadingBatchConfirmation}
+        selectedChanges={selectedFleetChanges}
+        setSelectedChanges={setSelectedFleetChanges}
+      />
        {riskAlerts.map(alert => (
           <ScheduleRiskAlert 
             key={alert.technician.id} 
@@ -1241,6 +1323,8 @@ export default function DashboardPage() {
             jobs={jobs}
             technicians={technicians}
             onJobClick={(job) => handleOpenEditJob(job)}
+            onFleetOptimize={handleFleetOptimize}
+            isFleetOptimizing={isFleetOptimizing}
           />
         </TabsContent>
 

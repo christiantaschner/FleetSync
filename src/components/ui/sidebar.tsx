@@ -367,7 +367,7 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 border-b border-sidebar-border p-3 bg-primary text-primary-foreground", className)}
+      className={cn("flex flex-col gap-2 border-b border-sidebar-border p-3", className)}
       {...props}
     />
   )
@@ -382,7 +382,7 @@ const SidebarFooter = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="footer"
-      className={cn("flex flex-col gap-2 p-2 mt-auto", className)}
+      className={cn("flex flex-col gap-2 p-2 mt-auto border-t border-sidebar-border", className)}
       {...props}
     />
   )
@@ -549,7 +549,7 @@ const sidebarMenuButtonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "ghost",
       size: "default",
     },
   }
@@ -566,7 +566,7 @@ const SidebarMenuButton = React.forwardRef<
 >(
   (
     {
-      variant = "default",
+      variant = "ghost",
       size = "default",
       isActive = false,
       tooltip,

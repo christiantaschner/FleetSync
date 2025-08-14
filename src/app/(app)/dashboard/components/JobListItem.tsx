@@ -66,7 +66,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
 
   return (
     <Card className={cn(
-      "hover:shadow-lg transition-shadow duration-200",
+      "hover:shadow-md transition-shadow duration-200",
       isHighPriorityUnassigned && "border-destructive bg-destructive/5",
       isMediumOrLowPriorityUnassigned && "border-amber-400 bg-amber-50",
       isDraft && "border-dashed border-gray-400 bg-gray-50/50"

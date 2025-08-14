@@ -8,7 +8,7 @@ interface LogoProps {
 
 export function Logo({ className }: LogoProps) {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-2 text-inherit", className)}>
       <Waypoints className="h-6 w-6" />
       <span className="text-xl font-bold font-logo">
         FleetSync AI

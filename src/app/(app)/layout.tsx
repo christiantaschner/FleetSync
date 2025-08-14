@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -161,7 +162,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
-          <SidebarHeader className="bg-sidebar">
+          <SidebarHeader>
             <Logo className="text-sidebar-foreground" />
           </SidebarHeader>
           <SidebarContent>
@@ -215,7 +216,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10">
+                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 hover:bg-sidebar-accent">
                   <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>
@@ -259,9 +260,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <div className="flex flex-col flex-1">
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-primary px-4 text-primary-foreground md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background px-4 md:hidden">
             <SidebarTrigger />
-            <Logo className="absolute left-1/2 -translate-x-1/2"/>
+            <Logo />
           </header>
            <main className="flex-1 overflow-x-hidden">
                 <div className="p-4 sm:p-6 lg:p-8">

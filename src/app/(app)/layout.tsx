@@ -81,14 +81,9 @@ const ALL_NAV_ITEMS: NavItem[] = [
 
 function getNavItemsForRole(role: UserProfile['role']): NavItem[] {
   if (!role) return [];
-  return ALL_NAV_ITEMS.filter(item => {
-    // A superAdmin should see everything an admin sees.
-    if (role === 'superAdmin' && (item.roles.includes('admin') || item.roles.includes('superAdmin'))) {
-      return true;
-    }
-    // Otherwise, check for a direct role match.
-    return item.roles.includes(role);
-  });
+  // A superAdmin should see everything an admin sees.
+  const effectiveRoles = role === 'superAdmin' ? ['admin', 'superAdmin'] : [role];
+  return ALL_NAV_ITEMS.filter(item => item.roles.some(itemRole => effectiveRoles.includes(itemRole)));
 };
 
 
@@ -182,7 +177,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => {
-                 const isActive = item.href === pathname || (item.href === '/dashboard' && pathname === '/');
+                 const isActive = item.href === '/dashboard' ? pathname === '/' || pathname === '/dashboard' : pathname === item.href;
                  
                  const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
                  

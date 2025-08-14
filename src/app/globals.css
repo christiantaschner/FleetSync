@@ -48,14 +48,6 @@
     --ring: 217 91% 60%;
     --radius: 0.5rem;
   }
-
-  /* Simplified Sidebar variables based on root theme */
-  :root, .dark {
-    --sidebar-background: hsl(var(--secondary));
-    --sidebar-foreground: hsl(var(--foreground));
-    --sidebar-border: hsl(var(--border));
-    --sidebar-ring: hsl(var(--ring));
-  }
 }
 
 @layer base {
@@ -68,3 +60,4 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -178,9 +179,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <SidebarMenuItem>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
-                            variant={isActive ? 'secondary' : 'ghost'}
+                            variant={isActive ? 'default' : 'ghost'}
                             isActive={isActive}
-                            className="w-full justify-start"
+                            className={cn("w-full justify-start", isActive && "bg-primary text-primary-foreground hover:bg-primary/90")}
                             tooltip={t(item.label)}
                             >
                             <item.icon className="h-4 w-4" />
@@ -201,8 +202,8 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                         <Link href="/settings">
                             <SidebarMenuButton
                                 isActive={pathname.startsWith('/settings')}
-                                variant={pathname.startsWith('/settings') ? "secondary" : "ghost"}
-                                className="w-full justify-start"
+                                variant={pathname.startsWith('/settings') ? "default" : "ghost"}
+                                className={cn("w-full justify-start", pathname.startsWith('/settings') && "bg-primary text-primary-foreground hover:bg-primary/90")}
                                 tooltip={t('settings')}
                             >
                                 <Settings className="h-4 w-4" />
@@ -214,7 +215,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 hover:bg-secondary">
+                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:h-10 hover:bg-background">
                   <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>

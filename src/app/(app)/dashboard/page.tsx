@@ -45,7 +45,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from './components/MultiSelectFilter';
+import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -155,6 +155,7 @@ export default function DashboardPage() {
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
+  const canEditJobs = isAdmin || userProfile?.role === 'csr';
   const [activeTab, setActiveTab] = useState('job-list');
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -407,7 +408,7 @@ export default function DashboardPage() {
       technicianId: t.id,
       technicianName: t.name,
       isAvailable: t.isAvailable,
-      skills: t.skills || [],
+      skills: t.skills.map(s => s.name) || [],
       liveLocation: t.location,
       homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
@@ -924,7 +925,7 @@ export default function DashboardPage() {
   
   const statusOptions = [
     { value: "Draft", label: "Draft" },
-    { value: "Pending", label: "Unassigned" },
+    { value: "Pending", label: "Pending" },
     { value: "Assigned", label: "Assigned" },
     { value: "En Route", label: "En Route" },
     { value: "In Progress", label: "In Progress" },
@@ -1137,9 +1138,11 @@ export default function DashboardPage() {
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> {t('import_jobs')}
             </Button>
            )}
-           <Button onClick={handleOpenAddJob} className="w-full sm:w-auto">
-             <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
-           </Button>
+           {canEditJobs && (
+            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto">
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
+            </Button>
+           )}
         </div>
       </div>
       
@@ -1226,7 +1229,7 @@ export default function DashboardPage() {
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Only shows all Draft, Unassigned jobs, and jobs ready for review from Fleety's Service Prep</p>
+                                <p>Only shows all Draft, Pending jobs, and jobs ready for review from Fleety's Service Prep</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -1398,3 +1401,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

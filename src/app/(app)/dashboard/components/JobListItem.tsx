@@ -85,7 +85,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                     <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{job.status === 'Pending' ? 'Unassigned' : job.status}</p>
+                    <p>{job.status}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -167,4 +167,3 @@ const JobListItem: React.FC<JobListItemProps> = ({
 
 export default JobListItem;
 
-    

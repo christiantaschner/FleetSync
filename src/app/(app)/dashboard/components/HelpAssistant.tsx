@@ -100,7 +100,7 @@ const HelpAssistant: React.FC = () => {
         <Card className="flex flex-col h-[70vh]">
           <CardHeader className="flex flex-row items-center justify-between">
             <div className="space-y-1">
-                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Fleety AI Assistant</CardTitle>
+                <CardTitle className="font-headline flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Fleety Assistant</CardTitle>
                 <CardDescription>Ask me anything about using the app.</CardDescription>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setHelpOpen(false)} className="h-7 w-7"><X className="h-4 w-4" /></Button>

@@ -9,7 +9,7 @@ interface LogoProps {
 
 export function Logo({ className }: LogoProps) {
   const { language } = useTranslation();
-  const appName = language === 'de' ? "EinsatzPilot AI" : "FleetSync AI";
+  const appName = language === 'de' ? "EinsatzPilot" : "FleetSync";
 
   return (
     <div className={cn("flex items-center gap-2 text-inherit", className)}>

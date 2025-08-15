@@ -269,7 +269,7 @@ export default function MarketingPage() {
               Stop Drowning in Dispatch. Start Growing Your Business.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             FleetSync AI is the straightforward, affordable dispatch software for field service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
+             FleetSync is the straightforward, affordable dispatch software for field service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -295,7 +295,7 @@ export default function MarketingPage() {
                             src="/dashboard-screenshot.png"
                             width={1200}
                             height={750}
-                            alt="FleetSync AI Dashboard Screenshot"
+                            alt="FleetSync Dashboard Screenshot"
                             className="w-full h-full object-cover object-top rounded-t-md"
                             priority
                         />
@@ -315,7 +315,7 @@ export default function MarketingPage() {
                                 src="/dashboard-screenshot-mobile.png"
                                 width={375}
                                 height={812}
-                                alt="FleetSync AI Technician App Screenshot"
+                                alt="FleetSync Technician App Screenshot"
                                 className="w-full h-auto"
                             />
                         </div>
@@ -501,7 +501,7 @@ export default function MarketingPage() {
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the People in the Field and in the Office</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">Don't just take our word for it. Here's how FleetSync AI is changing the game for dispatchers and technicians.</p>
+                    <p className="mt-6 text-lg text-muted-foreground">Don't just take our word for it. Here's how FleetSync is changing the game for dispatchers and technicians.</p>
                 </div>
                 <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
                     {testimonials.map((testimonial, index) => (
@@ -629,7 +629,7 @@ export default function MarketingPage() {
       {/* Footer */}
       <footer className="border-t">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0">
-          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} FleetSync AI. {t('all_rights_reserved')}</p>
+          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} FleetSync. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
              <Link href="#" className="hover:text-primary">{t('privacy_policy')}</Link>
              <Link href="#" className="hover:text-primary">{t('terms_of_service')}</Link>

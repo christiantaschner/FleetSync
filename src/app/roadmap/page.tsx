@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -245,7 +246,7 @@ const roadmapFeatures = {
     },
     {
       title: "CRM/Accounting Software Integrations",
-      description: "Seamless, automated data flow between FleetSync AI and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
+      description: "Seamless, automated data flow between FleetSync and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
       icon: Building2,
       status: "Vision",
     },
@@ -260,7 +261,7 @@ const roadmapFeatures = {
 
 export default function RoadmapPage() {
     const { t, language } = useTranslation();
-    const appName = language === 'de' ? "EinsatzPilot AI" : "FleetSync AI";
+    const appName = language === 'de' ? "EinsatzPilot" : "FleetSync";
     const description = language === 'de' 
         ? `Unsere geplanten Funktionen, Verbesserungen und langfristige Vision, um die Flottenverwaltung intelligenter und effizienter zu gestalten.`
         : `Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.`;

@@ -1,4 +1,5 @@
-# FleetSync AI
+
+# FleetSync
 
 This is a Next.js application built with Firebase Studio.
 

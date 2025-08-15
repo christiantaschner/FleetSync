@@ -175,7 +175,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
                  return (
                     <React.Fragment key={item.label}>
                         {item.divider && <SidebarSeparator className="my-2"/>}
-                        <SidebarMenuItem>
+                        <SidebarMenuItem isActive={isActive}>
                         <Link href={finalHref || '#'}>
                             <SidebarMenuButton
                             isActive={isActive}
@@ -195,7 +195,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarFooter>
             <SidebarMenu>
                  {userProfile?.role !== 'technician' && (
-                    <SidebarMenuItem>
+                    <SidebarMenuItem isActive={pathname.startsWith('/settings')}>
                         <Link href="/settings">
                             <SidebarMenuButton
                                 isActive={pathname.startsWith('/settings')}

@@ -509,8 +509,8 @@ SidebarMenu.displayName = "SidebarMenu"
 
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
-  React.ComponentProps<"li">
->(({ className, onClick, ...props }, ref) => {
+  React.ComponentProps<"li"> & { isActive?: boolean }
+>(({ className, onClick, isActive, children, ...props }, ref) => {
   const { isMobile, setOpenMobile } = useSidebar();
 
   return (
@@ -525,13 +525,21 @@ const SidebarMenuItem = React.forwardRef<
         onClick?.(e);
       }}
       {...props}
-    />
+    >
+      {isActive && (
+        <div
+          data-sidebar="menu-item-indicator"
+          className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-md bg-primary"
+        />
+      )}
+      {children}
+    </li>
   );
 });
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-base outline-none ring-ring transition-all focus-visible:ring-2 active:bg-background/90 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-secondary-foreground data-[active=true]:bg-background/95 data-[active=true]:border-l-4 data-[active=true]:border-primary data-[active=true]:pl-3 data-[state=open]:bg-background group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-base outline-none ring-ring transition-all focus-visible:ring-2 active:bg-background/90 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-secondary-foreground data-[active=true]:bg-background/95 data-[state=open]:bg-background group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
   {
     variants: {
       variant: {

@@ -7,7 +7,7 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'FleetSync AI',
+  title: 'EinsatzPilot AI | FleetSync AI',
   description: 'AI-Powered Fleet Management Solution',
 };
 

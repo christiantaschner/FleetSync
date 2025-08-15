@@ -12,9 +12,9 @@ import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase"; 
-import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
+import { doc, onSnapshot, collection, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import type { UserProfile, Company, Contract, Job, JobStatus, Technician } from "@/types";
+import type { UserProfile, Company, Contract, Job, JobStatus, Technician, Invite } from "@/types";
 import Link from "next/link";
 import { getNextDueDate } from "@/lib/utils";
 import { isBefore } from "date-fns";
@@ -149,6 +149,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true);
 
       if (currentUser) {
+        // --- Check for pending invites ---
+        const invitesRef = collection(db, "invitations");
+        const inviteQuery = query(invitesRef, where("email", "==", currentUser.email), where("status", "==", "pending"));
+        const inviteSnapshot = await getDocs(inviteQuery);
+
+        if (!inviteSnapshot.empty) {
+            const inviteDoc = inviteSnapshot.docs[0];
+            const inviteData = inviteDoc.data() as Invite;
+            const batch = writeBatch(db);
+
+            // 1. Update User Profile with company and role
+            const userDocRefForUpdate = doc(db, "users", currentUser.uid);
+            batch.update(userDocRefForUpdate, {
+                companyId: inviteData.companyId,
+                role: inviteData.role,
+                onboardingStatus: 'completed'
+            });
+            
+            // 2. Update Invitation status
+            batch.update(inviteDoc.ref, {
+                status: 'accepted',
+                acceptedAt: new Date().toISOString(),
+                acceptedByUid: currentUser.uid
+            });
+
+            // 3. Create Technician profile if applicable
+            const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+            if (inviteData.role === 'technician' && appId) {
+                const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, currentUser.uid);
+                batch.set(techDocRef, {
+                    companyId: inviteData.companyId,
+                    name: currentUser.email?.split('@')[0],
+                    email: currentUser.email,
+                    isAvailable: true,
+                    skills: [],
+                    location: { latitude: 0, longitude: 0, address: "Not set" },
+                }, { merge: true });
+            }
+
+            await batch.commit();
+
+            // Set custom claims AFTER data is committed
+            await auth.currentUser?.getIdToken(true); // Force refresh token
+        }
+
+
         const userDocRef = doc(db, "users", currentUser.uid);
         unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
             if (userDocSnap.exists()) {
@@ -299,7 +345,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error.code === 'auth/email-already-in-use') {
         message = 'An account with this email already exists. Please login instead.';
       } else {
-         message = "An unexpected error occurred during signup. Please contact support at info@fleet-sync.ai if the problem persists.";
+         message = "An unexpected error occurred during signup. Please contact support if the problem persists.";
       }
       
       toast({

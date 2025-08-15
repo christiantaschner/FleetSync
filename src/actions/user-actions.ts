@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { dbAdmin, authAdmin } from '@/lib/firebase-admin';
 import type { UserProfile, Invite } from '@/types';
 import * as admin from 'firebase-admin';
-import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc, orderBy, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, addDoc, serverTimestamp, updateDoc, orderBy, setDoc, deleteDoc } from 'firebase/firestore';
 
 const CreateUserProfileInputSchema = z.object({
   uid: z.string().min(1),
@@ -134,7 +134,7 @@ export async function getCompanyInvitesAction(
 
 const InviteUserInputSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['admin', 'technician', 'csr']),
+  role: z.enum(['admin', 'technician']),
   companyId: z.string(),
   appId: z.string().min(1),
 });
@@ -150,9 +150,19 @@ export async function inviteUserAction(
     if (!dbAdmin || !authAdmin) throw new Error("Firebase Admin SDK has not been initialized.");
     const { email, role, companyId, appId } = InviteUserInputSchema.parse(input);
 
-    const usersQuery = dbAdmin.collection("users").where("email", "==", email);
-    const userSnapshot = await usersQuery.get();
+    const invitesRef = collection(dbAdmin, 'invitations');
     
+    const usersQuery = query(dbAdmin.collection("users"), where("email", "==", email), limit(1));
+    const userSnapshot = await getDocs(usersQuery);
+    
+    // Check for existing active invitations
+    const existingInviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"), limit(1));
+    const existingInviteSnapshot = await getDocs(existingInviteQuery);
+    if (!existingInviteSnapshot.empty) {
+        return { error: "An active invitation for this email address already exists." };
+    }
+    
+    // Check if user is already in ANY company
     if (!userSnapshot.empty) {
         const userDoc = userSnapshot.docs[0];
         const userProfile = userDoc.data() as UserProfile;
@@ -160,6 +170,7 @@ export async function inviteUserAction(
             return { error: `This user is already a member of a company.` };
         }
 
+        // If user exists but is not in a company, add them directly and mark invite as accepted
         await userDoc.ref.update({
             companyId,
             role,
@@ -182,17 +193,21 @@ export async function inviteUserAction(
 
         await authAdmin.setCustomUserClaims(userProfile.uid, { companyId, role });
         
+        // Create an "accepted" invitation for record-keeping
+        await addDoc(invitesRef, {
+            email,
+            role,
+            companyId,
+            status: 'accepted',
+            createdAt: serverTimestamp(),
+            acceptedAt: serverTimestamp(),
+            acceptedByUid: userProfile.uid
+        });
+
         return { error: null };
     }
     
-    const invitesRef = collection(dbAdmin, 'invitations');
-    const existingInviteQuery = query(invitesRef, where("email", "==", email), where("status", "==", "pending"));
-    const existingInviteSnapshot = await getDocs(existingInviteQuery);
-
-    if (!existingInviteSnapshot.empty) {
-        return { error: "An active invitation for this email address already exists." };
-    }
-    
+    // If user does not exist, create a pending invitation
     await addDoc(invitesRef, {
         email,
         role,
@@ -222,7 +237,7 @@ export async function inviteUserAction(
 const ManageUserRoleInputSchema = z.object({
     userId: z.string(),
     companyId: z.string(),
-    newRole: z.enum(['admin', 'technician', 'csr']),
+    newRole: z.enum(['admin', 'technician']),
 });
 export type ManageUserRoleInput = z.infer<typeof ManageUserRoleInputSchema>;
 
@@ -306,6 +321,18 @@ export async function removeUserFromCompanyAction(
         if (techDocSnap.exists && techDocSnap.data()?.companyId === companyId) {
             batch.delete(techDocRef);
         }
+
+        // Also remove any pending invites for this user's email, if they exist
+        const userEmail = userSnap.data()?.email;
+        if(userEmail) {
+            const invitesRef = collection(dbAdmin, 'invitations');
+            const inviteQuery = query(invitesRef, where("email", "==", userEmail), where("status", "==", "pending"));
+            const inviteSnapshot = await getDocs(inviteQuery);
+            inviteSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+        }
+
 
         await batch.commit();
 

@@ -210,7 +210,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             </SidebarMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 group-data-[collapsible=icon]:h-10">
+                <Button variant="ghost" className="flex items-center justify-start gap-2 w-full p-2 h-12 md:group-data-[collapsible=icon]:justify-center">
                   <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>

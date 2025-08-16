@@ -25,6 +25,7 @@ import {
   Briefcase,
   CalendarDays,
   HelpCircle,
+  BookOpen,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -74,6 +75,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/customers", label: 'customers', icon: ClipboardList },
   { href: "/contracts", label: 'contracts', icon: Repeat },
   { href: "/reports", label: 'reports', icon: BarChart },
+  { href: "/roadmap", label: 'roadmap', icon: BookOpen },
   { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true },
 ];
 

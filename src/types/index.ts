@@ -1,5 +1,4 @@
 
-
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -685,7 +684,8 @@ export type SuggestScheduleTimeInput = z.infer<typeof SuggestScheduleTimeInputSc
 export const SuggestScheduleTimeOutputSchema = z.object({
   suggestions: z.array(z.object({
     time: z.string().describe("A suggested appointment time in ISO 8601 format."),
-    reasoning: z.string().describe("A brief explanation for why this time was suggested."),
+    technicianId: z.string().describe("The ID of the recommended technician for this time slot."),
+    reasoning: z.string().describe("A brief explanation for why this time and technician were suggested."),
   })).describe("A list of up to 5 appointment suggestions.")
 });
 export type SuggestScheduleTimeOutput = z.infer<typeof SuggestScheduleTimeOutputSchema>;

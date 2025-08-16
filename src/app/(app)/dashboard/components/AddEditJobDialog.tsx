@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -30,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, Customer, Contract } from '@/types';
+import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
@@ -67,17 +66,14 @@ interface AddEditJobDialogProps {
 }
 
 const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, customers, contracts, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
-  const { userProfile } = useAuth();
+  const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
-  const [isFetchingSkillSuggestion, setIsFetchingSkillSuggestion] = useState(false);
   
-  const [aiSuggestion, setAiSuggestion] = useState<AllocateJobOutput | null>(null);
-  const [rejectedSuggestions, setRejectedSuggestions] = useState<AllocateJobOutput[]>([]);
-  const [skillSuggestionReasoning, setSkillSuggestionReasoning] = useState<string | null>(null);
-  const [suggestedTechnicianDetails, setSuggestedTechnicianDetails] = useState<Technician | null>(null);
+  const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
+  const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -127,16 +123,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
     setSelectedContractId(job?.sourceContractId || '');
     setSelectedCustomerId(job?.customerId || null);
-    setAiSuggestion(null);
-    setSkillSuggestionReasoning(null);
-    setSuggestedTechnicianDetails(null);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
     setTriageMessage(null);
     setIsGeneratingLink(false);
     setIsCopied(false);
-    setRejectedSuggestions([]);
+    setRejectedTimes([]);
+    setTimeSuggestions([]);
   }, [job]);
 
   useEffect(() => {
@@ -201,110 +195,52 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
   };
 
-  const fetchAISkillSuggestion = useCallback(async (currentTitle: string, currentDescription: string) => {
-    if (!currentDescription.trim() || allSkills.length === 0) {
-      toast({
-        title: "Cannot Suggest Skills",
-        description: "Please enter a job description first.",
-        variant: "default",
-      });
-      return;
-    }
-    setIsFetchingSkillSuggestion(true);
-    setSkillSuggestionReasoning(null);
-    const input: SuggestJobSkillsActionInput = {
-      jobTitle: currentTitle,
-      jobDescription: currentDescription,
-      availableSkills: allSkills,
-    };
-    const result = await suggestJobSkillsAction(input);
-    if (result.data) {
-        if (result.data.suggestedSkills && result.data.suggestedSkills.length > 0) {
-            setRequiredSkills(result.data.suggestedSkills);
-            toast({ title: "Fleety's Skills Suggestion", description: "Fleety has suggested skills based on the description." });
-        } else {
-            setRequiredSkills([]); // Clear existing skills if none are suggested
-            const reasoning = result.data.reasoning || "No specific skills from the library seem to match the job description.";
-            setSkillSuggestionReasoning(reasoning);
-        }
-    } else {
-       setSkillSuggestionReasoning(result.error || "An error occurred while suggesting skills.");
-    }
-    setIsFetchingSkillSuggestion(false);
-  }, [allSkills, toast]);
-
-  const fetchAIAssignmentSuggestion = useCallback(async (isNextSuggestion: boolean = false) => {
-    if (!description || !priority || technicians.length === 0) {
-      setAiSuggestion(null);
-      setSuggestedTechnicianDetails(null);
-      return;
-    }
-    setIsFetchingAISuggestion(true);
-    setAiSuggestion(null);
-    setSuggestedTechnicianDetails(null);
-
-    const aiTechnicians: AITechnician[] = technicians.map(t => {
-      const currentJobs = jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
-        .map(j => ({
-          jobId: j.id,
-          scheduledTime: j.scheduledTime,
-          priority: j.priority,
-          location: j.location,
-        }));
-        
-      return {
-        technicianId: t.id,
-        technicianName: t.name,
-        isAvailable: t.isAvailable,
-        skills: t.skills || [],
-        liveLocation: t.location,
-        homeBaseLocation: t.location,
-        currentJobs: currentJobs,
-        workingHours: t.workingHours,
-        isOnCall: t.isOnCall
-      };
-    });
-
-    if (!appId) {
-        toast({ title: "Configuration Error", description: "Firebase Project ID not found.", variant: "destructive"});
-        setIsFetchingAISuggestion(false);
+  const fetchAITimeSuggestion = useCallback(async (getMore: boolean = false) => {
+    if (!description.trim() || !userProfile?.companyId || !appId) {
+        toast({ title: "Cannot Suggest Time", description: "Please enter a job description first.", variant: "default" });
         return;
     }
+    setIsFetchingAISuggestion(true);
+    
+    const currentRejectedTimes = getMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : [];
+    if(getMore) {
+        setRejectedTimes(currentRejectedTimes);
+    }
 
-    const input: AllocateJobActionInput = {
-      appId,
-      currentTime: new Date().toISOString(),
-      jobDescription: description,
-      jobPriority: priority,
-      requiredSkills: requiredSkills,
-      technicianAvailability: aiTechnicians,
-      scheduledTime: scheduledTime?.toISOString(),
-      rejectedSuggestions: isNextSuggestion ? rejectedSuggestions : undefined
-    };
+    const result = await suggestScheduleTimeAction({
+        companyId: userProfile.companyId,
+        jobPriority: priority,
+        requiredSkills: requiredSkills,
+        currentTime: new Date().toISOString(),
+        businessHours: company?.settings?.businessHours || [],
+        excludedTimes: currentRejectedTimes,
+        technicians: technicians.map(tech => ({
+            id: tech.id,
+            name: tech.name,
+            skills: tech.skills.map(s => s.name),
+            jobs: jobs.filter(j => j.assignedTechnicianId === tech.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+                .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! }))
+        }))
+    });
 
-    const result = await allocateJobAction(input);
     setIsFetchingAISuggestion(false);
 
     if (result.error) {
-      toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
-      setAiSuggestion(null);
-    } else if (result.data) {
-      if (result.data.suggestedTechnicianId) {
-        setAiSuggestion(result.data);
-        const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
-        setSuggestedTechnicianDetails(tech || null);
-        setManualTechnicianId(result.data.suggestedTechnicianId);
-      } else {
-        setAiSuggestion({ suggestedTechnicianId: null, reasoning: 'No other suitable suggestions found.' });
-      }
+        toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
+    } else if (result.data?.suggestions) {
+        if(result.data.suggestions.length === 0) {
+            toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
+        }
+        setTimeSuggestions(result.data.suggestions);
     }
-  }, [description, priority, technicians, jobs, appId, toast, requiredSkills, scheduledTime, rejectedSuggestions]);
 
-  const handleNextSuggestion = () => {
-    if (aiSuggestion) {
-      setRejectedSuggestions(prev => [...prev, aiSuggestion]);
-      fetchAIAssignmentSuggestion(true);
-    }
+  }, [description, priority, requiredSkills, userProfile, appId, company, technicians, jobs, timeSuggestions, rejectedTimes, toast, UNCOMPLETED_STATUSES_LIST]);
+  
+  const handleAcceptSuggestion = (suggestion: SuggestScheduleTimeOutput['suggestions'][number]) => {
+      setScheduledTime(new Date(suggestion.time));
+      setManualTechnicianId(suggestion.technicianId);
+      setTimeSuggestions([]); // Clear suggestions after accepting one
+      toast({ title: "Details Updated", description: "Time and technician have been set based on the suggestion.", variant: "default"});
   };
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
@@ -524,8 +460,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       } else { // CREATING A NEW JOB
         const techToAssignId = assignTechId || (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
         const techToAssign = techToAssignId ? technicians.find(t => t.id === techToAssignId) : null;
-        const isInterruption = !!(techToAssign && !techToAssign.isAvailable && techToAssign.currentJobId);
-
+        
         const batch = writeBatch(db);
 
         const newJobRef = doc(collection(db, `artifacts/${appId}/public/data/jobs`));
@@ -553,15 +488,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               isAvailable: false, // Tech will be busy with the new job
               currentJobId: newJobRef.id,
           });
-
-          if (isInterruption) {
-              const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, techToAssign.currentJobId!);
-              batch.update(oldJobRef, {
-                  status: 'Unassigned' as JobStatus,
-                  assignedTechnicianId: null,
-                  notes: 'This job was unassigned due to a higher priority interruption.',
-              });
-          }
         }
         
         await batch.commit();
@@ -573,9 +499,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             updatedAt: new Date().toISOString()
         };
 
-        if (isInterruption) {
-            toast({ title: "Job Interrupted & Assigned", description: `Assigned "${finalJobDataForCallback.title}" and returned previous job to queue.` });
-        } else if (techToAssignId) {
+        if (techToAssignId) {
             toast({ title: "Job Added & Assigned", description: `New job "${finalJobDataForCallback.title}" created and assigned.` });
         } else {
             toast({ title: "Job Added", description: `New job "${finalJobDataForCallback.title}" created.` });
@@ -591,8 +515,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setIsLoading(false);
     }
   };
-
-  const isInterruptionSuggestion = aiSuggestion?.suggestedTechnicianId && suggestedTechnicianDetails && !suggestedTechnicianDetails.isAvailable;
   
   const titleText = job ? 'Edit Job' : 'Add New Job';
   const descriptionText = job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : '';
@@ -796,20 +718,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             <ListChecks className="h-3.5 w-3.5" />
                             Required Skills (Optional)
                         </Label>
-                           <Button
-                                type="button"
-                                variant="default"
-                                size="sm"
-                                onClick={() => fetchAISkillSuggestion(title, description)}
-                                disabled={isFetchingSkillSuggestion || !description.trim()}
-                            >
-                                {isFetchingSkillSuggestion ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                ) : (
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                )}
-                                Fleety Suggests
-                            </Button>
                     </div>
                     <Input
                       placeholder="Search skills..."
@@ -817,15 +725,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       onChange={(e) => setSkillSearchTerm(e.target.value)}
                       className="mb-2 h-8"
                     />
-                    {skillSuggestionReasoning && !isFetchingSkillSuggestion && (
-                        <div className="text-xs text-muted-foreground p-2 bg-secondary rounded-md mb-2">
-                            {skillSuggestionReasoning}
-                        </div>
-                    )}
-                    <ScrollArea className="h-36 rounded-md border p-3">
+                    <ScrollArea className="h-24 rounded-md border p-3">
                       <div className="space-y-2">
                         {allSkills.length === 0 ? (
-                          <div className="text-center flex flex-col items-center justify-center h-full pt-8">
+                          <div className="text-center flex flex-col items-center justify-center h-full pt-4">
                             <p className="text-sm text-muted-foreground">No skills defined in library.</p>
                             <Button type="button" variant="link" className="mt-1" onClick={onManageSkills}>
                               <Settings className="mr-2 h-4 w-4" /> Manage Skills
@@ -851,55 +754,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </div>
                     </ScrollArea>
                   </div>
-                  
-                  <div>
+
+                  <div className="space-y-2 pt-2">
                     <Label htmlFor="assign-technician">Assigned Technician</Label>
-                      <div className="flex gap-2">
-                         <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
-                            <SelectTrigger id="assign-technician">
-                              <SelectValue placeholder="Unassigned" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
-                              {technicians.map(tech => (
-                                <SelectItem key={tech.id} value={tech.id}>
-                                  {tech.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                      </div>
+                    <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
+                        <SelectTrigger id="assign-technician">
+                          <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
+                          {technicians.map(tech => (
+                            <SelectItem key={tech.id} value={tech.id}>
+                              {tech.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                   </div>
-                  {aiSuggestion ? (
-                      <Alert variant="default" className="border-primary/20 bg-primary/5">
-                        <Bot className="h-4 w-4 text-primary" />
-                        <AlertTitle className="font-semibold text-primary">Fleety's Suggestion</AlertTitle>
-                        <AlertDescription className="text-primary/90">
-                            {aiSuggestion.reasoning}
-                        </AlertDescription>
-                        <div className="mt-3 flex gap-2">
-                          <Button size="sm" type="button" onClick={() => handleSubmit(aiSuggestion.suggestedTechnicianId)} disabled={!aiSuggestion.suggestedTechnicianId}>
-                            <UserCheck className="mr-2 h-4 w-4"/>
-                            Accept &amp; Assign
-                          </Button>
-                          <Button size="sm" type="button" variant="outline" onClick={handleNextSuggestion} disabled={isFetchingAISuggestion}>
-                            <RefreshCw className="mr-2 h-4 w-4"/>
-                            Next Suggestion
-                          </Button>
-                        </div>
-                      </Alert>
-                    ) : (
-                      <Button
-                          type="button"
-                          variant="accent"
-                          className="w-full"
-                          onClick={() => fetchAIAssignmentSuggestion()}
-                          disabled={isFetchingAISuggestion || !description}
-                      >
-                          {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                          Fleety Suggest Technician
-                      </Button>
-                    )}
+                  
                   {job && (
                     <div>
                         <Label htmlFor="jobStatus">Status</Label>
@@ -955,10 +827,44 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </Button>
                     )}
                   </div>
-
                 </div>
               </div>
             </div>
+
+            <div className="px-6 pb-2">
+              <Separator />
+              <div className="pt-4 space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
+                   <div className="flex flex-wrap gap-2">
+                       <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !description}>
+                            {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                            Fleety Suggest Time & Tech
+                        </Button>
+                        {timeSuggestions.length > 0 && (
+                            <Button type="button" variant="outline" onClick={() => fetchAITimeSuggestion(true)} disabled={isFetchingAISuggestion}>
+                                <RefreshCw className="mr-2 h-4 w-4"/>
+                                Get More Suggestions
+                            </Button>
+                        )}
+                   </div>
+                   {timeSuggestions.length > 0 && (
+                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                           {timeSuggestions.map(suggestion => (
+                               <button 
+                                   key={suggestion.time}
+                                   type="button" 
+                                   onClick={() => handleAcceptSuggestion(suggestion)} 
+                                   className="p-3 border rounded-md text-left hover:bg-secondary transition-colors"
+                                >
+                                    <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'PPp')}</p>
+                                    <p className="text-xs text-muted-foreground">{suggestion.reasoning}</p>
+                               </button>
+                           ))}
+                       </div>
+                   )}
+              </div>
+            </div>
+
             <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2">
               <div className="flex-shrink-0">
                 {job && (
@@ -996,25 +902,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     </Button>
                   ) : (
                     <>
-                      {aiSuggestion && suggestedTechnicianDetails && (
-                         <Button
-                          type="button"
-                          onClick={() => handleSubmit(aiSuggestion?.suggestedTechnicianId || null)}
-                          disabled={isLoading || isFetchingAISuggestion || !aiSuggestion?.suggestedTechnicianId}
-                          variant={isInterruptionSuggestion ? "destructive" : "accent"}
-                          title={isInterruptionSuggestion ? `Interrupts ${suggestedTechnicianDetails?.name}'s current low-priority job.` : `Assign to ${suggestedTechnicianDetails?.name}`}
-                        >
-                          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isInterruptionSuggestion ? <AlertTriangle className="mr-2 h-4 w-4" /> : <UserCheck className="mr-2 h-4 w-4" />}
-                          {isInterruptionSuggestion ? 'Interrupt & Assign' : `Save & Assign to ${suggestedTechnicianDetails?.name || 'Suggested'}`}
-                        </Button>
-                      )}
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        variant={'outline'}
+                        variant={'default'}
                       >
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save as Unassigned'}
+                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save Job'}
                       </Button>
                     </>
                   )}

@@ -211,6 +211,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="w-full justify-start p-2 h-12 md:group-data-[collapsible=icon]:justify-center md:group-data-[collapsible=icon]:p-0 md:group-data-[collapsible=icon]:h-10 md:group-data-[collapsible=icon]:w-10">
                   <Avatar className="h-8 w-8 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6">
+                    <AvatarImage src={userProfile?.avatarUrl} alt={userDisplayName} />
                     <AvatarFallback>{userInitial}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">

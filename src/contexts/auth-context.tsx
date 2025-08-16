@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [contractsDueCount, setContractsDueCount] = useState(0);
 
-  const [isMockMode, setMockModeState] = useState(process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true');
+  const [isMockMode, setMockModeState] = useState(false);
   const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(null);
   
   const { toast } = useToast();
@@ -96,7 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const storedMockMode = localStorage.getItem('mockMode');
     const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
-
+    setMockModeState(mockModeActive);
+    
     if (mockModeActive) {
       console.log("Auth Context: Running in MOCK DATA mode.");
       
@@ -121,7 +122,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setCompany(MOCK_COMPANY);
       setContractsDueCount(getMockContractsDueCount());
       setLoading(false);
-      setMockModeState(true);
       return;
     }
 
@@ -198,7 +198,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userDocRef = doc(db, "users", currentUser.uid);
         unsubscribeProfile = onSnapshot(userDocRef, (userDocSnap) => {
             if (userDocSnap.exists()) {
-                const profile = { uid: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+                const profileData = userDocSnap.data();
+                const profile = { 
+                  uid: userDocSnap.id, 
+                  email: profileData.email,
+                  companyId: profileData.companyId,
+                  role: profileData.role,
+                  onboardingStatus: profileData.onboardingStatus,
+                  avatarUrl: profileData.avatarUrl
+                } as UserProfile;
+
                 setUserProfile(profile);
 
                 if (profile.companyId) {
@@ -275,7 +284,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (unsubscribeCompany) unsubscribeCompany();
       if (unsubscribeContractsAndJobs) unsubscribeContractsAndJobs();
     };
-  }, [toast, router, isMockMode]); 
+  }, [toast, router]); 
 
   const login = async (email_address: string, pass_word: string) => {
     if (isMockMode) {

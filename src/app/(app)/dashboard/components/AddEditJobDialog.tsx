@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown } from 'lucide-react';
 import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, AITechnician } from "@/types";
@@ -47,6 +47,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
 const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Unassigned', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
@@ -623,8 +625,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Label htmlFor="jobDescription">Job Description *</Label>
                     <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} />
                   </div>
-                 
                 </div>
+
                 <div className="space-y-4">
                    <div>
                         <div className="flex items-center gap-1.5 mb-1">
@@ -655,42 +657,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </SelectContent>
                       </Select>
                     </div>
-                  <div>
-                    <Label>Schedule Time</Label>
-                    <div className="flex gap-2">
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    id="date"
-                                    variant={"outline"}
-                                    className={cn(
-                                    "flex-1 justify-start text-left font-normal bg-card",
-                                    !scheduledTime && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={scheduledTime}
-                                    onSelect={handleDateSelect}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
-                         <Input
-                            ref={timeInputRef}
-                            type="time"
-                            onChange={handleTimeChange}
-                            value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
-                            className="w-36 bg-card"
-                        />
-                    </div>
-                  </div>
-                   <div>
+                     <div>
                       <Label>Estimated Duration</Label>
                       <div className="flex items-center gap-2">
                           <Input
@@ -755,41 +722,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </div>
                     </ScrollArea>
                   </div>
-
-                  <div className="space-y-2 pt-2">
-                    <Label htmlFor="assign-technician">Assigned Technician</Label>
-                    <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
-                        <SelectTrigger id="assign-technician">
-                          <SelectValue placeholder="Unassigned" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
-                          {technicians.map(tech => (
-                            <SelectItem key={tech.id} value={tech.id}>
-                              {tech.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                  </div>
-                  
-                  {job && (
-                    <div>
-                        <Label htmlFor="jobStatus">Status</Label>
-                        <Select 
-                            value={status} 
-                            onValueChange={(value: JobStatus) => setStatus(value)}
-                        >
-                        <SelectTrigger id="jobStatus">
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                        </Select>
-                    </div>
-                  )}
-                  
                   <div className="space-y-2 rounded-md border p-4">
                     <TooltipProvider>
                       <Tooltip>
@@ -801,7 +733,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-
                     {job && (job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide) ? (
                       <div className="text-sm space-y-2">
                           <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
@@ -835,18 +766,20 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             <div className="px-6 pb-2">
               <Separator />
               <div className="pt-4 space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
-                   <div className="flex flex-wrap gap-2">
-                       <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !description}>
-                            {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                            Fleety Suggest Time & Tech
-                        </Button>
-                        {timeSuggestions.length > 0 && (
-                            <Button type="button" variant="outline" onClick={() => fetchAITimeSuggestion(true)} disabled={isFetchingAISuggestion}>
-                                <RefreshCw className="mr-2 h-4 w-4"/>
-                                Get More Suggestions
+                   <div className="flex flex-wrap gap-2 items-center justify-between">
+                       <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
+                       <div className="flex flex-wrap gap-2">
+                           <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !description}>
+                                {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                                Fleety Suggest Time & Tech
                             </Button>
-                        )}
+                            {timeSuggestions.length > 0 && (
+                                <Button type="button" variant="outline" onClick={() => fetchAITimeSuggestion(true)} disabled={isFetchingAISuggestion}>
+                                    <RefreshCw className="mr-2 h-4 w-4"/>
+                                    Get More Suggestions
+                                </Button>
+                            )}
+                       </div>
                    </div>
                    {timeSuggestions.length > 0 && (
                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -863,6 +796,84 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                            ))}
                        </div>
                    )}
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="manual-override">
+                      <AccordionTrigger>
+                        <span className="flex items-center gap-2 text-sm font-medium"><ChevronsUpDown className="h-4 w-4"/>Manual Override</span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                          <div className="space-y-2">
+                            <Label>Schedule Time</Label>
+                            <div className="flex gap-2">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            id="date"
+                                            variant={"outline"}
+                                            className={cn(
+                                            "flex-1 justify-start text-left font-normal bg-card",
+                                            !scheduledTime && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                            {scheduledTime ? format(scheduledTime, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
+                                        <Calendar
+                                            mode="single"
+                                            selected={scheduledTime}
+                                            onSelect={handleDateSelect}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                                <Input
+                                    ref={timeInputRef}
+                                    type="time"
+                                    onChange={handleTimeChange}
+                                    value={scheduledTime ? format(scheduledTime, 'HH:mm') : ''}
+                                    className="w-36 bg-card"
+                                />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="assign-technician">Assigned Technician</Label>
+                            <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
+                                <SelectTrigger id="assign-technician">
+                                <SelectValue placeholder="Unassigned" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                <SelectItem value={UNASSIGNED_VALUE}>-- Unassigned --</SelectItem>
+                                {technicians.map(tech => (
+                                    <SelectItem key={tech.id} value={tech.id}>
+                                    {tech.name}
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                          </div>
+                           {job && (
+                            <div className="space-y-2">
+                                <Label htmlFor="jobStatus">Status</Label>
+                                <Select 
+                                    value={status} 
+                                    onValueChange={(value: JobStatus) => setStatus(value)}
+                                >
+                                <SelectTrigger id="jobStatus">
+                                    <SelectValue placeholder="Select status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ALL_JOB_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
               </div>
             </div>
 
@@ -923,5 +934,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-
-    

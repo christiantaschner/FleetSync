@@ -21,13 +21,13 @@ import {
 
 const JobImportSchema = z.object({
     title: z.string().min(1, "Title is required."),
-    description: z.string().min(1, "Description is required."),
+    description: z.string().optional(),
     priority: z.enum(['High', 'Medium', 'Low']),
     customerName: z.string().optional(),
     customerPhone: z.string().optional(),
     address: z.string().min(1, "Address is required."),
     scheduledTime: z.string().optional(), // ISO string
-    estimatedDurationMinutes: z.number().optional(),
+    estimatedDurationMinutes: z.number().min(1, "Estimated duration is required and must be at least 1."),
     requiredSkills: z.array(z.string()).optional(),
 });
 
@@ -61,7 +61,7 @@ export async function importJobsAction(
             const finalPayload = {
               companyId,
               title: jobData.title,
-              description: jobData.description,
+              description: jobData.description || "",
               priority: jobData.priority,
               status: 'Unassigned' as JobStatus,
               customerName: jobData.customerName || "N/A",
@@ -72,7 +72,8 @@ export async function importJobsAction(
                   longitude: 0,
               },
               scheduledTime: jobData.scheduledTime,
-              estimatedDurationMinutes: jobData.estimatedDurationMinutes || 0,
+              estimatedDuration: jobData.estimatedDurationMinutes,
+              durationUnit: 'minutes',
               requiredSkills: jobData.requiredSkills || [],
               assignedTechnicianId: null,
               notes: 'Imported via CSV.',

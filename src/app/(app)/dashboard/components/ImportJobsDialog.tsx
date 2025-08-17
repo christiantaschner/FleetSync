@@ -101,8 +101,8 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
         data.forEach((row: any, index) => {
           const rowIndex = index + 2; // 1 for header, 1 for 0-index
           
-          if (!row.title || !row.description || !row.priority || !row.address) {
-            newErrors.push({ rowIndex, message: "Missing required fields: title, description, priority, address." });
+          if (!row.title || !row.priority || !row.address || !row.estimatedDurationMinutes) {
+            newErrors.push({ rowIndex, message: "Missing required fields: title, priority, address, estimatedDurationMinutes." });
             return;
           }
 
@@ -116,11 +116,15 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
             }
           }
           
-          const duration = row.estimatedDurationMinutes ? parseInt(row.estimatedDurationMinutes, 10) : undefined;
+          const duration = row.estimatedDurationMinutes ? parseInt(row.estimatedDurationMinutes, 10) : 0;
+          if (isNaN(duration) || duration <= 0) {
+            newErrors.push({ rowIndex, message: "estimatedDurationMinutes must be a number greater than 0." });
+            return;
+          }
 
           const job: ImportJobsActionInput['jobs'][number] = {
             title: row.title,
-            description: row.description,
+            description: row.description || undefined,
             priority: row.priority as JobPriority,
             customerName: row.customerName || undefined,
             customerPhone: row.customerPhone || undefined,
@@ -222,7 +226,7 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
                     <div className="p-4 border rounded-md bg-secondary/50 h-full flex flex-col justify-center">
                         <p className="text-sm text-muted-foreground mb-3">
                             Ensure your CSV file matches the template's headers and format.
-                            Required fields are: <strong>title, description, priority, address</strong>.
+                            Required fields are: <strong>title, priority, address, estimatedDurationMinutes</strong>.
                         </p>
                         <a href="/jobs_template.csv" download>
                             <Button variant="outline" className="w-full">

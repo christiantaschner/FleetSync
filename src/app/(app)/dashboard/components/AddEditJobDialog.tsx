@@ -31,9 +31,9 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown } from 'lucide-react';
-import { allocateJobAction, suggestJobSkillsAction, suggestScheduleTimeAction, type AllocateJobActionInput, type SuggestJobSkillsActionInput, type SuggestScheduleTimeInput, generateTriageLinkAction } from "@/actions/ai-actions";
+import { suggestScheduleTimeAction, generateTriageLinkAction } from "@/actions/ai-actions";
 import { deleteJobAction } from '@/actions/fleet-actions';
-import type { AllocateJobOutput, AITechnician } from "@/types";
+import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
@@ -324,6 +324,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
           status: 'Draft' as const,
           createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+          estimatedDuration,
+          durationUnit,
       };
       const newJobRef = await addDoc(collection(db, `artifacts/${appId}/public/data/jobs`), tempJobData);
       jobIdToUse = newJobRef.id;
@@ -481,7 +483,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           updatedAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDuration: estimatedDuration || 0,
+          estimatedDuration: estimatedDuration,
         };
 
         if(techToAssignId) {

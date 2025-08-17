@@ -90,7 +90,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
-  const [estimatedDuration, setEstimatedDuration] = useState<number | undefined>();
+  const [estimatedDuration, setEstimatedDuration] = useState<number>(1);
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
   const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
   const [selectedContractId, setSelectedContractId] = useState<string>('');
@@ -121,7 +121,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLatitude(job?.location.latitude || null);
     setLongitude(job?.location.longitude || null);
     setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
-    setEstimatedDuration(job?.estimatedDuration);
+    setEstimatedDuration(job?.estimatedDuration || 1);
     setDurationUnit(job?.durationUnit || 'hours');
     setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
     setSelectedContractId(job?.sourceContractId || '');
@@ -199,8 +199,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
 
   const fetchAITimeSuggestion = useCallback(async (getMore: boolean = false) => {
-    if (!description.trim() || !userProfile?.companyId || !appId) {
-        toast({ title: "Cannot Suggest Time", description: "Please enter a job description first.", variant: "default" });
+    if (!description.trim() && !title.trim() || !userProfile?.companyId || !appId) {
+        toast({ title: "Cannot Suggest Time", description: "Please enter a Job Title.", variant: "default" });
         return;
     }
     setIsFetchingAISuggestion(true);
@@ -237,7 +237,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         setTimeSuggestions(result.data.suggestions);
     }
 
-  }, [description, priority, requiredSkills, userProfile, appId, company, technicians, jobs, timeSuggestions, rejectedTimes, toast]);
+  }, [description, title, priority, requiredSkills, userProfile, appId, company, technicians, jobs, timeSuggestions, rejectedTimes, toast]);
   
   const handleAcceptSuggestion = (suggestion: SuggestScheduleTimeOutput['suggestions'][number]) => {
       setScheduledTime(new Date(suggestion.time));
@@ -368,8 +368,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onClose();
         return;
     }
-    if (!title.trim() || !description.trim() || !locationAddress.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in Title, Description, and Address.", variant: "destructive" });
+    if (!title.trim() || !locationAddress.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in Title and Address.", variant: "destructive" });
+      return;
+    }
+
+    if (estimatedDuration === undefined || estimatedDuration <= 0) {
+      toast({ title: "Invalid Duration", description: "Please enter a valid estimated duration greater than 0.", variant: "destructive" });
       return;
     }
 
@@ -622,8 +627,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
                   </div>
                   <div>
-                    <Label htmlFor="jobDescription">Job Description *</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." required rows={3} />
+                    <Label htmlFor="jobDescription">Job Description</Label>
+                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={3} />
                   </div>
                 </div>
 
@@ -658,14 +663,14 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </Select>
                     </div>
                      <div>
-                      <Label>Estimated Duration</Label>
+                      <Label>Estimated Duration *</Label>
                       <div className="flex items-center gap-2">
                           <Input
                               id="estimatedDuration"
                               type="number"
                               value={estimatedDuration || ''}
-                              onChange={(e) => setEstimatedDuration(e.target.value ? parseInt(e.target.value, 10) : undefined)}
-                              min="0"
+                              onChange={(e) => setEstimatedDuration(e.target.value ? parseInt(e.target.value, 10) : 1)}
+                              min="1"
                               placeholder="e.g., 2"
                           />
                           <Select value={durationUnit} onValueChange={(value: 'hours' | 'days') => setDurationUnit(value)}>
@@ -769,7 +774,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                    <div className="flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
                        <div className="flex flex-wrap gap-2">
-                           <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !description}>
+                           <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !title}>
                                 {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
                                 Fleety Suggest Time & Tech
                             </Button>

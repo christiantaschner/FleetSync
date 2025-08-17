@@ -120,7 +120,7 @@ export type Job = {
   id: string;
   companyId: string;
   title: string;
-  description: string;
+  description?: string;
   priority: JobPriority;
   status: JobStatus;
   assignedTechnicianId?: string | null;
@@ -130,7 +130,7 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDuration?: number;
+  estimatedDuration: number;
   durationUnit?: 'hours' | 'days';
   createdAt: string;
   updatedAt: string;

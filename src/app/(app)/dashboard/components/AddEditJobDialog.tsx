@@ -719,6 +719,22 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             Suggest
                         </Button>
                     </div>
+                     {requiredSkills.length > 0 && (
+                      <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-10 bg-secondary/50">
+                        {requiredSkills.map(skill => (
+                          <Badge key={skill} variant="secondary" className="text-sm">
+                            {skill}
+                            <button
+                              type="button"
+                              className="ml-1.5 rounded-full p-0.5 hover:bg-destructive/20"
+                              onClick={() => handleSkillChange(skill)}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     <Input
                       placeholder="Search skills..."
                       value={skillSearchTerm}

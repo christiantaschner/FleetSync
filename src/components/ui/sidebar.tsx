@@ -225,7 +225,7 @@ const Sidebar = React.forwardRef<
     return (
       <div
         ref={ref}
-        className="group peer hidden md:block text-secondary-foreground"
+        className="group peer hidden md:block text-foreground"
         data-state={state}
         data-collapsible={state === "collapsed" ? collapsible : ""}
         data-variant={variant}
@@ -534,13 +534,13 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const sidebarMenuButtonVariants = cva(
-  "peer/menu-button relative flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-base outline-none ring-ring transition-all focus-visible:ring-2 active:bg-background/90 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-secondary-foreground data-[active=true]:bg-background/95 data-[state=open]:bg-background justify-start md:group-data-[collapsible=icon]:h-9 md:group-data-[collapsible=icon]:justify-center md:group-data-[collapsible=icon]:p-2 [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
+  "peer/menu-button relative flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-base outline-none ring-ring transition-all focus-visible:ring-2 active:bg-background/90 disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-semibold data-[active=true]:text-foreground data-[active=true]:bg-background data-[state=open]:bg-background justify-start md:group-data-[collapsible=icon]:h-9 md:group-data-[collapsible=icon]:justify-center md:group-data-[collapsible=icon]:p-2 [&>span:last-child]:truncate [&>svg]:size-5 [&>svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "text-secondary-foreground bg-transparent hover:bg-background",
+        default: "text-foreground bg-transparent hover:bg-background/50",
         secondary: "bg-primary text-primary-foreground hover:bg-primary/90",
-        ghost: "hover:bg-background hover:text-foreground text-secondary-foreground",
+        ghost: "hover:bg-background/50 hover:text-foreground text-foreground",
       },
       size: {
         default: "h-10 text-sm",

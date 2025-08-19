@@ -104,6 +104,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [triageMessage, setTriageMessage] = useState<string | null>(null);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [triageToken, setTriageToken] = useState<string | null>(null);
 
   const formRef = useRef<HTMLFormElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -135,6 +136,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsCopied(false);
     setRejectedTimes([]);
     setTimeSuggestions([]);
+    setTriageToken(null);
   }, [job]);
 
   useEffect(() => {
@@ -305,55 +307,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       toast({ title: "Cannot Generate Link", description: "Please provide a Job Title and Customer Name first.", variant: "default" });
       return;
     }
-    if (!job && !userProfile?.companyId) {
-      toast({ title: "Cannot Generate Link", description: "Save this job first to create a photo request link.", variant: "default" });
-      return;
-    }
-
     if (!userProfile?.companyId || !appId) return;
-    
+
     setIsGeneratingLink(true);
-
-    let jobIdToUse = job?.id;
-
-    if (!jobIdToUse) {
-       const tempJobData = {
-          companyId: userProfile.companyId,
-          customerId: selectedCustomerId,
-          title, description, priority, requiredSkills, customerName, customerEmail, customerPhone,
-          location: { latitude: latitude ?? 0, longitude: longitude ?? 0, address: locationAddress },
-          scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
-          status: 'Draft' as const,
-          createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-          estimatedDuration,
-          durationUnit,
-      };
-      const newJobRef = await addDoc(collection(db, `artifacts/${appId}/public/data/jobs`), tempJobData);
-      jobIdToUse = newJobRef.id;
-      if (onJobAddedOrUpdated) {
-        onJobAddedOrUpdated({ ...tempJobData, id: jobIdToUse, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as Job, null);
-      }
-    }
-    
-    if (!jobIdToUse) {
-      setIsGeneratingLink(false);
-      return;
-    }
-
     const result = await generateTriageLinkAction({
-        jobId: jobIdToUse,
-        companyId: userProfile.companyId,
-        appId,
-        customerName: customerName || "Valued Customer",
-        jobTitle: title || "Your Service",
+      jobId: job?.id, // Pass jobId if it exists, otherwise it's undefined
+      companyId: userProfile.companyId,
+      appId,
+      customerName,
+      jobTitle: title,
     });
+    setIsGeneratingLink(false);
 
     if (result.error) {
       toast({ title: "Error", description: result.error, variant: "destructive" });
-    } else if (result.data?.message) {
+    } else if (result.data) {
       setTriageMessage(result.data.message);
+      setTriageToken(result.data.token);
     }
-    setIsGeneratingLink(false);
   };
   
   const handleCopyToClipboard = () => {
@@ -431,6 +402,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       estimatedDuration,
       durationUnit,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
+      // Add triage token if it exists
+      ...(triageToken && { 
+        triageToken: triageToken,
+        triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
+      }),
     };
 
     try {
@@ -831,17 +807,21 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                    </div>
                    {timeSuggestions.length > 0 && (
                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                           {timeSuggestions.map(suggestion => (
-                               <button 
-                                   key={suggestion.time}
-                                   type="button" 
-                                   onClick={() => handleAcceptSuggestion(suggestion)} 
-                                   className="p-3 border rounded-md text-left hover:bg-secondary transition-colors"
-                                >
-                                    <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'PPp')}</p>
-                                    <p className="text-xs text-muted-foreground">{suggestion.reasoning}</p>
-                               </button>
-                           ))}
+                           {timeSuggestions.map(suggestion => {
+                               const techName = technicians.find(t => t.id === suggestion.technicianId)?.name || 'Unknown Tech';
+                               return (
+                                   <button
+                                       key={suggestion.time}
+                                       type="button"
+                                       onClick={() => handleAcceptSuggestion(suggestion)}
+                                       className="p-3 border rounded-md text-left hover:bg-secondary transition-colors"
+                                   >
+                                       <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'PPp')}</p>
+                                       <p className="text-xs text-muted-foreground">with {techName}</p>
+                                       <p className="text-xs text-muted-foreground mt-1 italic">"{suggestion.reasoning}"</p>
+                                   </button>
+                               )
+                           })}
                        </div>
                    )}
                   <Accordion type="single" collapsible className="w-full">

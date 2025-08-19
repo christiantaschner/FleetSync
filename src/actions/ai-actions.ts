@@ -630,21 +630,22 @@ export async function summarizeFtfrAction(
 }
 
 const GenerateTriageLinkInputSchema = z.object({
-    jobId: z.string(),
+    jobId: z.string().optional(),
     companyId: z.string(),
     appId: z.string().min(1),
     customerName: z.string(),
     jobTitle: z.string(),
 });
+type GenerateTriageLinkInput = z.infer<typeof GenerateTriageLinkInputSchema>;
 
 export async function generateTriageLinkAction(
-    input: z.infer<typeof GenerateTriageLinkInputSchema>
-): Promise<{ data: { message: string } | null; error: string | null }> {
+    input: GenerateTriageLinkInput
+): Promise<{ data: { message: string, token: string } | null; error: string | null }> {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         const token = crypto.randomUUID();
         const triageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/triage/${token}?appId=${input.appId}`;
         const message = `Hi ${input.customerName}, to help our technician prepare for your "${input.jobTitle}" service, please upload photos of the issue here: ${triageUrl}. It will help us bring the right parts and save you time. - from Mock Company`;
-        return { data: { message }, error: null };
+        return { data: { message, token }, error: null };
     }
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
@@ -652,18 +653,20 @@ export async function generateTriageLinkAction(
 
         const token = crypto.randomUUID();
         const expiresAt = addHours(new Date(), 24); // Link is valid for 24 hours
-
-        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
         
-        await updateDoc(jobDocRef, {
-            triageToken: token,
-            triageTokenExpiresAt: expiresAt.toISOString(),
-        });
+        // If a jobId is provided, update that job with the token.
+        // If not, the token is just used for the message and link generation.
+        if (jobId) {
+            const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
+            await updateDoc(jobDocRef, {
+                triageToken: token,
+                triageTokenExpiresAt: expiresAt.toISOString(),
+            });
+        }
         
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
         const triageUrl = `${appUrl}/triage/${token}?appId=${appId}`;
         
-        // Generate the customer-facing message with the AI
         const companyDoc = await getDoc(doc(dbAdmin, 'companies', companyId));
         const companyName = companyDoc.exists() ? companyDoc.data()?.name : 'our team';
 
@@ -674,7 +677,7 @@ export async function generateTriageLinkAction(
             triageLink: triageUrl,
         });
 
-        return { data: { message }, error: null };
+        return { data: { message, token }, error: null };
 
     } catch (e) {
         if (e instanceof z.ZodError) {

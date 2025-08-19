@@ -498,7 +498,7 @@ export async function suggestScheduleTimeAction(
   input: Omit<SuggestScheduleTimeInput, 'businessHours'> & { companyId: string }
 ): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
   if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-    return { data: { suggestions: [ { time: new Date().toISOString(), reasoning: 'Mock suggestion' } ] }, error: null };
+    return { data: { suggestions: [ { time: new Date().toISOString(), reasoning: 'Mock suggestion', technicianId: 'tech_1' } ] }, error: null };
   }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");

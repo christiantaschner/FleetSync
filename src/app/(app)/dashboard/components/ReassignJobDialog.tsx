@@ -216,7 +216,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                     </DialogDescription>
                 </DialogHeader>
                  
-                {jobToReassign.customerName && (
+                {suggestion?.type === 'reschedule' && jobToReassign.customerName && (
                   <Alert variant="default" className="border-blue-200 bg-blue-50">
                     <Phone className="h-4 w-4 text-blue-600"/>
                     <AlertTitle className="font-semibold text-blue-800">Contact Customer</AlertTitle>
@@ -267,4 +267,3 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
 };
 
 export default ReassignJobDialog;
-

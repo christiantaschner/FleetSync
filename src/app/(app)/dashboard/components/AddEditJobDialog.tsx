@@ -31,7 +31,7 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown } from 'lucide-react';
-import { suggestScheduleTimeAction, generateTriageLinkAction } from "@/actions/ai-actions";
+import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
@@ -74,6 +74,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
+  const [isFetchingSkills, setIsFetchingSkills] = useState(false);
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
@@ -362,6 +363,26 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       toast({ title: "Copied!", description: "Message copied to clipboard." });
       setTimeout(() => setIsCopied(false), 2000);
     }
+  };
+  
+  const handleSuggestSkills = async () => {
+    if (!description.trim() && !title.trim()) {
+        toast({ title: "Cannot Suggest Skills", description: "Please enter a Job Title or Description.", variant: "default" });
+        return;
+    }
+    setIsFetchingSkills(true);
+    const result = await suggestJobSkillsAction({ jobTitle: title, jobDescription: description, availableSkills: allSkills });
+    if (result.error) {
+        toast({ title: "Skill Suggestion Error", description: result.error, variant: "destructive" });
+    } else if (result.data?.suggestedSkills) {
+        if (result.data.suggestedSkills.length === 0) {
+            toast({ title: "No specific skills suggested", description: result.data.reasoning || "The AI could not identify specific skills from the job description.", variant: "default" });
+        } else {
+            setRequiredSkills(prev => [...new Set([...prev, ...result.data!.suggestedSkills])]);
+            toast({ title: "Skills Suggested", description: `Fleety added ${result.data.suggestedSkills.length} skill(s). Please review.` });
+        }
+    }
+    setIsFetchingSkills(false);
   };
 
   const handleSubmit = async (assignTechId: string | null = null) => {
@@ -690,9 +711,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   <div className="flex flex-col space-y-2">
                     <div className="flex justify-between items-center mb-1">
                         <Label className="flex items-center gap-2">
-                            <ListChecks className="h-3.5 w-3.5" />
-                            Required Skills (Optional)
+                            <ListChecks className="h-4 w-4" />
+                            Required Skills
                         </Label>
+                         <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || !title.trim() && !description.trim()}>
+                            {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+                            Suggest
+                        </Button>
                     </div>
                     <Input
                       placeholder="Search skills..."

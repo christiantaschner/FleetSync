@@ -14,10 +14,11 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle, Bot } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/contexts/auth-context';
 
 const FormSchema = z.object({
   name: z.string().min(2, 'Company name must be at least 2 characters.'),
@@ -68,6 +69,7 @@ const curatedTimezones = [
 const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isMockMode, setIsMockMode } = useAuth();
   
   const defaultBusinessHours = [
       { dayOfWeek: "Monday", isOpen: true, startTime: "08:00", endTime: "17:00" },
@@ -161,7 +163,7 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
       <Separator />
       
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2"><HelpCircle/> UI Settings</h3>
+        <h3 className="text-lg font-semibold flex items-center gap-2"><HelpCircle/> UI &amp; Data Settings</h3>
         <div className="flex items-center space-x-2 rounded-md border p-4">
           <Controller
             name="settings.hideHelpButton"
@@ -177,6 +179,17 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
           <div>
               <Label htmlFor="hideHelpButton">Hide Floating Help Button</Label>
               <p className="text-sm text-muted-foreground">The AI Assistant will still be accessible from the main menu.</p>
+          </div>
+        </div>
+         <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Switch
+            id="mockDataMode"
+            checked={isMockMode}
+            onCheckedChange={setIsMockMode}
+          />
+          <div>
+              <Label htmlFor="mockDataMode" className="flex items-center gap-2"><Bot/> Mock Data Mode</Label>
+              <p className="text-sm text-muted-foreground">Display sample data throughout the app for demonstration or testing. No real data will be saved.</p>
           </div>
         </div>
       </div>

@@ -53,20 +53,31 @@ You must also learn from past dispatcher decisions.
 
 The current time is {{{currentTime}}}.
 
-**TASK:**
-Given the following job and technician data, suggest the most suitable technician.
+**TASK & DECISION-MAKING LOGIC (STEP-BY-STEP):**
 
-**Job Details:**
-- Description: {{{jobDescription}}}
-- Priority: {{{jobPriority}}}
-{{#if scheduledTime}}
-- Customer Requested Time: {{{scheduledTime}}}. You must determine if this is for today or a future day by comparing it to the current time.
+1.  **Job Day Analysis**: First, determine if the job is for **today** or a **future day** by comparing its scheduled time to the current time.
+
+2.  **Availability & Timeline Calculation**:
+    -   **For TODAY's Jobs**:
+        -   If a technician is 'isAvailable: true', they are a primary candidate. Their travel time starts from their 'liveLocation'.
+        -   If a technician is 'isAvailable: false', calculate their *Earliest Next Availability*. This is (current job's startedAt + estimatedDurationMinutes) + 15 min buffer. Then, estimate travel time from their current job's location to the new job site. If this combined time allows them to arrive before the end of the workday, they are a potential candidate.
+    -   **For FUTURE DAY's Jobs**:
+        -   The current 'isAvailable' status is IRRELEVANT.
+        -   Check their 'currentJobs' list to see if they are already booked on that future day. A technician who is 'isAvailable: false' now can still be assigned a job for tomorrow if their schedule for that day is open. Their travel for a future job will start from their 'homeBaseLocation'.
+
+3.  **Skill & Customer History Check**:
+    -   **CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
+    -   Filter out any technician who does not meet ALL 'requiredSkills'.
+    -   If a skilled, available technician also has 'Previous Customer History', they should be **strongly prioritized** over others. This reflects an established customer relationship which is very valuable.
+
+**LEARNING FROM PAST DECISIONS:**
+Analyze the following examples where a human dispatcher overrode the AI's suggestion. These reveal the company's hidden preferences. Learn from them.
+{{#if pastFeedback.length}}
+  {{#each pastFeedback}}
+  - **Example:** For Job #{{{jobId}}}, the AI suggested Technician #{{{aiSuggestedTechnicianId}}} because "{{{aiReasoning}}}". The dispatcher disagreed and chose Technician #{{{dispatcherSelectedTechnicianId}}} instead.
+  {{/each}}
 {{else}}
-- No specific time requested. Assume the job is for as soon as possible (today).
-{{/if}}
-
-{{#if requiredSkills.length}}
-**CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
+- No past feedback available. Use standard logic.
 {{/if}}
 
 **Technician Data:**
@@ -98,32 +109,8 @@ Given the following job and technician data, suggest the most suitable technicia
 {{/each}}
 
 ---
-**LEARNING FROM PAST DECISIONS:**
-Analyze the following examples where a human dispatcher overrode the AI's suggestion. These reveal the company's hidden preferences. Learn from them.
-{{#if pastFeedback.length}}
-  {{#each pastFeedback}}
-  - **Example:** For Job #{{{jobId}}}, the AI suggested Technician #{{{aiSuggestedTechnicianId}}} because "{{{aiReasoning}}}". The dispatcher disagreed and chose Technician #{{{dispatcherSelectedTechnicianId}}} instead.
-  {{/each}}
-{{else}}
-- No past feedback available. Use standard logic.
-{{/if}}
----
-
-**DECISION-MAKING LOGIC (STEP-BY-STEP):**
-
-1.  **Job Day Analysis**: First, determine if the job is for **today** or a **future day** by comparing its scheduled time to the current time.
-
-2.  **Availability & Timeline Calculation**:
-    -   **For TODAY's Jobs**:
-        -   If a technician is 'isAvailable: true', they are a primary candidate. Their travel time starts from their 'liveLocation'.
-        -   If a technician is 'isAvailable: false', calculate their *Earliest Next Availability*. This is (current job's startedAt + estimatedDurationMinutes) + 15 min buffer. Then, estimate travel time from their current job's location to the new job site. If this combined time allows them to arrive before the end of the workday, they are a potential candidate.
-    -   **For FUTURE DAY's Jobs**:
-        -   The current 'isAvailable' status is IRRELEVANT.
-        -   Check their 'currentJobs' list to see if they are already booked on that future day. A technician who is 'isAvailable: false' now can still be assigned a job for tomorrow if their schedule for that day is open. Their travel for a future job will start from their 'homeBaseLocation'.
-
-3.  **Skill & Customer History Check**:
-    -   Filter out any technician who does not meet ALL 'requiredSkills'. This is a hard rule.
-    -   If a skilled, available technician also has 'Previous Customer History', they should be **strongly prioritized** over others. This reflects an established customer relationship which is very valuable.
+**Final Sanity Check (Self-Correction):**
+Before providing your final answer, review your suggested technician. Does the proposed schedule respect their working hours for the given day? Have you correctly accounted for all hard constraints like skills? If not, reconsider and choose the next best option.
 
 ---
 Provide a clear reasoning for your choice, explicitly mentioning how customer history, skill match, and calculated availability (including travel time estimates) influenced your decision. Refer to technicians by name, not ID. If no technician is suitable, explain why (e.g., "No technician has the 'Boiler Repair' skill," or "All qualified technicians are fully booked for the day.").

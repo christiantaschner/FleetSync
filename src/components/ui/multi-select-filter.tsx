@@ -85,10 +85,11 @@ export function MultiSelectFilter({
                 onClick={() => handleSelectAll(!allSelected)}
                 tabIndex={0}
               >
-                <Checkbox 
-                  checked={allSelected ? true : someSelected ? 'indeterminate' : false}
-                  className="mr-2 data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground"
-                />
+                <div className="flex h-4 w-4 items-center justify-center mr-2">
+                    <Checkbox 
+                        checked={allSelected ? true : someSelected ? 'indeterminate' : false}
+                    />
+                </div>
                 <label className="text-sm font-medium leading-none cursor-pointer">
                   Select All
                 </label>
@@ -106,19 +107,17 @@ export function MultiSelectFilter({
                   onClick={() => handleToggleOption(option.value)}
                   tabIndex={0}
                 >
-                  <div
-                    className="flex w-full items-center space-x-2"
-                  >
+                  <div className="flex h-4 w-4 items-center justify-center mr-2">
                     <Check
                       className={cn(
                         "h-4 w-4",
                         selected.includes(option.value)
-                          ? "opacity-100 text-foreground group-hover:text-accent-foreground"
+                          ? "opacity-100"
                           : "opacity-0"
                       )}
                     />
-                    <span className="cursor-pointer">{option.label}</span>
                   </div>
+                  <span className="cursor-pointer">{option.label}</span>
                 </div>
               ))}
             </CommandGroup>

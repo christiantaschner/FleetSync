@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -10,24 +9,24 @@ import { Loader2, ArrowLeft, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog'; // Re-purposing this for a modal view
 import { mockJobs, mockTechnicians, mockCustomers, mockContracts } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
-
-// This is now the DISPATCHER's view of a job.
-// The Technician's view is at /technician/jobs/[jobId]
+import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog';
+import JobDetailsDisplay from './components/JobDetailsDisplay';
+import CustomerHistoryCard from './components/CustomerHistoryCard';
+import ChatCard from './components/ChatCard';
 
 export default function DispatcherJobDetailPage() {
-  const { userProfile, loading } = useAuth();
+  const { userProfile, loading, isMockMode } = useAuth();
   const router = useRouter();
   const params = useParams();
   const jobId = params.jobId as string;
 
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // In a real app, we'd fetch all these from context or dedicated hooks
-  // For now, we'll use mocks as placeholders for the dialog to work.
   const [technicians, setTechnicians] = useState<Technician[]>(mockTechnicians);
   const [allJobs, setAllJobs] = useState<Job[]>(mockJobs);
   const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
@@ -41,6 +40,14 @@ export default function DispatcherJobDetailPage() {
       setIsLoading(false);
       return;
     }
+    
+    if (isMockMode) {
+      const mockJob = mockJobs.find(j => j.id === jobId) || null;
+      setJob(mockJob);
+      setIsLoading(false);
+      return;
+    }
+
     const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
     const unsubscribe = onSnapshot(jobDocRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -58,7 +65,7 @@ export default function DispatcherJobDetailPage() {
     });
 
     return () => unsubscribe();
-  }, [jobId, appId]);
+  }, [jobId, appId, isMockMode]);
 
   if (loading || isLoading) {
      return <div className="flex h-[50vh] w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
@@ -87,15 +94,13 @@ export default function DispatcherJobDetailPage() {
     )
   }
   
+  const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
+
   return (
-    <div className="p-4">
-      {/* We are re-using the AddEditJobDialog to show the job details */}
-      {/* For this to be a "view", we'd ideally have a separate component, */}
-      {/* but for an MVP, re-using a complex dialog is a quick way to show details. */}
-      {/* The dialog will be opened by default for this page. */}
+    <div className="space-y-6">
        <AddEditJobDialog
-            isOpen={true}
-            onClose={() => router.push('/dashboard')}
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
             job={job}
             jobs={allJobs}
             technicians={technicians}
@@ -104,6 +109,27 @@ export default function DispatcherJobDetailPage() {
             allSkills={allSkills}
             onManageSkills={() => {}}
         />
+        <div className="flex items-center justify-between">
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+                <ArrowLeft className="mr-2 h-4 w-4"/>
+                Back to Dashboard
+            </Button>
+            <Button onClick={() => setIsEditDialogOpen(true)}>
+                <Edit className="mr-2 h-4 w-4"/>
+                Edit Job Details
+            </Button>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-2 space-y-6">
+                <JobDetailsDisplay job={job} />
+                <CustomerHistoryCard jobs={[]} />
+            </div>
+            <div className="lg:col-span-1 space-y-6">
+                {assignedTechnician && appId && (
+                    <ChatCard job={job} technician={assignedTechnician} appId={appId} />
+                )}
+            </div>
+        </div>
     </div>
   );
 }

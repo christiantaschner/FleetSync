@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -24,7 +23,6 @@ interface JobListItemProps {
   onAIAssign: (job: Job) => void;
   onViewOnMap: (location: Location) => void;
   onShareTracking: (job: Job) => void;
-  onEdit: (job: Job) => void;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ 
@@ -34,7 +32,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onAIAssign, 
     onViewOnMap,
     onShareTracking,
-    onEdit,
 }) => {
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
@@ -157,9 +154,11 @@ const JobListItem: React.FC<JobListItemProps> = ({
          <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
             <MapIcon className="mr-2 h-3 w-3" /> View on Map
         </Button>
-        <Button variant="outline" size="sm" onClick={() => onEdit(job)} className="w-full">
-           <Eye className="mr-2 h-4 w-4" /> View/Edit
-        </Button>
+        <Link href={`/job/${job.id}`} className="w-full">
+            <Button variant="outline" size="sm" className="w-full">
+               <Eye className="mr-2 h-4 w-4" /> View/Edit
+            </Button>
+        </Link>
       </CardFooter>
     </Card>
   );

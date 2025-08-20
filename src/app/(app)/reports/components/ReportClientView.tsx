@@ -288,99 +288,95 @@ export default function ReportClientView() {
 
   return (
     <div className="space-y-6">
-       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
       </div>
-      
       <Card>
         <CardHeader>
-            <CardTitle>Filters</CardTitle>
+          <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-                <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId}>
-                    <SelectTrigger className="w-full sm:w-[220px] bg-card"><SelectValue placeholder="Filter by Technician" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all"><div className="flex items-center gap-2"><Users className="h-4 w-4" /> All Technicians</div></SelectItem>
-                        {technicians.map(tech => (
-                            <SelectItem key={tech.id} value={tech.id}><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarImage src={tech.avatarUrl} alt={tech.name} /><AvatarFallback>{tech.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>{tech.name}</div></SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <DateRangePicker date={date} setDate={setDate} className="bg-card" />
-            </div>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId}>
+              <SelectTrigger className="w-full sm:w-[220px] bg-card"><SelectValue placeholder="Filter by Technician" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all"><div className="flex items-center gap-2"><Users className="h-4 w-4" /> All Technicians</div></SelectItem>
+                {technicians.map(tech => (
+                  <SelectItem key={tech.id} value={tech.id}><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarImage src={tech.avatarUrl} alt={tech.name} /><AvatarFallback>{tech.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>{tech.name}</div></SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <DateRangePicker date={date} setDate={setDate} className="bg-card" />
+          </div>
         </CardContent>
       </Card>
-
-
-       <div className="grid grid-cols-1 gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Waypoints /> Overall Performance</CardTitle>
-                    <CardDescription>A high-level overview of operational volume and success rates in the selected period.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KpiCard title="Total Jobs" value={reportData.kpis.totalJobs} desc="All jobs in period" icon={Briefcase} tooltipText="Total count of all jobs (completed, pending, etc.) created within the date range. A key indicator of business volume." />
-                    <KpiCard title="Completed Jobs" value={reportData.kpis.completedJobs} desc="Successfully finished" icon={CheckCircle} tooltipText="Count of jobs marked 'Completed'. Comparing this to 'Total Jobs' gives a rough idea of your completion rate." />
-                    <KpiCard title="First-Time-Fix Rate" value={`${reportData.kpis.ftfr}%`} desc="Resolved in one visit" icon={ThumbsUp} tooltipText="The percentage of jobs resolved in a single visit without needing a follow-up. Use the AI Summary to diagnose reasons for low rates." />
-                    <KpiCard title="On-Time Arrival Rate" value={`${reportData.kpis.onTimeArrivalRate}%`} desc="Within 15min of schedule" icon={CalendarClock} tooltipText="Percentage of jobs where technicians arrived within a 15-minute window of the scheduled time. Low rates impact customer satisfaction." />
-                </CardContent>
-                 {ftfrFeedbackNotesCount > 0 && (
-                    <CardFooter className="flex-col items-start gap-2 pt-3 border-t">
-                      {ftfrSummary && !isSummarizing && (
-                          <div className="space-y-2 text-sm">
-                              <h4 className="font-semibold flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-primary" /> AI Summary for Failed First-Time Fixes</h4>
-                              <p className="text-muted-foreground">{ftfrSummary.summary}</p>
-                              <div className="flex flex-wrap gap-1">
-                                  {ftfrSummary.themes.map(theme => <Badge key={theme} variant="secondary">{theme}</Badge>)}
-                              </div>
-                          </div>
-                      )}
-                      <Button onClick={handleSummarizeFtfr} disabled={isSummarizing} size="sm" variant="outline">
-                        {isSummarizing ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Bot className="mr-2 h-4 w-4" />
-                        )}
-                        Summarize Feedback ({ftfrFeedbackNotesCount})
-                      </Button>
-                    </CardFooter>
-                  )}
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><BarChart /> Technician Efficiency</CardTitle>
-                    <CardDescription>Metrics focused on how effectively your team spends their time.</CardDescription>
-                </CardHeader>
-                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="From start to completion" icon={Clock} tooltipText="The average time a technician spends actively working on a job, excluding travel and breaks." />
-                    <KpiCard title="Avg. Travel Time" value={reportData.kpis.avgTravelTime} desc="Per job" icon={Route} tooltipText="Average time spent driving to jobs. Use route optimization to reduce this non-billable time." />
-                    <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="The average time a new job waits before being assigned. Use 'AI Batch Assign' to improve this." />
-                    <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="The average number of jobs each technician completes. Helps in balancing workload." />
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Experience</CardTitle>
-                    <CardDescription>Key indicators of customer satisfaction and service quality.</CardDescription>
-                </CardHeader>
-                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KpiCard title="Avg. Satisfaction" value={`${reportData.kpis.avgSatisfaction} / 5`} desc="From all rated jobs" icon={Smile} tooltipText="The average customer satisfaction rating (1-5 stars) collected after job completion." />
-                    <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="The average time technicians log for breaks during a job." />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Leaf /> Environmental Impact</CardTitle>
-                    <CardDescription>Estimates based on fleet travel data.</CardDescription>
-                </CardHeader>
-                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <KpiCard title="Total Travel Distance" value={`${reportData.kpis.totalTravelDistance} km`} desc="All completed jobs" icon={Route} tooltipText="Sum of the estimated distance driven for all completed jobs. Better routing reduces this." />
-                    <KpiCard title="Total CO₂ Emissions" value={`${reportData.kpis.totalEmissions} kg`} desc="Estimated from travel" icon={Leaf} tooltipText="Estimated carbon footprint based on travel and your company's emission factor setting." />
-                </CardContent>
-            </Card>
-       </div>
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><Waypoints /> Overall Performance</CardTitle>
+            <CardDescription>A high-level overview of operational volume and success rates in the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard title="Total Jobs" value={reportData.kpis.totalJobs} desc="All jobs in period" icon={Briefcase} tooltipText="What it is: Total count of all jobs created in this period. Action: A high number indicates business volume; ensure you have enough technicians by visiting the 'Users' tab in Settings." />
+            <KpiCard title="Completed Jobs" value={reportData.kpis.completedJobs} desc="Successfully finished" icon={CheckCircle} tooltipText="What it is: Jobs marked 'Completed'. Action: Compare to 'Total Jobs'. If the ratio is low, check your Job List for bottlenecks or old, unclosed jobs." />
+            <KpiCard title="First-Time-Fix Rate" value={`${reportData.kpis.ftfr}%`} desc="Resolved in one visit" icon={ThumbsUp} tooltipText="What it is: The percentage of jobs resolved without a follow-up. Action: Use the AI Summary button to diagnose why repeat visits are needed. This may reveal needs for specific parts or training." />
+            <KpiCard title="On-Time Arrival Rate" value={`${reportData.kpis.onTimeArrivalRate}%`} desc="Within 15min of schedule" icon={CalendarClock} tooltipText="What it is: Percentage of jobs started within 15 minutes of the scheduled time. Action: Use the 'Optimize Fleet' and 'Resolve Conflict' AI features on the Schedule tab to improve punctuality." />
+          </CardContent>
+          {ftfrFeedbackNotesCount > 0 && (
+            <CardFooter className="flex-col items-start gap-2 pt-3 border-t">
+              {ftfrSummary && !isSummarizing && (
+                  <div className="space-y-2 text-sm">
+                      <h4 className="font-semibold flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-primary" /> AI Summary for Failed First-Time Fixes</h4>
+                      <p className="text-muted-foreground">{ftfrSummary.summary}</p>
+                      <div className="flex flex-wrap gap-1">
+                          {ftfrSummary.themes.map(theme => <Badge key={theme} variant="secondary">{theme}</Badge>)}
+                      </div>
+                  </div>
+              )}
+              <Button onClick={handleSummarizeFtfr} disabled={isSummarizing} size="sm" variant="outline">
+                {isSummarizing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <Bot className="mr-2 h-4 w-4" />
+                )}
+                Summarize Feedback ({ftfrFeedbackNotesCount})
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><BarChart /> Technician Efficiency</CardTitle>
+            <CardDescription>Metrics focused on how effectively your team spends their time.</CardDescription>
+          </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="From start to completion" icon={Clock} tooltipText="What it is: The average time a technician spends actively working on a job. Action: If this is too high, it might indicate a need for more training or better tools. Review technician notes on long jobs." />
+            <KpiCard title="Avg. Travel Time" value={reportData.kpis.avgTravelTime} desc="Per job" icon={Route} tooltipText="What it is: Average time spent driving to jobs. Action: Use the 'Optimize Fleet' feature on the Schedule tab to reduce this non-billable time by improving routing." />
+            <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="What it is: The average time a new job waits in the queue before assignment. Action: Use the 'Fleety Batch Assign' button on the Job List to quickly clear the backlog." />
+            <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="What it is: The average number of jobs each technician completes. Action: Use this to ensure workload is balanced. Filter this report by technician to compare performance." />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Experience</CardTitle>
+            <CardDescription>Key indicators of customer satisfaction and service quality.</CardDescription>
+          </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard title="Avg. Satisfaction" value={`${reportData.kpis.avgSatisfaction} / 5`} desc="From all rated jobs" icon={Smile} tooltipText="What it is: The average customer satisfaction rating (1-5 stars) collected after job completion. Action: Filter by technician to identify top performers and those who may need coaching." />
+            <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="What it is: The average time technicians log for breaks during a job. Action: This helps ensure compliance with labor laws and technician well-being. Monitor for excessive outliers." />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><Leaf /> Environmental Impact</CardTitle>
+            <CardDescription>Estimates based on fleet travel data.</CardDescription>
+          </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard title="Total Travel Distance" value={`${reportData.kpis.totalTravelDistance} km`} desc="All completed jobs" icon={Route} tooltipText="What it is: Sum of the estimated distance driven for all completed jobs. Action: Better routing via the 'Optimize Fleet' feature reduces this, saving fuel and vehicle wear." />
+            <KpiCard title="Total CO₂ Emissions" value={`${reportData.kpis.totalEmissions} kg`} desc="Estimated from travel" icon={Leaf} tooltipText="What it is: Estimated carbon footprint based on travel. Action: Update your fleet's average emission factor in Settings for accuracy. Optimize routes to lower this value." />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

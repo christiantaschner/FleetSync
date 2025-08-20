@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill, Contract, OptimizationSuggestion } from '@/types';
-import AddEditJobDialog from './components/AddEditJobDialog';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
@@ -44,7 +43,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
+import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -149,12 +148,8 @@ export default function DashboardPage() {
   const [searchAddressText, setSearchAddressText] = useState('');
   const [technicianSearchTerm, setTechnicianSearchTerm] = useState('');
 
-  const [isAddJobDialogOpen, setIsAddJobDialogOpen] = useState(false);
-  const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
-  
   const [jobForAIAssign, setJobForAIAssign] = useState<Job | null>(null);
   const [isAIAssignDialogOpen, setIsAIAssignDialogOpen] = useState(false);
-
 
   const [isAddEditTechnicianDialogOpen, setIsAddEditTechnicianDialogOpen] = useState(false);
   const [selectedTechnicianForEdit, setSelectedTechnicianForEdit] = useState<Technician | null>(null);
@@ -347,15 +342,9 @@ export default function DashboardPage() {
   }, [jobFilterId]);
   
   const handleOpenAddJob = () => {
-    setSelectedJobForEdit(null);
-    setIsAddJobDialogOpen(true);
+    router.push('/job/new');
   };
   
-  const handleOpenEditJob = (job: Job) => {
-    setSelectedJobForEdit(job);
-    setIsAddJobDialogOpen(true);
-  };
-
   const handleOpenEditTechnician = (technician: Technician) => {
     setSelectedTechnicianForEdit(technician);
     setIsAddEditTechnicianDialogOpen(true);
@@ -1038,17 +1027,6 @@ export default function DashboardPage() {
             isLoading={isLoadingData}
           />
         )}
-        <AddEditJobDialog
-            isOpen={isAddJobDialogOpen}
-            onClose={() => setIsAddJobDialogOpen(false)}
-            job={selectedJobForEdit}
-            technicians={technicians}
-            allSkills={allSkills.map(s => s.name)}
-            customers={customers}
-            contracts={contracts}
-            jobs={jobs}
-            onManageSkills={() => setIsManageSkillsOpen(true)}
-        />
         <SmartJobAllocationDialog
           jobToAssign={jobForAIAssign}
           technicians={technicians}
@@ -1120,7 +1098,7 @@ export default function DashboardPage() {
                         {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
                         Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
                     </Button>
-                     <Button size="sm" variant="outline" onClick={() => handleOpenEditJob(proactiveSuggestion.job)}>
+                     <Button size="sm" variant="outline" onClick={() => router.push(`/job/${proactiveSuggestion.job.id}`)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         View Details
                     </Button>
@@ -1294,7 +1272,6 @@ export default function DashboardPage() {
                       onAIAssign={handleAIAssign}
                       onViewOnMap={handleViewOnMap}
                       onShareTracking={handleShareTracking}
-                      onEdit={handleOpenEditJob}
                     />
                   ))
                 ) : (
@@ -1313,7 +1290,7 @@ export default function DashboardPage() {
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
-            onJobClick={(job) => handleOpenEditJob(job)}
+            onJobClick={(job) => router.push(`/job/${job.id}`)}
             onFleetOptimize={handleFleetOptimize}
             isFleetOptimizing={isFleetOptimizing}
           />

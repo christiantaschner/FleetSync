@@ -197,8 +197,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
     };
 
     const handleOpenEditJob = (job: Job) => {
-      setSelectedJobForEdit(job);
-      setIsAddJobOpen(true);
+      router.push(`/job/${job.id}`);
     };
 
     const handleAddNewJob = () => {

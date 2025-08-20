@@ -170,6 +170,7 @@ export default function CustomersPage() {
     
     return (
         <div>
+            <MockModeBanner />
             <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} initialSearchTerm={searchTerm} />
         </div>
     );

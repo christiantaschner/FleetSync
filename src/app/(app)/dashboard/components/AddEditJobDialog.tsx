@@ -366,8 +366,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onClose();
         return;
     }
-    if (!title.trim() || !locationAddress.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in Title and Address.", variant: "destructive" });
+    if (!title.trim() || !locationAddress.trim() || !customerName.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in Title, Customer Name and Address.", variant: "destructive" });
       return;
     }
 
@@ -562,7 +562,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><User className="h-4 w-4"/> Customer & Location</h3>
                   <div>
-                    <Label htmlFor="customerName">Customer Name</Label>
+                    <Label htmlFor="customerName">Customer Name *</Label>
                     <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
                       <PopoverAnchor>
                         <Input
@@ -747,7 +747,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                           </TooltipTrigger>
                           <TooltipContent>
-                              <p className="max-w-xs">Generates a link for the customer to upload photos. Our AI analyzes them to help the tech prepare.</p>
+                              <p className="max-w-xs">Generates a secure link to send to the customer. They can upload photos of the issue, which our AI will analyze. The photos and AI analysis (suggested parts, repair steps) will appear on the job details page to help the technician prepare.</p>
                           </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -782,7 +782,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             </div>
 
             <div className="px-6 pb-2 space-y-4">
-               <Separator />
               <div className="pt-4 space-y-4">
                    <div className="flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>

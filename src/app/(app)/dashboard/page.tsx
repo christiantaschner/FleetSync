@@ -44,7 +44,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from './components/MultiSelectFilter';
+import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -98,9 +98,26 @@ export default function DashboardPage() {
   const [profileChangeRequests, setProfileChangeRequests] = useState<ProfileChangeRequest[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
-  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
-  const [showOpenTasksOnly, setShowOpenTasksOnly] = useState(true);
+  const statusOptions = useMemo(() => [
+    { value: "Draft", label: "Draft" },
+    { value: "Unassigned", label: "Unassigned" },
+    { value: "Assigned", label: "Assigned" },
+    { value: "En Route", label: "En Route" },
+    { value: "In Progress", label: "In Progress" },
+    { value: "Completed", label: "Completed" },
+    { value: "Cancelled", label: "Cancelled" },
+  ], []);
+
+  const priorityOptions = useMemo(() => [
+    { value: "High", label: "High" },
+    { value: "Medium", label: "Medium" },
+    { value: "Low", label: "Low" },
+  ], []);
+  
+  const [statusFilter, setStatusFilter] = useState<string[]>(statusOptions.map(o => o.value));
+  const [priorityFilter, setPriorityFilter] = useState<string[]>(priorityOptions.map(o => o.value));
+
+  const [showOpenTasksOnly, setShowOpenTasksOnly] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
 
@@ -161,6 +178,27 @@ export default function DashboardPage() {
 
   const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
   
+  const openTasksFilter: JobStatus[] = useMemo(() => ['Unassigned', 'Draft'], []);
+
+  const handleOpenTasksToggle = (checked: boolean) => {
+    setShowOpenTasksOnly(checked);
+    if (checked) {
+      setStatusFilter(openTasksFilter);
+    } else {
+      setStatusFilter(statusOptions.map(o => o.value));
+    }
+  };
+
+  const handleStatusFilterChange = (newStatusFilter: string[]) => {
+      setStatusFilter(newStatusFilter);
+      // If a status other than the "open" ones is selected, turn off the toggle.
+      const hasNonOpenStatus = newStatusFilter.some(s => !openTasksFilter.includes(s as JobStatus));
+      if (hasNonOpenStatus && showOpenTasksOnly) {
+        setShowOpenTasksOnly(false);
+      }
+  };
+
+
   const fetchSkills = useCallback(async (companyId: string) => {
     if (isMockMode) {
       setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
@@ -555,8 +593,6 @@ export default function DashboardPage() {
     setIsChatOpen(true);
   };
   
-  const openTasksFilter: JobStatus[] = ['Unassigned', 'Draft'];
-  
   const kpiData = useMemo(() => {
     const unassignedJobs = jobs.filter(j => j.status === 'Unassigned');
     const today = new Date();
@@ -577,7 +613,7 @@ export default function DashboardPage() {
         tempJobs = tempJobs.filter(job => {
             return (
                 job.title.toLowerCase().includes(lowercasedTerm) ||
-                job.description.toLowerCase().includes(lowercasedTerm) ||
+                job.description?.toLowerCase().includes(lowercasedTerm) ||
                 job.customerName.toLowerCase().includes(lowercasedTerm) ||
                 (job.location.address && job.location.address.toLowerCase().includes(lowercasedTerm)) ||
                 (job.requiredSkills && job.requiredSkills.some(skill => skill.toLowerCase().includes(lowercasedTerm)))
@@ -592,13 +628,13 @@ export default function DashboardPage() {
     
     // Filter by open tasks if toggled
     if (showOpenTasksOnly) {
-        return tempJobs.filter(job => 
+        tempJobs = tempJobs.filter(job => 
             openTasksFilter.includes(job.status)
         );
     }
 
     // Filter by status and priority if not showing open tasks only
-    if (statusFilter.length > 0 || priorityFilter.length > 0) {
+    if (!showOpenTasksOnly && (statusFilter.length > 0 || priorityFilter.length > 0)) {
         return tempJobs.filter(job => {
             const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
             const statusMatch = statusFilter.length === 0 || statusFilter.includes(job.status);
@@ -607,7 +643,7 @@ export default function DashboardPage() {
     }
 
     return tempJobs;
-}, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm, showOpenTasksOnly, openTasksFilter]);
+  }, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm, showOpenTasksOnly, openTasksFilter]);
 
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
@@ -905,22 +941,6 @@ export default function DashboardPage() {
     setJobToShare(job);
     setIsShareTrackingOpen(true);
   };
-  
-  const statusOptions = [
-    { value: "Draft", label: "Draft" },
-    { value: "Unassigned", label: "Unassigned" },
-    { value: "Assigned", label: "Assigned" },
-    { value: "En Route", label: "En Route" },
-    { value: "In Progress", label: "In Progress" },
-    { value: "Completed", label: "Completed" },
-    { value: "Cancelled", label: "Cancelled" },
-  ];
-
-  const priorityOptions = [
-    { value: "High", label: "High" },
-    { value: "Medium", label: "Medium" },
-    { value: "Low", label: "Low" },
-  ];
 
   const handleSkillsUpdated = (newSkills: Skill[]) => {
       if(userProfile?.companyId) {
@@ -1220,7 +1240,7 @@ export default function DashboardPage() {
                         <MultiSelectFilter
                             options={statusOptions}
                             selected={statusFilter}
-                            onChange={setStatusFilter}
+                            onChange={handleStatusFilterChange}
                             placeholder="Filter by Status"
                             disabled={showOpenTasksOnly}
                         />
@@ -1254,7 +1274,7 @@ export default function DashboardPage() {
                     <Switch
                         id="open-tasks-toggle"
                         checked={showOpenTasksOnly}
-                        onCheckedChange={setShowOpenTasksOnly}
+                        onCheckedChange={handleOpenTasksToggle}
                     />
                     <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Show Open Tasks Only</Label>
                 </div>
@@ -1374,3 +1394,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

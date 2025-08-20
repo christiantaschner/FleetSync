@@ -248,7 +248,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <div className="flex flex-col flex-1">
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-primary text-primary-foreground px-4 md:hidden">
             <SidebarTrigger />
             <Logo />
             <div className="w-7 h-7" />

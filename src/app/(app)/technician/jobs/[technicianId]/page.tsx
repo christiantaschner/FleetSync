@@ -49,7 +49,7 @@ export default function TechnicianJobListPage() {
         if (foundTechnician) {
             const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
             const jobsForTech = mockJobs
-                .filter(j => j.assignedTechnicianId === technicianId && activeJobStatuses.includes(j.status))
+                .filter(j => j.assignedTechnicianId === technicianId)
                 .sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
             setAssignedJobs(jobsForTech);
         }
@@ -238,23 +238,25 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
-        <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                    <AvatarImage src={technician.avatarUrl} alt={technician.name} />
-                    <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
-                    <p className="text-muted-foreground">Welcome to your daily command center.</p>
-                </div>
-                 <Link href={`/technician/profile`}>
-                    <Button variant="outline">
-                        <User className="mr-2 h-4 w-4" /> View My Profile
-                    </Button>
-                </Link>
-            </CardContent>
-        </Card>
+      <Card>
+          <CardContent className="p-4 flex items-center gap-4">
+              <Avatar className="h-16 w-16">
+                  <AvatarImage src={technician.avatarUrl} alt={technician.name} />
+                  <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                  <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
+                  <p className="text-muted-foreground">Welcome to your daily command center.</p>
+              </div>
+          </CardContent>
+           <CardFooter className="p-4 pt-0">
+               <Link href={`/technician/profile`} className="w-full">
+                  <Button variant="outline" className="w-full">
+                      <User className="mr-2 h-4 w-4" /> View My Profile
+                  </Button>
+              </Link>
+          </CardFooter>
+      </Card>
       
       {assignedJobs.length === 0 ? (
         <Card className="text-center py-12">
@@ -270,7 +272,7 @@ export default function TechnicianJobListPage() {
                      <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline">
                         <Briefcase className="text-primary" /> {currentOrNextJob.status === 'In Progress' ? 'Current Job' : 'Next Job'}
                     </h2>
-                     <Card className="bg-background">
+                     <Card>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
@@ -294,7 +296,7 @@ export default function TechnicianJobListPage() {
                                         <Button 
                                             onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className={cn("w-full", action.nextStatus === 'Completed' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary/90')}
+                                            className={cn("w-full bg-primary hover:bg-primary/90")}
                                         >
                                             {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
                                             {action.label}

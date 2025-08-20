@@ -72,8 +72,8 @@ type NavItem = {
 
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
-  { href: "/contracts", label: 'contracts', icon: Repeat },
   { href: "/customers", label: 'customers', icon: ClipboardList },
+  { href: "/contracts", label: 'contracts', icon: Repeat },
   { href: "/reports", label: 'reports', icon: BarChart },
   { href: "/roadmap", label: 'roadmap', icon: BookOpen },
   { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true },

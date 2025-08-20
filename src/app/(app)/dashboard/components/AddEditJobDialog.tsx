@@ -36,7 +36,7 @@ import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
+import { addHours, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -201,16 +201,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
   };
 
-  const fetchAITimeSuggestion = useCallback(async (getMore: boolean = false) => {
+  const fetchAITimeSuggestion = useCallback(async (isGettingMore: boolean = false) => {
     if (!description.trim() && !title.trim() || !userProfile?.companyId || !appId) {
         toast({ title: "Cannot Suggest Time", description: "Please enter a Job Title.", variant: "default" });
         return;
     }
     setIsFetchingAISuggestion(true);
-    
-    const currentRejectedTimes = getMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : [];
-    if(getMore) {
-        setRejectedTimes(currentRejectedTimes);
+
+    const timesToExclude = isGettingMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : rejectedTimes;
+    if (isGettingMore) {
+        setRejectedTimes(timesToExclude);
     }
 
     const result = await suggestScheduleTimeAction({
@@ -219,7 +219,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         requiredSkills: requiredSkills,
         currentTime: new Date().toISOString(),
         businessHours: company?.settings?.businessHours || [],
-        excludedTimes: currentRejectedTimes,
+        excludedTimes: timesToExclude,
         technicians: technicians.map(tech => ({
             id: tech.id,
             name: tech.name,
@@ -239,7 +239,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         }
         setTimeSuggestions(result.data.suggestions);
     }
-
   }, [description, title, priority, requiredSkills, userProfile, appId, company, technicians, jobs, timeSuggestions, rejectedTimes, toast]);
   
   const handleAcceptSuggestion = (suggestion: SuggestScheduleTimeOutput['suggestions'][number]) => {

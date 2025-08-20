@@ -93,16 +93,18 @@ export default function TechnicianJobDetailPage() {
           }
         }
 
-        const historyQuery = query(
-            collection(db, `artifacts/${appId}/public/data/jobs`),
-            where("customerPhone", "==", fetchedJob.customerPhone),
-            where("status", "==", "Completed"),
-            where("createdAt", "<", fetchedJob.createdAt),
-            orderBy("createdAt", "desc"),
-            limit(3)
-        );
-        const historySnapshot = await getDocs(historyQuery);
-        setHistoryJobs(historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job)));
+        if (fetchedJob.customerId) {
+            const historyQuery = query(
+                collection(db, `artifacts/${appId}/public/data/jobs`),
+                where("customerId", "==", fetchedJob.customerId),
+                where("status", "==", "Completed"),
+                where("createdAt", "<", fetchedJob.createdAt),
+                orderBy("createdAt", "desc"),
+                limit(3)
+            );
+            const historySnapshot = await getDocs(historyQuery);
+            setHistoryJobs(historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job)));
+        }
 
       }
       setIsLoading(false);

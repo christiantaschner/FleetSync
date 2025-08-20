@@ -83,6 +83,7 @@ export default function TechnicianProfilePage() {
   const [isSuggestChangeOpen, setIsSuggestChangeOpen] = useState(false);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const isViewingOwnPage = userProfile?.uid === firebaseUser?.uid;
 
   useEffect(() => {
     if (authLoading || !firebaseUser) return;
@@ -245,7 +246,7 @@ export default function TechnicianProfilePage() {
             <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsSuggestChangeOpen(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setIsSuggestChangeOpen(true)} disabled={!isViewingOwnPage}>
                 <Edit className="mr-2 h-4 w-4"/>
                 Suggest a Change
             </Button>
@@ -275,7 +276,7 @@ export default function TechnicianProfilePage() {
                     {technician.skills && technician.skills.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                         {technician.skills.map(skill => (
-                            <Badge key={skill} variant="secondary" className="text-sm">{skill}</Badge>
+                            <Badge key={skill.name} variant="secondary" className="text-sm">{skill.name}</Badge>
                         ))}
                         </div>
                     ) : (
@@ -360,7 +361,7 @@ export default function TechnicianProfilePage() {
                                                   <li key={key}>
                                                       <span className="capitalize font-medium text-foreground">{key}:</span>{' '}
                                                       {key === 'skills' && Array.isArray(val) ? 
-                                                        (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map(s => <Badge key={s} variant="outline" className="font-normal">{s}</Badge>)}</div>)
+                                                        (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map((s: TechnicianSkill) => <Badge key={s.name} variant="outline" className="font-normal">{s.name}</Badge>)}</div>)
                                                         : (String(val))
                                                       }
                                                   </li>
@@ -386,7 +387,7 @@ export default function TechnicianProfilePage() {
                                                         <li key={key} className={wasChanged ? 'text-green-600 font-bold' : ''}>
                                                             <span className="capitalize font-medium text-foreground">{key}:</span>{' '}
                                                             {key === 'skills' && Array.isArray(val) ? 
-                                                              (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map(s => <Badge key={s} variant="outline" className="font-normal">{s}</Badge>)}</div>)
+                                                              (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map((s: TechnicianSkill) => <Badge key={s.name} variant="outline" className="font-normal">{s.name}</Badge>)}</div>)
                                                               : (String(val))
                                                             }
                                                         </li>

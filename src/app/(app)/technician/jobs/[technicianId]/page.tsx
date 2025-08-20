@@ -244,19 +244,17 @@ export default function TechnicianJobListPage() {
             <CardDescription>Welcome to your daily command center.</CardDescription>
           </div>
         </CardHeader>
-        {isViewingOwnPage && (
-           <CardFooter className="bg-secondary/50 p-3 grid grid-cols-2 gap-2">
-             <Button onClick={handleUpdateLocation} disabled={isUpdatingLocation} className="w-full">
-              {isUpdatingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}
-              Update My Location
+        <CardFooter className="bg-secondary/50 p-3 grid grid-cols-2 gap-2">
+            <Button onClick={handleUpdateLocation} disabled={isUpdatingLocation || !isViewingOwnPage} className="w-full">
+            {isUpdatingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}
+            Update My Location
             </Button>
             <Link href="/technician/profile" className="w-full">
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" disabled={!isViewingOwnPage}>
                     <User className="mr-2 h-4 w-4" /> View My Profile
                 </Button>
             </Link>
-          </CardFooter>
-        )}
+        </CardFooter>
       </Card>
       
       {assignedJobs.length === 0 ? (

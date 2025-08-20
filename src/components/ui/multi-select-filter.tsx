@@ -2,11 +2,11 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Command, CommandGroup, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -70,7 +70,9 @@ export function MultiSelectFilter({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0 sm:w-[var(--radix-popover-trigger-width)]">
         <Command>
+          <CommandInput placeholder="Search..." />
           <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               <div
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent"

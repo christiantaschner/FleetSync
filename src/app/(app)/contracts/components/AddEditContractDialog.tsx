@@ -131,7 +131,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 <DialogHeader className="px-6 pt-6 flex-shrink-0">
                     <DialogTitle className="font-headline">{contract ? 'Edit Contract' : 'Create New Contract'}</DialogTitle>
                     <DialogDescription>
-                        {contract ? 'Update the details for this recurring service contract.' : 'Create a new template for recurring jobs.'}
+                        {contract ? '' : 'Create a new template for recurring jobs.'}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto px-6">
@@ -235,7 +235,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="jobTemplate.estimatedDuration">Estimated Duration</Label>
+                                <Label htmlFor="jobTemplate.estimatedDuration">Estimated Duration *</Label>
                                 <div className="flex items-center gap-2">
                                 <Input id="jobTemplate.estimatedDuration" type="number" {...register('jobTemplate.estimatedDuration', { valueAsNumber: true })} />
                                 <Controller
@@ -252,6 +252,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                     )}
                                 />
                                 </div>
+                                {errors.jobTemplate?.estimatedDuration && <p className="text-destructive text-sm mt-1">{errors.jobTemplate.estimatedDuration.message}</p>}
                             </div>
                         </div>
                         <div className="flex items-center space-x-2 pt-2">

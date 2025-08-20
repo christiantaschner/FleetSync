@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -97,16 +97,19 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
         }
     }, [isOpen, contract, reset, userProfile]);
 
-    useEffect(() => {
-        if (customerNameValue && customerNameValue.length > 1) {
-            const filtered = customers.filter(c => c.name.toLowerCase().includes(customerNameValue.toLowerCase()));
+    const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setValue('customerName', value, { shouldValidate: true });
+        
+        if (value.length > 1) {
+            const filtered = customers.filter(c => c.name.toLowerCase().includes(value.toLowerCase()));
             setCustomerSuggestions(filtered);
             setIsCustomerPopoverOpen(filtered.length > 0);
         } else {
             setCustomerSuggestions([]);
             setIsCustomerPopoverOpen(false);
         }
-    }, [customerNameValue, customers]);
+    };
     
     const handleSelectCustomer = (customer: Customer) => {
       setValue('customerName', customer.name);
@@ -168,7 +171,8 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                 <PopoverAnchor>
                                     <Input 
                                       id="customerName"
-                                      {...register('customerName')} 
+                                      value={customerNameValue}
+                                      onChange={handleCustomerNameChange}
                                       autoComplete="off" 
                                     />
                                 </PopoverAnchor>

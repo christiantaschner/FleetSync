@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -165,11 +164,18 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                         <h3 className="text-lg font-semibold flex items-center gap-2"><User/>Customer Info</h3>
                         <div>
                             <Label htmlFor="customerName">Customer Name *</Label>
-                            <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                             <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
                                 <PopoverAnchor>
-                                    <Input id="customerName" {...register('customerName')} autoComplete="off" />
+                                    <Input 
+                                      id="customerName"
+                                      {...register('customerName')} 
+                                      autoComplete="off" 
+                                    />
                                 </PopoverAnchor>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <PopoverContent 
+                                  className="w-[--radix-popover-trigger-width] p-0"
+                                  onOpenAutoFocus={(e) => e.preventDefault()}
+                                >
                                     {customerSuggestions.map(customer => (
                                         <div key={customer.id} className="p-2 cursor-pointer hover:bg-accent" onClick={() => handleSelectCustomer(customer)}>
                                             <p className="font-medium">{customer.name}</p>
@@ -322,3 +328,5 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
 };
 
 export default AddEditContractDialog;
+
+    

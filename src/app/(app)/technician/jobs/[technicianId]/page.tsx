@@ -11,13 +11,13 @@ import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, U
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, startOfToday, endOfTomorrow } from 'date-fns';
 import DailyTimeline from './components/DailyTimeline';
 import { notifyCustomerAction, calculateTravelMetricsAction } from '@/actions/ai-actions';
 
@@ -37,8 +37,6 @@ export default function TechnicianJobListPage() {
   const isInitialLoad = useRef(true);
   const prevJobOrder = useRef<string>("");
 
-  // For testing purposes, we grant full permissions to admins viewing this page.
-  const hasPermission = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin' || userProfile?.uid === technicianId;
   const isViewingOwnPage = userProfile?.uid === technicianId;
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -73,12 +71,16 @@ export default function TechnicianJobListPage() {
         setTechnician(techData);
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+        const startOfToday = startOfToday();
+        const endOfNextDay = endOfTomorrow();
+        
         const jobsQuery = query(
           collection(db, `artifacts/${appId}/public/data/jobs`),
           where("companyId", "==", techData.companyId),
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses),
-          orderBy("routeOrder"),
+          where("scheduledTime", ">=", startOfToday.toISOString()),
+          where("scheduledTime", "<=", endOfNextDay.toISOString()),
           orderBy("scheduledTime")
         );
 
@@ -237,16 +239,6 @@ export default function TechnicianJobListPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician Roster
         </Button>
       )}
-
-      {isViewingOwnPage && !hasPermission && (
-        <Alert className="mb-6">
-            <Eye className="h-4 w-4" />
-            <AlertTitle className="font-semibold">Technician View</AlertTitle>
-            <AlertDescription>
-                You are viewing your own job list. To manage other technicians, please contact an administrator.
-            </AlertDescription>
-        </Alert>
-      )}
       
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center gap-4">
@@ -272,7 +264,7 @@ export default function TechnicianJobListPage() {
         <Card className="text-center py-12">
             <CardContent>
                 <h3 className="text-lg font-semibold">All Clear!</h3>
-                <p className="text-muted-foreground mt-1">You have no active jobs assigned for today.</p>
+                <p className="text-muted-foreground mt-1">You have no active jobs assigned for today or tomorrow.</p>
             </CardContent>
         </Card>
       ) : (
@@ -297,7 +289,8 @@ export default function TechnicianJobListPage() {
                                 <p className="text-xs text-muted-foreground pt-1">Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
                             </CardDescription>
                         </CardHeader>
-                        <CardFooter className="flex flex-col sm:flex-row gap-2">
+                        <CardFooter className="grid grid-cols-3 gap-2">
+                           <div className="col-span-2 flex flex-col sm:flex-row gap-2">
                             {getNextAction(currentOrNextJob.status) ? (
                                 (() => {
                                     const action = getNextAction(currentOrNextJob.status)!;
@@ -319,6 +312,7 @@ export default function TechnicianJobListPage() {
                                      <Eye className="mr-2 h-4 w-4" /> Details
                                 </Button>
                             </Link>
+                            </div>
                              <Button variant="default" size="icon" onClick={() => handleNavigate(currentOrNextJob)} className="h-10 w-10 bg-primary hover:bg-primary/90">
                                 <Navigation className="h-4 w-4"/>
                             </Button>

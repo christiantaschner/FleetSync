@@ -18,6 +18,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import DailyTimeline from './components/DailyTimeline';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
@@ -206,7 +207,7 @@ export default function TechnicianJobListPage() {
   }
 
   const currentOrNextJob = assignedJobs.find(job => job.status === 'In Progress' || job.status === 'En Route') || assignedJobs[0];
-  const upcomingJobs = currentOrNextJob ? assignedJobs.filter(job => job.id !== currentOrNextJob.id) : [];
+  const upcomingJobs = currentOrNextJob ? assignedJobs.filter(job => job.id !== currentOrNextJob.id) : assignedJobs;
 
   const handleNavigate = (job: Job) => {
     if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
@@ -278,12 +279,13 @@ export default function TechnicianJobListPage() {
                                 <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
                                 <Badge variant={currentOrNextJob.priority === 'High' ? 'destructive' : 'default'}>{currentOrNextJob.priority}</Badge>
                             </div>
-                            <CardDescription className="pt-1">
+                            <CardDescription className="pt-1 space-y-1">
                                 <p className="font-semibold text-base">{currentOrNextJob.customerName}</p>
                                 <p className="flex items-center gap-1.5"><MapPin size={14}/> {currentOrNextJob.location.address}</p>
                                 {currentOrNextJob.scheduledTime && (
                                     <p className="flex items-center gap-1.5"><Clock size={14}/> {format(new Date(currentOrNextJob.scheduledTime), 'PPp')}</p>
                                 )}
+                                 <p className="flex items-center gap-1.5"><Clock size={14}/> Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
                             </CardDescription>
                         </CardHeader>
                         <CardFooter className="grid grid-cols-2 gap-2">
@@ -304,22 +306,7 @@ export default function TechnicianJobListPage() {
                     <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline mt-8">
                         <ListChecks className="text-primary" /> Upcoming Jobs
                     </h2>
-                    <div className="space-y-3">
-                    {upcomingJobs.map(job => (
-                        <Card key={job.id} className="overflow-hidden">
-                            <CardContent className="p-3 flex items-center justify-between">
-                                <div>
-                                    <p className="font-semibold">{job.title}</p>
-                                    <p className="text-sm text-muted-foreground">{job.customerName}</p>
-                                    <p className="text-xs text-muted-foreground">{job.scheduledTime ? format(new Date(job.scheduledTime), 'p') : 'Unscheduled'}</p>
-                                </div>
-                                <Link href={`/technician/${job.id}`}>
-                                    <Button variant="ghost" size="sm">Details</Button>
-                                </Link>
-                            </CardContent>
-                        </Card>
-                    ))}
-                    </div>
+                    <DailyTimeline jobs={upcomingJobs} />
                 </div>
             )}
         </>
@@ -328,5 +315,3 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
-
-    

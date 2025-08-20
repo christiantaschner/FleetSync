@@ -6,7 +6,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
-import type { Contract, Job, Customer } from '@/types';
+import type { Contract, Job, Customer, Technician } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import AddEditContractDialog from './components/AddEditContractDialog';
@@ -15,7 +15,7 @@ import GenerateJobsDialog from './components/GenerateJobsDialog';
 import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { mockContracts, mockJobs, mockCustomers } from '@/lib/mock-data';
+import { mockContracts, mockJobs, mockCustomers, mockTechnicians } from '@/lib/mock-data';
 import { addDays, isBefore } from 'date-fns';
 import { getNextDueDate } from '@/lib/utils';
 import { MockModeBanner } from '@/components/common/MockModeBanner';
@@ -25,6 +25,7 @@ export default function ContractsPage() {
     const [contracts, setContracts] = useState<(Contract & { isDue?: boolean })[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [technicians, setTechnicians] = useState<Technician[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
@@ -61,6 +62,7 @@ export default function ContractsPage() {
             setContracts(contractsData);
             setJobs(mockJobs);
             setCustomers(mockCustomers);
+            setTechnicians(mockTechnicians);
             setIsLoading(false);
             return () => {};
         }
@@ -73,19 +75,27 @@ export default function ContractsPage() {
         setIsLoading(true);
         let jobsUnsubscribe: (() => void) | null = null;
         let customersUnsubscribe: (() => void) | null = null;
+        let techniciansUnsubscribe: (() => void) | null = null;
         
         const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", userProfile.companyId));
         const unsubscribeContracts = onSnapshot(contractsQuery, async (contractsSnapshot) => {
             
             if (jobsUnsubscribe) jobsUnsubscribe();
             if (customersUnsubscribe) customersUnsubscribe();
+            if (techniciansUnsubscribe) techniciansUnsubscribe();
 
             const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", userProfile.companyId));
             const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", userProfile.companyId));
+            const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", userProfile.companyId));
             
             customersUnsubscribe = onSnapshot(customersQuery, (customersSnapshot) => {
                  const allCustomers = customersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
                  setCustomers(allCustomers);
+            });
+
+            techniciansUnsubscribe = onSnapshot(techniciansQuery, (snapshot) => {
+                const techs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
+                setTechnicians(techs);
             });
             
             jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
@@ -136,6 +146,7 @@ export default function ContractsPage() {
             unsubscribeContracts();
             if (jobsUnsubscribe) jobsUnsubscribe();
             if (customersUnsubscribe) customersUnsubscribe();
+            if (techniciansUnsubscribe) techniciansUnsubscribe();
         };
     }, [userProfile, appId]);
 
@@ -180,6 +191,7 @@ export default function ContractsPage() {
 
     return (
         <div className="space-y-6">
+            <MockModeBanner />
             {userProfile?.companyId && (
                 <AddEditContractDialog
                     isOpen={isAddEditDialogOpen}
@@ -199,6 +211,9 @@ export default function ContractsPage() {
                 isOpen={isSuggestAppointmentOpen}
                 onClose={onSuggestDialogClose}
                 contract={selectedContract}
+                technicians={technicians}
+                jobs={jobs}
+                onJobCreated={fetchContractsAndJobs}
             />
 
             <Card>

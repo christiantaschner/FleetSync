@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,80 +11,146 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { suggestNextAppointmentAction } from '@/actions/ai-actions';
-import type { SuggestNextAppointmentOutput, Contract } from '@/types';
-import { Loader2, Sparkles, Copy, X, ArrowRight } from 'lucide-react';
+import { suggestScheduleTimeAction } from '@/actions/ai-actions';
+import type { Contract, Technician, Job, JobStatus, SuggestScheduleTimeOutput } from '@/types';
+import { Loader2, Sparkles, X, UserCheck, Bot, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
 import { useAuth } from '@/contexts/auth-context';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 interface SuggestAppointmentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   contract: Contract | null;
+  technicians: Technician[];
+  jobs: Job[];
+  onJobCreated: () => void;
 }
 
-const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isOpen, onClose, contract }) => {
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
+
+const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isOpen, onClose, contract, technicians, jobs, onJobCreated }) => {
   const { toast } = useToast();
-  const { userProfile } = useAuth();
+  const { userProfile, company } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [suggestion, setSuggestion] = useState<SuggestNextAppointmentOutput | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [suggestions, setSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestScheduleTimeOutput['suggestions'][number] | null>(null);
+  const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  useEffect(() => {
-    const getSuggestion = async () => {
-        if (isOpen && contract && userProfile?.companyId && appId) {
-            setIsLoading(true);
-            setError(null);
-            setSuggestion(null);
+  const getSuggestions = useCallback(async (isGettingMore: boolean = false) => {
+    if (!isOpen || !contract || !userProfile?.companyId || !appId || !company) return;
 
-            const result = await suggestNextAppointmentAction({
-                companyId: userProfile.companyId,
-                appId,
-                contract,
-            });
+    setIsLoading(true);
+    setError(null);
 
-            if (result.error) {
-                setError(result.error);
-                toast({ title: "Error", description: result.error, variant: "destructive" });
-            } else {
-                setSuggestion(result.data);
-            }
-            setIsLoading(false);
-        }
-    };
+    if (!isGettingMore) {
+        setSuggestions([]);
+        setSelectedSuggestion(null);
+        setRejectedTimes([]);
+    }
     
-    getSuggestion();
-  }, [isOpen, contract, toast, userProfile, appId]);
+    const timesToExclude = isGettingMore ? [...rejectedTimes, ...suggestions.map(s => s.time)] : [];
 
-  const handleCopyToClipboard = () => {
-    if (suggestion?.message) {
-      navigator.clipboard.writeText(suggestion.message);
-      toast({ title: "Copied!", description: "Message copied to clipboard." });
+    const result = await suggestScheduleTimeAction({
+      companyId: userProfile.companyId,
+      jobPriority: contract.jobTemplate.priority,
+      requiredSkills: contract.jobTemplate.requiredSkills || [],
+      currentTime: new Date().toISOString(),
+      businessHours: company.settings?.businessHours || [],
+      excludedTimes: timesToExclude,
+      technicians: technicians.map(tech => ({
+        id: tech.id,
+        name: tech.name,
+        skills: tech.skills.map(s => s.name),
+        jobs: jobs.filter(j => j.assignedTechnicianId === tech.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
+            .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! }))
+      }))
+    });
+
+    if (result.error) {
+      setError(result.error);
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else if (result.data?.suggestions) {
+      const newSuggestions = result.data.suggestions;
+      if (newSuggestions.length === 0 && isGettingMore) {
+        toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
+      }
+      setSuggestions(prev => [...prev, ...newSuggestions]);
+    }
+    setIsLoading(false);
+  }, [isOpen, contract, userProfile, appId, company, technicians, jobs, toast, suggestions, rejectedTimes]);
+  
+  useEffect(() => {
+    if (isOpen) {
+      getSuggestions(false);
+    }
+  }, [isOpen]); // simplified dependency array
+
+  const handleConfirm = async () => {
+    if (!selectedSuggestion || !contract || !userProfile?.companyId || !appId || !db) return;
+
+    setIsConfirming(true);
+    try {
+        const newJobPayload = {
+            ...contract.jobTemplate,
+            companyId: userProfile.companyId,
+            customerName: contract.customerName,
+            customerPhone: contract.customerPhone || '',
+            customerEmail: '',
+            location: { address: contract.customerAddress, latitude: 0, longitude: 0 },
+            status: 'Unassigned' as const,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            scheduledTime: selectedSuggestion.time,
+            sourceContractId: contract.id,
+            notes: `Generated from Contract ID: ${contract.id} via "Suggest Appointment" feature.`,
+            assignedTechnicianId: null, // Start as unassigned
+        };
+
+        const jobsCollectionRef = collection(db, `artifacts/${appId}/public/data/jobs`);
+        await addDoc(jobsCollectionRef, newJobPayload);
+        
+        toast({
+            title: "Job Scheduled!",
+            description: `A new job for ${contract.customerName} has been added to the schedule for ${format(new Date(selectedSuggestion.time), 'PPp')}.`
+        });
+        
+        onJobCreated();
+        onClose();
+
+    } catch (e: any) {
+        console.error("Failed to create job from suggestion:", e);
+        toast({ title: "Error", description: `Could not create job: ${e.message}`, variant: "destructive" });
+    } finally {
+        setIsConfirming(false);
     }
   };
 
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={(open) => { if(!open) onClose() }}>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" /> AI Appointment Suggestion
           </DialogTitle>
           <DialogDescription>
-            AI has drafted a message and created a draft job for {contract?.customerName}.
+            Fleety has analyzed all technician schedules to find the best time for {contract?.jobTemplate.title} for {contract?.customerName}.
           </DialogDescription>
         </DialogHeader>
         
-        {isLoading && (
+        {isLoading && suggestions.length === 0 && (
             <div className="flex items-center justify-center p-10 space-x-2">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <span className="text-muted-foreground">Generating suggestion...</span>
+                <span className="text-muted-foreground">Finding the best time slots...</span>
             </div>
         )}
 
@@ -95,45 +161,56 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             </Alert>
         )}
 
-        {suggestion && (
-            <div className="space-y-4 py-2">
-                <div>
-                    <Label htmlFor="suggested-message">Drafted Message</Label>
-                    <Textarea 
-                        id="suggested-message"
-                        readOnly 
-                        value={suggestion.message} 
-                        rows={6}
-                        className="bg-secondary/50"
-                    />
-                </div>
-                 <Alert>
-                    <AlertTitle className="font-semibold">Next Suggested Date</AlertTitle>
-                    <AlertDescription>{suggestion.suggestedDate}</AlertDescription>
-                </Alert>
-                <Alert variant="default" className="bg-primary/5 border-primary/20">
-                    <AlertTitle className="font-semibold text-primary">Draft Job Created</AlertTitle>
-                    <AlertDescription>
-                        A draft job has been created. Click below to review and assign it.
-                    </AlertDescription>
-                     <div className="mt-3">
-                        <Link href={`/dashboard?jobFilter=${suggestion.createdJobId}`}>
-                            <Button variant="outline" size="sm" onClick={onClose}>
-                                View Draft Job <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                        </Link>
-                    </div>
-                </Alert>
+        {suggestions.length > 0 && (
+            <div className="space-y-3 py-2 max-h-80 overflow-y-auto pr-3">
+               {suggestions.map((suggestion, index) => {
+                    const techName = technicians.find(t => t.id === suggestion.technicianId)?.name || 'Unknown';
+                    return (
+                        <button
+                           key={`${suggestion.time}-${index}`}
+                           type="button"
+                           onClick={() => setSelectedSuggestion(suggestion)}
+                           className={cn(
+                            "w-full p-3 border rounded-md text-left hover:bg-secondary transition-colors ring-2 ring-transparent",
+                            selectedSuggestion?.time === suggestion.time && "ring-green-500 bg-green-50"
+                           )}
+                       >
+                           <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'EEEE, MMM d @ p')}</p>
+                           <p className="text-xs text-muted-foreground">with {techName}</p>
+                           <p className="text-xs text-muted-foreground mt-1 italic">"{suggestion.reasoning}"</p>
+                       </button>
+                    )
+               })}
             </div>
         )}
 
-        <DialogFooter className="pt-4 flex-col sm:flex-row gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>
-            <X className="mr-2 h-4 w-4" /> Close
-          </Button>
-          <Button onClick={handleCopyToClipboard} disabled={isLoading || !suggestion}>
-            <Copy className="mr-2 h-4 w-4" /> Copy Message
-          </Button>
+        {!isLoading && suggestions.length === 0 && !error && (
+            <Alert>
+                <AlertTitle>No Suggestions Found</AlertTitle>
+                <AlertDescription>
+                    Fleety could not find any suitable appointment times based on current schedules and technician availability. You may need to adjust technician working hours or clear some existing jobs.
+                </AlertDescription>
+            </Alert>
+        )}
+
+        <DialogFooter className="pt-4 flex-col sm:flex-row gap-2 sm:justify-between">
+           <Button
+                type="button"
+                variant="ghost"
+                onClick={() => getSuggestions(true)}
+                disabled={isLoading || suggestions.length === 0}
+            >
+                <RefreshCw className="mr-2 h-4 w-4" /> Get More Suggestions
+            </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+                <X className="mr-2 h-4 w-4" /> Cancel
+            </Button>
+            <Button onClick={handleConfirm} disabled={!selectedSuggestion || isConfirming}>
+                {isConfirming ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4"/>}
+                Schedule Job
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -141,3 +218,4 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
 };
 
 export default SuggestAppointmentDialog;
+

@@ -8,7 +8,6 @@ import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predict-schedule-risk";
 import { generateCustomerNotification as generateCustomerNotificationFlow } from "@/ai/flows/generate-customer-notification-flow";
-import { suggestNextAppointment as suggestNextAppointmentFlow } from "@/ai/flows/suggest-next-appointment-flow";
 import { troubleshootEquipment as troubleshootEquipmentFlow } from "@/ai/flows/troubleshoot-flow";
 import { estimateTravelDistance as estimateTravelDistanceFlow } from "@/ai/flows/estimate-travel-distance-flow";
 import { suggestScheduleTime as suggestScheduleTimeFlow } from "@/ai/flows/suggest-schedule-time";
@@ -41,8 +40,6 @@ import type {
   PredictScheduleRiskInput,
   PredictScheduleRiskOutput,
   NotifyCustomerInput,
-  SuggestNextAppointmentInput,
-  SuggestNextAppointmentOutput,
   TroubleshootEquipmentInput,
   TroubleshootEquipmentOutput,
   CalculateTravelMetricsInput,
@@ -345,37 +342,6 @@ export async function notifyCustomerAction(
     const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
     console.error(JSON.stringify({
         message: 'Error in notifyCustomerAction',
-        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
-        severity: "ERROR"
-    }));
-    return { data: null, error: errorMessage };
-  }
-}
-
-export async function suggestNextAppointmentAction(
-  input: SuggestNextAppointmentInput
-): Promise<{ data: SuggestNextAppointmentOutput | null; error: string | null }> {
-  try {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        const mockJobId = `mock_job_${crypto.randomUUID()}`;
-        return { 
-            data: {
-                createdJobId: mockJobId,
-                suggestedDate: new Date().toLocaleDateString(),
-                message: "Mock message for your review."
-            }, 
-            error: null 
-        };
-    }
-    const result = await suggestNextAppointmentFlow(input);
-    return { data: result, error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map(err => err.message).join(", ") };
-    }
-    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-    console.error(JSON.stringify({
-        message: 'Error in suggestNextAppointmentAction',
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));

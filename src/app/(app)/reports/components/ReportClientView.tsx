@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Job, Technician, SummarizeFtfrOutput } from "@/types";
+import type { Job, Technician, SummarizeFtfrOutput, RunReportAnalysisOutput } from "@/types";
 import {
   CheckCircle,
   Clock,
@@ -38,14 +38,13 @@ import { subDays } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { summarizeFtfrAction } from "@/actions/ai-actions";
+import { summarizeFtfrAction, runReportAnalysisAction } from "@/actions/ai-actions";
 import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ReportAnalysisDialog from "./ReportAnalysisDialog";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -103,6 +102,10 @@ export default function ReportClientView() {
   
   const [ftfrSummary, setFtfrSummary] = useState<SummarizeFtfrOutput | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<RunReportAnalysisOutput | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -281,6 +284,18 @@ export default function ReportClientView() {
       },
     };
   }, [filteredJobs]);
+  
+  const handleRunAnalysis = async () => {
+    setIsAnalyzing(true);
+    const result = await runReportAnalysisAction({ kpiData: reportData.kpis });
+    if(result.error) {
+        toast({ title: "Analysis Failed", description: result.error, variant: "destructive" });
+    } else {
+        setAnalysisResult(result.data);
+        setIsAnalysisOpen(true);
+    }
+    setIsAnalyzing(false);
+  }
 
   if (authLoading || isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
@@ -288,8 +303,20 @@ export default function ReportClientView() {
 
   return (
     <div className="space-y-6">
+       <ReportAnalysisDialog 
+            isOpen={isAnalysisOpen} 
+            setIsOpen={setIsAnalysisOpen}
+            analysisResult={analysisResult}
+        />
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
+            <p className="text-muted-foreground">Analyze your fleet's performance and get AI-powered insights.</p>
+        </div>
+        <Button onClick={handleRunAnalysis} disabled={isAnalyzing}>
+            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+            Get AI Analysis
+        </Button>
       </div>
       <Card>
         <CardHeader>
@@ -378,5 +405,5 @@ export default function ReportClientView() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

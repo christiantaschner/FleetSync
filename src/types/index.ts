@@ -756,3 +756,33 @@ export const RunFleetOptimizationOutputSchema = z.object({
     overallReasoning: z.string(),
 });
 export type RunFleetOptimizationOutput = z.infer<typeof RunFleetOptimizationOutputSchema>;
+
+
+export const KpiDataSchema = z.object({
+    totalJobs: z.number(),
+    completedJobs: z.number(),
+    avgDuration: z.string(),
+    avgTimeToAssign: z.string(),
+    avgSatisfaction: z.string(),
+    ftfr: z.string(),
+    onTimeArrivalRate: z.string(),
+    totalEmissions: z.number(),
+    totalTravelDistance: z.number(),
+    avgTravelTime: z.string(),
+    avgBreakTime: z.string(),
+    avgJobsPerTech: z.string(),
+});
+export type KpiData = z.infer<typeof KpiDataSchema>;
+
+export const RunReportAnalysisInputSchema = z.object({
+    kpiData: KpiDataSchema,
+});
+export type RunReportAnalysisInput = z.infer<typeof RunReportAnalysisInputSchema>;
+
+
+export const RunReportAnalysisOutputSchema = z.object({
+    insights: z.string().describe("A high-level summary of the data's key takeaways."),
+    suggestions: z.array(z.string()).describe("A list of concrete, actionable suggestions for improvement using app features."),
+    quickWins: z.array(z.string()).describe("A list of simple actions the user can take right now for an immediate impact."),
+});
+export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;

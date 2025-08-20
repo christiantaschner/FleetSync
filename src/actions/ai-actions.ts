@@ -16,6 +16,7 @@ import { summarizeFtfr as summarizeFtfrFlow } from "@/ai/flows/summarize-ftfr-fl
 import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-assistant-flow";
 import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/ai/flows/generate-service-prep-message-flow";
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
+import { runReportAnalysis as runReportAnalysisFlow } from "@/ai/flows/run-report-analysis-flow";
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
@@ -51,6 +52,8 @@ import type {
   AnswerUserQuestionOutput,
   RunFleetOptimizationInput,
   RunFleetOptimizationOutput,
+  RunReportAnalysisInput,
+  RunReportAnalysisOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -697,6 +700,27 @@ export async function runFleetOptimizationAction(
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         console.error(JSON.stringify({
             message: 'Error running fleet optimization',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { data: null, error: errorMessage };
+    }
+}
+
+
+export async function runReportAnalysisAction(
+    input: RunReportAnalysisInput
+): Promise<{ data: RunReportAnalysisOutput | null; error: string | null }> {
+    try {
+        const result = await runReportAnalysisFlow(input);
+        return { data: result, error: null };
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map((err) => err.message).join(", ") };
+        }
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error running report analysis',
             error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
             severity: "ERROR"
         }));

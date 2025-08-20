@@ -13,8 +13,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { suggestScheduleTimeAction } from '@/actions/ai-actions';
-import type { Contract, Technician, Job, JobStatus, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, Sparkles, X, UserCheck, Bot, RefreshCw, Phone } from 'lucide-react';
+import type { Contract, Technician, Job, JobStatus, SuggestScheduleTimeOutput, Customer } from '@/types';
+import { Loader2, Sparkles, X, UserCheck, Bot, RefreshCw, Phone, Mail } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth-context';
 import { format } from 'date-fns';
@@ -28,12 +28,13 @@ interface SuggestAppointmentDialogProps {
   contract: Contract | null;
   technicians: Technician[];
   jobs: Job[];
+  customers: Customer[];
   onJobCreated: () => void;
 }
 
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
-const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isOpen, onClose, contract, technicians, jobs, onJobCreated }) => {
+const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isOpen, onClose, contract, technicians, jobs, customers, onJobCreated }) => {
   const { toast } = useToast();
   const { userProfile, company } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +45,8 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
   const [error, setError] = useState<string | null>(null);
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  const customerEmail = contract ? customers.find(c => c.name === contract.customerName)?.email : null;
 
   const getSuggestions = useCallback(async (isGettingMore: boolean = false) => {
     if (!isOpen || !contract || !userProfile?.companyId || !appId || !company) return;
@@ -104,7 +107,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             companyId: userProfile.companyId,
             customerName: contract.customerName,
             customerPhone: contract.customerPhone || '',
-            customerEmail: '',
+            customerEmail: customerEmail || '',
             location: { address: contract.customerAddress, latitude: 0, longitude: 0 },
             status: 'Unassigned' as const,
             createdAt: serverTimestamp(),
@@ -150,9 +153,13 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
         {contract?.customerName && (
           <Alert variant="default" className="border-blue-200 bg-blue-50 mt-4">
             <Phone className="h-4 w-4 text-blue-600"/>
-            <AlertTitle className="font-semibold text-blue-800">Contact Customer</AlertTitle>
+            <AlertTitle className="font-semibold text-blue-800">Contact Customer to Confirm</AlertTitle>
             <AlertDescription className="text-blue-700">
-                Please call <strong>{contract.customerName}</strong> at <a href={`tel:${contract.customerPhone}`} className="font-bold underline">{contract.customerPhone || 'N/A'}</a> to confirm a new time.
+                <p>Please call <strong>{contract.customerName}</strong> to confirm a new appointment time.</p>
+                <div className="text-xs mt-1 space-y-0.5">
+                    <p><strong>Phone:</strong> <a href={`tel:${contract.customerPhone}`} className="font-bold underline">{contract.customerPhone || 'N/A'}</a></p>
+                    <p><strong>Email:</strong> <a href={`mailto:${customerEmail}`} className="font-bold underline">{customerEmail || 'N/A'}</a></p>
+                </div>
             </AlertDescription>
           </Alert>
         )}
@@ -181,8 +188,8 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
                            type="button"
                            onClick={() => setSelectedSuggestion(suggestion)}
                            className={cn(
-                            "w-full p-3 border rounded-md text-left hover:bg-secondary transition-colors ring-2 ring-transparent",
-                            selectedSuggestion?.time === suggestion.time && "ring-green-500 bg-green-50"
+                            "w-full p-3 border rounded-md text-left hover:bg-secondary transition-all",
+                            selectedSuggestion?.time === suggestion.time && "ring-2 ring-green-500 bg-green-50"
                            )}
                        >
                            <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'EEEE, MMM d @ p')}</p>

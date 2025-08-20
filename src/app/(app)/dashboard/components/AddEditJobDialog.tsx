@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput } from "@/types";
@@ -553,7 +553,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 </Alert>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                {/* --- LEFT COLUMN --- */}
                 <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><User className="h-4 w-4"/> Customer & Location</h3>
                   <div>
                     <Label htmlFor="customerName">Customer Name</Label>
                     <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
@@ -606,7 +608,58 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       required
                     />
                   </div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2 pt-2"><Info className="h-4 w-4"/> Job Details</h3>
                   <div>
+                    <Label htmlFor="jobTitle">Job Title *</Label>
+                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+                  </div>
+                  <div>
+                    <Label htmlFor="jobDescription">Job Description</Label>
+                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={5} className="bg-card" />
+                  </div>
+                </div>
+
+                {/* --- RIGHT COLUMN --- */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><Settings className="h-4 w-4"/> Job Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="jobPriority">Job Priority *</Label>
+                        <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
+                          <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
+                            <SelectValue placeholder="Select priority" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label htmlFor="estimatedDuration">Estimated Duration *</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                id="estimatedDuration"
+                                type="number"
+                                value={estimatedDuration || ''}
+                                onChange={(e) => setEstimatedDuration(e.target.value ? parseInt(e.target.value, 10) : 1)}
+                                min="1"
+                                placeholder="e.g., 2"
+                            />
+                            <Select value={durationUnit} onValueChange={(value: 'hours' | 'days') => setDurationUnit(value)}>
+                                <SelectTrigger className="w-[120px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="hours">Hours</SelectItem>
+                                    <SelectItem value="days">Days</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                      </div>
+                  </div>
+                   <div>
                     <Label htmlFor="contractId">Link to Contract (Optional)</Label>
                     <Select value={selectedContractId} onValueChange={handleSelectContract}>
                         <SelectTrigger id="contractId">
@@ -620,69 +673,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </SelectContent>
                     </Select>
                   </div>
-                   <div>
-                    <Label htmlFor="jobTitle">Job Title *</Label>
-                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="jobDescription">Job Description</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={3} />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                   <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <Label htmlFor="jobPriority">Job Priority *</Label>
-                            <TooltipProvider>
-                                  <Tooltip>
-                                      <TooltipTrigger type="button" asChild>
-                                          <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                          <p className="max-w-xs">
-                                              <b>High:</b> Emergencies (e.g., leaks, power loss).<br/>
-                                              <b>Medium:</b> Standard service calls and repairs.<br/>
-                                              <b>Low:</b> Routine maintenance or inspections.
-                                          </p>
-                                      </TooltipContent>
-                                  </Tooltip>
-                              </TooltipProvider>
-                        </div>
-                      <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
-                        <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                     <div>
-                      <Label>Estimated Duration *</Label>
-                      <div className="flex items-center gap-2">
-                          <Input
-                              id="estimatedDuration"
-                              type="number"
-                              value={estimatedDuration || ''}
-                              onChange={(e) => setEstimatedDuration(e.target.value ? parseInt(e.target.value, 10) : 1)}
-                              min="1"
-                              placeholder="e.g., 2"
-                          />
-                          <Select value={durationUnit} onValueChange={(value: 'hours' | 'days') => setDurationUnit(value)}>
-                              <SelectTrigger className="w-[120px]">
-                                  <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="hours">Hours</SelectItem>
-                                  <SelectItem value="days">Days</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      </div>
-                  </div>
-                  
                   <div className="flex flex-col space-y-2">
                     <div className="flex justify-between items-center mb-1">
                         <Label className="flex items-center gap-2">

@@ -70,9 +70,7 @@ export function MultiSelectFilter({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0 sm:w-[var(--radix-popover-trigger-width)]">
         <Command>
-          <CommandInput placeholder="Search..." />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               <div
                 className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[selected=true]:bg-accent"

@@ -48,7 +48,9 @@ export default function TechnicianJobListPage() {
         setTechnician(foundTechnician);
         if (foundTechnician) {
             const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
-            const jobsForTech = mockJobs.filter(j => j.assignedTechnicianId === technicianId && activeJobStatuses.includes(j.status));
+            const jobsForTech = mockJobs
+                .filter(j => j.assignedTechnicianId === technicianId && activeJobStatuses.includes(j.status))
+                .sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
             setAssignedJobs(jobsForTech);
         }
         setIsLoading(false);
@@ -79,8 +81,6 @@ export default function TechnicianJobListPage() {
           where("companyId", "==", techData.companyId),
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses),
-          where("scheduledTime", ">=", today.toISOString()),
-          where("scheduledTime", "<=", sevenDaysFromNow.toISOString()),
           orderBy("scheduledTime")
         );
 
@@ -93,6 +93,10 @@ export default function TechnicianJobListPage() {
                   }
               }
               return { id: doc.id, ...data } as Job;
+          }).filter(job => {
+            if (!job.scheduledTime) return false;
+            const jobDate = new Date(job.scheduledTime);
+            return jobDate >= today && jobDate <= sevenDaysFromNow;
           });
           
           const currentJobOrder = jobsForTech.map(j => j.id).join(',');
@@ -234,14 +238,23 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold font-headline">{isViewingOwnPage ? "My Active Jobs" : `${technician.name}'s Jobs`}</h1>
-         <Link href={`/technician/profile`}>
-            <Button variant="outline">
-                <User className="mr-2 h-4 w-4" /> View My Profile
-            </Button>
-        </Link>
-      </div>
+        <Card>
+            <CardContent className="p-4 flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                    <AvatarImage src={technician.avatarUrl} alt={technician.name} />
+                    <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                    <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
+                    <p className="text-muted-foreground">Welcome to your daily command center.</p>
+                </div>
+                 <Link href={`/technician/profile`}>
+                    <Button variant="outline">
+                        <User className="mr-2 h-4 w-4" /> View My Profile
+                    </Button>
+                </Link>
+            </CardContent>
+        </Card>
       
       {assignedJobs.length === 0 ? (
         <Card className="text-center py-12">
@@ -272,7 +285,7 @@ export default function TechnicianJobListPage() {
                                 <p className="text-xs text-muted-foreground pt-1">Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
                             </CardDescription>
                         </CardHeader>
-                        <CardFooter className="flex items-center gap-2">
+                        <CardFooter className="grid grid-cols-[1fr_auto_auto] gap-2">
                              {getNextAction(currentOrNextJob.status) ? (
                                 (() => {
                                     const action = getNextAction(currentOrNextJob.status)!;
@@ -281,16 +294,16 @@ export default function TechnicianJobListPage() {
                                         <Button 
                                             onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className={cn("flex-1", action.nextStatus === 'Completed' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary/90')}
+                                            className={cn("w-full", action.nextStatus === 'Completed' ? 'bg-green-600 hover:bg-green-700' : 'bg-primary hover:bg-primary/90')}
                                         >
                                             {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
                                             {action.label}
                                         </Button>
                                     );
                                 })()
-                            ) : <div className="flex-1" />}
-                            <Link href={`/technician/${currentOrNextJob.id}`}>
-                                <Button variant="outline">
+                            ) : <div />}
+                            <Link href={`/technician/${currentOrNextJob.id}`} className="w-full">
+                                <Button variant="outline" className="w-full">
                                      <Eye className="mr-2 h-4 w-4" /> Details
                                 </Button>
                             </Link>

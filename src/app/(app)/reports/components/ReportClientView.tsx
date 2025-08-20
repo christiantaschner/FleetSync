@@ -21,6 +21,8 @@ import {
   Info,
   Bot,
   BarChart,
+  Waypoints,
+  Sparkles,
 } from "lucide-react";
 import {
   Card,
@@ -43,6 +45,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { summarizeFtfrAction } from "@/actions/ai-actions";
 import { mockJobs, mockTechnicians } from "@/lib/mock-data";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -56,6 +59,34 @@ const formatDuration = (milliseconds: number): string => {
     
     return result.trim() || '0m';
 }
+
+const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: string; value: string | number; desc: string; icon: React.ElementType, tooltipText: string }) => {
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                 <div className="flex items-center justify-between">
+                    <CardDescription className="flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" />{title}</CardDescription>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
+                                    <Info className="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" align="end" className="max-w-xs">
+                                <p>{tooltipText}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold">{value}</p>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+            </CardContent>
+        </Card>
+    );
+};
 
 
 export default function ReportClientView() {
@@ -255,177 +286,57 @@ export default function ReportClientView() {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
   }
 
-  const kpiCards = [
-    {
-      title: "Total Jobs",
-      value: reportData.kpis.totalJobs,
-      desc: "In selected period",
-      icon: Briefcase,
-      tooltip: {
-        desc: "A count of all jobs created within the selected date range, regardless of their status.",
-        action: "This is an informational metric. Trends can indicate business growth or seasonality."
-      }
-    },
-    {
-      title: "Completed Jobs",
-      value: reportData.kpis.completedJobs,
-      desc: "In selected period",
-      icon: CheckCircle,
-      tooltip: {
-        desc: "A count of all jobs marked as 'Completed' within the date range.",
-        action: "Comparing this to 'Total Jobs' gives a rough idea of your completion rate."
-      }
-    },
-    {
-      title: "On-Time Arrival Rate",
-      value: `${reportData.kpis.onTimeArrivalRate}%`,
-      desc: "Within 15min of schedule",
-      icon: CalendarClock,
-      tooltip: {
-        desc: "Measures the percentage of jobs where the technician arrived within 15 minutes of the scheduled time. High rates lead to better customer satisfaction.",
-        action: "If this rate is low, use the 'Find Schedule Risks' feature on the Schedule page to proactively identify and address potential delays before they happen."
-      }
-    },
-    {
-      title: "Avg. On-Site Duration",
-      value: reportData.kpis.avgDuration,
-      desc: "From start to completion",
-      icon: Clock,
-      tooltip: {
-        desc: "The average time a technician spends actively working on a job, excluding travel and breaks.",
-        action: "Consistently high durations for specific job types may indicate a need for better training or more accurate initial time estimates."
-      }
-    },
-    {
-      title: "Avg. Time to Assign",
-      value: reportData.kpis.avgTimeToAssign,
-      desc: "From creation to assignment",
-      icon: Timer,
-      tooltip: {
-        desc: "The average time a new job waits before being assigned to a technician. A direct measure of dispatcher responsiveness.",
-        action: "If this number is high, use the 'AI Batch Assign' feature on the Dashboard to quickly clear the pending queue."
-      }
-    },
-    {
-      title: "Avg. Travel Time",
-      value: reportData.kpis.avgTravelTime,
-      desc: "Per job, from en route to start",
-      icon: Route,
-      tooltip: {
-        desc: "The average time a technician spends driving to a job site. This is non-billable time that impacts efficiency.",
-        action: "A high average travel time is a strong indicator to use the 'Re-Optimize Route' feature more frequently, especially when schedules change."
-      }
-    },
-    {
-      title: "Avg. Satisfaction",
-      value: `${reportData.kpis.avgSatisfaction} / 5`,
-      desc: "Across all rated jobs",
-      icon: Smile,
-      tooltip: {
-        desc: "The average customer satisfaction rating (1-5 stars) collected by technicians after job completion.",
-        action: "Low scores for a particular technician or job type can highlight areas for customer service training or process improvement."
-      }
-    },
-    {
-      title: "First-Time-Fix Rate",
-      value: `${reportData.kpis.ftfr}%`,
-      desc: "Of jobs resolved in one visit",
-      icon: ThumbsUp,
-      tooltip: {
-        desc: "The percentage of jobs resolved in a single visit without needing a follow-up. A critical efficiency metric.",
-        action: "If low, check the technicians' 'Reason for Follow-up' notes. This often reveals needs for specific skills training or better initial parts allocation."
-      }
-    },
-    {
-      title: "Avg. Jobs per Technician",
-      value: reportData.kpis.avgJobsPerTech,
-      desc: "Completed in period",
-      icon: Users,
-      tooltip: {
-        desc: "The average number of jobs each technician completes. Helps in balancing workload and identifying high-performers.",
-        action: "Filter the report by technician to dive deeper into individual performance."
-      }
-    },
-     {
-      title: "Avg. Break Time",
-      value: reportData.kpis.avgBreakTime,
-      desc: "Per job with breaks logged",
-      icon: Coffee,
-      tooltip: {
-        desc: "The average time technicians take for breaks during a job.",
-        action: "Monitoring this helps ensure accurate job costing and schedule planning."
-      }
-    },
-     {
-      title: "Total Travel Distance",
-      value: `${reportData.kpis.totalTravelDistance} km`,
-      desc: "Across all completed jobs",
-      icon: Route,
-      tooltip: {
-        desc: "The sum of the estimated distance driven for all completed jobs in the selected period.",
-        action: "High travel distances suggest opportunities for better geographical batching of jobs or route optimization to increase efficiency."
-      }
-    },
-    {
-      title: "Total CO2 Emissions",
-      value: `${reportData.kpis.totalEmissions} kg`,
-      desc: "Est. from travel distance",
-      icon: Leaf,
-      tooltip: {
-        desc: "An estimate of the fleet's carbon footprint based on total travel distance and the emission factor set in your company settings.",
-        action: "Reducing travel time through route optimization directly lowers this value, saving fuel costs and improving your company's environmental impact."
-      }
-    },
-  ];
-
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight font-headline flex items-center gap-2">Reporting & Analytics</h1>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId}>
-                <SelectTrigger className="w-full sm:w-[220px]"><SelectValue placeholder="Filter by Technician" /></SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all"><div className="flex items-center gap-2"><Users className="h-4 w-4" /> All Technicians</div></SelectItem>
-                    {technicians.map(tech => (
-                        <SelectItem key={tech.id} value={tech.id}><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarImage src={tech.avatarUrl} alt={tech.name} /><AvatarFallback>{tech.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>{tech.name}</div></SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <DateRangePicker date={date} setDate={setDate} />
-          </div>
+       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
       </div>
+      
+      <Card>
+        <CardHeader>
+            <CardTitle>Filters</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div className="flex flex-col sm:flex-row gap-4">
+                <Select value={selectedTechnicianId} onValueChange={setSelectedTechnicianId}>
+                    <SelectTrigger className="w-full sm:w-[220px] bg-card"><SelectValue placeholder="Filter by Technician" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all"><div className="flex items-center gap-2"><Users className="h-4 w-4" /> All Technicians</div></SelectItem>
+                        {technicians.map(tech => (
+                            <SelectItem key={tech.id} value={tech.id}><div className="flex items-center gap-2"><Avatar className="h-6 w-6"><AvatarImage src={tech.avatarUrl} alt={tech.name} /><AvatarFallback>{tech.name.split(' ').map(n => n[0]).join('')}</AvatarFallback></Avatar>{tech.name}</div></SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <DateRangePicker date={date} setDate={setDate} className="bg-card" />
+            </div>
+        </CardContent>
+      </Card>
 
-       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {kpiCards.map(kpi => (
-              <Dialog key={kpi.title}>
-                <Card className="flex flex-col">
-                  <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                    <DialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-5 w-5 -mt-1 -mr-2 text-muted-foreground hover:bg-secondary">
-                            <Info className="h-4 w-4" />
-                            <span className="sr-only">More Info</span>
-                        </Button>
-                    </DialogTrigger>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <div className="text-2xl font-bold">{kpi.value}</div>
-                    <p className="text-xs text-muted-foreground">{kpi.desc}</p>
-                  </CardContent>
-                  {kpi.title === "First-Time-Fix Rate" && (
+
+       <div className="grid grid-cols-1 gap-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Waypoints /> Overall Performance</CardTitle>
+                    <CardDescription>A high-level overview of operational volume and success rates in the selected period.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard title="Total Jobs" value={reportData.kpis.totalJobs} desc="All jobs in period" icon={Briefcase} tooltipText="Total count of all jobs (completed, pending, etc.) created within the date range. A key indicator of business volume." />
+                    <KpiCard title="Completed Jobs" value={reportData.kpis.completedJobs} desc="Successfully finished" icon={CheckCircle} tooltipText="Count of jobs marked 'Completed'. Comparing this to 'Total Jobs' gives a rough idea of your completion rate." />
+                    <KpiCard title="First-Time-Fix Rate" value={`${reportData.kpis.ftfr}%`} desc="Resolved in one visit" icon={ThumbsUp} tooltipText="The percentage of jobs resolved in a single visit without needing a follow-up. Use the AI Summary to diagnose reasons for low rates." />
+                    <KpiCard title="On-Time Arrival Rate" value={`${reportData.kpis.onTimeArrivalRate}%`} desc="Within 15min of schedule" icon={CalendarClock} tooltipText="Percentage of jobs where technicians arrived within a 15-minute window of the scheduled time. Low rates impact customer satisfaction." />
+                </CardContent>
+                 {ftfrFeedbackNotesCount > 0 && (
                     <CardFooter className="flex-col items-start gap-2 pt-3 border-t">
                       {ftfrSummary && !isSummarizing && (
-                          <div className="space-y-2 text-xs">
-                              <h4 className="font-semibold text-sm flex items-center gap-1.5"><Bot className="h-4 w-4 text-primary" /> AI Summary</h4>
+                          <div className="space-y-2 text-sm">
+                              <h4 className="font-semibold flex items-center gap-1.5"><Sparkles className="h-4 w-4 text-primary" /> AI Summary for Failed First-Time Fixes</h4>
                               <p className="text-muted-foreground">{ftfrSummary.summary}</p>
                               <div className="flex flex-wrap gap-1">
                                   {ftfrSummary.themes.map(theme => <Badge key={theme} variant="secondary">{theme}</Badge>)}
                               </div>
                           </div>
                       )}
-                      <Button onClick={handleSummarizeFtfr} disabled={isSummarizing || ftfrFeedbackNotesCount === 0} className="w-full mt-auto" size="sm" variant="outline">
+                      <Button onClick={handleSummarizeFtfr} disabled={isSummarizing} size="sm" variant="outline">
                         {isSummarizing ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
@@ -435,28 +346,114 @@ export default function ReportClientView() {
                       </Button>
                     </CardFooter>
                   )}
-                </Card>
-                <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2 text-lg">
-                        <kpi.icon className="h-5 w-5 text-primary" />
-                        {kpi.title}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-2">
-                        <div>
-                            <h4 className="font-semibold text-base">What it means</h4>
-                            <p className="text-sm text-muted-foreground">{kpi.tooltip.desc}</p>
-                        </div>
-                         <div className="p-3 bg-secondary/50 rounded-md border border-primary/20">
-                            <h4 className="font-semibold text-base text-primary">Actionable Insight</h4>
-                            <p className="text-sm text-muted-foreground">{kpi.tooltip.action}</p>
-                        </div>
-                    </div>
-                </DialogContent>
-              </Dialog>
-            ))}
-        </div>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><BarChart /> Technician Efficiency</CardTitle>
+                    <CardDescription>Metrics focused on how effectively your team spends their time.</CardDescription>
+                </CardHeader>
+                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="From start to completion" icon={Clock} tooltipText="The average time a technician spends actively working on a job, excluding travel and breaks." />
+                    <KpiCard title="Avg. Travel Time" value={reportData.kpis.avgTravelTime} desc="Per job" icon={Route} tooltipText="Average time spent driving to jobs. Use route optimization to reduce this non-billable time." />
+                    <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="The average time a new job waits before being assigned. Use 'AI Batch Assign' to improve this." />
+                    <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="The average number of jobs each technician completes. Helps in balancing workload." />
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Experience</CardTitle>
+                    <CardDescription>Key indicators of customer satisfaction and service quality.</CardDescription>
+                </CardHeader>
+                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard title="Avg. Satisfaction" value={`${reportData.kpis.avgSatisfaction} / 5`} desc="From all rated jobs" icon={Smile} tooltipText="The average customer satisfaction rating (1-5 stars) collected after job completion." />
+                    <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="The average time technicians log for breaks during a job." />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Leaf /> Environmental Impact</CardTitle>
+                    <CardDescription>Estimates based on fleet travel data.</CardDescription>
+                </CardHeader>
+                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <KpiCard title="Total Travel Distance" value={`${reportData.kpis.totalTravelDistance} km`} desc="All completed jobs" icon={Route} tooltipText="Sum of the estimated distance driven for all completed jobs. Better routing reduces this." />
+                    <KpiCard title="Total CO₂ Emissions" value={`${reportData.kpis.totalEmissions} kg`} desc="Estimated from travel" icon={Leaf} tooltipText="Estimated carbon footprint based on travel and your company's emission factor setting." />
+                </CardContent>
+            </Card>
+       </div>
     </div>
   );
+}
+
+```
+  </change>
+  <change>
+    <file>src/components/ui/date-range-picker.tsx</file>
+    <content><![CDATA[
+"use client"
+
+import * as React from "react"
+import { format } from "date-fns"
+import { Calendar as CalendarIcon } from "lucide-react"
+import { DateRange } from "react-day-picker"
+
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+
+interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
+  date: DateRange | undefined;
+  setDate: (date: DateRange | undefined) => void;
+}
+
+export function DateRangePicker({
+  className,
+  date,
+  setDate
+}: DateRangePickerProps) {
+  return (
+    <div className={cn("grid gap-2", className)}>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            id="date"
+            variant={"outline"}
+            className={cn(
+              "w-full justify-start text-left font-normal sm:w-[260px] bg-card",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date?.from ? (
+              date.to ? (
+                <>
+                  {format(date.from, "LLL dd, y")} -{" "}
+                  {format(date.to, "LLL dd, y")}
+                </>
+              ) : (
+                format(date.from, "LLL dd, y")
+              )
+            ) : (
+              <span>Pick a date range</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="end">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={date?.from}
+            selected={date}
+            onSelect={setDate}
+            numberOfMonths={2}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
 }

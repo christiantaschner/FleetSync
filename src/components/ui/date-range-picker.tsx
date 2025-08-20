@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -33,7 +32,7 @@ export function DateRangePicker({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-full justify-start text-left font-normal sm:w-[260px]",
+              "w-full justify-start text-left font-normal sm:w-[260px] bg-card",
               !date && "text-muted-foreground"
             )}
           >

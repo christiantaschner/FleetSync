@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { startOfToday, endOfDay, addDays } from 'date-fns';
+import { startOfToday, endOfDay, addDays, format } from 'date-fns';
 import DailyTimeline from './components/DailyTimeline';
 import { notifyCustomerAction, calculateTravelMetricsAction } from '@/actions/ai-actions';
 
@@ -234,31 +234,14 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
-      {!isViewingOwnPage && (
-        <Button variant="outline" size="sm" onClick={() => router.push('/dashboard?tab=technicians')} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician Roster
-        </Button>
-      )}
-      
-      <Card className="shadow-lg">
-        <CardHeader className="flex flex-row items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait"/>
-            <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle className="text-2xl font-headline">{technician.name}</CardTitle>
-            <CardDescription>Welcome to your daily command center.</CardDescription>
-          </div>
-        </CardHeader>
-        <CardFooter className="bg-secondary/50 p-3">
-             <Link href={`/technician/profile`} className="w-full">
-                <Button variant="outline" className="w-full">
-                    <User className="mr-2 h-4 w-4" /> View My Profile
-                </Button>
-            </Link>
-        </CardFooter>
-      </Card>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold font-headline">{isViewingOwnPage ? "My Active Jobs" : `${technician.name}'s Jobs`}</h1>
+         <Link href={`/technician/profile`}>
+            <Button variant="outline">
+                <User className="mr-2 h-4 w-4" /> View My Profile
+            </Button>
+        </Link>
+      </div>
       
       {assignedJobs.length === 0 ? (
         <Card className="text-center py-12">
@@ -274,7 +257,7 @@ export default function TechnicianJobListPage() {
                      <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline">
                         <Briefcase className="text-primary" /> {currentOrNextJob.status === 'In Progress' ? 'Current Job' : 'Next Job'}
                     </h2>
-                     <Card>
+                     <Card className="bg-background">
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
@@ -290,7 +273,7 @@ export default function TechnicianJobListPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardFooter className="flex items-center gap-2">
-                            {getNextAction(currentOrNextJob.status) ? (
+                             {getNextAction(currentOrNextJob.status) ? (
                                 (() => {
                                     const action = getNextAction(currentOrNextJob.status)!;
                                     const Icon = action.icon;

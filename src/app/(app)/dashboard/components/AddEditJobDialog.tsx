@@ -145,6 +145,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       resetForm();
     }
   }, [job, isOpen, resetForm]);
+  
+  const isReadyForAssignment = useMemo(() => {
+    if (selectedSuggestion) {
+      return true;
+    }
+    if (manualTechnicianId !== UNASSIGNED_VALUE && scheduledTime) {
+      return true;
+    }
+    return false;
+  }, [selectedSuggestion, manualTechnicianId, scheduledTime]);
+  
 
   // Handle smart status updates
   useEffect(() => {
@@ -277,6 +288,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         minutes
     );
     setScheduledTime(newDateTime);
+    setSelectedSuggestion(null);
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -289,6 +301,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     newDateTime.setHours(hours);
     newDateTime.setMinutes(minutes);
     setScheduledTime(newDateTime);
+    setSelectedSuggestion(null);
+  };
+  
+  const handleManualTechnicianChange = (techId: string) => {
+    setManualTechnicianId(techId);
+    setSelectedSuggestion(null);
   };
   
   const handleDeleteJob = async () => {
@@ -366,18 +384,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onClose();
         return;
     }
-    if (!title.trim() || !locationAddress.trim() || !customerName.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in Title, Customer Name and Address.", variant: "destructive" });
+    if (!title.trim() || !customerName.trim()) {
+      toast({ title: "Missing Information", description: "Please fill in Title and Customer Name.", variant: "destructive" });
       return;
     }
 
     if (estimatedDuration === undefined || estimatedDuration <= 0) {
       toast({ title: "Invalid Duration", description: "Please enter a valid estimated duration greater than 0.", variant: "destructive" });
-      return;
-    }
-
-    if (latitude === null || longitude === null) {
-      toast({ title: "Invalid Address", description: "Please select a valid address from the dropdown suggestions to set the location.", variant: "destructive" });
       return;
     }
     
@@ -417,11 +430,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
     try {
       let finalJobDataForCallback: Job;
+      let finalStatus: JobStatus;
+
+      if (isReadyForAssignment) {
+        finalStatus = (job && job.status !== 'Draft') ? status : 'Assigned';
+      } else {
+        finalStatus = 'Draft';
+      }
+      jobData.status = finalStatus;
 
       if (job) { // EDITING A JOB
         const batch = writeBatch(db);
         const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-        const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
+        const updatePayload: any = { ...jobData, status: finalStatus, updatedAt: serverTimestamp() };
 
         const newAssignedTechId = finalTechId;
         const currentAssignedId = job.assignedTechnicianId || null;
@@ -430,7 +451,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         if (technicianHasChanged) {
             if (newAssignedTechId === null) { // Un-assigning
                 updatePayload.assignedTechnicianId = null;
-                updatePayload.status = 'Unassigned';
+                updatePayload.status = isReadyForAssignment ? 'Unassigned' : 'Draft';
                 if(job.assignedTechnicianId) {
                     const oldTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
@@ -448,13 +469,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
                 }
             }
-        } else {
-            updatePayload.status = status;
         }
-
-        const finalStatus = updatePayload.status || job.status;
+        
+        const effectiveStatus = updatePayload.status || job.status;
         const wasCompletedOrCancelled = job.status === 'Completed' || job.status === 'Cancelled';
-        const isNowCompletedOrCancelled = finalStatus === 'Completed' || finalStatus === 'Cancelled';
+        const isNowCompletedOrCancelled = effectiveStatus === 'Completed' || effectiveStatus === 'Cancelled';
         
         if (!wasCompletedOrCancelled && isNowCompletedOrCancelled && job.assignedTechnicianId) {
             const techToFree = job.assignedTechnicianId;
@@ -478,7 +497,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         
         const newJobPayload: any = {
           ...jobData,
-          status: techToAssignId ? 'Assigned' as JobStatus : 'Unassigned' as JobStatus,
+          status: finalStatus,
           assignedTechnicianId: techToAssignId || null,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
@@ -510,10 +529,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             updatedAt: new Date().toISOString()
         };
 
-        if (techToAssignId) {
+        if (finalStatus === 'Draft') {
+          toast({ title: "Draft Saved", description: `Job "${finalJobDataForCallback.title}" has been saved as a draft.` });
+        } else if (techToAssignId) {
             toast({ title: "Job Added & Assigned", description: `New job "${finalJobDataForCallback.title}" created and assigned.` });
         } else {
-            toast({ title: "Job Added", description: `New job "${finalJobDataForCallback.title}" created.` });
+            toast({ title: "Job Added", description: `New job "${finalJobDataForCallback.title}" created and is unassigned.` });
         }
 
         onJobAddedOrUpdated?.(finalJobDataForCallback, techToAssignId);
@@ -781,8 +802,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               </div>
             </div>
 
+            <Separator className="mt-4 mb-4" />
+
             <div className="px-6 pb-2 space-y-4">
-              <div className="pt-4 space-y-4">
                    <div className="flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
                        <div className="flex flex-wrap gap-2">
@@ -864,7 +886,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="assign-technician">Assigned Technician</Label>
-                            <Select value={manualTechnicianId} onValueChange={setManualTechnicianId}>
+                            <Select value={manualTechnicianId} onValueChange={handleManualTechnicianChange}>
                                 <SelectTrigger id="assign-technician">
                                 <SelectValue placeholder="Unassigned" />
                                 </SelectTrigger>
@@ -898,7 +920,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
-              </div>
             </div>
 
             <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2">
@@ -935,7 +956,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     disabled={isLoading}
                   >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {job ? "Save Changes" : (userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save Job')}
+                    {isReadyForAssignment ? (job ? "Save Changes" : "Save Job") : "Save as Draft"}
                   </Button>
               </div>
             </DialogFooter>
@@ -946,3 +967,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+
+    

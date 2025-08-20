@@ -1,4 +1,3 @@
-
 "use client";
 
 import { AuthProvider } from "@/contexts/auth-context";

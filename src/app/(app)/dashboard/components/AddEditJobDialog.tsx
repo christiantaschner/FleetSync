@@ -620,7 +620,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </div>
                   <div>
                     <Label htmlFor="jobDescription">Job Description</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={5} className="bg-card" />
+                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={4} className="bg-card" />
                   </div>
                 </div>
 
@@ -707,12 +707,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         className="h-9 flex-1"
                       />
                       <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || !title.trim() && !description.trim()} className="h-9">
-                          {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+                          {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
                           Suggest
                       </Button>
                     </div>
-                    <ScrollArea className="h-40 rounded-md border">
-                      <div className="space-y-2 p-3">
+                    <ScrollArea className="h-40 rounded-md border py-2">
+                      <div className="space-y-2 px-3">
                         {allSkills.length === 0 ? (
                           <div className="text-center flex flex-col items-center justify-center h-full pt-4">
                             <p className="text-sm text-muted-foreground">No skills defined in library.</p>
@@ -747,7 +747,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                           </TooltipTrigger>
                           <TooltipContent>
-                              <p className="max-w-xs">Generate a link for the customer to upload photos. Our AI will analyze them to help the tech prepare.</p>
+                              <p className="max-w-xs">Generates a link for the customer to upload photos. Our AI analyzes them to help the tech prepare.</p>
                           </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -782,7 +782,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             </div>
 
             <div className="px-6 pb-2 space-y-4">
-               <Separator className="my-4"/>
+               <Separator />
               <div className="pt-4 space-y-4">
                    <div className="flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
@@ -822,7 +822,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                        </div>
                    )}
                   <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="manual-override" className="border-b-0">
+                    <AccordionItem value="manual-override">
                       <AccordionTrigger>
                         <span className="flex items-center gap-2 text-sm font-medium"><ChevronsUpDown className="h-4 w-4"/>Manual Override</span>
                       </AccordionTrigger>

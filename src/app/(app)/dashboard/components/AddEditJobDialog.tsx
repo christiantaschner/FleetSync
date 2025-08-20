@@ -46,6 +46,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
 
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
@@ -781,6 +782,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             </div>
 
             <div className="px-6 pb-2 space-y-4">
+               <Separator className="my-4"/>
               <div className="pt-4 space-y-4">
                    <div className="flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
@@ -811,7 +813,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                         selectedSuggestion?.time === suggestion.time && "ring-green-500 bg-green-50"
                                        )}
                                    >
-                                       <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'PPp')}</p>
+                                       <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'MMM d, p')}</p>
                                        <p className="text-xs text-muted-foreground">with {techName}</p>
                                        <p className="text-xs text-muted-foreground mt-1 italic">"{suggestion.reasoning}"</p>
                                    </button>

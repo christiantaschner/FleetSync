@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
@@ -614,7 +614,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                       required
                     />
                   </div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2 pt-2"><Info className="h-4 w-4"/> Job Details</h3>
+                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2 pt-2"><Wrench className="h-4 w-4"/> Job Details</h3>
                   <div>
                     <Label htmlFor="jobTitle">Job Title *</Label>
                     <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
@@ -712,8 +712,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           Suggest
                       </Button>
                     </div>
-                    <ScrollArea className="h-40 rounded-md border p-3">
-                      <div className="space-y-2">
+                    <ScrollArea className="h-40 rounded-md border">
+                      <div className="space-y-2 p-3">
                         {allSkills.length === 0 ? (
                           <div className="text-center flex flex-col items-center justify-center h-full pt-4">
                             <p className="text-sm text-muted-foreground">No skills defined in library.</p>
@@ -782,8 +782,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               </div>
             </div>
 
-            <div className="px-6 pb-2">
-              <Separator />
+            <div className="px-6 pb-2 space-y-4">
               <div className="pt-4 space-y-4">
                    <div className="flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
@@ -823,7 +822,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                        </div>
                    )}
                   <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="manual-override">
+                    <AccordionItem value="manual-override" className="border-b-0">
                       <AccordionTrigger>
                         <span className="flex items-center gap-2 text-sm font-medium"><ChevronsUpDown className="h-4 w-4"/>Manual Override</span>
                       </AccordionTrigger>
@@ -948,3 +947,4 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+

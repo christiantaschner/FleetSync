@@ -60,7 +60,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
           technicianId: t.id,
           technicianName: t.name,
           isAvailable: t.isAvailable,
-          skills: t.skills || [],
+          skills: t.skills.map(s => s.name) || [],
           liveLocation: t.location,
           homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
           currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))

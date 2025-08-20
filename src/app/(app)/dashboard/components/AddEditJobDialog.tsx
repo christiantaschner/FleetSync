@@ -33,7 +33,6 @@ import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, Sugge
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
-import type { AllocateJobOutput } from "@/types";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { addHours, format } from 'date-fns';
@@ -78,6 +77,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestScheduleTimeOutput['suggestions'][number] | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -137,6 +137,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setRejectedTimes([]);
     setTimeSuggestions([]);
     setTriageToken(null);
+    setSelectedSuggestion(null);
   }, [job]);
 
   useEffect(() => {
@@ -208,9 +209,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
     setIsFetchingAISuggestion(true);
 
-    const timesToExclude = isGettingMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : rejectedTimes;
+    const timesToExclude = isGettingMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : [];
     if (isGettingMore) {
         setRejectedTimes(timesToExclude);
+    } else {
+        setSelectedSuggestion(null); // Clear selection when getting new initial suggestions
     }
 
     const result = await suggestScheduleTimeAction({
@@ -234,19 +237,18 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     if (result.error) {
         toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
     } else if (result.data?.suggestions) {
-        if(result.data.suggestions.length === 0) {
+        const newSuggestions = result.data.suggestions;
+        if(newSuggestions.length === 0) {
             toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
         }
-        setTimeSuggestions(result.data.suggestions);
+        
+        if (isGettingMore) {
+          setTimeSuggestions(prev => [...prev, ...newSuggestions]);
+        } else {
+          setTimeSuggestions(newSuggestions);
+        }
     }
   }, [description, title, priority, requiredSkills, userProfile, appId, company, technicians, jobs, timeSuggestions, rejectedTimes, toast]);
-  
-  const handleAcceptSuggestion = (suggestion: SuggestScheduleTimeOutput['suggestions'][number]) => {
-      setScheduledTime(new Date(suggestion.time));
-      setManualTechnicianId(suggestion.technicianId);
-      setTimeSuggestions([]); // Clear suggestions after accepting one
-      toast({ title: "Details Updated", description: "Time and technician have been set based on the suggestion.", variant: "default"});
-  };
 
   const handleLocationSelect = (location: { address: string; lat: number; lng: number }) => {
     setLocationAddress(location.address);
@@ -355,7 +357,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingSkills(false);
   };
 
-  const handleSubmit = async (assignTechId: string | null = null) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         toast({ title: 'Success', description: 'Job saved in mock mode.' });
         onClose();
@@ -382,6 +386,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
     setIsLoading(true);
 
+    const finalTechId = selectedSuggestion ? selectedSuggestion.technicianId : (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
+    const finalScheduledTime = selectedSuggestion ? new Date(selectedSuggestion.time) : scheduledTime;
+
     const jobData: any = {
       companyId: userProfile.companyId,
       customerId: selectedCustomerId,
@@ -397,11 +404,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         longitude: longitude ?? 0,
         address: locationAddress 
       },
-      scheduledTime: scheduledTime ? scheduledTime.toISOString() : null,
+      scheduledTime: finalScheduledTime ? finalScheduledTime.toISOString() : null,
       estimatedDuration,
       durationUnit,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
-      // Add triage token if it exists
       ...(triageToken && { 
         triageToken: triageToken,
         triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
@@ -416,7 +422,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
         const updatePayload: any = { ...jobData, updatedAt: serverTimestamp() };
 
-        const newAssignedTechId = manualTechnicianId === UNASSIGNED_VALUE ? null : manualTechnicianId;
+        const newAssignedTechId = finalTechId;
         const currentAssignedId = job.assignedTechnicianId || null;
         const technicianHasChanged = newAssignedTechId !== currentAssignedId;
         
@@ -442,7 +448,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 }
             }
         } else {
-            // No technician change, just respect the status dropdown from the UI
             updatePayload.status = status;
         }
 
@@ -464,11 +469,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onJobAddedOrUpdated?.(finalJobDataForCallback, newAssignedTechId || null);
 
       } else { // CREATING A NEW JOB
-        const techToAssignId = assignTechId || (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
+        const techToAssignId = finalTechId;
         const techToAssign = techToAssignId ? technicians.find(t => t.id === techToAssignId) : null;
         
         const batch = writeBatch(db);
-
         const newJobRef = doc(collection(db, `artifacts/${appId}/public/data/jobs`));
         
         const newJobPayload: any = {
@@ -532,7 +536,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             <DialogTitle className="font-headline">{titleText}</DialogTitle>
             {descriptionText && <DialogDescription>{descriptionText}</DialogDescription>}
           </DialogHeader>
-          <form id="job-form" ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(null); }} className="flex-1 min-h-0 flex flex-col">
+          <form id="job-form" ref={formRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {job?.status === 'Draft' && (
                 <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
@@ -674,16 +678,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     </Select>
                   </div>
                   <div className="flex flex-col space-y-2">
-                    <div className="flex justify-between items-center mb-1">
-                        <Label className="flex items-center gap-2">
-                            <ListChecks className="h-4 w-4" />
-                            Required Skills
-                        </Label>
-                         <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || !title.trim() && !description.trim()}>
-                            {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
-                            Suggest
-                        </Button>
-                    </div>
+                    <Label className="flex items-center gap-2">
+                        <ListChecks className="h-4 w-4" />
+                        Required Skills
+                    </Label>
                      {requiredSkills.length > 0 && (
                       <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-10 bg-secondary/50">
                         {requiredSkills.map(skill => (
@@ -700,13 +698,19 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         ))}
                       </div>
                     )}
-                    <Input
-                      placeholder="Search skills..."
-                      value={skillSearchTerm}
-                      onChange={(e) => setSkillSearchTerm(e.target.value)}
-                      className="mb-2 h-8"
-                    />
-                    <ScrollArea className="h-24 rounded-md border p-3">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Search skills..."
+                        value={skillSearchTerm}
+                        onChange={(e) => setSkillSearchTerm(e.target.value)}
+                        className="mb-2 h-9 flex-1"
+                      />
+                      <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || !title.trim() && !description.trim()} className="h-9">
+                          {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
+                          Suggest
+                      </Button>
+                    </div>
+                    <ScrollArea className="h-40 rounded-md border p-3">
                       <div className="space-y-2">
                         {allSkills.length === 0 ? (
                           <div className="text-center flex flex-col items-center justify-center h-full pt-4">
@@ -796,14 +800,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                    </div>
                    {timeSuggestions.length > 0 && (
                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                           {timeSuggestions.map(suggestion => {
+                           {timeSuggestions.slice(0, 3).map(suggestion => {
                                const techName = technicians.find(t => t.id === suggestion.technicianId)?.name || 'Unknown Tech';
                                return (
                                    <button
                                        key={suggestion.time}
                                        type="button"
-                                       onClick={() => handleAcceptSuggestion(suggestion)}
-                                       className="p-3 border rounded-md text-left hover:bg-secondary transition-colors"
+                                       onClick={() => setSelectedSuggestion(suggestion)}
+                                       className={cn(
+                                        "p-3 border rounded-md text-left hover:bg-secondary transition-colors ring-2 ring-transparent",
+                                        selectedSuggestion?.time === suggestion.time && "ring-green-500 bg-green-50"
+                                       )}
                                    >
                                        <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'PPp')}</p>
                                        <p className="text-xs text-muted-foreground">with {techName}</p>
@@ -923,25 +930,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                 <Button type="button" variant="ghost" onClick={onClose}>
                   Close
                 </Button>
-                  <>
-                  {job ? (
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      Save Changes
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        type="submit"
-                        disabled={isLoading}
-                        variant={'default'}
-                      >
-                        {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        {userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save Job'}
-                      </Button>
-                    </>
-                  )}
-                  </>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {job ? "Save Changes" : (userProfile?.role === 'csr' ? 'Create Job Ticket' : 'Save Job')}
+                  </Button>
               </div>
             </DialogFooter>
           </form>

@@ -35,7 +35,7 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
     const [selectedCustomerContracts, setSelectedCustomerContracts] = useState<Contract[]>([]);
     const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
     const [customerToEdit, setCustomerToEdit] = useState<CustomerData | null>(null);
-    const { userProfile } = useAuth();
+    const { userProfile, isMockMode } = useAuth();
     const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
 
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
@@ -70,7 +70,21 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
     }, [initialSearchTerm, filteredCustomers, selectedCustomer]);
 
     useEffect(() => {
-        if (!selectedCustomer || !userProfile?.companyId || !appId) {
+        if (!selectedCustomer) {
+            setSelectedCustomerJobs([]);
+            setSelectedCustomerContracts([]);
+            return;
+        }
+
+        if (isMockMode) {
+            const jobs = mockJobs.filter(j => j.customerId === selectedCustomer.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            const contracts = mockContracts.filter(c => c.customerId === selectedCustomer.id).sort((a,b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+            setSelectedCustomerJobs(jobs);
+            setSelectedCustomerContracts(contracts);
+            return;
+        }
+
+        if (!userProfile?.companyId || !appId) {
             setSelectedCustomerJobs([]);
             setSelectedCustomerContracts([]);
             return;
@@ -102,7 +116,7 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
             unsubContracts();
         };
 
-    }, [selectedCustomer, userProfile, appId]);
+    }, [selectedCustomer, userProfile, appId, isMockMode]);
     
     const handleEditCustomer = () => {
         if (!selectedCustomer) return;
@@ -232,7 +246,7 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
                                         <p className="flex items-center gap-1"><MapPin size={14}/>Address: {selectedCustomer.address}</p>
                                     </CardDescription>
                                 </div>
-                                {isAdmin && (
+                                {isAdmin && selectedCustomer.id && (
                                     <Button variant="outline" size="sm" onClick={handleEditCustomer}>
                                         <Edit className="mr-2 h-4 w-4" /> Edit Customer
                                     </Button>

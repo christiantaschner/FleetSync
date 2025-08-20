@@ -45,7 +45,6 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
@@ -211,9 +210,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
     const timesToExclude = isGettingMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : [];
     
-    // Immediately update rejected times state if getting more, to prevent re-fetching the same rejected ones
     if (isGettingMore) {
-        setRejectedTimes(prev => [...prev, ...timeSuggestions.map(s => s.time)]);
+        setRejectedTimes(prev => [...new Set([...prev, ...timeSuggestions.map(s => s.time)])]);
     } else {
         setSelectedSuggestion(null); // Clear selection when getting new initial suggestions
     }
@@ -314,7 +312,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
     setIsGeneratingLink(true);
     const result = await generateTriageLinkAction({
-      jobId: job?.id, // Pass jobId if it exists, otherwise it's undefined
+      jobId: job?.id,
       companyId: userProfile.companyId,
       appId,
       customerName,
@@ -705,7 +703,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         placeholder="Search skills..."
                         value={skillSearchTerm}
                         onChange={(e) => setSkillSearchTerm(e.target.value)}
-                        className="mb-2 h-9 flex-1"
+                        className="h-9 flex-1"
                       />
                       <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || !title.trim() && !description.trim()} className="h-9">
                           {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5" />}
@@ -748,7 +746,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                           </TooltipTrigger>
                           <TooltipContent>
-                              <p className="max-w-xs">Generate a link to send to the customer. They can upload photos of the issue, which our AI will analyze. The uploaded pictures and AI diagnosis will appear here.</p>
+                              <p className="max-w-xs">Generate a link for the customer to upload photos. Our AI will analyze them to help the tech prepare.</p>
                           </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -772,7 +770,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
                       </div>
                     ) : (
-                      <Button type="button" size="sm" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
+                      <Button type="button" size="sm" variant="outline" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
                           {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
                           Request Photos
                       </Button>
@@ -947,4 +945,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-

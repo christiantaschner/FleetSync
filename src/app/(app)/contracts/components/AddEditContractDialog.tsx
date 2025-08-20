@@ -247,7 +247,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                             {errors.jobTemplate?.title && <p className="text-destructive text-sm mt-1">{errors.jobTemplate.title.message}</p>}
                         </div>
                         <div>
-                            <Label htmlFor="jobTemplate.description">Job Description *</Label>
+                            <Label htmlFor="jobTemplate.description">Job Description</Label>
                             <Textarea id="jobTemplate.description" {...register('jobTemplate.description')} rows={3} />
                             {errors.jobTemplate?.description && <p className="text-destructive text-sm mt-1">{errors.jobTemplate.description.message}</p>}
                         </div>

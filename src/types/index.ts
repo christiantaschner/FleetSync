@@ -267,7 +267,7 @@ export const ContractSchema = z.object({
     startDate: z.string().describe("The start date of the contract in ISO 8601 format."),
     jobTemplate: z.object({
         title: z.string().min(1, "Job title is required."),
-        description: z.string().min(1, "Job description is required."),
+        description: z.string().optional(),
         priority: z.enum(['High', 'Medium', 'Low']),
         estimatedDuration: z.number({required_error: "Estimated duration is required."}).positive("Duration must be positive."),
         durationUnit: z.enum(['hours', 'days']).optional(),

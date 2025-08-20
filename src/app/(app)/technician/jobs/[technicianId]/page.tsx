@@ -7,11 +7,11 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Job, Technician, JobStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase } from 'lucide-react';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase, Truck, Play, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, updateDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -19,9 +19,10 @@ import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import DailyTimeline from './components/DailyTimeline';
+import { notifyCustomerAction, calculateTravelMetricsAction } from '@/actions/ai-actions';
 
 export default function TechnicianJobListPage() {
-  const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
+  const { user: firebaseUser, userProfile, loading: authLoading, company } = useAuth();
   const { toast } = useToast();
   const params = useParams();
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function TechnicianJobListPage() {
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isInitialLoad = useRef(true);
@@ -134,6 +136,56 @@ export default function TechnicianJobListPage() {
     return () => unsubscribeTech();
   }, [firebaseUser, authLoading, userProfile, technicianId, hasPermission, toast, isViewingOwnPage, appId]);
   
+  const handleStatusUpdate = async (job: Job, newStatus: JobStatus) => {
+    if (!db || isUpdatingStatus || !technician || !appId) return;
+
+    if (job.status === 'In Progress' && job.breaks?.some(b => !b.end)) {
+        toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
+        return;
+    }
+    
+    setIsUpdatingStatus(job.id);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+    try {
+        const updatePayload: any = { status: newStatus, updatedAt: serverTimestamp() };
+
+        if (newStatus === 'En Route') {
+            updatePayload.enRouteAt = serverTimestamp();
+            notifyCustomerAction({
+                jobId: job.id, customerName: job.customerName, technicianName: technician.name,
+                reasonForChange: `Your technician, ${technician.name}, is on their way.`,
+                companyName: company?.name || 'our team'
+            }).catch(err => console.error("Failed to send 'On My Way' notification:", err));
+        }
+        if (newStatus === 'In Progress') {
+            updatePayload.inProgressAt = serverTimestamp();
+        }
+        if (newStatus === 'Completed') {
+            updatePayload.completedAt = serverTimestamp();
+        }
+        
+        await updateDoc(jobDocRef, updatePayload);
+
+        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+            await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
+        }
+        toast({ title: "Status Updated", description: `Job status set to ${newStatus}.` });
+
+        if (newStatus === 'Completed' && job.assignedTechnicianId && userProfile) {
+            calculateTravelMetricsAction({
+                companyId: userProfile.companyId!, jobId: job.id, technicianId: job.assignedTechnicianId, appId,
+            }).catch(err => console.error("Failed to trigger travel metrics calculation:", err));
+        }
+    } catch(e) {
+        console.error("Error updating job status from list view:", e);
+        toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
+    } finally {
+        setIsUpdatingStatus(null);
+    }
+  };
+
+
   if (isLoading || authLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)]">
@@ -172,6 +224,15 @@ export default function TechnicianJobListPage() {
     if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
     else if (job.location) window.open(`https://www.google.com/maps?q=${job.location.latitude},${job.location.longitude}`, '_blank');
     else toast({ title: "Navigation Error", description: "No address or coordinates available.", variant: "destructive"});
+  };
+
+  const getNextAction = (status: JobStatus): { label: string, icon: React.ElementType, nextStatus: JobStatus } | null => {
+      switch (status) {
+          case 'Assigned': return { label: "Start Travel", icon: Truck, nextStatus: 'En Route' };
+          case 'En Route': return { label: "Arrived & Start", icon: Play, nextStatus: 'In Progress' };
+          case 'In Progress': return { label: "Complete Job", icon: CheckCircle, nextStatus: 'Completed' };
+          default: return null;
+      }
   };
 
   return (
@@ -236,18 +297,34 @@ export default function TechnicianJobListPage() {
                                 <p className="font-semibold text-base">{currentOrNextJob.customerName}</p>
                                 <p className="flex items-center gap-1.5"><MapPin size={14}/> {currentOrNextJob.location.address}</p>
                                 {currentOrNextJob.scheduledTime && (
-                                    <p className="flex items-center gap-1.5"><Clock size={14}/> {format(new Date(currentOrNextJob.scheduledTime), 'PPp')}</p>
+                                    <p className="font-semibold text-lg flex items-center gap-1.5 pt-1"><Clock size={16}/> {format(new Date(currentOrNextJob.scheduledTime), 'p')}</p>
                                 )}
-                                 <p className="flex items-center gap-1.5"><Clock size={14}/> Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
+                                <p className="text-xs text-muted-foreground pt-1">Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
                             </CardDescription>
                         </CardHeader>
-                        <CardFooter className="grid grid-cols-2 gap-2">
-                             <Button onClick={() => handleNavigate(currentOrNextJob)}>
-                                <Navigation className="mr-2 h-4 w-4"/> Navigate
+                        <CardFooter className="grid grid-cols-[1fr,auto,auto] gap-2">
+                             {isViewingOwnPage && getNextAction(currentOrNextJob.status) ? (
+                                (() => {
+                                    const action = getNextAction(currentOrNextJob.status)!;
+                                    const Icon = action.icon;
+                                    return (
+                                        <Button 
+                                            onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
+                                            disabled={isUpdatingStatus === currentOrNextJob.id}
+                                            className={cn(action.nextStatus === 'Completed' && 'bg-green-600 hover:bg-green-700')}
+                                        >
+                                            {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
+                                            {action.label}
+                                        </Button>
+                                    );
+                                })()
+                            ) : <div />}
+                             <Button variant="outline" size="icon" onClick={() => handleNavigate(currentOrNextJob)}>
+                                <Navigation className="h-4 w-4"/>
                             </Button>
-                             <Link href={`/technician/${currentOrNextJob.id}`} className="w-full">
-                                <Button variant="outline" className="w-full">
-                                    <ListChecks className="mr-2 h-4 w-4"/> View Details
+                             <Link href={`/technician/${currentOrNextJob.id}`}>
+                                <Button variant="outline" size="icon">
+                                    <ListChecks className="h-4 w-4"/>
                                 </Button>
                             </Link>
                         </CardFooter>

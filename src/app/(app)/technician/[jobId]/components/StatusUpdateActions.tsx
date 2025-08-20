@@ -11,6 +11,9 @@ interface StatusUpdateActionsProps {
     onUpdateStatus: (newStatus: JobStatus) => void;
 }
 
+// This component is no longer used directly on the job detail page,
+// as the action has been moved to the job list card for one-click access.
+// It is kept for reference or potential future use.
 const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus, onUpdateStatus }) => {
     
     if (currentStatus === 'Assigned') {
@@ -46,5 +49,3 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
 };
 
 export default StatusUpdateActions;
-
-    

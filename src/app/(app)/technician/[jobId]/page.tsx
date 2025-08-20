@@ -8,7 +8,6 @@ import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigatio
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
-import StatusUpdateActions from './components/StatusUpdateActions';
 import WorkDocumentationForm from './components/WorkDocumentationForm';
 import ChecklistCard from './components/ChecklistCard';
 import TroubleshootingCard from './components/TroubleshootingCard';
@@ -79,7 +78,7 @@ export default function TechnicianJobDetailPage() {
         const data = jobDocSnap.data();
         for (const key in data) {
             if (data[key] && typeof data[key].toDate === 'function') {
-                data[key] = data[key].toDate().toISOString();
+                (data[key] as any) = (data[key] as any).toDate().toISOString();
             }
         }
         const fetchedJob = { id: jobDocSnap.id, ...data } as Job;
@@ -113,68 +112,6 @@ export default function TechnicianJobDetailPage() {
     fetchJobAndRelatedData();
   }, [jobId, authLoading, user, appId]);
   
-  const handleStatusUpdate = async (newStatus: JobStatus) => {
-    if (!job || !db || isUpdating || !technician || !appId) return;
-    
-    if (isBreakActive) {
-      toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
-      return;
-    }
-    
-    if (newStatus === 'In Progress' && (!job.checklistResults || !job.checklistResults.every(c => c.checked))) {
-        toast({ title: "Checklist Required", description: "Please complete the pre-work safety checklist before starting the job.", variant: "destructive" });
-        return;
-    }
-
-    setIsUpdating(true);
-    
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-    try {
-      const updatePayload: any = { status: newStatus, updatedAt: serverTimestamp() };
-      const newTimestamp = new Date().toISOString();
-      let updatedJobState: Partial<Job> = { status: newStatus, updatedAt: newTimestamp };
-
-      if (newStatus === 'En Route') {
-        updatePayload.enRouteAt = serverTimestamp();
-        updatedJobState.enRouteAt = newTimestamp;
-        notifyCustomerAction({
-            jobId: job.id, customerName: job.customerName, technicianName: technician.name,
-            reasonForChange: `Your technician, ${technician.name}, is on their way.`,
-            companyName: company?.name || 'our team'
-        }).catch(err => console.error("Failed to send 'On My Way' notification:", err));
-      }
-      if (newStatus === 'In Progress') {
-        updatePayload.inProgressAt = serverTimestamp();
-        updatedJobState.inProgressAt = newTimestamp;
-      }
-      if (newStatus === 'Completed') {
-        updatePayload.completedAt = serverTimestamp();
-        updatedJobState.completedAt = newTimestamp;
-      }
-
-      await updateDoc(jobDocRef, updatePayload);
-      
-      if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
-        const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
-        await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
-      }
-      
-      setJob(prevJob => prevJob ? { ...prevJob, ...updatedJobState } : null);
-      toast({ title: "Status Updated", description: `Job status set to ${newStatus}.`});
-
-      if (newStatus === 'Completed' && job.assignedTechnicianId && userProfile) {
-        calculateTravelMetricsAction({ 
-            companyId: userProfile.companyId!, jobId: job.id, technicianId: job.assignedTechnicianId, appId,
-        }).catch(err => console.error("Failed to trigger travel metrics calculation:", err));
-      }
-    } catch (error) {
-      console.error("Error updating job status:", error);
-      toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => {
     if (!job || !db || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
@@ -195,7 +132,7 @@ export default function TechnicianJobDetailPage() {
         newSignatureUrl = await getDownloadURL(signatureRef);
       }
       const updateData: any = { updatedAt: serverTimestamp() };
-      if (notes.trim()) updateData.notes = `${job.notes ? job.notes + '\n\n' : ''}Technician Notes:\n${notes.trim()}`;
+      if (notes.trim()) updateData.notes = `${job.notes ? job.notes + '\\n\\n' : ''}Technician Notes:\\n${notes.trim()}`;
       if (newPhotoUrls.length > 0) updateData.photos = arrayUnion(...newPhotoUrls);
       if (newSignatureUrl) {
         updateData.customerSignatureUrl = newSignatureUrl;
@@ -251,8 +188,6 @@ export default function TechnicianJobDetailPage() {
   const isAssignedToCurrentUser = user?.uid === job?.assignedTechnicianId;
   const isJobConcluded = job?.status === 'Completed' || job?.status === 'Cancelled';
   
-  const canUpdateStatus = isAssignedToCurrentUser && job?.status !== 'Completed' && job?.status !== 'Cancelled';
-
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
   }
@@ -286,17 +221,6 @@ export default function TechnicianJobDetailPage() {
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
 
       {!isJobConcluded && job.status === 'Assigned' && <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />}
-
-      {canUpdateStatus && (
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">Update Job Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <StatusUpdateActions currentStatus={job.status} onUpdateStatus={handleStatusUpdate} />
-            </CardContent>
-        </Card>
-      )}
 
       {job.status === 'In Progress' && (
         <>

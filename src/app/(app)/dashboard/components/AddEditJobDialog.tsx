@@ -210,8 +210,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingAISuggestion(true);
 
     const timesToExclude = isGettingMore ? [...rejectedTimes, ...timeSuggestions.map(s => s.time)] : [];
+    
+    // Immediately update rejected times state if getting more, to prevent re-fetching the same rejected ones
     if (isGettingMore) {
-        setRejectedTimes(timesToExclude);
+        setRejectedTimes(prev => [...prev, ...timeSuggestions.map(s => s.time)]);
     } else {
         setSelectedSuggestion(null); // Clear selection when getting new initial suggestions
     }
@@ -238,7 +240,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
     } else if (result.data?.suggestions) {
         const newSuggestions = result.data.suggestions;
-        if(newSuggestions.length === 0) {
+        if(newSuggestions.length === 0 && isGettingMore) {
             toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
         }
         

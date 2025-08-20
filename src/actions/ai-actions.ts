@@ -23,7 +23,7 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
 import type { Job, Technician, Company } from "@/types";
 import crypto from 'crypto';
-import { addHours } from 'date-fns';
+import { addHours, addMinutes } from 'date-fns';
 
 
 // Import all required AI-related schemas and types from the central types file
@@ -498,7 +498,12 @@ export async function suggestScheduleTimeAction(
   input: Omit<SuggestScheduleTimeInput, 'businessHours'> & { companyId: string }
 ): Promise<{ data: SuggestScheduleTimeOutput | null; error: string | null }> {
   if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-    return { data: { suggestions: [ { time: new Date().toISOString(), reasoning: 'Mock suggestion', technicianId: 'tech_1' } ] }, error: null };
+    const baseTime = new Date();
+    return { data: { suggestions: [ 
+        { time: addMinutes(baseTime, 30).toISOString(), reasoning: 'Mock: Alice is free soon.', technicianId: 'tech_1' },
+        { time: addMinutes(baseTime, 75).toISOString(), reasoning: 'Mock: Bob has an opening after his current job.', technicianId: 'tech_2' },
+        { time: addHours(baseTime, 2).toISOString(), reasoning: 'Mock: Charlie is available this afternoon.', technicianId: 'tech_3' },
+    ] }, error: null };
   }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");

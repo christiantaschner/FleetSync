@@ -44,7 +44,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from './components/MultiSelectFilter';
+import { MultiSelectFilter } from './components/multi-select-filter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -191,9 +191,13 @@ export default function DashboardPage() {
 
   const handleStatusFilterChange = (newStatusFilter: string[]) => {
     setStatusFilter(newStatusFilter);
-    // If a status other than the "open" ones is selected, turn off the toggle.
-    const hasNonOpenStatus = newStatusFilter.some(s => !openTasksFilter.includes(s as JobStatus));
-    if (hasNonOpenStatus && showOpenTasksOnly) {
+
+    // Check if the current filter selection matches the "Open Tasks" preset
+    const openTasksSet = new Set(openTasksFilter);
+    const newStatusSet = new Set(newStatusFilter);
+    const areSetsEqual = openTasksSet.size === newStatusSet.size && [...openTasksSet].every(value => newStatusSet.has(value));
+
+    if (!areSetsEqual && showOpenTasksOnly) {
       setShowOpenTasksOnly(false);
     }
   };
@@ -626,15 +630,8 @@ export default function DashboardPage() {
         return tempJobs.filter(job => job.id === jobFilterId);
     }
     
-    // Filter by open tasks if toggled
-    if (showOpenTasksOnly) {
-        tempJobs = tempJobs.filter(job => 
-            openTasksFilter.includes(job.status)
-        );
-    }
-
-    // Filter by status and priority if not showing open tasks only
-    if (!showOpenTasksOnly && (statusFilter.length > 0 || priorityFilter.length > 0)) {
+    // Always filter by status and priority
+    if (statusFilter.length > 0 || priorityFilter.length > 0) {
         return tempJobs.filter(job => {
             const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
             const statusMatch = statusFilter.length === 0 || statusFilter.includes(job.status);
@@ -643,7 +640,7 @@ export default function DashboardPage() {
     }
 
     return tempJobs;
-  }, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm, showOpenTasksOnly, openTasksFilter]);
+  }, [jobs, statusFilter, priorityFilter, jobFilterId, jobSearchTerm]);
 
   const sortedJobs = useMemo(() => {
     const technicianMap = new Map(technicians.map(t => [t.id, t.name]));
@@ -1392,4 +1389,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

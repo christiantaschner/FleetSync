@@ -136,30 +136,8 @@ const allocateJobFlow = ai.defineFlow(
     inputSchema: AllocateJobInputSchema,
     outputSchema: AllocateJobOutputSchema,
   },
-  async input => {
-    try {
-      const { output } = await prompt(input);
-      if (!output) {
-        return {
-          suggestedTechnicianId: null,
-          reasoning: "The AI model could not determine a suitable technician based on the provided constraints (e.g., skills, availability) or generated an invalid response.",
-        };
-      }
-      return output;
-    } catch (error) {
-      console.error('Error in allocateJobFlow:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      // Check for specific Firestore-related error messages
-      if (errorMessage.includes('firestore') || errorMessage.includes('collection()')) {
-        return {
-          suggestedTechnicianId: null,
-          reasoning: `An internal database error occurred while trying to access learning data. ${errorMessage}`,
-        };
-      }
-      return {
-        suggestedTechnicianId: null,
-        reasoning: `The AI model encountered an error during processing: ${errorMessage}`,
-      };
-    }
+  async (input) => {
+    const { output } = await prompt(input);
+    return output!;
   }
 );

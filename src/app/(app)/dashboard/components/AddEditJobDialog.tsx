@@ -167,9 +167,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         setStatus('Assigned');
     }
     
-    if (status === 'Unassigned' && manualTechnicianId !== UNASSIGNED_VALUE) {
-        setManualTechnicianId(UNASSIGNED_VALUE);
-    }
   }, [status, manualTechnicianId]);
 
   const handleCustomerNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

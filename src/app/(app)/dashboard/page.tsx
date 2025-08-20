@@ -44,7 +44,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
+import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -190,12 +190,12 @@ export default function DashboardPage() {
   };
 
   const handleStatusFilterChange = (newStatusFilter: string[]) => {
-      setStatusFilter(newStatusFilter);
-      // If a status other than the "open" ones is selected, turn off the toggle.
-      const hasNonOpenStatus = newStatusFilter.some(s => !openTasksFilter.includes(s as JobStatus));
-      if (hasNonOpenStatus && showOpenTasksOnly) {
-        setShowOpenTasksOnly(false);
-      }
+    setStatusFilter(newStatusFilter);
+    // If a status other than the "open" ones is selected, turn off the toggle.
+    const hasNonOpenStatus = newStatusFilter.some(s => !openTasksFilter.includes(s as JobStatus));
+    if (hasNonOpenStatus && showOpenTasksOnly) {
+      setShowOpenTasksOnly(false);
+    }
   };
 
 
@@ -1242,7 +1242,6 @@ export default function DashboardPage() {
                             selected={statusFilter}
                             onChange={handleStatusFilterChange}
                             placeholder="Filter by Status"
-                            disabled={showOpenTasksOnly}
                         />
                     </div>
                     <div className="space-y-1">
@@ -1252,7 +1251,6 @@ export default function DashboardPage() {
                             selected={priorityFilter}
                             onChange={setPriorityFilter}
                             placeholder="Filter by Priority"
-                            disabled={showOpenTasksOnly}
                         />
                     </div>
                     <div className="space-y-1">

@@ -287,7 +287,7 @@ export default function TechnicianJobListPage() {
                      <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline">
                         <Briefcase className="text-primary" /> {currentOrNextJob.status === 'In Progress' ? 'Current Job' : 'Next Job'}
                     </h2>
-                     <Card className="bg-primary/5 border-primary shadow-lg">
+                     <Card>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
@@ -297,34 +297,34 @@ export default function TechnicianJobListPage() {
                                 <p className="font-semibold text-base">{currentOrNextJob.customerName}</p>
                                 <p className="flex items-center gap-1.5"><MapPin size={14}/> {currentOrNextJob.location.address}</p>
                                 {currentOrNextJob.scheduledTime && (
-                                    <p className="font-semibold text-lg flex items-center gap-1.5 pt-1"><Clock size={16}/> {format(new Date(currentOrNextJob.scheduledTime), 'p')}</p>
+                                    <p className="font-semibold text-lg flex items-center gap-1.5 pt-1 text-primary"><Clock size={16}/> {format(new Date(currentOrNextJob.scheduledTime), 'p')}</p>
                                 )}
                                 <p className="text-xs text-muted-foreground pt-1">Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
                             </CardDescription>
                         </CardHeader>
-                        <CardFooter className="grid grid-cols-[1fr,auto,auto] gap-2">
-                             {isViewingOwnPage && getNextAction(currentOrNextJob.status) ? (
+                        <CardFooter className="flex flex-col sm:flex-row gap-2">
+                            {getNextAction(currentOrNextJob.status) ? (
                                 (() => {
                                     const action = getNextAction(currentOrNextJob.status)!;
                                     const Icon = action.icon;
                                     return (
                                         <Button 
                                             onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
-                                            disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className={cn("col-span-full sm:col-span-1", action.nextStatus === 'Completed' && 'bg-green-600 hover:bg-green-700')}
+                                            disabled={isUpdatingStatus === currentOrNextJob.id || !isViewingOwnPage}
+                                            className={cn("w-full", action.nextStatus === 'Completed' && 'bg-green-600 hover:bg-green-700')}
                                         >
                                             {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
                                             {action.label}
                                         </Button>
                                     );
                                 })()
-                            ) : <div className="col-span-full sm:col-span-1" />}
+                            ) : <div className="w-full" />}
                             <Link href={`/technician/${currentOrNextJob.id}`} className="w-full">
                                 <Button variant="outline" className="w-full">
                                      <Eye className="mr-2 h-4 w-4" /> Details
                                 </Button>
                             </Link>
-                             <Button variant="default" size="icon" onClick={() => handleNavigate(currentOrNextJob)}>
+                             <Button variant="default" size="icon" onClick={() => handleNavigate(currentOrNextJob)} className="bg-blue-600 hover:bg-blue-700">
                                 <Navigation className="h-4 w-4"/>
                             </Button>
                         </CardFooter>

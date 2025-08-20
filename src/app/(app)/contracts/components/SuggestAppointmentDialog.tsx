@@ -18,7 +18,7 @@ import { Loader2, Sparkles, X, UserCheck, Bot, RefreshCw, Phone, Mail } from 'lu
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth-context';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { cn, getNextDueDate } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
@@ -61,6 +61,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
     }
     
     const timesToExclude = isGettingMore ? [...rejectedTimes, ...suggestions.map(s => s.time)] : [];
+    const preferredDate = getNextDueDate(contract).toISOString();
 
     const result = await suggestScheduleTimeAction({
       companyId: userProfile.companyId,
@@ -69,6 +70,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
       currentTime: new Date().toISOString(),
       businessHours: company.settings?.businessHours || [],
       excludedTimes: timesToExclude,
+      preferredDate: preferredDate,
       technicians: technicians.map(tech => ({
         id: tech.id,
         name: tech.name,
@@ -95,7 +97,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
     if (isOpen) {
       getSuggestions(false);
     }
-  }, [isOpen]); // simplified dependency array
+  }, [isOpen, getSuggestions]);
 
   const handleConfirm = async () => {
     if (!selectedSuggestion || !contract || !userProfile?.companyId || !appId || !db) return;

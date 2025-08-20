@@ -192,7 +192,7 @@ export default function ContractsPage() {
                 <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <CardTitle className="font-headline flex items-center gap-2"><Repeat/> Service Contracts</CardTitle>
-                        <CardDescription>
+                        <CardDescription className="mt-1">
                             Manage recurring service agreements that automatically generate jobs.
                         </CardDescription>
                     </div>

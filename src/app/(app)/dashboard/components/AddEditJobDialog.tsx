@@ -59,6 +59,7 @@ interface AddEditJobDialogProps {
   isOpen: boolean;
   onClose: () => void;
   job?: Job | null;
+  prefilledData?: Partial<Job> | null;
   jobs: Job[];
   technicians: Technician[];
   customers: Customer[];
@@ -68,7 +69,7 @@ interface AddEditJobDialogProps {
   onManageSkills: () => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, jobs, technicians, customers, contracts, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, prefilledData, jobs, technicians, customers, contracts, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -112,23 +113,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const resetForm = useCallback(() => {
-    setTitle(job?.title || '');
-    setDescription(job?.description || '');
-    setPriority(job?.priority || 'Medium');
-    setStatus(job?.status || 'Unassigned');
-    setRequiredSkills(job?.requiredSkills || []);
-    setCustomerName(job?.customerName || '');
-    setCustomerEmail(job?.customerEmail || '');
-    setCustomerPhone(job?.customerPhone || '');
-    setLocationAddress(job?.location.address || '');
-    setLatitude(job?.location.latitude || null);
-    setLongitude(job?.location.longitude || null);
-    setScheduledTime(job?.scheduledTime ? new Date(job.scheduledTime) : undefined);
-    setEstimatedDuration(job?.estimatedDuration || 1);
-    setDurationUnit(job?.durationUnit || 'hours');
-    setManualTechnicianId(job?.assignedTechnicianId || UNASSIGNED_VALUE);
-    setSelectedContractId(job?.sourceContractId || '');
-    setSelectedCustomerId(job?.customerId || null);
+    const initialData = job || prefilledData || {};
+    setTitle(initialData.title || '');
+    setDescription(initialData.description || '');
+    setPriority(initialData.priority || 'Medium');
+    setStatus(initialData.status || 'Unassigned');
+    setRequiredSkills(initialData.requiredSkills || []);
+    setCustomerName(initialData.customerName || '');
+    setCustomerEmail(initialData.customerEmail || '');
+    setCustomerPhone(initialData.customerPhone || '');
+    setLocationAddress(initialData.location?.address || '');
+    setLatitude(initialData.location?.latitude || null);
+    setLongitude(initialData.location?.longitude || null);
+    setScheduledTime(initialData.scheduledTime ? new Date(initialData.scheduledTime) : undefined);
+    setEstimatedDuration(initialData.estimatedDuration || 1);
+    setDurationUnit(initialData.durationUnit || 'hours');
+    setManualTechnicianId(initialData.assignedTechnicianId || UNASSIGNED_VALUE);
+    setSelectedContractId(initialData.sourceContractId || '');
+    setSelectedCustomerId(initialData.customerId || null);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
@@ -139,13 +141,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setTimeSuggestions([]);
     setTriageToken(null);
     setSelectedSuggestion(null);
-  }, [job]);
+  }, [job, prefilledData]);
 
   useEffect(() => {
     if (isOpen) {
       resetForm();
     }
-  }, [job, isOpen, resetForm]);
+  }, [job, prefilledData, isOpen, resetForm]);
   
   const isReadyForAssignment = useMemo(() => {
     if (selectedSuggestion) {
@@ -566,7 +568,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   };
   
   const titleText = job ? 'Edit Job' : 'Add New Job';
-  const descriptionText = job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : '';
+  const descriptionText = job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details below to create and assign a new job.';
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

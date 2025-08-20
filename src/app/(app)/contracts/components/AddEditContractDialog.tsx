@@ -33,11 +33,12 @@ interface AddEditContractDialogProps {
     isOpen: boolean;
     onClose: () => void;
     contract?: Contract | null;
+    prefilledData?: Partial<Contract> | null;
     customers: Customer[];
     onContractUpdated: () => void;
 }
 
-const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, onClose, contract, customers, onContractUpdated }) => {
+const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, onClose, contract, prefilledData, customers, onContractUpdated }) => {
     const { userProfile } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,8 +46,11 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
 
     const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
     const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
-
-    const defaultValues = contract || {
+    
+    const getInitialValues = useCallback(() => {
+        if (contract) return contract;
+        if (prefilledData) return { ...prefilledData, frequency: 'Monthly', isActive: true, jobTemplate: { title: '', description: '', priority: 'Medium', estimatedDuration: 1, durationUnit: 'hours' }, startDate: new Date().toISOString() };
+        return {
             companyId: userProfile?.companyId || '',
             customerName: '',
             customerPhone: '',
@@ -63,10 +67,11 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 requiredSkills: [],
             }
         };
+    }, [contract, prefilledData, userProfile]);
 
     const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<Contract>({
         resolver: zodResolver(ContractSchema),
-        defaultValues
+        defaultValues: getInitialValues()
     });
     
     const customerNameValue = watch('customerName');
@@ -92,26 +97,9 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
 
     useEffect(() => {
         if (isOpen) {
-             const newDefaultValues = contract || {
-                companyId: userProfile?.companyId || '',
-                customerName: '',
-                customerPhone: '',
-                customerAddress: '',
-                frequency: 'Monthly',
-                startDate: new Date().toISOString(),
-                isActive: true,
-                jobTemplate: {
-                    title: '',
-                    description: '',
-                    priority: 'Medium',
-                    estimatedDuration: 1,
-                    durationUnit: 'hours',
-                    requiredSkills: [],
-                }
-            };
-            reset(newDefaultValues);
+             reset(getInitialValues());
         }
-    }, [isOpen, contract, reset, userProfile]);
+    }, [isOpen, contract, prefilledData, reset, getInitialValues]);
     
     const handleSelectCustomer = (customer: Customer) => {
       setValue('customerName', customer.name);

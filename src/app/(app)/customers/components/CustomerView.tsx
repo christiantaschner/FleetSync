@@ -40,9 +40,12 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
 
     const [isAddJobOpen, setIsAddJobOpen] = useState(false);
     const [selectedJobForEdit, setSelectedJobForEdit] = useState<Job | null>(null);
+    const [prefilledJobData, setPrefilledJobData] = useState<Partial<Job> | null>(null);
 
     const [isAddContractOpen, setIsAddContractOpen] = useState(false);
-    const [prefilledContract, setPrefilledContract] = useState<Partial<Contract> | null>(null);
+    const [selectedContractForEdit, setSelectedContractForEdit] = useState<Contract | null>(null);
+    const [prefilledContractData, setPrefilledContractData] = useState<Partial<Contract> | null>(null);
+
     const router = useRouter();
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -59,8 +62,12 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
         if (initialSearchTerm && filteredCustomers.length > 0) {
             const match = filteredCustomers.find(c => c.name.toLowerCase() === initialSearchTerm.toLowerCase());
             setSelectedCustomer(match || filteredCustomers[0]);
+        } else if (filteredCustomers.length > 0 && !selectedCustomer) {
+            setSelectedCustomer(filteredCustomers[0]);
+        } else if (filteredCustomers.length === 0) {
+            setSelectedCustomer(null);
         }
-    }, [initialSearchTerm, filteredCustomers]);
+    }, [initialSearchTerm, filteredCustomers, selectedCustomer]);
 
     useEffect(() => {
         if (!selectedCustomer || !userProfile?.companyId || !appId) {
@@ -114,7 +121,8 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
 
     const handleAddNewJob = () => {
       if (!selectedCustomer) return;
-      const prefilledJob = {
+      setSelectedJobForEdit(null);
+      setPrefilledJobData({
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone || '',
@@ -124,14 +132,20 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
           latitude: 0,
           longitude: 0,
         },
-      };
-      setSelectedJobForEdit(prefilledJob as Job);
+      });
       setIsAddJobOpen(true);
     };
     
+    const handleEditContract = (contract: Contract) => {
+        setSelectedContractForEdit(contract);
+        setPrefilledContractData(null);
+        setIsAddContractOpen(true);
+    };
+
     const handleAddNewContract = () => {
       if (!selectedCustomer) return;
-      setPrefilledContract({
+      setSelectedContractForEdit(null);
+      setPrefilledContractData({
         customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone || '',
@@ -148,11 +162,11 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
                 onCustomerUpserted={onCustomerAdded}
                 customerToEdit={customerToEdit}
             />
-            {/* The dialogs below need mock data or live data passed in. Assuming they get what they need. */}
              <AddEditJobDialog
                 isOpen={isAddJobOpen}
                 onClose={() => setIsAddJobOpen(false)}
                 job={selectedJobForEdit}
+                prefilledData={prefilledJobData}
                 jobs={[]} 
                 technicians={[]}
                 customers={initialCustomers}
@@ -163,7 +177,8 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
             <AddEditContractDialog
                 isOpen={isAddContractOpen}
                 onClose={() => setIsAddContractOpen(false)}
-                contract={prefilledContract as Contract | null}
+                contract={selectedContractForEdit}
+                prefilledData={prefilledContractData}
                 customers={initialCustomers}
                 onContractUpdated={onCustomerAdded}
             />
@@ -236,7 +251,7 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
                                     <div className="space-y-3 p-2">
                                     {selectedCustomerContracts.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No active contracts.</p>}
                                     {selectedCustomerContracts.map(contract => (
-                                        <button onClick={() => router.push(`/contracts?contract=${contract.id}`)} key={contract.id} className="w-full text-left block p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
+                                        <button onClick={() => handleEditContract(contract)} key={contract.id} className="w-full text-left block p-3 rounded-md bg-secondary/50 hover:bg-secondary/80 transition-colors">
                                             <div className="flex justify-between items-start">
                                                 <p className="font-semibold text-sm">{contract.jobTemplate.title}</p>
                                                 <Badge variant={contract.isActive ? "secondary" : "destructive"}>

@@ -1,14 +1,13 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import type { Job, Technician, JobPriority, JobStatus } from '@/types';
+import type { Job, Technician, JobStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye } from 'lucide-react';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
@@ -18,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { MockModeBanner } from '@/components/common/MockModeBanner';
+import { format } from 'date-fns';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading } = useAuth();
@@ -206,8 +205,17 @@ export default function TechnicianJobListPage() {
     );
   }
 
+  const currentOrNextJob = assignedJobs.find(job => job.status === 'In Progress' || job.status === 'En Route') || assignedJobs[0];
+  const upcomingJobs = currentOrNextJob ? assignedJobs.filter(job => job.id !== currentOrNextJob.id) : [];
+
+  const handleNavigate = (job: Job) => {
+    if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
+    else if (job.location) window.open(`https://www.google.com/maps?q=${job.location.latitude},${job.location.longitude}`, '_blank');
+    else toast({ title: "Navigation Error", description: "No address or coordinates available.", variant: "destructive"});
+  };
+
   return (
-    <div className="max-w-2xl mx-auto p-4">
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
       {(userProfile?.role === 'admin' || userProfile?.role === 'superAdmin') && (
         <Button variant="outline" size="sm" onClick={() => router.push('/dashboard?tab=technicians')} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician Roster
@@ -223,8 +231,8 @@ export default function TechnicianJobListPage() {
             </AlertDescription>
         </Alert>
       )}
-
-      <Card className="mb-6 shadow-lg">
+      
+      <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center gap-4">
           <Avatar className="h-16 w-16">
             <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait"/>
@@ -232,7 +240,7 @@ export default function TechnicianJobListPage() {
           </Avatar>
           <div>
             <CardTitle className="text-2xl font-headline">{technician.name}</CardTitle>
-            <CardDescription>Currently assigned jobs.</CardDescription>
+            <CardDescription>Welcome to your daily command center.</CardDescription>
           </div>
         </CardHeader>
         {isViewingOwnPage && (
@@ -249,63 +257,76 @@ export default function TechnicianJobListPage() {
           </CardFooter>
         )}
       </Card>
-
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 font-headline">
-        <ListChecks className="text-primary" /> Active Jobs ({assignedJobs.length})
-      </h2>
       
       {assignedJobs.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">{technician.name} has no active jobs assigned.</p>
-          </CardContent>
+        <Card className="text-center py-12">
+            <CardContent>
+                <h3 className="text-lg font-semibold">All Clear!</h3>
+                <p className="text-muted-foreground mt-1">You have no active jobs assigned for today.</p>
+            </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {assignedJobs.map(job => (
-            <Card key={job.id} className={cn(
-                "overflow-hidden hover:shadow-md transition-shadow",
-                job.priority === 'High' && "border-destructive bg-destructive/5"
-            )}>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg font-headline">{job.title}</CardTitle>
-                  <Badge variant={job.priority === 'High' ? 'destructive' : job.priority === 'Medium' ? 'default' : 'secondary'}>
-                    {job.priority}
-                  </Badge>
+        <>
+            {currentOrNextJob && (
+                <div>
+                     <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline">
+                        <Briefcase className="text-primary" /> {currentOrNextJob.status === 'In Progress' ? 'Current Job' : 'Next Job'}
+                    </h2>
+                     <Card className="bg-primary/5 border-primary shadow-lg">
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
+                                <Badge variant={currentOrNextJob.priority === 'High' ? 'destructive' : 'default'}>{currentOrNextJob.priority}</Badge>
+                            </div>
+                            <CardDescription className="pt-1">
+                                <p className="font-semibold text-base">{currentOrNextJob.customerName}</p>
+                                <p className="flex items-center gap-1.5"><MapPin size={14}/> {currentOrNextJob.location.address}</p>
+                                {currentOrNextJob.scheduledTime && (
+                                    <p className="flex items-center gap-1.5"><Clock size={14}/> {format(new Date(currentOrNextJob.scheduledTime), 'PPp')}</p>
+                                )}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardFooter className="grid grid-cols-2 gap-2">
+                             <Button onClick={() => handleNavigate(currentOrNextJob)}>
+                                <Navigation className="mr-2 h-4 w-4"/> Navigate
+                            </Button>
+                             <Link href={`/technician/${currentOrNextJob.id}`} className="w-full">
+                                <Button variant="outline" className="w-full">
+                                    <ListChecks className="mr-2 h-4 w-4"/> View Details
+                                </Button>
+                            </Link>
+                        </CardFooter>
+                    </Card>
                 </div>
-                <CardDescription className="flex items-center text-sm">
-                  <MapPin size={14} className="mr-1 text-muted-foreground" /> {job.location.address || `Lat: ${job.location.latitude}, Lon: ${job.location.longitude}`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm">
-                <p className="text-muted-foreground mb-2 line-clamp-2">{job.description}</p>
-                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                  <span className="flex items-center">
-                    <UserCircle size={14} className="mr-1" /> {job.customerName}
-                  </span>
-                  <span className="flex items-center">
-                    <Clock size={14} className="mr-1" /> Status: {job.status}
-                  </span>
+            )}
+            {upcomingJobs.length > 0 && (
+                 <div>
+                    <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline mt-8">
+                        <ListChecks className="text-primary" /> Upcoming Jobs
+                    </h2>
+                    <div className="space-y-3">
+                    {upcomingJobs.map(job => (
+                        <Card key={job.id} className="overflow-hidden">
+                            <CardContent className="p-3 flex items-center justify-between">
+                                <div>
+                                    <p className="font-semibold">{job.title}</p>
+                                    <p className="text-sm text-muted-foreground">{job.customerName}</p>
+                                    <p className="text-xs text-muted-foreground">{job.scheduledTime ? format(new Date(job.scheduledTime), 'p') : 'Unscheduled'}</p>
+                                </div>
+                                <Link href={`/technician/${job.id}`}>
+                                    <Button variant="ghost" size="sm">Details</Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    ))}
+                    </div>
                 </div>
-                 {job.scheduledTime && (
-                  <p className="text-xs text-muted-foreground">
-                    Scheduled: {new Date(job.scheduledTime).toLocaleString()}
-                  </p>
-                )}
-              </CardContent>
-              <CardFooter className="bg-secondary/50 p-3">
-                <Link href={`/technician/${job.id}`} className="w-full">
-                  <Button className="w-full" variant="default">
-                    View Details & Update Status
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+            )}
+        </>
       )}
+
     </div>
   );
 }
 
+    

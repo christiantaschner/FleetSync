@@ -18,9 +18,6 @@ import { MockModeBanner } from '@/components/common/MockModeBanner';
 export default function CustomersPage() {
     const { user, userProfile, loading: authLoading } = useAuth();
     const searchParams = useSearchParams();
-    const [jobs, setJobs] = useState<Job[]>([]);
-    const [contracts, setContracts] = useState<Contract[]>([]);
-    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [customers, setCustomers] = useState<CustomerData[]>([]);
     const [allSkills, setAllSkills] = useState<Skill[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,9 +37,6 @@ export default function CustomersPage() {
         }
 
         if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-            setJobs(mockJobs);
-            setContracts(mockContracts);
-            setEquipment(mockEquipment);
             setCustomers(mockCustomers);
             setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
             setIsLoading(false);
@@ -62,7 +56,7 @@ export default function CustomersPage() {
         }
 
         let loadedCount = 0;
-        const totalCollections = 4;
+        const totalCollections = 2; // Customers and Skills
         const companyId = userProfile.companyId;
 
         const updateLoadingState = () => {
@@ -76,60 +70,14 @@ export default function CustomersPage() {
           if (result.data) {
             setAllSkills(result.data);
           }
+          updateLoadingState();
         });
 
-        const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
-        const unsubscribeJobs = onSnapshot(jobsQuery, (snapshot) => {
-            const jobsData = snapshot.docs.map(doc => {
-                const data = doc.data();
-                for (const key in data) {
-                    if (data[key] && typeof data[key].toDate === 'function') {
-                        data[key] = data[key].toDate().toISOString();
-                    }
-                }
-                return { id: doc.id, ...data } as Job;
-            });
-            setJobs(jobsData);
-            if(isLoading) updateLoadingState();
-        }, (err) => {
-            console.error("Error fetching jobs for customer view:", err);
-            if(isLoading) updateLoadingState();
-        });
-
-        const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
-        const unsubscribeContracts = onSnapshot(contractsQuery, (snapshot) => {
-            const contractsData = snapshot.docs.map(doc => {
-                 const data = doc.data();
-                 for (const key in data) {
-                    if (data[key] && typeof data[key].toDate === 'function') {
-                        data[key] = data[key].toDate().toISOString();
-                    }
-                }
-                return { id: doc.id, ...data } as Contract;
-            });
-            setContracts(contractsData);
-            if(isLoading) updateLoadingState();
-        }, (err) => {
-            console.error("Error fetching contracts for customer view:", err);
-            if(isLoading) updateLoadingState();
-        });
-        
-        const equipmentQuery = query(collection(db, `artifacts/${appId}/public/data/equipment`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
-        const unsubscribeEquipment = onSnapshot(equipmentQuery, (snapshot) => {
-            const equipmentData = snapshot.docs.map(doc => {
-                 const data = doc.data();
-                 for (const key in data) {
-                    if (data[key] && typeof data[key].toDate === 'function') {
-                        data[key] = data[key].toDate().toISOString();
-                    }
-                }
-                return { id: doc.id, ...data } as Equipment;
-            });
-            setEquipment(equipmentData);
-            if(isLoading) updateLoadingState();
-        });
-
-        const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", companyId), orderBy("createdAt", "desc"));
+        const customersQuery = query(
+            collection(db, `artifacts/${appId}/public/data/customers`), 
+            where("companyId", "==", companyId), 
+            orderBy("name", "asc")
+        );
         const unsubscribeCustomers = onSnapshot(customersQuery, (snapshot) => {
             const customersData = snapshot.docs.map(doc => {
                  const data = doc.data();
@@ -147,11 +95,7 @@ export default function CustomersPage() {
             if(isLoading) updateLoadingState();
         });
 
-
         return () => {
-            unsubscribeJobs();
-            unsubscribeContracts();
-            unsubscribeEquipment();
             unsubscribeCustomers();
         };
     }, [authLoading, userProfile, isLoading]);
@@ -171,7 +115,11 @@ export default function CustomersPage() {
     return (
         <div>
             <MockModeBanner />
-            <CustomerView customers={customers} jobs={jobs} contracts={contracts} allSkills={allSkills.map(s => s.name)} onCustomerAdded={fetchData} initialSearchTerm={searchTerm} />
+            <CustomerView 
+                initialCustomers={customers} 
+                allSkills={allSkills.map(s => s.name)} 
+                onCustomerAdded={fetchData} 
+                initialSearchTerm={searchTerm} />
         </div>
     );
 }

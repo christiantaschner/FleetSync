@@ -160,29 +160,40 @@ export async function upsertCustomerAction(
 
     const customersCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/customers`);
 
-    // Check for existing customer with the same name if we are creating a new one
-    if (!id) {
-        const nameQuery = customersCollectionRef
-            .where("companyId", "==", companyId)
-            .where("name", "==", customerData.name);
-        const querySnapshot = await nameQuery.get();
-        if (!querySnapshot.empty) {
-            return { data: null, error: 'A customer with this name already exists.' };
-        }
-    }
+    // Normalize name for querying
+    const normalizedName = customerData.name.trim().toLowerCase();
     
+    // If an ID is provided, it's an update.
     if (id) {
-      // Update existing customer
-      const docRef = dbAdmin.collection(`artifacts/${appId}/public/data/customers`).doc(id);
+      const docRef = customersCollectionRef.doc(id);
       await docRef.update({
         ...customerData,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       return { data: { id }, error: null };
+    }
+
+    // If no ID, it's an insert or potential upsert based on name.
+    // Check for an existing customer with the same normalized name.
+    const nameQuery = customersCollectionRef
+        .where("companyId", "==", companyId)
+        .where("name_normalized", "==", normalizedName);
+        
+    const querySnapshot = await nameQuery.get();
+    
+    if (!querySnapshot.empty) {
+        // Customer exists, update their info if needed. This makes the action an "upsert".
+        const existingDocRef = querySnapshot.docs[0].ref;
+        await existingDocRef.update({
+            ...customerData, // Update with potentially new phone/email/address
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        return { data: { id: existingDocRef.id }, error: null };
     } else {
-      // Add new customer
+      // No existing customer, create a new one.
       const docRef = await customersCollectionRef.add({
         ...customerData,
+        name_normalized: normalizedName, // Store the normalized name for future lookups
         companyId: companyId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),

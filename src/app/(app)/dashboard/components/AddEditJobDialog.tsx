@@ -33,6 +33,7 @@ import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, Sugge
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
+import { upsertCustomerAction } from '@/actions/customer-actions';
 import { Popover, PopoverContent, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { addHours, format } from 'date-fns';
@@ -205,8 +206,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setCustomerName(contract.customerName);
       setCustomerPhone(contract.customerPhone || '');
       setLocationAddress(contract.customerAddress);
-      setCustomerEmail(''); // Contracts don't have email, clear it
-      setSelectedCustomerId(null); // Contracts don't have a direct customer ID link yet
+      setSelectedCustomerId(contract.customerId || null);
     }
   };
 
@@ -396,13 +396,33 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       return;
     }
     setIsLoading(true);
+    
+    let customerIdToUse = selectedCustomerId;
+    if (!customerIdToUse) {
+        const customerResult = await upsertCustomerAction({
+            companyId: userProfile.companyId,
+            appId,
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            address: locationAddress
+        });
+        if (customerResult.data?.id) {
+            customerIdToUse = customerResult.data.id;
+        } else {
+            toast({ title: "Customer Creation Failed", description: customerResult.error, variant: "destructive" });
+            setIsLoading(false);
+            return;
+        }
+    }
+
 
     const finalTechId = selectedSuggestion ? selectedSuggestion.technicianId : (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
     const finalScheduledTime = selectedSuggestion ? new Date(selectedSuggestion.time) : scheduledTime;
 
     const jobData: any = {
       companyId: userProfile.companyId,
-      customerId: selectedCustomerId,
+      customerId: customerIdToUse,
       title,
       description,
       priority,

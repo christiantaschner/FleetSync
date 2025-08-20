@@ -229,7 +229,7 @@ export default function TechnicianJobListPage() {
   const getNextAction = (status: JobStatus): { label: string, icon: React.ElementType, nextStatus: JobStatus } | null => {
       switch (status) {
           case 'Assigned': return { label: "Start Travel", icon: Truck, nextStatus: 'En Route' };
-          case 'En Route': return { label: "Arrived & Start", icon: Play, nextStatus: 'In Progress' };
+          case 'En Route': return { label: "Start Work", icon: Play, nextStatus: 'In Progress' };
           case 'In Progress': return { label: "Complete Job", icon: CheckCircle, nextStatus: 'Completed' };
           default: return null;
       }
@@ -311,22 +311,22 @@ export default function TechnicianJobListPage() {
                                         <Button 
                                             onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className={cn(action.nextStatus === 'Completed' && 'bg-green-600 hover:bg-green-700')}
+                                            className={cn("col-span-full sm:col-span-1", action.nextStatus === 'Completed' && 'bg-green-600 hover:bg-green-700')}
                                         >
                                             {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
                                             {action.label}
                                         </Button>
                                     );
                                 })()
-                            ) : <div />}
-                             <Button variant="outline" size="icon" onClick={() => handleNavigate(currentOrNextJob)}>
-                                <Navigation className="h-4 w-4"/>
-                            </Button>
-                             <Link href={`/technician/${currentOrNextJob.id}`}>
-                                <Button variant="outline" size="icon">
-                                    <ListChecks className="h-4 w-4"/>
+                            ) : <div className="col-span-full sm:col-span-1" />}
+                            <Link href={`/technician/${currentOrNextJob.id}`} className="w-full">
+                                <Button variant="outline" className="w-full">
+                                     <Eye className="mr-2 h-4 w-4" /> Details
                                 </Button>
                             </Link>
+                             <Button variant="default" size="icon" onClick={() => handleNavigate(currentOrNextJob)}>
+                                <Navigation className="h-4 w-4"/>
+                            </Button>
                         </CardFooter>
                     </Card>
                 </div>

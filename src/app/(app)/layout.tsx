@@ -85,11 +85,36 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
+  const [showStuckMessage, setShowStuckMessage] = React.useState(false);
+
+  React.useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (loading) {
+        timer = setTimeout(() => {
+            setShowStuckMessage(true);
+        }, 7000); // Show message after 7 seconds of loading
+    } else {
+        setShowStuckMessage(false);
+    }
+
+    return () => clearTimeout(timer);
+  }, [loading]);
   
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-center">
+        <div className="flex flex-col items-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            {showStuckMessage && (
+                <div className="mt-8 animate-in fade-in-50">
+                    <p className="text-muted-foreground mb-4">Taking longer than usual to load...</p>
+                    <Button onClick={logout} variant="outline">
+                        <LogOut className="mr-2 h-4 w-4"/>
+                        Log Out & Try Again
+                    </Button>
+                </div>
+            )}
+        </div>
       </div>
     );
   }

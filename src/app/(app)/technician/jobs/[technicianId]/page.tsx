@@ -73,12 +73,14 @@ export default function TechnicianJobListPage() {
         setTechnician(techData);
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+        const startOfView = startOfToday();
         
         const jobsQuery = query(
           collection(db, `artifacts/${appId}/public/data/jobs`),
           where("companyId", "==", techData.companyId),
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses),
+          where("scheduledTime", ">=", startOfView.toISOString()),
           orderBy("scheduledTime")
         );
 
@@ -268,7 +270,7 @@ export default function TechnicianJobListPage() {
                      <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline">
                         <Briefcase className="text-primary" /> {currentOrNextJob.status === 'In Progress' ? 'Current Job' : 'Next Job'}
                     </h2>
-                     <Card className="bg-background">
+                     <Card>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
@@ -292,7 +294,7 @@ export default function TechnicianJobListPage() {
                                         <Button 
                                             onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className={cn("w-full bg-primary hover:bg-primary/90")}
+                                            className="bg-primary hover:bg-primary/90"
                                         >
                                             {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
                                             {action.label}

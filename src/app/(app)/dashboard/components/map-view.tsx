@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -88,9 +89,8 @@ const MapView: React.FC<MapViewProps> = ({
     }
   }, [map, searchedLocation]);
   
-  const handleJobClick = (jobId: string, techId?: string | null) => {
-    const url = techId ? `/technician/${jobId}` : `/job/${jobId}`;
-    router.push(url);
+  const handleJobClick = (jobId: string) => {
+    router.push(`/job/${jobId}`);
   };
   
   const handleTechnicianClick = (techId: string) => {
@@ -127,7 +127,7 @@ const MapView: React.FC<MapViewProps> = ({
               key={`job-${job.id}`} 
               position={{ lat: job.location.latitude, lng: job.location.longitude }} 
               title={`${job.title} (${job.priority} Priority)`}
-              onClick={() => handleJobClick(job.id, job.assignedTechnicianId)}
+              onClick={() => handleJobClick(job.id)}
            >
              <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center border-2 border-white shadow-md cursor-pointer",

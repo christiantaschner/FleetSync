@@ -339,7 +339,14 @@ export default function DashboardPage() {
     if (jobFilterId) {
         setActiveTab('job-list');
     }
-  }, [jobFilterId]);
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    const address = searchParams.get('address');
+    if (lat && lng) {
+        setSearchedLocation({ latitude: parseFloat(lat), longitude: parseFloat(lng), address: address || '' });
+        setActiveTab('overview-map');
+    }
+  }, [jobFilterId, searchParams]);
   
   const handleOpenAddJob = () => {
     router.push('/job/new');
@@ -883,17 +890,21 @@ export default function DashboardPage() {
   };
   
   const handleLocationSearch = (location: { address: string; lat: number; lng: number }) => {
-    setActiveTab('overview-map');
-    setSearchedLocation({
-        address: location.address,
-        latitude: location.lat,
-        longitude: location.lng,
-    });
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', 'overview-map');
+    params.set('lat', location.lat.toString());
+    params.set('lng', location.lng.toString());
+    params.set('address', location.address);
+    router.push(`?${params.toString()}`);
   };
   
   const handleViewOnMap = (location: Location) => {
-    setActiveTab('overview-map');
-    setSearchedLocation(location);
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', 'overview-map');
+    params.set('lat', location.latitude.toString());
+    params.set('lng', location.longitude.toString());
+    params.set('address', location.address || '');
+    router.push(`?${params.toString()}`);
   };
 
   const handleToggleOnCall = async (technicianId: string, isOnCall: boolean) => {

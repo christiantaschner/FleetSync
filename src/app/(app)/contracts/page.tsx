@@ -2,11 +2,11 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PlusCircle, Loader2, Repeat, CalendarPlus } from 'lucide-react';
-import type { Contract, Job } from '@/types';
+import type { Contract, Job, Customer } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where, getDocs } from 'firebase/firestore';
 import AddEditContractDialog from './components/AddEditContractDialog';
@@ -15,7 +15,7 @@ import GenerateJobsDialog from './components/GenerateJobsDialog';
 import SuggestAppointmentDialog from './components/SuggestAppointmentDialog';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { mockContracts, mockJobs } from '@/lib/mock-data';
+import { mockContracts, mockJobs, mockCustomers } from '@/lib/mock-data';
 import { addDays, isBefore } from 'date-fns';
 import { getNextDueDate } from '@/lib/utils';
 import { MockModeBanner } from '@/components/common/MockModeBanner';
@@ -24,6 +24,7 @@ export default function ContractsPage() {
     const { userProfile, loading: authLoading } = useAuth();
     const [contracts, setContracts] = useState<(Contract & { isDue?: boolean })[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
@@ -59,6 +60,7 @@ export default function ContractsPage() {
             });
             setContracts(contractsData);
             setJobs(mockJobs);
+            setCustomers(mockCustomers);
             setIsLoading(false);
             return () => {};
         }
@@ -70,13 +72,22 @@ export default function ContractsPage() {
 
         setIsLoading(true);
         let jobsUnsubscribe: (() => void) | null = null;
+        let customersUnsubscribe: (() => void) | null = null;
         
         const contractsQuery = query(collection(db, `artifacts/${appId}/public/data/contracts`), where("companyId", "==", userProfile.companyId));
         const unsubscribeContracts = onSnapshot(contractsQuery, async (contractsSnapshot) => {
             
             if (jobsUnsubscribe) jobsUnsubscribe();
+            if (customersUnsubscribe) customersUnsubscribe();
 
             const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", userProfile.companyId));
+            const customersQuery = query(collection(db, `artifacts/${appId}/public/data/customers`), where("companyId", "==", userProfile.companyId));
+            
+            customersUnsubscribe = onSnapshot(customersQuery, (customersSnapshot) => {
+                 const allCustomers = customersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+                 setCustomers(allCustomers);
+            });
+            
             jobsUnsubscribe = onSnapshot(jobsQuery, (jobsSnapshot) => {
                 const allJobs = jobsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Job));
                 setJobs(allJobs);
@@ -124,6 +135,7 @@ export default function ContractsPage() {
         return () => {
             unsubscribeContracts();
             if (jobsUnsubscribe) jobsUnsubscribe();
+            if (customersUnsubscribe) customersUnsubscribe();
         };
     }, [userProfile, appId]);
 
@@ -173,6 +185,7 @@ export default function ContractsPage() {
                     isOpen={isAddEditDialogOpen}
                     onClose={onDialogClose}
                     contract={selectedContract}
+                    customers={customers}
                     onContractUpdated={fetchContractsAndJobs}
                 />
             )}

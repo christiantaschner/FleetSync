@@ -17,12 +17,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { Contract, ContractSchema, JobPriority } from '@/types';
+import { Contract, ContractSchema, JobPriority, Customer } from '@/types';
 import { Loader2, Save, Calendar as CalendarIcon, Repeat, User, Briefcase, Info } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -34,14 +34,18 @@ interface AddEditContractDialogProps {
     isOpen: boolean;
     onClose: () => void;
     contract?: Contract | null;
+    customers: Customer[];
     onContractUpdated: () => void;
 }
 
-const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, onClose, contract, onContractUpdated }) => {
+const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, onClose, contract, customers, onContractUpdated }) => {
     const { userProfile } = useAuth();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+    const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
+    const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
 
     const defaultValues = contract || {
             companyId: userProfile?.companyId || '',
@@ -61,10 +65,12 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
             }
         };
 
-    const { register, handleSubmit, control, reset, formState: { errors } } = useForm<Contract>({
+    const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<Contract>({
         resolver: zodResolver(ContractSchema),
         defaultValues
     });
+    
+    const customerNameValue = watch('customerName');
 
     useEffect(() => {
         if (isOpen) {
@@ -86,8 +92,29 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                 }
             };
             reset(newDefaultValues);
+        } else {
+            setIsCustomerPopoverOpen(false);
+            setCustomerSuggestions([]);
         }
     }, [isOpen, contract, reset, userProfile]);
+
+    useEffect(() => {
+        if (customerNameValue && customerNameValue.length > 1) {
+            const filtered = customers.filter(c => c.name.toLowerCase().includes(customerNameValue.toLowerCase()));
+            setCustomerSuggestions(filtered);
+            setIsCustomerPopoverOpen(filtered.length > 0);
+        } else {
+            setCustomerSuggestions([]);
+            setIsCustomerPopoverOpen(false);
+        }
+    }, [customerNameValue, customers]);
+    
+    const handleSelectCustomer = (customer: Customer) => {
+      setValue('customerName', customer.name);
+      setValue('customerPhone', customer.phone || '');
+      setValue('customerAddress', customer.address || '');
+      setIsCustomerPopoverOpen(false);
+    };
     
     const frequencies: Contract['frequency'][] = ['Weekly', 'Bi-Weekly', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually'];
     const priorities: JobPriority[] = ['Low', 'Medium', 'High'];
@@ -126,20 +153,31 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            if (!open) onClose();
+        }}>
             <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90dvh] p-0">
                 <DialogHeader className="px-6 pt-6 flex-shrink-0">
                     <DialogTitle className="font-headline">{contract ? 'Edit Contract' : 'Create New Contract'}</DialogTitle>
-                    <DialogDescription>
-                        {contract ? '' : 'Create a new template for recurring jobs.'}
-                    </DialogDescription>
                 </DialogHeader>
                 <div className="flex-1 overflow-y-auto px-6">
                     <form id="contract-form" onSubmit={handleSubmit(onSubmitForm)} className="py-4 space-y-4">
                         <h3 className="text-lg font-semibold flex items-center gap-2"><User/>Customer Info</h3>
                         <div>
                             <Label htmlFor="customerName">Customer Name *</Label>
-                            <Input id="customerName" {...register('customerName')} />
+                            <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                                <PopoverAnchor>
+                                    <Input id="customerName" {...register('customerName')} autoComplete="off" />
+                                </PopoverAnchor>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    {customerSuggestions.map(customer => (
+                                        <div key={customer.id} className="p-2 cursor-pointer hover:bg-accent" onClick={() => handleSelectCustomer(customer)}>
+                                            <p className="font-medium">{customer.name}</p>
+                                            <p className="text-sm text-muted-foreground">{customer.address}</p>
+                                        </div>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
                             {errors.customerName && <p className="text-destructive text-sm mt-1">{errors.customerName.message}</p>}
                         </div>
                         <div>
@@ -178,7 +216,7 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                     render={({ field }) => (
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
+                                                <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-card", !field.value && "text-muted-foreground")}>
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                                     {field.value ? format(new Date(field.value), "PPP") : <span>Pick a date</span>}
                                                 </Button>

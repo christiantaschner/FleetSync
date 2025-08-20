@@ -44,7 +44,13 @@ export default function DispatcherJobDetailPage() {
     const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
     const unsubscribe = onSnapshot(jobDocRef, (docSnap) => {
       if (docSnap.exists()) {
-        setJob({ id: docSnap.id, ...docSnap.data() } as Job);
+        const data = docSnap.data();
+        for (const key in data) {
+            if (data[key] && typeof data[key].toDate === 'function') {
+                data[key] = data[key].toDate().toISOString();
+            }
+        }
+        setJob({ id: docSnap.id, ...data } as Job);
       } else {
         setJob(null);
       }

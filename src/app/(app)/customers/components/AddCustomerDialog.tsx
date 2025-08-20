@@ -16,26 +16,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { addCustomerAction } from '@/actions/customer-actions';
-import { AddCustomerInputSchema, type CustomerData } from '@/types';
-import type { AddCustomerInput } from '@/types';
+import { upsertCustomerAction } from '@/actions/customer-actions';
+import { UpsertCustomerInputSchema } from '@/types';
+import type { UpsertCustomerInput, CustomerData } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, UserPlus, Save } from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AddCustomerDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  onCustomerAdded: () => void;
+  onCustomerUpserted: () => void;
   customerToEdit?: CustomerData | null;
 }
 
-const FormSchema = AddCustomerInputSchema.omit({ companyId: true, appId: true });
+const FormSchema = UpsertCustomerInputSchema.omit({ companyId: true, appId: true, id: true });
 type AddCustomerFormValues = Zod.infer<typeof FormSchema>;
 
-
-const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerAdded, customerToEdit }) => {
+const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen, onCustomerUpserted, customerToEdit }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,7 +62,7 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
   const onSubmitForm = async (data: AddCustomerFormValues) => {
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         toast({ title: 'Success', description: 'Mock Customer saved.' });
-        onCustomerAdded();
+        onCustomerUpserted();
         setIsOpen(false);
         reset();
         return;
@@ -81,24 +78,20 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
     }
     setIsSubmitting(true);
     
-    if (customerToEdit) {
-      const customerDocRef = doc(db, `artifacts/${appId}/public/data/customers`, customerToEdit.id);
-      try {
-        await updateDoc(customerDocRef, { ...data, updatedAt: serverTimestamp() });
-        toast({ title: 'Success', description: 'Customer details updated.' });
-      } catch (e: any) {
-        toast({ title: 'Error', description: `Failed to update customer: ${e.message}`, variant: 'destructive' });
-      }
+    const result = await upsertCustomerAction({ 
+        ...data, 
+        id: customerToEdit?.id,
+        companyId: userProfile.companyId, 
+        appId 
+    });
+
+    if (result.error) {
+      toast({ title: 'Error', description: result.error, variant: 'destructive' });
     } else {
-      const result = await addCustomerAction({ ...data, companyId: userProfile.companyId, appId });
-      if (result.error) {
-        toast({ title: 'Error', description: result.error, variant: 'destructive' });
-      } else {
-        toast({ title: 'Success', description: 'Customer added successfully.' });
-      }
+      toast({ title: 'Success', description: `Customer ${customerToEdit ? 'updated' : 'added'} successfully.` });
     }
     
-    onCustomerAdded();
+    onCustomerUpserted();
     setIsOpen(false);
     reset();
     setIsSubmitting(false);
@@ -154,4 +147,3 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({ isOpen, setIsOpen
 };
 
 export default AddCustomerDialog;
-

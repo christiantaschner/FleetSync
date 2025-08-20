@@ -343,6 +343,11 @@ export const AddCustomerInputSchema = z.object({
 });
 export type AddCustomerInput = z.infer<typeof AddCustomerInputSchema>;
 
+export const UpsertCustomerInputSchema = AddCustomerInputSchema.extend({
+  id: z.string().optional(),
+});
+export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
+
 // --- AI Flow Schemas ---
 
 export const AllocateJobOutputSchema = z.object({

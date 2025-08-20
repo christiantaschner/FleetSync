@@ -233,7 +233,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
              <AddCustomerDialog
                 isOpen={isAddCustomerOpen}
                 setIsOpen={setIsAddCustomerOpen}
-                onCustomerAdded={onCustomerAdded}
+                onCustomerUpserted={onCustomerAdded}
                 customerToEdit={customerToEdit}
             />
              <AddEditJobDialog
@@ -251,6 +251,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                 isOpen={isAddContractOpen}
                 onClose={() => setIsAddContractOpen(false)}
                 contract={prefilledContract as Contract | null}
+                customers={customers}
                 onContractUpdated={onCustomerAdded}
             />
             <Card className="lg:col-span-1">

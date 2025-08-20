@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import type { Job, Technician, PublicTrackingInfo } from '@/types';
+import type { Job, Technician, PublicTrackingInfo, CustomerData } from '@/types';
 import * as admin from 'firebase-admin';
 import { AddCustomerInputSchema } from '@/types';
 import type { AddCustomerInput } from '@/types';
@@ -142,44 +142,60 @@ export async function getTrackingInfoAction(
   }
 }
 
-export async function addCustomerAction(
-  input: AddCustomerInput
+export const UpsertCustomerInputSchema = AddCustomerInputSchema.extend({
+  id: z.string().optional(),
+});
+export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
+
+export async function upsertCustomerAction(
+  input: UpsertCustomerInput
 ): Promise<{ data: { id: string } | null; error: string | null }> {
   if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-    return { data: { id: `mock_cust_${Date.now()}` }, error: "Mock mode: Data is not saved." };
+    return { data: { id: input.id || `mock_cust_${Date.now()}` }, error: "Mock mode: Data is not saved." };
   }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
-    const validatedInput = AddCustomerInputSchema.parse(input);
-    const { appId, companyId, ...customerData } = validatedInput;
+    const validatedInput = UpsertCustomerInputSchema.parse(input);
+    const { id, appId, companyId, ...customerData } = validatedInput;
 
     const customersCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/customers`);
-    
-    const nameQuery = customersCollectionRef
-        .where("companyId", "==", companyId)
-        .where("name", "==", customerData.name);
-        
-    const querySnapshot = await nameQuery.get();
 
-    if (!querySnapshot.empty) {
-        return { data: null, error: 'A customer with this name already exists.' };
+    // Check for existing customer with the same name if we are creating a new one
+    if (!id) {
+        const nameQuery = customersCollectionRef
+            .where("companyId", "==", companyId)
+            .where("name", "==", customerData.name);
+        const querySnapshot = await nameQuery.get();
+        if (!querySnapshot.empty) {
+            return { data: null, error: 'A customer with this name already exists.' };
+        }
     }
-
-    const docRef = await customersCollectionRef.add({
-      ...customerData,
-      companyId: companyId,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return { data: { id: docRef.id }, error: null };
+    
+    if (id) {
+      // Update existing customer
+      const docRef = dbAdmin.collection(`artifacts/${appId}/public/data/customers`).doc(id);
+      await docRef.update({
+        ...customerData,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { data: { id }, error: null };
+    } else {
+      // Add new customer
+      const docRef = await customersCollectionRef.add({
+        ...customerData,
+        companyId: companyId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { data: { id: docRef.id }, error: null };
+    }
   } catch (e) {
     if (e instanceof z.ZodError) {
       return { data: null, error: e.errors.map((err) => err.message).join(', ') };
     }
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     console.error(JSON.stringify({
-        message: 'Error in addCustomerAction',
+        message: 'Error in upsertCustomerAction',
         error: {
             message: errorMessage,
             stack: e instanceof Error ? e.stack : undefined,

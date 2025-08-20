@@ -155,7 +155,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             <Phone className="h-4 w-4 text-blue-600"/>
             <AlertTitle className="font-semibold text-blue-800">Contact Customer to Confirm</AlertTitle>
             <AlertDescription className="text-blue-700">
-                <p>Please call <strong>{contract.customerName}</strong> to confirm a new appointment time.</p>
+                <p>Please call <strong>{contract.customerName}</strong> to confirm the appointment.</p>
                 <div className="text-xs mt-1 space-y-0.5">
                     <p><strong>Phone:</strong> <a href={`tel:${contract.customerPhone}`} className="font-bold underline">{contract.customerPhone || 'N/A'}</a></p>
                     <p><strong>Email:</strong> <a href={`mailto:${customerEmail}`} className="font-bold underline">{customerEmail || 'N/A'}</a></p>
@@ -179,7 +179,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
         )}
 
         {suggestions.length > 0 && (
-            <div className="space-y-3 py-2 max-h-80 overflow-y-auto pr-3">
+            <div className="space-y-3 py-2 px-1 max-h-80 overflow-y-auto">
                {suggestions.map((suggestion, index) => {
                     const techName = technicians.find(t => t.id === suggestion.technicianId)?.name || 'Unknown';
                     return (

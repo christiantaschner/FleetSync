@@ -110,7 +110,7 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
 {{/if}}
 ---
 
-**DECISION-MAKING LOGIC:**
+**DECISION-MAKING LOGIC (STEP 1):**
 
 1.  **Determine Job Day**: First, decide if the job is for **today** or a **future day** by comparing its scheduled time to the current time.
 
@@ -119,33 +119,8 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
     -   For jobs scheduled for a **FUTURE DAY**: The 'isAvailable' status (which reflects their status *right now*) is LESS important. Instead, check their 'currentJobs' list to see if they are already booked on that future day. A technician who is 'isAvailable: false' now can still be assigned a job for tomorrow if their schedule is open.
 
 3.  **Customer History Preference**: If a technician has 'Previous Customer History', they should be **strongly prioritized** over others, provided they meet all other critical requirements (skills, availability). This reflects an established customer relationship which is very valuable.
-
-4.  **Estimate Availability**: For technicians who are NOT 'Available Now', you must calculate their estimated availability time. To do this, take the 'startedAt' time of their current job and add its 'estimatedDurationMinutes'. **Crucially, ALWAYS add a 10-minute buffer** to this completion time to account for wrap-up and travel. If 'startedAt' is not available, assume it started at '{{{currentTime}}}'.
-
-5.  **Determine Starting Location for Travel Calculation:**
-    -   If the job is for **today**: The starting point is the technician's **Live Location**.
-    -   If the job is for a **future day**:
-        -   Look at the technician's currentJobs for that future day.
-        -   If they have jobs scheduled, the starting point is the location of the **last job** in their schedule for that day.
-        -   If they have no jobs scheduled for that future day, the starting point is their **Home Base**.
-
-6.  **Learn from Feedback**: Analyze the 'LEARNING FROM PAST DECISIONS' section. Identify patterns. Let these examples heavily influence your final choice.
-
-7.  **Skill Match**: The technician MUST have ALL 'requiredSkills'. If no technician has the required skills, no one is suitable.
-
-8.  **Job Priority & Scheduling Logic:**
-    -   **If the job priority is 'High':**
-        -   Your absolute top priority is to find an available technician who is marked as 'isOnCall: true'. If one exists and is skilled, suggest them immediately.
-        -   If no 'On Call' technician is available, consider ALL skilled technicians (both 'isAvailable: true' and 'isAvailable: false'). Choose the one who can get to the job the soonest, considering their estimated availability time (from step 4) plus travel time.
-        -   If the best choice is a technician who is NOT 'isAvailable: true', you are suggesting an interruption of their current work. State this clearly in your reasoning.
-        -   NEVER suggest interrupting a technician currently on a 'High' priority job.
-    -   **If the job priority is 'Medium' or 'Low':**
-        -   Only consider technicians who are available for the job on its scheduled day (today or future).
-        -   The suggested assignment time MUST respect the technician's individual 'workingHours'. However, be flexible; if a full day's work is scheduled, it's acceptable for the last job to end slightly after the official 'endTime', up to about 2 hours, to accommodate real-world conditions.
-        -   Consider their 'currentJobs' to ensure they have capacity. Choose the skilled technician who can best fit the job into their schedule.
-
 ---
-Provide a clear reasoning for your choice, explicitly mentioning how customer history, skill match, and availability (current or estimated future) influenced your decision. Refer to technicians by name, not ID. If you suggest an interruption, state it clearly. If no technician is suitable, explain why.
+Provide a clear reasoning for your choice, explicitly mentioning how customer history, skill match, and availability (current or estimated future) influenced your decision. Refer to technicians by name, not ID. If no technician is suitable, explain why.
 `,
 });
 

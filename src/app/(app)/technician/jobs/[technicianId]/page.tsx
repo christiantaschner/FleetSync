@@ -30,7 +30,6 @@ export default function TechnicianJobListPage() {
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isInitialLoad = useRef(true);
@@ -134,46 +133,6 @@ export default function TechnicianJobListPage() {
     
     return () => unsubscribeTech();
   }, [firebaseUser, authLoading, userProfile, technicianId, hasPermission, toast, isViewingOwnPage, appId]);
-
-  const handleUpdateLocation = async () => {
-    if (!navigator.geolocation) {
-      toast({ title: "Geolocation Error", description: "Geolocation is not supported by your browser.", variant: "destructive"});
-      return;
-    }
-    if (!isViewingOwnPage) {
-        toast({ title: "Action Not Allowed", description: "You can only update your own location.", variant: "destructive"});
-        return;
-    }
-     if (!appId) return;
-
-    setIsUpdatingLocation(true);
-    try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0,
-            });
-        });
-
-        const { latitude, longitude } = position.coords;
-        if (technician && db) {
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technician.id);
-            await updateDoc(techDocRef, {
-            "location.latitude": latitude,
-            "location.longitude": longitude,
-            });
-            toast({ title: "Location Updated", description: "Your current location has been updated." });
-        }
-    } catch (locationError: any) {
-        let message = "An unknown error occurred.";
-        if (locationError.code === 1) message = "Please allow location access to update your position.";
-        if (locationError.code === 2) message = "Location information is unavailable.";
-        toast({ title: "Geolocation Error", description: message, variant: "destructive" });
-    } finally {
-        setIsUpdatingLocation(false);
-    }
-  };
   
   if (isLoading || authLoading) {
     return (
@@ -244,12 +203,8 @@ export default function TechnicianJobListPage() {
             <CardDescription>Welcome to your daily command center.</CardDescription>
           </div>
         </CardHeader>
-        <CardFooter className="bg-secondary/50 p-3 grid grid-cols-2 gap-2">
-            <Button onClick={handleUpdateLocation} disabled={isUpdatingLocation || !isViewingOwnPage} className="w-full">
-            {isUpdatingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MapPin className="mr-2 h-4 w-4" />}
-            Update My Location
-            </Button>
-            <Link href="/technician/profile" className="w-full">
+        <CardFooter className="bg-secondary/50 p-3">
+             <Link href="/technician/profile" className="w-full">
                 <Button variant="outline" className="w-full" disabled={!isViewingOwnPage}>
                     <User className="mr-2 h-4 w-4" /> View My Profile
                 </Button>

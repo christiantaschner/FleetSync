@@ -83,7 +83,10 @@ export default function TechnicianProfilePage() {
   const [isSuggestChangeOpen, setIsSuggestChangeOpen] = useState(false);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-  const isViewingOwnPage = userProfile?.uid === firebaseUser?.uid;
+  
+  // This page is always viewed for the logged-in user if they are a technician.
+  // Admins cannot view this page for other technicians.
+  const technicianId = firebaseUser?.uid;
 
   useEffect(() => {
     if (authLoading || !firebaseUser) return;
@@ -100,9 +103,9 @@ export default function TechnicianProfilePage() {
         return;
     }
 
-    if (!db) {
+    if (!db || !technicianId) {
       setIsLoading(false);
-      setError("Database service not available.");
+      setError("Database service not available or user not found.");
       return;
     }
     
@@ -112,7 +115,7 @@ export default function TechnicianProfilePage() {
         return;
     }
 
-    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, firebaseUser.uid);
+    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, technicianId);
     const unsubscribeTech = onSnapshot(techDocRef, (docSnap) => {
         if (docSnap.exists()) {
           const techData = { id: docSnap.id, ...docSnap.data() } as Technician;
@@ -132,7 +135,7 @@ export default function TechnicianProfilePage() {
     return () => {
         unsubscribeTech();
     };
-  }, [firebaseUser, authLoading, appId]);
+  }, [firebaseUser, authLoading, technicianId, appId]);
 
   useEffect(() => {
     if (!technician || !userProfile?.companyId || !appId) return;
@@ -143,7 +146,6 @@ export default function TechnicianProfilePage() {
     
     const companyId = userProfile.companyId;
 
-    // Fetch Skills
     const fetchSkills = async () => {
         const result = await getSkillsAction({ companyId, appId });
         if(result.data) {
@@ -154,7 +156,6 @@ export default function TechnicianProfilePage() {
     }
     fetchSkills();
 
-    // Fetch Change Requests
     const requestsQuery = query(
         collection(db, `artifacts/${appId}/public/data/profileChangeRequests`),
         where("companyId", "==", companyId),
@@ -176,7 +177,6 @@ export default function TechnicianProfilePage() {
         console.error("Error fetching change requests:", err);
     });
     
-    // Fetch Completed Jobs
     const jobsQuery = query(
         collection(db, `artifacts/${appId}/public/data/jobs`),
         where("companyId", "==", companyId),
@@ -246,7 +246,7 @@ export default function TechnicianProfilePage() {
             <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => setIsSuggestChangeOpen(true)} disabled={!isViewingOwnPage}>
+            <Button variant="secondary" size="sm" onClick={() => setIsSuggestChangeOpen(true)}>
                 <Edit className="mr-2 h-4 w-4"/>
                 Suggest a Change
             </Button>

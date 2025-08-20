@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Bot, Lightbulb } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
 import type { TroubleshootEquipmentOutput } from '@/types';
 import { troubleshootEquipmentAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

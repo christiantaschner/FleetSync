@@ -53,7 +53,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
         signaturePadRef.current?.clear();
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.Event) => {
         e.preventDefault();
         const signatureDataUrl = signaturePadRef.current?.isEmpty()
             ? null

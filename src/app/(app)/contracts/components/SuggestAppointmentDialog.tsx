@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { suggestScheduleTimeAction } from '@/actions/ai-actions';
 import type { Contract, Technician, Job, JobStatus, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, Sparkles, X, UserCheck, Bot, RefreshCw } from 'lucide-react';
+import { Loader2, Sparkles, X, UserCheck, Bot, RefreshCw, Phone } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth-context';
 import { format } from 'date-fns';
@@ -146,6 +146,16 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             Fleety has analyzed all technician schedules to find the best time for {contract?.jobTemplate.title} for {contract?.customerName}.
           </DialogDescription>
         </DialogHeader>
+
+        {contract?.customerName && (
+          <Alert variant="default" className="border-blue-200 bg-blue-50 mt-4">
+            <Phone className="h-4 w-4 text-blue-600"/>
+            <AlertTitle className="font-semibold text-blue-800">Contact Customer</AlertTitle>
+            <AlertDescription className="text-blue-700">
+                Please call <strong>{contract.customerName}</strong> at <a href={`tel:${contract.customerPhone}`} className="font-bold underline">{contract.customerPhone || 'N/A'}</a> to confirm a new time.
+            </AlertDescription>
+          </Alert>
+        )}
         
         {isLoading && suggestions.length === 0 && (
             <div className="flex items-center justify-center p-10 space-x-2">
@@ -218,4 +228,3 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
 };
 
 export default SuggestAppointmentDialog;
-

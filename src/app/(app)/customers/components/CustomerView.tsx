@@ -211,7 +211,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
           latitude: 0,
           longitude: 0,
         },
-      } as Partial<Job>;
+      };
       setSelectedJobForEdit(prefilledJob as Job);
       setIsAddJobOpen(true);
     };
@@ -250,7 +250,7 @@ export default function CustomerView({ customers: initialCustomers, jobs, contra
                 isOpen={isAddContractOpen}
                 onClose={() => setIsAddContractOpen(false)}
                 contract={prefilledContract as Contract | null}
-                customers={customers}
+                customers={customers as Customer[]}
                 onContractUpdated={onCustomerAdded}
             />
             <Card className="lg:col-span-1">

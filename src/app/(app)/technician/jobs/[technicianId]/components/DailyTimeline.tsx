@@ -6,7 +6,7 @@ import type { Job } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Clock, Briefcase, Car, Calendar } from 'lucide-react';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, isToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -29,7 +29,9 @@ const DailyTimeline: React.FC<DailyTimelineProps> = ({ jobs }) => {
 
           const jobDate = new Date(job.scheduledTime);
           const jobDateString = format(jobDate, 'PPPP'); // e.g., "Tuesday, October 26, 2021"
-          const showDateHeader = jobDateString !== lastDate;
+          
+          // Only show the date header if it's a new date AND not today
+          const showDateHeader = jobDateString !== lastDate && !isToday(jobDate);
           lastDate = jobDateString;
 
           const travelTimeMinutes = 30; // Placeholder for travel time
@@ -55,7 +57,7 @@ const DailyTimeline: React.FC<DailyTimelineProps> = ({ jobs }) => {
                   <p className="font-bold text-lg text-primary">
                     {format(jobDate, 'p')}
                   </p>
-                  <Card className="hover:shadow-md transition-shadow">
+                  <Card className="hover:shadow-md transition-shadow bg-card">
                     <CardContent className="p-4 space-y-2">
                       <div className="flex justify-between items-start">
                           <h4 className="font-semibold text-base">{job.title}</h4>

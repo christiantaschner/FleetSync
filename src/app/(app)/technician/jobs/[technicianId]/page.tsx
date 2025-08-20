@@ -49,7 +49,10 @@ export default function TechnicianJobListPage() {
         setTechnician(foundTechnician);
         if (foundTechnician) {
             const jobsForTech = mockJobs
-                .filter(j => j.assignedTechnicianId === technicianId)
+                .filter(j => {
+                    const jobDate = j.scheduledTime ? new Date(j.scheduledTime) : new Date(0);
+                    return j.assignedTechnicianId === technicianId && jobDate >= startOfToday();
+                })
                 .sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
             setAssignedJobs(jobsForTech);
         }
@@ -237,17 +240,19 @@ export default function TechnicianJobListPage() {
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       <Card>
-          <CardContent className="p-4 flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                  <AvatarImage src={technician.avatarUrl} alt={technician.name} />
-                  <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                  <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
-                  <p className="text-muted-foreground">Welcome to your daily command center.</p>
-              </div>
-          </CardContent>
-           <CardFooter className="p-4 pt-0">
+          <CardHeader>
+            <div className="flex items-center gap-4">
+                 <Avatar className="h-16 w-16">
+                      <AvatarImage src={technician.avatarUrl} alt={technician.name} />
+                      <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                      <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
+                      <p className="text-muted-foreground">Welcome to your daily command center.</p>
+                  </div>
+            </div>
+          </CardHeader>
+          <CardFooter>
                <Link href={`/technician/profile`} className="w-full">
                   <Button variant="outline" className="w-full">
                       <User className="mr-2 h-4 w-4" /> View My Profile

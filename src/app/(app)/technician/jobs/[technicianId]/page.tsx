@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Job, Technician, JobStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase, Truck, Play, CheckCircle } from 'lucide-react';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase, Truck, Play, CheckCircle, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
@@ -17,9 +17,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import { cn } from '@/lib/utils';
-import { startOfToday, endOfDay, addDays, format } from 'date-fns';
+import { startOfToday, endOfDay, addDays, format, isSameDay } from 'date-fns';
 import DailyTimeline from './components/DailyTimeline';
 import { notifyCustomerAction, calculateTravelMetricsAction } from '@/actions/ai-actions';
+import { Separator } from '@/components/ui/separator';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading, company } = useAuth();
@@ -47,7 +48,6 @@ export default function TechnicianJobListPage() {
         const foundTechnician = mockTechnicians.find(t => t.id === technicianId) || null;
         setTechnician(foundTechnician);
         if (foundTechnician) {
-            const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
             const jobsForTech = mockJobs
                 .filter(j => j.assignedTechnicianId === technicianId)
                 .sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
@@ -73,8 +73,6 @@ export default function TechnicianJobListPage() {
         setTechnician(techData);
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
-        const today = startOfToday();
-        const sevenDaysFromNow = endOfDay(addDays(today, 7));
         
         const jobsQuery = query(
           collection(db, `artifacts/${appId}/public/data/jobs`),
@@ -93,10 +91,6 @@ export default function TechnicianJobListPage() {
                   }
               }
               return { id: doc.id, ...data } as Job;
-          }).filter(job => {
-            if (!job.scheduledTime) return false;
-            const jobDate = new Date(job.scheduledTime);
-            return jobDate >= today && jobDate <= sevenDaysFromNow;
           });
           
           const currentJobOrder = jobsForTech.map(j => j.id).join(',');
@@ -218,8 +212,10 @@ export default function TechnicianJobListPage() {
     );
   }
 
-  const currentOrNextJob = assignedJobs.find(job => job.status === 'In Progress' || job.status === 'En Route') || assignedJobs[0];
-  const upcomingJobs = currentOrNextJob ? assignedJobs.filter(job => job.id !== currentOrNextJob.id) : assignedJobs;
+  const jobsForToday = assignedJobs.filter(j => j.scheduledTime && isSameDay(new Date(j.scheduledTime), new Date()));
+  const currentOrNextJob = jobsForToday.find(job => job.status === 'In Progress') || jobsForToday.find(job => job.status === 'En Route') || jobsForToday[0];
+  
+  const jobsForTimeline = assignedJobs.filter(job => !currentOrNextJob || job.id !== currentOrNextJob.id);
 
   const handleNavigate = (job: Job) => {
     if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
@@ -272,7 +268,7 @@ export default function TechnicianJobListPage() {
                      <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline">
                         <Briefcase className="text-primary" /> {currentOrNextJob.status === 'In Progress' ? 'Current Job' : 'Next Job'}
                     </h2>
-                     <Card>
+                     <Card className="bg-background">
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-xl font-bold">{currentOrNextJob.title}</CardTitle>
@@ -316,12 +312,12 @@ export default function TechnicianJobListPage() {
                     </Card>
                 </div>
             )}
-            {upcomingJobs.length > 0 && (
+            {jobsForTimeline.length > 0 && (
                  <div>
                     <h2 className="text-xl font-semibold mb-2 flex items-center gap-2 font-headline mt-8">
                         <ListChecks className="text-primary" /> Upcoming Jobs
                     </h2>
-                    <DailyTimeline jobs={upcomingJobs} />
+                    <DailyTimeline jobs={jobsForTimeline} />
                 </div>
             )}
         </>

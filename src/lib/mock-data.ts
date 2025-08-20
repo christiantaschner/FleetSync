@@ -36,7 +36,7 @@ export const mockTechnicians: Technician[] = [
     email: 'alice.j@example.com',
     phone: '555-0101',
     isAvailable: false,
-    skills: [{name: 'HVAC'}, {name: 'AC Repair'}, {name: 'Furnace Maintenance'}, {name: 'Refrigerant Handling'}],
+    skills: [{name: 'HVAC'}, {name: 'AC Repair'}, {name: 'Furnace Maintenance'}, {name: 'Refrigerant Handling'}, {name: 'Appliance Repair'}, {name: 'Refrigerator Repair'}],
     location: { latitude: 34.0522, longitude: -118.2437, address: 'Los Angeles, CA' },
     avatarUrl: 'https://placehold.co/100x100.png',
     isOnCall: true,
@@ -49,7 +49,7 @@ export const mockTechnicians: Technician[] = [
     email: 'bob.w@example.com',
     phone: '555-0102',
     isAvailable: true,
-    skills: [{name: 'Plumbing'}, {name: 'Pipe Fitting'}, {name: 'Leak Detection'}, {name: 'Water Heater Repair'}, {name: 'HVAC'}, {name: 'AC Repair'}],
+    skills: [{name: 'Plumbing'}, {name: 'Pipe Fitting'}, {name: 'Leak Detection'}, {name: 'Water Heater Repair'}, {name: 'HVAC'}, {name: 'AC Repair'}, {name: 'Faucet Repair'}, {name: 'Drain Cleaning'}],
     location: { latitude: 34.0582, longitude: -118.2517, address: 'Glendale, CA' },
     avatarUrl: 'https://placehold.co/100x100.png',
     currentJobId: null,
@@ -61,7 +61,7 @@ export const mockTechnicians: Technician[] = [
     email: 'charlie.b@example.com',
     phone: '555-0103',
     isAvailable: true,
-    skills: [{name: 'Electrical'}, {name: 'Wiring and Rewiring'}, {name: 'Circuit Breaker Repair'}],
+    skills: [{name: 'Electrical'}, {name: 'Wiring and Rewiring'}, {name: 'Circuit Breaker Repair'}, {name: 'Lighting Installation'}, {name: 'Outlet Installation'}],
     location: { latitude: 34.1522, longitude: -118.2637, address: 'Burbank, CA' },
     avatarUrl: 'https://placehold.co/100x100.png',
     currentJobId: null,
@@ -540,5 +540,3 @@ export const mockChatMessages: ChatMessage[] = [
         isRead: false,
     },
 ];
-
-    

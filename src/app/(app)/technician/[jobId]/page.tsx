@@ -199,7 +199,7 @@ export default function TechnicianJobDetailPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-6">
+    <div className="p-4 space-y-6">
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
           setIsOpen={setIsChatOpen} 

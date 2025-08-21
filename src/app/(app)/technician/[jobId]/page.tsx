@@ -23,7 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 
-const JobActionsCard = ({ job, onToggleBreak, onNavigate, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
+const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, onOpenChat: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
     <Card>
         <CardHeader>
             <CardTitle className="font-headline">Job Actions</CardTitle>
@@ -31,12 +31,15 @@ const JobActionsCard = ({ job, onToggleBreak, onNavigate, isBreakActive, isUpdat
         </CardHeader>
         <CardContent className="space-y-4">
              <div className="flex flex-wrap gap-2 items-center">
+                 <Button variant="outline" onClick={onNavigate}>
+                    <Navigation className="mr-2 h-4 w-4" /> Navigate
+                </Button>
+                <Button variant="outline" onClick={onOpenChat}>
+                    <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
+                </Button>
                 <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating}>
                     {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
                     {isBreakActive ? 'End Break' : 'Start Break'}
-                </Button>
-                 <Button variant="outline" onClick={onNavigate}>
-                    <Navigation className="mr-2 h-4 w-4" /> Navigate
                 </Button>
             </div>
             <div className="border-t pt-4">
@@ -275,7 +278,7 @@ export default function TechnicianJobDetailPage() {
         />
       </div>
 
-      <JobDetailsDisplay job={job} onOpenChat={() => setIsChatOpen(true)} />
+      <JobDetailsDisplay job={job} />
       
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
 
@@ -285,6 +288,7 @@ export default function TechnicianJobDetailPage() {
                 job={job}
                 onToggleBreak={handleToggleBreak}
                 onNavigate={handleNavigate}
+                onOpenChat={() => setIsChatOpen(true)}
                 isBreakActive={isBreakActive ?? false}
                 isUpdating={isUpdating}
             />

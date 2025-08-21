@@ -12,10 +12,9 @@ import { Button } from '@/components/ui/button';
 
 interface JobDetailsDisplayProps {
     job: Job;
-    onOpenChat: () => void;
 }
 
-const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, onOpenChat }) => {
+const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
     
     const getStatusBadgeVariant = (status: Job['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch(status) {
@@ -44,9 +43,6 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, onOpenChat }
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                         <Button variant="outline" size="sm" onClick={onOpenChat}>
-                            <MessageSquare className="mr-2 h-4 w-4" /> Chat
-                        </Button>
                         <Badge variant={getStatusBadgeVariant(job.status)} className="capitalize">{job.status}</Badge>
                         <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
                     </div>

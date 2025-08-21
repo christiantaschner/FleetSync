@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Camera, Star, Edit, ThumbsUp, ThumbsDown, Trash2, Edit3, FileSignature, Smile } from 'lucide-react';
+import { Loader2, Camera, Star, Edit, ThumbsUp, ThumbsDown, Trash2, Edit3, FileSignature, Smile, Save } from 'lucide-react';
 import Image from 'next/image';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
@@ -160,7 +159,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
             </Card>
 
              <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 Save Documentation
             </Button>
         </form>

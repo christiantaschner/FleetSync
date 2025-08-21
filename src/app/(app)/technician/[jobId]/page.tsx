@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -61,6 +60,8 @@ export default function TechnicianJobDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   
+  const [isDocumentationSaved, setIsDocumentationSaved] = useState(false);
+
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
   const backUrl = `/technician/jobs/${userProfile?.uid}`;
 
@@ -150,7 +151,7 @@ export default function TechnicianJobDetailPage() {
       
       const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
       const updateData: any = { updatedAt: serverTimestamp() };
-      if (notes.trim()) updateData.notes = `${job.notes ? job.notes + '\\n\\n' : ''}Technician Notes:\\n${notes.trim()}`;
+      if (notes.trim()) updateData.notes = `${job.notes ? job.notes + '\n\n' : ''}Technician Notes:\n${notes.trim()}`;
       if (newPhotoUrls.length > 0) updateData.photos = arrayUnion(...newPhotoUrls);
       if (newSignatureUrl) {
         updateData.customerSignatureUrl = newSignatureUrl;
@@ -162,6 +163,7 @@ export default function TechnicianJobDetailPage() {
 
       setJob(prevJob => prevJob ? { ...prevJob, ...updateData, photos: [...(prevJob.photos || []), ...newPhotoUrls] } : null);
       toast({ title: "Success", description: "Work documentation saved." });
+      setIsDocumentationSaved(true);
     } catch (error) {
       console.error("Error documenting work:", error);
       toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
@@ -207,8 +209,9 @@ export default function TechnicianJobDetailPage() {
     }
     
     // Logic for saving signature/satisfaction when completing
-    if (newStatus === 'Completed' && job.status === 'In Progress') {
-        await handleWorkDocumented('', [], null, 0); // This just saves whatever is in the form, not ideal but works
+    if (newStatus === 'Completed' && !isDocumentationSaved) {
+        toast({ title: "Please Save Documentation", description: "You must save documentation before completing the job.", variant: "destructive" });
+        return;
     }
     
     setIsUpdating(true);
@@ -288,6 +291,7 @@ export default function TechnicianJobDetailPage() {
             <StatusUpdateActions 
                 currentStatus={job.status} 
                 onUpdateStatus={handleStatusUpdate}
+                isUpdating={isUpdating}
             />
         </div>
       )}
@@ -314,6 +318,7 @@ export default function TechnicianJobDetailPage() {
             <StatusUpdateActions 
                 currentStatus={job.status} 
                 onUpdateStatus={handleStatusUpdate}
+                isUpdating={isUpdating}
             />
           </div>
         </div>

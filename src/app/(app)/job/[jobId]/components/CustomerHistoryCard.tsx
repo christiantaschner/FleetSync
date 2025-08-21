@@ -1,13 +1,14 @@
-
 "use client";
 
 import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { History, FileText, Camera, Construction } from 'lucide-react';
+import { History, FileText, Camera, Construction, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface CustomerHistoryCardProps {
   jobs: Job[];
@@ -63,6 +64,11 @@ const CustomerHistoryCard: React.FC<CustomerHistoryCardProps> = ({ jobs }) => {
                         </div>
                     </div>
                  )}
+                 <div className="pt-2">
+                    <Link href={`/job/${job.id}`}>
+                        <Button variant="outline" size="sm"><Eye className="mr-2 h-4 w-4"/>View Job Details</Button>
+                    </Link>
+                 </div>
               </AccordionContent>
             </AccordionItem>
           ))}

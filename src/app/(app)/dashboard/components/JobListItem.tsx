@@ -147,7 +147,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
             </Button>
             <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
-                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
+                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat with Dispatch
             </Button>
           </>
         )}

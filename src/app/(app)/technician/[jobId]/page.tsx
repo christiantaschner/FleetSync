@@ -337,7 +337,7 @@ export default function TechnicianJobDetailPage() {
                         <Navigation className="mr-2 h-4 w-4" /> Navigate
                     </Button>
                     <Button variant="outline" onClick={() => setIsChatOpen(true)} className="w-full justify-center">
-                        <MessageSquare className="mr-2 h-4 w-4" /> Chat
+                        <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
                     </Button>
                     <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full justify-center">
                         {isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}

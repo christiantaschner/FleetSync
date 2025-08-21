@@ -5,10 +5,11 @@ import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, MessageSquare, Bot, FileSignature, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, MessageSquare, Bot, FileSignature, Star, ThumbsUp, ThumbsDown, Construction, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 interface JobDetailsDisplayProps {
     job: Job;
@@ -92,6 +93,33 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, children }) 
                            {job.aiRepairGuide && <div><p><strong>Repair Guide:</strong></p><p className="whitespace-pre-wrap text-muted-foreground text-xs italic">{job.aiRepairGuide}</p></div>}
                         </div>
                     </div>
+                )}
+                 {job.notes && (
+                    <>
+                        <Separator />
+                        <div>
+                            <h3 className="text-sm font-semibold mb-1 flex items-center gap-1.5"><Construction className="h-4 w-4"/>Technician's Notes</h3>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-secondary/50 rounded-md border">{job.notes}</p>
+                        </div>
+                    </>
+                )}
+
+                {job.photos && job.photos.length > 0 && (
+                     <>
+                        <Separator />
+                        <div>
+                            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Camera className="h-4 w-4"/>Technician's Photos</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                {job.photos.map((photoUrl, index) => (
+                                    <a href={photoUrl} key={index} target="_blank" rel="noopener noreferrer">
+                                        <div className="relative aspect-square rounded-md overflow-hidden border transition-transform hover:scale-105">
+                                            <Image src={photoUrl} alt={`Job photo ${index + 1}`} layout="fill" objectFit="cover" />
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    </>
                 )}
             </CardContent>
             {children}

@@ -239,26 +239,35 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
+      {!isViewingOwnPage && (
+          <div className="flex items-center">
+              <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+              </Button>
+          </div>
+      )}
        <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
                  <Avatar className="h-16 w-16">
                       <AvatarImage src={technician.avatarUrl} alt={technician.name} />
-                      <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                      <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                       <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
-                      <p className="text-muted-foreground">Welcome to your daily command center.</p>
+                      <p className="text-muted-foreground">{isViewingOwnPage ? "Welcome to your daily command center." : "Technician's daily command center."}</p>
                   </div>
             </div>
           </CardHeader>
-          <CardFooter>
-               <Link href={`/technician/profile`} className="w-full">
-                  <Button variant="outline" className="w-full">
-                      <User className="mr-2 h-4 w-4" /> View My Profile
-                  </Button>
-              </Link>
-          </CardFooter>
+          {isViewingOwnPage && (
+            <CardFooter>
+                <Link href={`/technician/profile`} className="w-full">
+                    <Button variant="outline" className="w-full">
+                        <User className="mr-2 h-4 w-4" /> View My Profile
+                    </Button>
+                </Link>
+            </CardFooter>
+          )}
       </Card>
       
       {assignedJobs.length === 0 ? (

@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
@@ -22,6 +22,11 @@ import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
+import SignatureCanvas from 'react-signature-canvas';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
+
 
 const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, onOpenChat: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
     <Card>
@@ -64,6 +69,10 @@ export default function TechnicianJobDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
+  const [satisfactionScore, setSatisfactionScore] = useState<number>(0);
+  const signaturePadRef = useRef<SignatureCanvas>(null);
+
+
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
   const backUrl = `/technician/jobs/${userProfile?.uid}`;
 
@@ -81,6 +90,7 @@ export default function TechnicianJobDetailPage() {
       if (mockJob?.customerId) {
         setHistoryJobs(mockJobs.filter(j => j.customerId === mockJob.customerId && j.id !== mockJob.id && j.status === 'Completed'));
       }
+      setSatisfactionScore(mockJob?.customerSatisfactionScore || 0);
       setIsLoading(false);
       return;
     }
@@ -100,6 +110,7 @@ export default function TechnicianJobDetailPage() {
         }
         const fetchedJob = { id: jobDocSnap.id, ...data } as Job;
         setJob(fetchedJob);
+        setSatisfactionScore(fetchedJob.customerSatisfactionScore || 0);
 
         if (fetchedJob.assignedTechnicianId) {
           const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
@@ -131,9 +142,14 @@ export default function TechnicianJobDetailPage() {
     fetchJobAndRelatedData();
   }, [jobId, authLoading, user, appId, isMockMode]);
   
-  const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => {
+  const handleWorkDocumented = async (notes: string, photos: File[]) => {
     if (!job || !db || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
+
+    const signatureDataUrl = signaturePadRef.current?.isEmpty()
+      ? null
+      : signaturePadRef.current?.getTrimmedCanvas().toDataURL('image/png');
+
     const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     let newPhotoUrls: string[] = [];
     let newSignatureUrl: string | null = null;
@@ -158,7 +174,9 @@ export default function TechnicianJobDetailPage() {
         updateData.customerSignatureTimestamp = new Date().toISOString();
       }
       if (satisfactionScore > 0) updateData.customerSatisfactionScore = satisfactionScore;
+      
       await updateDoc(jobDocRef, updateData);
+
       setJob(prevJob => prevJob ? { ...prevJob, ...updateData, photos: [...(prevJob.photos || []), ...newPhotoUrls] } : null);
       toast({ title: "Success", description: "Work documentation saved." });
     } catch (error) {
@@ -248,6 +266,14 @@ export default function TechnicianJobDetailPage() {
     }
   };
 
+  const satisfactionIcons = [
+    { icon: ThumbsDown, color: 'text-red-500', label: 'Poor' },
+    { icon: Star, color: 'text-orange-400', label: 'Fair' },
+    { icon: Star, color: 'text-yellow-400', label: 'Good' },
+    { icon: Star, color: 'text-lime-500', label: 'Very Good' },
+    { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
+  ];
+
 
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
@@ -297,13 +323,48 @@ export default function TechnicianJobDetailPage() {
       )}
 
       {job.status === 'In Progress' && (
-        <Card>
+        <div className="space-y-4">
+          <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />
+          
+          <Card>
             <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work</CardTitle>
-                <CardDescription>Add notes and photos before completing the job.</CardDescription>
+                <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Sign-off</CardTitle>
+                <CardDescription>Capture customer satisfaction and signature to finalize the job.</CardDescription>
             </CardHeader>
-            <CardContent><WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} /></CardContent>
-        </Card>
+            <CardContent className="space-y-6">
+                 <div>
+                    <Label>Customer Satisfaction ({satisfactionScore > 0 ? `${satisfactionScore}/5` : 'Not Rated'})</Label>
+                     <div className="flex items-center gap-2 mt-2">
+                        <Slider 
+                            defaultValue={[satisfactionScore]}
+                            value={[satisfactionScore]}
+                            max={5} 
+                            step={1} 
+                            onValueChange={(value) => setSatisfactionScore(value[0])}
+                        />
+                        {satisfactionScore > 0 && (
+                            React.createElement(satisfactionIcons[satisfactionScore - 1].icon, {
+                                className: cn("h-6 w-6", satisfactionIcons[satisfactionScore - 1].color)
+                            })
+                        )}
+                    </div>
+                </div>
+                <div>
+                    <div className="flex justify-between items-center mb-1">
+                        <Label>Customer Signature</Label>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => signaturePadRef.current?.clear()}>Clear</Button>
+                    </div>
+                    <div className="border rounded-md bg-white">
+                        <SignatureCanvas
+                            ref={signaturePadRef}
+                            penColor="black"
+                            canvasProps={{ className: 'w-full h-32' }}
+                        />
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {job.status === 'Completed' && (

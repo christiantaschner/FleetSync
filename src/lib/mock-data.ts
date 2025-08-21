@@ -91,7 +91,7 @@ export const mockJobs: Job[] = [
     title: 'Urgent: No Hot Water',
     description: 'Customer reports no hot water. Suspect faulty water heater element.',
     priority: 'High',
-    status: 'Assigned',
+    status: 'In Progress',
     assignedTechnicianId: 'tech_1',
     location: { latitude: 34.0622, longitude: -118.2537, address: '123 Maple St, Los Angeles, CA' },
     customerId: 'cust_1',

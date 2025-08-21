@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
 import WorkDocumentationForm from './components/WorkDocumentationForm';
 import SignatureCard from './components/SignatureCard';
@@ -24,27 +24,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import SignatureCanvas from 'react-signature-canvas';
-
-const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, onOpenChat: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
-    <Card>
-        <CardHeader>
-            <CardTitle className="font-headline">Job Actions</CardTitle>
-            <CardDescription>Tools for your active job.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-2">
-            <Button variant="outline" onClick={onNavigate} className="w-full justify-center">
-                <Navigation className="mr-2 h-4 w-4" /> Navigate
-            </Button>
-            <Button variant="outline" onClick={onOpenChat} className="w-full justify-center">
-                <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
-            </Button>
-            <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full justify-center">
-                {isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
-                {isBreakActive ? 'End Break' : 'Start Break'}
-            </Button>
-        </CardContent>
-    </Card>
-);
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -96,7 +75,7 @@ export default function TechnicianJobDetailPage() {
             completedAt: '2023-10-26T15:30:00.000Z',
             notes: 'System is in good condition. Cleaned coils and replaced filter.',
             isFirstTimeFix: true,
-            estimatedDuration: 90
+            customerSatisfactionScore: 5,
           });
         setHistoryJobs(history);
       }
@@ -347,25 +326,29 @@ export default function TechnicianJobDetailPage() {
             />
       </div>
 
-      <JobDetailsDisplay job={job} />
+      <JobDetailsDisplay job={job}>
+          {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (
+              <CardFooter className="grid grid-cols-3 gap-2">
+                   <Button variant="outline" onClick={handleNavigate} className="w-full justify-center">
+                        <Navigation className="mr-2 h-4 w-4" /> Navigate
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsChatOpen(true)} className="w-full justify-center">
+                        <MessageSquare className="mr-2 h-4 w-4" /> Chat
+                    </Button>
+                    <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full justify-center">
+                        {isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+                        {isBreakActive ? 'End Break' : 'Start Break'}
+                    </Button>
+              </CardFooter>
+          )}
+      </JobDetailsDisplay>
       
       <CustomerHistoryCard jobs={historyJobs} />
-
-      {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (
-        <JobActionsCard 
-            job={job}
-            onToggleBreak={handleToggleBreak}
-            onNavigate={handleNavigate}
-            onOpenChat={() => setIsChatOpen(true)}
-            isBreakActive={isBreakActive ?? false}
-            isUpdating={isUpdating}
-        />
-      )}
 
       {job.status === 'In Progress' && (
         <div className="space-y-4">
           <WorkDocumentationForm onSave={handleSaveDocumentation} isSaving={isUpdating} />
-          <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} isDisabled={false} />
+          <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
         </div>
       )}
 

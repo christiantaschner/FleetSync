@@ -160,7 +160,7 @@ export default function DispatcherJobDetailPage() {
         <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
                 <ArrowLeft className="mr-2 h-4 w-4"/>
-                {job.assignedTechnicianId ? "Back to Technician View" : "Back to Dashboard"}
+                Back
             </Button>
             <div className="flex items-center gap-2">
                  <Button variant="outline" size="sm" onClick={() => handleViewOnMap(job.location)}>

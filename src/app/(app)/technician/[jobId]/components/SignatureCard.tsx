@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,11 +13,10 @@ import { cn } from '@/lib/utils';
 interface SignatureCardProps {
     onSubmit: (signatureDataUrl: string | null, satisfactionScore: number) => void;
     isSubmitting: boolean;
-    isDisabled: boolean;
 }
 
-const SignatureCard: React.FC<SignatureCardProps> = ({ onSubmit, isSubmitting, isDisabled }) => {
-    const [satisfactionScore, setSatisfactionScore] = React.useState<number>(0);
+const SignatureCard: React.FC<SignatureCardProps> = ({ onSubmit, isSubmitting }) => {
+    const [satisfactionScore, setSatisfactionScore] = useState<number>(0);
     const signaturePadRef = useRef<SignatureCanvas>(null);
 
     const clearSignature = () => {
@@ -41,53 +40,51 @@ const SignatureCard: React.FC<SignatureCardProps> = ({ onSubmit, isSubmitting, i
     ];
 
     return (
-        <fieldset disabled={isDisabled} className="disabled:opacity-50 disabled:cursor-not-allowed">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><FileSignature /> Customer Sign-off</CardTitle>
-                    <CardDescription>Capture signature and satisfaction to confirm completion.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <Label>Customer Satisfaction ({satisfactionScore > 0 ? `${satisfactionScore}/5 - ${satisfactionIcons[satisfactionScore - 1].label}` : 'Not Rated'})</Label>
-                            <div className="flex items-center gap-2 mt-2">
-                                <Slider
-                                    defaultValue={[satisfactionScore]}
-                                    value={[satisfactionScore]}
-                                    max={5}
-                                    step={1}
-                                    onValueChange={(value) => setSatisfactionScore(value[0])}
-                                    disabled={isDisabled || isSubmitting}
-                                />
-                                {satisfactionScore > 0 ? (
-                                    React.createElement(satisfactionIcons[satisfactionScore - 1].icon, {
-                                        className: cn("h-6 w-6", satisfactionIcons[satisfactionScore - 1].color)
-                                    })
-                                ) : <Smile className="h-6 w-6 text-muted-foreground" />}
-                            </div>
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><FileSignature /> Customer Sign-off</CardTitle>
+                <CardDescription>Capture signature and satisfaction to confirm completion.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <Label>Customer Satisfaction ({satisfactionScore > 0 ? `${satisfactionScore}/5 - ${satisfactionIcons[satisfactionScore - 1].label}` : 'Not Rated'})</Label>
+                        <div className="flex items-center gap-2 mt-2">
+                            <Slider
+                                defaultValue={[satisfactionScore]}
+                                value={[satisfactionScore]}
+                                max={5}
+                                step={1}
+                                onValueChange={(value) => setSatisfactionScore(value[0])}
+                                disabled={isSubmitting}
+                            />
+                            {satisfactionScore > 0 ? (
+                                React.createElement(satisfactionIcons[satisfactionScore - 1].icon, {
+                                    className: cn("h-6 w-6", satisfactionIcons[satisfactionScore - 1].color)
+                                })
+                            ) : <Smile className="h-6 w-6 text-muted-foreground" />}
                         </div>
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <Label>Customer Signature</Label>
-                                <Button type="button" variant="ghost" size="sm" onClick={clearSignature} disabled={isDisabled || isSubmitting}>Clear</Button>
-                            </div>
-                            <div className="border rounded-md bg-white">
-                                <SignatureCanvas
-                                    ref={signaturePadRef}
-                                    penColor="black"
-                                    canvasProps={{ className: 'w-full h-32' }}
-                                />
-                            </div>
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <Label>Customer Signature</Label>
+                            <Button type="button" variant="ghost" size="sm" onClick={clearSignature} disabled={isSubmitting}>Clear</Button>
                         </div>
-                         <Button type="submit" disabled={isSubmitting || isDisabled} className="w-full">
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Sign-off
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
-        </fieldset>
+                        <div className="border rounded-md bg-white">
+                            <SignatureCanvas
+                                ref={signaturePadRef}
+                                penColor="black"
+                                canvasProps={{ className: 'w-full h-32' }}
+                            />
+                        </div>
+                    </div>
+                     <Button type="submit" disabled={isSubmitting} className="w-full">
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save Sign-off
+                    </Button>
+                </form>
+            </CardContent>
+        </Card>
     );
 };
 

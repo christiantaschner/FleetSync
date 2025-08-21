@@ -1,19 +1,21 @@
+
 "use client";
 
 import React from 'react';
 import type { Job } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, MessageSquare, Bot } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, MessageSquare, Bot, FileSignature, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 
 interface JobDetailsDisplayProps {
     job: Job;
+    children?: React.ReactNode;
 }
 
-const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
+const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, children }) => {
     
     const getStatusBadgeVariant = (status: Job['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch(status) {
@@ -30,6 +32,14 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
         if (priority === 'Medium') return 'default';
         return 'secondary';
     }
+    
+    const satisfactionIcons = [
+        { icon: ThumbsDown, color: 'text-red-500', label: 'Poor' },
+        { icon: Star, color: 'text-orange-400', label: 'Fair' },
+        { icon: Star, color: 'text-yellow-400', label: 'Good' },
+        { icon: Star, color: 'text-lime-500', label: 'Very Good' },
+        { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
+    ];
 
     return (
         <Card className="shadow-lg">
@@ -92,6 +102,7 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                     </div>
                 )}
             </CardContent>
+            {children}
         </Card>
     );
 };

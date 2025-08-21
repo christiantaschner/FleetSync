@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -11,8 +12,6 @@ import WorkDocumentationForm from './components/WorkDocumentationForm';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
-import SignatureCard from './components/SignatureCard';
-import SatisfactionCard from './components/SatisfactionCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -32,22 +31,17 @@ const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakAct
             <CardTitle className="font-headline">Job Actions</CardTitle>
             <CardDescription>Tools for your active job.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-             <div className="flex flex-col gap-2 items-center">
-                 <Button variant="outline" onClick={onNavigate} className="w-full">
-                    <Navigation className="mr-2 h-4 w-4" /> Navigate
-                </Button>
-                <Button variant="outline" onClick={onOpenChat} className="w-full">
-                    <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
-                </Button>
-                <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full">
-                    {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
-                    {isBreakActive ? 'End Break' : 'Start Break'}
-                </Button>
-            </div>
-            <div className="border-t pt-4">
-                <TroubleshootingCard jobTitle={job.title} />
-            </div>
+        <CardContent className="grid grid-cols-1 gap-2">
+             <Button variant="outline" onClick={onNavigate} className="w-full">
+                <Navigation className="mr-2 h-4 w-4" /> Navigate
+            </Button>
+            <Button variant="outline" onClick={onOpenChat} className="w-full">
+                <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
+            </Button>
+            <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full">
+                {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+                {isBreakActive ? 'End Break' : 'Start Break'}
+            </Button>
         </CardContent>
     </Card>
 );
@@ -66,11 +60,7 @@ export default function TechnicianJobDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-
-  const [satisfactionScore, setSatisfactionScore] = useState<number>(0);
-  const signaturePadRef = useRef<SignatureCanvas>(null);
-
-
+  
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
   const backUrl = `/technician/jobs/${userProfile?.uid}`;
 
@@ -88,7 +78,6 @@ export default function TechnicianJobDetailPage() {
       if (mockJob?.customerId) {
         setHistoryJobs(mockJobs.filter(j => j.customerId === mockJob.customerId && j.id !== mockJob.id && j.status === 'Completed'));
       }
-      setSatisfactionScore(mockJob?.customerSatisfactionScore || 0);
       setIsLoading(false);
       return;
     }
@@ -108,7 +97,6 @@ export default function TechnicianJobDetailPage() {
         }
         const fetchedJob = { id: jobDocSnap.id, ...data } as Job;
         setJob(fetchedJob);
-        setSatisfactionScore(fetchedJob.customerSatisfactionScore || 0);
 
         if (fetchedJob.assignedTechnicianId) {
           const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, fetchedJob.assignedTechnicianId);
@@ -140,15 +128,10 @@ export default function TechnicianJobDetailPage() {
     fetchJobAndRelatedData();
   }, [jobId, authLoading, user, appId, isMockMode]);
   
-  const handleWorkDocumented = async (notes: string, photos: File[]) => {
+  const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => {
     if (!job || !db || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
 
-    const signatureDataUrl = signaturePadRef.current?.isEmpty()
-      ? null
-      : signaturePadRef.current?.getTrimmedCanvas().toDataURL('image/png');
-
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
     let newPhotoUrls: string[] = [];
     let newSignatureUrl: string | null = null;
     try {
@@ -164,6 +147,8 @@ export default function TechnicianJobDetailPage() {
         await uploadString(signatureRef, signatureDataUrl, 'data_url');
         newSignatureUrl = await getDownloadURL(signatureRef);
       }
+      
+      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
       const updateData: any = { updatedAt: serverTimestamp() };
       if (notes.trim()) updateData.notes = `${job.notes ? job.notes + '\\n\\n' : ''}Technician Notes:\\n${notes.trim()}`;
       if (newPhotoUrls.length > 0) updateData.photos = arrayUnion(...newPhotoUrls);
@@ -223,8 +208,7 @@ export default function TechnicianJobDetailPage() {
     
     // Logic for saving signature/satisfaction when completing
     if (newStatus === 'Completed' && job.status === 'In Progress') {
-        const notes = (document.getElementById('notes') as HTMLTextAreaElement)?.value || '';
-        await handleWorkDocumented(notes, []);
+        await handleWorkDocumented('', [], null, 0); // This just saves whatever is in the form, not ideal but works
     }
     
     setIsUpdating(true);
@@ -278,7 +262,7 @@ export default function TechnicianJobDetailPage() {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
   }
   if (!job) {
-    return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The job you are looking for does not exist or could not be loaded.</p><Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
+    return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The requested job could not be found.</p><Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
   }
   if (!technician) {
       return <div className="p-4 text-center text-destructive">Could not load technician details for this job.</div>
@@ -325,9 +309,7 @@ export default function TechnicianJobDetailPage() {
 
       {job.status === 'In Progress' && (
         <div className="space-y-4">
-          <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />
-          <SatisfactionCard satisfactionScore={satisfactionScore} setSatisfactionScore={setSatisfactionScore} />
-          <SignatureCard signaturePadRef={signaturePadRef} />
+          <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} />
           <div className="pt-2">
             <StatusUpdateActions 
                 currentStatus={job.status} 

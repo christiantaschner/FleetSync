@@ -2,39 +2,134 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read their own profile, admins can read any profile.
-    // Any authenticated user can create their own profile document.
-    match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superAdmin']);
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update: if request.auth != null && request.auth.uid == userId;
+  
+    // --- Utility Functions ---
+    function isSuperAdmin() {
+      return request.auth.token.role == 'superAdmin';
+    }
+  
+    function isCompanyAdmin(companyId) {
+      return request.auth.token.companyId == companyId && request.auth.token.role == 'admin';
     }
 
-    // Companies can be read by their own members.
-    match /companies/{companyId} {
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
-      allow update: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    // Invitations can be read by company members and created by admins.
-    match /invitations/{inviteId} {
-       allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-       // Also allow a user to update an invite if the email matches their verified email
-       allow update: if request.auth != null && request.auth.token.email_verified && request.auth.token.email == resource.data.email;
-    }
-
-    // --- Artifacts (App-Specific Data) ---
-    // The `appId` is used to namespace data for different Firebase Studio apps.
-    // The rules below ensure that a user can only access data for their own company within a specific app.
-    match /artifacts/{appId}/public/data/{collection}/{docId} {
-        allow read, write: if request.auth != null && request.resource.data.companyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
-        allow create: if request.auth != null && request.resource.data.companyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+    function isCompanyTechnician(companyId) {
+       return request.auth.token.companyId == companyId && request.auth.token.role == 'technician';
     }
     
-    // Public read for customer tracking and triage pages
-    match /artifacts/{appId}/public/data/jobs/{jobId} {
-       allow read: if true; // Open read for specific queries
-       allow write: if request.auth != null && request.resource.data.companyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+    function isCompanyMember(companyId) {
+      return request.auth.token.companyId == companyId && request.auth.token.role in ['admin', 'technician', 'csr'];
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // --- Public Read, Admin Write ---
+    // Anyone can read, but only company admins/super admins can create/update/delete.
+    function publicReadAdminWrite(companyId) {
+      return {
+        read: isSignedIn(),
+        write: isCompanyAdmin(companyId) || isSuperAdmin()
+      }
+    }
+    
+    // --- Company Member Read, Admin Write ---
+    // Any member of a company can read, but only company admins/super admins can write.
+    function companyMemberReadAdminWrite(companyId) {
+      return {
+        read: isCompanyMember(companyId),
+        write: isCompanyAdmin(companyId) || isSuperAdmin()
+      }
+    }
+
+    // --- Users Collection ---
+    // Users can read/update their own profile. Admins can read all profiles in their company.
+    match /users/{userId} {
+      allow read, update: request.auth.uid == userId || isCompanyAdmin(request.auth.token.companyId);
+      allow create: request.auth.uid == userId;
+    }
+
+    // --- Companies Collection ---
+    // Only admins of that company or super admins can read/update.
+    match /companies/{companyId} {
+      allow read, update: isCompanyAdmin(companyId) || isSuperAdmin();
+      allow create: isSignedIn(); // Allow creation during onboarding
+    }
+    
+    // --- Invitations Collection ---
+    // Users can read their own pending invite. Admins can read/write invites for their company.
+    match /invitations/{inviteId} {
+      allow read: request.auth.email == resource.data.email || isCompanyAdmin(request.auth.token.companyId);
+      allow create, update: isCompanyAdmin(request.auth.token.companyId);
+    }
+    
+    // --- Main Artifacts Data ---
+    // This uses a wildcard to match all app-specific data collections.
+    match /artifacts/{appId}/public/data/{collection}/{documentId} {
+      
+      // Default: Deny all access
+      allow read, write: if false;
+
+      // Technicians can update their own profile and create change requests.
+      // Admins can manage all technicians in their company.
+      match /technicians/{techId} {
+         allow read: isCompanyMember(resource.data.companyId);
+         allow update: request.auth.uid == techId || isCompanyAdmin(resource.data.companyId);
+         allow create: isCompanyAdmin(resource.data.companyId);
+         allow delete: isCompanyAdmin(resource.data.companyId);
+      }
+      
+      // Admins can manage profile change requests for their company.
+      match /profileChangeRequests/{reqId} {
+         allow read: isCompanyMember(resource.data.companyId);
+         allow create: isCompanyTechnician(request.resource.data.companyId); // Techs create requests
+         allow update, delete: isCompanyAdmin(resource.data.companyId); // Admins process them
+      }
+      
+      // --- Jobs Collection Rules ---
+      // Admins/CSRs can manage all jobs. Technicians can read/update their assigned jobs.
+      match /jobs/{jobId} {
+         allow read: isCompanyMember(resource.data.companyId);
+         allow create: isCompanyAdmin(request.resource.data.companyId); // Admins create
+         allow update: (isCompanyTechnician(resource.data.companyId) && request.auth.uid == resource.data.assignedTechnicianId) || isCompanyAdmin(resource.data.companyId);
+         allow delete: isCompanyAdmin(resource.data.companyId);
+      }
+      
+      // Chat messages are restricted between the dispatcher (admin) and the assigned technician for a job.
+      match /chatMessages/{msgId} {
+        allow read, create: isCompanyMember(resource.data.companyId) && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+      }
+
+      // Any company member can read reference data like skills and parts. Only admins can modify them.
+      match /skills/{skillId} {
+         allow read: isCompanyMember(resource.data.companyId);
+         allow write: isCompanyAdmin(resource.data.companyId);
+      }
+      match /parts/{partId} {
+         allow read: isCompanyMember(resource.data.companyId);
+         allow write: isCompanyAdmin(resource.data.companyId);
+      }
+      
+      // Contracts and Customers can be read by company members, but only managed by admins.
+      match /contracts/{contractId} {
+        allow read: isCompanyMember(resource.data.companyId);
+        allow write: isCompanyAdmin(resource.data.companyId);
+      }
+      
+      match /customers/{customerId} {
+        allow read: isCompanyMember(resource.data.companyId);
+        allow write: isCompanyAdmin(resource.data.companyId);
+      }
+      
+      match /equipment/{equipId} {
+        allow read: isCompanyMember(resource.data.companyId);
+        allow write: isCompanyAdmin(resource.data.companyId);
+      }
+
+      // Allow admins to write dispatcher feedback for AI training
+      match /dispatcherFeedback/{feedbackId} {
+        allow write: isCompanyAdmin(request.resource.data.companyId);
+      }
     }
   }
 }

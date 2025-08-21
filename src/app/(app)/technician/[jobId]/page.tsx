@@ -37,7 +37,7 @@ const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakAct
                 <Button variant="outline" onClick={onOpenChat}>
                     <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
                 </Button>
-                <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating}>
+                <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating || job.status !== 'In Progress'}>
                     {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
                     {isBreakActive ? 'End Break' : 'Start Break'}
                 </Button>
@@ -65,7 +65,7 @@ export default function TechnicianJobDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
-  const backUrl = userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : '/dashboard';
+  const backUrl = `/technician/jobs/${userProfile?.uid}`;
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -227,6 +227,9 @@ export default function TechnicianJobDetailPage() {
         if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
             const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
             await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
+        } else if (newStatus !== 'Completed' && newStatus !== 'Cancelled' && job.assignedTechnicianId) {
+             const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+            await updateDoc(techDocRef, { isAvailable: false, currentJobId: job.id });
         }
         
         setJob(prev => prev ? {...prev, ...updatePayload, status: newStatus, updatedAt: new Date().toISOString() } : null);
@@ -282,25 +285,25 @@ export default function TechnicianJobDetailPage() {
       
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
 
-      {job.status === 'In Progress' && (
-        <>
-            <JobActionsCard 
-                job={job}
-                onToggleBreak={handleToggleBreak}
-                onNavigate={handleNavigate}
-                onOpenChat={() => setIsChatOpen(true)}
-                isBreakActive={isBreakActive ?? false}
-                isUpdating={isUpdating}
-            />
+      {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (
+        <JobActionsCard 
+            job={job}
+            onToggleBreak={handleToggleBreak}
+            onNavigate={handleNavigate}
+            onOpenChat={() => setIsChatOpen(true)}
+            isBreakActive={isBreakActive ?? false}
+            isUpdating={isUpdating}
+        />
+      )}
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work</CardTitle>
-                    <CardDescription>Add notes and photos before completing the job.</CardDescription>
-                </CardHeader>
-                <CardContent><WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} /></CardContent>
-            </Card>
-        </>
+      {job.status === 'In Progress' && (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><Edit3 /> Document Work</CardTitle>
+                <CardDescription>Add notes and photos before completing the job.</CardDescription>
+            </CardHeader>
+            <CardContent><WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} /></CardContent>
+        </Card>
       )}
 
       {job.status === 'Completed' && (

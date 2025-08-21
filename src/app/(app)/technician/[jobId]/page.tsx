@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -12,6 +11,8 @@ import WorkDocumentationForm from './components/WorkDocumentationForm';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
+import SignatureCard from './components/SignatureCard';
+import SatisfactionCard from './components/SatisfactionCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -23,9 +24,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 import SignatureCanvas from 'react-signature-canvas';
-import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
-import { cn } from '@/lib/utils';
 
 
 const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, onOpenChat: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
@@ -35,14 +33,14 @@ const JobActionsCard = ({ job, onToggleBreak, onNavigate, onOpenChat, isBreakAct
             <CardDescription>Tools for your active job.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-             <div className="flex flex-wrap gap-2 items-center">
-                 <Button variant="outline" onClick={onNavigate}>
+             <div className="flex flex-col gap-2 items-center">
+                 <Button variant="outline" onClick={onNavigate} className="w-full">
                     <Navigation className="mr-2 h-4 w-4" /> Navigate
                 </Button>
-                <Button variant="outline" onClick={onOpenChat}>
+                <Button variant="outline" onClick={onOpenChat} className="w-full">
                     <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
                 </Button>
-                <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating || job.status !== 'In Progress'}>
+                <Button variant={isBreakActive ? "destructive" : "outline"} onClick={onToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full">
                     {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
                     {isBreakActive ? 'End Break' : 'Start Break'}
                 </Button>
@@ -189,10 +187,13 @@ export default function TechnicianJobDetailPage() {
   
   const handleToggleBreak = async () => {
     if (!job || !db || isUpdating || !appId) return;
+    const currentJob = job;
+    if (!currentJob) return;
+
     setIsUpdating(true);
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, currentJob.id);
     const now = new Date().toISOString();
-    const currentBreaks = job.breaks || [];
+    const currentBreaks = currentJob.breaks || [];
     let updatedBreaks;
     if (isBreakActive) {
       toast({ title: "Resuming Work" });
@@ -218,6 +219,12 @@ export default function TechnicianJobDetailPage() {
     if (job.status === 'In Progress' && job.breaks?.some(b => !b.end)) {
         toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
         return;
+    }
+    
+    // Logic for saving signature/satisfaction when completing
+    if (newStatus === 'Completed' && job.status === 'In Progress') {
+        const notes = (document.getElementById('notes') as HTMLTextAreaElement)?.value || '';
+        await handleWorkDocumented(notes, []);
     }
     
     setIsUpdating(true);
@@ -266,14 +273,6 @@ export default function TechnicianJobDetailPage() {
     }
   };
 
-  const satisfactionIcons = [
-    { icon: ThumbsDown, color: 'text-red-500', label: 'Poor' },
-    { icon: Star, color: 'text-orange-400', label: 'Fair' },
-    { icon: Star, color: 'text-yellow-400', label: 'Good' },
-    { icon: Star, color: 'text-lime-500', label: 'Very Good' },
-    { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
-  ];
-
 
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
@@ -299,13 +298,15 @@ export default function TechnicianJobDetailPage() {
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
-
-      <div className="flex flex-wrap gap-2">
-         <StatusUpdateActions 
-            currentStatus={job.status} 
-            onUpdateStatus={handleStatusUpdate}
-        />
-      </div>
+      
+      {job.status !== 'In Progress' && (
+        <div className="flex flex-wrap gap-2">
+            <StatusUpdateActions 
+                currentStatus={job.status} 
+                onUpdateStatus={handleStatusUpdate}
+            />
+        </div>
+      )}
 
       <JobDetailsDisplay job={job} />
       
@@ -325,45 +326,14 @@ export default function TechnicianJobDetailPage() {
       {job.status === 'In Progress' && (
         <div className="space-y-4">
           <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} />
-          
-          <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><Smile /> Customer Sign-off</CardTitle>
-                <CardDescription>Capture customer satisfaction and signature to finalize the job.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                 <div>
-                    <Label>Customer Satisfaction ({satisfactionScore > 0 ? `${satisfactionScore}/5` : 'Not Rated'})</Label>
-                     <div className="flex items-center gap-2 mt-2">
-                        <Slider 
-                            defaultValue={[satisfactionScore]}
-                            value={[satisfactionScore]}
-                            max={5} 
-                            step={1} 
-                            onValueChange={(value) => setSatisfactionScore(value[0])}
-                        />
-                        {satisfactionScore > 0 && (
-                            React.createElement(satisfactionIcons[satisfactionScore - 1].icon, {
-                                className: cn("h-6 w-6", satisfactionIcons[satisfactionScore - 1].color)
-                            })
-                        )}
-                    </div>
-                </div>
-                <div>
-                    <div className="flex justify-between items-center mb-1">
-                        <Label>Customer Signature</Label>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => signaturePadRef.current?.clear()}>Clear</Button>
-                    </div>
-                    <div className="border rounded-md bg-white">
-                        <SignatureCanvas
-                            ref={signaturePadRef}
-                            penColor="black"
-                            canvasProps={{ className: 'w-full h-32' }}
-                        />
-                    </div>
-                </div>
-            </CardContent>
-          </Card>
+          <SatisfactionCard satisfactionScore={satisfactionScore} setSatisfactionScore={setSatisfactionScore} />
+          <SignatureCard signaturePadRef={signaturePadRef} />
+          <div className="pt-2">
+            <StatusUpdateActions 
+                currentStatus={job.status} 
+                onUpdateStatus={handleStatusUpdate}
+            />
+          </div>
         </div>
       )}
 
@@ -387,4 +357,3 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
-

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -26,8 +25,8 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
                         <Button onClick={() => onUpdateStatus('In Progress')} className="flex-1">
                             <Play className="mr-2 h-4 w-4" /> Arrived & Start Work
                         </Button>
-                        <Button variant="outline" onClick={() => onUpdateStatus('Assigned')} title="Reset Status">
-                            <Undo2 className="h-4 w-4" />
+                        <Button variant="secondary" onClick={() => onUpdateStatus('Assigned')} title="Reset Status">
+                            <Undo2 className="h-4 w-4 mr-2" /> Reset
                         </Button>
                     </div>
                 );
@@ -37,11 +36,11 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
                         <Button onClick={() => onUpdateStatus('Completed')} className="flex-1 bg-green-600 hover:bg-green-700">
                             <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
                         </Button>
-                         <Button variant="outline" onClick={() => onUpdateStatus('En Route')} title="Reset Status">
-                            <Undo2 className="h-4 w-4" />
+                         <Button variant="secondary" onClick={() => onUpdateStatus('En Route')} title="Reset Status">
+                            <Undo2 className="h-4 w-4 mr-2" /> Reset
                         </Button>
-                        <Button variant="destructive" onClick={() => onUpdateStatus('Cancelled')}>
-                            <XCircle className="mr-2 h-4 w-4" /> Cancel Job
+                        <Button variant="secondary" className="bg-destructive/20 text-destructive-foreground hover:bg-destructive/30" onClick={() => onUpdateStatus('Cancelled')}>
+                            <XCircle className="mr-2 h-4 w-4" /> Cancel
                         </Button>
                     </div>
                 );
@@ -54,4 +53,3 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
 };
 
 export default StatusUpdateActions;
-

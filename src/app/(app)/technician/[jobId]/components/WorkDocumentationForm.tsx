@@ -8,9 +8,6 @@ import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Camera, Star, Edit, ThumbsUp, ThumbsDown, Trash2, Edit3 } from 'lucide-react';
 import Image from 'next/image';
-import SignatureCanvas from 'react-signature-canvas';
-import { cn } from '@/lib/utils';
-import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface WorkDocumentationFormProps {
@@ -95,6 +92,10 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
                             </div>
                         )}
                     </div>
+                     <Button type="submit" disabled={isSubmitting} className="w-full">
+                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Documentation
+                    </Button>
                 </CardContent>
              </Card>
         </form>

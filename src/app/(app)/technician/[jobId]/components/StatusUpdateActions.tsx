@@ -35,10 +35,10 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
             case 'In Progress':
                  return (
                     <div className="flex flex-wrap gap-2 w-full justify-end">
-                        <Button variant="secondary" onClick={() => onUpdateStatus('En Route')} disabled={isUpdating} title="Reset to En Route">
+                        <Button variant="secondary" onClick={() => onUpdateStatus('En Route')} disabled={isUpdating} title="Reset to En Route" className="flex-1">
                             <Undo2 className="h-4 w-4 mr-2" /> Reset Status
                         </Button>
-                        <Button variant="destructive" className="bg-destructive/80" onClick={() => onUpdateStatus('Cancelled')}>
+                        <Button variant="destructive" className="bg-destructive/80 flex-1" onClick={() => onUpdateStatus('Cancelled')}>
                             <XCircle className="mr-2 h-4 w-4" /> Cancel Job
                         </Button>
                     </div>

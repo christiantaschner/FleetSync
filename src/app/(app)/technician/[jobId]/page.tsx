@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -10,6 +11,7 @@ import JobDetailsDisplay from './components/JobDetailsDisplay';
 import WorkDocumentationForm from './components/WorkDocumentationForm';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
+import StatusUpdateActions from './components/StatusUpdateActions';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -189,8 +191,58 @@ export default function TechnicianJobDetailPage() {
     else toast({ title: "Navigation Error", description: "No address or coordinates available.", variant: "destructive"});
   };
 
-  const isJobConcluded = job?.status === 'Completed' || job?.status === 'Cancelled';
-  
+  const handleStatusUpdate = async (newStatus: JobStatus) => {
+    if (!job || !db || isUpdating || !technician || !appId) return;
+
+    if (job.status === 'In Progress' && job.breaks?.some(b => !b.end)) {
+        toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
+        return;
+    }
+    
+    setIsUpdating(true);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+    try {
+        const updatePayload: any = { status: newStatus, updatedAt: serverTimestamp() };
+
+        if (newStatus === 'En Route') {
+            updatePayload.enRouteAt = serverTimestamp();
+            notifyCustomerAction({
+                jobId: job.id, customerName: job.customerName, technicianName: technician.name,
+                reasonForChange: `Your technician, ${technician.name}, is on their way.`,
+                companyName: company?.name || 'our team'
+            }).catch(err => console.error("Failed to send 'On My Way' notification:", err));
+        }
+        if (newStatus === 'In Progress') {
+            updatePayload.inProgressAt = serverTimestamp();
+        }
+        if (newStatus === 'Completed') {
+            updatePayload.completedAt = serverTimestamp();
+        }
+        
+        await updateDoc(jobDocRef, updatePayload);
+
+        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+            await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
+        }
+        
+        setJob(prev => prev ? {...prev, ...updatePayload, status: newStatus, updatedAt: new Date().toISOString() } : null);
+        toast({ title: "Status Updated", description: `Job status set to ${newStatus}.` });
+
+        if (newStatus === 'Completed' && job.assignedTechnicianId && userProfile) {
+            calculateTravelMetricsAction({
+                companyId: userProfile.companyId!, jobId: job.id, technicianId: job.assignedTechnicianId, appId,
+            }).catch(err => console.error("Failed to trigger travel metrics calculation:", err));
+        }
+    } catch(e) {
+        console.error("Error updating job status from detail view:", e);
+        toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
+    } finally {
+        setIsUpdating(false);
+    }
+  };
+
+
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
   }
@@ -218,6 +270,13 @@ export default function TechnicianJobDetailPage() {
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
+
+      <div className="flex flex-wrap gap-2">
+         <StatusUpdateActions 
+            currentStatus={job.status} 
+            onUpdateStatus={handleStatusUpdate}
+        />
+      </div>
 
       <JobDetailsDisplay job={job} />
       
@@ -263,3 +322,4 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
+

@@ -139,6 +139,7 @@ export default function DispatcherJobDetailPage() {
   }
   
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
+  const backUrl = userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : '/dashboard';
 
   return (
     <div className="space-y-6">
@@ -154,7 +155,7 @@ export default function DispatcherJobDetailPage() {
             onManageSkills={() => {}}
         />
         <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>
+            <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
                 <ArrowLeft className="mr-2 h-4 w-4"/>
                 Back to Dashboard
             </Button>

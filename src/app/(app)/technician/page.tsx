@@ -34,10 +34,9 @@ export default function SelectTechnicianPage() {
             return;
         }
 
+        // RBAC: This logic is now primarily in layout.tsx, but this is a failsafe.
         if (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin') {
-            // A technician should be redirected to their jobs page by the layout,
-            // but this is a failsafe.
-            router.push(`/technician/jobs/${userProfile.uid}`); 
+            router.replace(`/technician/jobs/${userProfile.uid}`); 
             return;
         }
 

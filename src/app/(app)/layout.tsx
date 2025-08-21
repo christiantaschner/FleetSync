@@ -68,15 +68,16 @@ type NavItem = {
   label: string;
   icon: React.ElementType; 
   divider?: boolean;
+  roles: ('admin' | 'technician' | 'csr' | 'superAdmin' | null)[];
 };
 
 const ALL_NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
-  { href: "/customers", label: 'customers', icon: ClipboardList },
-  { href: "/contracts", label: 'contracts', icon: Repeat },
-  { href: "/reports", label: 'reports', icon: BarChart },
-  { href: "/roadmap", label: 'roadmap', icon: BookOpen },
-  { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true },
+  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+  { href: "/roadmap", label: 'roadmap', icon: BookOpen, roles: ['admin', 'superAdmin', 'csr', 'technician'] },
+  { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true, roles: ['admin', 'superAdmin', 'technician'] },
 ];
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
@@ -86,6 +87,17 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
   
+  // Primary RBAC Logic
+  useEffect(() => {
+    if (!loading && userProfile && userProfile.role === 'technician') {
+      const isCorrectPath = pathname.startsWith(`/technician/jobs/${userProfile.uid}`) || pathname === '/technician/profile' || pathname === '/roadmap';
+      if (!isCorrectPath) {
+        router.replace(`/technician/jobs/${userProfile.uid}`);
+      }
+    }
+  }, [pathname, userProfile, loading, router]);
+
+
   if (pathname === '/onboarding') {
       return <>{children}</>;
   }
@@ -158,10 +170,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {ALL_NAV_ITEMS.map((item) => {
+              {ALL_NAV_ITEMS.filter(item => item.roles.includes(userProfile?.role || null)).map((item) => {
                  const isActive = (item.href === '/dashboard' && pathname === '/dashboard') || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                  
-                 const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
+                 let finalHref = item.href;
+                 if (item.href === '/technician' && userProfile?.role === 'technician') {
+                   finalHref = `/technician/jobs/${userProfile.uid}`;
+                 }
                  
                  const badgeCount = item.label === 'contracts' ? contractsDueCount : 0;
 

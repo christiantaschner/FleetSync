@@ -46,6 +46,13 @@ export default function TechnicianJobListPage() {
 
   useEffect(() => {
     if (authLoading || !firebaseUser || !userProfile || !technicianId) return;
+    
+    // RBAC: This is a redundant check as the layout should handle it, but it's a good failsafe.
+    if (userProfile.role === 'technician' && userProfile.uid !== technicianId) {
+        router.replace(`/technician/jobs/${userProfile.uid}`);
+        return;
+    }
+
 
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         const foundTechnician = mockTechnicians.find(t => t.id === technicianId) || null;
@@ -137,7 +144,7 @@ export default function TechnicianJobListPage() {
     });
     
     return () => unsubscribeTech();
-  }, [firebaseUser, authLoading, userProfile, technicianId, toast, isViewingOwnPage, appId]);
+  }, [firebaseUser, authLoading, userProfile, technicianId, toast, isViewingOwnPage, appId, router]);
   
   const handleToggleBreak = async () => {
     if (!technician?.currentJobId || !db || isUpdating || !appId) return;

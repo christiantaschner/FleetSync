@@ -1,9 +1,10 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
@@ -208,7 +209,6 @@ export default function TechnicianJobDetailPage() {
         return;
     }
     
-    // Logic for saving signature/satisfaction when completing
     if (newStatus === 'Completed' && !isDocumentationSaved) {
         toast({ title: "Please Save Documentation", description: "You must save documentation before completing the job.", variant: "destructive" });
         return;
@@ -286,7 +286,7 @@ export default function TechnicianJobDetailPage() {
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
       
-      {job.status !== 'In Progress' && (
+      {job.status !== 'In Progress' && job.status !== 'Completed' && (
         <div className="flex flex-wrap gap-2">
             <StatusUpdateActions 
                 currentStatus={job.status} 
@@ -314,13 +314,13 @@ export default function TechnicianJobDetailPage() {
       {job.status === 'In Progress' && (
         <div className="space-y-4">
           <WorkDocumentationForm onSubmit={handleWorkDocumented} isSubmitting={isUpdating} initialSatisfactionScore={job.customerSatisfactionScore} />
-          <div className="pt-2">
-            <StatusUpdateActions 
-                currentStatus={job.status} 
-                onUpdateStatus={handleStatusUpdate}
-                isUpdating={isUpdating}
-            />
-          </div>
+          {isDocumentationSaved && (
+            <div className="pt-2">
+                <Button onClick={() => handleStatusUpdate('Completed')} className="w-full bg-green-600 hover:bg-green-700" disabled={isUpdating}>
+                    <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
+                </Button>
+            </div>
+          )}
         </div>
       )}
 

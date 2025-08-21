@@ -40,7 +40,7 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
                          <Button variant="outline" onClick={() => onUpdateStatus('En Route')} title="Reset Status">
                             <Undo2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" onClick={() => onUpdateStatus('Cancelled')} className="flex-1">
+                        <Button variant="destructive" onClick={() => onUpdateStatus('Cancelled')}>
                             <XCircle className="mr-2 h-4 w-4" /> Cancel Job
                         </Button>
                     </div>
@@ -54,3 +54,4 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
 };
 
 export default StatusUpdateActions;
+

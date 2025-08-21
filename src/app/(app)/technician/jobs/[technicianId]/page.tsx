@@ -7,7 +7,7 @@ import { useParams, useRouter } from 'next/navigation';
 import type { Job, Technician, JobStatus } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase, Truck, Play, CheckCircle, Calendar } from 'lucide-react';
+import { ListChecks, MapPin, AlertTriangle, Clock, UserCircle, Loader2, UserX, User, ArrowLeft, Eye, Navigation, Briefcase, Truck, Play, CheckCircle, Calendar, Pause } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { db } from '@/lib/firebase';
@@ -32,8 +32,11 @@ export default function TechnicianJobListPage() {
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [assignedJobs, setAssignedJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  const isBreakActive = technician?.currentJobId && assignedJobs.find(j => j.id === technician.currentJobId)?.breaks?.some(b => !b.end);
 
   const isInitialLoad = useRef(true);
   const prevJobOrder = useRef<string>("");
@@ -136,6 +139,27 @@ export default function TechnicianJobListPage() {
     return () => unsubscribeTech();
   }, [firebaseUser, authLoading, userProfile, technicianId, toast, isViewingOwnPage, appId]);
   
+  const handleToggleBreak = async () => {
+    if (!technician?.currentJobId || !db || isUpdating || !appId) return;
+    const currentJob = assignedJobs.find(j => j.id === technician.currentJobId);
+    if (!currentJob) return;
+
+    setIsUpdating(true);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, currentJob.id);
+    const now = new Date().toISOString();
+    const currentBreaks = currentJob.breaks || [];
+    let updatedBreaks;
+    if (isBreakActive) {
+      toast({ title: "Resuming Work" });
+      updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
+    } else {
+      toast({ title: "Break Started" });
+      updatedBreaks = [...currentBreaks, { start: now }];
+    }
+    await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
+    setIsUpdating(false);
+  };
+
   const handleStatusUpdate = async (job: Job, newStatus: JobStatus) => {
     if (!db || isUpdatingStatus || !technician || !appId) return;
 
@@ -257,6 +281,13 @@ export default function TechnicianJobListPage() {
                       <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
                       <p className="text-muted-foreground">{isViewingOwnPage ? "Welcome to your daily command center." : "Technician's daily command center."}</p>
                   </div>
+                  {isViewingOwnPage && technician.currentJobId && (
+                    <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>
+                      {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                      {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+                      {isBreakActive ? 'End Break' : 'Start Break'}
+                    </Button>
+                  )}
             </div>
           </CardHeader>
           {isViewingOwnPage && (

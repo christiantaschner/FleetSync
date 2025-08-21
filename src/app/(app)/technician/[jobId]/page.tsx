@@ -1,15 +1,13 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Job, JobStatus, Technician, ChecklistResult } from '@/types';
+import type { Job, JobStatus, Technician } from '@/types';
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
 import WorkDocumentationForm from './components/WorkDocumentationForm';
-import ChecklistCard from './components/ChecklistCard';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 
@@ -91,7 +89,7 @@ export default function TechnicianJobDetailPage() {
       if (jobDocSnap.exists()) {
         const data = jobDocSnap.data();
         for (const key in data) {
-            if (data[key] && typeof data[key].toDate === 'function') {
+            if ((data[key] as any) && typeof (data[key] as any).toDate === 'function') {
                 (data[key] as any) = (data[key] as any).toDate().toISOString();
             }
         }
@@ -119,6 +117,8 @@ export default function TechnicianJobDetailPage() {
             setHistoryJobs(historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Job)));
         }
 
+      } else {
+        setJob(null);
       }
       setIsLoading(false);
     };
@@ -188,16 +188,6 @@ export default function TechnicianJobDetailPage() {
     else if (job?.location) window.open(`https://www.google.com/maps?q=${job.location.latitude},${job.location.longitude}`, '_blank');
     else toast({ title: "Navigation Error", description: "No address or coordinates available.", variant: "destructive"});
   };
-  
-  const handleChecklistSubmit = async (results: ChecklistResult[]) => {
-      if (!job || !db || isUpdating || !appId) return;
-      setIsUpdating(true);
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-      await updateDoc(jobDocRef, { checklistResults: results, updatedAt: serverTimestamp() });
-      setJob(prev => prev ? { ...prev, checklistResults: results, updatedAt: new Date().toISOString() } : null);
-      toast({ title: "Checklist Saved", description: "You are cleared to start the job." });
-      setIsUpdating(false);
-  };
 
   const isJobConcluded = job?.status === 'Completed' || job?.status === 'Cancelled';
   
@@ -232,8 +222,6 @@ export default function TechnicianJobDetailPage() {
       <JobDetailsDisplay job={job} />
       
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
-
-      {!isJobConcluded && (job.status === 'Assigned' || job.status === 'En Route') && <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />}
 
       {job.status === 'In Progress' && (
         <>

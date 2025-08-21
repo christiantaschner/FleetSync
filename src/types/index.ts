@@ -111,11 +111,6 @@ export type Technician = {
 export type JobPriority = 'High' | 'Medium' | 'Low';
 export type JobStatus = 'Unassigned' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
 
-export type ChecklistResult = {
-    item: string;
-    checked: boolean;
-}
-
 export type Job = {
   id: string;
   companyId: string;
@@ -150,7 +145,6 @@ export type Job = {
   reasonForFollowUp?: string;
   sourceContractId?: string;
   breaks?: { start: string; end?: string; }[];
-  checklistResults?: ChecklistResult[];
   trackingToken?: string;
   trackingTokenExpiresAt?: string;
   triageToken?: string;

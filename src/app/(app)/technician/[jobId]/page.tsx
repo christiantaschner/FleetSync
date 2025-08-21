@@ -55,28 +55,6 @@ export default function TechnicianJobDetailPage() {
       }
       if (mockJob?.customerId) {
         const history = mockJobs.filter(j => j.customerId === mockJob.customerId && j.id !== mockJob.id && j.status === 'Completed');
-        history.unshift({
-            id: 'job_1_history_1',
-            companyId: 'mock_company_123',
-            title: 'Annual HVAC Tune-up',
-            description: 'Performed annual cleaning and inspection of HVAC system.',
-            priority: 'Low',
-            status: 'Completed',
-            assignedTechnicianId: 'tech_1',
-            location: { latitude: 34.0622, longitude: -118.2537, address: '123 Maple St, Los Angeles, CA' },
-            customerId: 'cust_1',
-            customerName: 'Eve Davis',
-            customerPhone: '555-0201',
-            customerEmail: 'eve.d@example.com',
-            requiredSkills: ['HVAC', 'Furnace Maintenance'],
-            createdAt: '2023-10-26T14:00:00.000Z',
-            updatedAt: '2023-10-26T15:30:00.000Z',
-            scheduledTime: '2023-10-26T14:00:00.000Z',
-            completedAt: '2023-10-26T15:30:00.000Z',
-            notes: 'System is in good condition. Cleaned coils and replaced filter.',
-            isFirstTimeFix: true,
-            customerSatisfactionScore: 5,
-          });
         setHistoryJobs(history);
       }
       setIsLoading(false);
@@ -316,19 +294,18 @@ export default function TechnicianJobDetailPage() {
           technician={technician}
           appId={appId}
       />}
-      <div className="flex items-center">
+      <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
-      </div>
-      
-      {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
-      
-      <div className="flex flex-wrap gap-2 w-full justify-end">
+        <div className="flex items-center gap-2">
             <StatusUpdateActions 
                 currentStatus={job.status} 
                 onUpdateStatus={handleStatusUpdate}
                 isUpdating={isUpdating}
             />
+        </div>
       </div>
+      
+      {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
 
       <JobDetailsDisplay job={job}>
           {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (

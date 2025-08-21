@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -27,21 +28,21 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
                             <Play className="mr-2 h-4 w-4" /> Arrived & Start Work
                         </Button>
                          <Button variant="secondary" onClick={() => onUpdateStatus('Assigned')} disabled={isUpdating} title="Reset Status">
-                            <Undo2 className="h-4 w-4 mr-2" /> Reset Status
+                            <Undo2 className="h-4 w-4 mr-2" /> Reset to Assigned
                         </Button>
                     </div>
                 );
             case 'In Progress':
                  return (
-                    <div className="w-full flex justify-end gap-2">
-                        <Button variant="secondary" className="bg-destructive/20 text-destructive-foreground hover:bg-destructive/30" onClick={() => onUpdateStatus('Cancelled')} disabled={isUpdating}>
-                            <XCircle className="mr-2 h-4 w-4" /> Cancel Job
+                    <div className="w-full flex justify-end items-center gap-2">
+                         <Button variant="secondary" onClick={() => onUpdateStatus('Completed')} className="bg-green-600 hover:bg-green-700" disabled={isUpdating}>
+                            <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
                         </Button>
                          <Button variant="secondary" onClick={() => onUpdateStatus('En Route')} disabled={isUpdating} title="Reset Status">
-                            <Undo2 className="h-4 w-4 mr-2" /> Reset to En Route
+                            <Undo2 className="h-4 w-4 mr-2" /> Reset Status
                         </Button>
-                        <Button onClick={() => onUpdateStatus('Completed')} className="bg-green-600 hover:bg-green-700" disabled={isUpdating}>
-                            <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
+                        <Button variant="secondary" className="bg-destructive/20 text-destructive-foreground hover:bg-destructive/30" onClick={() => onUpdateStatus('Cancelled')} disabled={isUpdating}>
+                            <XCircle className="mr-2 h-4 w-4" /> Cancel Job
                         </Button>
                     </div>
                 );

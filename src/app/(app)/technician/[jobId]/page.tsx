@@ -59,9 +59,6 @@ export default function TechnicianJobDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
-  const [hasDocumentedWork, setHasDocumentedWork] = useState(false);
-  const [isSignoffComplete, setIsSignoffComplete] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
   const backUrl = `/technician/jobs/${userProfile?.uid}`;
@@ -189,7 +186,6 @@ export default function TechnicianJobDetailPage() {
             updatedAt: new Date().toISOString()
         };
       });
-      setHasDocumentedWork(true);
       toast({ title: "Success", description: "Documentation saved." });
     } catch (error) {
       console.error("Error documenting work:", error);
@@ -227,8 +223,6 @@ export default function TechnicianJobDetailPage() {
         setJob(prev => prev ? { ...prev, ...updateData } : null);
         toast({ title: "Success", description: "Customer sign-off saved." });
       }
-      setIsSignoffComplete(true);
-
     } catch (error) {
        console.error("Error saving sign-off:", error);
        toast({ title: "Error", description: "Could not save customer sign-off.", variant: "destructive" });
@@ -371,15 +365,7 @@ export default function TechnicianJobDetailPage() {
       {job.status === 'In Progress' && (
         <div className="space-y-4">
           <WorkDocumentationForm onSave={handleSaveDocumentation} isSaving={isUpdating} />
-          <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} isDisabled={!hasDocumentedWork} />
-          
-          {isSignoffComplete && (
-            <div className="pt-2">
-                <Button onClick={() => handleStatusUpdate('Completed')} className="w-full bg-green-600 hover:bg-green-700" disabled={isUpdating}>
-                    <CheckCircle className="mr-2 h-4 w-4" /> Mark Job as Completed
-                </Button>
-            </div>
-          )}
+          <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} isDisabled={false} />
         </div>
       )}
 

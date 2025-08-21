@@ -76,7 +76,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
   { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
   { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
-  { href: "/roadmap", label: 'roadmap', icon: BookOpen, roles: ['admin', 'superAdmin', 'csr', 'technician'] },
+  { href: "/roadmap", label: 'roadmap', icon: BookOpen, roles: ['superAdmin'] },
   { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true, roles: ['admin', 'superAdmin', 'technician'] },
 ];
 

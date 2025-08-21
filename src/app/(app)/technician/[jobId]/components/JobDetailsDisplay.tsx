@@ -33,14 +33,6 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, children }) 
         return 'secondary';
     }
     
-    const satisfactionIcons = [
-        { icon: ThumbsDown, color: 'text-red-500', label: 'Poor' },
-        { icon: Star, color: 'text-orange-400', label: 'Fair' },
-        { icon: Star, color: 'text-yellow-400', label: 'Good' },
-        { icon: Star, color: 'text-lime-500', label: 'Very Good' },
-        { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
-    ];
-
     return (
         <Card className="shadow-lg">
             <CardHeader>

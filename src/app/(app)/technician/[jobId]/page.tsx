@@ -264,6 +264,10 @@ export default function TechnicianJobDetailPage() {
         }
         if (newStatus === 'Completed') {
             updatePayload.completedAt = serverTimestamp();
+            // In a real app, you might want to ensure a signature is present before allowing this.
+            if (!job.customerSignatureUrl && !job.customerSatisfactionScore) {
+                toast({ title: "Complete Job", description: "Remember to get customer sign-off before you leave.", variant: "default" });
+            }
         }
         
         await updateDoc(jobDocRef, updatePayload);
@@ -304,7 +308,7 @@ export default function TechnicianJobDetailPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
           setIsOpen={setIsChatOpen} 
@@ -318,7 +322,7 @@ export default function TechnicianJobDetailPage() {
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
       
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 w-full justify-end">
             <StatusUpdateActions 
                 currentStatus={job.status} 
                 onUpdateStatus={handleStatusUpdate}
@@ -328,7 +332,7 @@ export default function TechnicianJobDetailPage() {
 
       <JobDetailsDisplay job={job}>
           {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (
-              <CardFooter className="grid grid-cols-3 gap-2">
+              <CardFooter className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                    <Button variant="outline" onClick={handleNavigate} className="w-full justify-center">
                         <Navigation className="mr-2 h-4 w-4" /> Navigate
                     </Button>
@@ -351,6 +355,14 @@ export default function TechnicianJobDetailPage() {
           <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
         </div>
       )}
+      
+      <div className="pt-2">
+        {job.status === 'In Progress' && (
+             <Button onClick={() => handleStatusUpdate('Completed')} className="w-full bg-green-600 hover:bg-green-700">
+                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed & Finish
+            </Button>
+        )}
+      </div>
 
       {job.status === 'Completed' && (
         <Card className="bg-green-50 border-green-200">

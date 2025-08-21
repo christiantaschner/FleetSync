@@ -254,7 +254,7 @@ export default function TechnicianJobDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
           setIsOpen={setIsChatOpen} 
@@ -262,11 +262,8 @@ export default function TechnicianJobDetailPage() {
           technician={technician}
           appId={appId}
       />}
-      <div className="flex items-center justify-between">
-        <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
-         <Button variant="outline" size="sm" onClick={() => setIsChatOpen(true)}>
-          <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
-        </Button>
+      <div className="flex items-center">
+        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
@@ -278,7 +275,7 @@ export default function TechnicianJobDetailPage() {
         />
       </div>
 
-      <JobDetailsDisplay job={job} />
+      <JobDetailsDisplay job={job} onOpenChat={() => setIsChatOpen(true)} />
       
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
 

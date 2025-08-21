@@ -5,15 +5,17 @@ import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, MessageSquare, Bot } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
 
 interface JobDetailsDisplayProps {
     job: Job;
+    onOpenChat: () => void;
 }
 
-const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
+const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, onOpenChat }) => {
     
     const getStatusBadgeVariant = (status: Job['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch(status) {
@@ -42,6 +44,9 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                         </CardDescription>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
+                         <Button variant="outline" size="sm" onClick={onOpenChat}>
+                            <MessageSquare className="mr-2 h-4 w-4" /> Chat
+                        </Button>
                         <Badge variant={getStatusBadgeVariant(job.status)} className="capitalize">{job.status}</Badge>
                         <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
                     </div>
@@ -97,5 +102,3 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
 };
 
 export default JobDetailsDisplay;
-
-    

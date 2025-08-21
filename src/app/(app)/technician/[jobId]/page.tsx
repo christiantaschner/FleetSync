@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician, ChecklistResult } from '@/types';
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, Timer, Pause, Play, BookOpen, MessageSquare } from 'lucide-react';
@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
+import { mockJobs, mockTechnicians } from '@/lib/mock-data';
 
 const JobActionsCard = ({ job, onToggleBreak, onNavigate, isBreakActive, isUpdating }: { job: Job, onToggleBreak: () => void, onNavigate: () => void, isBreakActive: boolean, isUpdating: boolean }) => (
     <Card>
@@ -67,6 +68,19 @@ export default function TechnicianJobDetailPage() {
 
   useEffect(() => {
     if (!jobId || authLoading || !user) return;
+    
+     if (isMockMode) {
+      const mockJob = mockJobs.find(j => j.id === jobId) || null;
+      setJob(mockJob);
+      if (mockJob?.assignedTechnicianId) {
+        setTechnician(mockTechnicians.find(t => t.id === mockJob.assignedTechnicianId) || null);
+      }
+      if (mockJob?.customerId) {
+        setHistoryJobs(mockJobs.filter(j => j.customerId === mockJob.customerId && j.id !== mockJob.id && j.status === 'Completed'));
+      }
+      setIsLoading(false);
+      return;
+    }
 
     const fetchJobAndRelatedData = async () => {
       setIsLoading(true);
@@ -110,7 +124,7 @@ export default function TechnicianJobDetailPage() {
     };
 
     fetchJobAndRelatedData();
-  }, [jobId, authLoading, user, appId]);
+  }, [jobId, authLoading, user, appId, isMockMode]);
   
   const handleWorkDocumented = async (notes: string, photos: File[], signatureDataUrl: string | null, satisfactionScore: number) => {
     if (!job || !db || !storage || isUpdating || !appId) return;
@@ -185,7 +199,6 @@ export default function TechnicianJobDetailPage() {
       setIsUpdating(false);
   };
 
-  const isAssignedToCurrentUser = user?.uid === job?.assignedTechnicianId;
   const isJobConcluded = job?.status === 'Completed' || job?.status === 'Cancelled';
   
   if (isLoading || authLoading) {
@@ -199,7 +212,7 @@ export default function TechnicianJobDetailPage() {
   }
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="space-y-6">
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
           setIsOpen={setIsChatOpen} 
@@ -207,7 +220,7 @@ export default function TechnicianJobDetailPage() {
           technician={technician}
           appId={appId}
       />}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between">
         <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
          <Button variant="outline" size="sm" onClick={() => setIsChatOpen(true)}>
           <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
@@ -220,7 +233,7 @@ export default function TechnicianJobDetailPage() {
       
       {historyJobs.length > 0 && <CustomerHistoryCard jobs={historyJobs} />}
 
-      {!isJobConcluded && job.status === 'Assigned' && <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />}
+      {!isJobConcluded && (job.status === 'Assigned' || job.status === 'En Route') && <ChecklistCard job={job} onSubmit={handleChecklistSubmit} isUpdating={isUpdating} />}
 
       {job.status === 'In Progress' && (
         <>

@@ -95,5 +95,3 @@ const ChecklistCard: React.FC<ChecklistCardProps> = ({ job, onSubmit, isUpdating
 };
 
 export default ChecklistCard;
-
-    

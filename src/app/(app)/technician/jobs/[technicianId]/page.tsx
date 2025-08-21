@@ -77,7 +77,6 @@ export default function TechnicianJobListPage() {
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
         const startOfView = startOfToday();
-        const endOfView = endOfDay(addDays(startOfView, 6)); // Fetch for the next 7 days
         
         const jobsQuery = query(
           collection(db, `artifacts/${appId}/public/data/jobs`),
@@ -85,7 +84,6 @@ export default function TechnicianJobListPage() {
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses),
           where("scheduledTime", ">=", startOfView.toISOString()),
-          where("scheduledTime", "<=", endOfView.toISOString()),
           orderBy("scheduledTime")
         );
 
@@ -241,7 +239,7 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <Card>
+       <Card>
           <CardHeader>
             <div className="flex items-center gap-4">
                  <Avatar className="h-16 w-16">
@@ -292,7 +290,7 @@ export default function TechnicianJobListPage() {
                                 <p className="text-xs text-muted-foreground pt-1">Est. Duration: {currentOrNextJob.estimatedDurationMinutes} mins</p>
                             </CardDescription>
                         </CardHeader>
-                        <CardFooter className="grid grid-cols-[1fr_auto_auto] gap-2">
+                        <CardFooter className="grid grid-cols-2 gap-2">
                              {getNextAction(currentOrNextJob.status) ? (
                                 (() => {
                                     const action = getNextAction(currentOrNextJob.status)!;
@@ -301,21 +299,21 @@ export default function TechnicianJobListPage() {
                                         <Button 
                                             onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className="bg-primary hover:bg-primary/90"
+                                            className="bg-primary hover:bg-primary/90 col-span-2"
                                         >
                                             {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
                                             {action.label}
                                         </Button>
                                     );
                                 })()
-                            ) : <div />}
-                            <Link href={`/job/${currentOrNextJob.id}`}>
-                                <Button variant="outline" className="w-full">
+                            ) : <div className="col-span-2" />}
+                            <Link href={`/technician/${currentOrNextJob.id}`} className="col-span-1">
+                                <Button variant="secondary" className="w-full">
                                      <Eye className="mr-2 h-4 w-4" /> Details
                                 </Button>
                             </Link>
-                             <Button variant="default" size="icon" onClick={() => handleNavigate(currentOrNextJob)} className="h-10 w-10 bg-primary hover:bg-primary/90">
-                                <Navigation className="h-4 w-4"/>
+                             <Button variant="outline" onClick={() => handleNavigate(currentOrNextJob)} className="col-span-1">
+                                <Navigation className="mr-2 h-4 w-4"/> Navigate
                             </Button>
                         </CardFooter>
                     </Card>

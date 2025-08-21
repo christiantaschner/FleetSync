@@ -67,6 +67,17 @@ export default function DispatcherJobDetailPage() {
       return;
     }
 
+    // This is a temporary solution for the demo. 
+    // In a real app, this data would be fetched from a central store or context.
+    const fetchTechnicians = async () => {
+        if (!userProfile?.companyId) return;
+        const techsQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", userProfile.companyId));
+        const snapshot = await getDocs(techsQuery);
+        setTechnicians(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician)));
+    };
+    fetchTechnicians();
+
+
     const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobId);
     const unsubscribeJob = onSnapshot(jobDocRef, async (docSnap) => {
       if (docSnap.exists()) {
@@ -98,7 +109,7 @@ export default function DispatcherJobDetailPage() {
     });
 
     return () => unsubscribeJob();
-  }, [jobId, appId, isMockMode]);
+  }, [jobId, appId, isMockMode, userProfile]);
 
   if (loading || isLoading) {
      return <div className="flex h-[50vh] w-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
@@ -143,7 +154,7 @@ export default function DispatcherJobDetailPage() {
             onManageSkills={() => {}}
         />
         <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>
+            <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')}>
                 <ArrowLeft className="mr-2 h-4 w-4"/>
                 Back to Dashboard
             </Button>
@@ -158,12 +169,16 @@ export default function DispatcherJobDetailPage() {
                 </Button>
             </div>
         </div>
-        <div className="space-y-6">
-            <JobDetailsDisplay job={job} />
-            <CustomerHistoryCard jobs={historyJobs} />
-            {assignedTechnician && appId && (
-                <ChatCard job={job} technician={assignedTechnician} appId={appId} />
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-2 space-y-6">
+                <JobDetailsDisplay job={job} />
+                <CustomerHistoryCard jobs={historyJobs} />
+            </div>
+            <div className="lg:col-span-1">
+                 {assignedTechnician && appId && (
+                    <ChatCard job={job} technician={assignedTechnician} appId={appId} />
+                )}
+            </div>
         </div>
     </div>
   );

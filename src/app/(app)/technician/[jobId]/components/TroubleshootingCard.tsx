@@ -87,5 +87,3 @@ const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) =
 };
 
 export default TroubleshootingCard;
-
-    

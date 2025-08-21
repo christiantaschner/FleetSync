@@ -1,18 +1,19 @@
 
-
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Lightbulb, CheckSquare, MessageSquare, Map, Settings2, Wrench, Truck, FileText, History, AlertOctagon, 
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, BookUser
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
 
 interface RoadmapItemProps {
   title: string;
@@ -190,7 +191,7 @@ const roadmapFeatures = {
     },
     {
       title: "Integrated Invoicing & Payments",
-      description: "Enable technicians to generate and send a professional invoice on the spot from pre-built templates. The system will support immediate payment processing via a secure online portal, closing the job loop instantly and improving cash flow.",
+      description: "Enable technicians to generate and send professional invoices and quotes on the spot. The system will support immediate payment processing via a secure online portal and handle automated payment reminders, closing the job loop instantly and improving cash flow.",
       icon: DollarSign,
       status: "Planned",
     },
@@ -219,6 +220,18 @@ const roadmapFeatures = {
       description: "The AI suggests required parts from triage photos and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
       icon: ShoppingCart,
       status: "Vision",
+    },
+    {
+      title: "Online Booking Portal",
+      description: "Offer a seamless, integrated booking experience. Allow new and existing customers to request service and book available time slots directly through your company website or Google My Business profile.",
+      icon: BookUser,
+      status: "Vision",
+    },
+    {
+      title: "Financial Insights & Reporting",
+      description: "Go beyond operational KPIs with integrated financial reporting. Track job profitability, technician revenue, and overall business financial health directly within the application.",
+      icon: TrendingUp,
+      status: "Vision"
     },
      {
       title: "AI-Powered Customer Follow-Up",
@@ -261,10 +274,27 @@ const roadmapFeatures = {
 
 export default function RoadmapPage() {
     const { t, language } = useTranslation();
+    const { userProfile, loading } = useAuth();
+    const router = useRouter();
+
     const appName = language === 'de' ? "EinsatzPilot" : "FleetSync";
     const description = language === 'de' 
         ? `Unsere geplanten Funktionen, Verbesserungen und langfristige Vision, um die Flottenverwaltung intelligenter und effizienter zu gestalten.`
         : `Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.`;
+
+    useEffect(() => {
+        if (!loading && userProfile?.role !== 'superAdmin') {
+            router.replace('/dashboard');
+        }
+    }, [userProfile, loading, router]);
+    
+    if (loading || userProfile?.role !== 'superAdmin') {
+        return (
+            <div className="flex h-[50vh] w-full items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
+    }
 
   return (
     <div className="space-y-8">

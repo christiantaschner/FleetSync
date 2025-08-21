@@ -77,6 +77,7 @@ export default function TechnicianJobListPage() {
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
         const startOfView = startOfToday();
+        const endOfView = endOfDay(addDays(startOfView, 6)); // Fetch for the next 7 days
         
         const jobsQuery = query(
           collection(db, `artifacts/${appId}/public/data/jobs`),
@@ -84,6 +85,7 @@ export default function TechnicianJobListPage() {
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses),
           where("scheduledTime", ">=", startOfView.toISOString()),
+          where("scheduledTime", "<=", endOfView.toISOString()),
           orderBy("scheduledTime")
         );
 
@@ -307,7 +309,7 @@ export default function TechnicianJobListPage() {
                                     );
                                 })()
                             ) : <div />}
-                            <Link href={`/technician/${currentOrNextJob.id}`} className="w-full">
+                            <Link href={`/job/${currentOrNextJob.id}`}>
                                 <Button variant="outline" className="w-full">
                                      <Eye className="mr-2 h-4 w-4" /> Details
                                 </Button>

@@ -158,6 +158,9 @@ export type Job = {
   invoiceUrl?: string;
   invoiceUploadedAt?: string;
   invoiceUploadedBy?: string;
+  // Profit-aware fields
+  jobValue?: number;
+  slaPenalty?: number;
 };
 
 export const CustomerSchema = z.object({

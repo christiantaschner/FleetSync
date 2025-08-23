@@ -153,8 +153,8 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
                         )}
                     </div>
                     {isOriginallyConfirmable && (
-                       <p className="text-xs text-muted-foreground mt-2 pl-8">
-                         Fleety's Reason: {suggestion!.reasoning}
+                       <p className="text-xs text-muted-foreground mt-2 pl-8 italic">
+                         {suggestion!.reasoning}
                        </p>
                     )}
                     {error && (

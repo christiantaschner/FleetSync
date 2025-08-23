@@ -80,6 +80,8 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             jobPriority: jobToAssign.priority,
             requiredSkills: jobToAssign.requiredSkills,
             scheduledTime: jobToAssign.scheduledTime,
+            jobValue: jobToAssign.jobValue,
+            slaPenalty: jobToAssign.slaPenalty,
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
         };

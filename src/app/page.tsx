@@ -61,30 +61,7 @@ export default function MarketingPage() {
     }
   ];
 
-  const benefits = [
-      {
-        icon: <Zap className="h-8 w-8 text-primary" />,
-        title: t('benefit_efficiency_title'),
-        description: t('benefit_efficiency_desc')
-      },
-       {
-        icon: <DollarSign className="h-8 w-8 text-primary" />,
-        title: t('benefit_costs_title'),
-        description: t('benefit_costs_desc')
-      },
-      {
-        icon: <Users className="h-8 w-8 text-primary" />,
-        title: t('benefit_satisfaction_title'),
-        description: t('benefit_satisfaction_desc')
-      },
-      {
-        icon: <TrendingUp className="h-8 w-8 text-primary" />,
-        title: 'Scalable Growth',
-        description: 'Our per-technician pricing and robust features support your business as it grows, from a few vans to a large fleet.'
-      }
-  ];
-
-   const scenarios = [
+  const scenarios = [
     {
       icon: <Heart className="h-8 w-8 text-red-500" />,
       problem: t('scenario_sick_technician_problem'),
@@ -106,17 +83,17 @@ export default function MarketingPage() {
     {
       icon: <Briefcase className="h-8 w-8 text-primary" />,
       title: t('how_it_works_1_title'),
-      description: t('how_it_works_1_desc'),
+      description: "Input new jobs as they come in—from emergency calls to routine maintenance. This is your command center's input.",
     },
     {
-      icon: <UserCheck className="h-8 w-8 text-primary" />,
-      title: t('how_it_works_2_title'),
-      description: t('how_it_works_2_desc'),
+      icon: <Bot className="h-8 w-8 text-primary" />,
+      title: "2. Let the AI Assign & Optimize",
+      description: "With one click, our AI analyzes all variables—location, traffic, skills, history—to assign the perfect technician and optimize their route instantly.",
     },
     {
       icon: <Star className="h-8 w-8 text-primary" />,
-      title: t('how_it_works_3_title'),
-      description: t('how_it_works_3_desc'),
+      title: "3. Track & Grow",
+      description: "Watch your fleet operate with machine-like efficiency. Focus on customer service and growing your business, not on putting out scheduling fires.",
     },
   ];
   
@@ -131,15 +108,15 @@ export default function MarketingPage() {
   };
 
   const otherGuysPoints = [
-    { title: 'Bloated & Overwhelming:', description: 'Dozens of features you\'ll never use, buried in confusing menus.' },
-    { title: 'Punishing Pricing:', description: 'Complicated tiers and long-term contracts designed to lock you in.' },
-    { title: 'Poor Technician Adoption:', description: 'Clunky mobile apps that your team hates using, leading to inconsistent data.' }
+    { title: 'Guesswork & Gut Feelings:', description: 'Dispatchers manually juggle schedules, locations, and skills, leading to costly errors and delays.' },
+    { title: 'Reactive Problem-Solving:', description: 'You only find out about a problem (like a traffic jam) when an angry customer calls. It\'s too late to fix it properly.' },
+    { title: 'Scaling Creates Chaos:', description: 'Hiring more technicians means hiring more dispatchers. Your overhead grows, but your efficiency doesn\'t.' }
   ];
 
   const fleetSyncPoints = [
-    { title: 'Simple & Powerful:', description: 'All the essential tools you need, with one-click AI to handle the complexity for you.' },
-    { title: 'Fair & Scalable Pricing:', description: 'Simple per-technician pricing that grows with you. No hidden fees. No long-term commitments.' },
-    { title: 'Loved by Technicians:', description: 'An intuitive mobile app designed for speed and simplicity, ensuring your whole team is on board.' }
+    { title: 'Data-Driven Decisions:', description: 'Our AI analyzes thousands of data points in real-time to make the single best assignment, every time.' },
+    { title: 'Proactive Optimization:', description: 'Our AI sees a delay coming and can suggest an alternative technician before it becomes a problem.' },
+    { title: 'Scalable Efficiency:', description: 'Our AI handles 5 or 500 technicians with the same efficiency. Grow your fleet, not your overhead.' }
   ];
 
   const testimonials = [
@@ -266,10 +243,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Stop Drowning in Dispatch. Start Growing Your Business.
+              Turn Chaotic Dispatch into a Profitable System.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             FleetSync is the straightforward, affordable dispatch software for field service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
+              With FleetSync AI, our AI handles the assignments so your team can focus on the work. Stop wasting time and fuel—start growing your business effortlessly.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -343,15 +320,15 @@ export default function MarketingPage() {
         <section id="why" className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for Your Business, Not for Enterprises</h2>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Competitors Rely on Guesswork. You Can Rely on AI.</h2>
                     <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-                        Tired of field service software that's too complex, too expensive, and built for mega-corporations? We are too. Here's how we're different.
+                        Most dispatch software still forces your team to manually assign jobs. This leads to costly mistakes. FleetSync automates this critical decision, giving you an unbeatable edge.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
                     <Card className="bg-background/80">
                         <CardHeader>
-                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Other Guys</CardTitle>
+                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Old Way (Manual Dispatch)</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {otherGuysPoints.map((point, index) => (
@@ -392,7 +369,7 @@ export default function MarketingPage() {
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('from_nightmare_to_excellence')}</h2>
               <p className="mt-6 text-lg text-muted-foreground">
-                {t('from_nightmare_to_excellence_desc')}
+                Real-world problems demand intelligent solutions. See how FleetSync's AI turns daily chaos into a competitive advantage.
               </p>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -446,8 +423,8 @@ export default function MarketingPage() {
         {/* How it Works Section */}
         <section className="py-16 sm:py-24">
           <div className="container text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('how_it_works_title')}</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">{t('how_it_works_subtitle')}</p>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Command Center</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">Three simple steps to turning your dispatch process into a competitive advantage.</p>
             <div className="relative mt-12 grid grid-cols-1 items-start gap-12 md:grid-cols-3">
               <div className="absolute top-8 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
               {howItWorksSteps.map((step, index) => (
@@ -461,43 +438,8 @@ export default function MarketingPage() {
           </div>
         </section>
         
-        {/* Vertical AI Section */}
-        <section className="bg-primary/5 py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-3xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the Chaos of Field Service</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">
-                        Generic software fails because it doesn’t understand your reality. Our AI is different because it's trained specifically on the complex, unpredictable problems of your industry.
-                    </p>
-                </div>
-                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
-                            <Workflow className="h-7 w-7 text-primary" />
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold">Understands Your Chaos</h3>
-                        <p className="mt-2 text-muted-foreground">A technician stuck in traffic, a customer emergency, a last-minute cancellation—these aren't exceptions, they're your Tuesday. Our system thrives on it.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
-                            <Bot className="h-7 w-7 text-primary" />
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold">AI That Speaks Your Language</h3>
-                        <p className="mt-2 text-muted-foreground">We use a "Vertical AI" approach. This means our AI is fluent in the language of your business—technician skills, job priorities, and real-world logistics.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
-                            <Target className="h-7 w-7 text-primary" />
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold">Turns Data into Dollars</h3>
-                        <p className="mt-2 text-muted-foreground">We turn your operational data into a competitive advantage, making smarter decisions that directly lead to fuel savings, more completed jobs, and happier customers.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         {/* Testimonials Section */}
-        <section className="py-16 sm:py-24">
+        <section className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the People in the Field and in the Office</h2>
@@ -639,3 +581,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

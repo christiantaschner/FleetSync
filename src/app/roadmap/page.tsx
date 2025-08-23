@@ -258,8 +258,8 @@ const roadmapFeatures = {
       status: "Vision",
     },
     {
-      title: "CRM/Accounting Software Integrations",
-      description: "Seamless, automated data flow between FleetSync and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
+      title: "QuickBooks & Xero Integration",
+      description: "Seamless, two-way data flow between FleetSync and essential accounting software. This eliminates double-entry for invoices and payments, prevents churn, and makes FleetSync the true 'job-to-cash' system of record for the business.",
       icon: Building2,
       status: "Vision",
     },

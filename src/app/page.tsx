@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe } from 'lucide-react';
@@ -21,8 +20,8 @@ export default function MarketingPage() {
   const features = [
     {
       icon: <Bot className="h-8 w-8 text-primary" />,
-      title: "AI-Powered Dispatch",
-      description: "Let our AI analyze skills, live location, and customer history to suggest the optimal technician for any job in seconds. Eliminate guesswork and manual scheduling.",
+      title: "Profit-Aware Dispatch",
+      description: "Let our AI analyze skills, live location, and job profitability to suggest the optimal technician for any job in seconds. Eliminate guesswork and manual scheduling.",
     },
     {
       icon: <Smartphone className="h-8 w-8 text-primary" />,
@@ -57,7 +56,7 @@ export default function MarketingPage() {
     {
       icon: <TrendingUp className="h-8 w-8 text-primary" />,
       title: "Actionable Reporting",
-      description: "Track key metrics like first-time-fix rate, on-time arrivals, and average job duration to understand your business performance at a glance.",
+      description: "Track key metrics like first-time-fix rate, on-time arrivals, and profit per job to understand your business performance at a glance.",
     }
   ];
 
@@ -82,13 +81,13 @@ export default function MarketingPage() {
   const howItWorksSteps = [
     {
       icon: <Briefcase className="h-8 w-8 text-primary" />,
-      title: t('how_it_works_1_title'),
+      title: "1. Create Job",
       description: "Input new jobs as they come in—from emergency calls to routine maintenance. This is your command center's input.",
     },
     {
       icon: <Bot className="h-8 w-8 text-primary" />,
       title: "2. Let the AI Assign & Optimize",
-      description: "With one click, our AI analyzes all variables—location, traffic, skills, history—to assign the perfect technician and optimize their route instantly.",
+      description: "With one click, our AI analyzes all variables—location, traffic, skills, history, and profit potential—to assign the perfect technician and optimize their route instantly.",
     },
     {
       icon: <Star className="h-8 w-8 text-primary" />,
@@ -114,9 +113,9 @@ export default function MarketingPage() {
   ];
 
   const fleetSyncPoints = [
-    { title: 'Data-Driven Decisions:', description: 'Our AI analyzes thousands of data points in real-time to make the single best assignment, every time.' },
-    { title: 'Proactive Optimization:', description: 'Our AI sees a delay coming and can suggest an alternative technician before it becomes a problem.' },
-    { title: 'Scalable Efficiency:', description: 'Our AI handles 5 or 500 technicians with the same efficiency. Grow your fleet, not your overhead.' }
+    { title: 'Profit-Driven Decisions:', description: 'Our AI analyzes each job\'s profit profile—value, costs, and risk—to make the single most profitable assignment, every time.' },
+    { title: 'Proactive Optimization:', description: 'Our AI sees a delay coming and can suggest an alternative technician before it becomes a problem, protecting your margin and reputation.' },
+    { title: 'Scalable Efficiency:', description: 'Our AI handles 5 or 500 technicians with the same intelligence. Grow your fleet, not your overhead.' }
   ];
 
   const testimonials = [
@@ -243,10 +242,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Turn Chaotic Dispatch into a Profitable System.
+              Stop Planning Routes. Start Dispatching for Profit.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              With FleetSync AI, our AI handles the assignments so your team can focus on the work. Stop wasting time and fuel—start growing your business effortlessly.
+              Upgrade from simple scheduling to profit-aware dispatching. FleetSync's AI analyzes job value, costs, and risks to make the most profitable assignment, every time.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
@@ -320,15 +319,15 @@ export default function MarketingPage() {
         <section id="why" className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Competitors Rely on Guesswork. You Can Rely on AI.</h2>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Competitors Optimize for Logistics. You Optimize for Profit.</h2>
                     <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-                        Most dispatch software still forces your team to manually assign jobs. This leads to costly mistakes. FleetSync automates this critical decision, giving you an unbeatable edge.
+                        Most dispatch software still forces your team to manually assign jobs based on who is closest. This manual guesswork costs you money. FleetSync automates this critical decision, giving you an unbeatable edge.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
                     <Card className="bg-background/80">
                         <CardHeader>
-                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Old Way (Manual Dispatch)</CardTitle>
+                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Old Way (Manual, Logistics-First)</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {otherGuysPoints.map((point, index) => (
@@ -423,7 +422,7 @@ export default function MarketingPage() {
         {/* How it Works Section */}
         <section className="py-16 sm:py-24">
           <div className="container text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Command Center</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Center</h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">Three simple steps to turning your dispatch process into a competitive advantage.</p>
             <div className="relative mt-12 grid grid-cols-1 items-start gap-12 md:grid-cols-3">
               <div className="absolute top-8 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
@@ -581,5 +580,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-
-    

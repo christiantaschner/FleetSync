@@ -48,52 +48,61 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
-  prompt: `You are an AI assistant helping dispatchers allocate jobs to field technicians. Your decision must be based on a balance of skill, availability, location, customer history, and individual schedules.
-You must also learn from past dispatcher decisions.
+  prompt: `You are an AI Operations Manager for a field service company. Your primary goal is to assign jobs in the most profitable way possible, considering all constraints.
 
 The current time is {{{currentTime}}}.
 
-**TASK & DECISION-MAKING LOGIC (STEP-BY-STEP):**
+**JOB TO ASSIGN:**
+- Priority: {{{jobPriority}}}
+- Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
+- Description: {{{jobDescription}}}
+- Financials:
+  - Job Value: \${{{jobValue}}}
+  - SLA Penalty Risk: \${{{slaPenalty}}}
+  - After Hours Job: {{#if isAfterHours}}Yes{{else}}No{{/if}}
 
-1.  **Job Day Analysis**: First, determine if the job is for **today** or a **future day** by comparing its scheduled time to the current time.
+**DECISION-MAKING LOGIC (ranked by importance):**
 
-2.  **Availability & Timeline Calculation**:
-    -   **For TODAY's Jobs**:
-        -   If a technician is 'isAvailable: true', they are a primary candidate. Their travel time starts from their 'liveLocation'.
-        -   If a technician is 'isAvailable: false', calculate their *Earliest Next Availability*. This is (current job's startedAt + estimatedDurationMinutes) + 15 min buffer. Then, estimate travel time from their current job's location to the new job site. If this combined time allows them to arrive before the end of the workday, they are a potential candidate.
-    -   **For FUTURE DAY's Jobs**:
-        -   The current 'isAvailable' status is IRRELEVANT.
-        -   Check their 'currentJobs' list to see if they are already booked on that future day. A technician who is 'isAvailable: false' now can still be assigned a job for tomorrow if their schedule for that day is open. Their travel for a future job will start from their 'homeBaseLocation'.
+1.  **HARD CONSTRAINTS (Non-negotiable):**
+    -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'. This is the most important rule.
+    -   **Working Hours:** The job, including estimated travel, MUST be completed within the technician's working hours for the scheduled day.
 
-3.  **Skill & Customer History Check**:
-    -   **CRITICAL SKILL REQUIREMENT:** The job explicitly requires the following skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}. The chosen technician MUST possess ALL of these skills. This is a non-negotiable constraint.
-    -   Filter out any technician who does not meet ALL 'requiredSkills'.
-    -   If a skilled, available technician also has 'Previous Customer History', they should be **strongly prioritized** over others. This reflects an established customer relationship which is very valuable.
+2.  **PROFITABILITY ANALYSIS (Primary Goal):**
+    -   **Maximize Margin:** Your main goal is to maximize the profit from this job.
+    -   **SLA Penalties:** Avoid any technician whose current schedule puts them at risk of arriving late to this job if there is an SLA penalty. The risk of a \${{{slaPenalty}}} penalty is a major factor.
+    -   **After-Hours Costs:** If the job is marked 'After Hours', be aware that this may incur higher labor costs. Prioritize technicians who are already working or on-call to minimize activating another technician.
+    -   **Travel Time vs. Job Value:** Sending a technician from far away erodes profit. A slightly less optimal but much closer technician is often the more profitable choice, especially for lower-value jobs.
 
-**LEARNING FROM PAST DECISIONS:**
-Analyze the following examples where a human dispatcher overrode the AI's suggestion. These reveal the company's hidden preferences. Learn from them.
-{{#if pastFeedback.length}}
-  {{#each pastFeedback}}
-  - **Example:** For Job #{{{jobId}}}, the AI suggested Technician #{{{aiSuggestedTechnicianId}}} because "{{{aiReasoning}}}". The dispatcher disagreed and chose Technician #{{{dispatcherSelectedTechnicianId}}} instead.
-  {{/each}}
-{{else}}
-- No past feedback available. Use standard logic.
-{{/if}}
+3.  **EFFICIENCY & CUSTOMER SATISFACTION (Secondary Factors):**
+    -   **Customer History:** A technician with 'Previous Customer History' is highly valuable. Prefer them if all other financial and skill factors are equal. A good relationship can lead to future high-margin work.
+    -   **Availability:**
+        -   An 'isAvailable: true' technician is a strong candidate. Travel starts from their 'liveLocation'.
+        -   An 'isAvailable: false' technician can be considered if their *Earliest Next Availability* (current job's end time + buffer) + travel time from their current job allows for a profitable assignment.
+
+4.  **LEARNING FROM DISPATCHER OVERRIDES:**
+    Analyze these past decisions where a human dispatcher disagreed with the AI. This is valuable insight into the company's real-world priorities.
+    {{#if pastFeedback.length}}
+      {{#each pastFeedback}}
+      - **Example:** For Job #{{{jobId}}}, AI suggested Tech #{{{aiSuggestedTechnicianId}}} because "{{{aiReasoning}}}". Dispatcher chose Tech #{{{dispatcherSelectedTechnicianId}}} instead, reasoning: "{{#if dispatcherReasoning}}{{{dispatcherReasoning}}}{{else}}No reason given.{{/if}}".
+      {{/each}}
+    {{else}}
+    - No past feedback available. Use standard logic.
+    {{/if}}
+
 
 **Technician Data:**
 {{#each technicianAvailability}}
-- **Technician ID: {{{technicianId}}}**
-  - Name: {{{technicianName}}}
+- **Technician ID: {{{technicianId}}}** | Name: {{{technicianName}}}
   - Available Now: {{{isAvailable}}}
-  - On Call for Emergencies: {{#if isOnCall}}Yes{{else}}No{{/if}}
+  - On Call: {{#if isOnCall}}Yes{{else}}No{{/if}}
   - **Previous Customer History: {{#if hasCustomerHistory}}Yes{{else}}No{{/if}}**
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
   - Home Base: {{{homeBaseLocation.address}}}
   {{#if currentJobs.length}}
-  - Current Assigned Jobs for Today/Tomorrow:
+  - Current Assigned Jobs:
     {{#each currentJobs}}
-    - Job ID: {{{jobId}}}, Location: ({{{location.latitude}}}, {{{location.longitude}}}), Priority: {{{priority}}}{{#if scheduledTime}}, Scheduled: {{{scheduledTime}}}{{/if}}, Started At: {{#if startedAt}}{{{startedAt}}}{{else}}Not Started{{/if}}, Est. Duration: {{{estimatedDurationMinutes}}} mins
+    - Job ID: {{{jobId}}}, Location: ({{{location.latitude}}}, {{{location.longitude}}}), Scheduled: {{{scheduledTime}}}, Started At: {{#if startedAt}}{{{startedAt}}}{{else}}Not Started{{/if}}, Est. Duration: {{{estimatedDurationMinutes}}} mins
     {{/each}}
   {{else}}
   - No jobs currently assigned.
@@ -109,11 +118,8 @@ Analyze the following examples where a human dispatcher overrode the AI's sugges
 {{/each}}
 
 ---
-**Final Sanity Check (Self-Correction):**
-Before providing your final answer, review your suggested technician. Does the proposed schedule respect their working hours for the given day? Have you correctly accounted for all hard constraints like skills? If not, reconsider and choose the next best option.
-
----
-Provide a clear reasoning for your choice, explicitly mentioning how customer history, skill match, and calculated availability (including travel time estimates) influenced your decision. Refer to technicians by name, not ID. If no technician is suitable, explain why (e.g., "No technician has the 'Boiler Repair' skill," or "All qualified technicians are fully booked for the day.").
+**Final Assessment:**
+Provide your final decision. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck (e.g., "No qualified technician is available without incurring significant overtime costs," or "All skilled technicians are too far away, making the job unprofitable due to travel time.").
 `,
 });
 

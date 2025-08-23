@@ -357,6 +357,9 @@ export const AllocateJobInputSchema = z.object({
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
+  jobValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
+  slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
+  isAfterHours: z.boolean().optional().describe('Whether the job is scheduled for after standard business hours, potentially incurring higher technician costs.'),
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),

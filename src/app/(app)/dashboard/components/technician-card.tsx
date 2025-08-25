@@ -237,4 +237,3 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 };
 
 export default TechnicianCard;
-

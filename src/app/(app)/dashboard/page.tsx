@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -17,7 +18,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion, type FinalAssignment } from './components/BatchAssignmentReviewDialog';
-import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
+import { handleTechnicianUnavailabilityAction, reassignJobAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
@@ -42,7 +43,7 @@ import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
 import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
-import { MultiSelectFilter } from './components/MultiSelectFilter';
+import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
 import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
@@ -55,6 +56,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -118,6 +121,7 @@ export default function DashboardPage() {
   const [showOpenTasksOnly, setShowOpenTasksOnly] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
@@ -444,7 +448,7 @@ export default function DashboardPage() {
       technicianId: t.id,
       technicianName: t.name,
       isAvailable: t.isAvailable,
-      skills: t.skills.map(s => s.name) || [],
+      skills: t.skills || [],
       liveLocation: t.location,
       homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
@@ -599,7 +603,7 @@ export default function DashboardPage() {
         highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
         pendingCount: unassignedJobs.length,
         availableTechnicians: technicians.filter(t => t.isAvailable).length,
-        jobsToday: jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length
+        jobsToday: jobs.filter(j => j.scheduledTime && isSameDay(new Date(j.scheduledTime), today)).length
     };
   }, [jobs, technicians]);
 
@@ -692,7 +696,7 @@ export default function DashboardPage() {
       const isAvailableMatch = lowercasedTerm === 'available' && tech.isAvailable;
       const isUnavailableMatch = (lowercasedTerm === 'unavailable' || lowercasedTerm === 'busy') && !tech.isAvailable;
       const nameMatch = tech.name.toLowerCase().includes(lowercasedTerm);
-      const skillMatch = tech.skills?.some(skill => skill.name.toLowerCase().includes(lowercasedTerm));
+      const skillMatch = tech.skills?.some(skill => skill.toLowerCase().includes(lowercasedTerm));
       return isAvailableMatch || isUnavailableMatch || nameMatch || skillMatch;
     });
   }, [technicians, technicianSearchTerm]);
@@ -719,7 +723,7 @@ export default function DashboardPage() {
       const suggestions: AssignmentSuggestion[] = currentUnassignedJobs.map(job => {
         const { requiredSkills = [] } = job;
         const suitableTechIndex = tempTechnicianPool.findIndex((tech: Technician) => 
-            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.some(s => s.name === skill))
+            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill))
         );
 
         if (suitableTechIndex !== -1) {
@@ -767,7 +771,7 @@ export default function DashboardPage() {
             technicianId: t.id,
             technicianName: t.name,
             isAvailable: t.isAvailable,
-            skills: t.skills.map(s => s.name) || [],
+            skills: t.skills || [],
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
@@ -1013,6 +1017,41 @@ export default function DashboardPage() {
         setIsFleetOptimizationDialogOpen(false);
     }
   };
+  
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const {active, over} = event;
+    setActiveDragId(null);
+    
+    if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
+      const job = active.data.current.job as Job;
+      const technician = over.data.current.technician as Technician;
+
+      if (job.assignedTechnicianId === technician.id) return;
+      
+      setIsLoadingData(true);
+      const result = await reassignJobAction({
+        companyId: job.companyId,
+        appId: appId!,
+        jobId: job.id,
+        newTechnicianId: technician.id,
+        reason: 'Manual drag-and-drop assignment'
+      });
+      setIsLoadingData(false);
+
+      if (result.error) {
+        toast({ title: "Assignment Failed", description: result.error, variant: 'destructive' });
+      } else {
+        toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
+      }
+    }
+  };
+  
+  const draggedJob = useMemo(() => {
+    if (!activeDragId) return null;
+    return jobs.find(j => j.id === activeDragId);
+  }, [activeDragId, jobs]);
 
 
   if (authLoading || isLoadingData) { 
@@ -1024,6 +1063,12 @@ export default function DashboardPage() {
   }
 
   return (
+    <DndContext 
+      sensors={sensors} 
+      onDragStart={(e) => setActiveDragId(e.active.id as string)}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveDragId(null)}
+    >
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
@@ -1321,7 +1366,7 @@ export default function DashboardPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Technician Roster</CardTitle>
-                    <CardDescription>Manage your team of field technicians.</CardDescription>
+                    <CardDescription>Manage your team of field technicians. Drag jobs from the Job List onto a technician to assign.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
@@ -1363,6 +1408,20 @@ export default function DashboardPage() {
             />
         </TabsContent>
       </Tabs>
+      <DragOverlay>
+        {activeDragId && draggedJob ? (
+          <div className="pointer-events-none">
+            <JobListItem
+              job={draggedJob}
+              technicians={technicians}
+              onOpenChat={() => {}}
+              onAIAssign={() => {}}
+              onViewOnMap={() => {}}
+              onShareTracking={() => {}}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
 
       <ManageSkillsDialog 
         isOpen={isManageSkillsOpen} 
@@ -1385,5 +1444,6 @@ export default function DashboardPage() {
       />
       <HelpAssistant />
     </div>
+    </DndContext>
   );
 }

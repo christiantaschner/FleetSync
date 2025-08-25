@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -22,6 +23,9 @@ import {
   BarChart,
   Waypoints,
   Sparkles,
+  Download,
+  AlertTriangle,
+  Award,
 } from "lucide-react";
 import {
   Card,
@@ -33,7 +37,7 @@ import {
 } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
-import { subDays } from "date-fns";
+import { subDays, format, isToday } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
@@ -44,6 +48,7 @@ import { summarizeFtfrAction, runReportAnalysisAction } from "@/actions/ai-actio
 import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReportAnalysisDialog from "./ReportAnalysisDialog";
+import Papa from 'papaparse';
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -94,7 +99,7 @@ export default function ReportClientView() {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: subDays(new Date(), 29),
+    from: new Date(),
     to: new Date(),
   });
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("all");
@@ -265,6 +270,16 @@ export default function ReportClientView() {
     const assignedTechnicianIds = new Set(completedJobs.map(j => j.assignedTechnicianId).filter(Boolean));
     const technicianCountInPeriod = assignedTechnicianIds.size;
     const avgJobsPerTech = technicianCountInPeriod > 0 ? (completedJobs.length / technicianCountInPeriod).toFixed(1) : "0.0";
+    
+    const totalProfit = completedJobs.reduce((acc, job) => acc + (job.profitScore || 0), 0);
+    const slaMisses = completedJobs.filter(job => job.slaDeadline && job.completedAt && new Date(job.completedAt) > new Date(job.slaDeadline)).length;
+
+    const topTechnician = Object.entries(completedJobs.reduce((acc, job) => {
+        if (!job.assignedTechnicianId) return acc;
+        acc[job.assignedTechnicianId] = (acc[job.assignedTechnicianId] || 0) + (job.profitScore || 0);
+        return acc;
+    }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0];
+
 
     return {
       kpis: {
@@ -280,9 +295,16 @@ export default function ReportClientView() {
         avgTravelTime: formatDuration(avgTravelTimeMs),
         avgBreakTime: formatDuration(avgBreakTimeMs),
         avgJobsPerTech,
+        totalProfit,
+        slaMisses,
+        topTechnician: topTechnician ? {
+            technicianId: topTechnician[0],
+            name: technicians.find(t => t.id === topTechnician[0])?.name || 'Unknown',
+            margin: topTechnician[1]
+        } : null,
       },
     };
-  }, [filteredJobs]);
+  }, [filteredJobs, technicians]);
   
   const handleRunAnalysis = async () => {
     setIsAnalyzing(true);
@@ -295,6 +317,30 @@ export default function ReportClientView() {
     }
     setIsAnalyzing(false);
   }
+
+  const handleExport = () => {
+    const dataForExport = [
+        { KPI: "Total Jobs", Value: reportData.kpis.totalJobs, Description: "All jobs in period" },
+        { KPI: "Completed Jobs", Value: reportData.kpis.completedJobs, Description: "Successfully finished" },
+        { KPI: "First-Time-Fix Rate (%)", Value: reportData.kpis.ftfr, Description: "Resolved in one visit" },
+        { KPI: "On-Time Arrival Rate (%)", Value: reportData.kpis.onTimeArrivalRate, Description: "Within 15min of schedule" },
+        { KPI: "SLA Misses", Value: reportData.kpis.slaMisses, Description: "Jobs completed after SLA deadline" },
+        { KPI: "Total Profit", Value: reportData.kpis.totalProfit.toFixed(2), Description: "Sum of profit scores for completed jobs" },
+        { KPI: "Avg. On-Site Duration", Value: reportData.kpis.avgDuration, Description: "From start to completion" },
+        { KPI: "Avg. Travel Time", Value: reportData.kpis.avgTravelTime, Description: "Per job" },
+        { KPI: "Avg. Jobs per Technician", Value: reportData.kpis.avgJobsPerTech, Description: "Completed in period" },
+        { KPI: "Avg. Satisfaction", Value: reportData.kpis.avgSatisfaction, Description: "From all rated jobs" },
+    ];
+    const csv = Papa.unparse(dataForExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `fleetsync_report_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   if (authLoading || isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
@@ -312,10 +358,16 @@ export default function ReportClientView() {
             <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
             <p className="text-muted-foreground">Analyze your fleet's performance and get AI-powered insights.</p>
         </div>
-        <Button onClick={handleRunAnalysis} disabled={isAnalyzing}>
-            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-            Get AI Analysis
-        </Button>
+        <div className="flex gap-2">
+            <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2 h-4 w-4"/>
+                Export CSV
+            </Button>
+            <Button onClick={handleRunAnalysis} disabled={isAnalyzing}>
+                {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                Get AI Analysis
+            </Button>
+        </div>
       </div>
       <Card>
         <CardHeader>
@@ -347,6 +399,17 @@ export default function ReportClientView() {
             <KpiCard title="Completed Jobs" value={reportData.kpis.completedJobs} desc="Successfully finished" icon={CheckCircle} tooltipText="What it is: Jobs marked 'Completed'. Action: Compare to 'Total Jobs'. If the ratio is low, check your Job List for bottlenecks or old, unclosed jobs." />
             <KpiCard title="First-Time-Fix Rate" value={`${reportData.kpis.ftfr}%`} desc="Resolved in one visit" icon={ThumbsUp} tooltipText="What it is: The percentage of jobs resolved without a follow-up. Action: Use the AI Summary button to diagnose why repeat visits are needed. This may reveal needs for specific parts or training." />
             <KpiCard title="On-Time Arrival Rate" value={`${reportData.kpis.onTimeArrivalRate}%`} desc="Within 15min of schedule" icon={CalendarClock} tooltipText="What it is: Percentage of jobs started within 15 minutes of the scheduled time. Action: Use the 'Optimize Fleet' and 'Resolve Conflict' AI features on the Schedule tab to improve punctuality." />
+            <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
+            <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={BarChart} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
+            {reportData.kpis.topTechnician && (
+              <KpiCard 
+                title="Top Technician by Margin" 
+                value={reportData.kpis.topTechnician.name} 
+                desc={`Contributed $${reportData.kpis.topTechnician.margin.toFixed(2)}`} 
+                icon={Award}
+                tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
+              />
+            )}
           </CardContent>
           {ftfrFeedbackNotesCount > 0 && (
             <CardFooter className="flex-col items-start gap-2 pt-3 border-t">

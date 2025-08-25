@@ -1,123 +1,137 @@
 
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSuperAdmin() {
-      return request.auth.token.role == 'superAdmin';
+    // Helper function to check if a user is an admin or superAdmin
+    function isAdmin() {
+      return request.auth.token.role == 'admin' || request.auth.token.role == 'superAdmin';
     }
 
-    function isAdmin() {
-      return request.auth.token.role == 'admin' || isSuperAdmin();
-    }
-    
-    function isTechnician() {
-      return request.auth.token.role == 'technician';
-    }
-    
-    function isCompanyMember(companyId) {
+    // Helper function to check if the user belongs to the company that owns the document
+    function isMemberOfCompany(companyId) {
       return request.auth.token.companyId == companyId;
     }
-    
-    function isOwner(uid) {
-        return request.auth.uid == uid;
+
+    // Helper function to get incoming data
+    function incomingData() {
+      return request.resource.data;
     }
 
-    // Companies: Only readable by members, only updatable by company owner or admin
+    // Helper function to get existing data
+    function existingData() {
+      return resource.data;
+    }
+
+    // --- Company Documents ---
+    // Companies can be read by their members.
+    // Only the owner can update the company details.
     match /companies/{companyId} {
-      allow read: if isCompanyMember(companyId);
-      allow update: if isCompanyMember(companyId) && (isOwner(resource.data.ownerId) || isAdmin());
-      // Disallow create/delete from client
+      allow read: if isMemberOfCompany(companyId);
+      allow update: if request.auth.uid == resource.data.ownerId;
+      // Disallow client-side creation/deletion of companies for security.
       allow create, delete: if false;
     }
 
-    // Users: Can read/update their own profile. Admins can read all profiles in their company.
+    // --- User Profiles ---
+    // Users can read and update their own profile.
+    // Admins can read any profile within their own company.
     match /users/{userId} {
-      allow read: if isOwner(userId) || (isAdmin() && isCompanyMember(resource.data.companyId));
-      allow update: if isOwner(userId);
-      // Create is handled by a Cloud Function upon user signup
-      allow create: if request.auth != null;
-      allow delete: if false;
+      allow read, update: if request.auth.uid == userId;
+      allow get: if isMemberOfCompany(resource.data.companyId) && isAdmin();
+      // Disallow client-side creation/deletion of user profiles.
+      allow create, delete: if false;
     }
     
-    // Invitations: Admins can manage invites for their own company.
+    // --- Invitations ---
+    // Users can read invitations for their own email address.
+    // Admins can create and read invites for their own company.
     match /invitations/{inviteId} {
-      allow read, create: if isAdmin() && isCompanyMember(request.resource.data.companyId);
-      allow update: if isCompanyMember(request.resource.data.companyId); // For accepting invites
-      allow delete: if isAdmin() && isCompanyMember(resource.data.companyId);
+        allow read: if incomingData().email == request.auth.token.email;
+        allow create: if isMemberOfCompany(incomingData().companyId) && isAdmin();
+        allow list: if isMemberOfCompany(request.query.companyId) && isAdmin();
     }
+    
+    // --- Artifacts (App-Specific Data) ---
+    // This rule applies to all collections within a specific app's data partition.
+    match /artifacts/{appId}/public/data/{collection}/{documentId} {
+      
+      // --- Jobs ---
+      // Admins and CSRs can create/update any job in their company.
+      // Technicians can only update jobs they are assigned to.
+      // Any company member can read jobs.
+      match /jobs/{jobId} {
+          allow read: if isMemberOfCompany(resource.data.companyId);
+          allow create: if (isAdmin() || request.auth.token.role == 'csr') && isMemberOfCompany(incomingData().companyId);
+          allow update: if 
+              // Admin can update any field except protected ones
+              (isAdmin() && isMemberOfCompany(existingData().companyId)) ||
+              // Technician can update their assigned job
+              (request.auth.uid == existingData().assignedTechnicianId && isMemberOfCompany(existingData().companyId));
+          
+           // Add specific rules for sensitive fields `profitScore` and `dispatchLocked`
+          allow update: if 
+              (isAdmin() && isMemberOfCompany(existingData().companyId))
+              // Technicians can update, but NOT the protected fields
+              || (request.auth.uid == existingData().assignedTechnicianId 
+                  && isMemberOfCompany(existingData().companyId)
+                  && !('profitScore' in incomingData())
+                  && !('dispatchLocked' in incomingData()));
 
-    // --- Artifacts ---
-    // All data within an app's artifact collection is protected by the companyId check.
-    match /artifacts/{appId}/public/data/{collection}/{docId} {
-        // Default deny all
-        allow read, write: if false;
-    }
+          allow delete: if isAdmin() && isMemberOfCompany(resource.data.companyId);
+      }
 
-    // Jobs
-    match /artifacts/{appId}/public/data/jobs/{jobId} {
-      allow read: if isCompanyMember(resource.data.companyId);
-      // Admins/CSRs can create. Technicians can update (e.g. status), but not create.
-      allow create: if isCompanyMember(request.resource.data.companyId) && (isAdmin() || request.auth.token.role == 'csr');
-      allow update: if isCompanyMember(resource.data.companyId) && (isAdmin() || request.auth.token.role == 'csr' || isOwner(resource.data.assignedTechnicianId));
-      allow delete: if isCompanyMember(resource.data.companyId) && isAdmin();
-    }
-    
-    // Technicians
-    match /artifacts/{appId}/public/data/technicians/{techId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        // Only admins can create/update technician profiles directly
-        allow create, update: if isAdmin() && isCompanyMember(request.resource.data.companyId);
-        // Deletion is handled by a server-side action when removing a user
-        allow delete: if isAdmin() && isCompanyMember(resource.data.companyId);
-    }
+      // --- Technicians ---
+      // Admins can manage technicians in their company.
+      // Technicians can read their own profile details from this collection.
+      // All company members can list/read technicians.
+      match /technicians/{techId} {
+        allow read: if isMemberOfCompany(resource.data.companyId);
+        allow create, update: if isAdmin() && isMemberOfCompany(incomingData().companyId);
+        allow delete: if isAdmin() && isMemberOfCompany(resource.data.companyId);
+      }
 
-    // Skills
-    match /artifacts/{appId}/public/data/skills/{skillId} {
-        allow read: if request.auth != null; // All authenticated users can read skills
-        allow create, delete: if isAdmin() && isCompanyMember(request.resource.data.companyId);
-    }
-    
-    // Parts
-    match /artifacts/{appId}/public/data/parts/{partId} {
-        allow read: if request.auth != null; // All authenticated users can read parts
-        allow create, delete: if isAdmin() && isCompanyMember(request.resource.data.companyId);
-    }
-    
-    // Profile Change Requests
-    match /artifacts/{appId}/public/data/profileChangeRequests/{reqId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create: if isTechnician() && isCompanyMember(request.resource.data.companyId) && isOwner(request.resource.data.technicianId);
-        allow update: if isAdmin() && isCompanyMember(resource.data.companyId);
-        allow delete: if false;
-    }
-    
-     // Chat Messages
-    match /artifacts/{appId}/public/data/chatMessages/{msgId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create: if isCompanyMember(request.resource.data.companyId) && (isOwner(request.resource.data.senderId));
+      // --- Contracts, Customers, Equipment, Skills, Parts ---
+      // Generally, these are managed by Admins.
+      // All company members can read them.
+      match /contracts/{docId} {
+        allow read: if isMemberOfCompany(resource.data.companyId);
+        allow create, update, delete: if isAdmin() && isMemberOfCompany(incomingData().companyId);
+      }
+      match /customers/{docId} {
+        allow read: if isMemberOfCompany(resource.data.companyId);
+        allow create, update, delete: if isAdmin() && isMemberOfCompany(incomingData().companyId);
+      }
+      match /equipment/{docId} {
+        allow read: if isMemberOfCompany(resource.data.companyId);
+        allow create, update, delete: if isAdmin() && isMemberOfCompany(incomingData().companyId);
+      }
+      match /skills/{docId} {
+        allow read: if isMemberOfCompany(resource.data.companyId);
+        allow create, update, delete: if isAdmin() && isMemberOfCompany(incomingData().companyId);
+      }
+      match /parts/{docId} {
+        allow read: if isMemberOfCompany(resource.data.companyId);
+        allow create, update, delete: if isAdmin() && isMemberOfCompany(incomingData().companyId);
+      }
+      
+      // --- Profile Change Requests ---
+      // Technicians can create requests for their own profile.
+      // Admins can read/update/delete any request in their company.
+       match /profileChangeRequests/{reqId} {
+        allow create: if request.auth.uid == incomingData().technicianId && isMemberOfCompany(incomingData().companyId);
+        allow read, update, delete: if isAdmin() && isMemberOfCompany(resource.data.companyId);
+      }
+      
+      // --- Chat Messages ---
+      // Only the sender or receiver of a message can read it.
+      // Only the sender can create a message.
+       match /chatMessages/{msgId} {
+        allow read: if isMemberOfCompany(resource.data.companyId) && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
+        allow create: if isMemberOfCompany(incomingData().companyId) && request.auth.uid == incomingData().senderId;
         allow update, delete: if false;
+      }
     }
-    
-    // Contracts
-    match /artifacts/{appId}/public/data/contracts/{contractId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create, update, delete: if isAdmin() && isCompanyMember(request.resource.data.companyId);
-    }
-    
-    // Customers
-    match /artifacts/{appId}/public/data/customers/{customerId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create, update: if isCompanyMember(request.resource.data.companyId);
-        allow delete: if isAdmin() && isCompanyMember(resource.data.companyId);
-    }
-    
-     // Equipment
-    match /artifacts/{appId}/public/data/equipment/{equipId} {
-        allow read: if isCompanyMember(resource.data.companyId);
-        allow create, update, delete: if isCompanyMember(request.resource.data.companyId);
-    }
-    
   }
 }

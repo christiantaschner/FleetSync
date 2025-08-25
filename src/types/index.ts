@@ -110,6 +110,8 @@ export type Technician = {
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
 export type JobStatus = 'Unassigned' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
+export type JobFlexibility = 'fixed' | 'flexible' | 'soft_window';
+
 
 export type Job = {
   id: string;
@@ -125,7 +127,7 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDuration: number;
+  estimatedDurationMinutes: number;
   durationUnit?: 'hours' | 'days';
   createdAt: string;
   updatedAt: string;
@@ -159,8 +161,17 @@ export type Job = {
   invoiceUploadedAt?: string;
   invoiceUploadedBy?: string;
   // Profit-aware fields
-  jobValue?: number;
-  slaPenalty?: number;
+  jobValue?: number; // Replaces quotedValue for consistency
+  slaPenalty?: number; // Replaces penalty_value
+  expectedPartsCost?: number;
+  slaDeadline?: string; // ISO Timestamp
+  upsellScore?: number; // Float 0-1
+  // Scheduling constraint fields
+  fixedWindow?: { start: string, end: string }; // ISO Timestamps
+  flexibility?: JobFlexibility; // enum
+  // AI-computed fields
+  profitScore?: number;
+  dispatchLocked?: boolean;
 };
 
 export const CustomerSchema = z.object({

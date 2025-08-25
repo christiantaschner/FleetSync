@@ -415,7 +415,7 @@ export default function DashboardPage() {
   }, [technicians, company, isLoadingData, toast, isMockMode]);
   
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId || isMockMode) {
+    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId || isMockMode || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true)) {
       return;
     }
 
@@ -435,7 +435,7 @@ export default function DashboardPage() {
     if (highPriorityPendingJob && !proactiveSuggestion && !isFetchingProactiveSuggestion) {
       fetchProactiveSuggestion(highPriorityPendingJob);
     }
-  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile, isMockMode]);
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile, isMockMode, company]);
 
   const fetchProactiveSuggestion = useCallback(async (job: Job) => {
     if (!appId) return;
@@ -495,7 +495,7 @@ export default function DashboardPage() {
   
   // Effect for automatic schedule health checks
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || jobs.length === 0 || isMockMode) {
+    if (isLoadingData || technicians.length === 0 || jobs.length === 0 || isMockMode || !(company?.settings?.featureFlags?.rescheduleCustomerJobsEnabled ?? true)) {
       return;
     }
 
@@ -531,7 +531,7 @@ export default function DashboardPage() {
       clearTimeout(initialCheckTimer);
       clearInterval(intervalId);
     };
-  }, [jobs, technicians, isLoadingData, isMockMode]);
+  }, [jobs, technicians, isLoadingData, isMockMode, company]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId || !appId) return;
@@ -1262,15 +1262,26 @@ export default function DashboardPage() {
                     />
                     <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Show Open Tasks Only</Label>
                 </div>
-                 <Button 
-                    variant="accent" 
-                    onClick={handleBatchAIAssign} 
-                    disabled={unassignedJobsCount === 0 || isBatchLoading}
-                    className="w-full sm:w-auto"
-                    >
-                    {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                    Fleety Batch Assign ({unassignedJobsCount})
-                </Button>
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                variant="accent" 
+                                onClick={handleBatchAIAssign} 
+                                disabled={unassignedJobsCount === 0 || isBatchLoading || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true)}
+                                className="w-full sm:w-auto"
+                                >
+                                {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                Fleety Batch Assign ({unassignedJobsCount})
+                            </Button>
+                        </TooltipTrigger>
+                        {!(company?.settings?.featureFlags?.autoDispatchEnabled ?? true) && (
+                            <TooltipContent>
+                                <p>This feature is disabled in company settings.</p>
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                 </TooltipProvider>
               </div>
               <div className="space-y-4 mt-4">
                 {sortedJobs.length > 0 ? (
@@ -1377,3 +1388,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

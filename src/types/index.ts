@@ -50,6 +50,13 @@ export const BusinessDaySchema = z.object({
 });
 export type BusinessDay = z.infer<typeof BusinessDaySchema>;
 
+export const FeatureFlagsSchema = z.object({
+    profitScoringEnabled: z.boolean().optional(),
+    autoDispatchEnabled: z.boolean().optional(),
+    rescheduleCustomerJobsEnabled: z.boolean().optional(),
+});
+export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
+
 export const CompanySettingsSchema = z.object({
   address: z.string().optional(),
   timezone: z.string().optional(),
@@ -58,6 +65,7 @@ export const CompanySettingsSchema = z.object({
   companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
   otherSpecialty: z.string().optional(),
   hideHelpButton: z.boolean().optional(),
+  featureFlags: FeatureFlagsSchema.optional(),
 }).refine(data => {
     if (data.companySpecialties.includes('Other')) {
         return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
@@ -810,3 +818,5 @@ export const RunReportAnalysisOutputSchema = z.object({
     quickWins: z.array(z.string()).describe("A list of simple actions the user can take right now for an immediate impact."),
 });
 export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;
+
+    

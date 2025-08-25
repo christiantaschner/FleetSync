@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye, Lock, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -539,47 +539,9 @@ export default function DashboardPage() {
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId || !appId) return;
     
-    setIsProcessingProactive(true);
-    
-    const { job, suggestedTechnicianDetails } = suggestion;
-    const isInterruption = !suggestedTechnicianDetails.isAvailable && suggestedTechnicianDetails.currentJobId;
-
-    const batch = writeBatch(db);
-    
-    const newJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-    batch.update(newJobRef, { 
-        status: 'Assigned', 
-        assignedTechnicianId: suggestedTechnicianDetails.id,
-        updatedAt: serverTimestamp(),
-        assignedAt: serverTimestamp(),
-    });
-
-    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestedTechnicianDetails.id);
-    batch.update(techDocRef, {
-        isAvailable: false,
-        currentJobId: job.id,
-    });
-    
-    if (isInterruption) {
-        const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, suggestedTechnicianDetails.currentJobId!);
-        batch.update(oldJobRef, {
-            status: 'Unassigned',
-            assignedTechnicianId: null,
-            notes: arrayUnion(`(Auto-Reassigned: Technician interrupted for high-priority job ${job.title})`) as any,
-            updatedAt: serverTimestamp(),
-        });
-    }
-
-    try {
-        await batch.commit();
-        toast({ title: "Job Assigned!", description: `${job.title} assigned to ${suggestedTechnicianDetails.name}.` });
-        setProactiveSuggestion(null);
-    } catch (error: any) {
-        console.error("Error processing proactive assignment:", error);
-        toast({ title: "Assignment Failed", description: error.message, variant: "destructive" });
-    } finally {
-        setIsProcessingProactive(false);
-    }
+    setProactiveSuggestion(null); // Dismiss the alert
+    setJobForAIAssign(suggestion.job);
+    setIsAIAssignDialogOpen(true);
   };
 
   const handleAIAssign = useCallback((job: Job) => {
@@ -1041,7 +1003,7 @@ export default function DashboardPage() {
       setIsLoadingData(false);
 
       if (result.error) {
-        toast({ title: "Assignment Failed", description: result.error, variant: 'destructive' });
+        toast({ title: "Assignment Failed", description: result.error, variant: "destructive" });
       } else {
         toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
       }
@@ -1151,7 +1113,7 @@ export default function DashboardPage() {
                         disabled={isProcessingProactive || !proactiveSuggestion.suggestedTechnicianDetails}
                     >
                         {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
-                        Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
+                        Review & Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
                     </Button>
                      <Button size="sm" variant="outline" onClick={() => router.push(`/job/${proactiveSuggestion.job.id}`)}>
                         <Edit className="mr-2 h-4 w-4"/>

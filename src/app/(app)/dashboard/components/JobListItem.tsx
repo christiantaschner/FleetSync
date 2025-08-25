@@ -121,7 +121,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                            <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Job is locked and cannot be moved by the optimizer or drag-and-drop.</p>
+                          <p>Job is locked and cannot be moved.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -133,7 +133,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                            <Repeat className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>This is a flexible job that can be moved by the optimizer.</p>
+                          <p>This is a flexible job that can be optimized.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -235,4 +235,3 @@ const JobListItem: React.FC<JobListItemProps> = ({
 
 export default JobListItem;
 
-    

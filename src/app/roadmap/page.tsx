@@ -184,15 +184,21 @@ const roadmapFeatures = {
   ],
   planned: [
      {
-      title: "Installed Equipment Tracking",
-      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
-      icon: Package,
+      title: "QuickBooks & Xero Integration",
+      description: "Seamlessly sync customers, invoices, and payments with QuickBooks Online and Xero to eliminate double-entry and make FleetSync your true 'job-to-cash' system of record. Requires a secure OAuth 2.0 connection.",
+      icon: Building2,
       status: "Planned",
     },
     {
-      title: "Integrated Invoicing & Payments",
-      description: "Enable technicians to generate and send professional invoices and quotes on the spot. The system will support immediate payment processing via a secure online portal and handle automated payment reminders, closing the job loop instantly and improving cash flow.",
+      title: "Integrated Invoicing & Quoting",
+      description: "Enable technicians and dispatchers to generate and send professional invoices and quotes on the spot. The system will support immediate payment processing and automated payment reminders, closing the job loop instantly and improving cash flow.",
       icon: DollarSign,
+      status: "Planned",
+    },
+    {
+      title: "Installed Equipment Tracking",
+      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
+      icon: Package,
       status: "Planned",
     },
     {
@@ -215,6 +221,12 @@ const roadmapFeatures = {
       icon: Brain,
       status: "Vision",
     },
+    {
+      title: "Financial Insights & Reporting",
+      description: "Go beyond operational KPIs with integrated financial reporting. Track job profitability, technician revenue, and overall business financial health directly within the application.",
+      icon: TrendingUp,
+      status: "Vision"
+    },
      {
       title: "AI-Powered Parts Suggestion & Van Inventory",
       description: "The AI suggests required parts from triage photos and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
@@ -228,12 +240,6 @@ const roadmapFeatures = {
       status: "Vision",
     },
     {
-      title: "Financial Insights & Reporting",
-      description: "Go beyond operational KPIs with integrated financial reporting. Track job profitability, technician revenue, and overall business financial health directly within the application.",
-      icon: TrendingUp,
-      status: "Vision"
-    },
-     {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
@@ -255,12 +261,6 @@ const roadmapFeatures = {
       title: "\"Why this happened\" AI Insights",
       description: "The system will provide explanations for significant deviations. If an ETA was missed or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
       icon: Search,
-      status: "Vision",
-    },
-    {
-      title: "QuickBooks & Xero Integration",
-      description: "Seamless, two-way data flow between FleetSync and essential accounting software. This eliminates double-entry for invoices and payments, prevents churn, and makes FleetSync the true 'job-to-cash' system of record for the business.",
-      icon: Building2,
       status: "Vision",
     },
     {

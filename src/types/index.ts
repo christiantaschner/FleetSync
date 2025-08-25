@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -102,7 +103,7 @@ export type Technician = {
   companyId: string;
   name: string;
   isAvailable: boolean;
-  skills: string[]; // Changed from TechnicianSkill[] to string[]
+  skills: string[];
   avatarUrl?: string;
   currentJobId?: string | null;
   phone?: string;
@@ -141,7 +142,7 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDurationMinutes: number;
+  estimatedDuration: number;
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -769,6 +770,9 @@ export const OptimizationSuggestionSchema = z.object({
     newTechnicianId: z.string().nullable(),
     newScheduledTime: z.string().optional(),
     justification: z.string(),
+    profitChange: z.number().optional().describe("The estimated change in profit for this specific move. Can be positive or negative."),
+    driveTimeChangeMinutes: z.number().optional().describe("The estimated change in travel time in minutes. Negative is better."),
+    slaRiskChange: z.number().optional().describe("The percentage change in SLA risk. E.g., -10 means a 10% reduction in risk."),
 });
 export type OptimizationSuggestion = z.infer<typeof OptimizationSuggestionSchema>;
 

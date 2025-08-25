@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, CheckCircle, User, Bot, Loader2, Shuffle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, User, Bot, Loader2, Shuffle, ArrowRight, TrendingUp, Car, ShieldAlert, BadgeInfo } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Job, Technician, OptimizationSuggestion } from '@/types';
@@ -34,6 +34,21 @@ interface FleetOptimizationReviewDialogProps {
   selectedChanges: OptimizationSuggestion[];
   setSelectedChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
 }
+
+const ChangeMetric = ({ icon: Icon, value, unit, className, label }: { icon: React.ElementType, value: number | undefined, unit: string, className?: string, label: string }) => {
+    if (value === undefined || value === 0) return null;
+    const isPositive = value > 0;
+    const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+    return (
+        <Badge variant="outline" className={cn("text-xs", className, isPositive ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50")}>
+            <Icon className={cn("h-3.5 w-3.5 mr-1", colorClass)} />
+            <span className={cn(colorClass)}>
+                {isPositive ? '+' : ''}{value.toFixed(0)}{unit}
+            </span>
+            <span className="ml-1 text-muted-foreground">{label}</span>
+        </Badge>
+    );
+};
 
 const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps> = ({
   isOpen,
@@ -74,16 +89,24 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
      const newTechnician = getTechnicianName(change.newTechnicianId);
 
      if (change.originalTechnicianId && change.newTechnicianId && change.originalTechnicianId !== change.newTechnicianId) {
-         return `Reassign "${jobTitle}" from ${originalTechnician} to ${newTechnician}.`;
+         return <><span className="font-semibold">{`Reassign "${jobTitle}"`}</span><br/><span className="text-muted-foreground text-xs">{originalTechnician} <ArrowRight className="inline h-3 w-3"/> {newTechnician}</span></>;
      }
      if (!change.originalTechnicianId && change.newTechnicianId) {
-         return `Assign pending job "${jobTitle}" to ${newTechnician}.`;
+         return <><span className="font-semibold">{`Assign "${jobTitle}"`}</span><br/><span className="text-muted-foreground text-xs">to {newTechnician}</span></>;
      }
      if(change.newScheduledTime) {
-        return `Reschedule "${jobTitle}" for ${newTechnician} to ${new Date(change.newScheduledTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+        return <><span className="font-semibold">{`Reschedule "${jobTitle}"`}</span><br/><span className="text-muted-foreground text-xs">for {newTechnician} to {new Date(change.newScheduledTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></>;
      }
      return `Suggested change for "${jobTitle}"`;
   };
+  
+  const summary = React.useMemo(() => {
+    return selectedChanges.reduce((acc, change) => {
+        acc.profit += change.profitChange || 0;
+        acc.driveTime += change.driveTimeChangeMinutes || 0;
+        return acc;
+    }, { profit: 0, driveTime: 0 });
+  }, [selectedChanges]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -99,8 +122,8 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
          
         {optimizationResult?.overallReasoning && (
              <Alert>
-                <Shuffle className="h-4 w-4" />
-                <AlertTitle>AI Analysis</AlertTitle>
+                <BadgeInfo className="h-4 w-4" />
+                <AlertTitle>AI Analysis Summary</AlertTitle>
                 <AlertDescription>
                     {optimizationResult.overallReasoning}
                 </AlertDescription>
@@ -127,10 +150,15 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
                           disabled={isLoadingConfirmation}
                           className="mt-1"
                         />
-                        <div className="flex-1">
-                            <h4 className="font-semibold">{renderChangeDescription(change)}</h4>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {change.justification}
+                        <div className="flex-1 space-y-2">
+                            <h4 className="font-semibold leading-tight">{renderChangeDescription(change)}</h4>
+                             <div className="flex flex-wrap items-center gap-2">
+                                <ChangeMetric icon={TrendingUp} value={change.profitChange} unit="" label="Profit" />
+                                <ChangeMetric icon={Car} value={change.driveTimeChangeMinutes} unit=" min" label="Drive" />
+                                <ChangeMetric icon={ShieldAlert} value={change.slaRiskChange} unit="%" label="SLA Risk" />
+                            </div>
+                            <p className="text-xs text-muted-foreground pt-1">
+                                <span className="font-semibold">Justification:</span> {change.justification}
                             </p>
                         </div>
                     </div>
@@ -142,10 +170,14 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
             <p className="text-muted-foreground text-center py-6">No optimization suggestions at this time.</p>
           )}
         </ScrollArea>
-        <DialogFooter className="sm:justify-between items-center mt-4 gap-2">
-           <p className="text-sm text-muted-foreground">
-            Selected to apply: {selectedChanges.length} change(s)
-          </p>
+        <DialogFooter className="sm:justify-between items-center mt-4 gap-2 border-t pt-4">
+           <div className="text-sm text-muted-foreground space-y-1">
+            <p className="font-semibold">Total Gain for {selectedChanges.length} Change(s):</p>
+            <div className="flex flex-wrap gap-2">
+              <ChangeMetric icon={TrendingUp} value={summary.profit} unit="" label="Total Profit"/>
+              <ChangeMetric icon={Car} value={summary.driveTime} unit=" min" label="Total Drive Time"/>
+            </div>
+           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isLoadingConfirmation}>
               Cancel

@@ -17,26 +17,27 @@ export async function runFleetOptimization(input: RunFleetOptimizationInput): Pr
 
 const prompt = ai.definePrompt({
   name: 'runFleetOptimizationPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   input: { schema: RunFleetOptimizationInputSchema },
   output: { schema: RunFleetOptimizationOutputSchema },
-  prompt: `You are an expert fleet dispatcher with the goal of maximizing efficiency while minimizing customer disruption.
+  prompt: `You are an expert fleet dispatcher with the goal of maximizing efficiency and profitability while minimizing customer disruption.
 
 Your task is to analyze the entire fleet's schedule for today and suggest a set of changes that provides a significant net benefit.
 
 **The Current Time is: {{currentTime}}**
 
-**Core Principle:** Do NOT make changes for the sake of small improvements. Only suggest a change if it solves a clear problem (like fitting in a high-priority job) or offers a substantial efficiency gain (e.g., saving more than 30-45 minutes of total travel time across the fleet). Customer satisfaction is paramount; avoid rescheduling existing appointments unless absolutely necessary.
+**Core Principle:** Do NOT make changes for the sake of small improvements. Only suggest a change if it solves a clear problem (like fitting in a high-priority job) or offers a substantial efficiency gain (e.g., saving more than 30-45 minutes of total travel time, or significantly increasing profit). Customer satisfaction is paramount; avoid rescheduling existing appointments unless absolutely necessary.
 
 **Available Technicians and their Current Schedules:**
 {{#each technicians}}
 - **Technician: {{name}} (ID: {{id}})**
   - Skills: {{#if skills.length}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - On-Call: {{#if isOnCall}}Yes{{else}}No{{/if}}
+  - Hourly Cost: \${{{hourlyCost}}}
   - Current Schedule:
     {{#if jobs}}
       {{#each jobs}}
-      - Job '{{title}}' (ID: {{id}}), Priority: {{priority}}, Location: {{location.address}}, Scheduled: {{scheduledTime}}, Flexibility: {{flexibility}}, Locked: {{dispatchLocked}}
+      - Job '{{title}}' (ID: {{id}}), Priority: {{priority}}, Location: {{location.address}}, Scheduled: {{scheduledTime}}, Flexibility: {{flexibility}}, Locked: {{dispatchLocked}}, Quoted Value: \${{quotedValue}}
       {{/each}}
     {{else}}
     - No jobs scheduled today.
@@ -46,7 +47,7 @@ Your task is to analyze the entire fleet's schedule for today and suggest a set 
 **Unassigned Jobs in the Queue:**
 {{#if pendingJobs.length}}
     {{#each pendingJobs}}
-    - **Job '{{title}}' (ID: {{id}})**, Priority: {{priority}}, Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}, Location: {{location.address}}
+    - **Job '{{title}}' (ID: {{id}})**, Priority: {{priority}}, Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}, Location: {{location.address}}, Quoted Value: \${{quotedValue}}
     {{/each}}
 {{else}}
 - No pending jobs to assign.
@@ -56,8 +57,12 @@ Your task is to analyze the entire fleet's schedule for today and suggest a set 
 1.  **Respect Constraints**: You MUST NOT suggest changes for jobs where \`dispatchLocked\` is true. Jobs with \`flexibility: "fixed"\` should not be moved.
 2.  **Prioritize High-Priority Jobs**: Your first goal is to get all High-Priority pending jobs assigned. If a skilled technician is available, assign it. If not, you may suggest reassigning a *low-priority*, non-fixed job from another technician to make space.
 3.  **Look for Geographic Clusters**: Identify if unassigned jobs are very close to a skilled technician's existing route. Suggest inserting these jobs if it doesn't create significant delays for their confirmed appointments.
-4.  **Justify Every Change**: For each proposed change, provide a clear, concise \`justification\` explaining the benefit. Start with a quantifiable benefit if possible. Examples: "Reduces travel by 25 mins by grouping jobs.", "Assigns a high-priority job.", "Frees up a specialized technician for a more complex job.".
-5.  **Summarize Overall Benefit**: Provide a high-level \`overallReasoning\`. If changes are made, summarize the net benefit (e.g., "Assigns 2 high-priority jobs and reduces total travel time by 45 minutes.").
+4.  **Calculate Impact**: For each suggested change, you MUST estimate the financial and time impact.
+    - \`profitChange\`: Calculate the change in profit margin. Profit = quotedValue - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost).
+    - \`driveTimeChangeMinutes\`: Estimate the change in total travel time for the technician(s) involved. Negative is good.
+    - \`slaRiskChange\`: Estimate the percentage change in the risk of missing an SLA for any affected job. Negative is good.
+5.  **Justify Every Change**: Provide a clear, concise \`justification\` explaining the benefit. Start with a quantifiable benefit. Examples: "Reduces travel by 25 mins by grouping jobs.", "Assigns a high-priority job.", "Frees up a specialized technician for a more complex job.".
+6.  **Summarize Overall Benefit**: Provide a high-level \`overallReasoning\`. If changes are made, summarize the net benefit (e.g., "Assigns 2 high-priority jobs and reduces total travel time by 45 minutes, increasing total margin by $150.").
 
 If the current schedule is already optimal or no significant improvements can be made without causing undue disruption, return an empty \`suggestedChanges\` array and state in the \`overallReasoning\` that no changes are recommended at this time.
 `,

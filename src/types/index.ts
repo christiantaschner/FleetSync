@@ -92,12 +92,11 @@ export type Technician = {
   companyId: string;
   name: string;
   isAvailable: boolean;
-  skills: TechnicianSkill[]; 
-  partsInventory?: string[];
+  skills: string[]; // Changed from TechnicianSkill[] to string[]
   avatarUrl?: string;
   currentJobId?: string | null;
   phone?: string;
-  email: string; // Email is required for a technician
+  email: string;
   createdAt?: string;
   updatedAt?: string;
   unavailabilityReason?: string;
@@ -106,6 +105,10 @@ export type Technician = {
   location: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
+  // New profit-aware fields
+  hourlyCost?: number;
+  vanInventory?: string[]; // Array of part IDs
+  maxDailyHours?: number;
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
@@ -160,16 +163,15 @@ export type Job = {
   invoiceUrl?: string;
   invoiceUploadedAt?: string;
   invoiceUploadedBy?: string;
-  // Profit-aware fields
-  jobValue?: number; // Replaces quotedValue for consistency
-  slaPenalty?: number; // Replaces penalty_value
+  // Profit-aware fields (new)
+  quotedValue?: number;
   expectedPartsCost?: number;
-  slaDeadline?: string; // ISO Timestamp
-  upsellScore?: number; // Float 0-1
-  // Scheduling constraint fields
-  fixedWindow?: { start: string, end: string }; // ISO Timestamps
-  flexibility?: JobFlexibility; // enum
-  // AI-computed fields
+  slaDeadline?: string;
+  upsellScore?: number;
+  // Scheduling constraint fields (new)
+  fixedWindow?: { start: string, end: string };
+  flexibility?: JobFlexibility;
+  // AI-computed fields (new)
   profitScore?: number;
   dispatchLocked?: boolean;
 };

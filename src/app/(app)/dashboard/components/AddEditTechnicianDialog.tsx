@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
-import type { Technician, BusinessDay, TechnicianSkill } from '@/types';
+import type { Technician, BusinessDay } from '@/types';
 import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -185,7 +185,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       name: data.name,
       email: data.email || "", 
       phone: data.phone || "",
-      skills: data.skills.map((s: string | TechnicianSkill) => typeof s === 'string' ? { name: s } : s),
+      skills: data.skills || [],
       location: {
         latitude: data.latitude ?? 0, 
         longitude: data.longitude ?? 0,
@@ -276,33 +276,28 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                             key={skill}
                             name="skills"
                             control={control}
-                            render={({ field }) => {
-                               const currentSkill = field.value?.find(s => s.name === skill);
-                               return (
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`skill-${skill}`}
-                                        checked={!!currentSkill}
-                                        onCheckedChange={(checked) => {
-                                            const newSkills = checked
-                                                ? [...(field.value || []), { name: skill }]
-                                                : (field.value || []).filter((s) => s.name !== skill);
-                                            field.onChange(newSkills);
-                                        }}
-                                    />
-                                    <Label htmlFor={`skill-${skill}`} className="font-normal cursor-pointer">{skill}</Label>
-                                  </div>
-                                  {currentSkill?.certificateUrl ? (
-                                     <Link href={currentSkill.certificateUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
-                                        <Paperclip className="h-3 w-3" /> View Cert.
-                                    </Link>
-                                  ) : (
-                                    currentSkill && <span className="text-xs text-muted-foreground italic">No cert.</span>
-                                  )}
-                                </div>
-                               )
-                            }}
+                            render={({ field }) => (
+                              <div className="flex items-center">
+                                <Checkbox
+                                  id={`skill-${skill}`}
+                                  checked={field.value?.includes(skill)}
+                                  onCheckedChange={(checked) => {
+                                    const newSkills = checked
+                                      ? [...(field.value || []), skill]
+                                      : (field.value || []).filter(
+                                          (s) => s !== skill
+                                        );
+                                    field.onChange(newSkills);
+                                  }}
+                                />
+                                <Label
+                                  htmlFor={`skill-${skill}`}
+                                  className="ml-2 font-normal cursor-pointer"
+                                >
+                                  {skill}
+                                </Label>
+                              </div>
+                            )}
                           />
                         ))}
                         {allSkills.length === 0 && (

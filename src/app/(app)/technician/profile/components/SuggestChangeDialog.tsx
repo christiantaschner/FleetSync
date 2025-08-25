@@ -42,7 +42,7 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
   const [email, setEmail] = useState(technician.email);
   const [phone, setPhone] = useState(technician.phone);
   const [notes, setNotes] = useState('');
-  const [selectedSkills, setSelectedSkills] = useState<TechnicianSkill[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -58,46 +58,13 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
   const handleSkillToggle = (skillName: string) => {
     setSelectedSkills(prevSkills => {
-      const isSelected = prevSkills.some(s => s.name === skillName);
-      if (isSelected) {
-        return prevSkills.filter(s => s.name !== skillName);
+      if (prevSkills.includes(skillName)) {
+        return prevSkills.filter(s => s !== skillName);
       } else {
-        return [...prevSkills, { name: skillName }];
+        return [...prevSkills, skillName];
       }
     });
   };
-
-  const handleFileUpload = async (skillName: string, file: File) => {
-    if (!user || !appId) return;
-    setIsUploading(skillName);
-    const result = await uploadCertificateAction({
-      technicianId: user.uid,
-      skillName,
-      file,
-      appId,
-    });
-    setIsUploading(null);
-
-    if (result.error) {
-      toast({ title: "Upload Failed", description: result.error, variant: "destructive" });
-    } else if (result.data) {
-      setSelectedSkills(prev => prev.map(skill => 
-        skill.name === skillName 
-          ? { ...skill, certificateUrl: result.data!.url, certificateFileName: result.data!.fileName }
-          : skill
-      ));
-      toast({ title: "Upload Successful", description: `${result.data.fileName} is ready to be submitted for review.` });
-    }
-  };
-
-  const handleRemoveCertificate = (skillName: string) => {
-     setSelectedSkills(prev => prev.map(skill => 
-        skill.name === skillName 
-          ? { name: skillName } // Remove certificate fields
-          : skill
-      ));
-  };
-
 
   const handleSubmit = async () => {
     if (!user || !userProfile?.companyId) {
@@ -117,7 +84,7 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
 
     // Compare skill arrays, accounting for order
     const initialSkills = technician.skills || [];
-    if (!isEqual(initialSkills.sort((a,b) => a.name.localeCompare(b.name)), selectedSkills.sort((a,b) => a.name.localeCompare(b.name)))) {
+    if (!isEqual(initialSkills.sort(), selectedSkills.sort())) {
         requestedChanges.skills = selectedSkills;
     }
 
@@ -169,46 +136,23 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
                     <Input id="change-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
                 </div>
                 <div>
-                    <Label className="flex items-center gap-2"><ListChecks /> Skills & Certifications</Label>
+                    <Label className="flex items-center gap-2"><ListChecks /> Skills</Label>
                     <ScrollArea className="h-40 rounded-md border p-3 mt-1">
                     <div className="space-y-3">
                         {allSkills.length === 0 && <p className="text-sm text-muted-foreground">No skills defined in library.</p>}
                         {allSkills.map(skillName => {
-                            const currentSkill = selectedSkills.find(s => s.name === skillName);
                             return (
                                 <div key={skillName} className="flex items-center justify-between">
                                     <div className="flex items-center space-x-2">
                                         <Checkbox
                                             id={`skill-req-${skillName.replace(/\s+/g, '-')}`}
-                                            checked={!!currentSkill}
+                                            checked={selectedSkills.includes(skillName)}
                                             onCheckedChange={() => handleSkillToggle(skillName)}
                                         />
                                         <Label htmlFor={`skill-req-${skillName.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
                                             {skillName}
                                         </Label>
                                     </div>
-                                    {currentSkill && (
-                                      <div>
-                                        {currentSkill.certificateUrl ? (
-                                          <div className="flex items-center gap-1">
-                                            <Link href={currentSkill.certificateUrl} target="_blank" className="text-xs font-medium text-primary hover:underline truncate max-w-[100px]">{currentSkill.certificateFileName}</Link>
-                                            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => handleRemoveCertificate(skillName)}><X className="h-3 w-3"/></Button>
-                                          </div>
-                                        ) : (
-                                          <Button variant="outline" size="sm" className="h-7" onClick={() => document.getElementById(`file-upload-${skillName}`)?.click()} disabled={isUploading === skillName}>
-                                              {isUploading === skillName ? <Loader2 className="h-4 w-4 animate-spin"/> : <Upload className="h-3 w-3 mr-1.5" />}
-                                              Cert.
-                                          </Button>
-                                        )}
-                                        <input 
-                                          type="file" 
-                                          id={`file-upload-${skillName}`} 
-                                          className="hidden" 
-                                          accept=".pdf"
-                                          onChange={(e) => e.target.files?.[0] && handleFileUpload(skillName, e.target.files[0])}
-                                        />
-                                      </div>
-                                    )}
                                 </div>
                             )
                         })}

@@ -1,4 +1,5 @@
 
+
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -142,7 +143,6 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDuration: number;
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -172,6 +172,7 @@ export type Job = {
   travelDistanceKm?: number;
   co2EmissionsKg?: number;
   invoiceId?: string;
+  // Profit-aware dispatching fields
   quotedValue?: number;
   expectedPartsCost?: number;
   slaDeadline?: string;
@@ -180,6 +181,7 @@ export type Job = {
   flexibility?: JobFlexibility;
   profitScore?: number;
   dispatchLocked?: boolean;
+  estimatedDurationMinutes?: number;
 };
 
 export const CustomerSchema = z.object({
@@ -820,3 +822,4 @@ export const RunReportAnalysisOutputSchema = z.object({
     quickWins: z.array(z.string()).describe("A list of simple actions the user can take right now for an immediate impact."),
 });
 export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;
+    

@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -34,12 +34,15 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onViewOnMap,
     onShareTracking,
 }) => {
+  const isLocked = job.dispatchLocked || job.flexibility === 'fixed';
+  
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: job.id,
     data: {
       type: 'job',
       job,
     },
+    disabled: isLocked,
   });
 
   const style = transform ? {
@@ -74,17 +77,26 @@ const JobListItem: React.FC<JobListItemProps> = ({
   const isUnassigned = job.status === 'Unassigned' && !job.assignedTechnicianId;
   const isRoutable = (job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress') && job.assignedTechnicianId;
   const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
-
-  return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+  
+  const JobCardWrapper = ({ children }: { children: React.ReactNode }) => (
+     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
         <Card className={cn(
-          "hover:shadow-md transition-shadow duration-200 cursor-grab",
+          "hover:shadow-md transition-shadow duration-200",
+          !isLocked && "cursor-grab",
+          isLocked && "cursor-not-allowed",
           isHighPriorityUnassigned && "border-destructive bg-destructive/5",
           isMediumOrLowPriorityUnassigned && "border-amber-400 bg-amber-50",
-          (isDraft || isFlexible) && "border-dashed",
+          isFlexible && !isDraft && "border-dashed",
           isDraft && "border-gray-400 bg-gray-50/50"
         )}>
-          <CardHeader className="pb-3">
+            {children}
+        </Card>
+     </div>
+  );
+
+  const cardContent = (
+    <>
+        <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <CardTitle className={cn("text-lg font-headline flex items-start gap-2", 
@@ -102,14 +114,26 @@ const JobListItem: React.FC<JobListItemProps> = ({
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  {job.dispatchLocked && (
+                  {isLocked && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                           <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Job is locked and cannot be moved by the optimizer.</p>
+                          <p>Job is locked and cannot be moved by the optimizer or drag-and-drop.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                   {isFlexible && (
+                     <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Repeat className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This is a flexible job that can be moved by the optimizer.</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -188,10 +212,27 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 </Button>
             </Link>
           </CardFooter>
-        </Card>
-    </div>
+    </>
   );
+  
+  if (isLocked) {
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <JobCardWrapper>{cardContent}</JobCardWrapper>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>This job is locked and cannot be moved by drag-and-drop.</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    )
+  }
+
+  return <JobCardWrapper>{cardContent}</JobCardWrapper>;
 };
 
 export default JobListItem;
 
+    

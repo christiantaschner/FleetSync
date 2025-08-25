@@ -257,7 +257,7 @@ export async function checkScheduleHealthAction(
             jobId: currentJob.id,
             location: currentJob.location,
             startedAt: currentJob.inProgressAt,
-            estimatedDurationMinutes: currentJob.estimatedDuration || 60,
+            estimatedDurationMinutes: currentJob.estimatedDurationMinutes || 60,
           },
           nextJob: {
             jobId: nextJob.id,
@@ -731,3 +731,4 @@ export async function runReportAnalysisAction(
         return { data: null, error: errorMessage };
     }
 }
+    

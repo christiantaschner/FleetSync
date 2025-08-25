@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, BookUser
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, PhoneIncoming, BookUser
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -184,6 +184,12 @@ const roadmapFeatures = {
   ],
   planned: [
      {
+      title: "Twilio Voice Integration",
+      description: "Handle incoming customer calls directly within the FleetSync app. A pop-up will alert dispatchers of incoming calls, allowing them to create a new job ticket instantly with pre-filled customer information, linking the call recording to the job record.",
+      icon: PhoneIncoming,
+      status: "Planned",
+    },
+    {
       title: "QuickBooks & Xero Integration",
       description: "Seamlessly sync customers, invoices, and payments with QuickBooks Online and Xero to eliminate double-entry and make FleetSync your true 'job-to-cash' system of record. Requires a secure OAuth 2.0 connection.",
       icon: Building2,
@@ -205,12 +211,6 @@ const roadmapFeatures = {
       title: "Automated Geo-Fenced Status Updates",
       description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart for the next location.",
       icon: Target,
-      status: "Planned",
-    },
-    {
-      title: "Integrated Customer Notifications (SMS/Email)",
-      description: "Connect to a third-party service like Twilio to send automated notifications (e.g., confirmations, 'On My Way' alerts) directly to customers via SMS and email, replacing the current simulation.",
-      icon: MessageSquare,
       status: "Planned",
     },
   ],

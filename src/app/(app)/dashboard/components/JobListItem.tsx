@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -55,6 +55,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
 
   const isHighPriorityUnassigned = job.priority === 'High' && job.status === 'Unassigned';
   const isMediumOrLowPriorityUnassigned = (job.priority === 'Medium' || job.priority === 'Low') && job.status === 'Unassigned';
+  const isFlexible = job.flexibility === 'flexible';
   const isDraft = job.status === 'Draft';
   
   const isUnassigned = job.status === 'Unassigned' && !job.assignedTechnicianId;
@@ -66,7 +67,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
       "hover:shadow-md transition-shadow duration-200",
       isHighPriorityUnassigned && "border-destructive bg-destructive/5",
       isMediumOrLowPriorityUnassigned && "border-amber-400 bg-amber-50",
-      isDraft && "border-dashed border-gray-400 bg-gray-50/50"
+      (isDraft || isFlexible) && "border-dashed",
+      isDraft && "border-gray-400 bg-gray-50/50"
     )}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-4">
@@ -86,6 +88,18 @@ const JobListItem: React.FC<JobListItemProps> = ({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              {job.dispatchLocked && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Job is locked and cannot be moved by the optimizer.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
               <span className="truncate">{job.title}</span>
             </CardTitle>
             <CardDescription className="flex items-center gap-1 text-sm mt-1">

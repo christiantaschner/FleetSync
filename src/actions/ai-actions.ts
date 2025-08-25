@@ -334,7 +334,11 @@ export async function notifyCustomerAction(
     // For this demo, we'll log it and return the message to be displayed in a toast.
     console.log(JSON.stringify({
         message: `Simulating notification for job ${input.jobId}: "${message}"`,
-        severity: "INFO"
+        severity: "INFO",
+        payload: {
+            to: (await getDoc(jobDocRef)).data()?.customerPhone,
+            body: message
+        }
     }));
     
     return { data: { message }, error: null };

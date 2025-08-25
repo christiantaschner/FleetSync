@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState } from 'react';
@@ -14,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle, Bot } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle, Bot, Sparkles } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { Switch } from '@/components/ui/switch';
@@ -95,6 +94,14 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         companySpecialties: company.settings?.companySpecialties || [],
         otherSpecialty: company.settings?.otherSpecialty || '',
         hideHelpButton: company.settings?.hideHelpButton || false,
+        featureFlags: {
+            profitScoringEnabled: company.settings?.featureFlags?.profitScoringEnabled ?? true,
+            autoDispatchEnabled: company.settings?.featureFlags?.autoDispatchEnabled ?? true,
+            rescheduleCustomerJobsEnabled: company.settings?.featureFlags?.rescheduleCustomerJobsEnabled ?? true,
+            quickbooksEnabled: company.settings?.featureFlags?.quickbooksEnabled ?? false,
+            xeroEnabled: company.settings?.featureFlags?.xeroEnabled ?? false,
+            callTrackingEnabled: company.settings?.featureFlags?.callTrackingEnabled ?? false,
+        },
       },
     },
   });
@@ -159,6 +166,54 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                 />
             </div>
         </div>
+      
+      <Separator />
+
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><Sparkles /> Feature Flags</h3>
+         <p className="text-sm text-muted-foreground">Enable or disable advanced AI and integration features for your company.</p>
+         <div className="space-y-4 rounded-md border p-4">
+            <div className="flex items-center space-x-2">
+                <Controller name="settings.featureFlags.profitScoringEnabled" control={control} render={({ field }) => ( <Switch id="profitScoringEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
+                <div>
+                    <Label htmlFor="profitScoringEnabled">Profit-Aware Dispatch</Label>
+                    <p className="text-sm text-muted-foreground">Enables AI suggestions based on profitability metrics, not just logistics.</p>
+                </div>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Controller name="settings.featureFlags.autoDispatchEnabled" control={control} render={({ field }) => ( <Switch id="autoDispatchEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
+                <div>
+                    <Label htmlFor="autoDispatchEnabled">Automatic Job Assignment</Label>
+                    <p className="text-sm text-muted-foreground">Allow AI to automatically assign new high-priority jobs to the best technician.</p>
+                </div>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Controller name="settings.featureFlags.rescheduleCustomerJobsEnabled" control={control} render={({ field }) => ( <Switch id="rescheduleCustomerJobsEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
+                <div>
+                    <Label htmlFor="rescheduleCustomerJobsEnabled">AI Schedule Conflict Resolution</Label>
+                    <p className="text-sm text-muted-foreground">Allow AI to suggest rescheduling or reassigning jobs to resolve schedule conflicts.</p>
+                </div>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Controller name="settings.featureFlags.quickbooksEnabled" control={control} render={({ field }) => ( <Switch id="quickbooksEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
+                <div>
+                    <Label htmlFor="quickbooksEnabled">Enable QuickBooks Integration</Label>
+                </div>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Controller name="settings.featureFlags.xeroEnabled" control={control} render={({ field }) => ( <Switch id="xeroEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
+                <div>
+                    <Label htmlFor="xeroEnabled">Enable Xero Integration</Label>
+                </div>
+            </div>
+             <div className="flex items-center space-x-2">
+                <Controller name="settings.featureFlags.callTrackingEnabled" control={control} render={({ field }) => ( <Switch id="callTrackingEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
+                <div>
+                    <Label htmlFor="callTrackingEnabled">Enable Call Tracking Integration</Label>
+                </div>
+            </div>
+         </div>
+      </div>
       
       <Separator />
       

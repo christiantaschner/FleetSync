@@ -1,4 +1,3 @@
-
 "use client";
 
 import dynamic from 'next/dynamic';
@@ -15,5 +14,10 @@ const ReportClientView = dynamic(() => import('./components/ReportClientView'), 
 });
 
 export default function ReportsPage() {
-  return <ReportClientView />;
+  return (
+    <>
+      <MockModeBanner />
+      <ReportClientView />
+    </>
+  );
 }

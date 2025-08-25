@@ -17,7 +17,7 @@ import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from
 import { Label } from '@/components/ui/label';
 import { Loader2, UserCheck, Bot } from 'lucide-react';
 import { db } from '@/lib/firebase';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -60,7 +60,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
           technicianId: t.id,
           technicianName: t.name,
           isAvailable: t.isAvailable,
-          skills: t.skills.map(s => s.name) || [],
+          skills: t.skills || [],
           liveLocation: t.location,
           homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
           currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
@@ -69,9 +69,13 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
               scheduledTime: j.scheduledTime,
               priority: j.priority,
               location: j.location,
+              estimatedDurationMinutes: j.estimatedDuration
             })),
           workingHours: t.workingHours,
           isOnCall: t.isOnCall,
+          hourlyCost: t.hourlyCost,
+          vanInventory: t.vanInventory,
+          maxDailyHours: t.maxDailyHours,
         }));
         
         const input = {
@@ -80,8 +84,9 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             jobPriority: jobToAssign.priority,
             requiredSkills: jobToAssign.requiredSkills,
             scheduledTime: jobToAssign.scheduledTime,
-            jobValue: jobToAssign.jobValue,
-            slaPenalty: jobToAssign.slaPenalty,
+            quotedValue: jobToAssign.quotedValue,
+            expectedPartsCost: jobToAssign.expectedPartsCost,
+            slaPenalty: 0, // Placeholder
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
         };
@@ -131,24 +136,31 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
 
 
     try {
+      const batch = writeBatch(db);
       const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, jobToAssign.id);
-      await updateDoc(jobDocRef, {
+      
+      const updatePayload: any = {
         assignedTechnicianId: selectedTechnicianId,
         status: 'Assigned' as Job['status'],
         updatedAt: serverTimestamp(),
         assignedAt: serverTimestamp(),
-      });
+      };
+
+      if (wasOriginallySuggested && suggestedTechnician?.profitScore) {
+        updatePayload.profitScore = suggestedTechnician.profitScore;
+      }
+      
+      batch.update(jobDocRef, updatePayload);
       
       const updatedJob: Job = { 
         ...jobToAssign, 
-        assignedTechnicianId: selectedTechnicianId,
-        status: 'Assigned',
+        ...updatePayload,
         updatedAt: new Date().toISOString(),
         assignedAt: new Date().toISOString(),
       };
 
       const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, selectedTechnicianId);
-      await updateDoc(techDocRef, {
+      batch.update(techDocRef, {
         isAvailable: false,
         currentJobId: jobToAssign.id,
       });
@@ -158,6 +170,8 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         isAvailable: false,
         currentJobId: jobToAssign.id,
       };
+
+      await batch.commit();
       
       onJobAssigned(updatedJob, updatedTechnician);
       toast({ title: "Job Assigned", description: `Job "${updatedJob.title}" assigned to ${assignedTechDetails?.name}.`});

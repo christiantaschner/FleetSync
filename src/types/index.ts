@@ -105,7 +105,7 @@ export type Technician = {
   location: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
-  // New profit-aware fields
+  // Profit-aware fields
   hourlyCost?: number;
   vanInventory?: string[]; // Array of part IDs
   maxDailyHours?: number;
@@ -130,7 +130,7 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDurationMinutes: number;
+  estimatedDuration: number; // Changed from estimatedDurationMinutes
   durationUnit?: 'hours' | 'days';
   createdAt: string;
   updatedAt: string;
@@ -163,15 +163,15 @@ export type Job = {
   invoiceUrl?: string;
   invoiceUploadedAt?: string;
   invoiceUploadedBy?: string;
-  // Profit-aware fields (new)
+  // Profit-aware fields
   quotedValue?: number;
   expectedPartsCost?: number;
   slaDeadline?: string;
   upsellScore?: number;
-  // Scheduling constraint fields (new)
+  // Scheduling constraint fields
   fixedWindow?: { start: string, end: string };
   flexibility?: JobFlexibility;
-  // AI-computed fields (new)
+  // AI-computed fields
   profitScore?: number;
   dispatchLocked?: boolean;
 };
@@ -363,6 +363,7 @@ export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 export const AllocateJobOutputSchema = z.object({
   suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
   reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
+  profitScore: z.number().optional().describe('The calculated profit score for this assignment, normalized per hour.'),
 });
 export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 
@@ -373,8 +374,14 @@ export const AllocateJobInputSchema = z.object({
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
-  jobValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
+  // Profit-aware fields
+  quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
+  expectedPartsCost: z.number().optional().describe('The anticipated cost of parts for this job.'),
+  slaDeadline: z.string().optional().describe('The ISO 8601 timestamp for the Service Level Agreement deadline.'),
   slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
+  upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
+  // New fields from user request
+  durationEstimate: z.number().optional().describe('Estimated duration of the job in minutes.'),
   isAfterHours: z.boolean().optional().describe('Whether the job is scheduled for after standard business hours, potentially incurring higher technician costs.'),
   technicianAvailability: z.array(
     z.object({
@@ -395,6 +402,10 @@ export const AllocateJobInputSchema = z.object({
         estimatedDurationMinutes: z.number().optional(),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
+      // Profit-aware technician fields
+      hourlyCost: z.number().optional().describe('The total hourly cost of this technician (wages + overhead).'),
+      vanInventory: z.array(z.string()).optional().describe('A list of part IDs currently in the technician\'s van.'),
+      maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),

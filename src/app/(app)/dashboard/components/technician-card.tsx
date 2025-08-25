@@ -7,7 +7,7 @@ import { MapPin, Briefcase, Phone, Mail, Circle, Edit, AlertOctagon, Package, Ca
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import type { Technician, Job, Location, TechnicianSkill } from '@/types';
+import type { Technician, Job, Location } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -124,8 +124,8 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
           <div className="flex flex-wrap gap-1">
             {(technician.skills && technician.skills.length > 0) ? (
               <>
-                {technician.skills.slice(0, 3).map((skill: TechnicianSkill) => (
-                  <Badge key={skill.name} variant="secondary">{skill.name}</Badge>
+                {technician.skills.slice(0, 3).map((skill: string) => (
+                  <Badge key={skill} variant="secondary">{skill}</Badge>
                 ))}
                 {technician.skills.length > 3 && (
                   <Badge variant="outline">+{technician.skills.length - 3} more</Badge>
@@ -142,7 +142,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
             <p className="font-medium text-foreground">Current Job:</p>
              <div className="h-10 flex items-center">
                  {currentJob ? (
-                    <Link href={`/technician/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
+                    <Link href={`/job/${currentJob.id}`} className="text-primary hover:underline line-clamp-2">
                         {currentJob.title}
                     </Link>
                 ) : (

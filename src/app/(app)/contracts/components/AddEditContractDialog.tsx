@@ -48,25 +48,35 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
     const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
     
     const getInitialValues = useCallback(() => {
-        if (contract) return contract;
-        if (prefilledData) return { ...prefilledData, frequency: 'Monthly', isActive: true, jobTemplate: { title: '', description: '', priority: 'Medium', estimatedDuration: 1, durationUnit: 'hours' }, startDate: new Date().toISOString() };
-        return {
+        const base = contract || prefilledData;
+        const defaults = {
             companyId: userProfile?.companyId || '',
             customerName: '',
             customerPhone: '',
             customerAddress: '',
-            frequency: 'Monthly',
-            startDate: new Date().toISOString(),
+            frequency: 'Monthly' as const,
             isActive: true,
             jobTemplate: {
                 title: '',
                 description: '',
-                priority: 'Medium',
-                estimatedDuration: 1,
-                durationUnit: 'hours',
+                priority: 'Medium' as const,
+                estimatedDurationMinutes: 60,
                 requiredSkills: [],
-            }
+            },
+            startDate: new Date().toISOString(),
         };
+
+        if (base) {
+            return {
+                ...defaults,
+                ...base,
+                jobTemplate: {
+                    ...defaults.jobTemplate,
+                    ...base.jobTemplate,
+                },
+            };
+        }
+        return defaults;
     }, [contract, prefilledData, userProfile]);
 
     const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<Contract>({
@@ -272,24 +282,9 @@ const AddEditContractDialog: React.FC<AddEditContractDialogProps> = ({ isOpen, o
                                 />
                             </div>
                             <div>
-                                <Label htmlFor="jobTemplate.estimatedDuration">Estimated Duration *</Label>
-                                <div className="flex items-center gap-2">
-                                <Input id="jobTemplate.estimatedDuration" type="number" {...register('jobTemplate.estimatedDuration', { valueAsNumber: true })} />
-                                <Controller
-                                    name="jobTemplate.durationUnit"
-                                    control={control}
-                                    render={({ field }) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="hours">Hours</SelectItem>
-                                                <SelectItem value="days">Days</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    )}
-                                />
-                                </div>
-                                {errors.jobTemplate?.estimatedDuration && <p className="text-destructive text-sm mt-1">{errors.jobTemplate.estimatedDuration.message}</p>}
+                                <Label htmlFor="jobTemplate.estimatedDurationMinutes">Estimated Duration (minutes) *</Label>
+                                <Input id="jobTemplate.estimatedDurationMinutes" type="number" {...register('jobTemplate.estimatedDurationMinutes', { valueAsNumber: true })} />
+                                {errors.jobTemplate?.estimatedDurationMinutes && <p className="text-destructive text-sm mt-1">{errors.jobTemplate.estimatedDurationMinutes.message}</p>}
                             </div>
                         </div>
                         <div className="flex items-center space-x-2 pt-2">

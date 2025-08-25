@@ -54,6 +54,9 @@ export const FeatureFlagsSchema = z.object({
     profitScoringEnabled: z.boolean().optional(),
     autoDispatchEnabled: z.boolean().optional(),
     rescheduleCustomerJobsEnabled: z.boolean().optional(),
+    quickbooksEnabled: z.boolean().optional(),
+    xeroEnabled: z.boolean().optional(),
+    callTrackingEnabled: z.boolean().optional(),
 });
 export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
 
@@ -113,10 +116,11 @@ export type Technician = {
   location: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
-  // Profit-aware fields
   hourlyCost?: number;
   vanInventory?: string[]; // Array of part IDs
   maxDailyHours?: number;
+  currentRoute?: string[];
+  active?: boolean;
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
@@ -138,8 +142,7 @@ export type Job = {
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDuration: number; // Changed from estimatedDurationMinutes
-  durationUnit?: 'hours' | 'days';
+  estimatedDurationMinutes: number;
   createdAt: string;
   updatedAt: string;
   notes?: string;
@@ -162,24 +165,19 @@ export type Job = {
   trackingTokenExpiresAt?: string;
   triageToken?: string;
   triageTokenExpiresAt?: string;
-  triageImages?: string[]; // Storing as data URIs or storage URLs
+  triageImages?: string[];
   aiIdentifiedModel?: string;
   aiSuggestedParts?: string[];
   aiRepairGuide?: string;
   travelDistanceKm?: number;
   co2EmissionsKg?: number;
-  invoiceUrl?: string;
-  invoiceUploadedAt?: string;
-  invoiceUploadedBy?: string;
-  // Profit-aware fields
+  invoiceId?: string;
   quotedValue?: number;
   expectedPartsCost?: number;
   slaDeadline?: string;
   upsellScore?: number;
-  // Scheduling constraint fields
-  fixedWindow?: { start: string, end: string };
+  fixedWindow?: { start: string; end: string };
   flexibility?: JobFlexibility;
-  // AI-computed fields
   profitScore?: number;
   dispatchLocked?: boolean;
 };
@@ -245,6 +243,9 @@ export type AITechnician = {
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
   hasCustomerHistory?: boolean;
+  hourlyCost?: number;
+  vanInventory?: string[];
+  maxDailyHours?: number;
 };
 
 export type ProfileChangeRequest = {
@@ -287,8 +288,7 @@ export const ContractSchema = z.object({
         title: z.string().min(1, "Job title is required."),
         description: z.string().optional(),
         priority: z.enum(['High', 'Medium', 'Low']),
-        estimatedDuration: z.number({required_error: "Estimated duration is required."}).positive("Duration must be positive."),
-        durationUnit: z.enum(['hours', 'days']).optional(),
+        estimatedDurationMinutes: z.number({required_error: "Estimated duration is required."}).positive("Duration must be positive."),
         requiredSkills: z.array(z.string()).optional(),
         requiredParts: z.array(z.string()).optional(),
     }),
@@ -336,6 +336,8 @@ export const CustomerDataSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   createdAt: z.string(),
+  preferredContactMethod: z.enum(['sms', 'email', 'phone']).optional(),
+  history: z.array(z.string()).optional(),
 });
 export type CustomerData = z.infer<typeof CustomerDataSchema>;
 
@@ -382,13 +384,11 @@ export const AllocateJobInputSchema = z.object({
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
-  // Profit-aware fields
   quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
   expectedPartsCost: z.number().optional().describe('The anticipated cost of parts for this job.'),
   slaDeadline: z.string().optional().describe('The ISO 8601 timestamp for the Service Level Agreement deadline.'),
   slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
   upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
-  // New fields from user request
   durationEstimate: z.number().optional().describe('Estimated duration of the job in minutes.'),
   isAfterHours: z.boolean().optional().describe('Whether the job is scheduled for after standard business hours, potentially incurring higher technician costs.'),
   technicianAvailability: z.array(
@@ -410,7 +410,6 @@ export const AllocateJobInputSchema = z.object({
         estimatedDurationMinutes: z.number().optional(),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
-      // Profit-aware technician fields
       hourlyCost: z.number().optional().describe('The total hourly cost of this technician (wages + overhead).'),
       vanInventory: z.array(z.string()).optional().describe('A list of part IDs currently in the technician\'s van.'),
       maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
@@ -818,5 +817,3 @@ export const RunReportAnalysisOutputSchema = z.object({
     quickWins: z.array(z.string()).describe("A list of simple actions the user can take right now for an immediate impact."),
 });
 export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;
-
-    

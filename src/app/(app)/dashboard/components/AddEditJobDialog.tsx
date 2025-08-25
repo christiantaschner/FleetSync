@@ -93,8 +93,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [scheduledTime, setScheduledTime] = useState<Date | undefined>(undefined);
-  const [estimatedDuration, setEstimatedDuration] = useState<number>(1);
-  const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
+  const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState<number>(60);
   const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -126,8 +125,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLatitude(initialData.location?.latitude || null);
     setLongitude(initialData.location?.longitude || null);
     setScheduledTime(initialData.scheduledTime ? new Date(initialData.scheduledTime) : undefined);
-    setEstimatedDuration(initialData.estimatedDuration || 1);
-    setDurationUnit(initialData.durationUnit || 'hours');
+    setEstimatedDurationMinutes(initialData.estimatedDurationMinutes || 60);
     setManualTechnicianId(initialData.assignedTechnicianId || UNASSIGNED_VALUE);
     setSelectedContractId(initialData.sourceContractId || '');
     setSelectedCustomerId(initialData.customerId || null);
@@ -208,7 +206,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       setCustomerName(contract.customerName);
       setCustomerPhone(contract.customerPhone || '');
       setLocationAddress(contract.customerAddress);
-      setSelectedCustomerId(contract.customerId || null);
+      setSelectedCustomerId(contract.id || null);
     }
   };
 
@@ -237,7 +235,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         technicians: technicians.map(tech => ({
             id: tech.id,
             name: tech.name,
-            skills: tech.skills.map(s => s.name),
+            skills: tech.skills.map(s => s),
             jobs: jobs.filter(j => j.assignedTechnicianId === tech.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
                 .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! }))
         }))
@@ -388,7 +386,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       return;
     }
 
-    if (estimatedDuration === undefined || estimatedDuration <= 0) {
+    if (estimatedDurationMinutes === undefined || estimatedDurationMinutes <= 0) {
       toast({ title: "Invalid Duration", description: "Please enter a valid estimated duration greater than 0.", variant: "destructive" });
       return;
     }
@@ -438,8 +436,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         address: locationAddress 
       },
       scheduledTime: finalScheduledTime ? finalScheduledTime.toISOString() : null,
-      estimatedDuration,
-      durationUnit,
+      estimatedDurationMinutes,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
       ...(triageToken && { 
         triageToken: triageToken,
@@ -522,7 +519,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
           updatedAt: serverTimestamp(),
           notes: '',
           photos: [],
-          estimatedDuration: estimatedDuration,
         };
 
         if(techToAssignId) {
@@ -682,26 +678,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor="estimatedDuration">Estimated Duration *</Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                id="estimatedDuration"
-                                type="number"
-                                value={estimatedDuration || ''}
-                                onChange={(e) => setEstimatedDuration(e.target.value ? parseInt(e.target.value, 10) : 1)}
-                                min="1"
-                                placeholder="e.g., 2"
-                            />
-                            <Select value={durationUnit} onValueChange={(value: 'hours' | 'days') => setDurationUnit(value)}>
-                                <SelectTrigger className="w-[120px]">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="hours">Hours</SelectItem>
-                                    <SelectItem value="days">Days</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Label htmlFor="estimatedDurationMinutes">Estimated Duration (minutes) *</Label>
+                        <Input
+                            id="estimatedDurationMinutes"
+                            type="number"
+                            value={estimatedDurationMinutes || ''}
+                            onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 60)}
+                            min="1"
+                            placeholder="e.g., 60"
+                        />
                       </div>
                   </div>
                    <div>

@@ -69,7 +69,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
               scheduledTime: j.scheduledTime,
               priority: j.priority,
               location: j.location,
-              estimatedDurationMinutes: j.estimatedDuration
+              estimatedDurationMinutes: j.estimatedDurationMinutes
             })),
           workingHours: t.workingHours,
           isOnCall: t.isOnCall,

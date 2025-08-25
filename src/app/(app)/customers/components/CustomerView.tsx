@@ -78,7 +78,7 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
 
         if (isMockMode) {
             const jobs = mockJobs.filter(j => j.customerId === selectedCustomer.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            const contracts = mockContracts.filter(c => c.customerId === selectedCustomer.id).sort((a,b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+            const contracts = mockContracts.filter(c => c.customerName === selectedCustomer.name).sort((a,b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
             setSelectedCustomerJobs(jobs);
             setSelectedCustomerContracts(contracts);
             return;
@@ -98,7 +98,7 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
         const contractsQuery = query(
             collection(db, `artifacts/${appId}/public/data/contracts`),
             where('companyId', '==', userProfile.companyId),
-            where('customerId', '==', selectedCustomer.id)
+            where('customerName', '==', selectedCustomer.name)
         );
 
         const unsubJobs = onSnapshot(jobsQuery, (snapshot) => {
@@ -160,7 +160,6 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
       if (!selectedCustomer) return;
       setSelectedContractForEdit(null);
       setPrefilledContractData({
-        customerId: selectedCustomer.id,
         customerName: selectedCustomer.name,
         customerPhone: selectedCustomer.phone || '',
         customerAddress: selectedCustomer.address || '',

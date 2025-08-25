@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -55,6 +56,13 @@ const JobListItem: React.FC<JobListItemProps> = ({
     if (priority === 'Medium') return 'default'; 
     return 'secondary';
   };
+
+  const getProfitScoreColor = (score: number | undefined) => {
+    if (score === undefined) return 'bg-gray-200';
+    if (score > 0) return 'bg-green-500';
+    if (score === 0) return 'bg-yellow-500';
+    return 'bg-red-500';
+  }
 
   const getStatusIcon = (status: Job['status']) => {
     switch (status) {
@@ -144,7 +152,23 @@ const JobListItem: React.FC<JobListItemProps> = ({
                   <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}</span>
                 </CardDescription>
               </div>
-              <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
+               <div className="flex flex-col items-end gap-1">
+                 <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
+                  {job.profitScore !== undefined && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Badge variant="outline" className={cn("border-none", getProfitScoreColor(job.profitScore))}>
+                                  <span className="text-white">${job.profitScore.toFixed(0)}</span>
+                                </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Estimated Profit: ${job.profitScore.toFixed(2)}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                  )}
+               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-3 text-sm pb-3">
@@ -235,3 +259,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
 
 export default JobListItem;
 
+
+
+    

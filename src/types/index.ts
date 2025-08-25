@@ -375,7 +375,7 @@ export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 export const AllocateJobOutputSchema = z.object({
   suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
   reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
-  profitScore: z.number().optional().describe('The calculated profit score for this assignment, normalized per hour.'),
+  profitScore: z.number().optional().describe('The calculated profit score for this assignment.'),
 });
 export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 
@@ -388,7 +388,6 @@ export const AllocateJobInputSchema = z.object({
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
   quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
   expectedPartsCost: z.number().optional().describe('The anticipated cost of parts for this job.'),
-  slaDeadline: z.string().optional().describe('The ISO 8601 timestamp for the Service Level Agreement deadline.'),
   slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
   upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
   durationEstimate: z.number().optional().describe('Estimated duration of the job in minutes.'),
@@ -761,7 +760,7 @@ export const AnswerUserQuestionOutputSchema = z.object({
 });
 export type AnswerUserQuestionOutput = z.infer<typeof AnswerUserQuestionOutputSchema>;
 
-export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
+export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime' | 'profit';
 
 // Re-export AllocateJobInput to be used in server actions without circular dependencies.
 export type AllocateJobActionInput = z.infer<typeof AllocateJobInputSchema> & { appId: string };
@@ -822,4 +821,6 @@ export const RunReportAnalysisOutputSchema = z.object({
     quickWins: z.array(z.string()).describe("A list of simple actions the user can take right now for an immediate impact."),
 });
 export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;
+    
+
     

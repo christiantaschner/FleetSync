@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, PhoneIncoming, BookUser
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -184,9 +184,9 @@ const roadmapFeatures = {
   ],
   planned: [
      {
-      title: "Twilio Voice Integration",
-      description: "Handle incoming customer calls directly within the FleetSync app. A pop-up will alert dispatchers of incoming calls, allowing them to create a new job ticket instantly with pre-filled customer information, linking the call recording to the job record.",
-      icon: PhoneIncoming,
+      title: "Installed Equipment Tracking",
+      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
+      icon: Package,
       status: "Planned",
     },
     {
@@ -202,15 +202,15 @@ const roadmapFeatures = {
       status: "Planned",
     },
     {
-      title: "Installed Equipment Tracking",
-      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
-      icon: Package,
-      status: "Planned",
-    },
-    {
       title: "Automated Geo-Fenced Status Updates",
       description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart for the next location.",
       icon: Target,
+      status: "Planned",
+    },
+    {
+      title: "Integrated Customer Notifications (SMS/Email)",
+      description: "Connect to a third-party service like Twilio to send automated notifications (e.g., confirmations, 'On My Way' alerts) directly to customers via SMS and email, replacing the current simulation.",
+      icon: MessageSquare,
       status: "Planned",
     },
   ],
@@ -221,25 +221,13 @@ const roadmapFeatures = {
       icon: Brain,
       status: "Vision",
     },
-    {
-      title: "Financial Insights & Reporting",
-      description: "Go beyond operational KPIs with integrated financial reporting. Track job profitability, technician revenue, and overall business financial health directly within the application.",
-      icon: TrendingUp,
-      status: "Vision"
-    },
      {
       title: "AI-Powered Parts Suggestion & Van Inventory",
       description: "The AI suggests required parts from triage photos and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
       icon: ShoppingCart,
       status: "Vision",
     },
-    {
-      title: "Online Booking Portal",
-      description: "Offer a seamless, integrated booking experience. Allow new and existing customers to request service and book available time slots directly through your company website or Google My Business profile.",
-      icon: BookUser,
-      status: "Vision",
-    },
-    {
+     {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
@@ -261,6 +249,12 @@ const roadmapFeatures = {
       title: "\"Why this happened\" AI Insights",
       description: "The system will provide explanations for significant deviations. If an ETA was missed or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
       icon: Search,
+      status: "Vision",
+    },
+    {
+      title: "CRM/Accounting Software Integrations",
+      description: "Seamless, automated data flow between FleetSync and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
+      icon: Building2,
       status: "Vision",
     },
     {

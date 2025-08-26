@@ -19,24 +19,24 @@ export default function MarketingPage() {
 
   const benefits = [
     {
-      icon: <TrendingUp className="h-8 w-8 text-primary" />,
+      icon: <Bot className="h-8 w-8 text-primary" />,
       title: "Higher Margins, Automatically",
-      description: "Assign jobs where they deliver the most profit, without lifting a finger.",
+      description: "Boost profit per tech by 15–25% in the first 90 days.",
     },
     {
-      icon: <UserCheck className="h-8 w-8 text-primary" />,
+      icon: <Zap className="h-8 w-8 text-primary" />,
       title: "Smarter Tech Utilization",
-      description: "Keep your top people on the jobs that pay the most.",
+      description: "AI keeps your best techs on your highest-value jobs.",
     },
     {
       icon: <Map className="h-8 w-8 text-primary" />,
       title: "Less Drive Time = More Jobs",
-      description: "Cut wasted miles and fit more profitable work into every day.",
+      description: "Cut wasted miles by 30% and fit 1–2 more calls into every day.",
     },
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
       title: "Fewer Callbacks, Happier Customers",
-      description: "Match skills to jobs correctly the first time.",
+      description: "AI matches skills to jobs so work is done right the first time.",
     },
   ];
   
@@ -192,8 +192,8 @@ export default function MarketingPage() {
               The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br/>
-             <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
+              <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br/>
+              <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-sm text-muted-foreground">On average, businesses boost margins 15-25% in 90 days.</p>
@@ -230,8 +230,8 @@ export default function MarketingPage() {
          <section id="why" className="py-16 sm:py-24">
             <div className="container">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
-                    <div>
-                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💸 Standard Dispatch = Lost Profit</h2>
+                    <div className="bg-red-500/5 p-8 rounded-lg border border-destructive/20">
+                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline text-destructive">💸 Standard Dispatch = Lost Profit</h2>
                         <p className="mt-4 text-lg text-muted-foreground">Every wrong assignment costs you money.</p>
                         <ul className="mt-6 space-y-4">
                             {otherGuysPoints.map((point, index) => (
@@ -263,7 +263,7 @@ export default function MarketingPage() {
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><Check className="text-blue-500"/> Constraints</CardTitle>
-                                    <CardDescription>SLA windows, technician skills, customer preferences</CardDescription>
+                                    <CardDescription>SLA windows, technician skills, preferences</CardDescription>
                                 </CardHeader>
                             </Card>
                          </div>
@@ -276,7 +276,7 @@ export default function MarketingPage() {
         <section id="features" className="bg-muted py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">📈 Why Businesses Switch to Profit-First Dispatching</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">📈 Why Businesses Switch to Profit-First AI Dispatching</h2>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
               {benefits.map((feature) => (
@@ -399,3 +399,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

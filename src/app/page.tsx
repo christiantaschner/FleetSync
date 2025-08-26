@@ -199,43 +199,25 @@ export default function MarketingPage() {
             <Card className="border-destructive/30 bg-destructive/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-destructive flex items-center justify-center gap-2">
-                💸 Standard Dispatch = Lost Profit
+                  💸 Standard Dispatch = Lost Profit
                 </CardTitle>
-                <CardDescription>
-                  Every wrong assignment costs you money.
-                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 flex-grow">
-                <p className="flex items-start gap-2">
-                  <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                  <span>
-                    <strong>$200+ lost</strong> when high-value jobs go to the
-                    wrong tech
-                  </span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                  <span>
-                    <strong>1 hour/day</strong> wasted in drive time per
-                    technician
-                  </span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                  <span>
-                    <strong>$300 SLA penalties</strong> per missed window
-                  </span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                  <span>
-                    <strong>Upsells lost</strong> to under-skilled techs
-                  </span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                  <span>Busy all day. <strong>No profit growth.</strong></span>
-                </p>
+              <CardContent className="space-y-4 flex-grow">
+                <p className="text-sm text-center text-destructive-foreground/80">Traditional dispatch focuses on "who's closest?", ignoring the financial impact of each decision.</p>
+                <div className="space-y-3 pt-2">
+                    <p className="flex items-start gap-3">
+                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                        <span>Jobs are assigned based on location only, ignoring revenue, upsell potential, SLA premiums, or after-hours surcharges.</span>
+                    </p>
+                    <p className="flex items-start gap-3">
+                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                        <span>Businesses accidentally lose money on high-cost, low-value jobs without realizing it.</span>
+                    </p>
+                    <p className="flex items-start gap-3">
+                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                        <span>80% of field service companies leave <strong>10-20% of their profit on the table</strong> due to inefficient dispatching.</span>
+                    </p>
+                </div>
               </CardContent>
             </Card>
 

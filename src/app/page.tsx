@@ -13,6 +13,8 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle,
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
@@ -36,7 +38,7 @@ export default function MarketingPage() {
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
       title: "Fewer Callbacks, Happier Customers",
-      description: "AI matches skills to jobs correctly the first time.",
+      description: "AI matches skills to jobs so work is done right the first time.",
     },
   ];
   
@@ -192,8 +194,8 @@ export default function MarketingPage() {
               The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-                <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br/>
-                <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
+              <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br />
+              <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-sm text-muted-foreground">On average, businesses boost margins 15-25% in 90 days.</p>
@@ -295,7 +297,7 @@ export default function MarketingPage() {
         {/* Industry Niches Section */}
         <section className="container py-16 sm:py-24">
              <div className="mx-auto max-w-2xl text-center">
-                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing &amp; More</h2>
+                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing & More</h2>
                  <p className="mt-6 text-lg text-muted-foreground">No matter your trade, the system learns where your margins live — and helps you capture them.</p>
              </div>
              <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -313,78 +315,92 @@ export default function MarketingPage() {
 
         {/* ROI Calculator Section */}
         <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
-          <div className="container px-4">
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div className="text-center lg:text-left">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💵 See Your Profit Gap in Seconds</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">
-                        Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
-                    </p>
-                     <Card className="mt-8 text-left">
-                        <CardHeader>
-                            <CardTitle>Quick ROI Calculator</CardTitle>
-                        </CardHeader>
-                         <CardContent className="space-y-4">
-                             <p className="text-muted-foreground">This feature is coming soon. For now, contact us for a personalized profit analysis!</p>
-                             <Button size="lg" disabled>Calculate My ROI</Button>
-                         </CardContent>
-                    </Card>
-                </div>
-                 <div className="flex justify-center">
-                    <Card className="max-w-md w-full bg-background border-primary ring-2 ring-primary/50 shadow-xl">
-                        <CardHeader>
-                            <CardTitle className="font-headline text-2xl">{t('pricing_plan_title')}</CardTitle>
-                            <CardDescription>One plan. All features. No compromises.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-baseline justify-center gap-2">
-                                <span className="text-5xl font-bold">$69</span>
-                                <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
-                            </div>
-                            <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">{t('get_started_free')}</Link>
-                            </Button>
-                             <ul className="space-y-2 text-sm text-muted-foreground">
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_all_inclusive')}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_all_ai')}</span>
-                                </li>
-                                 <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_no_hidden_fees')}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_cancel_anytime')}</span>
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
+            <div className="container px-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div className="text-center lg:text-left">
+                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💵 See Your Profit Gap in Seconds</h2>
+                        <p className="mt-6 text-lg text-muted-foreground">
+                            Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
+                        </p>
+                        <Card className="mt-8 text-left">
+                            <CardHeader>
+                                <CardTitle>Quick ROI Calculator</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                               <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="techs"># of Technicians</Label>
+                                        <Input id="techs" type="number" defaultValue="5" />
+                                    </div>
+                                     <div className="space-y-1">
+                                        <Label htmlFor="jobs-per-day">Jobs/Day/Tech</Label>
+                                        <Input id="jobs-per-day" type="number" defaultValue="4" />
+                                    </div>
+                               </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="avg-job-value">Avg. Job Value ($)</Label>
+                                    <Input id="avg-job-value" type="number" defaultValue="450" />
+                               </div>
+                                <Button size="lg" disabled>Calculate My ROI</Button>
+                                 <p className="text-xs text-muted-foreground pt-2">ROI Calculator is for demonstration purposes. Contact us for a personalized analysis.</p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="flex justify-center">
+                        <Card className="max-w-md w-full bg-background border-primary ring-2 ring-primary/50 shadow-xl">
+                            <CardHeader>
+                                <CardTitle className="font-headline text-2xl">{t('pricing_plan_title')}</CardTitle>
+                                <CardDescription>One plan. All features. No compromises.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="flex items-baseline justify-center gap-2">
+                                    <span className="text-5xl font-bold">$69</span>
+                                    <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
+                                </div>
+                                <Button asChild size="lg" className="w-full">
+                                    <Link href="/signup">{t('get_started_free')}</Link>
+                                </Button>
+                                <ul className="space-y-2 text-sm text-muted-foreground">
+                                    <li className="flex items-center gap-2">
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <span>{t('pricing_feature_all_inclusive')}</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <span>{t('pricing_feature_all_ai')}</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <span>{t('pricing_feature_no_hidden_fees')}</span>
+                                    </li>
+                                    <li className="flex items-center gap-2">
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <span>{t('pricing_feature_cancel_anytime')}</span>
+                                    </li>
+                                </ul>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
-          </div>
         </section>
 
         {/* CTA Section */}
-        <section className="bg-secondary py-16">
-          <div className="container px-4 text-center">
-            <h2 className="text-3xl font-bold tracking-tight font-headline">🚀 Stop Dispatching. Start Operating Like a Business.</h2>
-            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Your fleet isn’t just a cost center — it’s a profit engine waiting to be optimized. Our system helps you capture more margin, serve customers better, and run your business like the operator you are.
-            </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <Button asChild size="lg">
-                <Link href="/signup">Try It Free</Link>
-              </Button>
-               <Button asChild size="lg" variant="outline">
-                <Link href="/signup">Book a Demo</Link>
-              </Button>
+        <section className="bg-foreground py-16">
+            <div className="container px-4 text-center">
+                 <h2 className="text-3xl font-bold tracking-tight font-headline text-background">🚀 Stop Dispatching. Start Operating Like a Business.</h2>
+                <p className="mx-auto mt-4 max-w-xl text-muted-foreground text-background/80">
+                  Your fleet isn’t just a cost center — it’s a profit engine waiting to be optimized. Our system helps you capture more margin, serve customers better, and run your business like the operator you are.
+                </p>
+                <div className="mt-8 flex justify-center gap-4">
+                  <Button asChild size="lg" variant="secondary">
+                    <Link href="/signup">Try It Free</Link>
+                  </Button>
+                  <Button asChild size="lg" variant="outline" className="bg-transparent text-background border-background hover:bg-background hover:text-foreground">
+                    <Link href="/signup">Book a Demo</Link>
+                  </Button>
+                </div>
             </div>
-          </div>
         </section>
       </main>
 

@@ -48,7 +48,7 @@ export default function MarketingPage() {
   
   const navLinks = [
     { href: "#problem", text: "The Problem" },
-    { href: "#solution", text: "The Solution" },
+    { href: "#ai-knows-business", text: "The Solution" },
     { href: "#features", text: "Features" },
     { href: "#pricing", text: "Pricing" }
   ];
@@ -250,7 +250,7 @@ export default function MarketingPage() {
         </section>
         
         {/* Industry Niches Section */}
-        <section className="bg-muted py-16 sm:py-24">
+        <section id="ai-knows-business" className="bg-muted py-16 sm:py-24">
              <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
@@ -326,7 +326,7 @@ export default function MarketingPage() {
         </section>
 
         {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-primary/5 py-16 sm:py-24">
+        <section id="pricing" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>

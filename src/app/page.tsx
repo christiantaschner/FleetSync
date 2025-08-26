@@ -326,7 +326,7 @@ export default function MarketingPage() {
         </section>
 
         {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-background py-16 sm:py-24">
+        <section id="pricing" className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
@@ -357,7 +357,7 @@ export default function MarketingPage() {
                             <Button onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700 text-white">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
-                                    <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit:</p>
+                                    <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
                                     <p className="text-4xl font-bold text-green-600 mt-1">
                                         {roi.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                     </p>

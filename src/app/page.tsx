@@ -395,8 +395,7 @@ export default function MarketingPage() {
         <section className="bg-gray-900 py-20 sm:py-24">
             <div className="container text-center text-white">
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl font-headline flex items-center justify-center gap-3">
-                    <span className="text-3xl">🚀</span>
-                    Your Most Profitable Quarter Starts Now
+                    Stop Dispatching. Start Operating Like a Business.
                 </h2>
                 <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">

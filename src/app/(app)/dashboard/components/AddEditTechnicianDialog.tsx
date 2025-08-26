@@ -311,7 +311,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                           />
                         ))}
                         {allSkills.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
+                          <p className="text-sm text-muted-foreground text-center py-4">No skills defined in library.</p>
                         )}
                       </div>
                     </ScrollArea>

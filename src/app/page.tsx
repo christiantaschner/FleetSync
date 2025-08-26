@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain, Rocket } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -116,7 +116,7 @@ export default function MarketingPage() {
               <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
-              <Button asChild variant="outline" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+              <Button asChild variant="default" className="bg-green-600 text-white hover:bg-green-700">
                   <Link href="/signup">{t('start_free_trial')}</Link>
               </Button>
             </div>
@@ -145,7 +145,7 @@ export default function MarketingPage() {
                              </SheetClose>
                              <SheetClose asChild>
                                 <Link href="/signup" className="w-full">
-                                    <Button className="w-full">{t('start_free_trial')}</Button>
+                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">{t('start_free_trial')}</Button>
                                 </Link>
                              </SheetClose>
                        </div>
@@ -163,7 +163,7 @@ export default function MarketingPage() {
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               Stop Dispatching. Start Profiting.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground">
               Assign jobs based on profit per hour, not just proximity. MarginMax makes every job a winning job.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
@@ -392,10 +392,13 @@ export default function MarketingPage() {
         </section>
         
         {/* Final CTA */}
-        <section className="bg-gray-900 text-white py-20 sm:py-24">
-            <div className="container text-center">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Most Profitable Quarter Starts Now</h2>
-                <p className="mt-4 text-lg text-white/90">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
+        <section className="bg-gray-900 py-20 sm:py-24">
+            <div className="container text-center text-white">
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline flex items-center justify-center gap-3">
+                    <Rocket />
+                    Your Most Profitable Quarter Starts Now
+                </h2>
+                <p className="mt-4 text-lg">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
                         <Link href="/signup">Claim Your 30-Day Free Trial</Link>

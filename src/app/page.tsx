@@ -168,7 +168,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <Button asChild size="lg" className="w-full">
+                    <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">
                         <Link href="/signup">Uncover Your Hidden Profit — Free</Link>
                     </Button>
                 </div>
@@ -198,7 +198,7 @@ export default function MarketingPage() {
           <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             <Card className="border-destructive/30 bg-red-50/50 flex flex-col">
               <CardHeader>
-                <CardTitle className="text-2xl font-bold text-red-700 flex items-center gap-3">
+                <CardTitle className="text-2xl font-bold text-red-800 flex items-center gap-3">
                     <span className="text-4xl">💸</span>
                     Standard Dispatch = Lost Profit
                 </CardTitle>
@@ -281,6 +281,24 @@ export default function MarketingPage() {
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
                      <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
                 </div>
+                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                    <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Input jobs with revenue & cost profiles.</h3>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">AI analyzes constraints: tech skills, SLAs, customer preferences.</h3>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Algorithm optimizes assignments for maximum profit per hour.</h3>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">4</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Dispatchers approve or adjust in one click.</h3>
+                    </div>
+                </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {featureList.map((feature) => (
                       <div key={feature.title} className="space-y-1">
@@ -354,7 +372,7 @@ export default function MarketingPage() {
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
                             </div>
-                            <Button onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700">Calculate My Additional Profit</Button>
+                            <Button onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700 text-white">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
                                     <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit:</p>
@@ -382,7 +400,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full">
+                            <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">
                                 <Link href="/signup">Start Your 30-Day Free Trial</Link>
                             </Button>
                         </CardContent>
@@ -397,7 +415,7 @@ export default function MarketingPage() {
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Most Profitable Quarter Starts Now</h2>
                 <p className="mt-4 text-lg text-gray-300">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
-                    <Button asChild size="lg" className="bg-white text-gray-900 hover:bg-gray-200">
+                    <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
                         <Link href="/signup">Claim Your 30-Day Free Trial</Link>
                     </Button>
                 </div>

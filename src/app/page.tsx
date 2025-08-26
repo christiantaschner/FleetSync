@@ -315,18 +315,16 @@ export default function MarketingPage() {
                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing & More</h2>
                  <p className="mt-6 text-lg text-muted-foreground">No matter your trade, the system learns where your margins live — and helps you capture them.</p>
              </div>
-             <div className="mt-12 flex justify-center">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {industryNiches.map((niche) => (
-                        <Card key={niche.name} className="text-center p-6 h-full">
-                            <niche.icon className="h-10 w-10 text-primary mx-auto" />
-                            <h3 className="mt-4 font-semibold text-lg">{niche.name}</h3>
-                            <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
-                            <p className="mt-1 text-sm font-medium">{niche.profitLever}</p>
-                        </Card>
-                    ))}
-                </div>
-             </div>
+             <div className="mt-12 flex flex-wrap justify-center gap-6">
+                {industryNiches.map((niche) => (
+                    <Card key={niche.name} className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
+                        <niche.icon className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">{niche.name}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
+                        <p className="mt-1 text-sm font-medium">{niche.profitLever}</p>
+                    </Card>
+                ))}
+            </div>
         </section>
 
 

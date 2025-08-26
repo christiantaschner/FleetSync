@@ -197,10 +197,10 @@ export default function MarketingPage() {
         <section id="problem" className="py-16 sm:py-24">
           <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             <Card className="border-destructive/30 bg-red-50/50 flex flex-col">
-               <CardHeader>
+              <CardHeader>
                 <CardTitle className="text-2xl font-bold text-red-700 flex items-center gap-3">
-                  <span className="text-4xl">💸</span>
-                   Standard Dispatch = Lost Profit
+                    <span className="text-4xl">💸</span>
+                    Standard Dispatch = Lost Profit
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
@@ -248,38 +248,6 @@ export default function MarketingPage() {
             </Card>
           </div>
         </section>
-
-        {/* 4. How It Works Section */}
-        <section id="solution" className="py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">MarginMax turns your most complex decisions into the easiest part of your day.</p>
-                </div>
-                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-                    <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Enter new jobs with their potential revenue and costs. Our AI instantly assesses their unique profit profile.</p>
-                    </div>
-                     <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Analyze Constraints</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">The AI considers everything: technician skills, current location, drive time, and service level agreements.</p>
-                    </div>
-                     <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Optimize for Profit</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.</p>
-                    </div>
-                     <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">4</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Dispatch with Confidence</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
         
         {/* Industry Niches Section */}
         <section className="bg-muted/50 py-16 sm:py-24">
@@ -321,6 +289,38 @@ export default function MarketingPage() {
                         <p className="text-muted-foreground text-sm">{feature.description}</p>
                       </div>
                     ))}
+                </div>
+            </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section id="solution" className="py-16 sm:py-24 bg-primary/5">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">MarginMax turns your most complex decisions into the easiest part of your day.</p>
+                </div>
+                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                    <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Enter new jobs with their potential revenue and costs. Our AI instantly assesses their unique profit profile.</p>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Analyze Constraints</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI considers everything: technician skills, current location, drive time, and service level agreements.</p>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Optimize for Profit</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.</p>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">4</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Dispatch with Confidence</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click.</p>
+                    </div>
                 </div>
             </div>
         </section>

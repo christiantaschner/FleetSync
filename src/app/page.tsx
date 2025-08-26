@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -17,82 +17,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
 
-  const features = [
-    {
-      icon: <Bot className="h-8 w-8 text-primary" />,
-      title: "Profit-Aware Dispatch",
-      description: "Let our AI analyze skills, live location, and job profitability to suggest the optimal technician for any job in seconds. Eliminate guesswork and manual scheduling.",
-    },
-    {
-      icon: <Smartphone className="h-8 w-8 text-primary" />,
-      title: "Intuitive Technician App",
-      description: "A simple, powerful mobile view for your team. They get clear daily schedules, can update job statuses with a tap, and communicate directly with dispatch.",
-    },
-    {
-      icon: <Shuffle className="h-8 w-8 text-primary" />,
-      title: "Dynamic Route Optimization",
-      description: "A last-minute cancellation? A new emergency? Re-optimize any technician's route with a single click to fill gaps and minimize travel time.",
-    },
-     {
-      icon: <AlertTriangle className="h-8 w-8 text-primary" />,
-      title: "Proactive Risk Alerts",
-      description: "Our system constantly monitors active jobs and warns you if a technician is at risk of being late, giving you time to act before it becomes a customer complaint.",
-    },
-    {
-      icon: <Repeat className="h-8 w-8 text-primary" />,
-      title: "Recurring Service Contracts",
-      description: "Manage maintenance agreements with ease. Automatically generate recurring jobs and use AI to help schedule the next appointment.",
-    },
-    {
-      icon: <ClipboardList className="h-8 w-8 text-primary" />,
-      title: "Complete Digital Work Orders",
-      description: "From pre-work safety checklists to adding notes, capturing photos, and getting customer signatures, everything is handled digitally.",
-    },
-    {
-      icon: <Target className="h-8 w-8 text-primary" />,
-      title: "Customer Live Tracking",
-      description: "Reduce 'where are you?' calls by sending customers a secure, live tracking link to see their technician's ETA on a map.",
-    },
+  const benefits = [
     {
       icon: <TrendingUp className="h-8 w-8 text-primary" />,
-      title: "Actionable Reporting",
-      description: "Track key metrics like first-time-fix rate, on-time arrivals, and profit per job to understand your business performance at a glance.",
-    }
-  ];
-
-  const scenarios = [
-    {
-      icon: <Heart className="h-8 w-8 text-red-500" />,
-      problem: t('scenario_sick_technician_problem'),
-      solution: t('scenario_sick_technician_solution'),
+      title: "Higher Margins, Automatically",
+      description: "Assign jobs where they deliver the most profit, without lifting a finger.",
     },
     {
-      icon: <AlertTriangle className="h-8 w-8 text-amber-500" />,
-      problem: t('scenario_emergency_job_problem'),
-      solution: t('scenario_emergency_job_solution'),
+      icon: <UserCheck className="h-8 w-8 text-primary" />,
+      title: "Smarter Tech Utilization",
+      description: "Keep your top people on the jobs that pay the most.",
     },
     {
-      icon: <Workflow className="h-8 w-8 text-blue-500" />,
-      problem: t('scenario_cancellation_problem'),
-      solution: t('scenario_cancellation_solution'),
-    },
-  ];
-
-  const howItWorksSteps = [
-    {
-      icon: <Briefcase className="h-8 w-8 text-primary" />,
-      title: "1. Create Job",
-      description: "Input new jobs as they come in—from emergency calls to routine maintenance. This is your command center's input.",
+      icon: <Map className="h-8 w-8 text-primary" />,
+      title: "Less Drive Time = More Jobs",
+      description: "Cut wasted miles and fit more profitable work into every day.",
     },
     {
-      icon: <Bot className="h-8 w-8 text-primary" />,
-      title: "2. Let the AI Assign & Optimize",
-      description: "With one click, our AI analyzes all variables—location, traffic, skills, history, and profit potential—to assign the perfect technician and optimize their route instantly.",
-    },
-    {
-      icon: <Star className="h-8 w-8 text-primary" />,
-      title: "3. Track & Grow",
-      description: "Watch your fleet operate with machine-like efficiency. Focus on customer service and growing your business, not on putting out scheduling fires.",
+      icon: <Heart className="h-8 w-8 text-primary" />,
+      title: "Fewer Callbacks, Happier Customers",
+      description: "Match skills to jobs correctly the first time.",
     },
   ];
   
@@ -107,16 +51,19 @@ export default function MarketingPage() {
   };
 
   const otherGuysPoints = [
-    { title: 'Guesswork & Gut Feelings:', description: 'Dispatchers manually juggle schedules, locations, and skills, leading to costly errors and delays.' },
-    { title: 'Reactive Problem-Solving:', description: 'You only find out about a problem (like a traffic jam) when an angry customer calls. It\'s too late to fix it properly.' },
-    { title: 'Scaling Creates Chaos:', description: 'Hiring more technicians means hiring more dispatchers. Your overhead grows, but your efficiency doesn\'t.' }
+    { title: 'High-value jobs get assigned to the wrong tech.'},
+    { title: 'Drive time eats away at margins.' },
+    { title: 'SLA penalties sneak in.' },
+    { title: 'Upsell opportunities are wasted.' }
   ];
 
-  const fleetSyncPoints = [
-    { title: 'Profit-Driven Decisions:', description: 'Our AI analyzes each job\'s profit profile—value, costs, and risk—to make the single most profitable assignment, every time.' },
-    { title: 'Proactive Optimization:', description: 'Our AI sees a delay coming and can suggest an alternative technician before it becomes a problem, protecting your margin and reputation.' },
-    { title: 'Scalable Efficiency:', description: 'Our AI handles 5 or 500 technicians with the same intelligence. Grow your fleet, not your overhead.' }
-  ];
+  const industryNiches = [
+      { name: 'HVAC', icon: Wrench },
+      { name: 'Electrical', icon: Zap },
+      { name: 'Plumbing', icon: Droplets },
+      { name: 'Pest Control', icon: Bug },
+      { name: 'IT Services', icon: Computer }
+  ]
 
   const testimonials = [
     {
@@ -242,28 +189,28 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Stop Planning Routes. Start Dispatching for Profit.
+              Turn Every Job Into Maximum Profit — Not Just Busy Work
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Upgrade from simple scheduling to profit-aware dispatching. FleetSync's AI analyzes job value, costs, and risks to make the most profitable assignment, every time.
+              Stop dispatching based on “who’s closest.” Start assigning based on who makes you the most money. Our AI-powered dispatcher factors in every cost, revenue driver, and business constraint to maximize profit across your entire fleet.
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
-                <Link href="/signup">{t('get_started_free')}</Link>
+                <Link href="#pricing">See How Much Profit You’re Leaving on the Table</Link>
+              </Button>
+               <Button asChild size="lg" variant="outline">
+                <Link href="/signup">Book a Demo</Link>
               </Button>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">{t('no_setup_fee')}</p>
           </div>
         </section>
         
-         {/* Screenshot placeholder */}
+        {/* Screenshot placeholder */}
         <section className="container mt-8 md:-mt-16 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
                 {/* Laptop Mockup */}
                 <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
-                    {/* Laptop screen */}
                     <div className="relative aspect-[16/10] bg-gray-800 rounded-t-xl border-x-4 border-t-4 border-gray-900 pt-8 shadow-lg">
-                        {/* Top bar with camera */}
                         <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                             <div className="w-2 h-2 rounded-full bg-gray-600"></div>
                         </div>
@@ -276,130 +223,69 @@ export default function MarketingPage() {
                             priority
                         />
                     </div>
-                    {/* Laptop base */}
                     <div className="relative h-4 w-full bg-gray-900 rounded-b-xl shadow-lg"></div>
                      <div className="relative mx-auto h-2 w-[55%] bg-gray-800/50 rounded-b-md"></div>
                      <div className="relative mx-auto h-1 w-[45%] bg-gray-700/50 rounded-b-md"></div>
                 </div>
+            </div>
+        </section>
 
-                {/* iPhone Mockup */}
-                 <div className="absolute w-36 sm:w-44 -bottom-16 sm:bottom-0 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
-                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
-                        <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
-                           <Image
-                                src="/dashboard-screenshot-mobile.png"
-                                width={375}
-                                height={812}
-                                alt="FleetSync Technician App Screenshot"
-                                className="w-full h-auto"
-                            />
+        {/* Problem Statement Section */}
+         <section id="why" className="py-16 sm:py-24">
+            <div className="container">
+                <div className="grid md:grid-cols-2 gap-12 items-center">
+                    <div>
+                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 border-2 border-destructive/20 mb-6">
+                            <DollarSign className="h-8 w-8 text-destructive" />
                         </div>
+                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline text-center md:text-left">💸 Standard Dispatch = Lost Profit</h2>
+                        <ul className="mt-6 space-y-4">
+                            {otherGuysPoints.map((point, index) => (
+                                <li key={index} className="flex items-start gap-3">
+                                    <X className="h-5 w-5 text-destructive shrink-0 mt-1" />
+                                    <p className="text-lg text-muted-foreground">{point.title}</p>
+                                </li>
+                            ))}
+                        </ul>
+                         <p className="mt-4 text-lg text-muted-foreground">The result? You stay busy all day… but your profits don’t grow.</p>
+                    </div>
+                    <div className="bg-primary/5 p-8 rounded-lg border">
+                         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💡 Meet the World’s First Profit-First Dispatching System</h2>
+                         <p className="mt-4 text-lg text-muted-foreground">Instead of asking “Who’s nearest?”, our AI asks: “Which assignment makes this job the most profitable for the business?”</p>
+                         <p className="mt-2 text-lg text-muted-foreground">Every job is given a Profit Profile that considers:</p>
+                         <div className="mt-6 grid grid-cols-1 gap-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="text-green-500" /> Revenue Drivers</CardTitle>
+                                    <CardDescription>Quoted value, upsell potential, SLA premiums, after-hours surcharges</CardDescription>
+                                </CardHeader>
+                            </Card>
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg flex items-center gap-2"><DollarSign className="text-red-500" /> Cost Drivers</CardTitle>
+                                    <CardDescription>Labor cost, drive time, parts required, risk of return visit</CardDescription>
+                                </CardHeader>
+                            </Card>
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-lg flex items-center gap-2"><List className="text-blue-500"/> Constraints</CardTitle>
+                                    <CardDescription>SLA windows, technician skills, customer preferences</CardDescription>
+                                </CardHeader>
+                            </Card>
+                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        {/* Industries Section */}
-        <section className="bg-secondary py-12 mt-16 sm:mt-24">
-            <div className="container text-center">
-                <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h2>
-                <div className="mt-6 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">HVAC</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Plumbing</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Electrical</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Landscaping</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pest Control</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pipefitting</Badge>
-                </div>
-            </div>
-        </section>
-        
-        {/* Why Choose Us Section */}
-        <section id="why" className="bg-primary/5 py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Competitors Optimize for Logistics. You Optimize for Profit.</h2>
-                    <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-                        Most dispatch software still forces your team to manually assign jobs based on who is closest. This manual guesswork costs you money. FleetSync automates this critical decision, giving you an unbeatable edge.
-                    </p>
-                </div>
-                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
-                    <Card className="bg-background/80">
-                        <CardHeader>
-                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Old Way (Manual, Logistics-First)</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {otherGuysPoints.map((point, index) => (
-                                <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
-                                    <X className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                                    <div>
-                                        <strong className="font-semibold text-foreground">{point.title}</strong>
-                                        <p className="text-muted-foreground">{point.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
-                        <CardHeader>
-                           <CardTitle className="font-headline text-primary flex items-center gap-2">
-                             <Logo />
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             {fleetSyncPoints.map((point, index) => (
-                                <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
-                                    <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                                    <div>
-                                        <strong className="font-semibold text-foreground">{point.title}</strong>
-                                        <p className="text-muted-foreground">{point.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </section>
-
-        {/* Scenarios Section */}
-        <section className="container py-16 sm:py-24">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('from_nightmare_to_excellence')}</h2>
-              <p className="mt-6 text-lg text-muted-foreground">
-                Real-world problems demand intelligent solutions. See how FleetSync's AI turns daily chaos into a competitive advantage.
-              </p>
-            </div>
-            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-              {scenarios.map((scenario, index) => (
-                <Card key={index} className="flex flex-col text-center bg-secondary/50">
-                  <CardHeader>
-                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background border shadow-sm">
-                        {scenario.icon}
-                      </div>
-                      <CardTitle className="font-headline pt-2">{scenario.problem}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                      <p className="text-muted-foreground">{scenario.solution}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-        </section>
-
-        {/* Features Section */}
+        {/* Benefits Section */}
         <section id="features" className="bg-muted py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
-              <Badge variant="default">{t('our_solution')}</Badge>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">A Smarter Toolkit for a More Efficient Business</h2>
-              <p className="mt-6 text-lg text-muted-foreground">
-                We provide a focused set of powerful, easy-to-use features that solve your biggest operational headaches and deliver an immediate impact.
-              </p>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">📈 Why Businesses Switch to Profit-First Dispatching</h2>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
-              {features.map((feature) => (
+              {benefits.map((feature) => (
                  <div key={feature.title} className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                       {feature.icon}
@@ -409,111 +295,47 @@ export default function MarketingPage() {
                 </div>
               ))}
             </div>
-             <div className="mt-12 text-center">
-                 <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-                    <Bot className="h-5 w-5 text-accent"/>
-                    {t('fleety_title')}
-                </h3>
-                <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">{t('fleety_desc')}</p>
-             </div>
-          </div>
-        </section>
-
-        {/* How it Works Section */}
-        <section className="py-16 sm:py-24">
-          <div className="container text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Center</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">Three simple steps to turning your dispatch process into a competitive advantage.</p>
-            <div className="relative mt-12 grid grid-cols-1 items-start gap-12 md:grid-cols-3">
-              <div className="absolute top-8 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
-              {howItWorksSteps.map((step, index) => (
-                <div key={index} className="relative flex flex-col items-center text-center">
-                   <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary shadow-lg z-10">{index + 1}</div>
-                  <h3 className="mt-4 text-xl font-semibold font-headline">{step.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{step.description}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </section>
         
-        {/* Testimonials Section */}
-        <section className="bg-primary/5 py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the People in the Field and in the Office</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">Don't just take our word for it. Here's how FleetSync is changing the game for dispatchers and technicians.</p>
-                </div>
-                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
-                    {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="flex flex-col text-center p-8 bg-background">
-                        <CardContent className="flex-grow p-0">
-                            <p className="relative text-xl font-medium leading-8 text-foreground">
-                                <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
-                                    <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
-                                </svg>
-                                {testimonial.quote}
-                            </p>
-                        </CardContent>
-                        <footer className="mt-8">
-                            <div className="flex items-center justify-center gap-x-3">
-                                <Avatar>
-                                    <AvatarImage src={testimonial.avatar} alt={testimonial.author} data-ai-hint="person"/>
-                                    <AvatarFallback>{testimonial.author.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="text-base font-semibold">{testimonial.author}</div>
-                                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                                </div>
-                            </div>
-                        </footer>
-                        </Card>
-                    ))}
-                </div>
-            </div>
+        {/* Industry Niches Section */}
+        <section className="container py-16 sm:py-24">
+             <div className="mx-auto max-w-2xl text-center">
+                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing & More</h2>
+                 <p className="mt-6 text-lg text-muted-foreground">Our AI adapts profit-first rules to your trade. Every trade has its own profit levers. Our AI adapts automatically.</p>
+             </div>
+             <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                 {industryNiches.map((niche) => (
+                    <Card key={niche.name} className="text-center p-4">
+                        <niche.icon className="h-8 w-8 text-primary mx-auto" />
+                        <p className="mt-2 font-semibold">{niche.name}</p>
+                    </Card>
+                 ))}
+             </div>
         </section>
 
-        {/* Pricing Section */}
-        <section id="pricing" className="bg-muted py-20 sm:py-24 lg:py-32">
+
+        {/* ROI Calculator Section */}
+        <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div className="text-center md:text-left">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('pricing_roi_title')}</h2>
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="text-center lg:text-left">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💵 See Your Profit Gap in Seconds</h2>
                     <p className="mt-6 text-lg text-muted-foreground">
-                        Stop guessing and start growing. Our simple, transparent pricing is designed to deliver a clear return on investment by boosting efficiency, not your overheads.
+                        Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
                     </p>
-                     <div className="mt-8 space-y-4">
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
-                                <TrendingUp className="h-6 w-6"/>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{t('pricing_benefit_1_title')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_1_desc')}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
-                                <DollarSign className="h-6 w-6"/>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{t('pricing_benefit_2_title')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_2_desc')}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
-                                <Users className="h-6 w-6"/>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{t('pricing_benefit_3_title')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_3_desc')}</p>
-                            </div>
-                        </div>
-                    </div>
+                     <Card className="mt-8 text-left">
+                        <CardHeader>
+                            <CardTitle>Quick ROI Calculator</CardTitle>
+                        </CardHeader>
+                         <CardContent className="space-y-4">
+                             <p className="text-muted-foreground">This feature is coming soon. For now, contact us for a personalized profit analysis!</p>
+                             <Button size="lg" disabled>Calculate My ROI</Button>
+                         </CardContent>
+                    </Card>
                 </div>
                  <div className="flex justify-center">
-                    <Card className="max-w-md w-full border-primary ring-2 ring-primary shadow-xl">
+                    <Card className="max-w-md w-full bg-background border-primary ring-2 ring-primary/50 shadow-xl">
                         <CardHeader>
                             <CardTitle className="font-headline text-2xl">{t('pricing_plan_title')}</CardTitle>
                             <CardDescription>One plan. All features. No compromises.</CardDescription>
@@ -554,13 +376,16 @@ export default function MarketingPage() {
         {/* CTA Section */}
         <section className="bg-secondary py-16">
           <div className="container px-4 text-center">
-            <h2 className="text-3xl font-bold tracking-tight font-headline">{t('ready_to_transform')}</h2>
+            <h2 className="text-3xl font-bold tracking-tight font-headline">🚀 Stop Dispatching. Start Operating Like a Business.</h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              {t('ready_to_transform_desc')}
+              Your fleet isn’t just a cost center — it’s a profit engine waiting to be optimized. Our system helps you capture more margin, serve customers better, and run your business like the operator you are.
             </p>
-            <div className="mt-8">
+            <div className="mt-8 flex justify-center gap-4">
               <Button asChild size="lg">
-                <Link href="/signup">{t('start_free_trial_now')}</Link>
+                <Link href="/signup">Try It Free</Link>
+              </Button>
+               <Button asChild size="lg" variant="outline">
+                <Link href="/signup">Book a Demo</Link>
               </Button>
             </div>
           </div>

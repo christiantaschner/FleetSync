@@ -390,7 +390,7 @@ export const AllocateJobInputSchema = z.object({
   expectedPartsCost: z.number().optional().describe('The anticipated cost of parts for this job.'),
   slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
   upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
-  durationEstimate: z.number().optional().describe('Estimated duration of the job in minutes.'),
+  estimatedDurationMinutes: z.number().optional().describe('Estimated duration of the job in minutes.'),
   isAfterHours: z.boolean().optional().describe('Whether the job is scheduled for after standard business hours, potentially incurring higher technician costs.'),
   technicianAvailability: z.array(
     z.object({
@@ -810,7 +810,15 @@ export const KpiDataSchema = z.object({
 export type KpiData = z.infer<typeof KpiDataSchema>;
 
 export const RunReportAnalysisInputSchema = z.object({
-    kpiData: KpiDataSchema,
+    kpiData: KpiDataSchema.extend({
+        totalProfit: z.number(),
+        slaMisses: z.number(),
+        topTechnician: z.object({
+            technicianId: z.string(),
+            name: z.string(),
+            margin: z.number(),
+        }).nullable(),
+    }),
 });
 export type RunReportAnalysisInput = z.infer<typeof RunReportAnalysisInputSchema>;
 

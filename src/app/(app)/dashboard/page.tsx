@@ -1,8 +1,9 @@
 
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye, Lock, Repeat } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -1255,6 +1256,7 @@ export default function DashboardPage() {
                             <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
                             <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
                             <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
+                             <SelectItem value="profit">Profit</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

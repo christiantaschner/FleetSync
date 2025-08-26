@@ -1,4 +1,5 @@
 
+
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -26,6 +27,8 @@ import {
   Download,
   AlertTriangle,
   Award,
+  TrendingUp,
+  DollarSign
 } from "lucide-react";
 import {
   Card,
@@ -399,17 +402,6 @@ export default function ReportClientView() {
             <KpiCard title="Completed Jobs" value={reportData.kpis.completedJobs} desc="Successfully finished" icon={CheckCircle} tooltipText="What it is: Jobs marked 'Completed'. Action: Compare to 'Total Jobs'. If the ratio is low, check your Job List for bottlenecks or old, unclosed jobs." />
             <KpiCard title="First-Time-Fix Rate" value={`${reportData.kpis.ftfr}%`} desc="Resolved in one visit" icon={ThumbsUp} tooltipText="What it is: The percentage of jobs resolved without a follow-up. Action: Use the AI Summary button to diagnose why repeat visits are needed. This may reveal needs for specific parts or training." />
             <KpiCard title="On-Time Arrival Rate" value={`${reportData.kpis.onTimeArrivalRate}%`} desc="Within 15min of schedule" icon={CalendarClock} tooltipText="What it is: Percentage of jobs started within 15 minutes of the scheduled time. Action: Use the 'Optimize Fleet' and 'Resolve Conflict' AI features on the Schedule tab to improve punctuality." />
-            <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
-            <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={BarChart} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
-            {reportData.kpis.topTechnician && (
-              <KpiCard 
-                title="Top Technician by Margin" 
-                value={reportData.kpis.topTechnician.name} 
-                desc={`Contributed $${reportData.kpis.topTechnician.margin.toFixed(2)}`} 
-                icon={Award}
-                tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
-              />
-            )}
           </CardContent>
           {ftfrFeedbackNotesCount > 0 && (
             <CardFooter className="flex-col items-start gap-2 pt-3 border-t">
@@ -432,6 +424,25 @@ export default function ReportClientView() {
               </Button>
             </CardFooter>
           )}
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Financial Performance</CardTitle>
+            <CardDescription>Key metrics related to profitability and financial outcomes.</CardDescription>
+          </CardHeader>
+           <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+             <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
+             <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Jobs completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
+             {reportData.kpis.topTechnician && (
+              <KpiCard 
+                title="Top Technician by Margin" 
+                value={reportData.kpis.topTechnician.name} 
+                desc={`Contributed $${reportData.kpis.topTechnician.margin.toFixed(2)}`} 
+                icon={Award}
+                tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
+              />
+            )}
+           </CardContent>
         </Card>
         <Card>
           <CardHeader>

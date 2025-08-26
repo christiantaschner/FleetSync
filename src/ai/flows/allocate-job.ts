@@ -54,6 +54,9 @@ const prompt = ai.definePrompt({
 
 The current time is {{{currentTime}}}.
 
+{{#if featureFlags.profitScoringEnabled}}
+**PROFIT-AWARE DISPATCH IS ENABLED. YOUR PRIMARY GOAL IS TO MAXIMIZE PROFIT.**
+
 **JOB TO ASSIGN:**
 - Priority: {{{jobPriority}}}
 - Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
@@ -70,7 +73,7 @@ For each potential assignment, you must calculate the 'profitScore'. Use the fol
 profit = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty)
 If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.
 
-**DECISION-MAKING LOGIC (ranked by importance):**
+**PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
 1.  **HARD CONSTRAINTS (Non-negotiable):**
     -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'. This is the most important rule.
@@ -87,8 +90,27 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
     -   **Availability:**
         -   An 'isAvailable: true' technician is a strong candidate.
         -   An 'isAvailable: false' technician can be considered if their earliest availability allows for a profitable assignment.
+{{else}}
+**STANDARD DISPATCH IS ENABLED. YOUR PRIMARY GOAL IS TO FIND THE BEST AVAILABLE AND SKILLED TECHNICIAN.**
 
-4.  **LEARNING FROM DISPATCHER OVERRIDES:**
+**JOB TO ASSIGN:**
+- Priority: {{{jobPriority}}}
+- Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
+- Description: {{{jobDescription}}}
+
+**STANDARD DECISION-MAKING LOGIC (ranked by importance):**
+1.  **HARD CONSTRAINTS (Non-negotiable):**
+    -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'.
+    -   **Availability:** The technician must be available. An 'isAvailable: true' technician is a strong candidate.
+    -   **Working Hours:** The job should ideally fall within the technician's standard working hours.
+
+2.  **EFFICIENCY & CUSTOMER SATISFACTION (Primary Goal):**
+    -   **Minimize Travel:** Find the technician who is closest to the job location to ensure prompt service.
+    -   **Customer History:** A technician with 'Previous Customer History' is highly valuable. Prefer them if other factors are equal.
+    -   **On-Call Status:** For after-hours or emergency jobs, prioritize technicians marked as 'isOnCall'.
+{{/if}}
+
+4.  **LEARNING FROM DISPATCHER OVERRIDES (Applies to both modes):**
     Analyze these past decisions where a human dispatcher disagreed with the AI.
     {{#if pastFeedback.length}}
       {{#each pastFeedback}}
@@ -107,7 +129,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
   - **Previous Customer History: {{#if hasCustomerHistory}}Yes{{else}}No{{/if}}**
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
-  - Hourly Cost: \${{{hourlyCost}}}
+  {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} {{/if}}
   {{#if currentJobs.length}}
   - Current Assigned Jobs:
     {{#each currentJobs}}
@@ -120,7 +142,11 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 
 ---
 **Final Assessment:**
+{{#if featureFlags.profitScoringEnabled}}
 First, calculate the profitScore for every suitable technician. Then, provide your final decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints. State the calculated profit score in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
+{{else}}
+Provide your final decision on the best technician. Your reasoning MUST be based on skills, availability, and proximity. If no technician is suitable, state this clearly and explain the bottleneck.
+{{/if}}
 `,
 });
 

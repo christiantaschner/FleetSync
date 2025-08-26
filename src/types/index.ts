@@ -418,6 +418,7 @@ export const AllocateJobInputSchema = z.object({
   ).describe('A list of technicians and their availability, skills, and location.'),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
   rejectedSuggestions: z.array(AllocateJobOutputSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
+  featureFlags: FeatureFlagsSchema.optional().describe('Feature flags that might alter the AI\'s decision-making logic.'),
 });
 export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
 

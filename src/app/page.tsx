@@ -58,11 +58,11 @@ export default function MarketingPage() {
   ];
 
   const industryNiches = [
-      { name: 'HVAC', icon: Wrench },
-      { name: 'Electrical', icon: Zap },
-      { name: 'Plumbing', icon: Droplets },
-      { name: 'Pest Control', icon: Bug },
-      { name: 'IT Services', icon: Computer }
+      { name: 'HVAC', icon: Wrench, profitLever: 'Prioritizes maintenance contract upsells and after-hours surcharges.' },
+      { name: 'Electrical', icon: Zap, profitLever: 'Weighs high SLA penalties and premium emergency job values.' },
+      { name: 'Plumbing', icon: Droplets, profitLever: 'Factors in parts availability and the cost risk of repeat visits.' },
+      { name: 'Pest Control', icon: Bug, profitLever: 'Learns customer preferences and recurring contract values.' },
+      { name: 'IT Services', icon: Computer, profitLever: 'Understands skill-matching for complex, high-value tickets.' }
   ]
 
   const testimonials = [
@@ -296,13 +296,15 @@ export default function MarketingPage() {
         <section className="container py-16 sm:py-24">
              <div className="mx-auto max-w-2xl text-center">
                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing &amp; More</h2>
-                 <p className="mt-6 text-lg text-muted-foreground">Our AI adapts profit-first rules to your trade. Every trade has its own profit levers. Our AI adapts automatically.</p>
+                 <p className="mt-6 text-lg text-muted-foreground">No matter your trade, the system learns where your margins live — and helps you capture them.</p>
              </div>
-             <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+             <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                  {industryNiches.map((niche) => (
-                    <Card key={niche.name} className="text-center p-4">
-                        <niche.icon className="h-8 w-8 text-primary mx-auto" />
-                        <p className="mt-2 font-semibold">{niche.name}</p>
+                    <Card key={niche.name} className="text-center p-6 h-full">
+                        <niche.icon className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">{niche.name}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
+                        <p className="mt-1 text-sm font-medium">{niche.profitLever}</p>
                     </Card>
                  ))}
              </div>
@@ -400,4 +402,3 @@ export default function MarketingPage() {
   );
 }
 
-    

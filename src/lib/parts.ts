@@ -1,4 +1,3 @@
-
 // src/lib/parts.ts
 
 export const PREDEFINED_PARTS: string[] = [

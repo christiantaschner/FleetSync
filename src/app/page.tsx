@@ -164,12 +164,12 @@ export default function MarketingPage() {
               Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground">
-              Assign jobs based on profit per hour, not just proximity. MarginMax makes every job a winning job.
+              Assign jobs based on profit per hour, not just proximity.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">
-                        <Link href="/signup">Uncover Your Hidden Profit — Free</Link>
+                        <Link href="#pricing" onClick={handleScroll}>Uncover Your Hidden Profit</Link>
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-muted-foreground">30-day free trial. No credit card required.</p>
@@ -335,7 +335,7 @@ export default function MarketingPage() {
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                    <Card className="shadow-lg">
+                    <Card className="shadow-lg bg-primary/10 border-primary/30">
                         <CardHeader>
                             <CardTitle>Quick ROI Calculator</CardTitle>
                         </CardHeader>

@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, Star, Workflow, TrendingUp, ListChecks
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -52,228 +52,126 @@ const RoadmapItem: React.FC<RoadmapItemProps> = ({ title, description, icon: Ico
 };
 
 const roadmapFeatures = {
-  completed: [
-    {
-      title: "Core Dispatcher Dashboard & Technician View",
-      description: "A centralized web interface for managing jobs and a mobile-optimized view for technicians to see their assigned jobs, update statuses, and navigate to sites.",
-      icon: LayoutDashboard,
-      status: "Completed",
-    },
-    {
-      title: "AI-Powered Job Allocation",
-      description: "Core AI feature suggests the best technician for new jobs based on skills, availability, and location, with both single and batch assignment modes.",
-      icon: Sparkles,
-      status: "Completed",
-    },
-    {
-      title: "Advanced Drag-and-Drop Scheduling",
-      description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
-      icon: MousePointerClick,
-      status: "Completed",
-    },
-    {
-      title: "Dispatcher-Triggered Route Re-optimization",
-      description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes or cancellations.",
-      icon: Shuffle, 
-      status: "Completed",
-    },
+  phase1: [
      {
-      title: "Work Order Management",
-      description: "A centralized hub for all job-related information. Admins can create, edit, and view work orders with all necessary details, including customer information, job history, required parts, and special notes. All data is instantly available and synced across office and technician apps.",
-      icon: ClipboardList,
-      status: "Completed",
-    },
-    {
-      title: "Automated Schedule Risk Warnings",
-      description: "The system automatically checks for schedule risks and proactively warns dispatchers about potential delays.",
-      icon: ShieldQuestion,
-      status: "Completed",
-    },
-     {
-      title: "Basic Performance Analytics",
-      description: "A reporting dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
-      icon: BarChart,
-      status: "Completed",
-    },
-    {
-      title: "Visual Calendar & Schedule View",
-      description: "A visual calendar for dispatchers to view all jobs and technicians. Includes day and month views to manage schedules.",
-      icon: CalendarDays,
-      status: "Completed",
-    },
-     {
-      title: "Technician Profile & Change Requests",
-      description: "Technicians can view their profiles and suggest changes (e.g., updating their phone number or skills), which dispatchers can review and approve.",
-      icon: User, 
-      status: "Completed",
-    },
-    {
-      title: "Handle Technician Unavailability",
-      description: "Allows marking a technician as unavailable, which unassigns their active jobs, making them available for AI-powered reassignment.",
-      icon: AlertOctagon,
-      status: "Completed",
-    },
-    {
-      title: "Recurring Job & Contract Management",
-      description: "Create and manage recurring service contracts, with AI assistance for scheduling future appointments.",
-      icon: Repeat,
-      status: "Completed",
-    },
-    {
-      title: "Dynamic Skill Library & AI Suggestions",
-      description: "Dispatchers can manage a central skill library, and the AI suggests required skills for new jobs.",
-      icon: Cog, 
-      status: "Completed",
-    },
-    {
-      title: "CSV Job Data Import",
-      description: "Allows for bulk import of existing job data via CSV files to speed up onboarding.",
-      icon: FileSpreadsheet,
-      status: "Completed",
-    },
-    {
-      title: "In-App Chat & Photo Documentation",
-      description: "A simple communication hub for technicians and dispatchers. Technicians can also capture and upload before/after photos directly from the job site.",
-      icon: MessageSquare,
-      status: "Completed",
-    },
-    {
-      title: "Digital Signature & Satisfaction Capture",
-      description: "Technicians can capture a customer's signature and satisfaction rating directly on their device to confirm job completion.",
-      icon: FileSignature,
-      status: "Completed",
-    },
-    {
-      title: "Onboarding & In-App Help",
-      description: "A simple, interactive checklist on the dashboard guides new users. An AI Help Assistant is available to answer questions about using the application's features.",
-      icon: HelpCircle,
-      status: "Completed"
-    },
-    {
-      title: "Stripe Subscription & Billing Integration",
-      description: "Integrate Stripe to manage customer subscriptions for different pricing plans after a 30-day free trial. This includes creating checkout sessions and a customer portal to manage billing.",
-      icon: CreditCard,
-      status: "Completed",
-    },
-    {
-      title: "Customer Live Tracking Portal",
-      description: "Allows dispatchers to send a unique, secure link to customers, enabling them to see their technician's real-time location and updated ETA on a map as they approach the job site.",
-      icon: Navigation,
-      status: "Completed",
-    },
-    {
-      title: "AI-Powered Triage",
-      description: "Dispatchers can send customers a unique link to upload photos of an issue before a visit. The AI then analyzes these images to suggest required parts and preliminary repair steps, increasing the first-time fix rate.",
-      icon: ImageIcon,
-      status: "Completed",
-    },
-    {
-      title: "Real-Time Technician Location Tracking",
-      description: "Provides live GPS location updates of all active field technicians on the dispatcher's map view, fed directly from the technician's mobile app. This feature is the foundation for automated status updates.",
-      icon: MapPin,
-      status: "Completed",
-    },
-     {
-      title: "Automated 'On My Way' Notifications",
-      description: "When a technician sets their status to 'En Route', the system can automatically send the customer a text or email with the technician's ETA, a photo of the technician, and a live tracking link.",
-      icon: Truck,
-      status: "Completed",
-    },
-  ],
-  inProgress: [
-    {
       title: "Job Profit Scoring Engine",
-      description: "Each job will get a dynamic score based on revenue drivers (quoted value, upsell potential, SLA premiums) and cost drivers (labor, drive time, parts, risk of return). This is the foundation of Profit-First Dispatching.",
+      description: "Evaluate each job using revenue & cost drivers.",
       icon: TrendingUp,
-      status: "In Progress",
     },
     {
-      title: "Real-Time Profit Cockpit",
-      description: "A new dashboard view showing fleet-wide revenue vs. cost vs. profit-per-hour in real time. This moves dispatchers from clerks to business operators.",
-      icon: Rocket,
-      status: "In Progress",
-    },
-  ],
-  planned: [
-     {
-      title: "Predictive SLA Compliance",
-      description: "The AI will forecast the likelihood of missed SLAs for each job and proactively suggest schedule adjustments to prevent penalties.",
-      icon: CalendarClock,
-      status: "Planned",
-    },
-    {
-      title: "Installed Equipment Tracking",
-      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
-      icon: Package,
-      status: "Planned",
-    },
-    {
-      title: "Integrated Invoicing & Quoting",
-      description: "Enable technicians and dispatchers to generate and send professional invoices and quotes on the spot. This closes the job loop instantly and improves cash flow.",
-      icon: DollarSign,
-      status: "Planned",
-    },
-    {
-      title: "Automated Geo-Fenced Status Updates",
-      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart.",
-      icon: Target,
-      status: "Planned",
-    },
-  ],
-  vision: [
-     {
       title: "Fleet-Wide Profit Optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
+      description: "Assign jobs to maximize profit/hour across all technicians.",
       icon: Brain,
-      status: "Vision",
     },
     {
-      title: "Predictive Upsell & Return Visit AI",
-      description: "The AI will predict which jobs have the highest upsell likelihood and the risk of a return visit, optimizing technician assignment accordingly.",
+      title: "Basic Tech Skill Matching",
+      description: "Ensure techs are assigned to jobs they are qualified for.",
+      icon: ListChecks,
+    },
+    {
+      title: "Real-Time Dashboard (Simplified)",
+      description: "Show job list, profit/hour per tech, and SLA compliance.",
+      icon: BarChart,
+    },
+  ],
+  phase2: [
+    {
+      title: "SLA Risk Prediction",
+      description: "Forecast jobs likely to breach SLAs and auto-adjust assignments.",
+      icon: CalendarClock,
+    },
+    {
+      title: "Upsell Opportunity Prediction",
+      description: "Identify jobs with highest upsell potential for each tech.",
       icon: Lightbulb,
-      status: "Vision"
     },
     {
-      title: "Granular Technician Performance Profiling",
-      description: "Track technician speed, accuracy, upsell performance, and customer satisfaction to make even smarter assignments.",
-      icon: Users2,
-      status: "Vision"
+      title: "Return Visit Risk Modeling",
+      description: "Flag jobs likely to require follow-ups.",
+      icon: AlertOctagon,
     },
     {
-      title: "Customizable AI & Industry Templates",
-      description: "Provide pre-built profit models for HVAC, plumbing, electrical, etc., and allow businesses to tweak the rules engine to their specific needs.",
+      title: "Dynamic Schedule Adjustments",
+      description: "Auto-reschedule jobs if delays or cancellations occur.",
+      icon: Shuffle,
+    },
+  ],
+  phase3: [
+    {
+      title: "Pre-Built Industry Templates",
+      description: "Templates for HVAC, Electrical, Plumbing, Pest Control, etc.",
+      icon: Building2,
+    },
+    {
+      title: "Customizable Rules Engine",
+      description: "Businesses define revenue, cost, SLA, and priority rules without coding.",
       icon: Cog,
-      status: "Vision"
     },
     {
-      title: "End-to-End Automation & Integrations",
-      description: "Seamlessly connect dispatch, invoicing, inventory, payroll, and customer notifications with tools like QuickBooks and Salesforce.",
+      title: "Regulatory Awareness",
+      description: "Overtime, hazardous work, local labor laws incorporated automatically.",
+      icon: FileText,
+    },
+  ],
+  phase4: [
+    {
+      title: "Profit Cockpit",
+      description: "Profit per job, per tech, fleet-wide, with real-time updates.",
+      icon: Rocket,
+    },
+    {
+      title: "Opportunity Heatmaps",
+      description: "Identify unscheduled high-value jobs and underperforming techs.",
+      icon: Map,
+    },
+    {
+      title: "Scenario Modeling",
+      description: "Visualize “what-if” profit impact for different assignment strategies.",
+      icon: Brain,
+    },
+    {
+      title: "Tech Performance Analytics",
+      description: "Track speed, accuracy, upsell performance, and SLA compliance.",
+      icon: Users2,
+    },
+  ],
+  phase5: [
+    {
+      title: "End-to-End Integration",
+      description: "Accounting, inventory, CRM, payroll, and customer notifications.",
       icon: Workflow,
-      status: "Vision"
     },
     {
-      title: "Gamification & Performance Rewards",
-      description: "An optional system to reward technicians or dispatchers for achieving profit-per-hour targets or high SLA compliance.",
+      title: "Smart Alerts",
+      description: "Notify dispatchers of revenue threats, SLA breaches, or missed upsells.",
+      icon: Zap,
+    },
+    {
+      title: "Tech Marketplace Integration",
+      description: "Auto-source subcontractors for specialized jobs.",
+      icon: Users,
+    },
+    {
+      title: "Benchmarking & Competitive Analytics",
+      description: "Compare profit/hour against anonymized industry data.",
+      icon: BarChart,
+    },
+  ],
+  phase6: [
+    {
+      title: "Mobile-First UX",
+      description: "Techs can view schedules, routes, and profit opportunities on the go.",
+      icon: Smartphone,
+    },
+    {
+      title: "Gamification",
+      description: "Reward techs or dispatchers for achieving profit targets or SLA compliance.",
       icon: Star,
-      status: "Vision"
-    },
-     {
-      title: "AI-Powered Parts Suggestion & Van Inventory",
-      description: "The AI suggests required parts from triage photos and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
-      icon: ShoppingCart,
-      status: "Vision",
     },
     {
-      title: "Offline Mode for Technician App",
-      description: "Allow the mobile app to function without an internet connection. Technicians can view job details, document work, and update statuses offline. All data will automatically sync once connectivity is restored.",
-      icon: WifiOff,
-      status: "Vision",
-    },
-    {
-      title: "AI-Powered Smart Inbox",
-      description: "An intelligent inbox that automatically parses incoming emails or service requests from a website form, creating draft job tickets with suggested priorities, required skills, and even a suggested technician.",
-      icon: Mailbox,
-      status: "Vision",
+      title: "Interactive Dashboards",
+      description: "Drag-and-drop schedule adjustments, AI suggestions, and instant profit recalculation.",
+      icon: MousePointerClick,
     },
   ]
 };
@@ -285,7 +183,7 @@ export default function RoadmapPage() {
 
     const appName = "MarginMax";
     const description = language === 'de' 
-        ? `Unsere geplanten Funktionen, Verbesserungen und langfristige Vision, um die Flottenverwaltung intelligenter und effizienter zu gestalten.`
+        ? `Unsere geplante Funktionen, Verbesserungen und langfristige Vision, um die Flottenverwaltung intelligenter und effizienter zu gestalten.`
         : `Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.`;
 
     useEffect(() => {
@@ -312,40 +210,59 @@ export default function RoadmapPage() {
       </div>
 
        <section>
-        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">In Progress</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {roadmapFeatures.inProgress.length > 0 ? roadmapFeatures.inProgress.map((item) => (
-                <RoadmapItem key={item.title} {...item} />
-            )) : <p className="text-muted-foreground col-span-full">No features currently in progress.</p>}
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Phase 1 – Foundation: Profit-First AI Core (0–6 months)</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {roadmapFeatures.phase1.map((item) => (
+            <RoadmapItem key={item.title} {...item} status="In Progress" />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Phase 2 – Predictive Intelligence & SLA Automation (6–12 months)</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {roadmapFeatures.phase2.map((item) => (
+            <RoadmapItem key={item.title} {...item} status="Planned" />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Phase 3 – Industry Specialization & Rule Customization (12–18 months)</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {roadmapFeatures.phase3.map((item) => (
+            <RoadmapItem key={item.title} {...item} status="Planned" />
+          ))}
         </div>
       </section>
       
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Planned Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
-                <RoadmapItem key={item.title} {...item} />
-            )) : <p className="text-muted-foreground col-span-full">All planned features are complete! See the Vision section for what's next.</p>}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Future Innovations &amp; Long-Term Vision</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.vision.map((item) => (
-            <RoadmapItem key={item.title} {...item} />
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Phase 4 – Advanced Business Cockpit & Analytics (18–24 months)</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {roadmapFeatures.phase4.map((item) => (
+            <RoadmapItem key={item.title} {...item} status="Planned" />
           ))}
         </div>
       </section>
 
       <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Completed Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.completed.map((item) => (
-            <RoadmapItem key={item.title} {...item} />
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Phase 5 – Ecosystem & Automation (24–36 months)</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {roadmapFeatures.phase5.map((item) => (
+            <RoadmapItem key={item.title} {...item} status="Vision" />
           ))}
         </div>
       </section>
+
+       <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Phase 6 – UX & Engagement Enhancements (Ongoing)</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {roadmapFeatures.phase6.map((item) => (
+            <RoadmapItem key={item.title} {...item} status="Vision" />
+          ))}
+        </div>
+      </section>
+
     </div>
   );
 }

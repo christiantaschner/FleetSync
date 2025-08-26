@@ -15,9 +15,14 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
+  const [numTechs, setNumTechs] = useState(5);
+  const [jobsPerDay, setJobsPerDay] = useState(4);
+  const [avgJobValue, setAvgJobValue] = useState(450);
+  const [roi, setRoi] = useState<number | null>(null);
 
   const benefits = [
     {
@@ -50,6 +55,15 @@ export default function MarketingPage() {
     elem?.scrollIntoView({
       behavior: "smooth",
     });
+  };
+
+  const handleCalculateRoi = () => {
+    // Relatable but simplified calculation:
+    // Assume a 15% efficiency gain, which translates to profit.
+    // Operating days per month: ~21
+    const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21;
+    const profitGain = monthlyRevenue * 0.15; // 15% improvement
+    setRoi(profitGain);
   };
 
   const otherGuysPoints = [
@@ -266,7 +280,7 @@ export default function MarketingPage() {
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><Check className="text-blue-500"/> Constraints</CardTitle>
-                                    <CardDescription>SLA windows, technician skills, preferences</CardDescription>
+                                    <CardDescription>SLA windows, tech skills, preferences</CardDescription>
                                 </CardHeader>
                             </Card>
                          </div>
@@ -317,36 +331,44 @@ export default function MarketingPage() {
         {/* ROI Calculator Section */}
         <section id="pricing" className="bg-primary/5 py-20 sm:py-24 lg:py-32">
             <div className="container px-4">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div className="text-center lg:text-left">
-                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💵 See Your Profit Gap in Seconds</h2>
-                        <p className="mt-6 text-lg text-muted-foreground">
-                            Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
-                        </p>
-                        <Card className="mt-8 text-left">
-                            <CardHeader>
-                                <CardTitle>Quick ROI Calculator</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                               <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1">
-                                        <Label htmlFor="techs"># of Technicians</Label>
-                                        <Input id="techs" type="number" defaultValue="5" />
-                                    </div>
-                                     <div className="space-y-1">
-                                        <Label htmlFor="jobs-per-day">Jobs/Day/Tech</Label>
-                                        <Input id="jobs-per-day" type="number" defaultValue="4" />
-                                    </div>
-                               </div>
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💵 See Your Profit Gap in Seconds</h2>
+                    <p className="mt-6 text-lg text-muted-foreground">
+                        Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
+                    </p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                    <Card className="w-full">
+                        <CardHeader>
+                            <CardTitle>Quick ROI Calculator</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="avg-job-value">Avg. Job Value ($)</Label>
-                                    <Input id="avg-job-value" type="number" defaultValue="450" />
-                               </div>
-                                <Button size="lg" disabled>Calculate My ROI</Button>
-                                 <p className="text-xs text-muted-foreground pt-2">ROI Calculator is for demonstration purposes. Contact us for a personalized analysis.</p>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                    <Label htmlFor="techs"># of Technicians</Label>
+                                    <Input id="techs" type="number" value={numTechs} onChange={(e) => setNumTechs(Number(e.target.value))} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="jobs-per-day">Jobs/Day/Tech</Label>
+                                    <Input id="jobs-per-day" type="number" value={jobsPerDay} onChange={(e) => setJobsPerDay(Number(e.target.value))} />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="avg-job-value">Avg. Job Value ($)</Label>
+                                <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(Number(e.target.value))} />
+                            </div>
+                            <Button size="lg" onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700">Calculate My ROI</Button>
+                            {roi !== null && (
+                                <div className="text-center pt-4">
+                                    <p className="text-muted-foreground">Estimated Additional Monthly Profit:</p>
+                                    <p className="text-4xl font-bold text-green-600">
+                                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(roi)}
+                                    </p>
+                                </div>
+                            )}
+                            <p className="text-xs text-muted-foreground pt-2 text-center">ROI Calculator is for demonstration purposes. Contact us for a personalized analysis.</p>
+                        </CardContent>
+                    </Card>
                     <div className="flex justify-center">
                         <Card className="max-w-md w-full bg-background border-primary ring-2 ring-primary/50 shadow-xl">
                             <CardHeader>

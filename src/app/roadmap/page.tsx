@@ -181,45 +181,81 @@ const roadmapFeatures = {
     },
   ],
   inProgress: [
+    {
+      title: "Job Profit Scoring Engine",
+      description: "Each job will get a dynamic score based on revenue drivers (quoted value, upsell potential, SLA premiums) and cost drivers (labor, drive time, parts, risk of return). This is the foundation of Profit-First Dispatching.",
+      icon: TrendingUp,
+      status: "In Progress",
+    },
+    {
+      title: "Real-Time Profit Cockpit",
+      description: "A new dashboard view showing fleet-wide revenue vs. cost vs. profit-per-hour in real time. This moves dispatchers from clerks to business operators.",
+      icon: Rocket,
+      status: "In Progress",
+    },
   ],
   planned: [
      {
+      title: "Predictive SLA Compliance",
+      description: "The AI will forecast the likelihood of missed SLAs for each job and proactively suggest schedule adjustments to prevent penalties.",
+      icon: CalendarClock,
+      status: "Planned",
+    },
+    {
       title: "Installed Equipment Tracking",
       description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
       icon: Package,
       status: "Planned",
     },
     {
-      title: "QuickBooks & Xero Integration",
-      description: "Seamlessly sync customers, invoices, and payments with QuickBooks Online and Xero to eliminate double-entry and make MarginMax your true 'job-to-cash' system of record. Requires a secure OAuth 2.0 connection.",
-      icon: Building2,
-      status: "Planned",
-    },
-    {
       title: "Integrated Invoicing & Quoting",
-      description: "Enable technicians and dispatchers to generate and send professional invoices and quotes on the spot. The system will support immediate payment processing and automated payment reminders, closing the job loop instantly and improving cash flow.",
+      description: "Enable technicians and dispatchers to generate and send professional invoices and quotes on the spot. This closes the job loop instantly and improves cash flow.",
       icon: DollarSign,
       status: "Planned",
     },
     {
       title: "Automated Geo-Fenced Status Updates",
-      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart for the next location.",
+      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart.",
       icon: Target,
-      status: "Planned",
-    },
-    {
-      title: "Integrated Customer Notifications (SMS/Email)",
-      description: "Connect to a third-party service like Twilio to send automated notifications (e.g., confirmations, 'On My Way' alerts) directly to customers via SMS and email, replacing the current simulation.",
-      icon: MessageSquare,
       status: "Planned",
     },
   ],
   vision: [
      {
-      title: "Advanced Fleet-Wide Re-optimization",
+      title: "Fleet-Wide Profit Optimization",
       description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
       icon: Brain,
       status: "Vision",
+    },
+    {
+      title: "Predictive Upsell & Return Visit AI",
+      description: "The AI will predict which jobs have the highest upsell likelihood and the risk of a return visit, optimizing technician assignment accordingly.",
+      icon: Lightbulb,
+      status: "Vision"
+    },
+    {
+      title: "Granular Technician Performance Profiling",
+      description: "Track technician speed, accuracy, upsell performance, and customer satisfaction to make even smarter assignments.",
+      icon: Users2,
+      status: "Vision"
+    },
+    {
+      title: "Customizable AI & Industry Templates",
+      description: "Provide pre-built profit models for HVAC, plumbing, electrical, etc., and allow businesses to tweak the rules engine to their specific needs.",
+      icon: Cog,
+      status: "Vision"
+    },
+    {
+      title: "End-to-End Automation & Integrations",
+      description: "Seamlessly connect dispatch, invoicing, inventory, payroll, and customer notifications with tools like QuickBooks and Salesforce.",
+      icon: Workflow,
+      status: "Vision"
+    },
+    {
+      title: "Gamification & Performance Rewards",
+      description: "An optional system to reward technicians or dispatchers for achieving profit-per-hour targets or high SLA compliance.",
+      icon: Star,
+      status: "Vision"
     },
      {
       title: "AI-Powered Parts Suggestion & Van Inventory",
@@ -227,34 +263,10 @@ const roadmapFeatures = {
       icon: ShoppingCart,
       status: "Vision",
     },
-     {
-      title: "AI-Powered Customer Follow-Up",
-      description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
-      icon: Smile,
-      status: "Vision",
-    },
     {
       title: "Offline Mode for Technician App",
-      description: "Allow the mobile app to function without an internet connection. Technicians can view job details, document work, and update statuses offline. All data will automatically sync once connectivity is restored, ensuring productivity in areas with poor service.",
+      description: "Allow the mobile app to function without an internet connection. Technicians can view job details, document work, and update statuses offline. All data will automatically sync once connectivity is restored.",
       icon: WifiOff,
-      status: "Vision",
-    },
-    {
-      title: "Disruption Forecasting (Predicted Bottlenecks)",
-      description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
-      icon: Eye,
-      status: "Vision",
-    },
-    {
-      title: "\"Why this happened\" AI Insights",
-      description: "The system will provide explanations for significant deviations. If an ETA was missed or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
-      icon: Search,
-      status: "Vision",
-    },
-    {
-      title: "CRM/Accounting Software Integrations",
-      description: "Seamless, automated data flow between MarginMax and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
-      icon: Building2,
       status: "Vision",
     },
     {
@@ -299,15 +311,6 @@ export default function RoadmapPage() {
         </p>
       </div>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Completed Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.completed.map((item) => (
-            <RoadmapItem key={item.title} {...item} />
-          ))}
-        </div>
-      </section>
-
        <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">In Progress</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -316,9 +319,9 @@ export default function RoadmapPage() {
             )) : <p className="text-muted-foreground col-span-full">No features currently in progress.</p>}
         </div>
       </section>
-
+      
       <section>
-        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Planned Features</h2>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Planned Features</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
                 <RoadmapItem key={item.title} {...item} />
@@ -334,8 +337,15 @@ export default function RoadmapPage() {
           ))}
         </div>
       </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Completed Features</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {roadmapFeatures.completed.map((item) => (
+            <RoadmapItem key={item.title} {...item} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
-
-    

@@ -250,7 +250,7 @@ export default function MarketingPage() {
         </section>
         
         {/* Industry Niches Section */}
-        <section className="bg-muted/50 py-16 sm:py-24">
+        <section className="bg-muted py-16 sm:py-24">
              <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
@@ -294,7 +294,7 @@ export default function MarketingPage() {
         </section>
 
         {/* How It Works Section */}
-        <section id="solution" className="py-16 sm:py-24 bg-primary/5">
+        <section id="solution" className="py-16 sm:py-24 bg-muted">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
@@ -326,7 +326,7 @@ export default function MarketingPage() {
         </section>
 
         {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-muted py-16 sm:py-24">
+        <section id="pricing" className="bg-primary/5 py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
@@ -395,7 +395,7 @@ export default function MarketingPage() {
         <section className="bg-gray-900 py-20 sm:py-24">
             <div className="container text-center text-white">
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl font-headline flex items-center justify-center gap-3">
-                    Stop Dispatching. Start Operating Like a Business.
+                   🚀 Stop Dispatching. Start Operating Like a Business.
                 </h2>
                 <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">

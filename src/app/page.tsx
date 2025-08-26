@@ -166,6 +166,9 @@ export default function MarketingPage() {
             <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground">
               Assign jobs based on profit per hour, not just proximity.
             </p>
+            <p className="mx-auto mt-2 max-w-3xl text-lg text-muted-foreground">
+              MarginMax makes every job a winning job.
+            </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">

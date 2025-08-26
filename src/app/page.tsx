@@ -199,12 +199,12 @@ export default function MarketingPage() {
             <Card className="border-destructive/30 bg-red-50/50 flex flex-col">
                <CardHeader>
                 <CardTitle className="text-2xl font-bold text-red-700 flex items-center gap-3">
-                  <Image src="https://storage.googleapis.com/static.fleetsync.site/money-fire.png" width={40} height={40} alt="Money burning icon" data-ai-hint="money fire" />
+                  <span className="text-4xl">💸</span>
                    Standard Dispatch = Lost Profit
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-muted-foreground">Traditional dispatch focuses on one thing: who's closest. This "nearest tech" logic ignores the factors that actually make you money and costs you dearly.</p>
+                 <p className="text-muted-foreground">Traditional dispatch focuses on one thing: who's closest. This "nearest tech" logic ignores the factors that actually make you money and costs you dearly.</p>
                  <ul className="space-y-3 pt-2 text-left">
                   <li className="flex items-start gap-3">
                     <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
@@ -225,22 +225,22 @@ export default function MarketingPage() {
             <Card className="border-primary/20 bg-sky-50/50 flex flex-col">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                  <Bot className="h-8 w-8 text-primary" /> Profit-First AI Dispatching
+                  <span className="text-4xl">🚀</span> Profit-First AI Dispatching
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
                 <p className="text-muted-foreground">MarginMax's AI asks a better question: "Which assignment makes this job the most profitable?" It analyzes every job's unique profit profile by weighing all the critical factors.</p>
                 <div className="space-y-3">
                   <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><TrendingUp className="text-green-600" /> Revenue Drivers</h4>
+                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">📈</span> Revenue Drivers</h4>
                       <p className="text-sm text-muted-foreground mt-1">Quoted value, upsell potential, SLA premiums, after-hours surcharges.</p>
                   </div>
                    <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><DollarSign className="text-red-600" /> Cost Drivers</h4>
+                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">💵</span> Cost Drivers</h4>
                       <p className="text-sm text-muted-foreground mt-1">Labor cost per tech, drive time, parts required, and even the risk of a return visit.</p>
                   </div>
                    <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><Check className="text-blue-600" /> Real-World Constraints</h4>
+                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">🔧</span> Real-World Constraints</h4>
                       <p className="text-sm text-muted-foreground mt-1">Technician skills, SLA windows, and specific customer preferences are always respected.</p>
                   </div>
                 </div>

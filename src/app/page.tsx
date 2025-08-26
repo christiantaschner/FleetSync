@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, ShieldQuestion, Brain } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -41,7 +41,7 @@ export default function MarketingPage() {
     // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
     const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
     const profitGain = monthlyRevenue * 0.15; // Assume a 15% margin improvement
-    const softwareCost = numTechs * 99;
+    const softwareCost = numTechs * 69;
     const netGain = profitGain - softwareCost;
     setRoi(netGain);
   };
@@ -65,7 +65,7 @@ export default function MarketingPage() {
       description: "Re-optimize technician routes in one click when schedules change.",
     },
     {
-      icon: ShieldQuestion,
+      icon: AlertTriangle,
       title: "Proactive Risk Alerts",
       description: "AI constantly monitors schedules and warns you of potential delays before they happen.",
     },
@@ -161,10 +161,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Stop Dispatching. Start Profiting.
+              The AI Dispatcher That Protects Your Bottom Line
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              MarginMax is the only AI dispatcher that thinks like a CFO. It assigns jobs based on profit-per-hour, not just proximity, turning your schedule into your most valuable asset.
+             Stop assigning jobs based on proximity. Start assigning them based on profit. MarginMax makes every job a winning job.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
@@ -196,88 +196,95 @@ export default function MarketingPage() {
         {/* 2 & 3. The Problem vs. Solution Section */}
         <section id="problem" className="py-16 sm:py-24">
           <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            <Card className="border-destructive/30 bg-destructive/5 flex flex-col">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-destructive flex items-center justify-center gap-2">
-                  <X className="h-7 w-7 p-1 bg-destructive/20 rounded-full" /> The Old Way
+            <Card className="border-destructive/30 bg-red-50 flex flex-col">
+               <CardHeader>
+                <CardTitle className="text-2xl font-bold text-red-600 flex items-center gap-3">
+                  <Image src="https://storage.googleapis.com/static.fleetsync.site/money-fire.png" width={40} height={40} alt="Money burning icon" data-ai-hint="money fire" />
+                   Standard Dispatch = Lost Profit
                 </CardTitle>
-                <CardDescription className="text-destructive-foreground/90 font-semibold">Standard Dispatch = Lost Profit</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                  <ul className="space-y-3 pt-2 text-left">
-                    <li className="flex items-start gap-3">
-                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span><strong>Assigns "Nearest Tech":</strong> Ignores job value, technician cost, and upsell potential.</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span><strong>Loses Money:</strong> Sends your most expensive technician to a low-value job across town.</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span><strong>Creates Inefficiency:</strong> Causes unnecessary drive time and technician downtime.</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span><strong>The Result:</strong> Up to 20% of your potential profit is left on the table every single day.</span>
-                    </li>
+                <p className="text-muted-foreground">Every wrong assignment costs you money.</p>
+                <ul className="space-y-3 pt-2 text-left">
+                  <li className="flex items-start gap-3">
+                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                    <span><strong className="text-red-600/80">$200+ lost</strong> when high-value jobs go to the wrong tech</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                    <span><strong className="text-red-600/80">1 hour/day</strong> wasted in drive time per technician</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                    <span><strong className="text-red-600/80">$300 SLA penalties</strong> per missed window</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                    <span>Upsells lost to under-skilled techs</span>
+                  </li>
+                   <li className="flex items-start gap-3">
+                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
+                    <span>Busy all day. No profit growth.</span>
+                  </li>
                 </ul>
               </CardContent>
             </Card>
 
-            <Card className="border-primary/30 bg-primary/5 flex flex-col">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-                  <Bot className="h-7 w-7" /> The New Way
+            <Card className="border-primary/30 bg-sky-50/50 flex flex-col">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                  <Bot className="h-8 w-8 text-primary" /> Profit-First AI Dispatching
                 </CardTitle>
-                <CardDescription className="font-semibold">Profit-First AI Dispatching</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                 <ul className="space-y-3 pt-2 text-left">
-                    <li className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                        <span><strong>Assigns "Most Profitable Tech":</strong> Analyzes revenue, costs, skills, and risk for every job.</span>
-                    </li>
-                     <li className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                        <span><strong>Maximizes Margins:</strong> Sends the right tech to the right job to maximize profit-per-hour.</span>
-                    </li>
-                     <li className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                        <span><strong>Boosts Efficiency:</strong> Groups jobs intelligently and cuts down on wasted travel time.</span>
-                    </li>
-                     <li className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                        <span><strong>The Result:</strong> A smarter schedule, happier customers, and a healthier bottom line.</span>
-                    </li>
-                </ul>
+                <p className="text-muted-foreground">Instead of "nearest tech," our AI asks: "Which assignment makes this job the most profitable?"</p>
+                <p className="text-muted-foreground">Every job gets a Profit Profile:</p>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-lg border bg-white shadow-sm">
+                      <h4 className="font-semibold flex items-center gap-2"><TrendingUp className="text-green-600" /> Revenue Drivers</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Job value, upsell potential, SLA premiums, surcharges</p>
+                  </div>
+                   <div className="p-4 rounded-lg border bg-white shadow-sm">
+                      <h4 className="font-semibold flex items-center gap-2"><DollarSign className="text-red-600" /> Cost Drivers</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Labor cost, drive time, parts, rework risk</p>
+                  </div>
+                   <div className="p-4 rounded-lg border bg-white shadow-sm">
+                      <h4 className="font-semibold flex items-center gap-2"><Check className="text-blue-600" /> Constraints</h4>
+                      <p className="text-sm text-muted-foreground mt-1">SLA windows, tech skills, customer preferences</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
         </section>
 
-        {/* 4. How it works Section */}
+        {/* 4. How It Works Section */}
         <section id="solution" className="py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">From Chaos to Control in 3 Simple Steps</h2>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
                     <p className="mt-4 text-lg text-muted-foreground">MarginMax turns your most complex decisions into the easiest part of your day.</p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                     <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Input Your Jobs</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Add jobs manually or bulk-import via CSV. The AI immediately analyzes their profit potential based on value, costs, and urgency.</p>
+                        <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Add jobs with their potential revenue and costs. Our AI instantly assesses their profit profile.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Click "AI Batch Assign"</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">With one click, our AI dispatches your entire job queue. It assigns every job to the optimal technician to maximize your fleet's total profit for the day.</p>
+                        <h3 className="mt-4 text-lg font-semibold">Analyze Constraints</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI considers everything: technician skills, service level agreements, and even specific customer preferences.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Watch Your Profits Grow</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Monitor your perfectly optimized fleet from the live map and schedule. The AI handles the complexity, you reap the rewards.</p>
+                        <h3 className="mt-4 text-lg font-semibold">Optimize for Profit</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.</p>
+                    </div>
+                     <div className="flex flex-col items-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">4</span></div>
+                        <h3 className="mt-4 text-lg font-semibold">Dispatch with Confidence</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click.</p>
                     </div>
                 </div>
             </div>
@@ -375,7 +382,7 @@ export default function MarketingPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold">$99</span>
+                                <span className="text-4xl font-bold">$69</span>
                                 <span className="text-sm text-muted-foreground">/ per technician / month</span>
                             </div>
                             <ul className="space-y-2">

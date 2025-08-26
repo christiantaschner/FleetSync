@@ -634,6 +634,10 @@ export default function DashboardPage() {
                 const timeA = a.scheduledTime ? new Date(a.scheduledTime).getTime() : Infinity;
                 const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
                 return timeA - timeB || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
+            case 'profit':
+                const profitA = a.profitScore ?? -Infinity;
+                const profitB = b.profitScore ?? -Infinity;
+                return profitB - profitA;
             default:
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }

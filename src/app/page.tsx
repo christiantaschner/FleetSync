@@ -194,7 +194,7 @@ export default function MarketingPage() {
         </section>
 
         {/* 2 & 3. The Problem vs. Solution Section */}
-        <section id="problem" className="py-16 sm:py-24">
+        <section id="problem" className="bg-background py-16 sm:py-24">
           <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             <Card className="border-destructive/30 bg-red-50/50 flex flex-col">
               <CardHeader>
@@ -275,7 +275,7 @@ export default function MarketingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-16 sm:py-24">
+        <section id="features" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
@@ -294,7 +294,7 @@ export default function MarketingPage() {
         </section>
         
         {/* How It Works Section */}
-        <section id="solution" className="py-16 sm:py-24">
+        <section id="solution" className="bg-muted py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
@@ -326,7 +326,7 @@ export default function MarketingPage() {
         </section>
 
         {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-primary/5 py-16 sm:py-24">
+        <section id="pricing" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>

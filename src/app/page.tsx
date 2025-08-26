@@ -245,8 +245,8 @@ export default function MarketingPage() {
         {/* Problem vs. Solution Section */}
          <section id="why" className="py-16 sm:py-24">
             <div className="container">
-                <div className="grid md:grid-cols-2 gap-12 items-center">
-                    <div className="bg-red-500/5 p-8 rounded-lg border border-destructive/20">
+                <div className="grid md:grid-cols-2 gap-12 items-stretch">
+                    <div className="bg-red-500/5 p-8 rounded-lg border border-destructive/20 flex flex-col">
                         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline text-destructive">💸 Standard Dispatch = Lost Profit</h2>
                         <p className="mt-4 text-lg text-muted-foreground">Every wrong assignment costs you money.</p>
                         <ul className="mt-6 space-y-4">
@@ -267,27 +267,27 @@ export default function MarketingPage() {
                                 <p className="text-lg text-muted-foreground">Upsells lost to under-skilled techs</p>
                             </li>
                         </ul>
-                         <p className="mt-6 text-lg font-semibold text-destructive/80">Busy all day. No profit growth.</p>
+                         <p className="mt-auto pt-6 text-lg font-semibold text-destructive/80">Busy all day. No profit growth.</p>
                     </div>
-                    <div className="bg-primary/5 p-8 rounded-lg border">
+                    <div className="bg-primary/5 p-8 rounded-lg border flex flex-col">
                          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🤖 Profit-First AI Dispatching</h2>
                          <p className="mt-4 text-lg text-muted-foreground">Instead of “nearest tech,” our AI asks:
                          “Which assignment makes this job the most profitable?”</p>
                          <p className="mt-4 text-lg text-muted-foreground">Every job gets a Profit Profile:</p>
-                         <div className="mt-6 grid grid-cols-1 gap-6">
-                            <Card>
+                         <div className="mt-6 grid grid-cols-1 gap-6 flex-grow">
+                            <Card className="flex-1">
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="text-green-500" /> Revenue Drivers</CardTitle>
                                     <CardDescription>Job value, upsell potential, surcharges</CardDescription>
                                 </CardHeader>
                             </Card>
-                             <Card>
+                             <Card className="flex-1">
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><DollarSign className="text-red-500" /> Cost Drivers</CardTitle>
                                     <CardDescription>Labor cost, fuel/time, parts, rework risk</CardDescription>
                                 </CardHeader>
                             </Card>
-                             <Card>
+                             <Card className="flex-1">
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><Check className="text-blue-500"/> Constraints</CardTitle>
                                     <CardDescription>SLA windows, skills, customer preferences</CardDescription>
@@ -487,3 +487,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

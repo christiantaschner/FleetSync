@@ -242,7 +242,7 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* Problem Statement Section */}
+        {/* Problem vs. Solution Section */}
          <section id="why" className="py-16 sm:py-24">
             <div className="container">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -278,19 +278,19 @@ export default function MarketingPage() {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="text-green-500" /> Revenue Drivers</CardTitle>
-                                    <CardDescription>Job value, upsell potential, SLA premiums, surcharges</CardDescription>
+                                    <CardDescription>Job value, upsell potential, surcharges</CardDescription>
                                 </CardHeader>
                             </Card>
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><DollarSign className="text-red-500" /> Cost Drivers</CardTitle>
-                                    <CardDescription>Labor cost, drive time, parts, rework risk</CardDescription>
+                                    <CardDescription>Labor cost, fuel/time, parts, rework risk</CardDescription>
                                 </CardHeader>
                             </Card>
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><Check className="text-blue-500"/> Constraints</CardTitle>
-                                    <CardDescription>SLA windows, tech skills, customer preferences</CardDescription>
+                                    <CardDescription>SLA windows, skills, customer preferences</CardDescription>
                                 </CardHeader>
                             </Card>
                          </div>
@@ -306,7 +306,7 @@ export default function MarketingPage() {
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">📈 Why Businesses Switch to Profit-First AI Dispatching</h2>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
-              <div className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
+                <div className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                       <Bot className="h-8 w-8 text-primary" />
                     </div>

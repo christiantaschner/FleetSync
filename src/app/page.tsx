@@ -28,22 +28,22 @@ export default function MarketingPage() {
     {
       icon: <Bot className="h-8 w-8 text-primary" />,
       title: "Higher Margins, Automatically",
-      description: "Boost profit per tech by 15–25% in the first 90 days.",
+      description: "AI routes jobs where they deliver the most profit, boosting margins by 15-25% in 90 days.",
     },
     {
       icon: <Zap className="h-8 w-8 text-primary" />,
       title: "Smarter Tech Utilization",
-      description: "AI keeps your best techs on your highest-value jobs.",
+      description: "AI ensures your best techs are always assigned to your highest-value jobs.",
     },
     {
       icon: <Map className="h-8 w-8 text-primary" />,
       title: "Less Drive Time = More Jobs",
-      description: "Cut wasted miles by 30% and fit 1–2 more calls into every day.",
+      description: "AI slashes wasted miles by up to 30%, opening room for 1-2 more profitable calls per day.",
     },
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
       title: "Fewer Callbacks, Happier Customers",
-      description: "AI matches skills to jobs correctly the first time.",
+      description: "AI matches the right skills to the right job so work is done right the first time, every time.",
     },
   ];
   
@@ -205,11 +205,11 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              The Only AI Dispatcher That Puts Profit First — Not Proximity.
+             The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground font-semibold">
-              Old Way: Dispatchers assign the nearest tech. <br />
-              New Way: Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
+              <span className="font-bold">Old Way:</span> Dispatchers assign the nearest tech. <br />
+              <span className="font-bold text-primary">New Way:</span> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-sm text-muted-foreground">On average, businesses boost margins 15–25% in 90 days.</p>
@@ -257,30 +257,30 @@ export default function MarketingPage() {
                                 </li>
                             ))}
                         </ul>
-                         <p className="mt-4 text-lg text-muted-foreground">The result? You stay busy all day… but your profits don’t grow.</p>
+                         <p className="mt-4 text-lg text-muted-foreground">Busy all day. No profit growth.</p>
                     </div>
                     <div className="bg-primary/5 p-8 rounded-lg border">
                          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🤖 Profit-First AI Dispatching</h2>
-                         <p className="mt-4 text-lg text-muted-foreground">Instead of asking “Who’s nearest?”, our AI asks:
-                         “Which assignment makes this job the most profitable for the business?”</p>
+                         <p className="mt-4 text-lg text-muted-foreground">Instead of “nearest tech,” our AI asks:
+                         “Which assignment makes this job the most profitable?”</p>
                          <p className="mt-2 text-lg text-muted-foreground">Every job gets a Profit Profile:</p>
                          <div className="mt-6 grid grid-cols-1 gap-6">
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="text-green-500" /> Revenue Drivers</CardTitle>
-                                    <CardDescription>Quoted value, upsell potential, SLA premiums, after-hours surcharges</CardDescription>
+                                    <CardDescription>Job value, upsell potential, SLA premiums, surcharges</CardDescription>
                                 </CardHeader>
                             </Card>
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><DollarSign className="text-red-500" /> Cost Drivers</CardTitle>
-                                    <CardDescription>Labor cost, drive time, parts required, rework risk</CardDescription>
+                                    <CardDescription>Labor cost, drive time, parts, rework risk</CardDescription>
                                 </CardHeader>
                             </Card>
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><Check className="text-blue-500"/> Constraints</CardTitle>
-                                    <CardDescription>SLA windows, tech skills, preferences</CardDescription>
+                                    <CardDescription>SLA windows, tech skills, customer preferences</CardDescription>
                                 </CardHeader>
                             </Card>
                          </div>
@@ -337,7 +337,7 @@ export default function MarketingPage() {
                         Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
                     </p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                     <Card className="w-full">
                         <CardHeader>
                             <CardTitle>Quick ROI Calculator</CardTitle>
@@ -345,16 +345,16 @@ export default function MarketingPage() {
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor="techs"># of Technicians</Label>
+                                    <Label htmlFor="techs" className="flex items-center gap-1.5"><Users className="h-4 w-4"/># of Technicians</Label>
                                     <Input id="techs" type="number" value={numTechs} onChange={(e) => setNumTechs(Number(e.target.value))} />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label htmlFor="jobs-per-day">Jobs/Day/Tech</Label>
+                                    <Label htmlFor="jobs-per-day" className="flex items-center gap-1.5"><Briefcase className="h-4 w-4"/>Jobs/Day/Tech</Label>
                                     <Input id="jobs-per-day" type="number" value={jobsPerDay} onChange={(e) => setJobsPerDay(Number(e.target.value))} />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <Label htmlFor="avg-job-value">Avg. Job Value ($)</Label>
+                                <Label htmlFor="avg-job-value" className="flex items-center gap-1.5"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(Number(e.target.value))} />
                             </div>
                             <Button size="lg" onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700">Calculate My ROI</Button>
@@ -411,8 +411,8 @@ export default function MarketingPage() {
         {/* CTA Section */}
         <section className="bg-foreground py-16">
             <div className="container px-4 text-center">
-                 <h2 className="text-3xl font-bold tracking-tight font-headline text-background">🚀 Stop Dispatching. Start Operating Like a Business.</h2>
-                <p className="mx-auto mt-4 max-w-xl text-muted-foreground text-background/80">
+                 <h2 className="text-3xl font-bold tracking-tight font-headline text-background">🚀 Stop Dispatching. Start Operating.</h2>
+                 <p className="mx-auto mt-4 max-w-xl text-muted-foreground text-background/80">
                   Your fleet isn’t just a cost center — it’s a profit engine waiting to be optimized.
                 </p>
                 <div className="mt-8 flex justify-center gap-4">

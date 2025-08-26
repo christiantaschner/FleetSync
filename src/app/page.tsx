@@ -212,7 +212,7 @@ export default function MarketingPage() {
               New Way: Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
-                <p className="text-sm text-muted-foreground">On average, businesses boost margins 15-25% in 90 days.</p>
+                <p className="text-sm text-muted-foreground">On average, businesses boost margins 15–25% in 90 days.</p>
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700">
                         <Link href="#pricing">Calculate Your Lost Profit</Link>
@@ -377,7 +377,7 @@ export default function MarketingPage() {
                             </CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="flex items-baseline justify-center gap-2">
-                                    <span className="text-5xl font-bold">$69</span>
+                                    <span className="text-5xl font-bold">$99</span>
                                     <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
                                 </div>
                                 <Button asChild size="lg" className="w-full">

@@ -384,8 +384,8 @@ export default function MarketingPage() {
                         Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
                     </p>
                 </div>
-                <div className="mt-12 flex flex-col lg:flex-row gap-8 items-center justify-center">
-                    <Card className="w-full max-w-md">
+                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center justify-center">
+                    <Card className="w-full max-w-md mx-auto">
                         <CardHeader>
                             <CardTitle>Quick ROI Calculator</CardTitle>
                         </CardHeader>
@@ -402,7 +402,7 @@ export default function MarketingPage() {
                             </div>
                             <div className="space-y-1">
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
-                                <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(Number(e.target.value))} />
+                                <Input id="avg-job-value" type="number" step="50" value={avgJobValue} onChange={(e) => setAvgJobValue(Number(e.target.value))} />
                             </div>
                             <Button size="lg" onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700">Calculate My ROI</Button>
                             {roi !== null && (
@@ -487,5 +487,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-
-    

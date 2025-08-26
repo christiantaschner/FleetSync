@@ -207,7 +207,7 @@ export default function MarketingPage() {
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
              The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground font-semibold">
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
               <span className="font-bold">Old Way:</span> Dispatchers assign the nearest tech. <br />
               <span className="font-bold text-primary">New Way:</span> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
@@ -250,20 +250,30 @@ export default function MarketingPage() {
                         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline text-destructive">💸 Standard Dispatch = Lost Profit</h2>
                         <p className="mt-4 text-lg text-muted-foreground">Every wrong assignment costs you money.</p>
                         <ul className="mt-6 space-y-4">
-                            {otherGuysPoints.map((point, index) => (
-                                <li key={index} className="flex items-start gap-3">
-                                    <X className="h-5 w-5 text-destructive shrink-0 mt-1" />
-                                    <p className="text-lg text-muted-foreground">{point.title}</p>
-                                </li>
-                            ))}
+                            <li className="flex items-start gap-3">
+                                <X className="h-5 w-5 text-destructive shrink-0 mt-1" />
+                                <p className="text-lg text-muted-foreground">$200+ lost when high-value jobs go to the wrong tech</p>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <X className="h-5 w-5 text-destructive shrink-0 mt-1" />
+                                <p className="text-lg text-muted-foreground">1 hour/day wasted in drive time per technician</p>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <X className="h-5 w-5 text-destructive shrink-0 mt-1" />
+                                <p className="text-lg text-muted-foreground">$300 SLA penalties per missed window</p>
+                            </li>
+                             <li className="flex items-start gap-3">
+                                <X className="h-5 w-5 text-destructive shrink-0 mt-1" />
+                                <p className="text-lg text-muted-foreground">Upsells lost to under-skilled techs</p>
+                            </li>
                         </ul>
-                         <p className="mt-4 text-lg text-muted-foreground">Busy all day. No profit growth.</p>
+                         <p className="mt-6 text-lg font-semibold text-destructive/80">Busy all day. No profit growth.</p>
                     </div>
                     <div className="bg-primary/5 p-8 rounded-lg border">
                          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🤖 Profit-First AI Dispatching</h2>
                          <p className="mt-4 text-lg text-muted-foreground">Instead of “nearest tech,” our AI asks:
                          “Which assignment makes this job the most profitable?”</p>
-                         <p className="mt-2 text-lg text-muted-foreground">Every job gets a Profit Profile:</p>
+                         <p className="mt-4 text-lg text-muted-foreground">Every job gets a Profit Profile:</p>
                          <div className="mt-6 grid grid-cols-1 gap-6">
                             <Card>
                                 <CardHeader>
@@ -296,15 +306,34 @@ export default function MarketingPage() {
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">📈 Why Businesses Switch to Profit-First AI Dispatching</h2>
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
-              {benefits.map((feature) => (
-                 <div key={feature.title} className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
+              <div className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                      {feature.icon}
+                      <Bot className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="mt-4 font-headline text-lg font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
+                    <h3 className="mt-4 font-headline text-lg font-semibold">Higher Margins, Automatically</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">Boost profit per tech by 15–25% in the first 90 days.</p>
                 </div>
-              ))}
+                <div className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Zap className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="mt-4 font-headline text-lg font-semibold">Smarter Tech Utilization</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">AI keeps your best techs on your highest-value jobs.</p>
+                </div>
+                <div className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Map className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="mt-4 font-headline text-lg font-semibold">Less Drive Time = More Jobs</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">Cut wasted miles by 30% and fit 1–2 more calls into every day.</p>
+                </div>
+                <div className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Heart className="h-8 w-8 text-primary" />
+                    </div>
+                    <h3 className="mt-4 font-headline text-lg font-semibold">Fewer Callbacks, Happier Customers</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">AI matches skills to jobs so work is done right the first time.</p>
+                </div>
             </div>
           </div>
         </section>
@@ -316,14 +345,32 @@ export default function MarketingPage() {
                  <p className="mt-6 text-lg text-muted-foreground">No matter your trade, the system learns where your margins live — and helps you capture them.</p>
              </div>
              <div className="mt-12 flex flex-wrap justify-center gap-6">
-                {industryNiches.map((niche) => (
-                    <Card key={niche.name} className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
-                        <niche.icon className="h-10 w-10 text-primary mx-auto" />
-                        <h3 className="mt-4 font-semibold text-lg">{niche.name}</h3>
+                <Card className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
+                        <Wrench className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">HVAC</h3>
                         <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
-                        <p className="mt-1 text-sm font-medium">{niche.profitLever}</p>
+                        <p className="mt-1 text-sm font-medium">Prioritizes maintenance contract upsells and after-hours surcharges.</p>
+                    </Card><Card className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
+                        <Zap className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">Electrical</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
+                        <p className="mt-1 text-sm font-medium">Weighs high SLA penalties and premium emergency job values.</p>
+                    </Card><Card className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
+                        <Droplets className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">Plumbing</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
+                        <p className="mt-1 text-sm font-medium">Factors in parts availability and the cost risk of repeat visits.</p>
+                    </Card><Card className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
+                        <Bug className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">Pest Control</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
+                        <p className="mt-1 text-sm font-medium">Learns customer preferences and recurring contract values.</p>
+                    </Card><Card className="text-center p-6 h-full max-w-sm lg:max-w-xs flex-grow">
+                        <Computer className="h-10 w-10 text-primary mx-auto" />
+                        <h3 className="mt-4 font-semibold text-lg">IT Services</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI weighs factors like:</p>
+                        <p className="mt-1 text-sm font-medium">Understands skill-matching for complex, high-value tickets.</p>
                     </Card>
-                ))}
             </div>
         </section>
 
@@ -337,8 +384,8 @@ export default function MarketingPage() {
                         Businesses using profit-first dispatching see 15–25% higher margins within 90 days. Find out how much you could be making.
                     </p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                    <Card className="w-full">
+                <div className="mt-12 flex flex-col lg:flex-row gap-8 items-center justify-center">
+                    <Card className="w-full max-w-md">
                         <CardHeader>
                             <CardTitle>Quick ROI Calculator</CardTitle>
                         </CardHeader>

@@ -164,7 +164,7 @@ export default function MarketingPage() {
               Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             Assign jobs based on profit per hour, not just proximity. MarginMax is the AI dispatcher that protects your bottom line.
+              Assign jobs based on profit per hour, not just proximity. Make every job a winning job.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">

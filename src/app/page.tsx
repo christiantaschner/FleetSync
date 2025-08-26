@@ -142,7 +142,7 @@ export default function MarketingPage() {
                                <Link href="/login" className="w-full">
                                     <Button variant="outline" className="w-full">{t('login_button')}</Button>
                                 </Link>
-                            </SheetClose>
+                             </SheetClose>
                              <SheetClose asChild>
                                 <Link href="/signup" className="w-full">
                                     <Button className="w-full">{t('start_free_trial')}</Button>
@@ -199,69 +199,58 @@ export default function MarketingPage() {
             <Card className="border-destructive/30 bg-destructive/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-destructive flex items-center justify-center gap-2">
-                  <X className="h-7 w-7 p-1 bg-destructive/20 rounded-full" /> 💸 Standard Dispatch = Lost Profit
+                  <X className="h-7 w-7 p-1 bg-destructive/20 rounded-full" /> The Old Way
                 </CardTitle>
-                <CardDescription className="text-destructive-foreground/90">Your current software is costing you more than you think.</CardDescription>
+                <CardDescription className="text-destructive-foreground/90 font-semibold">Standard Dispatch = Lost Profit</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-sm text-center text-destructive-foreground/80">Traditional dispatch is a financial black hole, focused on "who's closest?" while ignoring what actually makes you money.</p>
-                <div className="space-y-3 pt-2">
-                    <p className="flex items-start gap-3">
+                  <ul className="space-y-3 pt-2 text-left">
+                    <li className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>You're sending your best techs to low-value jobs and leaving high-margin work for less experienced staff, killing your profit per hour.</span>
-                    </p>
-                    <p className="flex items-start gap-3">
+                        <span><strong>Assigns "Nearest Tech":</strong> Ignores job value, technician cost, and upsell potential.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>You're flying blind, unable to see which jobs and technicians are driving profit versus just driving around.</span>
-                    </p>
-                    <p className="flex items-start gap-3">
+                        <span><strong>Loses Money:</strong> Sends your most expensive technician to a low-value job across town.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span><strong>Fact:</strong> 80% of field service companies leave <strong>10-20% of their profit on the table</strong> due to inefficient, proximity-based dispatching.</span>
-                    </p>
-                </div>
+                        <span><strong>Creates Inefficiency:</strong> Causes unnecessary drive time and technician downtime.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                        <span><strong>The Result:</strong> Up to 20% of your potential profit is left on the table every single day.</span>
+                    </li>
+                </ul>
               </CardContent>
             </Card>
 
             <Card className="border-primary/30 bg-primary/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-                  <Bot className="h-7 w-7" /> 🤖 Profit-First AI Dispatching
+                  <Bot className="h-7 w-7" /> The New Way
                 </CardTitle>
-                <CardDescription>
-                  Instead of "who's closest?", our AI asks: "Which assignment makes this job the most profitable?"
-                </CardDescription>
+                <CardDescription className="font-semibold">Profit-First AI Dispatching</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-center font-medium">The AI builds a complete 'Profit Profile' for every job, analyzing:</p>
-                <div className="space-y-3">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2"><TrendingUp />Revenue Drivers</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                       <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
-                        <li>Quoted job value</li>
-                        <li>Upsell potential</li>
-                        <li>SLA premium</li>
-                        <li>After-hours surcharge</li>
-                      </ul>
-                      <p className="text-xs font-semibold mt-2 pt-2 border-t">Benefit: You’ll know which jobs actually move the profit needle.</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2"><DollarSign />Cost Drivers</CardTitle>
-                    </CardHeader>
-                     <CardContent>
-                       <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
-                          <li>Labor cost per tech/hour</li>
-                          <li>Drive time (fuel + wages)</li>
-                          <li>Parts required</li>
-                          <li>Risk of a costly return visit</li>
-                       </ul>
-                    </CardContent>
-                  </Card>
-                </div>
+                 <ul className="space-y-3 pt-2 text-left">
+                    <li className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <span><strong>Assigns "Most Profitable Tech":</strong> Analyzes revenue, costs, skills, and risk for every job.</span>
+                    </li>
+                     <li className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <span><strong>Maximizes Margins:</strong> Sends the right tech to the right job to maximize profit-per-hour.</span>
+                    </li>
+                     <li className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <span><strong>Boosts Efficiency:</strong> Groups jobs intelligently and cuts down on wasted travel time.</span>
+                    </li>
+                     <li className="flex items-start gap-3">
+                        <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                        <span><strong>The Result:</strong> A smarter schedule, happier customers, and a healthier bottom line.</span>
+                    </li>
+                </ul>
               </CardContent>
             </Card>
           </div>

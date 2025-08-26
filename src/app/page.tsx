@@ -164,7 +164,7 @@ export default function MarketingPage() {
               Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Assign jobs based on profit per hour, not just proximity. Make every job a winning job.
+              MarginMax makes every job a winning job.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
@@ -196,7 +196,7 @@ export default function MarketingPage() {
         {/* 2 & 3. The Problem vs. Solution Section */}
         <section id="problem" className="py-16 sm:py-24">
           <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            <Card className="border-destructive/30 bg-red-50 flex flex-col">
+            <Card className="border-destructive/30 bg-red-50/50 flex flex-col">
                <CardHeader>
                 <CardTitle className="text-2xl font-bold text-red-700 flex items-center gap-3">
                   <Image src="https://storage.googleapis.com/static.fleetsync.site/money-fire.png" width={40} height={40} alt="Money burning icon" data-ai-hint="money fire" />

@@ -9,7 +9,7 @@ interface LogoProps {
 
 export function Logo({ className }: LogoProps) {
   const { language } = useTranslation();
-  const appName = language === 'de' ? "EinsatzPilot" : "FleetSync";
+  const appName = "MarginMax";
 
   return (
     <div className={cn("flex items-center gap-2 text-inherit", className)}>
@@ -20,3 +20,5 @@ export function Logo({ className }: LogoProps) {
     </div>
   );
 }
+
+    

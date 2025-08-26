@@ -36,7 +36,7 @@ export default function MarketingPage() {
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
       title: "Fewer Callbacks, Happier Customers",
-      description: "AI matches skills to jobs so work is done right the first time.",
+      description: "AI matches skills to jobs correctly the first time.",
     },
   ];
   
@@ -91,7 +91,7 @@ export default function MarketingPage() {
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
              <Link href="#why" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
-                Why FleetSync?
+                Why MarginMax?
               </Link>
               <Link href="#features" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
                 {t('nav_features')}
@@ -152,7 +152,7 @@ export default function MarketingPage() {
                         </DropdownMenu>
                        <SheetClose asChild>
                          <Link href="#why" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
-                           Why FleetSync?
+                           Why MarginMax?
                          </Link>
                        </SheetClose>
                        <SheetClose asChild>
@@ -192,8 +192,8 @@ export default function MarketingPage() {
               The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br/>
-              <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
+                <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br/>
+                <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-sm text-muted-foreground">On average, businesses boost margins 15-25% in 90 days.</p>
@@ -389,7 +389,7 @@ export default function MarketingPage() {
       {/* Footer */}
       <footer className="border-t">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0">
-          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} FleetSync. {t('all_rights_reserved')}</p>
+          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} MarginMax. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
              <Link href="#" className="hover:text-primary">{t('privacy_policy')}</Link>
              <Link href="#" className="hover:text-primary">{t('terms_of_service')}</Link>

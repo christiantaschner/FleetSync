@@ -191,7 +191,7 @@ const roadmapFeatures = {
     },
     {
       title: "QuickBooks & Xero Integration",
-      description: "Seamlessly sync customers, invoices, and payments with QuickBooks Online and Xero to eliminate double-entry and make FleetSync your true 'job-to-cash' system of record. Requires a secure OAuth 2.0 connection.",
+      description: "Seamlessly sync customers, invoices, and payments with QuickBooks Online and Xero to eliminate double-entry and make MarginMax your true 'job-to-cash' system of record. Requires a secure OAuth 2.0 connection.",
       icon: Building2,
       status: "Planned",
     },
@@ -253,7 +253,7 @@ const roadmapFeatures = {
     },
     {
       title: "CRM/Accounting Software Integrations",
-      description: "Seamless, automated data flow between FleetSync and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
+      description: "Seamless, automated data flow between MarginMax and existing business software like QuickBooks, Salesforce, or HubSpot, eliminating double-entry and ensuring all systems are in sync.",
       icon: Building2,
       status: "Vision",
     },
@@ -271,7 +271,7 @@ export default function RoadmapPage() {
     const { userProfile, loading } = useAuth();
     const router = useRouter();
 
-    const appName = language === 'de' ? "EinsatzPilot" : "FleetSync";
+    const appName = "MarginMax";
     const description = language === 'de' 
         ? `Unsere geplanten Funktionen, Verbesserungen und langfristige Vision, um die Flottenverwaltung intelligenter und effizienter zu gestalten.`
         : `Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.`;
@@ -337,3 +337,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+    

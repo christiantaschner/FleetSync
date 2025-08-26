@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview An AI agent that answers user questions about how to use the FleetSync application.
+ * @fileOverview An AI agent that answers user questions about how to use the MarginMax application.
  *
  * - answerUserQuestion - A function that provides help for user queries.
  */
@@ -15,7 +15,7 @@ import {
 } from '@/types';
 
 const knowledgeBase = `
-Feature Documentation for FleetSync:
+Feature Documentation for MarginMax:
 
 Dashboard:
 - Main view with KPIs: High-Priority Queue, Pending Jobs, Available Technicians, Jobs Scheduled Today.
@@ -60,13 +60,13 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnswerUserQuestionInputSchema },
     output: { schema: AnswerUserQuestionOutputSchema },
-    prompt: `You are Fleety, a friendly and helpful AI assistant for the FleetSync application.
+    prompt: `You are Fleety, a friendly and helpful AI assistant for the MarginMax application.
     
     Your goal is to answer user questions about how to use the software. You must respond in the user's specified language, which is "{{language}}".
     
     Use the provided knowledge base below to answer the user's question. Keep your answers concise, clear, and easy to understand for a non-technical audience. Use bullet points if it helps with clarity.
     
-    If the question is unrelated to FleetSync, politely state that you can only answer questions about the application.
+    If the question is unrelated to MarginMax, politely state that you can only answer questions about the application.
 
     ---
     KNOWLEDGE BASE:
@@ -94,3 +94,5 @@ const answerUserQuestionFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

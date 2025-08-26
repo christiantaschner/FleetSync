@@ -7,7 +7,7 @@ import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'EinsatzPilot | FleetSync',
+  title: 'MarginMax',
   description: 'AI-Powered Fleet Management Solution',
 };
 
@@ -46,3 +46,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    

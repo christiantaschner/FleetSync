@@ -394,11 +394,11 @@ export default function MarketingPage() {
         {/* Final CTA */}
         <section className="bg-gray-900 py-20 sm:py-24">
             <div className="container text-center text-white">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline flex items-center justify-center gap-3">
-                    <Rocket />
+                <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl font-headline flex items-center justify-center gap-3">
+                    <span className="text-3xl">🚀</span>
                     Your Most Profitable Quarter Starts Now
                 </h2>
-                <p className="mt-4 text-lg">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
+                <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
                         <Link href="/signup">Claim Your 30-Day Free Trial</Link>

@@ -205,20 +205,20 @@ export default function MarketingPage() {
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
                  <p className="text-muted-foreground">Traditional dispatch focuses on one thing: who's closest. This "nearest tech" logic ignores the factors that actually make you money and costs you dearly.</p>
-                 <ul className="space-y-3 pt-2 text-left">
-                  <li className="flex items-start gap-3">
-                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-700/90">Wasted Fuel & Labor:</strong> Sending techs across town for low-value jobs burns fuel and payroll.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-700/90">Missed High-Value Work:</strong> Your best tech gets stuck on a minor fix while a high-margin installation goes to someone less qualified.</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-700/90">Costly SLA Penalties:</strong> Ignoring Service Level Agreement windows results in financial penalties and unhappy clients.</span>
-                  </li>
-                </ul>
+                 <div className="space-y-3 pt-2">
+                    <div className="p-4 rounded-lg border bg-white shadow-sm">
+                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">⛽</span> Wasted Fuel & Labor</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Sending techs across town for low-value jobs burns fuel and payroll.</p>
+                    </div>
+                    <div className="p-4 rounded-lg border bg-white shadow-sm">
+                        <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">💰</span> Missed High-Value Work</h4>
+                        <p className="text-sm text-muted-foreground mt-1">Your best tech gets stuck on a minor fix while a high-margin installation goes to someone less qualified.</p>
+                    </div>
+                    <div className="p-4 rounded-lg border bg-white shadow-sm">
+                        <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">⏳</span> Costly SLA Penalties</h4>
+                        <p className="text-sm text-muted-foreground mt-1">Ignoring Service Level Agreement windows results in financial penalties and unhappy clients.</p>
+                    </div>
+                 </div>
               </CardContent>
             </Card>
 

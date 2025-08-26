@@ -51,10 +51,10 @@ export default function MarketingPage() {
   };
 
   const otherGuysPoints = [
-    { title: 'High-value jobs get assigned to the wrong tech.'},
-    { title: 'Drive time eats away at margins.' },
-    { title: 'SLA penalties sneak in.' },
-    { title: 'Upsell opportunities are wasted.' }
+    { title: '$200+ lost when high-value jobs go to the wrong tech'},
+    { title: '1 hour/day wasted in drive time per technician' },
+    { title: '$300 SLA penalties per missed window' },
+    { title: 'Upsells lost to under-skilled techs' }
   ];
 
   const industryNiches = [
@@ -231,10 +231,8 @@ export default function MarketingPage() {
             <div className="container">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                     <div>
-                         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 border-2 border-destructive/20 mb-6">
-                            <DollarSign className="h-8 w-8 text-destructive" />
-                        </div>
-                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline text-center md:text-left">💸 Standard Dispatch = Lost Profit</h2>
+                        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💸 Standard Dispatch = Lost Profit</h2>
+                        <p className="mt-4 text-lg text-muted-foreground">Every wrong assignment costs you money.</p>
                         <ul className="mt-6 space-y-4">
                             {otherGuysPoints.map((point, index) => (
                                 <li key={index} className="flex items-start gap-3">
@@ -246,9 +244,9 @@ export default function MarketingPage() {
                          <p className="mt-4 text-lg text-muted-foreground">The result? You stay busy all day… but your profits don’t grow.</p>
                     </div>
                     <div className="bg-primary/5 p-8 rounded-lg border">
-                         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">💡 Meet the World’s First Profit-First Dispatching System</h2>
+                         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🤖 Profit-First AI Dispatching</h2>
                          <p className="mt-4 text-lg text-muted-foreground">Instead of asking “Who’s nearest?”, our AI asks: “Which assignment makes this job the most profitable for the business?”</p>
-                         <p className="mt-2 text-lg text-muted-foreground">Every job is given a Profit Profile that considers:</p>
+                         <p className="mt-2 text-lg text-muted-foreground">Every job gets a Profit Profile:</p>
                          <div className="mt-6 grid grid-cols-1 gap-6">
                             <Card>
                                 <CardHeader>
@@ -259,12 +257,12 @@ export default function MarketingPage() {
                              <Card>
                                 <CardHeader>
                                     <CardTitle className="text-lg flex items-center gap-2"><DollarSign className="text-red-500" /> Cost Drivers</CardTitle>
-                                    <CardDescription>Labor cost, drive time, parts required, risk of return visit</CardDescription>
+                                    <CardDescription>Labor cost, drive time, parts required, rework risk</CardDescription>
                                 </CardHeader>
                             </Card>
                              <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-lg flex items-center gap-2"><List className="text-blue-500"/> Constraints</CardTitle>
+                                    <CardTitle className="text-lg flex items-center gap-2"><Check className="text-blue-500"/> Constraints</CardTitle>
                                     <CardDescription>SLA windows, technician skills, customer preferences</CardDescription>
                                 </CardHeader>
                             </Card>
@@ -297,7 +295,7 @@ export default function MarketingPage() {
         {/* Industry Niches Section */}
         <section className="container py-16 sm:py-24">
              <div className="mx-auto max-w-2xl text-center">
-                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing & More</h2>
+                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🔧 Built for HVAC, Electrical, Plumbing &amp; More</h2>
                  <p className="mt-6 text-lg text-muted-foreground">Our AI adapts profit-first rules to your trade. Every trade has its own profit levers. Our AI adapts automatically.</p>
              </div>
              <div className="mt-12 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

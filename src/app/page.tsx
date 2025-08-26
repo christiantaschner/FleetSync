@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, ShieldQuestion } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, ShieldQuestion, Brain } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -23,7 +23,7 @@ export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
   const [numTechs, setNumTechs] = useState(1);
   const [jobsPerDay, setJobsPerDay] = useState(1);
-  const [avgJobValue, setAvgJobValue] = useState(100);
+  const [avgJobValue, setAvgJobValue] = useState(250);
   const [roi, setRoi] = useState<number | null>(null);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
@@ -87,12 +87,12 @@ export default function MarketingPage() {
   ];
 
   const industryNiches = [
-    { icon: Wrench, title: "HVAC", description: "Optimize for after-hours emergency rates and upsell maintenance contracts." },
-    { icon: Zap, title: "Electrical", description: "Balance high-margin installations with quick fixes for efficiency." },
-    { icon: Droplets, title: "Plumbing", description: "Minimize return visits with proper skill matching and part suggestions." },
-    { icon: Bug, title: "Pest Control", description: "Maximize route efficiency for high-value recurring contracts." },
-    { icon: Computer, title: "IT Services", description: "Prioritize high-value SLA clients while fitting in profitable one-off service calls." },
-    { icon: Building2, title: "Property Mgmt", description: "Efficiently manage maintenance schedules across multiple properties and tenants." },
+    { icon: Wrench, title: "HVAC", description: "The AI knows to prioritize high-margin emergency calls and factor in upsell potential for maintenance contracts." },
+    { icon: Zap, title: "Electrical", description: "Intelligently balances quick, profitable fixes with longer, high-value installation projects." },
+    { icon: Droplets, title: "Plumbing", description: "Reduces costly return visits by ensuring the right tech with the right skills is sent the first time." },
+    { icon: Bug, title: "Pest Control", description: "Maximizes route density and efficiency, turning recurring contracts into a profit machine." },
+    { icon: Computer, title: "IT Services", description: "Prioritizes high-value SLA clients while expertly weaving in profitable one-off service calls." },
+    { icon: Building2, title: "Property Mgmt", description: "Effortlessly juggles maintenance schedules across dozens of properties and tenants, optimizing every dispatch." },
   ];
 
   return (
@@ -161,15 +161,15 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Maximize Profit, Not Just Efficiency – The AI Dispatcher That Thinks Like Your CFO
+              Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Assign jobs based on profit per hour, not just proximity. Make every job a winning job.
+              MarginMax is the only AI dispatcher that thinks like a CFO. It assigns jobs based on profit-per-hour, not just proximity, turning your schedule into your most valuable asset.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full">
-                        <Link href="/signup">Start Maximizing Profit Today</Link>
+                        <Link href="/signup">Uncover Your Hidden Profit — Free</Link>
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-muted-foreground">30-day free trial. No credit card required.</p>
@@ -199,24 +199,24 @@ export default function MarketingPage() {
             <Card className="border-destructive/30 bg-destructive/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-destructive flex items-center justify-center gap-2">
-                  <X className="h-7 w-7 p-1 bg-destructive/20 rounded-full" /> The Old Way: Standard Dispatch
+                  <X className="h-7 w-7 p-1 bg-destructive/20 rounded-full" /> 💸 Standard Dispatch = Lost Profit
                 </CardTitle>
-                <CardDescription className="text-destructive-foreground/90">Traditional dispatch focuses on location & duration only, leaving profit to chance.</CardDescription>
+                <CardDescription className="text-destructive-foreground/90">Your current software is costing you more than you think.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-sm text-center text-destructive-foreground/80">Traditional dispatch focuses on "who's closest?", ignoring the financial impact of each decision.</p>
+                <p className="text-sm text-center text-destructive-foreground/80">Traditional dispatch is a financial black hole, focused on "who's closest?" while ignoring what actually makes you money.</p>
                 <div className="space-y-3 pt-2">
                     <p className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>Jobs get assigned to the “nearest tech,” ignoring revenue, upsell, SLA premiums, or after-hours surcharges.</span>
+                        <span>You're sending your best techs to low-value jobs and leaving high-margin work for less experienced staff, killing your profit per hour.</span>
                     </p>
                     <p className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>Businesses lose money on high-cost, low-value jobs.</span>
+                        <span>You're flying blind, unable to see which jobs and technicians are driving profit versus just driving around.</span>
                     </p>
                     <p className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>80% of field service companies leave <strong>10-20% profit on the table</strong> due to inefficient dispatching.</span>
+                        <span><strong>Fact:</strong> 80% of field service companies leave <strong>10-20% of their profit on the table</strong> due to inefficient, proximity-based dispatching.</span>
                     </p>
                 </div>
               </CardContent>
@@ -225,15 +225,14 @@ export default function MarketingPage() {
             <Card className="border-primary/30 bg-primary/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-                  <Bot className="h-7 w-7" /> The New Way: Profit-First AI
+                  <Bot className="h-7 w-7" /> 🤖 Profit-First AI Dispatching
                 </CardTitle>
                 <CardDescription>
-                  Instead of "nearest tech," our AI asks: "Which assignment makes
-                  this job the most profitable?"
+                  Instead of "who's closest?", our AI asks: "Which assignment makes this job the most profitable?"
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-center font-medium">Every job gets a Profit Profile:</p>
+                <p className="text-center font-medium">The AI builds a complete 'Profit Profile' for every job, analyzing:</p>
                 <div className="space-y-3">
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -253,8 +252,13 @@ export default function MarketingPage() {
                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium flex items-center gap-2"><DollarSign />Cost Drivers</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                       <p className="text-xs text-muted-foreground">Labor cost, drive time, parts, rework risk</p>
+                     <CardContent>
+                       <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
+                          <li>Labor cost per tech/hour</li>
+                          <li>Drive time (fuel + wages)</li>
+                          <li>Parts required</li>
+                          <li>Risk of a costly return visit</li>
+                       </ul>
                     </CardContent>
                   </Card>
                 </div>
@@ -267,24 +271,24 @@ export default function MarketingPage() {
         <section id="solution" className="py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">MarginMax turns complex decisions into a simple, 3-step process powered by AI.</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">From Chaos to Control in 3 Simple Steps</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">MarginMax turns your most complex decisions into the easiest part of your day.</p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                     <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Add jobs manually or via CSV import. The AI immediately analyzes their profit potential.</p>
+                        <h3 className="mt-4 text-lg font-semibold">Input Your Jobs</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Add jobs manually or bulk-import via CSV. The AI immediately analyzes their profit potential based on value, costs, and urgency.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">One-Click Dispatch</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Click "AI Batch Assign." Our AI assigns every job to the optimal technician in seconds.</p>
+                        <h3 className="mt-4 text-lg font-semibold">Click "AI Batch Assign"</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">With one click, our AI dispatches your entire job queue. It assigns every job to the optimal technician to maximize your fleet's total profit for the day.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Monitor & Manage</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Oversee your fleet from the live map and schedule. The AI will alert you to any potential delays.</p>
+                        <h3 className="mt-4 text-lg font-semibold">Watch Your Profits Grow</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">Monitor your perfectly optimized fleet from the live map and schedule. The AI handles the complexity, you reap the rewards.</p>
                     </div>
                 </div>
             </div>
@@ -294,12 +298,12 @@ export default function MarketingPage() {
         <section className="bg-muted/50 py-16 sm:py-24">
              <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Smarter Dispatch for Your Specific Trade</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">Our AI understands that not all jobs are created equal. It optimizes for what makes your business profitable.</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
                 </div>
-                <div className="mt-12 flex flex-wrap justify-center gap-8">
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {industryNiches.map((niche) => (
-                    <Card key={niche.title} className="w-full max-w-sm flex-grow">
+                    <Card key={niche.title} className="w-full flex-grow">
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <niche.icon className="h-6 w-6 text-primary" />
@@ -319,7 +323,8 @@ export default function MarketingPage() {
         <section id="features" className="py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Everything You Need to Run a More Profitable Fleet</h2>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
+                     <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {featureList.map((feature) => (
@@ -337,9 +342,9 @@ export default function MarketingPage() {
         <section id="pricing" className="bg-muted py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">See Your Profit Gap in Seconds</h2>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Businesses using profit-first dispatching see 15-25% higher margins within 90 days. Find out how much you could be making.
+                       Businesses using profit-first dispatching see 15-25% higher margins. Use our calculator to see the money you're leaving on the table.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -362,7 +367,7 @@ export default function MarketingPage() {
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
                             </div>
-                            <Button onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700">Calculate My ROI</Button>
+                            <Button onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
                                     <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit:</p>
@@ -391,7 +396,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
                             <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">Get Started for Free</Link>
+                                <Link href="/signup">Start Your 30-Day Free Trial</Link>
                             </Button>
                         </CardContent>
                     </Card>
@@ -402,11 +407,11 @@ export default function MarketingPage() {
         {/* Final CTA */}
         <section className="bg-gray-900 text-white py-20 sm:py-24">
             <div className="container text-center">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing and Start Profiting</h2>
-                <p className="mt-4 text-lg text-gray-300">Unlock the hidden profit in your daily schedule.</p>
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Most Profitable Quarter Starts Now</h2>
+                <p className="mt-4 text-lg text-gray-300">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-white text-gray-900 hover:bg-gray-200">
-                        <Link href="/signup">Start Your 30-Day Free Trial</Link>
+                        <Link href="/signup">Claim Your 30-Day Free Trial</Link>
                     </Button>
                 </div>
             </div>

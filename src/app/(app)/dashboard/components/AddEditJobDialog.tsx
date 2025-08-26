@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -30,7 +31,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
@@ -97,6 +98,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [manualTechnicianId, setManualTechnicianId] = useState<string>(UNASSIGNED_VALUE);
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [quotedValue, setQuotedValue] = useState<number | undefined>(undefined);
+  const [expectedPartsCost, setExpectedPartsCost] = useState<number | undefined>(undefined);
+
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
@@ -129,6 +133,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setManualTechnicianId(initialData.assignedTechnicianId || UNASSIGNED_VALUE);
     setSelectedContractId(initialData.sourceContractId || '');
     setSelectedCustomerId(initialData.customerId || null);
+    setQuotedValue(initialData.quotedValue);
+    setExpectedPartsCost(initialData.expectedPartsCost);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setSkillSearchTerm('');
@@ -438,6 +444,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       scheduledTime: finalScheduledTime ? finalScheduledTime.toISOString() : null,
       estimatedDurationMinutes,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
+      quotedValue,
+      expectedPartsCost,
       ...(triageToken && { 
         triageToken: triageToken,
         triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
@@ -658,6 +666,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Label htmlFor="jobDescription">Job Description</Label>
                     <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={4} className="bg-card" />
                   </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <Label htmlFor="quotedValue"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Quoted Value ($)</Label>
+                            <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
+                        </div>
+                        <div>
+                            <Label htmlFor="expectedPartsCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Expected Parts Cost ($)</Label>
+                            <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
+                        </div>
+                    </div>
                 </div>
 
                 {/* --- RIGHT COLUMN --- */}

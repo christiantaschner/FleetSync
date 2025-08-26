@@ -161,10 +161,10 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              The AI Dispatcher That Protects Your Bottom Line
+              Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             Stop assigning jobs based on proximity. Start assigning them based on profit. MarginMax makes every job a winning job.
+             Assign jobs based on profit per hour, not just proximity. MarginMax is the AI dispatcher that protects your bottom line.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
@@ -198,59 +198,50 @@ export default function MarketingPage() {
           <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
             <Card className="border-destructive/30 bg-red-50 flex flex-col">
                <CardHeader>
-                <CardTitle className="text-2xl font-bold text-red-600 flex items-center gap-3">
+                <CardTitle className="text-2xl font-bold text-red-700 flex items-center gap-3">
                   <Image src="https://storage.googleapis.com/static.fleetsync.site/money-fire.png" width={40} height={40} alt="Money burning icon" data-ai-hint="money fire" />
                    Standard Dispatch = Lost Profit
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-muted-foreground">Every wrong assignment costs you money.</p>
-                <ul className="space-y-3 pt-2 text-left">
+                <p className="text-muted-foreground">Traditional dispatch focuses on one thing: who's closest. This "nearest tech" logic ignores the factors that actually make you money and costs you dearly.</p>
+                 <ul className="space-y-3 pt-2 text-left">
                   <li className="flex items-start gap-3">
                     <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-600/80">$200+ lost</strong> when high-value jobs go to the wrong tech</span>
+                    <span><strong className="text-red-700/90">Wasted Fuel & Labor:</strong> Sending techs across town for low-value jobs burns fuel and payroll.</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-600/80">1 hour/day</strong> wasted in drive time per technician</span>
+                    <span><strong className="text-red-700/90">Missed High-Value Work:</strong> Your best tech gets stuck on a minor fix while a high-margin installation goes to someone less qualified.</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-600/80">$300 SLA penalties</strong> per missed window</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span>Upsells lost to under-skilled techs</span>
-                  </li>
-                   <li className="flex items-start gap-3">
-                    <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span>Busy all day. No profit growth.</span>
+                    <span><strong className="text-red-700/90">Costly SLA Penalties:</strong> Ignoring Service Level Agreement (SLA) windows results in financial penalties and unhappy clients.</span>
                   </li>
                 </ul>
               </CardContent>
             </Card>
 
-            <Card className="border-primary/30 bg-sky-50/50 flex flex-col">
+            <Card className="border-primary/20 bg-sky-50/50 flex flex-col">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
                   <Bot className="h-8 w-8 text-primary" /> Profit-First AI Dispatching
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
-                <p className="text-muted-foreground">Instead of "nearest tech," our AI asks: "Which assignment makes this job the most profitable?"</p>
-                <p className="text-muted-foreground">Every job gets a Profit Profile:</p>
+                <p className="text-muted-foreground">MarginMax's AI asks a better question: "Which assignment makes this job the most profitable?" It analyzes every job's unique profit profile by weighing all the critical factors.</p>
                 <div className="space-y-3">
                   <div className="p-4 rounded-lg border bg-white shadow-sm">
                       <h4 className="font-semibold flex items-center gap-2"><TrendingUp className="text-green-600" /> Revenue Drivers</h4>
-                      <p className="text-sm text-muted-foreground mt-1">Job value, upsell potential, SLA premiums, surcharges</p>
+                      <p className="text-sm text-muted-foreground mt-1">Quoted value, upsell potential, SLA premiums, after-hours surcharges.</p>
                   </div>
                    <div className="p-4 rounded-lg border bg-white shadow-sm">
                       <h4 className="font-semibold flex items-center gap-2"><DollarSign className="text-red-600" /> Cost Drivers</h4>
-                      <p className="text-sm text-muted-foreground mt-1">Labor cost, drive time, parts, rework risk</p>
+                      <p className="text-sm text-muted-foreground mt-1">Labor cost per tech, drive time, parts required, and even the risk of a return visit.</p>
                   </div>
                    <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><Check className="text-blue-600" /> Constraints</h4>
-                      <p className="text-sm text-muted-foreground mt-1">SLA windows, tech skills, customer preferences</p>
+                      <h4 className="font-semibold flex items-center gap-2"><Check className="text-blue-600" /> Real-World Constraints</h4>
+                      <p className="text-sm text-muted-foreground mt-1">Technician skills, SLA windows, and specific customer preferences are always respected.</p>
                   </div>
                 </div>
               </CardContent>
@@ -269,12 +260,12 @@ export default function MarketingPage() {
                     <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Add jobs with their potential revenue and costs. Our AI instantly assesses their profit profile.</p>
+                        <p className="mt-2 text-sm text-muted-foreground">Enter new jobs with their potential revenue and costs. Our AI instantly assesses their unique profit profile.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Analyze Constraints</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">The AI considers everything: technician skills, service level agreements, and even specific customer preferences.</p>
+                        <p className="mt-2 text-sm text-muted-foreground">The AI considers everything: technician skills, current location, drive time, and service level agreements.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>

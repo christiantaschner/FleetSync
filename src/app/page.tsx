@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -38,7 +38,7 @@ export default function MarketingPage() {
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
       title: "Fewer Callbacks, Happier Customers",
-      description: "AI matches skills to jobs so work is done right the first time.",
+      description: "AI matches skills to jobs correctly the first time.",
     },
   ];
   
@@ -193,9 +193,9 @@ export default function MarketingPage() {
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br />
-              <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground font-semibold">
+              Old Way: Dispatchers assign the nearest tech. <br />
+              New Way: Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <p className="text-sm text-muted-foreground">On average, businesses boost margins 15-25% in 90 days.</p>
@@ -247,7 +247,8 @@ export default function MarketingPage() {
                     </div>
                     <div className="bg-primary/5 p-8 rounded-lg border">
                          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">🤖 Profit-First AI Dispatching</h2>
-                         <p className="mt-4 text-lg text-muted-foreground">Instead of asking “Who’s nearest?”, our AI asks: “Which assignment makes this job the most profitable for the business?”</p>
+                         <p className="mt-4 text-lg text-muted-foreground">Instead of asking “Who’s nearest?”, our AI asks:
+                         “Which assignment makes this job the most profitable for the business?”</p>
                          <p className="mt-2 text-lg text-muted-foreground">Every job gets a Profit Profile:</p>
                          <div className="mt-6 grid grid-cols-1 gap-6">
                             <Card>
@@ -390,7 +391,7 @@ export default function MarketingPage() {
             <div className="container px-4 text-center">
                  <h2 className="text-3xl font-bold tracking-tight font-headline text-background">🚀 Stop Dispatching. Start Operating Like a Business.</h2>
                 <p className="mx-auto mt-4 max-w-xl text-muted-foreground text-background/80">
-                  Your fleet isn’t just a cost center — it’s a profit engine waiting to be optimized. Our system helps you capture more margin, serve customers better, and run your business like the operator you are.
+                  Your fleet isn’t just a cost center — it’s a profit engine waiting to be optimized.
                 </p>
                 <div className="mt-8 flex justify-center gap-4">
                   <Button asChild size="lg" variant="secondary">

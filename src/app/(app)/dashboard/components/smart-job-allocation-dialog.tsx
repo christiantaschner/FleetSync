@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -99,7 +98,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
         } else if (result.data) {
             const tech = technicians.find(t => t.id === result.data!.suggestedTechnicianId);
-            toast({ title: "AI Suggestion Received", description: `Fleety suggests ${tech?.name || 'a technician'}.` });
+            toast({ title: "AI Suggestion Received", description: `The AI suggests ${tech?.name || 'a technician'}.` });
             setSuggestedTechnician(result.data);
             setSelectedTechnicianId(result.data.suggestedTechnicianId);
         }
@@ -193,7 +192,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
           <DialogTitle className="font-headline flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/>AI Job Assignment</DialogTitle>
           {jobToAssign && (
             <DialogDescription>
-              Fleety is suggesting the best technician for: <strong>{jobToAssign.title}</strong>
+              The AI is suggesting the best technician for: <strong>{jobToAssign.title}</strong>
             </DialogDescription>
           )}
         </DialogHeader>
@@ -207,7 +206,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
 
         {suggestedTechnician && (
           <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2 border">
-            <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Fleety's Suggestion:</h3>
+            <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI's Suggestion:</h3>
             <p className="text-sm text-muted-foreground italic">"{suggestedTechnician.reasoning}"</p>
              {suggestedTechnician.profitScore !== undefined && (
                 <p className="text-sm font-semibold">Estimated Profit: <span className="text-green-600">${suggestedTechnician.profitScore.toFixed(2)}</span></p>

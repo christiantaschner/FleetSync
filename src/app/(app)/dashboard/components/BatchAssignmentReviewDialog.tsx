@@ -88,7 +88,7 @@ const BatchAssignmentReviewDialog: React.FC<BatchAssignmentReviewDialogProps> = 
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <Bot className="text-primary h-5 w-5" /> Review Fleety's Batch Assignments
+            <Bot className="text-primary h-5 w-5" /> Review AI Batch Assignments
           </DialogTitle>
           <DialogDescription>
             Select jobs to assign and change technicians if needed. Unchecked jobs will not be assigned.

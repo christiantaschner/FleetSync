@@ -86,7 +86,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
     } else if (result.data?.suggestions) {
       const newSuggestions = result.data.suggestions;
       if (newSuggestions.length === 0 && isGettingMore) {
-        toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
+        toast({ title: "No More Suggestions", description: "The AI could not find any other suitable time slots.", variant: "default" });
       }
       setSuggestions(prev => [...prev, ...newSuggestions]);
     }
@@ -148,7 +148,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             <Sparkles className="h-5 w-5 text-primary" /> AI Appointment Suggestion
           </DialogTitle>
           <DialogDescription>
-            Fleety has analyzed all technician schedules to find the best time for {contract?.jobTemplate.title} for {contract?.customerName}.
+            The AI has analyzed all technician schedules to find the best time for {contract?.jobTemplate.title} for {contract?.customerName}.
           </DialogDescription>
         </DialogHeader>
 
@@ -207,7 +207,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
             <Alert>
                 <AlertTitle>No Suggestions Found</AlertTitle>
                 <AlertDescription>
-                    Fleety could not find any suitable appointment times based on current schedules and technician availability. You may need to adjust technician working hours or clear some existing jobs.
+                    The AI could not find any suitable appointment times based on current schedules and technician availability. You may need to adjust technician working hours or clear some existing jobs.
                 </AlertDescription>
             </Alert>
         )}

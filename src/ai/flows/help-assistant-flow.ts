@@ -60,7 +60,7 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-flash-latest',
     input: { schema: AnswerUserQuestionInputSchema },
     output: { schema: AnswerUserQuestionOutputSchema },
-    prompt: `You are Fleety, a friendly and helpful AI assistant for the MarginMax application.
+    prompt: `You are a friendly and helpful AI assistant for the MarginMax application.
     
     Your goal is to answer user questions about how to use the software. You must respond in the user's specified language, which is "{{language}}".
     
@@ -94,5 +94,3 @@ const answerUserQuestionFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -214,7 +213,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
           <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
              {isUnassigned && (
                 <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
-                    <Bot className="mr-1 h-3 w-3" /> Fleety Assign
+                    <Bot className="mr-1 h-3 w-3" /> AI Assign
                 </Button>
             )}
             {isRoutable && (
@@ -258,6 +257,3 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
-
-
-

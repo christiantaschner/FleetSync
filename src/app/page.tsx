@@ -298,7 +298,7 @@ export default function MarketingPage() {
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
                         <h3 className="mt-4 text-lg font-semibold">One-Click Dispatch</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Click "Fleety Batch Assign." Our AI assigns every job to the optimal technician in seconds.</p>
+                        <p className="mt-2 text-sm text-muted-foreground">Click "AI Batch Assign." Our AI assigns every job to the optimal technician in seconds.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
@@ -446,4 +446,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-

@@ -212,7 +212,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                 <DialogHeader>
                     <DialogTitle className="font-headline">AI Schedule Resolution</DialogTitle>
                     <DialogDescription>
-                        For job "<strong>{jobToReassign.title}</strong>", Fleety suggests the following action to avoid a potential delay.
+                        For job "<strong>{jobToReassign.title}</strong>", the AI suggests the following action to avoid a potential delay.
                     </DialogDescription>
                 </DialogHeader>
                  

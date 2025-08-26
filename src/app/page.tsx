@@ -189,43 +189,39 @@ export default function MarketingPage() {
         <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Turn Every Job Into Maximum Profit — Not Just Busy Work
+              The Only AI Dispatcher That Puts Profit First — Not Proximity.
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              Stop dispatching based on “who’s closest.” Start assigning based on who makes you the most money. Our AI-powered dispatcher factors in every cost, revenue driver, and business constraint to maximize profit across your entire fleet.
+             <strong>Old Way:</strong> Dispatchers assign the nearest tech. <br/>
+             <strong>New Way:</strong> Our AI assigns the most profitable tech — factoring revenue, costs, and constraints in real time.
             </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <Button asChild size="lg">
-                <Link href="#pricing">See How Much Profit You’re Leaving on the Table</Link>
-              </Button>
-               <Button asChild size="lg" variant="outline">
-                <Link href="/signup">Book a Demo</Link>
-              </Button>
+            <div className="mt-8 flex flex-col items-center justify-center gap-4">
+                <p className="text-sm text-muted-foreground">On average, businesses boost margins 15-25% in 90 days.</p>
+                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                    <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700">
+                        <Link href="#pricing">Calculate Your Lost Profit</Link>
+                    </Button>
+                    <Button asChild size="lg" variant="outline" className="w-full">
+                        <Link href="/signup">Book a Demo</Link>
+                    </Button>
+                </div>
             </div>
           </div>
         </section>
         
         {/* Screenshot placeholder */}
-        <section className="container mt-8 md:-mt-16 lg:-mt-24">
+         <section className="container mt-8 md:-mt-16 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
-                {/* Laptop Mockup */}
-                <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
-                    <div className="relative aspect-[16/10] bg-gray-800 rounded-t-xl border-x-4 border-t-4 border-gray-900 pt-8 shadow-lg">
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
-                        </div>
-                        <Image 
-                            src="/dashboard-screenshot.png"
-                            width={1200}
-                            height={750}
-                            alt="FleetSync Dashboard Screenshot"
-                            className="w-full h-full object-cover object-top rounded-t-md"
-                            priority
-                        />
-                    </div>
-                    <div className="relative h-4 w-full bg-gray-900 rounded-b-xl shadow-lg"></div>
-                     <div className="relative mx-auto h-2 w-[55%] bg-gray-800/50 rounded-b-md"></div>
-                     <div className="relative mx-auto h-1 w-[45%] bg-gray-700/50 rounded-b-md"></div>
+                <div className="bg-muted/50 p-4 sm:p-8 rounded-2xl border shadow-2xl">
+                     <Image 
+                        src="https://storage.googleapis.com/static.fleetsync.site/profit-first-dispatch.png"
+                        width={1200}
+                        height={750}
+                        alt="A visual comparison showing how profit-first dispatching results in a higher profit margin than simply assigning the nearest technician."
+                        className="w-full h-auto object-contain rounded-lg border-2 border-primary/20"
+                        priority
+                        data-ai-hint="dispatch optimization profit"
+                    />
                 </div>
             </div>
         </section>

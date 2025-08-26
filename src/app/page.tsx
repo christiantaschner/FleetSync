@@ -199,23 +199,24 @@ export default function MarketingPage() {
             <Card className="border-destructive/30 bg-destructive/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-destructive flex items-center justify-center gap-2">
-                  💸 Standard Dispatch = Lost Profit
+                  <X className="h-7 w-7 p-1 bg-destructive/20 rounded-full" /> The Old Way: Standard Dispatch
                 </CardTitle>
+                <CardDescription className="text-destructive-foreground/90">Traditional dispatch focuses on location & duration only, leaving profit to chance.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
                 <p className="text-sm text-center text-destructive-foreground/80">Traditional dispatch focuses on "who's closest?", ignoring the financial impact of each decision.</p>
                 <div className="space-y-3 pt-2">
                     <p className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>Jobs are assigned based on location only, ignoring revenue, upsell potential, SLA premiums, or after-hours surcharges.</span>
+                        <span>Jobs get assigned to the “nearest tech,” ignoring revenue, upsell, SLA premiums, or after-hours surcharges.</span>
                     </p>
                     <p className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>Businesses accidentally lose money on high-cost, low-value jobs without realizing it.</span>
+                        <span>Businesses lose money on high-cost, low-value jobs.</span>
                     </p>
                     <p className="flex items-start gap-3">
                         <X className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                        <span>80% of field service companies leave <strong>10-20% of their profit on the table</strong> due to inefficient dispatching.</span>
+                        <span>80% of field service companies leave <strong>10-20% profit on the table</strong> due to inefficient dispatching.</span>
                     </p>
                 </div>
               </CardContent>
@@ -224,7 +225,7 @@ export default function MarketingPage() {
             <Card className="border-primary/30 bg-primary/5 flex flex-col">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl font-bold text-primary flex items-center justify-center gap-2">
-                  <Bot className="h-7 w-7" /> Profit-First AI Dispatching
+                  <Bot className="h-7 w-7" /> The New Way: Profit-First AI
                 </CardTitle>
                 <CardDescription>
                   Instead of "nearest tech," our AI asks: "Which assignment makes
@@ -239,7 +240,13 @@ export default function MarketingPage() {
                       <CardTitle className="text-sm font-medium flex items-center gap-2"><TrendingUp />Revenue Drivers</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-muted-foreground">Job value, upsell potential, SLA premiums, surcharges</p>
+                       <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
+                        <li>Quoted job value</li>
+                        <li>Upsell potential</li>
+                        <li>SLA premium</li>
+                        <li>After-hours surcharge</li>
+                      </ul>
+                      <p className="text-xs font-semibold mt-2 pt-2 border-t">Benefit: You’ll know which jobs actually move the profit needle.</p>
                     </CardContent>
                   </Card>
                   <Card>
@@ -248,14 +255,6 @@ export default function MarketingPage() {
                     </CardHeader>
                     <CardContent>
                        <p className="text-xs text-muted-foreground">Labor cost, drive time, parts, rework risk</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2"><Check />Constraints</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-xs text-muted-foreground">SLA windows, tech skills, customer preferences</p>
                     </CardContent>
                   </Card>
                 </div>

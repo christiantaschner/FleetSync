@@ -41,7 +41,7 @@ export default function MarketingPage() {
     // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
     const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
     const profitGain = monthlyRevenue * 0.15; // Assume a 15% margin improvement
-    const softwareCost = numTechs * 69;
+    const softwareCost = numTechs * 99;
     const netGain = profitGain - softwareCost;
     setRoi(netGain);
   };
@@ -216,7 +216,7 @@ export default function MarketingPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <X className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
-                    <span><strong className="text-red-700/90">Costly SLA Penalties:</strong> Ignoring Service Level Agreement (SLA) windows results in financial penalties and unhappy clients.</span>
+                    <span><strong className="text-red-700/90">Costly SLA Penalties:</strong> Ignoring Service Level Agreement windows results in financial penalties and unhappy clients.</span>
                   </li>
                 </ul>
               </CardContent>
@@ -280,24 +280,6 @@ export default function MarketingPage() {
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
                      <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
-                </div>
-                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-                    <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Input jobs with revenue & cost profiles.</h3>
-                    </div>
-                     <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">AI analyzes constraints: tech skills, SLAs, customer preferences.</h3>
-                    </div>
-                     <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Algorithm optimizes assignments for maximum profit per hour.</h3>
-                    </div>
-                     <div className="flex flex-col items-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">4</span></div>
-                        <h3 className="mt-4 text-lg font-semibold">Dispatchers approve or adjust in one click.</h3>
-                    </div>
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {featureList.map((feature) => (
@@ -391,7 +373,7 @@ export default function MarketingPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold">$69</span>
+                                <span className="text-4xl font-bold">$99</span>
                                 <span className="text-sm text-muted-foreground">/ per technician / month</span>
                             </div>
                             <ul className="space-y-2">
@@ -400,7 +382,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">
+                            <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">Start Your 30-Day Free Trial</Link>
                             </Button>
                         </CardContent>
@@ -413,7 +395,7 @@ export default function MarketingPage() {
         <section className="bg-gray-900 text-white py-20 sm:py-24">
             <div className="container text-center">
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Most Profitable Quarter Starts Now</h2>
-                <p className="mt-4 text-lg text-gray-300">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
+                <p className="mt-4 text-lg text-white/90">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
                         <Link href="/signup">Claim Your 30-Day Free Trial</Link>

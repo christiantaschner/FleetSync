@@ -70,6 +70,11 @@ export default function MarketingPage() {
       description: "AI constantly monitors schedules and warns you of potential delays before they happen.",
     },
     {
+      icon: Lightbulb,
+      title: "AI-Powered Upsell Intelligence",
+      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device, turning every service call into a potential revenue generator.",
+    },
+    {
       icon: CalendarDays,
       title: "Drag-and-Drop Schedule",
       description: "A visual timeline to easily see and manage your whole team's day.",
@@ -400,7 +405,7 @@ export default function MarketingPage() {
                 <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
-                        <Link href="/signup">💰 Start Your 30-Day Free Trial</Link>
+                        <Link href="/signup">💰 {t('start_free_trial')}</Link>
                     </Button>
                 </div>
             </div>

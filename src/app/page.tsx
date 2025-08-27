@@ -57,37 +57,37 @@ export default function MarketingPage() {
     {
       icon: Bot,
       title: "Profit-First Dispatching",
-      description: "Our core AI engine that assigns jobs based on maximum profitability, not just proximity.",
+      description: "Our core AI engine that assigns jobs based on maximum profitability, not just proximity. Ex: Instead of sending the closest tech, the AI assigns a slightly farther, but more experienced tech to a high-margin commercial job, boosting profit by $150.",
     },
     {
       icon: Shuffle,
       title: "Dynamic Route Optimization",
-      description: "Re-optimize technician routes in one click when schedules change.",
+      description: "Re-optimize technician routes in one click when schedules change. Ex: A cancellation opens a 2-hour gap. In one click, the AI pulls forward a nearby maintenance job, turning idle time into a billable hour.",
     },
     {
       icon: AlertTriangle,
       title: "Proactive Risk Alerts",
-      description: "AI constantly monitors schedules and warns you of potential delays before they happen.",
+      description: "AI constantly monitors schedules and warns you of potential delays before they happen. Ex: 'Alert: Tech B is 30 mins behind schedule. Reassign their next job to Tech C to meet the SLA window?'",
     },
     {
       icon: Lightbulb,
       title: "AI-Powered Upsell Intelligence",
-      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device, turning every service call into a potential revenue generator.",
+      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device, turning every service call into a potential revenue generator. Ex: 'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site.",
     },
     {
       icon: CalendarDays,
       title: "Drag-and-Drop Schedule",
-      description: "A visual timeline to easily see and manage your whole team's day.",
+      description: "A visual timeline to easily see and manage your whole team's day. Ex: See an overlap? Just drag the job from one technician's timeline to another's open slot. It's that simple.",
     },
     {
       icon: Repeat,
       title: "Contract & Recurring Jobs",
-      description: "Automate your recurring maintenance jobs and manage service contracts.",
+      description: "Automate your recurring maintenance jobs and manage service contracts. Ex: Set up 'Quarterly HVAC Check' for a commercial client once. Jobs are auto-generated and added to the queue on schedule.",
     },
     {
       icon: MessageSquare,
       title: "Customer Communication Tools",
-      description: "Live tracking links, in-app chat, and AI-drafted notifications to keep customers happy.",
+      description: "Live tracking links, in-app chat, and AI-drafted notifications to keep customers happy. Ex: Automatically send a text: 'Hi [Customer], your tech, John, is on the way! Track their arrival here: [link]'",
     },
   ];
 
@@ -388,7 +388,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
                             <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">💰 Start Your 30-Day Free Trial</Link>
+                                <Link href="/signup">💰 {t('start_free_trial')}</Link>
                             </Button>
                         </CardContent>
                     </Card>
@@ -426,4 +426,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-

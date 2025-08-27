@@ -103,7 +103,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [quotedValue, setQuotedValue] = useState<number | undefined>(undefined);
   const [expectedPartsCost, setExpectedPartsCost] = useState<number | undefined>(undefined);
   const [slaDeadline, setSlaDeadline] = useState<Date | undefined>(undefined);
-  const [upsellScore, setUpsellScore] = useState<number>(0);
+  const [upsellScore, setUpsellScore] = useState<number | undefined>(undefined);
+  const [upsellReasoning, setUpsellReasoning] = useState<string | undefined>(undefined);
 
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
@@ -139,7 +140,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setQuotedValue(initialData.quotedValue);
     setExpectedPartsCost(initialData.expectedPartsCost);
     setSlaDeadline(initialData.slaDeadline ? new Date(initialData.slaDeadline) : undefined);
-    setUpsellScore(initialData.upsellScore || 0);
+    setUpsellScore(initialData.upsellScore);
+    setUpsellReasoning(initialData.upsellReasoning);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setTriageMessage(null);
@@ -407,6 +409,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
     if (result.data) {
         setUpsellScore(result.data.upsellScore);
+        setUpsellReasoning(result.data.reasoning);
         toast({ title: "AI Upsell Suggestion", description: result.data.reasoning });
     } else {
         toast({ title: "Error", description: result.error || "Could not get upsell suggestion.", variant: "destructive" });
@@ -482,7 +485,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       quotedValue,
       expectedPartsCost,
       slaDeadline: slaDeadline ? slaDeadline.toISOString() : null,
-      upsellScore: upsellScore || null,
+      upsellScore: upsellScore,
+      upsellReasoning: upsellReasoning,
       ...(triageToken && { 
         triageToken: triageToken,
         triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
@@ -727,7 +731,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 <div className="space-y-1">
                                     <Label htmlFor="upsellScore">Upsell Potential</Label>
                                      <div className="flex items-center gap-2">
-                                        <Select value={String(upsellScore)} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
+                                        <Select value={String(upsellScore ?? '0')} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
                                             <SelectTrigger id="upsellScore">
                                                 <SelectValue placeholder="Select potential" />
                                             </SelectTrigger>
@@ -739,7 +743,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                             </SelectContent>
                                         </Select>
                                         <Button type="button" variant="outline" size="icon" onClick={handleSuggestUpsell} disabled={isFetchingUpsell || !title}>
-                                            <Sparkles className="h-4 w-4"/>
+                                            {isFetchingUpsell ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
                                         </Button>
                                     </div>
                                 </div>
@@ -1020,4 +1024,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
 export default AddEditJobDialog;
 
-    

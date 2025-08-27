@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -13,6 +14,7 @@ import SignatureCard from './components/SignatureCard';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
+import UpsellOpportunityCard from './components/UpsellOpportunityCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -107,7 +109,7 @@ export default function TechnicianJobDetailPage() {
     fetchJobAndRelatedData();
   }, [jobId, authLoading, user, appId, isMockMode]);
   
-  const handleSaveDocumentation = async (notes: string, photos: File[]) => {
+  const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string) => {
     if (!job || !db || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
 
@@ -122,7 +124,11 @@ export default function TechnicianJobDetailPage() {
       }
       
       const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-      const updateData: any = { updatedAt: serverTimestamp() };
+      const updateData: any = { 
+        updatedAt: serverTimestamp(),
+        isFirstTimeFix,
+        reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || 'No reason provided')
+      };
       
       if (notes.trim()) {
         const newNote = `\n--- ${new Date().toLocaleString()} ---\n${notes.trim()}`;
@@ -140,6 +146,8 @@ export default function TechnicianJobDetailPage() {
             ...prevJob,
             notes: prevJob.notes ? `${prevJob.notes}${updateData.notes}` : updateData.notes,
             photos: [...(prevJob.photos || []), ...newPhotoUrls],
+            isFirstTimeFix,
+            reasonForFollowUp: updateData.reasonForFollowUp,
             updatedAt: new Date().toISOString()
         };
       });
@@ -151,6 +159,7 @@ export default function TechnicianJobDetailPage() {
       setIsUpdating(false);
     }
   };
+
 
   const handleSaveSignoff = async (signatureDataUrl: string | null, satisfactionScore: number) => {
     if (!job || !db || !storage || isUpdating || !appId) return;
@@ -325,10 +334,15 @@ export default function TechnicianJobDetailPage() {
       </JobDetailsDisplay>
       
       <CustomerHistoryCard jobs={historyJobs} />
+      
+      {job.upsellReasoning && (
+          <UpsellOpportunityCard job={job} />
+      )}
 
       {job.status === 'In Progress' && (
         <div className="space-y-4">
-          <WorkDocumentationForm onSave={handleSaveDocumentation} isSaving={isUpdating} />
+          <TroubleshootingCard jobTitle={job.title} />
+          <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
           <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
         </div>
       )}
@@ -361,3 +375,4 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
+

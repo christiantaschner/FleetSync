@@ -177,6 +177,7 @@ export type Job = {
   expectedPartsCost?: number;
   slaDeadline?: string;
   upsellScore?: number;
+  upsellReasoning?: string;
   fixedWindow?: { start: string; end: string };
   flexibility?: JobFlexibility;
   profitScore?: number;

@@ -117,7 +117,7 @@ export default function MarketingPage() {
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
               <Button asChild variant="default" className="bg-green-600 text-white hover:bg-green-700">
-                  <Link href="/signup">{t('start_free_trial')}</Link>
+                  <Link href="/signup">💰 {t('start_free_trial')}</Link>
               </Button>
             </div>
             {/* Mobile Menu */}
@@ -145,7 +145,7 @@ export default function MarketingPage() {
                              </SheetClose>
                              <SheetClose asChild>
                                 <Link href="/signup" className="w-full">
-                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">{t('start_free_trial')}</Button>
+                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">💰 {t('start_free_trial')}</Button>
                                 </Link>
                              </SheetClose>
                        </div>
@@ -164,10 +164,7 @@ export default function MarketingPage() {
               Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground">
-              Assign jobs based on profit per hour, not just proximity.
-            </p>
-            <p className="mx-auto mt-2 max-w-3xl text-lg text-muted-foreground">
-              MarginMax makes every job a winning job.
+              Assign jobs based on profit per hour, not just proximity. MarginMax makes every job a winning job.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
@@ -386,7 +383,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
                             <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">Start Your 30-Day Free Trial</Link>
+                                <Link href="/signup">💰 Start Your 30-Day Free Trial</Link>
                             </Button>
                         </CardContent>
                     </Card>
@@ -403,7 +400,7 @@ export default function MarketingPage() {
                 <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
-                        <Link href="/signup">Claim Your 30-Day Free Trial</Link>
+                        <Link href="/signup">💰 Start Your 30-Day Free Trial</Link>
                     </Button>
                 </div>
             </div>
@@ -424,3 +421,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

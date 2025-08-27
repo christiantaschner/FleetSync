@@ -101,6 +101,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [quotedValue, setQuotedValue] = useState<number | undefined>(undefined);
   const [expectedPartsCost, setExpectedPartsCost] = useState<number | undefined>(undefined);
+  const [slaDeadline, setSlaDeadline] = useState<Date | undefined>(undefined);
+  const [upsellScore, setUpsellScore] = useState<number>(0);
 
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
@@ -135,6 +137,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setSelectedCustomerId(initialData.customerId || null);
     setQuotedValue(initialData.quotedValue);
     setExpectedPartsCost(initialData.expectedPartsCost);
+    setSlaDeadline(initialData.slaDeadline ? new Date(initialData.slaDeadline) : undefined);
+    setUpsellScore(initialData.upsellScore || 0);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setTriageMessage(null);
@@ -437,6 +441,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       sourceContractId: selectedContractId || job?.sourceContractId || null,
       quotedValue,
       expectedPartsCost,
+      slaDeadline: slaDeadline ? slaDeadline.toISOString() : null,
+      upsellScore: upsellScore || null,
       ...(triageToken && { 
         triageToken: triageToken,
         triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
@@ -671,6 +677,26 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                 <div>
                                     <Label htmlFor="expectedPartsCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Expected Parts Cost ($)</Label>
                                     <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
+                                </div>
+                            </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="slaDeadline">SLA Deadline</Label>
+                                    <Input id="slaDeadline" type="datetime-local" value={slaDeadline ? format(slaDeadline, "yyyy-MM-dd'T'HH:mm") : ''} onChange={e => setSlaDeadline(new Date(e.target.value))} />
+                                </div>
+                                <div>
+                                    <Label htmlFor="upsellScore">Upsell Potential</Label>
+                                     <Select value={String(upsellScore)} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
+                                        <SelectTrigger id="upsellScore">
+                                            <SelectValue placeholder="Select potential" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="0">None</SelectItem>
+                                            <SelectItem value="0.2">Low</SelectItem>
+                                            <SelectItem value="0.5">Medium</SelectItem>
+                                            <SelectItem value="0.8">High</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                         </AccordionContent>

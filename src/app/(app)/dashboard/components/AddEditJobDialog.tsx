@@ -53,7 +53,7 @@ import { MultiSelectFilter } from './MultiSelectFilter';
 
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
-const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Unassigned', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled'];
+const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Unassigned', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Pending Invoice', 'Finished'];
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
 

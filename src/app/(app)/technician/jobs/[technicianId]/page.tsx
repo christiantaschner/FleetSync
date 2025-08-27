@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -200,6 +201,9 @@ export default function TechnicianJobListPage() {
         if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
             const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
             await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
+        } else if (newStatus !== 'Completed' && newStatus !== 'Cancelled' && job.assignedTechnicianId) {
+            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
+            await updateDoc(techDocRef, { isAvailable: false, currentJobId: job.id });
         }
         toast({ title: "Status Updated", description: `Job status set to ${newStatus}.` });
 

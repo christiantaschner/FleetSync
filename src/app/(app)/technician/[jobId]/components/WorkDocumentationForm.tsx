@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useRef } from 'react';
@@ -145,7 +146,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
                     
                     <Button type="submit" disabled={isSubmitting} className="w-full">
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                        Save Documentation & Status
+                        Save Documentation
                     </Button>
                 </form>
             </CardContent>

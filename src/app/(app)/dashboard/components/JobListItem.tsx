@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -55,13 +56,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
     if (priority === 'Medium') return 'default'; 
     return 'secondary';
   };
-
-  const getProfitScoreColor = (score: number | undefined) => {
-    if (score === undefined) return 'bg-gray-200';
-    if (score > 0) return 'bg-green-500';
-    if (score === 0) return 'bg-yellow-500';
-    return 'bg-red-500';
-  }
 
   const getStatusIcon = (status: Job['status']) => {
     switch (status) {
@@ -153,20 +147,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
               </div>
                <div className="flex flex-col items-end gap-1">
                  <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
-                  {job.profitScore !== undefined && (
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Badge variant="outline" className={cn("border-none", getProfitScoreColor(job.profitScore))}>
-                                  <span className="text-white">${job.profitScore.toFixed(0)}</span>
-                                </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Estimated Profit: ${job.profitScore.toFixed(2)}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                  )}
                </div>
             </div>
           </CardHeader>

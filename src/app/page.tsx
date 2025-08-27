@@ -225,7 +225,7 @@ export default function MarketingPage() {
             <Card className="border-primary/20 bg-sky-50/50 flex flex-col">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                  <span className="text-4xl">🚀</span> Profit-First AI Dispatching
+                  <span className="text-4xl">🚀</span> New Way = Profit-First Dispatching
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 flex-grow">
@@ -422,4 +422,3 @@ export default function MarketingPage() {
   );
 }
 
-    

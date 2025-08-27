@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Separator } from '@/components/ui/separator';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
@@ -57,37 +58,44 @@ export default function MarketingPage() {
     {
       icon: Bot,
       title: "Profit-First Dispatching",
-      description: "Our core AI engine that assigns jobs based on maximum profitability, not just proximity. Ex: Instead of sending the closest tech, the AI assigns a slightly farther, but more experienced tech to a high-margin commercial job, boosting profit by $150.",
+      description: "Our core AI engine that assigns jobs based on maximum profitability, not just proximity.",
+      example: "Instead of sending the closest tech, the AI assigns a slightly farther, but more experienced tech to a high-margin commercial job, boosting profit by $150."
     },
     {
       icon: Shuffle,
       title: "Dynamic Route Optimization",
-      description: "Re-optimize technician routes in one click when schedules change. Ex: A cancellation opens a 2-hour gap. In one click, the AI pulls forward a nearby maintenance job, turning idle time into a billable hour.",
+      description: "Re-optimize technician routes in one click when schedules change.",
+      example: "A cancellation opens a 2-hour gap. In one click, the AI pulls forward a nearby maintenance job, turning idle time into a billable hour."
     },
     {
       icon: AlertTriangle,
       title: "Proactive Risk Alerts",
-      description: "AI constantly monitors schedules and warns you of potential delays before they happen. Ex: 'Alert: Tech B is 30 mins behind schedule. Reassign their next job to Tech C to meet the SLA window?'",
+      description: "AI constantly monitors schedules and warns you of potential delays before they happen.",
+      example: "'Alert: Tech B is 30 mins behind schedule. Reassign their next job to Tech C to meet the SLA window?'"
     },
     {
       icon: Lightbulb,
       title: "AI-Powered Upsell Intelligence",
-      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device, turning every service call into a potential revenue generator. Ex: 'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site.",
+      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device.",
+      example: "'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site."
     },
     {
       icon: CalendarDays,
       title: "Drag-and-Drop Schedule",
-      description: "A visual timeline to easily see and manage your whole team's day. Ex: See an overlap? Just drag the job from one technician's timeline to another's open slot. It's that simple.",
+      description: "A visual timeline to easily see and manage your whole team's day.",
+      example: "See an overlap? Just drag the job from one technician's timeline to another's open slot. It's that simple."
     },
     {
       icon: Repeat,
       title: "Contract & Recurring Jobs",
-      description: "Automate your recurring maintenance jobs and manage service contracts. Ex: Set up 'Quarterly HVAC Check' for a commercial client once. Jobs are auto-generated and added to the queue on schedule.",
+      description: "Automate your recurring maintenance jobs and manage service contracts.",
+      example: "Set up 'Quarterly HVAC Check' for a commercial client once. Jobs are auto-generated and added to the queue on schedule."
     },
     {
       icon: MessageSquare,
       title: "Customer Communication Tools",
-      description: "Live tracking links, in-app chat, and AI-drafted notifications to keep customers happy. Ex: Automatically send a text: 'Hi [Customer], your tech, John, is on the way! Track their arrival here: [link]'",
+      description: "Live tracking links, in-app chat, and AI-drafted notifications to keep customers happy.",
+      example: "Automatically send a text: 'Hi [Customer], your tech, John, is on the way! Track their arrival here: [link]'"
     },
   ];
 
@@ -286,13 +294,21 @@ export default function MarketingPage() {
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
                      <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {featureList.map((feature) => (
-                      <div key={feature.title} className="space-y-1">
-                        <feature.icon className="h-8 w-8 text-primary mb-2" />
-                        <h3 className="font-semibold">{feature.title}</h3>
-                        <p className="text-muted-foreground text-sm">{feature.description}</p>
-                      </div>
+                      <Card key={feature.title} className="flex flex-col">
+                          <CardHeader className="flex-row items-center gap-4 space-y-0 pb-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                <feature.icon className="h-6 w-6" />
+                              </div>
+                              <CardTitle className="text-lg font-semibold">{feature.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex-grow space-y-3">
+                              <p className="text-muted-foreground text-sm">{feature.description}</p>
+                              <Separator/>
+                              <p className="text-xs text-muted-foreground italic"><span className="font-semibold not-italic text-primary">Use Case:</span> {feature.example}</p>
+                          </CardContent>
+                      </Card>
                     ))}
                 </div>
             </div>

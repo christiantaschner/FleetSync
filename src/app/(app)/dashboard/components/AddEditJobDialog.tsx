@@ -29,10 +29,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
 import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign } from 'lucide-react';
-import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction } from '@/actions/ai-actions';
+import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction, suggestUpsellOpportunityAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
 import { Popover, PopoverContent, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover';
@@ -78,6 +78,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkills, setIsFetchingSkills] = useState(false);
+  const [isFetchingUpsell, setIsFetchingUpsell] = useState(false);
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
@@ -373,6 +374,45 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
     setIsFetchingSkills(false);
   };
+
+  const handleSuggestUpsell = async () => {
+    if (!description.trim() && !title.trim() || !customerName) {
+        toast({ title: "Cannot Suggest Upsell", description: "Please enter a Job Title and Customer Name.", variant: "default" });
+        return;
+    }
+    if (!db || !appId || !userProfile?.companyId) return;
+
+    setIsFetchingUpsell(true);
+
+    const historyQuery = query(
+        collection(db, `artifacts/${appId}/public/data/jobs`),
+        where("companyId", "==", userProfile.companyId),
+        where("customerName", "==", customerName),
+        where("status", "==", "Completed"),
+        orderBy("completedAt", "desc"),
+        limit(5)
+    );
+    const historySnapshot = await getDocs(historyQuery);
+    const customerHistory = historySnapshot.docs.map(d => d.data() as Job);
+
+    const result = await suggestUpsellOpportunityAction({
+        jobTitle: title,
+        jobDescription: description,
+        customerHistory: customerHistory.map(h => ({
+            title: h.title,
+            description: h.description || '',
+            completedAt: h.completedAt!,
+        }))
+    });
+
+    if (result.data) {
+        setUpsellScore(result.data.upsellScore);
+        toast({ title: "AI Upsell Suggestion", description: result.data.reasoning });
+    } else {
+        toast({ title: "Error", description: result.error || "Could not get upsell suggestion.", variant: "destructive" });
+    }
+    setIsFetchingUpsell(false);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -684,19 +724,24 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     <Label htmlFor="slaDeadline">SLA Deadline</Label>
                                     <Input id="slaDeadline" type="datetime-local" value={slaDeadline ? format(slaDeadline, "yyyy-MM-dd'T'HH:mm") : ''} onChange={e => setSlaDeadline(new Date(e.target.value))} />
                                 </div>
-                                <div>
+                                <div className="space-y-1">
                                     <Label htmlFor="upsellScore">Upsell Potential</Label>
-                                     <Select value={String(upsellScore)} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
-                                        <SelectTrigger id="upsellScore">
-                                            <SelectValue placeholder="Select potential" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="0">None</SelectItem>
-                                            <SelectItem value="0.2">Low</SelectItem>
-                                            <SelectItem value="0.5">Medium</SelectItem>
-                                            <SelectItem value="0.8">High</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                     <div className="flex items-center gap-2">
+                                        <Select value={String(upsellScore)} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
+                                            <SelectTrigger id="upsellScore">
+                                                <SelectValue placeholder="Select potential" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="0">None</SelectItem>
+                                                <SelectItem value="0.2">Low</SelectItem>
+                                                <SelectItem value="0.5">Medium</SelectItem>
+                                                <SelectItem value="0.8">High</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Button type="button" variant="outline" size="icon" onClick={handleSuggestUpsell} disabled={isFetchingUpsell || !title}>
+                                            <Sparkles className="h-4 w-4"/>
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </AccordionContent>
@@ -974,3 +1019,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+
+    

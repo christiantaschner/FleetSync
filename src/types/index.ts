@@ -831,5 +831,26 @@ export const RunReportAnalysisOutputSchema = z.object({
 });
 export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;
     
+export const SuggestUpsellOpportunityInputSchema = z.object({
+    jobTitle: z.string(),
+    jobDescription: z.string(),
+    customerHistory: z.array(
+        z.object({
+            title: z.string(),
+            description: z.string(),
+            completedAt: z.string(),
+        })
+    ).describe("A list of past completed jobs for the same customer."),
+});
+export type SuggestUpsellOpportunityInput = z.infer<typeof SuggestUpsellOpportunityInputSchema>;
+
+export const SuggestUpsellOpportunityOutputSchema = z.object({
+    upsellScore: z.number().min(0).max(1).describe("A score from 0.0 (no opportunity) to 1.0 (high opportunity) for an upsell."),
+    reasoning: z.string().describe("A brief explanation for the provided score."),
+});
+export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportunityOutputSchema>;
+
+    
+
 
     

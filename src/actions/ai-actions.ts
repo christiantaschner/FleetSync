@@ -17,6 +17,8 @@ import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-as
 import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/ai/flows/generate-service-prep-message-flow";
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
 import { runReportAnalysis as runReportAnalysisFlow } from "@/ai/flows/run-report-analysis-flow";
+import { suggestUpsellOpportunity as suggestUpsellOpportunityFlow } from "@/ai/flows/suggest-upsell-opportunity";
+
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
@@ -54,6 +56,8 @@ import type {
   RunFleetOptimizationOutput,
   RunReportAnalysisInput,
   RunReportAnalysisOutput,
+  SuggestUpsellOpportunityInput,
+  SuggestUpsellOpportunityOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -731,5 +735,26 @@ export async function runReportAnalysisAction(
         return { data: null, error: errorMessage };
     }
 }
+
+export async function suggestUpsellOpportunityAction(
+    input: SuggestUpsellOpportunityInput
+): Promise<{ data: SuggestUpsellOpportunityOutput | null; error: string | null }> {
+  try {
+    const result = await suggestUpsellOpportunityFlow(input);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in suggestUpsellOpportunityAction',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { data: null, error: errorMessage };
+  }
+}
+    
     
     

@@ -56,6 +56,12 @@ export default function MarketingPage() {
   
   const featureList = [
     {
+      icon: Lightbulb,
+      title: "AI-Powered Upsell Intelligence",
+      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device.",
+      example: "'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site."
+    },
+    {
       icon: Bot,
       title: "Profit-First Dispatching",
       description: "Our core AI engine that assigns jobs based on maximum profitability, not just proximity.",
@@ -72,12 +78,6 @@ export default function MarketingPage() {
       title: "Proactive Risk Alerts",
       description: "AI constantly monitors schedules and warns you of potential delays before they happen.",
       example: "'Alert: Tech B is 30 mins behind schedule. Reassign their next job to Tech C to meet the SLA window?'"
-    },
-    {
-      icon: Lightbulb,
-      title: "AI-Powered Upsell Intelligence",
-      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device.",
-      example: "'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site."
     },
     {
       icon: CalendarDays,

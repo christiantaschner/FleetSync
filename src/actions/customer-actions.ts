@@ -86,7 +86,7 @@ export async function getTrackingInfoAction(
     const job = { id: jobDoc.id, ...(jobDoc.data() as Job) };
 
     if (job.trackingTokenExpiresAt && new Date(job.trackingTokenExpiresAt) < new Date()) {
-        return { data: null, error: "Tracking link is invalid or has expired." };
+        return { data: null, error: "Tracking link has expired." };
     }
 
     if (job.status === 'Completed' || job.status === 'Cancelled') {

@@ -138,6 +138,7 @@ export type Job = {
   status: JobStatus;
   assignedTechnicianId?: string | null;
   customerId?: string | null;
+  equipmentId?: string; // Link to specific equipment
   location: Location;
   customerName: string;
   customerEmail?: string;

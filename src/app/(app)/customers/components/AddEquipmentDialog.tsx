@@ -95,7 +95,7 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
             Log a new piece of equipment installed at the customer's location.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
+        <form id="add-equipment-form" onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 py-4">
           <div>
             <Label htmlFor="name">Equipment Name *</Label>
             <Input id="name" {...register('name')} placeholder="e.g., HVAC Unit, Water Heater" />
@@ -121,7 +121,7 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" form="add-equipment-form" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <PackagePlus className="mr-2 h-4 w-4" /> Add Equipment
             </Button>

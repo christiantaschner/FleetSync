@@ -5,11 +5,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Job, Contract, Equipment, CustomerData, Skill } from '@/types';
+import type { CustomerData, Skill } from '@/types';
 import { Loader2 } from 'lucide-react';
 import CustomerView from './components/CustomerView';
 import { useAuth } from '@/contexts/auth-context';
-import { mockJobs, mockContracts, mockEquipment, mockCustomers } from '@/lib/mock-data';
+import { mockCustomers } from '@/lib/mock-data';
 import { getSkillsAction } from '@/actions/skill-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { useSearchParams } from 'next/navigation';
@@ -101,7 +101,10 @@ export default function CustomersPage() {
     }, [authLoading, userProfile, isLoading]);
 
      useEffect(() => {
-        fetchData();
+        const unsubscribe = fetchData();
+        return () => {
+            if (unsubscribe) unsubscribe();
+        }
     }, [fetchData]);
 
     if (authLoading || isLoading) {

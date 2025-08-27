@@ -62,10 +62,10 @@ export default function MarketingPage() {
       example: "'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site."
     },
     {
-      icon: Bot,
-      title: "Profit-First Dispatching",
-      description: "Our core AI engine that assigns jobs based on maximum profitability, not just proximity.",
-      example: "Instead of sending the closest tech, the AI assigns a slightly farther, but more experienced tech to a high-margin commercial job, boosting profit by $150."
+      icon: Package,
+      title: "Know-It-All Equipment Tracking",
+      description: "Log every piece of equipment at a customer's site. Your technicians arrive knowing the full service history, warranty status, and common failure points, turning them into trusted experts.",
+      example: "'This is the 3rd repair on this 7-year-old AC unit. It's out of warranty. Suggest a replacement with our new high-efficiency model and a 10-year service plan.' The AI tees up the sale for your tech."
     },
     {
       icon: Shuffle,

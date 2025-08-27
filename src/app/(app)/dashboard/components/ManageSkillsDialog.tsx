@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,8 +20,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth-context';
 import { addSkillAction, deleteSkillAction, type Skill } from '@/actions/skill-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
-import { writeBatch, collection, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { writeBatch, collection, doc } from 'firebase/firestore';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import isEqual from 'lodash.isequal';
 
@@ -38,54 +38,35 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
   const { toast } = useToast();
   
   const [localSkills, setLocalSkills] = useState<Skill[]>([]);
-  const [skillsToAdd, setSkillsToAdd] = useState<Skill[]>([]);
-  const [skillsToDelete, setSkillsToDelete] = useState<Skill[]>([]);
   const [newSkillName, setNewSkillName] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   useEffect(() => {
     if (isOpen) {
-      // Deep copy to avoid mutating the prop directly
       setLocalSkills(JSON.parse(JSON.stringify(initialSkills)));
-      setSkillsToAdd([]);
-      setSkillsToDelete([]);
       setNewSkillName('');
     }
   }, [isOpen, initialSkills]);
 
   const handleAddLocalSkill = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSkillName.trim()) return;
+    const trimmedName = newSkillName.trim();
+    if (!trimmedName) return;
 
-    const skillName = newSkillName.trim();
-    if (localSkills.some(s => s.name.toLowerCase() === skillName.toLowerCase())) {
+    if (localSkills.some(s => s.name.toLowerCase() === trimmedName.toLowerCase())) {
         toast({ title: "Duplicate Skill", description: "This skill already exists in the list.", variant: "destructive" });
         return;
     }
     
-    // Create a temporary new skill object
-    const newSkill: Skill = { id: `new_${Date.now()}`, name: skillName };
-    // Add to the list that is displayed
-    setLocalSkills(prev => [...prev, newSkill].sort((a,b) => a.name.localeCompare(b.name)));
-    // Add to the list of skills to be created in the DB
-    setSkillsToAdd(prev => [...prev, newSkill]);
+    setLocalSkills(prev => [...prev, { id: `new_${Date.now()}`, name: trimmedName }].sort((a,b) => a.name.localeCompare(b.name)));
     setNewSkillName('');
   };
   
-  const handleDeleteLocalSkill = (skillToDelete: Skill) => {
-     setLocalSkills(prev => prev.filter(s => s.id !== skillToDelete.id));
-
-    // If it was a newly added skill (not yet in DB), just remove it from the add list
-    if (skillsToAdd.some(s => s.id === skillToDelete.id)) {
-        setSkillsToAdd(prev => prev.filter(s => s.id !== skillToDelete.id));
-    } else {
-        // Otherwise, it's an existing skill, so add it to the delete list
-        setSkillsToDelete(prev => [...prev, skillToDelete]);
-    }
+  const handleDeleteLocalSkill = (skillId: string) => {
+     setLocalSkills(prev => prev.filter(s => s.id !== skillId));
   };
 
   const handleSeedSkills = () => {
@@ -100,10 +81,14 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
     }
 
     setLocalSkills(prev => [...prev, ...skillsToSeed].sort((a,b) => a.name.localeCompare(b.name)));
-    setSkillsToAdd(prev => [...prev, ...skillsToSeed]);
   };
   
   const handleSaveAndClose = async () => {
+    if (isEqual(initialSkills.map(s => s.name).sort(), localSkills.map(s => s.name).sort())) {
+        setIsOpen(false);
+        return;
+    }
+
     if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
         onSkillsUpdated(localSkills);
         toast({ title: "Success", description: "Skills library updated in mock mode." });
@@ -111,9 +96,16 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
         return;
     }
 
-    if (!userProfile?.companyId || !appId || !db) return;
+    if (!userProfile?.companyId || !appId) return;
 
     setIsSubmitting(true);
+
+    const initialSkillNames = new Set(initialSkills.map(s => s.name));
+    const localSkillNames = new Set(localSkills.map(s => s.name));
+    
+    const skillsToDelete = initialSkills.filter(s => !localSkillNames.has(s.name));
+    const skillsToAdd = localSkills.filter(s => !initialSkillNames.has(s.name));
+
     let hasError = false;
 
     // Process deletions
@@ -143,7 +135,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
 
     if (!hasError) {
         toast({ title: "Success", description: "Skills library has been updated." });
-        onSkillsUpdated(localSkills); // Optimistic update
+        onSkillsUpdated(localSkills);
         setIsOpen(false);
     }
 
@@ -184,11 +176,7 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
             <div className="flex-1 overflow-y-auto -mx-6 mt-2">
                 <ScrollArea className="h-full px-6">
                     <div className="p-2">
-                        {isLoading ? (
-                            <div className="flex items-center justify-center p-4">
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                            </div>
-                        ) : localSkills.length > 0 ? (
+                        {localSkills.length > 0 ? (
                             localSkills.map(skill => (
                                 <div key={skill.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
                                     <span className="text-sm">{skill.name}</span>
@@ -207,12 +195,12 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
                                             <AlertDialogHeader>
                                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Deleting "{skill.name}" will remove it from the central library and from all technicians who have it. This action will be saved when you click "Save &amp; Close".
+                                                    Deleting "{skill.name}" will remove it from the central library and from all technicians who have it. This action will be saved when you click "Save & Close".
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteLocalSkill(skill)}>Continue</AlertDialogAction>
+                                                <AlertDialogAction onClick={() => handleDeleteLocalSkill(skill.id)}>Continue</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
@@ -232,13 +220,13 @@ const ManageSkillsDialog: React.FC<ManageSkillsDialogProps> = ({ isOpen, setIsOp
             </div>
         </div>
 
-        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 sm:justify-end gap-2">
-          <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>
-            <X className="mr-2 h-4 w-4" /> Discard Changes
-          </Button>
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 sm:justify-between items-center gap-2">
+            <Button type="button" variant="outline" onClick={handleDiscard} disabled={isSubmitting}>
+                Discard Changes
+            </Button>
            <Button type="button" onClick={handleSaveAndClose} disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-            Save &amp; Close
+            Save & Close
           </Button>
         </DialogFooter>
       </DialogContent>

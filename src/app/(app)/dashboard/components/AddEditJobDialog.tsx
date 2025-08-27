@@ -49,6 +49,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import Link from 'next/link';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
+import { MultiSelectFilter } from './MultiSelectFilter';
 
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
@@ -104,7 +105,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
   const [isCustomerPopoverOpen, setIsCustomerPopoverOpen] = useState(false);
-  const [skillSearchTerm, setSkillSearchTerm] = useState('');
   
   const [triageMessage, setTriageMessage] = useState<string | null>(null);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
@@ -137,7 +137,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setExpectedPartsCost(initialData.expectedPartsCost);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
-    setSkillSearchTerm('');
     setTriageMessage(null);
     setIsGeneratingLink(false);
     setIsCopied(false);
@@ -271,14 +270,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setLongitude(location.lng);
   };
   
-  const handleSkillChange = (skill: string) => {
-    setRequiredSkills(prevSkills => 
-      prevSkills.includes(skill) 
-        ? prevSkills.filter(s => s !== skill) 
-        : [...prevSkills, skill]
-    );
-  };
-
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
     const hours = scheduledTime ? scheduledTime.getHours() : 9;
@@ -574,6 +565,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const titleText = job ? 'Edit Job' : 'Add New Job';
   const descriptionText = job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details below to create and assign a new job.';
 
+  const skillOptions = allSkills.map(skill => ({ value: skill, label: skill }));
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
@@ -666,16 +659,23 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <Label htmlFor="jobDescription">Job Description</Label>
                     <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={4} className="bg-card" />
                   </div>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="quotedValue"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Quoted Value ($)</Label>
-                            <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
-                        </div>
-                        <div>
-                            <Label htmlFor="expectedPartsCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Expected Parts Cost ($)</Label>
-                            <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
-                        </div>
-                    </div>
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="financials">
+                        <AccordionTrigger className="text-sm font-medium"><DollarSign className="h-4 w-4 mr-2"/>Financials (Optional)</AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="quotedValue"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Quoted Value ($)</Label>
+                                    <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
+                                </div>
+                                <div>
+                                    <Label htmlFor="expectedPartsCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Expected Parts Cost ($)</Label>
+                                    <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
+                                </div>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </div>
 
                 {/* --- RIGHT COLUMN --- */}
@@ -722,66 +722,25 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     </Select>
                   </div>
                   <div className="flex flex-col space-y-2">
-                    <Label className="flex items-center gap-2">
-                        <ListChecks className="h-4 w-4" />
-                        Required Skills
-                    </Label>
-                     {requiredSkills.length > 0 && (
-                      <div className="flex flex-wrap gap-1 p-2 border rounded-md min-h-10 bg-secondary/50">
-                        {requiredSkills.map(skill => (
-                          <Badge key={skill} variant="secondary" className="text-sm">
-                            {skill}
-                            <button
-                              type="button"
-                              className="ml-1.5 rounded-full p-0.5 hover:bg-destructive/20"
-                              onClick={() => handleSkillChange(skill)}
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                          <ListChecks className="h-4 w-4" />
+                          Required Skills
+                      </Label>
+                      <div className="flex items-center gap-2">
+                          <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0">Manage</Button>
+                          <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || (!title.trim() && !description.trim())} className="h-9">
+                              {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
+                              Suggest
+                          </Button>
                       </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Input
-                        placeholder="Search skills..."
-                        value={skillSearchTerm}
-                        onChange={(e) => setSkillSearchTerm(e.target.value)}
-                        className="h-9 flex-1"
-                      />
-                      <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || !title.trim() && !description.trim()} className="h-9">
-                          {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
-                          Suggest
-                      </Button>
                     </div>
-                    <ScrollArea className="h-40 rounded-md border py-2">
-                      <div className="space-y-2 px-3">
-                        {allSkills.length === 0 ? (
-                          <div className="text-center flex flex-col items-center justify-center h-full pt-4">
-                            <p className="text-sm text-muted-foreground">No skills defined in library.</p>
-                            <Button type="button" variant="link" className="mt-1" onClick={onManageSkills}>
-                              <Settings className="mr-2 h-4 w-4" /> Manage Skills
-                            </Button>
-                          </div>
-                        ) : (
-                          allSkills.filter(skill => skill.toLowerCase().includes(skillSearchTerm.toLowerCase())).map(skill => (
-                            <div key={skill} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`skill-${skill.replace(/\s+/g, '-')}`}
-                                checked={requiredSkills.includes(skill)}
-                                onCheckedChange={() => handleSkillChange(skill)}
-                              />
-                              <Label htmlFor={`skill-${skill.replace(/\s+/g, '-')}`} className="font-normal cursor-pointer">
-                                {skill}
-                              </Label>
-                            </div>
-                          ))
-                        )}
-                        {allSkills.filter(skill => skill.toLowerCase().includes(skillSearchTerm.toLowerCase())).length === 0 && allSkills.length > 0 && (
-                          <p className="text-sm text-muted-foreground text-center">No skills match your search.</p>
-                        )}
-                      </div>
-                    </ScrollArea>
+                     <MultiSelectFilter
+                        options={skillOptions}
+                        selected={requiredSkills}
+                        onChange={setRequiredSkills}
+                        placeholder="Select required skills..."
+                    />
                   </div>
                   <div className="space-y-2 rounded-md border p-4">
                     <TooltipProvider>

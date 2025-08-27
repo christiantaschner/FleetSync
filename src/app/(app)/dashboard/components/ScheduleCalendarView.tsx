@@ -58,7 +58,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   if (!job.scheduledTime) return null;
 
   const jobStart = new Date(job.scheduledTime);
-  const jobEnd = new Date(jobStart.getTime() + (job.estimatedDuration || 60) * 60000);
+  const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
 
   const offsetMinutes = (jobStart.getTime() - dayStart.getTime()) / 60000;
   const left = (offsetMinutes / totalMinutes) * 100;
@@ -107,7 +107,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
           <p className="text-sm"><strong>Customer:</strong> {job.customerName}</p>
           <p className="text-sm"><strong>Address:</strong> {job.location.address}</p>
           <p className="text-sm"><strong>Scheduled:</strong> {format(new Date(job.scheduledTime), 'PP p')}</p>
-          <p className="text-sm"><strong>Duration:</strong> {job.estimatedDuration} mins</p>
+          <p className="text-sm"><strong>Duration:</strong> {job.estimatedDurationMinutes} mins</p>
           {job.description && <p className="text-sm mt-2 pt-2 border-t"><strong>Notes:</strong> {job.description}</p>}
         </TooltipContent>
       </Tooltip>
@@ -428,7 +428,8 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     // The fleet-wide optimization is handled by a separate button.
     const jobsForOptimization = jobs.filter(j => 
         j.assignedTechnicianId === technicianId && 
-        isSameDay(new Date(j.scheduledTime || 0), currentDate) &&
+        j.scheduledTime &&
+        isSameDay(new Date(j.scheduledTime), currentDate) &&
         (j.status === 'Assigned' || j.status === 'En Route')
     );
 
@@ -581,7 +582,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                         {techJobs.map((job) => {
                                             if (!job.scheduledTime) return null;
                                             const jobStart = new Date(job.scheduledTime);
-                                            const jobEnd = new Date(jobStart.getTime() + (job.estimatedDuration || 60) * 60000);
+                                            const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
                                             
                                             const TRAVEL_TIME_MINUTES = 30; // Placeholder
                                             const travelStartTime = lastEventTime;

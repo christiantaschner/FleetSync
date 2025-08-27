@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import type { Job, Technician, Customer, Contract, Skill, Location } from '@/types';
-import { Loader2, ArrowLeft, Edit, MapIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, Edit, MapIcon, DollarSign, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -167,10 +168,17 @@ export default function DispatcherJobDetailPage() {
                     <MapIcon className="mr-2 h-4 w-4"/>
                     View on Map
                 </Button>
-                <Button onClick={() => setIsEditDialogOpen(true)}>
-                    <Edit className="mr-2 h-4 w-4"/>
-                    Edit Job Details
-                </Button>
+                 {job.status === 'Completed' ? (
+                     <Button>
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Generate Invoice
+                    </Button>
+                 ) : (
+                    <Button onClick={() => setIsEditDialogOpen(true)}>
+                        <Edit className="mr-2 h-4 w-4"/>
+                        Edit Job Details
+                    </Button>
+                 )}
             </div>
         </div>
         <div className="space-y-6">

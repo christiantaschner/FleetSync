@@ -53,7 +53,7 @@ import { MultiSelectFilter } from './MultiSelectFilter';
 
 
 const UNASSIGNED_VALUE = '_unassigned_'; // Special value for unassigned technician
-const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Unassigned', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Cancelled', 'Pending Invoice', 'Finished'];
+const ALL_JOB_STATUSES: JobStatus[] = ['Draft', 'Unassigned', 'Assigned', 'En Route', 'In Progress', 'Completed', 'Pending Invoice', 'Finished', 'Cancelled'];
 const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
 
@@ -537,8 +537,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         }
         
         const effectiveStatus = updatePayload.status || job.status;
-        const wasCompletedOrCancelled = job.status === 'Completed' || job.status === 'Cancelled';
-        const isNowCompletedOrCancelled = effectiveStatus === 'Completed' || effectiveStatus === 'Cancelled';
+        const wasCompletedOrCancelled = job.status === 'Completed' || job.status === 'Cancelled' || job.status === 'Finished';
+        const isNowCompletedOrCancelled = effectiveStatus === 'Completed' || effectiveStatus === 'Cancelled' || effectiveStatus === 'Finished';
         
         if (!wasCompletedOrCancelled && isNowCompletedOrCancelled && job.assignedTechnicianId) {
             const techToFree = job.assignedTechnicianId;

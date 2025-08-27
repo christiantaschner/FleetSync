@@ -5,7 +5,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
@@ -251,10 +251,6 @@ export default function TechnicianJobDetailPage() {
         }
         if (newStatus === 'Completed') {
             updatePayload.completedAt = serverTimestamp();
-            // In a real app, you might want to ensure a signature is present before allowing this.
-            if (!job.customerSignatureUrl && !job.customerSatisfactionScore) {
-                toast({ title: "Complete Job", description: "Remember to get customer sign-off before you leave.", variant: "default" });
-            }
         }
         
         await updateDoc(jobDocRef, updatePayload);
@@ -342,24 +338,36 @@ export default function TechnicianJobDetailPage() {
       {job.status === 'In Progress' && (
         <div className="space-y-4">
           <TroubleshootingCard jobTitle={job.title} />
-          <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
-          <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
         </div>
       )}
       
       <div className="pt-2">
         {job.status === 'In Progress' && (
-             <Button onClick={() => handleStatusUpdate('Completed')} className="w-full bg-green-600 hover:bg-green-700">
-                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed & Finish
-            </Button>
+             <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
+        )}
+        {job.status === 'Completed' && (
+            <div className="space-y-4">
+                <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
+                 <Button onClick={() => handleStatusUpdate('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
+                    <DollarSign className="mr-2 h-4 w-4" /> Finalize & Send for Invoicing
+                </Button>
+            </div>
         )}
       </div>
 
-      {job.status === 'Completed' && (
+      {job.status === 'Pending Invoice' && (
+        <Card className="bg-blue-50 border-blue-200">
+            <CardHeader>
+                <CardTitle className="font-headline text-blue-800">Pending Invoice</CardTitle>
+                <CardDescription className="text-blue-700">This job is awaiting invoicing by the back office.</CardDescription>
+            </CardHeader>
+        </Card>
+      )}
+       {job.status === 'Finished' && (
         <Card className="bg-green-50 border-green-200">
             <CardHeader>
-                <CardTitle className="font-headline text-green-800">Job Complete</CardTitle>
-                <CardDescription className="text-green-700">This job has been marked as completed.</CardDescription>
+                <CardTitle className="font-headline text-green-800">Job Finished</CardTitle>
+                 <CardDescription className="text-green-700">This job has been completed and invoiced.</CardDescription>
             </CardHeader>
         </Card>
       )}
@@ -375,4 +383,5 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
+
 

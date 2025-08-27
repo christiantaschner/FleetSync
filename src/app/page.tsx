@@ -86,12 +86,6 @@ export default function MarketingPage() {
       example: "See an overlap? Just drag the job from one technician's timeline to another's open slot. It's that simple."
     },
     {
-      icon: Repeat,
-      title: "Contract & Recurring Jobs",
-      description: "Automate your recurring maintenance jobs and manage service contracts.",
-      example: "Set up 'Quarterly HVAC Check' for a commercial client once. Jobs are auto-generated and added to the queue on schedule."
-    },
-    {
       icon: MessageSquare,
       title: "Customer Communication Tools",
       description: "Live tracking links, in-app chat, and AI-drafted notifications to keep customers happy.",
@@ -216,9 +210,9 @@ export default function MarketingPage() {
                     Standard Dispatch = Lost Profit
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 flex-grow">
+              <CardContent className="space-y-4 flex-grow flex flex-col">
                  <p className="text-muted-foreground">Traditional dispatch focuses on one thing: who's closest. This "nearest tech" logic ignores the factors that actually make you money and costs you dearly.</p>
-                 <div className="space-y-3 pt-2">
+                 <div className="space-y-3 pt-2 flex-grow flex flex-col justify-around">
                     <div className="p-4 rounded-lg border bg-white shadow-sm">
                       <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">⛽</span> Wasted Fuel & Labor</h4>
                       <p className="text-sm text-muted-foreground mt-1">Sending techs across town for low-value jobs burns fuel and payroll.</p>
@@ -241,9 +235,9 @@ export default function MarketingPage() {
                   <span className="text-4xl">🚀</span> New Way = Profit-First Dispatching
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 flex-grow">
+              <CardContent className="space-y-4 flex-grow flex flex-col">
                 <p className="text-muted-foreground">MarginMax's AI asks a better question: "Which assignment makes this job the most profitable?" It analyzes every job's unique profit profile by weighing all the critical factors.</p>
-                <div className="space-y-3">
+                <div className="space-y-3 flex-grow flex flex-col justify-around">
                   <div className="p-4 rounded-lg border bg-white shadow-sm">
                       <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">📈</span> Revenue Drivers</h4>
                       <p className="text-sm text-muted-foreground mt-1">Quoted value, upsell potential, SLA premiums, after-hours surcharges.</p>

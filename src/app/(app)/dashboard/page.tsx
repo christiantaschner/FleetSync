@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion, type FinalAssignment } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction, reassignJobAction } from '@/actions/fleet-actions';
-import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
+import { allocateJobAction, checkScheduleHealthAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
 import { useToast } from '@/hooks/use-toast';
@@ -955,35 +955,6 @@ export default function DashboardPage() {
       setIsFleetOptimizationDialogOpen(true);
     }
   };
-
-  const handleConfirmFleetOptimization = async (changes: OptimizationSuggestion[]) => {
-    if (!userProfile?.companyId || !appId || !db) return;
-    setIsLoadingBatchConfirmation(true);
-    
-    const batch = writeBatch(db);
-    changes.forEach(change => {
-        const jobRef = doc(db, `artifacts/${appId}/public/data/jobs`, change.jobId);
-        const payload: Partial<Job> = {
-            assignedTechnicianId: change.newTechnicianId,
-            status: 'Assigned',
-            notes: arrayUnion(`(Reassigned via Fleet Optimizer: ${change.justification})`) as any,
-        };
-        if(change.newScheduledTime) {
-            payload.scheduledTime = change.newScheduledTime;
-        }
-        batch.update(jobRef, payload);
-    });
-
-    try {
-        await batch.commit();
-        toast({ title: 'Fleet Schedule Updated', description: `${changes.length} change(s) have been applied successfully.` });
-    } catch (e: any) {
-        toast({ title: 'Error Applying Changes', description: e.message, variant: 'destructive' });
-    } finally {
-        setIsLoadingBatchConfirmation(false);
-        setIsFleetOptimizationDialogOpen(false);
-    }
-  };
   
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -1076,6 +1047,7 @@ export default function DashboardPage() {
           isOpen={isShareTrackingOpen}
           setIsOpen={setIsShareTrackingOpen}
           job={jobToShare}
+          technicians={technicians}
       />}
       <FleetOptimizationReviewDialog
         isOpen={isFleetOptimizationDialogOpen}

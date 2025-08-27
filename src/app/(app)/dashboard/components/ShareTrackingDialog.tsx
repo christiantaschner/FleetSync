@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -14,8 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import type { Job } from '@/types';
-import { generateTrackingLinkAction, notifyCustomerAction } from '@/actions/ai-actions';
+import type { Job, Technician } from '@/types';
+import { notifyCustomerAction } from '@/actions/ai-actions';
 import { Loader2, Copy, Link as LinkIcon, RefreshCw, Check, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 import { Textarea } from '@/components/ui/textarea';
@@ -24,13 +25,13 @@ interface ShareTrackingDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   job: Job | null;
+  technicians: Technician[];
 }
 
-const ShareTrackingDialog: React.FC<ShareTrackingDialogProps> = ({ isOpen, setIsOpen, job }) => {
+const ShareTrackingDialog: React.FC<ShareTrackingDialogProps> = ({ isOpen, setIsOpen, job, technicians }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [trackingUrl, setTrackingUrl] = useState('');
   const [message, setMessage] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   
@@ -39,23 +40,19 @@ const ShareTrackingDialog: React.FC<ShareTrackingDialogProps> = ({ isOpen, setIs
         toast({ title: "Error", description: "Company information not available.", variant: "destructive"});
         return;
     }
-    const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-    if (!appId) {
-        toast({ title: "Error", description: "Application ID not configured.", variant: "destructive"});
-        return;
-    }
+    const assignedTechnician = technicians.find(t => t.id === currentJob.assignedTechnicianId);
+
     setIsLoading(true);
-    setTrackingUrl('');
     setMessage('');
     setIsCopied(false);
 
     const result = await notifyCustomerAction({
         jobId: currentJob.id,
         customerName: currentJob.customerName,
-        technicianName: 'Your Technician', // Placeholder
+        technicianName: assignedTechnician?.name || 'Your Technician',
         companyName: company?.name,
         appointmentTime: currentJob.scheduledTime,
-        estimatedDurationMinutes: currentJob.estimatedDuration,
+        estimatedDurationMinutes: currentJob.estimatedDurationMinutes,
         jobTitle: currentJob.title,
     });
     
@@ -72,7 +69,6 @@ const ShareTrackingDialog: React.FC<ShareTrackingDialogProps> = ({ isOpen, setIs
     if (isOpen && job) {
       generateLinkAndMessage(job);
     } else {
-       setTrackingUrl('');
        setIsCopied(false);
        setMessage('');
     }

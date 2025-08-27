@@ -63,9 +63,9 @@ export default function MarketingPage() {
     },
     {
       icon: Package,
-      title: "Know-It-All Equipment Tracking",
-      description: "Log every piece of equipment at a customer's site. Your technicians arrive knowing the full service history, warranty status, and common failure points, turning them into trusted experts.",
-      example: "'This is the 3rd repair on this 7-year-old AC unit. It's out of warranty. Suggest a replacement with our new high-efficiency model and a 10-year service plan.' The AI tees up the sale for your tech."
+      title: "Turn Service History into Sales",
+      description: "Log every piece of customer equipment. The AI uses this history to flag high-value replacement jobs before the customer even thinks of calling a competitor.",
+      example: "'Alert: This is the 3rd repair on this 7-year-old AC unit. It's out of warranty. Suggest replacement options.' The AI turns a simple repair call into a major sale."
     },
     {
       icon: Shuffle,

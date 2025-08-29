@@ -1,7 +1,6 @@
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence, initializeFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // import { getAnalytics, isSupported } from "firebase/analytics"; // Optional: if you need Analytics
@@ -31,9 +30,28 @@ if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("YOUR_API_KEY")) {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
-const db = getFirestore(app);
 const storage = getStorage(app);
 
+// Initialize Firestore with offline persistence
+let db: ReturnType<typeof getFirestore>;
+
+if (typeof window !== 'undefined') {
+  try {
+    // We are on the client, so we can enable persistence.
+    db = initializeFirestore(app, {
+      localCache: {
+        kind: 'persistent'
+      }
+    });
+    console.log("Firestore persistence enabled.");
+  } catch (error) {
+    console.error("Failed to enable Firestore persistence:", error);
+    db = getFirestore(app); // Fallback to memory-only cache
+  }
+} else {
+  // We are on the server, no persistence needed.
+  db = getFirestore(app);
+}
 
 // Optional: Initialize Analytics if needed and supported
 // let analytics;

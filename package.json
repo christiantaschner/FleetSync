@@ -9,10 +9,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "patch-package && npx caniuse-lite@latest --update-db"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
+    "@ducanh2912/next-pwa": "^10.2.8",
     "@genkit-ai/googleai": "1.13.0",
     "@hookform/resolvers": "^4.1.3",
     "@radix-ui/react-accordion": "^1.2.3",
@@ -54,7 +56,6 @@
     "react": "rc",
     "react-day-picker": "^8.10.1",
     "react-dom": "rc",
-    "react-hook-form": "^7.54.2",
     "react-signature-canvas": "^1.0.6",
     "stripe": "^16.2.0",
     "tailwind-merge": "^3.0.1",

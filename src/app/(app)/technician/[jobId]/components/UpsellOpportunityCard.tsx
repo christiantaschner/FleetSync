@@ -12,19 +12,19 @@ interface UpsellOpportunityCardProps {
 }
 
 const UpsellOpportunityCard: React.FC<UpsellOpportunityCardProps> = ({ job }) => {
-    if (!job.upsellReasoning || !job.upsellScore) {
+    if (!job.upsellReasoning || typeof job.upsellScore !== 'number') {
         return null;
     }
 
     const getScoreLabel = (score: number) => {
-        if (score >= 0.8) return "High";
-        if (score >= 0.5) return "Medium";
+        if (score >= 0.7) return "High";
+        if (score >= 0.4) return "Medium";
         return "Low";
     };
 
     const getBadgeVariant = (score: number) => {
-        if (score >= 0.8) return "destructive";
-        if (score >= 0.5) return "default";
+        if (score >= 0.7) return "destructive";
+        if (score >= 0.4) return "default";
         return "secondary";
     };
 

@@ -16,6 +16,7 @@ import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog'
 import JobDetailsDisplay from './components/JobDetailsDisplay';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import ChatCard from './components/ChatCard';
+import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpportunityCard';
 
 export default function DispatcherJobDetailPage() {
   const { userProfile, loading, isMockMode } = useAuth();
@@ -183,6 +184,9 @@ export default function DispatcherJobDetailPage() {
         </div>
         <div className="space-y-6">
             <JobDetailsDisplay job={job} />
+            {job.upsellReasoning && (
+              <UpsellOpportunityCard job={job} />
+            )}
             <CustomerHistoryCard jobs={historyJobs} />
              {assignedTechnician && appId && (
                 <ChatCard job={job} technician={assignedTechnician} appId={appId} />

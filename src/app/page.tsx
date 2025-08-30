@@ -57,9 +57,9 @@ export default function MarketingPage() {
   const featureList = [
     {
       icon: Lightbulb,
-      title: "AI-Powered Upsell Intelligence",
-      description: "The AI analyzes customer history to identify and suggest high-margin upsell opportunities right on the technician's device.",
-      example: "'Customer's water heater is 15 years old. Suggest a high-efficiency tankless model.' Your tech gets this insight on-site."
+      title: "Profit-Driven Upsell Intelligence",
+      description: "Our AI doesn't just find upsells—it integrates them into your dispatching strategy. High-potential jobs are flagged and can be automatically assigned to your best closers, turning service calls into major sales.",
+      example: "'High upsell potential detected for AC replacement. Assigning to senior tech Sarah for maximum conversion probability.' The system doesn't just inform, it acts."
     },
     {
       icon: Package,
@@ -436,3 +436,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

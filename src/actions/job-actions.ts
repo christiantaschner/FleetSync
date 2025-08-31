@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import { doc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp, arrayUnion, getDoc } from 'firebase/firestore';
 import type { Job, JobStatus } from '@/types';
 
 // --- Update Job Status ---
@@ -38,9 +38,9 @@ export async function updateJobStatusAction(
 
     await updateDoc(jobDocRef, updatePayload);
 
-    // If job is completed or cancelled, free up the technician
+    // If job is completed, cancelled, or finished, free up the technician
     if (status === 'Completed' || status === 'Cancelled' || status === 'Finished') {
-      const jobSnap = await jobDocRef.get();
+      const jobSnap = await getDoc(jobDocRef); // Re-fetch to get the latest state
       const job = jobSnap.data() as Job;
       if (job.assignedTechnicianId) {
         const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);

@@ -18,6 +18,7 @@ import ChatCard from './components/ChatCard';
 import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpportunityCard';
 import { updateJobStatusAction } from '@/actions/job-actions';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function DispatcherJobDetailPage() {
   const { userProfile, loading, isMockMode } = useAuth();
@@ -190,15 +191,29 @@ export default function DispatcherJobDetailPage() {
                         {isUpdatingStatus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <DollarSign className="mr-2 h-4 w-4" />}
                         Generate Invoice
                     </Button>
-                 ) : (
+                 ) : job.status === 'Pending Invoice' ? (
+                     <Button onClick={() => handleUpdateStatus('Finished')} disabled={isUpdatingStatus} className="bg-green-600 hover:bg-green-700">
+                        {isUpdatingStatus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4" />}
+                        Mark as Finished
+                    </Button>
+                 ) : job.status !== 'Finished' && job.status !== 'Cancelled' ? (
                     <Button onClick={() => setIsEditDialogOpen(true)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         Edit Job Details
                     </Button>
-                 )}
+                 ) : null}
             </div>
         </div>
         <div className="space-y-6">
+            {job.status === 'Finished' && (
+              <Alert variant="default" className="border-green-600/50 bg-green-50/50">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertTitle className="font-semibold text-green-800">Job Finished</AlertTitle>
+                <AlertDescription className="text-green-700">
+                    This job has been completed and invoiced. No further actions are required.
+                </AlertDescription>
+              </Alert>
+            )}
             <JobDetailsDisplay job={job} />
             {job.upsellReasoning && (
               <UpsellOpportunityCard job={job} />

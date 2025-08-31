@@ -315,6 +315,8 @@ export const EquipmentSchema = z.object({
     notes: z.string().optional(),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
+    maintenanceFrequency: z.enum(['None', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']).optional(),
+    nextMaintenanceDate: z.string().optional(),
 });
 export type Equipment = z.infer<typeof EquipmentSchema>;
 
@@ -860,4 +862,5 @@ export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportu
     
 
     
+
 

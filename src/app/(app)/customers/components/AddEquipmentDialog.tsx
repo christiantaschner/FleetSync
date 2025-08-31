@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Dialog,
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addEquipmentAction, AddEquipmentInputSchema } from '@/actions/customer-actions';
 import type { AddEquipmentInput } from '@/actions/customer-actions';
 import { Loader2, PackagePlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AddEquipmentDialogProps {
   isOpen: boolean;
@@ -30,13 +31,15 @@ interface AddEquipmentDialogProps {
   onEquipmentAdded: () => void;
 }
 
+const maintenanceFrequencies: AddEquipmentInput['maintenanceFrequency'][] = ['None', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually'];
+
 const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOpen, customerId, customerName, companyId, onEquipmentAdded }) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!;
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<AddEquipmentInput>({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<AddEquipmentInput>({
     resolver: zodResolver(AddEquipmentInputSchema),
     defaultValues: {
       customerId,
@@ -47,7 +50,8 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
       model: '',
       serialNumber: '',
       installDate: '',
-      notes: ''
+      notes: '',
+      maintenanceFrequency: 'None',
     },
   });
 
@@ -114,6 +118,25 @@ const AddEquipmentDialog: React.FC<AddEquipmentDialogProps> = ({ isOpen, setIsOp
           <div>
             <Label htmlFor="installDate">Installation Date</Label>
             <Input id="installDate" type="date" {...register('installDate')} />
+          </div>
+           <div>
+            <Label htmlFor="maintenanceFrequency">Maintenance Schedule</Label>
+             <Controller
+                name="maintenanceFrequency"
+                control={control}
+                render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <SelectTrigger id="maintenanceFrequency">
+                            <SelectValue placeholder="Select frequency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {maintenanceFrequencies.map(f => (
+                                <SelectItem key={f} value={f!}>{f}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            />
           </div>
           <div>
             <Label htmlFor="notes">Notes</Label>

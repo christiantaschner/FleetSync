@@ -7,6 +7,7 @@ import type { Job, Technician, PublicTrackingInfo, CustomerData } from '@/types'
 import * as admin from 'firebase-admin';
 import { AddCustomerInputSchema } from '@/types';
 import type { AddCustomerInput } from '@/types';
+import { addMonths } from 'date-fns';
 
 
 export const AddEquipmentInputSchema = z.object({
@@ -19,8 +20,23 @@ export const AddEquipmentInputSchema = z.object({
   serialNumber: z.string().optional(),
   installDate: z.string().optional(),
   notes: z.string().optional(),
+  maintenanceFrequency: z.enum(['None', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']).optional(),
 });
 export type AddEquipmentInput = z.infer<typeof AddEquipmentInputSchema>;
+
+const calculateNextMaintenanceDate = (installDate: string, frequency: AddEquipmentInput['maintenanceFrequency']): string | undefined => {
+  if (!frequency || frequency === 'None' || !installDate) return undefined;
+  
+  const date = new Date(installDate);
+  switch (frequency) {
+    case 'Monthly': return addMonths(date, 1).toISOString();
+    case 'Quarterly': return addMonths(date, 3).toISOString();
+    case 'Semi-Annually': return addMonths(date, 6).toISOString();
+    case 'Annually': return addMonths(date, 12).toISOString();
+    default: return undefined;
+  }
+};
+
 
 export async function addEquipmentAction(
   input: AddEquipmentInput
@@ -33,12 +49,19 @@ export async function addEquipmentAction(
     const validatedInput = AddEquipmentInputSchema.parse(input);
     const { appId, ...equipmentData } = validatedInput; 
 
-    const equipmentCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/equipment`);
-    const docRef = await equipmentCollectionRef.add({
+    const nextMaintenanceDate = equipmentData.installDate 
+      ? calculateNextMaintenanceDate(equipmentData.installDate, equipmentData.maintenanceFrequency)
+      : undefined;
+
+    const equipmentPayload = {
       ...equipmentData,
+      nextMaintenanceDate,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+
+    const equipmentCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/equipment`);
+    const docRef = await equipmentCollectionRef.add(equipmentPayload);
 
     return { data: { id: docRef.id }, error: null };
   } catch (e) {

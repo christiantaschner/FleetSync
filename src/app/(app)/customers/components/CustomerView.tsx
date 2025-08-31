@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { User, Phone, MapPin, Briefcase, Repeat, Circle, UserPlus, Mail, Edit, PlusCircle, Package } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, Repeat, Circle, UserPlus, Mail, Edit, PlusCircle, Package, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -363,8 +363,11 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
                                                 <div key={item.id} className="w-full text-left block p-3 rounded-md bg-secondary/50">
                                                     <p className="font-semibold text-sm">{item.name}</p>
                                                     <p className="text-xs text-muted-foreground">Model: {item.model || 'N/A'}</p>
-                                                     <p className="text-xs text-muted-foreground">S/N: {item.serialNumber || 'N/A'}</p>
-                                                     {item.installDate && <p className="text-xs text-muted-foreground">Installed: {format(new Date(item.installDate), "PPP")}</p>}
+                                                    <p className="text-xs text-muted-foreground">S/N: {item.serialNumber || 'N/A'}</p>
+                                                    {item.installDate && <p className="text-xs text-muted-foreground">Installed: {format(new Date(item.installDate), "PPP")}</p>}
+                                                    {item.nextMaintenanceDate && (
+                                                        <p className="text-xs font-medium text-primary flex items-center gap-1 mt-1"><Calendar size={12}/> Next Service Due: {format(new Date(item.nextMaintenanceDate), "PPP")}</p>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>

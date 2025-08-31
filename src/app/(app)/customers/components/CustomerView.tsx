@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { User, Phone, MapPin, Briefcase, Repeat, Circle, UserPlus, Mail, Edit, PlusCircle, Package, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isBefore, addDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -359,17 +359,25 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
                                     <ScrollArea className="h-[50vh] border rounded-md p-2">
                                          <div className="space-y-3 p-2">
                                             {selectedCustomerEquipment.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No equipment logged for this customer.</p>}
-                                            {selectedCustomerEquipment.map(item => (
-                                                <div key={item.id} className="w-full text-left block p-3 rounded-md bg-secondary/50">
-                                                    <p className="font-semibold text-sm">{item.name}</p>
-                                                    <p className="text-xs text-muted-foreground">Model: {item.model || 'N/A'}</p>
-                                                    <p className="text-xs text-muted-foreground">S/N: {item.serialNumber || 'N/A'}</p>
-                                                    {item.installDate && <p className="text-xs text-muted-foreground">Installed: {format(new Date(item.installDate), "PPP")}</p>}
-                                                    {item.nextMaintenanceDate && (
-                                                        <p className="text-xs font-medium text-primary flex items-center gap-1 mt-1"><Calendar size={12}/> Next Service Due: {format(new Date(item.nextMaintenanceDate), "PPP")}</p>
-                                                    )}
-                                                </div>
-                                            ))}
+                                            {selectedCustomerEquipment.map(item => {
+                                                const isDue = item.nextMaintenanceDate && isBefore(new Date(item.nextMaintenanceDate), addDays(new Date(), 30));
+                                                return (
+                                                    <div key={item.id} className="w-full text-left block p-3 rounded-md bg-secondary/50">
+                                                        <p className="font-semibold text-sm">{item.name}</p>
+                                                        <p className="text-xs text-muted-foreground">Model: {item.model || 'N/A'}</p>
+                                                        <p className="text-xs text-muted-foreground">S/N: {item.serialNumber || 'N/A'}</p>
+                                                        {item.installDate && <p className="text-xs text-muted-foreground">Installed: {format(new Date(item.installDate), "PPP")}</p>}
+                                                        {item.nextMaintenanceDate && (
+                                                            <p className={cn(
+                                                                "text-xs flex items-center gap-1 mt-1",
+                                                                isDue ? "font-bold text-primary" : "text-muted-foreground"
+                                                            )}>
+                                                                <Calendar size={12}/> Next Service Due: {format(new Date(item.nextMaintenanceDate), "PPP")}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
                                     </ScrollArea>
                                 </TabsContent>

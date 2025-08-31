@@ -1,11 +1,10 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import type { Job, Technician, Customer, Contract, Skill, Location } from '@/types';
+import type { Job, Technician, Customer, Contract, Skill, Location, JobStatus } from '@/types';
 import { Loader2, ArrowLeft, Edit, MapIcon, DollarSign, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
@@ -17,16 +16,20 @@ import JobDetailsDisplay from './components/JobDetailsDisplay';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import ChatCard from './components/ChatCard';
 import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpportunityCard';
+import { updateJobStatusAction } from '@/actions/job-actions';
+import { useToast } from '@/hooks/use-toast';
 
 export default function DispatcherJobDetailPage() {
   const { userProfile, loading, isMockMode } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const jobId = params.jobId as string;
 
   const [job, setJob] = useState<Job | null>(null);
   const [historyJobs, setHistoryJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // In a real app, we'd fetch all these from context or dedicated hooks
@@ -45,6 +48,19 @@ export default function DispatcherJobDetailPage() {
       address: location.address || ''
     });
     router.push(`/dashboard?tab=overview-map&${params.toString()}`);
+  };
+  
+  const handleUpdateStatus = async (newStatus: JobStatus) => {
+    if (!job || !appId) return;
+    setIsUpdatingStatus(true);
+    const result = await updateJobStatusAction({ jobId: job.id, status: newStatus, appId });
+    if (result.error) {
+        toast({ title: 'Status Update Failed', description: result.error, variant: 'destructive'});
+    } else {
+        toast({ title: 'Status Updated', description: `Job status moved to ${newStatus}.`});
+        setJob(prev => prev ? {...prev, status: newStatus} : null);
+    }
+    setIsUpdatingStatus(false);
   };
 
   useEffect(() => {
@@ -170,8 +186,8 @@ export default function DispatcherJobDetailPage() {
                     View on Map
                 </Button>
                  {job.status === 'Completed' ? (
-                     <Button>
-                        <DollarSign className="mr-2 h-4 w-4" />
+                     <Button onClick={() => handleUpdateStatus('Pending Invoice')} disabled={isUpdatingStatus}>
+                        {isUpdatingStatus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <DollarSign className="mr-2 h-4 w-4" />}
                         Generate Invoice
                     </Button>
                  ) : (

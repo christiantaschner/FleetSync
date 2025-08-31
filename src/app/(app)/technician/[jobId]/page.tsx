@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
 import WorkDocumentationForm from './components/WorkDocumentationForm';
-import SignatureCard from './components/SignatureCard';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
@@ -22,10 +20,11 @@ import { ref, uploadString, uploadBytes, getDownloadURL } from "firebase/storage
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/auth-context';
 import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai-actions';
+import { addDocumentationAction, updateJobStatusAction } from '@/actions/job-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
-import SignatureCanvas from 'react-signature-canvas';
+import SignatureCard from './components/SignatureCard';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -110,44 +109,38 @@ export default function TechnicianJobDetailPage() {
   }, [jobId, authLoading, user, appId, isMockMode]);
   
   const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string) => {
-    if (!job || !db || !storage || isUpdating || !appId) return;
+    if (!job || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
 
-    let newPhotoUrls: string[] = [];
+    let photoUrls: string[] = [];
     try {
       if (photos.length > 0) {
-        newPhotoUrls = await Promise.all(photos.map(async (photo) => {
+        photoUrls = await Promise.all(photos.map(async (photo) => {
           const photoRef = ref(storage, `job-photos/${job.id}/${Date.now()}-${photo.name}`);
           await uploadBytes(photoRef, photo);
           return getDownloadURL(photoRef);
         }));
       }
       
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-      const updateData: any = { 
-        updatedAt: serverTimestamp(),
+      const result = await addDocumentationAction({
+        jobId: job.id,
+        appId,
+        notes,
+        photoUrls,
         isFirstTimeFix,
-        reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || 'No reason provided')
-      };
+        reasonForFollowUp
+      });
       
-      if (notes.trim()) {
-        const newNote = `\n--- ${new Date().toLocaleString()} ---\n${notes.trim()}`;
-        updateData.notes = arrayUnion(newNote);
-      }
-      if (newPhotoUrls.length > 0) {
-        updateData.photos = arrayUnion(...newPhotoUrls);
-      }
+      if(result.error) throw new Error(result.error);
       
-      await updateDoc(jobDocRef, updateData);
-
       setJob(prevJob => {
         if (!prevJob) return null;
         return {
             ...prevJob,
-            notes: prevJob.notes ? `${prevJob.notes}${updateData.notes}` : updateData.notes,
-            photos: [...(prevJob.photos || []), ...newPhotoUrls],
+            notes: prevJob.notes ? `${prevJob.notes}${notes ? `\n--- ${new Date().toLocaleString()} ---\n${notes.trim()}`: ''}` : notes,
+            photos: [...(prevJob.photos || []), ...photoUrls],
             isFirstTimeFix,
-            reasonForFollowUp: updateData.reasonForFollowUp,
+            reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || ''),
             updatedAt: new Date().toISOString()
         };
       });
@@ -160,35 +153,31 @@ export default function TechnicianJobDetailPage() {
     }
   };
 
-
   const handleSaveSignoff = async (signatureDataUrl: string | null, satisfactionScore: number) => {
-    if (!job || !db || !storage || isUpdating || !appId) return;
+    if (!job || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
-
-    let newSignatureUrl: string | null = null;
+    let signatureUrl: string | null = null;
     try {
       if (signatureDataUrl) {
         const signatureRef = ref(storage, `signatures/${job.id}.png`);
         await uploadString(signatureRef, signatureDataUrl, 'data_url');
-        newSignatureUrl = await getDownloadURL(signatureRef);
+        signatureUrl = await getDownloadURL(signatureRef);
       }
+      
+      const result = await addDocumentationAction({
+        jobId: job.id,
+        appId,
+        isFirstTimeFix: job.isFirstTimeFix ?? true,
+        reasonForFollowUp: job.reasonForFollowUp,
+        signatureUrl,
+        satisfactionScore
+      });
 
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-      const updateData: any = { updatedAt: serverTimestamp() };
-      
-      if (newSignatureUrl) {
-        updateData.customerSignatureUrl = newSignatureUrl;
-        updateData.customerSignatureTimestamp = new Date().toISOString();
-      }
-      if (satisfactionScore > 0) {
-        updateData.customerSatisfactionScore = satisfactionScore;
-      }
-      
-      if (Object.keys(updateData).length > 1) { // more than just timestamp
-        await updateDoc(jobDocRef, updateData);
-        setJob(prev => prev ? { ...prev, ...updateData } : null);
-        toast({ title: "Success", description: "Customer sign-off saved." });
-      }
+      if(result.error) throw new Error(result.error);
+
+      setJob(prev => prev ? { ...prev, customerSignatureUrl: signatureUrl || prev.customerSignatureUrl, customerSatisfactionScore: satisfactionScore } : null);
+      toast({ title: "Success", description: "Customer sign-off saved." });
+
     } catch (error) {
        console.error("Error saving sign-off:", error);
        toast({ title: "Error", description: "Could not save customer sign-off.", variant: "destructive" });
@@ -226,7 +215,7 @@ export default function TechnicianJobDetailPage() {
   };
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
-    if (!job || !db || isUpdating || !technician || !appId) return;
+    if (!job || !appId || isUpdating) return;
 
     if (job.status === 'In Progress' && job.breaks?.some(b => !b.end)) {
         toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
@@ -234,51 +223,22 @@ export default function TechnicianJobDetailPage() {
     }
     
     setIsUpdating(true);
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-    try {
-        const updatePayload: any = { status: newStatus, updatedAt: serverTimestamp() };
+    const result = await updateJobStatusAction({ jobId: job.id, status: newStatus, appId });
 
-        if (newStatus === 'En Route') {
-            updatePayload.enRouteAt = serverTimestamp();
-            notifyCustomerAction({
-                jobId: job.id, customerName: job.customerName, technicianName: technician.name,
-                reasonForChange: `Your technician, ${technician.name}, is on their way.`,
-                companyName: company?.name || 'our team'
-            }).catch(err => console.error("Failed to send 'On My Way' notification:", err));
-        }
-        if (newStatus === 'In Progress') {
-            updatePayload.inProgressAt = serverTimestamp();
-        }
-        if (newStatus === 'Completed') {
-            updatePayload.completedAt = serverTimestamp();
-        }
-        
-        await updateDoc(jobDocRef, updatePayload);
-
-        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
-            await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
-        } else if (newStatus !== 'Completed' && newStatus !== 'Cancelled' && job.assignedTechnicianId) {
-             const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
-            await updateDoc(techDocRef, { isAvailable: false, currentJobId: job.id });
-        }
-        
-        setJob(prev => prev ? {...prev, ...updatePayload, status: newStatus, updatedAt: new Date().toISOString() } : null);
+    if(result.error) {
+        toast({ title: "Error", description: `Could not update job status: ${result.error}`, variant: "destructive" });
+    } else {
+        setJob(prev => prev ? {...prev, status: newStatus, updatedAt: new Date().toISOString() } : null);
         toast({ title: "Status Updated", description: `Job status set to ${newStatus}.` });
 
-        if (newStatus === 'Completed' && job.assignedTechnicianId && userProfile) {
+        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId && userProfile) {
             calculateTravelMetricsAction({
                 companyId: userProfile.companyId!, jobId: job.id, technicianId: job.assignedTechnicianId, appId,
             }).catch(err => console.error("Failed to trigger travel metrics calculation:", err));
         }
-    } catch(e) {
-        console.error("Error updating job status from detail view:", e);
-        toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
-    } finally {
-        setIsUpdating(false);
     }
+    setIsUpdating(false);
   };
-
 
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
@@ -348,7 +308,7 @@ export default function TechnicianJobDetailPage() {
         {job.status === 'Completed' && (
             <div className="space-y-4">
                 <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
-                 <Button onClick={() => handleStatusUpdate('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
+                 <Button onClick={() => handleUpdateStatus('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
                     <DollarSign className="mr-2 h-4 w-4" /> Finalize & Send for Invoicing
                 </Button>
             </div>
@@ -383,5 +343,3 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
-
-

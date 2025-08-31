@@ -65,6 +65,12 @@ const roadmapFeatures = {
       icon: Sparkles,
       status: "Completed",
     },
+     {
+      title: "Profit-Aware Dispatching",
+      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. Controllable via a feature flag in settings.",
+      icon: DollarSign,
+      status: "Completed",
+    },
     {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
@@ -72,20 +78,8 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Dispatcher-Triggered Route Re-optimization",
-      description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes or cancellations.",
-      icon: Shuffle, 
-      status: "Completed",
-    },
-     {
-      title: "Work Order Management",
-      description: "A centralized hub for all job-related information. Admins can create, edit, and view work orders with all necessary details, including customer information, job history, required parts, and special notes. All data is instantly available and synced across office and technician apps.",
-      icon: ClipboardList,
-      status: "Completed",
-    },
-    {
-      title: "Automated Schedule Risk Warnings",
-      description: "The system automatically checks for schedule risks and proactively warns dispatchers about potential delays.",
+      title: "Automated Schedule Risk Warnings & AI Resolution",
+      description: "The system automatically checks for schedule risks, proactively warns dispatchers about potential delays, and offers AI-powered one-click resolutions to reassign or reschedule the at-risk job.",
       icon: ShieldQuestion,
       status: "Completed",
     },
@@ -174,37 +168,49 @@ const roadmapFeatures = {
       status: "Completed",
     },
      {
-      title: "Automated 'On My Way' Notifications",
-      description: "When a technician sets their status to 'En Route', the system can automatically send the customer a text or email with the technician's ETA, a photo of the technician, and a live tracking link.",
-      icon: Truck,
+      title: "AI-Drafted Customer Notifications",
+      description: "Generate professional, context-aware SMS/email notifications for customers for appointment confirmations, reminders, and delays.",
+      icon: MessageSquare,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
      {
       title: "Installed Equipment Tracking",
       description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
       icon: Package,
-      status: "Planned",
+      status: "Completed",
     },
+     {
+      title: "Job Financial Tracking",
+      description: "The data model now supports tracking quoted value, expected parts cost, and SLA deadlines on a per-job basis. The UI is available in the 'Add/Edit Job' dialog under the 'Financials' section.",
+      icon: DollarSign,
+      status: "Completed",
+    },
+    {
+      title: "PWA & Offline Mode Foundations",
+      description: "The application is now a Progressive Web App (PWA) with a service worker. Firestore's offline persistence is enabled, allowing the app to load and display cached data even without an internet connection.",
+      icon: WifiOff,
+      status: "Completed",
+    },
+    {
+      title: "AI-Powered Upsell Intelligence",
+      description: "The AI analyzes job details and customer history to identify upsell opportunities, calculate a potential profit score, and provide talking points for technicians. This data directly influences the profit-aware dispatching model.",
+      icon: Lightbulb,
+      status: "Completed"
+    },
+  ],
+  inProgress: [
     {
       title: "Integrated Invoicing & Payments",
-      description: "Enable technicians to generate and send a professional invoice on the spot from pre-built templates. The system will support immediate payment processing via a secure online portal, closing the job loop instantly and improving cash flow.",
+      description: "Enable technicians to generate and send a professional invoice on the spot. The job status workflow ('Completed', 'Pending Invoice', 'Finished') has been implemented. Next steps: auto-generate invoice PDFs and integrate payment processing.",
       icon: DollarSign,
-      status: "Planned",
+      status: "In Progress",
     },
+  ],
+  planned: [
     {
       title: "Automated Geo-Fenced Status Updates",
-      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart for the next location.",
+      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart. Foundational work (Job Flexibility, Break Tracking) is complete.",
       icon: Target,
-      status: "Planned",
-    },
-    {
-      title: "Integrated Customer Notifications (SMS/Email)",
-      description: "Connect to a third-party service like Twilio to send automated notifications (e.g., confirmations, 'On My Way' alerts) directly to customers via SMS and email, replacing the current simulation.",
-      icon: MessageSquare,
       status: "Planned",
     },
   ],
@@ -225,12 +231,6 @@ const roadmapFeatures = {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
-      status: "Vision",
-    },
-    {
-      title: "Offline Mode for Technician App",
-      description: "Allow the mobile app to function without an internet connection. Technicians can view job details, document work, and update statuses offline. All data will automatically sync once connectivity is restored, ensuring productivity in areas with poor service.",
-      icon: WifiOff,
       status: "Vision",
     },
     {
@@ -265,10 +265,8 @@ export default function RoadmapPage() {
     const { userProfile, loading } = useAuth();
     const router = useRouter();
 
-    const appName = language === 'de' ? "EinsatzPilot" : "FleetSync";
-    const description = language === 'de' 
-        ? `Unsere geplanten Funktionen, Verbesserungen und langfristige Vision, um die Flottenverwaltung intelligenter und effizienter zu gestalten.`
-        : `Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.`;
+    const appName = "MarginMax";
+    const description = `Our planned features, improvements, and long-term vision to make fleet management smarter and more efficient.`;
 
     useEffect(() => {
         if (!loading && userProfile?.role !== 'superAdmin') {

@@ -400,7 +400,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     const result = await suggestUpsellOpportunityAction({
         jobTitle: title,
         jobDescription: description,
-        customerHistory: customerHistory.map(h => ({
+        customerHistory: customerHistory.filter(h => h.completedAt).map(h => ({
             title: h.title,
             description: h.description || '',
             completedAt: h.completedAt!,
@@ -1026,4 +1026,3 @@ export default AddEditJobDialog;
 
 
 
-    

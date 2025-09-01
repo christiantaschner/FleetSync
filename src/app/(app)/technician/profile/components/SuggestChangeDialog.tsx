@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -15,15 +16,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import type { Technician, TechnicianSkill } from '@/types';
-import { Loader2, Send, ListChecks, Upload, Paperclip, X } from 'lucide-react';
+import type { Technician } from '@/types';
+import { Loader2, Send, ListChecks } from 'lucide-react';
 import { requestProfileChangeAction } from '@/actions/fleet-actions';
-import { uploadCertificateAction } from '@/actions/storage-actions';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import isEqual from 'lodash.isequal';
 import { useAuth } from '@/contexts/auth-context';
-import Link from 'next/link';
 
 interface SuggestChangeDialogProps {
   isOpen: boolean;
@@ -36,7 +35,6 @@ const SuggestChangeDialog: React.FC<SuggestChangeDialogProps> = ({ isOpen, setIs
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState<string | null>(null);
 
   const [name, setName] = useState(technician.name);
   const [email, setEmail] = useState(technician.email);

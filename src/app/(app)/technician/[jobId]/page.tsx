@@ -296,8 +296,8 @@ export default function TechnicianJobDetailPage() {
 
       {job.status === 'In Progress' && (
         <div className="space-y-4">
-          <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
           <TroubleshootingCard jobTitle={job.title} />
+          <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
         </div>
       )}
       

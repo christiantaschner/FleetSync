@@ -41,6 +41,9 @@ const StatusUpdateActions: React.FC<StatusUpdateActionsProps> = ({ currentStatus
                         <Button variant="destructive" className="bg-destructive/80 flex-1" onClick={() => onUpdateStatus('Cancelled')}>
                             <XCircle className="mr-2 h-4 w-4" /> Cancel Job
                         </Button>
+                         <Button onClick={() => onUpdateStatus('Completed')} className="w-full sm:w-auto bg-green-600 hover:bg-green-700 flex-1">
+                            <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
+                        </Button>
                     </div>
                 );
             default:

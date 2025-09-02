@@ -5,7 +5,7 @@ import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
@@ -89,6 +89,29 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                             ))}
                         </div>
                     </div>
+                )}
+                
+                {(job.quotedValue || job.expectedPartsCost || job.profitScore) && (
+                     <>
+                        <Separator />
+                        <div>
+                            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><DollarSign className="h-4 w-4"/>Financials</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
+                                <div className="p-2 bg-secondary/50 rounded-md border">
+                                    <p className="text-xs text-muted-foreground">Quoted Value</p>
+                                    <p className="font-bold text-lg">${job.quotedValue?.toFixed(2) || '0.00'}</p>
+                                </div>
+                                <div className="p-2 bg-secondary/50 rounded-md border">
+                                    <p className="text-xs text-muted-foreground">Parts Cost</p>
+                                    <p className="font-bold text-lg">${job.expectedPartsCost?.toFixed(2) || '0.00'}</p>
+                                </div>
+                                <div className="p-2 bg-secondary/50 rounded-md border">
+                                    <p className="text-xs text-muted-foreground">Est. Profit Score</p>
+                                    <p className="font-bold text-lg text-green-600">${job.profitScore?.toFixed(2) || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 )}
                 
                 {(job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide || (job.triageImages && job.triageImages.length > 0)) && (

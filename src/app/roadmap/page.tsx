@@ -78,18 +78,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Dispatcher-Triggered Route Re-optimization",
-      description: "AI engine re-optimizes a single technician's route upon dispatcher request, ideal after schedule changes or cancellations.",
-      icon: Shuffle, 
-      status: "Completed",
-    },
-     {
-      title: "Work Order Management",
-      description: "A centralized hub for all job-related information. Admins can create, edit, and view work orders with all necessary details, including customer information, job history, required parts, and special notes. All data is instantly available and synced across office and technician apps.",
-      icon: ClipboardList,
-      status: "Completed",
-    },
-    {
       title: "Automated Schedule Risk Warnings & AI Resolution",
       description: "The system automatically checks for schedule risks, proactively warns dispatchers about potential delays, and offers AI-powered one-click resolutions to reassign or reschedule the at-risk job.",
       icon: ShieldQuestion,
@@ -187,7 +175,7 @@ const roadmapFeatures = {
     },
      {
       title: "Installed Equipment Tracking",
-      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance. The UI for this is now available on the Customer page.",
+      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
       icon: Package,
       status: "Completed",
     },
@@ -202,6 +190,12 @@ const roadmapFeatures = {
       description: "The application is now a Progressive Web App (PWA) with a service worker. Firestore's offline persistence is enabled, allowing the app to load and display cached data even without an internet connection.",
       icon: WifiOff,
       status: "Completed",
+    },
+    {
+      title: "AI-Powered Upsell Intelligence",
+      description: "The AI analyzes job details and customer history to identify upsell opportunities, calculate a potential profit score, and provide talking points for technicians. This data directly influences the profit-aware dispatching model.",
+      icon: Lightbulb,
+      status: "Completed"
     },
   ],
   inProgress: [

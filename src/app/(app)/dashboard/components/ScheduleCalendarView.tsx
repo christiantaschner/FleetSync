@@ -297,7 +297,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Re-optimize {technician.name}'s schedule</p>
+                            <p>Optimize {technician.name}'s schedule</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -424,21 +424,18 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   };
   
   const handleOptimize = (technicianId: string) => {
-    // This function will now trigger the single-technician optimization dialog.
-    // The fleet-wide optimization is handled by a separate button.
     const jobsForOptimization = jobs.filter(j => 
         j.assignedTechnicianId === technicianId && 
         j.scheduledTime &&
         isSameDay(new Date(j.scheduledTime), currentDate) &&
-        (j.status === 'Assigned' || j.status === 'En Route')
+        (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress')
     );
 
-    if (jobsForOptimization.length === 0) {
-        toast({ title: "No Jobs to Optimize", description: `No optimizable jobs found for this technician today.`, variant: "default" });
+    if (jobsForOptimization.length < 2) {
+        toast({ title: "Not Enough Jobs", description: `This technician does not have enough scheduled jobs today to optimize.`, variant: "default" });
         return;
     }
     
-    // The logic inside ReassignJobDialog is now what we want for single-tech optimization.
     setJobToReassign(jobsForOptimization[0]);
     setIsReassignOpen(true);
   };
@@ -458,7 +455,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     setIsSaving(true);
     const promises = Object.entries(proposedChanges).map(([jobId, change]) => {
         return reassignJobAction({
-            companyId: userProfile.companyId,
+            companyId: userProfile.companyId!,
             jobId,
             newTechnicianId: change.assignedTechnicianId,
             newScheduledTime: change.scheduledTime,

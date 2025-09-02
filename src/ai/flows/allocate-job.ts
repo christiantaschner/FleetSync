@@ -50,7 +50,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
-  prompt: `You are an AI Operations Manager for a field service company. Your primary goal is to assign jobs in the most profitable way possible, considering all constraints.
+  prompt: `You are an AI Operations Manager for a field service company. Your primary goal is to assign jobs in the most profitable and efficient way possible, considering all constraints.
 
 The current time is {{{currentTime}}}.
 
@@ -60,6 +60,7 @@ The current time is {{{currentTime}}}.
 **JOB TO ASSIGN:**
 - Priority: {{{jobPriority}}}
 - Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
+- Required Parts: {{#if requiredParts.length}}{{#each requiredParts}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
 - Description: {{{jobDescription}}}
 - Financials:
   - Quoted Value: \${{{quotedValue}}}
@@ -76,7 +77,8 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
 1.  **HARD CONSTRAINTS (Non-negotiable):**
-    -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'. This is the most important rule.
+    -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'.
+    -   **Parts:** The chosen technician MUST have ALL of the 'requiredParts' in their van inventory. THIS IS A CRITICAL RULE.
     -   **Working Hours:** The job, including estimated travel and duration, MUST be completed within the technician's working hours for the scheduled day.
 
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
@@ -96,11 +98,13 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 **JOB TO ASSIGN:**
 - Priority: {{{jobPriority}}}
 - Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
+- Required Parts: {{#if requiredParts.length}}{{#each requiredParts}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
 - Description: {{{jobDescription}}}
 
 **STANDARD DECISION-MAKING LOGIC (ranked by importance):**
 1.  **HARD CONSTRAINTS (Non-negotiable):**
     -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'.
+    -   **Parts:** The chosen technician MUST have ALL of the 'requiredParts' in their van inventory.
     -   **Availability:** The technician must be available. An 'isAvailable: true' technician is a strong candidate.
     -   **Working Hours:** The job should ideally fall within the technician's standard working hours.
 
@@ -128,6 +132,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
   - On Call: {{#if isOnCall}}Yes{{else}}No{{/if}}
   - **Previous Customer History: {{#if hasCustomerHistory}}Yes{{else}}No{{/if}}**
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
+  - Van Inventory: {{#if vanInventory.length}}{{#each vanInventory}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
   {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} | Max Daily Hours: {{{maxDailyHours}}}h {{/if}}
   {{#if currentJobs.length}}
@@ -143,21 +148,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 ---
 **Final Assessment:**
 {{#if featureFlags.profitScoringEnabled}}
-First, calculate the profitScore for every suitable technician. Then, provide your final decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints. State the calculated profit score in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
+First, calculate the profitScore for every suitable technician. Then, provide your final decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
 {{else}}
-Provide your final decision on the best technician. Your reasoning MUST be based on skills, availability, and proximity. If no technician is suitable, state this clearly and explain the bottleneck.
+Provide your final decision on the best technician. Your reasoning MUST be based on skills, parts availability, and proximity. If no technician is suitable, state this clearly and explain the bottleneck.
 {{/if}}
-`,
-});
-
-const allocateJobFlow = ai.defineFlow(
-  {
-    name: 'allocateJobFlow',
-    inputSchema: AllocateJobInputSchema,
-    outputSchema: AllocateJobOutputSchema,
-  },
-  async (input) => {
-    const { output } = await prompt(input);
-    return output!;
-  }
-);

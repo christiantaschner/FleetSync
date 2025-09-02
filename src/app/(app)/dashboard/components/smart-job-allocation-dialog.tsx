@@ -74,7 +74,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
           workingHours: t.workingHours,
           isOnCall: t.isOnCall,
           hourlyCost: t.hourlyCost,
-          vanInventory: t.vanInventory,
+          vanInventory: t.vanInventory || [],
           maxDailyHours: t.maxDailyHours,
         }));
         
@@ -83,6 +83,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             jobDescription: jobToAssign.description,
             jobPriority: jobToAssign.priority,
             requiredSkills: jobToAssign.requiredSkills,
+            requiredParts: jobToAssign.requiredParts,
             scheduledTime: jobToAssign.scheduledTime,
             quotedValue: jobToAssign.quotedValue,
             expectedPartsCost: jobToAssign.expectedPartsCost,

@@ -394,6 +394,7 @@ export const AllocateJobInputSchema = z.object({
   customerPhone: z.string().optional().describe('The customer\'s phone number, used to find their service history.'),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
+  requiredParts: z.array(z.string()).optional().describe('A list of parts required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
   quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
@@ -410,6 +411,7 @@ export const AllocateJobInputSchema = z.object({
       isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),
       workingHours: z.array(BusinessDaySchema).optional().describe("The technician's individual working hours."),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
+      vanInventory: z.array(z.string()).optional().describe('A list of part names currently in the technician\'s van.'),
       liveLocation: z.any().describe('The current, real-time location of the technician.'),
       homeBaseLocation: z.any().describe('The technician\'s home base or starting location for the day.'),
       currentJobs: z.array(z.object({
@@ -422,7 +424,6 @@ export const AllocateJobInputSchema = z.object({
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
       hourlyCost: z.number().optional().describe('The total hourly cost of this technician (wages + overhead).'),
-      vanInventory: z.array(z.string()).optional().describe('A list of part names currently in the technician\'s van.'),
       maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
@@ -868,6 +869,7 @@ export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportu
     
 
     
+
 
 
 

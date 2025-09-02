@@ -1,14 +1,13 @@
 
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill, Contract, OptimizationSuggestion } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill, Contract, OptimizationSuggestion, Part } from '@/types';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
@@ -37,13 +36,14 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
+import { getPartsAction } from '@/actions/part-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { serverTimestamp } from 'firebase/firestore'; 
 import { Copy } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
-import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
+import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts, mockParts } from '@/lib/mock-data';
 import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/tooltip";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
+import ManagePartsDialog from './components/ManagePartsDialog';
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -131,6 +132,9 @@ export default function DashboardPage() {
   
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<Skill[]>([]);
+  
+  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
+  const [allParts, setAllParts] = useState<Part[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
 
@@ -216,6 +220,21 @@ export default function DashboardPage() {
     }
   }, [appId, isMockMode]);
 
+  const fetchParts = useCallback(async (companyId: string) => {
+    if (isMockMode) {
+      setAllParts(mockParts.map((name, index) => ({ id: `mock_part_${index}`, name })));
+      return;
+    }
+    if (!appId) return;
+    const result = await getPartsAction({ companyId, appId });
+    if (result.data) {
+      setAllParts(result.data || []);
+    } else {
+      console.error("Could not fetch parts library:", result.error);
+    }
+  }, [appId, isMockMode]);
+
+
   useEffect(() => {
     if (authLoading) return;
     
@@ -225,6 +244,7 @@ export default function DashboardPage() {
         setContracts(mockContracts);
         setProfileChangeRequests(mockProfileChangeRequests);
         setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
+        setAllParts(mockParts.map((name, index) => ({ id: `mock_part_${index}`, name })));
         setIsLoadingData(false);
         return;
     }
@@ -236,7 +256,7 @@ export default function DashboardPage() {
 
     const companyId = userProfile.companyId;
     let collectionsLoaded = 0;
-    const totalCollections = 4;
+    const totalCollections = 4; // Jobs, Techs, Contracts, Requests
 
     const checkLoadingComplete = () => {
         collectionsLoaded++;
@@ -246,6 +266,7 @@ export default function DashboardPage() {
     };
     
     fetchSkills(companyId);
+    fetchParts(companyId);
 
     const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
     const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
@@ -323,7 +344,7 @@ export default function DashboardPage() {
         unsubscribeContracts();
         unsubscribeRequests();
     };
-}, [authLoading, userProfile, appId, fetchSkills, toast, isLoadingData, isMockMode]);
+}, [authLoading, userProfile, appId, fetchSkills, fetchParts, toast, isLoadingData, isMockMode]);
 
 
   const handleSeedData = async () => {
@@ -914,6 +935,12 @@ export default function DashboardPage() {
         fetchSkills(userProfile.companyId);
       }
   };
+
+  const handlePartsUpdated = () => {
+    if(userProfile?.companyId) {
+      fetchParts(userProfile.companyId);
+    }
+  }
   
   const handleFleetOptimize = async () => {
     if (!userProfile?.companyId || !appId) return;
@@ -1034,6 +1061,7 @@ export default function DashboardPage() {
                 onClose={() => setIsAddEditTechnicianDialogOpen(false)}
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills.map(s => s.name)}
+                allParts={allParts}
             />
         )}
       {appId && <ChatSheet 
@@ -1055,7 +1083,7 @@ export default function DashboardPage() {
         optimizationResult={fleetOptimizationResult}
         technicians={technicians}
         jobs={jobs}
-        onConfirmChanges={handleConfirmFleetOptimization}
+        onConfirmChanges={handleConfirmBatchAssignments}
         isLoadingConfirmation={isLoadingBatchConfirmation}
         selectedChanges={selectedFleetChanges}
         setSelectedChanges={setSelectedFleetChanges}
@@ -1305,8 +1333,20 @@ export default function DashboardPage() {
         <TabsContent value="technicians" className="mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Technician Roster</CardTitle>
-                    <CardDescription>Manage your team of field technicians. Drag jobs from the Job List onto a technician to assign.</CardDescription>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <CardTitle>Technician Roster</CardTitle>
+                            <CardDescription>Manage your team of field technicians. Drag jobs from the Job List onto a technician to assign.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
+                                <Package className="mr-2 h-4 w-4" /> Manage Parts
+                            </Button>
+                             <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
+                                <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                            </Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
@@ -1368,6 +1408,11 @@ export default function DashboardPage() {
         setIsOpen={setIsManageSkillsOpen} 
         initialSkills={allSkills}
         onSkillsUpdated={handleSkillsUpdated}
+      />
+      <ManagePartsDialog
+        isOpen={isManagePartsOpen}
+        setIsOpen={setIsManagePartsOpen}
+        onPartsUpdated={handlePartsUpdated}
       />
       <ImportJobsDialog 
         isOpen={isImportJobsOpen} 

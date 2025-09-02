@@ -118,7 +118,7 @@ export type Technician = {
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
   hourlyCost?: number;
-  vanInventory?: string[]; // Array of part IDs
+  vanInventory?: string[]; // Array of part names
   maxDailyHours?: number;
   currentRoute?: string[];
   active?: boolean;
@@ -374,6 +374,12 @@ export const UpsertCustomerInputSchema = AddCustomerInputSchema.extend({
 });
 export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 
+export type Part = {
+  id: string;
+  name: string;
+};
+
+
 // --- AI Flow Schemas ---
 
 export const AllocateJobOutputSchema = z.object({
@@ -416,7 +422,7 @@ export const AllocateJobInputSchema = z.object({
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
       hourlyCost: z.number().optional().describe('The total hourly cost of this technician (wages + overhead).'),
-      vanInventory: z.array(z.string()).optional().describe('A list of part IDs currently in the technician\'s van.'),
+      vanInventory: z.array(z.string()).optional().describe('A list of part names currently in the technician\'s van.'),
       maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
@@ -862,6 +868,7 @@ export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportu
     
 
     
+
 
 
 

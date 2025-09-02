@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -28,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
-import type { Technician, BusinessDay } from '@/types';
+import type { Technician, BusinessDay, Part } from '@/types';
 import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare, Package, DollarSign, Hourglass } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -41,12 +40,14 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import Link from 'next/link';
+import { MultiSelectFilter, type MultiSelectOption } from './MultiSelectFilter';
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
   onClose: () => void;
   technician?: Technician | null;
   allSkills: string[];
+  allParts: Part[];
 }
 
 const defaultBusinessHours: BusinessDay[] = [
@@ -59,7 +60,7 @@ const defaultBusinessHours: BusinessDay[] = [
     { dayOfWeek: "Sunday", isOpen: false, startTime: "09:00", endTime: "12:00" },
 ];
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, allParts }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -222,6 +223,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   };
   
   const isSubmitting = watch('isSubmitting');
+  const skillOptions: MultiSelectOption[] = allSkills.map(s => ({ value: s, label: s }));
+  const partOptions: MultiSelectOption[] = allParts.map(p => ({ value: p.name, label: p.name }));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -279,42 +282,34 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                 
                  <div>
                     <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills &amp; Certificates</Label>
-                    <ScrollArea className="h-32 rounded-md border p-3 mt-1">
-                      <div className="space-y-3">
-                        {allSkills.map(skill => (
-                          <Controller
-                            key={skill}
-                            name="skills"
-                            control={control}
-                            render={({ field }) => (
-                              <div className="flex items-center">
-                                <Checkbox
-                                  id={`skill-${skill}`}
-                                  checked={field.value?.includes(skill)}
-                                  onCheckedChange={(checked) => {
-                                    const newSkills = checked
-                                      ? [...(field.value || []), skill]
-                                      : (field.value || []).filter(
-                                          (s) => s !== skill
-                                        );
-                                    field.onChange(newSkills);
-                                  }}
-                                />
-                                <Label
-                                  htmlFor={`skill-${skill}`}
-                                  className="ml-2 font-normal cursor-pointer"
-                                >
-                                  {skill}
-                                </Label>
-                              </div>
-                            )}
-                          />
-                        ))}
-                        {allSkills.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-4">No skills defined in library.</p>
+                    <Controller
+                        name="skills"
+                        control={control}
+                        render={({ field }) => (
+                            <MultiSelectFilter
+                                options={skillOptions}
+                                selected={field.value || []}
+                                onChange={field.onChange}
+                                placeholder="Select technician's skills..."
+                            />
                         )}
-                      </div>
-                    </ScrollArea>
+                    />
+                </div>
+                
+                 <div>
+                    <Label><Package className="inline h-3.5 w-3.5 mr-1" />Van Inventory</Label>
+                     <Controller
+                        name="vanInventory"
+                        control={control}
+                        render={({ field }) => (
+                            <MultiSelectFilter
+                                options={partOptions}
+                                selected={field.value || []}
+                                onChange={field.onChange}
+                                placeholder="Select parts in van..."
+                            />
+                        )}
+                    />
                 </div>
                 
                 <div>

@@ -129,7 +129,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
   - **Previous Customer History: {{#if hasCustomerHistory}}Yes{{else}}No{{/if}}**
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
-  {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} {{/if}}
+  {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} | Max Daily Hours: {{{maxDailyHours}}}h {{/if}}
   {{#if currentJobs.length}}
   - Current Assigned Jobs:
     {{#each currentJobs}}

@@ -23,6 +23,9 @@ const TechnicianDataSchema = z.object({
   avatarUrl: z.string().url().optional().nullable(),
   workingHours: z.array(BusinessDaySchema).length(7).optional(),
   isOnCall: z.boolean().optional(),
+  hourlyCost: z.number().optional(),
+  maxDailyHours: z.number().optional(),
+  vanInventory: z.array(z.string()).optional(),
 });
 
 // Schema for updating an existing technician
@@ -61,6 +64,9 @@ export async function updateTechnicianAction(
         avatarUrl: updateData.avatarUrl,
         workingHours: updateData.workingHours,
         isOnCall: updateData.isOnCall,
+        hourlyCost: updateData.hourlyCost,
+        maxDailyHours: updateData.maxDailyHours,
+        vanInventory: updateData.vanInventory || [],
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 

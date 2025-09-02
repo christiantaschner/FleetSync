@@ -12,7 +12,7 @@ import WorkDocumentationForm from './components/WorkDocumentationForm';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
-import UpsellOpportunityCard from './components/UpsellOpportunityCard';
+import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpportunityCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -243,6 +243,7 @@ export default function TechnicianJobDetailPage() {
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
   }
+  
   if (!job) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The requested job could not be found.</p><Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
   }
@@ -308,7 +309,7 @@ export default function TechnicianJobDetailPage() {
         {job.status === 'Completed' && (
             <div className="space-y-4">
                 <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
-                 <Button onClick={() => handleUpdateStatus('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
+                 <Button onClick={() => handleStatusUpdate('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
                     <DollarSign className="mr-2 h-4 w-4" /> Finalize & Send for Invoicing
                 </Button>
             </div>

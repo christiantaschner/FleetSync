@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useRef } from 'react';
@@ -11,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Camera, Trash2, Edit3, Save } from 'lucide-react';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface WorkDocumentationFormProps {
@@ -50,7 +48,7 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
         setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = (e: React.Event) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isFirstTimeFix === null) {
             toast({ title: "Required Field", description: "Please confirm if this was a first-time fix.", variant: "destructive" });

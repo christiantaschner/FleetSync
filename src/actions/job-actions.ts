@@ -65,7 +65,7 @@ const AddDocumentationInputSchema = z.object({
     appId: z.string().min(1),
     notes: z.string().optional(),
     photoUrls: z.array(z.string().url()).optional(),
-    isFirstTimeFix: z.boolean(),
+    isFirstTimeFix: z.boolean().optional(),
     reasonForFollowUp: z.string().optional(),
     signatureUrl: z.string().url().optional().nullable(),
     satisfactionScore: z.number().min(0).max(5).optional(),
@@ -83,8 +83,6 @@ export async function addDocumentationAction(input: AddDocumentationInput): Prom
         
         const updatePayload: any = {
             updatedAt: serverTimestamp(),
-            isFirstTimeFix: isFirstTimeFix,
-            reasonForFollowUp: isFirstTimeFix ? '' : reasonForFollowUp || '',
         };
 
         if (notes?.trim()) {
@@ -103,6 +101,11 @@ export async function addDocumentationAction(input: AddDocumentationInput): Prom
         
         if (satisfactionScore && satisfactionScore > 0) {
             updatePayload.customerSatisfactionScore = satisfactionScore;
+        }
+
+        if(typeof isFirstTimeFix === 'boolean') {
+            updatePayload.isFirstTimeFix = isFirstTimeFix;
+            updatePayload.reasonForFollowUp = isFirstTimeFix ? '' : reasonForFollowUp || '';
         }
 
         await updateDoc(jobDocRef, updatePayload);

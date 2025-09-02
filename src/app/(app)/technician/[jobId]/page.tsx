@@ -262,13 +262,11 @@ export default function TechnicianJobDetailPage() {
       />}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
-        <div className="flex items-center gap-2">
-            <StatusUpdateActions 
-                currentStatus={job.status} 
-                onUpdateStatus={handleStatusUpdate}
-                isUpdating={isUpdating}
-            />
-        </div>
+        <StatusUpdateActions 
+            currentStatus={job.status} 
+            onUpdateStatus={handleStatusUpdate}
+            isUpdating={isUpdating}
+        />
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
@@ -298,15 +296,12 @@ export default function TechnicianJobDetailPage() {
 
       {job.status === 'In Progress' && (
         <div className="space-y-4">
+          <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
           <TroubleshootingCard jobTitle={job.title} />
         </div>
       )}
       
-      <div className="pt-2">
-        {job.status === 'In Progress' && (
-             <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
-        )}
-        {job.status === 'Completed' && (
+      {job.status === 'Completed' && (
             <div className="space-y-4">
                 <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
                  <Button onClick={() => handleStatusUpdate('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
@@ -314,7 +309,6 @@ export default function TechnicianJobDetailPage() {
                 </Button>
             </div>
         )}
-      </div>
 
       {job.status === 'Pending Invoice' && (
         <Card className="bg-blue-50 border-blue-200">

@@ -5,10 +5,11 @@ import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown, DollarSign } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown, DollarSign, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 
 interface JobDetailsDisplayProps {
     job: Job;
@@ -214,6 +215,22 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                                 {!job.isFirstTimeFix && job.reasonForFollowUp && (
                                     <p><strong>Reason for Follow-up:</strong> {job.reasonForFollowUp}</p>
                                 )}
+                            </div>
+                        </div>
+                    </>
+                )}
+
+                {job.status === 'Completed' && job.notes && (
+                    <>
+                       <Separator />
+                        <div>
+                           <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Bot className="h-4 w-4"/> AI Customer Follow-up</h3>
+                            <div className="space-y-2 text-sm p-3 bg-secondary/50 rounded-md border">
+                                <p className="text-muted-foreground text-xs">Based on the technician's notes, generate a personalized thank you message for the customer, including any relevant maintenance tips.</p>
+                                <Button size="sm" variant="accent">
+                                    <MessageSquare className="mr-2 h-4 w-4"/>
+                                    Generate Follow-up Message
+                                </Button>
                             </div>
                         </div>
                     </>

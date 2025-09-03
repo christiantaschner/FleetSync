@@ -16,9 +16,10 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { Label } from '@/components/ui/label';
+import AddEditJobDialog from './components/AddEditJobDialog';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion, type FinalAssignment } from './components/BatchAssignmentReviewDialog';
-import { handleTechnicianUnavailabilityAction, reassignJobAction } from '@/actions/fleet-actions';
+import { handleTechnicianUnavailabilityAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
@@ -1083,7 +1084,7 @@ export default function DashboardPage() {
         optimizationResult={fleetOptimizationResult}
         technicians={technicians}
         jobs={jobs}
-        onConfirmChanges={handleConfirmBatchAssignments}
+        onConfirmChanges={confirmFleetOptimizationAction}
         isLoadingConfirmation={isLoadingBatchConfirmation}
         selectedChanges={selectedFleetChanges}
         setSelectedChanges={setSelectedFleetChanges}

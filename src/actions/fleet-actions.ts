@@ -5,13 +5,12 @@
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company, DispatcherFeedback } from "@/types";
+import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company, DispatcherFeedback, OptimizationSuggestion } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours, isSameDay } from 'date-fns';
 import crypto from 'crypto';
 
 // Import all required schemas and types from the central types file
 import {
-  OptimizeRoutesOutputSchema,
   ConfirmManualRescheduleInputSchema,
   ApproveProfileChangeRequestInputSchema,
   RejectProfileChangeRequestInputSchema,
@@ -179,67 +178,6 @@ export async function handleTechnicianUnavailabilityAction(
   }
 }
 
-
-const ConfirmOptimizedRouteInputSchema = z.object({
-  companyId: z.string(),
-  appId: z.string().min(1),
-  technicianId: z.string().min(1, "Technician ID is required."),
-  optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
-  jobsNotInRoute: z.array(z.string()).describe("A list of job IDs that were assigned to the tech but not included in this optimization, to have their routeOrder cleared."),
-});
-
-export async function confirmOptimizedRouteAction(
-  input: z.infer<typeof ConfirmOptimizedRouteInputSchema>
-): Promise<{ error: string | null }> {
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        return { error: "Mock mode: Data is not saved." };
-    }
-  try {
-    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    const { companyId, optimizedRoute, jobsNotInRoute, appId } = ConfirmOptimizedRouteInputSchema.parse(input);
-
-    const batch = writeBatch(dbAdmin);
-
-    const allJobIds = [...optimizedRoute.map(step => step.taskId), ...jobsNotInRoute];
-    for (const jobId of allJobIds) {
-        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
-        const jobSnap = await getDoc(jobDocRef);
-        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
-            return { error: `Job ${jobId} not found or does not belong to your company.` };
-        }
-    }
-
-    optimizedRoute.forEach((step, index) => {
-      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, step.taskId);
-      batch.update(jobDocRef, { routeOrder: index });
-    });
-    
-    jobsNotInRoute.forEach((jobId) => {
-      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
-      batch.update(jobDocRef, { routeOrder: deleteField() });
-    });
-
-    await batch.commit();
-
-    return { error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { error: e.errors.map(err => err.message).join(", ") };
-    }
-    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
-    console.error(JSON.stringify({
-        message: 'Error in confirmOptimizedRouteAction',
-        error: {
-            message: errorMessage,
-            stack: e instanceof Error ? e.stack : undefined,
-        },
-        severity: "ERROR"
-    }));
-    return { error: `Failed to confirm optimized route. ${errorMessage}` };
-  }
-}
-
-
 export async function confirmManualRescheduleAction(
   input: z.infer<typeof ConfirmManualRescheduleInputSchema>
 ): Promise<{ error: string | null }> {
@@ -248,32 +186,22 @@ export async function confirmManualRescheduleAction(
     }
   try {
     if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
-    const { companyId, movedJobId, newScheduledTime, optimizedRoute, appId, aiSuggestedTechnicianId, aiReasoning } = ConfirmManualRescheduleInputSchema.parse(input);
+    const { companyId, movedJobId, newScheduledTime, aiSuggestedTechnicianId, aiReasoning, appId } = ConfirmManualRescheduleInputSchema.parse(input);
 
     const batch = writeBatch(dbAdmin);
 
-    const allJobIds = [movedJobId, ...optimizedRoute.map(step => step.taskId)];
-     for (const jobId of allJobIds) {
-        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
-        const jobSnap = await getDoc(jobDocRef);
-        if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
-            return { error: `Job ${jobId} not found or does not belong to your company.` };
-        }
+    const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, movedJobId);
+    const jobSnap = await getDoc(jobDocRef);
+    if (!jobSnap.exists() || jobSnap.data().companyId !== companyId) {
+        return { error: `Job ${movedJobId} not found or does not belong to your company.` };
     }
+    
 
-    const movedJobRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, movedJobId);
-    batch.update(movedJobRef, { 
+    batch.update(jobDocRef, { 
       scheduledTime: newScheduledTime,
       updatedAt: serverTimestamp(),
      });
 
-    optimizedRoute.forEach((step, index) => {
-      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, step.taskId);
-      batch.update(jobDocRef, { 
-        routeOrder: index,
-        updatedAt: serverTimestamp(),
-      });
-    });
 
     if (aiSuggestedTechnicianId && aiReasoning) {
         const feedback: DispatcherFeedback = {
@@ -501,7 +429,7 @@ export async function reassignJobAction(
     }
 
     // Assign new technician if not already assigned
-    if (originalJob.assignedTechnicianId !== newTechnicianId) {
+    if (newTechnicianId && originalJob.assignedTechnicianId !== newTechnicianId) {
       const newTechDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, newTechnicianId);
       batch.update(newTechDocRef, {
           isAvailable: false,
@@ -772,5 +700,61 @@ export async function getTriageJobInfoAction(
         severity: "ERROR"
     }));
     return { data: null, error: 'Failed to retrieve job information.' };
+  }
+}
+
+const ConfirmFleetOptimizationInputSchema = z.object({
+  companyId: z.string(),
+  appId: z.string().min(1),
+  changesToConfirm: z.array(z.any()), // Simplified for the action
+});
+
+export async function confirmFleetOptimizationAction(
+  input: z.infer<typeof ConfirmFleetOptimizationInputSchema>
+): Promise<{ error: string | null }> {
+  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    return { error: "Mock mode: Data is not saved." };
+  }
+  try {
+    if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized. Check server logs for details.");
+    const { companyId, appId, changesToConfirm } = ConfirmFleetOptimizationInputSchema.parse(input);
+    
+    const batch = writeBatch(dbAdmin);
+
+    for (const change of changesToConfirm as OptimizationSuggestion[]) {
+      const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, change.jobId);
+      
+      const updatePayload: any = {
+        updatedAt: serverTimestamp(),
+        notes: arrayUnion(`(Reassigned via Fleet Optimization: ${change.justification})`)
+      };
+
+      if (change.newScheduledTime) {
+        updatePayload.scheduledTime = change.newScheduledTime;
+      }
+      
+      if (change.newTechnicianId !== change.originalTechnicianId) {
+        updatePayload.assignedTechnicianId = change.newTechnicianId;
+        updatePayload.status = change.newTechnicianId ? 'Assigned' : 'Unassigned';
+        updatePayload.assignedAt = change.newTechnicianId ? serverTimestamp() : deleteField();
+      }
+
+      batch.update(jobDocRef, updatePayload);
+    }
+    
+    await batch.commit();
+
+    return { error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { error: e.errors.map(err => err.message).join(", ") };
+    }
+    const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+    console.error(JSON.stringify({
+        message: 'Error confirming fleet optimization',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { error: `Failed to apply changes. ${errorMessage}` };
   }
 }

@@ -297,7 +297,7 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Optimize {technician.name}'s schedule</p>
+                            <p>Suggest schedule resolution</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -431,7 +431,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
         (j.status === 'Assigned' || j.status === 'En Route' || j.status === 'In Progress')
     );
 
-    if (jobsForOptimization.length < 2) {
+    if (jobsForOptimization.length < 1) {
         toast({ title: "Not Enough Jobs", description: `This technician does not have enough scheduled jobs today to optimize.`, variant: "default" });
         return;
     }

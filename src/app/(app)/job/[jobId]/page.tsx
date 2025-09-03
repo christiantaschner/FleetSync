@@ -19,9 +19,10 @@ import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpp
 import { updateJobStatusAction } from '@/actions/job-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { generateInvoicePdf } from '@/lib/pdf-utils';
 
 export default function DispatcherJobDetailPage() {
-  const { userProfile, loading, isMockMode } = useAuth();
+  const { userProfile, company, loading, isMockMode } = useAuth();
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
@@ -64,6 +65,26 @@ export default function DispatcherJobDetailPage() {
     }
     setIsUpdatingStatus(false);
   };
+  
+  const handleGenerateInvoice = async () => {
+    if (!job || !company) {
+        toast({ title: "Cannot Generate Invoice", description: "Job or company data is missing.", variant: "destructive" });
+        return;
+    }
+    
+    setIsUpdatingStatus(true);
+    try {
+        await generateInvoicePdf(job, company);
+        toast({ title: "Invoice Generated", description: `Invoice for job "${job.title}" has been downloaded.` });
+        await handleUpdateStatus('Finished');
+    } catch(e) {
+        console.error("Error generating PDF:", e);
+        toast({ title: "PDF Error", description: "Failed to generate invoice PDF.", variant: "destructive" });
+    } finally {
+        setIsUpdatingStatus(false);
+    }
+  };
+
 
   useEffect(() => {
     if (!jobId || !appId) {
@@ -193,12 +214,12 @@ export default function DispatcherJobDetailPage() {
                  {job.status === 'Completed' ? (
                      <Button onClick={() => handleUpdateStatus('Pending Invoice')} disabled={isUpdatingStatus}>
                         {isUpdatingStatus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <DollarSign className="mr-2 h-4 w-4" />}
-                        Generate Invoice
+                        Set as Pending Invoice
                     </Button>
                  ) : job.status === 'Pending Invoice' ? (
-                     <Button onClick={() => handleUpdateStatus('Finished')} disabled={isUpdatingStatus} className="bg-green-600 hover:bg-green-700">
+                     <Button onClick={handleGenerateInvoice} disabled={isUpdatingStatus} className="bg-green-600 hover:bg-green-700">
                         {isUpdatingStatus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4" />}
-                        Mark as Finished
+                        Generate Invoice & Finish
                     </Button>
                  ) : job.status !== 'Finished' && job.status !== 'Cancelled' ? (
                     <Button onClick={() => setIsEditDialogOpen(true)}>

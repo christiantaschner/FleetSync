@@ -1,3 +1,4 @@
+
 {
   "name": "nextn",
   "version": "0.1.0",
@@ -10,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "patch-package && npx caniuse-lite@latest --update-db"
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
@@ -46,6 +47,8 @@
     "firebase": "^11.9.1",
     "firebase-admin": "^12.2.0",
     "genkit": "1.13.0",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "lodash.isequal": "^4.5.0",
     "lucide-react": "^0.411.0",
     "micro": "^10.0.1",
@@ -75,5 +78,10 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
+  },
+  "overrides": {
+    "caniuse-lite": "latest",
+    "@jridgewell/gen-mapping": "latest",
+    "@jridgewell/trace-mapping": "latest"
   }
 }

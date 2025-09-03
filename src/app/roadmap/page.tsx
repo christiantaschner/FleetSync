@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -222,21 +222,21 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Integrated Invoicing & Payments",
-      description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
-      icon: DollarSign,
-      status: "Completed",
-    },
-    {
       title: "Automated Geo-Fenced Status Updates",
-      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart. Foundational work (Job Flexibility, Break Tracking) is complete.",
+      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart.",
       icon: Target,
       status: "Completed",
     },
-    {
+     {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
+      status: "Completed",
+    },
+    {
+      title: "Integrated Invoicing & Payments",
+      description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
+      icon: DollarSign,
       status: "Completed",
     },
   ],
@@ -245,12 +245,6 @@ const roadmapFeatures = {
       title: "Profitability Dashboard",
       description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
       icon: TrendingUp,
-      status: "In Progress",
-    },
-    {
-      title: "Simple PDF Invoicing",
-      description: "From the 'Pending Invoice' status, allow dispatchers to generate a simple, clean PDF invoice that can be sent to the customer. This completes the core job lifecycle for the MVP.",
-      icon: FileText,
       status: "In Progress",
     },
   ],
@@ -353,5 +347,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-    

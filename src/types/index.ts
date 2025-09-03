@@ -861,11 +861,25 @@ export const SuggestUpsellOpportunityOutputSchema = z.object({
 });
 export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportunityOutputSchema>;
 
-    
+export const GenerateCustomerFollowupInputSchema = z.object({
+  jobId: z.string(),
+  customerName: z.string(),
+  technicianName: z.string(),
+  technicianNotes: z.string(),
+});
+export type GenerateCustomerFollowupInput = z.infer<typeof GenerateCustomerFollowupInputSchema>;
+
+export const GenerateCustomerFollowupOutputSchema = z.object({
+  followupMessage: z.string().describe("The generated customer-facing follow-up message."),
+});
+export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFollowupOutputSchema>;
 
     
 
     
+
+    
+
 
 
 

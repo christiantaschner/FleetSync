@@ -1,22 +1,55 @@
 
 "use client";
 
-import React from 'react';
-import type { Job } from '@/types';
+import React, { useState } from 'react';
+import type { Job, Technician } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown, DollarSign, MessageSquare } from 'lucide-react';
+import { MapPin, UserCircle, Briefcase, ListChecks, Calendar, Clock, Construction, Camera, Bot, FileSignature, Star, ThumbsUp, ThumbsDown, DollarSign, MessageSquare, Loader2, Copy, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { generateCustomerFollowupAction } from '@/actions/ai-actions';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
+
+const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
+    const { toast } = useToast();
+    return (
+      <div className="w-full space-y-3">
+        <p className="text-sm">{message}</p>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="accent"
+            onClick={() => {
+              navigator.clipboard.writeText(message);
+              toast({ title: "Copied to clipboard!", duration: 2000 });
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" /> Copy Text
+          </Button>
+          <Button size="sm" variant="outline" onClick={onDismiss}>
+            Close
+          </Button>
+        </div>
+      </div>
+    );
+};
+
 
 interface JobDetailsDisplayProps {
     job: Job;
+    technician: Technician | null;
 }
 
-const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
+const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, technician }) => {
     
+    const { toast, dismiss } = useToast();
+    const { userProfile } = useAuth();
+    const [isGeneratingFollowup, setIsGeneratingFollowup] = useState(false);
+
     const getStatusBadgeVariant = (status: Job['status']): "default" | "secondary" | "destructive" | "outline" => {
         switch(status) {
             case 'Completed': return 'secondary';
@@ -40,6 +73,32 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
         { icon: Star, color: 'text-lime-500', label: 'Very Good' },
         { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
     ];
+    
+    const handleGenerateFollowup = async () => {
+        if (!job.notes || !technician) {
+            toast({ title: "Cannot Generate Message", description: "Technician notes are required to generate a follow-up.", variant: "destructive" });
+            return;
+        }
+
+        setIsGeneratingFollowup(true);
+        const result = await generateCustomerFollowupAction({
+            customerName: job.customerName,
+            technicianName: technician.name,
+            technicianNotes: job.notes,
+        });
+        setIsGeneratingFollowup(false);
+
+        if(result.error) {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        } else if (result.data) {
+            const { id } = toast({
+                title: "AI Message Drafted",
+                duration: Infinity, // Keep it open until user interaction
+                description: <ToastWithCopy message={result.data.followupMessage} onDismiss={() => dismiss(id)} />,
+            });
+        }
+    };
+
 
     return (
         <Card className="shadow-lg">
@@ -227,8 +286,8 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job }) => {
                            <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Bot className="h-4 w-4"/> AI Customer Follow-up</h3>
                             <div className="space-y-2 text-sm p-3 bg-secondary/50 rounded-md border">
                                 <p className="text-muted-foreground text-xs">Based on the technician's notes, generate a personalized thank you message for the customer, including any relevant maintenance tips.</p>
-                                <Button size="sm" variant="accent">
-                                    <MessageSquare className="mr-2 h-4 w-4"/>
+                                <Button size="sm" variant="accent" onClick={handleGenerateFollowup} disabled={isGeneratingFollowup}>
+                                    {isGeneratingFollowup ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <MessageSquare className="mr-2 h-4 w-4"/>}
                                     Generate Follow-up Message
                                 </Button>
                             </div>

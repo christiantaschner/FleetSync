@@ -17,6 +17,7 @@ import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
 import { suggestUpsellOpportunity as suggestUpsellOpportunityFlow } from "@/ai/flows/suggest-upsell-opportunity";
 import { suggestJobParts as suggestJobPartsFlow } from "@/ai/flows/suggest-job-parts";
+import { generateCustomerFollowup as generateCustomerFollowupFlow } from "@/ai/flows/generate-customer-followup-flow";
 
 
 import { z } from "zod";
@@ -55,6 +56,8 @@ import type {
   SuggestUpsellOpportunityOutput,
   SuggestJobPartsInput,
   SuggestJobPartsOutput,
+  GenerateCustomerFollowupInput,
+  GenerateCustomerFollowupOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -734,5 +737,24 @@ export async function suggestJobPartsAction(
   }
 }
     
+export async function generateCustomerFollowupAction(
+  input: GenerateCustomerFollowupInput
+): Promise<{ data: GenerateCustomerFollowupOutput | null; error: string | null }> {
+  try {
+    const result = await generateCustomerFollowupFlow(input);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in generateCustomerFollowupAction',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { data: null, error: errorMessage };
+  }
+}
     
     

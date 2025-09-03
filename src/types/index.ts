@@ -822,19 +822,18 @@ export const KpiDataSchema = z.object({
     avgTravelTime: z.string(),
     avgBreakTime: z.string(),
     avgJobsPerTech: z.string(),
+    totalProfit: z.number(),
+    slaMisses: z.number(),
+    topTechnician: z.object({
+        technicianId: z.string(),
+        name: z.string(),
+        margin: z.number(),
+    }).nullable(),
 });
 export type KpiData = z.infer<typeof KpiDataSchema>;
 
 export const RunReportAnalysisInputSchema = z.object({
-    kpiData: KpiDataSchema.extend({
-        totalProfit: z.number(),
-        slaMisses: z.number(),
-        topTechnician: z.object({
-            technicianId: z.string(),
-            name: z.string(),
-            margin: z.number(),
-        }).nullable(),
-    }),
+    kpiData: KpiDataSchema,
 });
 export type RunReportAnalysisInput = z.infer<typeof RunReportAnalysisInputSchema>;
 
@@ -878,20 +877,3 @@ export const GenerateCustomerFollowupOutputSchema = z.object({
 export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFollowupOutputSchema>;
 
     
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-

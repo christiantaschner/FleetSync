@@ -1,5 +1,4 @@
 
-
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -481,3 +480,4 @@ export default function ReportClientView() {
   );
 }
 
+    

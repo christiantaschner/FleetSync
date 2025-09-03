@@ -242,13 +242,25 @@ const roadmapFeatures = {
   ],
   inProgress: [
     {
-      title: "Disruption Forecasting (Predicted Bottlenecks)",
-      description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
-      icon: Eye,
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      icon: TrendingUp,
+      status: "In Progress",
+    },
+    {
+      title: "Simple PDF Invoicing",
+      description: "From the 'Pending Invoice' status, allow dispatchers to generate a simple, clean PDF invoice that can be sent to the customer. This completes the core job lifecycle for the MVP.",
+      icon: FileText,
       status: "In Progress",
     },
   ],
   planned: [
+     {
+      title: "Disruption Forecasting (Predicted Bottlenecks)",
+      description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
+      icon: Eye,
+      status: "Planned",
+    },
   ],
   vision: [
     {
@@ -303,15 +315,6 @@ export default function RoadmapPage() {
         </p>
       </div>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Completed Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.completed.map((item) => (
-            <RoadmapItem key={item.title} {...item} />
-          ))}
-        </div>
-      </section>
-
        <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">In Progress</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -331,6 +334,15 @@ export default function RoadmapPage() {
       </section>
 
       <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Completed Features</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {roadmapFeatures.completed.map((item) => (
+            <RoadmapItem key={item.title} {...item} />
+          ))}
+        </div>
+      </section>
+
+      <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Future Innovations &amp; Long-Term Vision</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {roadmapFeatures.vision.map((item) => (
@@ -341,3 +353,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+    

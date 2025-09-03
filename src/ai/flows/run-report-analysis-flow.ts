@@ -43,11 +43,14 @@ Your task is to analyze a set of Key Performance Indicators (KPIs) for a company
 - Average Travel Time per Job: {{kpiData.avgTravelTime}}
 - Average Time to Assign a Job: {{kpiData.avgTimeToAssign}}
 - Average Jobs per Technician: {{kpiData.avgJobsPerTech}}
+- Total Profit (from completed jobs): \${{kpiData.totalProfit}}
+- SLA Misses: {{kpiData.slaMisses}}
+- Top Technician by Margin: {{#if kpiData.topTechnician}}{{kpiData.topTechnician.name}} (\${{kpiData.topTechnician.margin}}){{else}}N/A{{/if}}
 
 **Your Task (Follow these steps):**
-1.  **Analyze KPIs**: Review all the provided numbers.
-2.  **Generate Key Insights**: Provide a brief, high-level summary (2-3 sentences) of what the data indicates. Is the team efficient? Is customer satisfaction high? Where are the potential problem areas?
-3.  **Generate Actionable Suggestions**: Provide a bulleted list of 3-5 concrete suggestions for improvement. **Each suggestion MUST directly relate to a specific feature from the MarginMax Application Features Knowledge Base provided above.** For example, if travel time is high, suggest using the 'Optimize Fleet' feature. If time-to-assign is high, suggest using 'Fleety Batch Assign'. Be specific and use the exact feature names from the knowledge base.
+1.  **Analyze KPIs**: Review all the provided numbers. Pay special attention to the financial metrics like Total Profit and the efficiency metrics that drive it (FTFR, On-Time Rate, Travel Time).
+2.  **Generate Key Insights**: Provide a brief, high-level summary (2-3 sentences) of what the data indicates. Is the team efficient? Is profitability strong? Where are the potential problem areas?
+3.  **Generate Actionable Suggestions**: Provide a bulleted list of 3-5 concrete suggestions for improvement. **Each suggestion MUST directly relate to a specific feature from the MarginMax Application Features Knowledge Base provided above.** For example, if travel time is high, suggest using the 'Optimize Fleet' feature. If Total Profit is lower than expected given the job volume, suggest enabling Profit-Aware dispatching in Settings.
 4.  **Generate Quick Wins**: Provide a bulleted list of 2-3 "quick wins"—simple actions the user can take right now in the app that could have an immediate positive impact, again referencing the specific features.
 
 Your tone should be professional, encouraging, and helpful. Focus on turning data into clear, easy-to-follow actions within the application.

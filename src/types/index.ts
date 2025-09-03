@@ -589,6 +589,10 @@ export const PredictScheduleRiskInputSchema = z.object({
         location: z.any(),
         scheduledTime: z.string().optional().nullable().describe('ISO 8601 timestamp for the appointment.'),
     }),
+    trafficData: z.object({
+        condition: z.string().describe("e.g., 'Light', 'Moderate', 'Heavy'"),
+        travelTimeModifier: z.number().describe("Percentage to modify travel time. E.g., 20 means 20% longer."),
+    }).optional().describe("Optional real-time traffic data."),
 });
 export type PredictScheduleRiskInput = z.infer<typeof PredictScheduleRiskInputSchema>;
 
@@ -862,7 +866,6 @@ export const SuggestUpsellOpportunityOutputSchema = z.object({
 export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportunityOutputSchema>;
 
 export const GenerateCustomerFollowupInputSchema = z.object({
-  jobId: z.string(),
   customerName: z.string(),
   technicianName: z.string(),
   technicianNotes: z.string(),
@@ -879,6 +882,7 @@ export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFoll
     
 
     
+
 
 
 

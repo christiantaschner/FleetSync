@@ -233,24 +233,24 @@ const roadmapFeatures = {
       icon: Target,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
-  ],
-  vision: [
-     {
+    {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
-      status: "Vision",
+      status: "Completed",
     },
+  ],
+  inProgress: [
     {
       title: "Disruption Forecasting (Predicted Bottlenecks)",
       description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
       icon: Eye,
-      status: "Vision",
+      status: "In Progress",
     },
+  ],
+  planned: [
+  ],
+  vision: [
     {
       title: "\"Why this happened\" AI Insights",
       description: "The system will provide explanations for significant deviations. If an ETA was missed or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",

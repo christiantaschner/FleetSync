@@ -197,6 +197,30 @@ const roadmapFeatures = {
       icon: Lightbulb,
       status: "Completed"
     },
+    {
+      title: "AI-Powered Parts Suggestion & Van Inventory",
+      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
+      icon: ShoppingCart,
+      status: "Completed",
+    },
+    {
+      title: "Break Tracking",
+      description: "Allows technicians to log break times during a job, which will provide more accurate data for job duration and performance analytics.",
+      icon: Timer,
+      status: "Completed",
+    },
+     {
+      title: "Advanced Fleet-Wide Re-optimization",
+      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
+      icon: Brain,
+      status: "Completed",
+    },
+     {
+      title: "Job Flexibility Status",
+      description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
+      icon: Shuffle,
+      status: "Completed",
+    },
   ],
   inProgress: [
     {
@@ -215,18 +239,6 @@ const roadmapFeatures = {
     },
   ],
   vision: [
-     {
-      title: "Advanced Fleet-Wide Re-optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
-      icon: Brain,
-      status: "Vision",
-    },
-     {
-      title: "AI-Powered Parts Suggestion & Van Inventory",
-      description: "The AI suggests required parts from triage photos and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
-      icon: ShoppingCart,
-      status: "Vision",
-    },
      {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",

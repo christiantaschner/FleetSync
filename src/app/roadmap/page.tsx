@@ -221,14 +221,14 @@ const roadmapFeatures = {
       icon: Shuffle,
       status: "Completed",
     },
-  ],
-  inProgress: [
     {
       title: "Integrated Invoicing & Payments",
-      description: "Enable technicians to generate and send a professional invoice on the spot. The job status workflow ('Completed', 'Pending Invoice', 'Finished') has been implemented. Next steps: auto-generate invoice PDFs and integrate payment processing.",
+      description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
       icon: DollarSign,
-      status: "In Progress",
+      status: "Completed",
     },
+  ],
+  inProgress: [
   ],
   planned: [
     {

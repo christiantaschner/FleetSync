@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -22,6 +21,7 @@ import { startOfToday, endOfDay, addDays, format, isSameDay } from 'date-fns';
 import DailyTimeline from './components/DailyTimeline';
 import { notifyCustomerAction, calculateTravelMetricsAction } from '@/actions/ai-actions';
 import { Separator } from '@/components/ui/separator';
+import GeoFenceWatcher from './components/GeoFenceWatcher';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading, company } = useAuth();
@@ -168,8 +168,9 @@ export default function TechnicianJobListPage() {
     setIsUpdating(false);
   };
 
-  const handleStatusUpdate = async (job: Job, newStatus: JobStatus) => {
-    if (!db || isUpdatingStatus || !technician || !appId) return;
+  const handleStatusUpdate = async (jobId: string, newStatus: JobStatus) => {
+    const job = assignedJobs.find(j => j.id === jobId);
+    if (!job || !db || isUpdatingStatus || !technician || !appId) return;
 
     if (job.status === 'In Progress' && job.breaks?.some(b => !b.end)) {
         toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
@@ -274,6 +275,7 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
+      {appId && <GeoFenceWatcher appId={appId} job={currentOrNextJob} onStatusChange={handleStatusUpdate} />}
       {!isViewingOwnPage && (
           <div className="flex items-center">
               <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>
@@ -348,7 +350,7 @@ export default function TechnicianJobListPage() {
                                     const Icon = action.icon;
                                     return (
                                         <Button 
-                                            onClick={() => handleStatusUpdate(currentOrNextJob, action.nextStatus)} 
+                                            onClick={() => handleStatusUpdate(currentOrNextJob.id, action.nextStatus)} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
                                             className="bg-primary hover:bg-primary/90 col-span-2"
                                         >

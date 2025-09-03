@@ -227,16 +227,16 @@ const roadmapFeatures = {
       icon: DollarSign,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Automated Geo-Fenced Status Updates",
       description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart. Foundational work (Job Flexibility, Break Tracking) is complete.",
       icon: Target,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
   ],
   vision: [
      {

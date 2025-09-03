@@ -1,5 +1,4 @@
 
-
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -184,6 +183,7 @@ export type Job = {
   profitScore?: number;
   dispatchLocked?: boolean;
   estimatedDurationMinutes?: number;
+  finishedAt?: string;
 };
 
 export const CustomerSchema = z.object({
@@ -863,12 +863,11 @@ export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportu
 
     
 
-
     
 
     
 
-    
+
 
 
 

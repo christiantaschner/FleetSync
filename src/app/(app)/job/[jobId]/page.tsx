@@ -4,12 +4,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import type { Job, Technician, Customer, Contract, Skill, Location, JobStatus } from '@/types';
+import type { Job, Technician, Customer, Contract, Skill, Location, JobStatus, Part } from '@/types';
 import { Loader2, ArrowLeft, Edit, MapIcon, DollarSign, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
-import { mockJobs, mockTechnicians, mockCustomers, mockContracts } from '@/lib/mock-data';
+import { mockJobs, mockTechnicians, mockCustomers, mockContracts, mockParts } from '@/lib/mock-data';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import AddEditJobDialog from '@/app/(app)/dashboard/components/AddEditJobDialog';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
@@ -39,6 +39,7 @@ export default function DispatcherJobDetailPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [allSkills, setAllSkills] = useState<string[]>([]);
+  const [allParts, setAllParts] = useState<Part[]>([]);
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
   
@@ -78,6 +79,7 @@ export default function DispatcherJobDetailPage() {
       setCustomers(mockCustomers);
       setContracts(mockContracts);
       setAllSkills(PREDEFINED_SKILLS);
+      setAllParts(mockParts.map((p, i) => ({ id: `part_${i}`, name: p })));
        if (mockJob?.customerId) {
         const history = mockJobs.filter(j => j.customerId === mockJob.customerId && j.status === 'Completed' && j.id !== mockJob.id);
         setHistoryJobs(history);
@@ -160,7 +162,7 @@ export default function DispatcherJobDetailPage() {
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
   
   const backUrl = job.assignedTechnicianId 
-    ? `/technician/jobs/${job.assignedTechnicianId}` 
+    ? `/dashboard` 
     : '/dashboard';
 
   return (
@@ -174,7 +176,9 @@ export default function DispatcherJobDetailPage() {
             customers={customers}
             contracts={contracts}
             allSkills={allSkills}
+            allParts={allParts}
             onManageSkills={() => {}}
+            onManageParts={() => {}}
         />
         <div className="flex items-center justify-between">
             <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>

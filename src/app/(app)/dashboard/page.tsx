@@ -61,6 +61,7 @@ import {
 } from "@/components/ui/tooltip";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
+import isEqual from 'lodash.isequal';
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -197,12 +198,11 @@ export default function DashboardPage() {
     setStatusFilter(newStatusFilter);
 
     // Check if the current filter selection matches the "Open Tasks" preset
-    const openTasksSet = new Set(openTasksFilter);
-    const newStatusSet = new Set(newStatusFilter);
-    const areSetsEqual = openTasksSet.size === newStatusSet.size && [...openTasksSet].every(value => newStatusSet.has(value));
-
-    if (!areSetsEqual && showOpenTasksOnly) {
-      setShowOpenTasksOnly(false);
+    const openTasksSet = new Set(openTasksFilter.sort());
+    const newStatusSet = new Set(newStatusFilter.sort());
+    
+    if (!isEqual(openTasksSet, newStatusSet)) {
+        setShowOpenTasksOnly(false);
     }
   };
 

@@ -284,7 +284,7 @@ export default function TechnicianJobDetailPage() {
                     <CheckCircle className="h-4 w-4 text-green-600" />
                     <AlertTitle className="font-semibold text-green-800">Job Completed</AlertTitle>
                     <AlertDescription className="text-green-700">
-                       This job has been marked as complete. The back office will handle invoicing.
+                       Great work! This job has been marked as complete. The back office will handle invoicing.
                     </AlertDescription>
                 </Alert>
             </div>

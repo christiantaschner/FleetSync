@@ -15,21 +15,27 @@ const TrackingMap: React.FC<TrackingMapProps> = ({ technicianLocation, jobLocati
   const map = useMap();
 
   useEffect(() => {
-    // Optional: Adjust map bounds to fit both markers
-    if (map) {
-      const bounds = new window.google.maps.LatLngBounds();
-      if(technicianLocation.latitude && technicianLocation.longitude) {
-         bounds.extend(new window.google.maps.LatLng(technicianLocation.latitude, technicianLocation.longitude));
-      }
-      if(jobLocation.latitude && jobLocation.longitude) {
-        bounds.extend(new window.google.maps.LatLng(jobLocation.latitude, jobLocation.longitude));
-      }
-      if(!bounds.isEmpty() && !bounds.getCenter().equals(bounds.getNorthEast())){
-         map.fitBounds(bounds, 100); // 100px padding
-      } else if (!bounds.isEmpty()) {
-          map.setCenter(bounds.getCenter());
-          map.setZoom(12);
-      }
+    if (!map) return;
+    
+    const bounds = new window.google.maps.LatLngBounds();
+    
+    if (technicianLocation.latitude && technicianLocation.longitude) {
+      bounds.extend(new window.google.maps.LatLng(technicianLocation.latitude, technicianLocation.longitude));
+    }
+    
+    if (jobLocation.latitude && jobLocation.longitude) {
+      bounds.extend(new window.google.maps.LatLng(jobLocation.latitude, jobLocation.longitude));
+    }
+    
+    if (bounds.isEmpty()) return;
+    
+    if (bounds.getCenter().equals(bounds.getNorthEast())) {
+      // If only one point, center and zoom in.
+      map.setCenter(bounds.getCenter());
+      map.setZoom(12);
+    } else {
+      // If two points, fit both with padding.
+      map.fitBounds(bounds, 100); 
     }
   }, [technicianLocation, jobLocation, map]);
 

@@ -377,6 +377,7 @@ export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 export type Part = {
   id: string;
   name: string;
+  cost?: number;
 };
 
 
@@ -398,7 +399,6 @@ export const AllocateJobInputSchema = z.object({
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
   quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
-  expectedPartsCost: z.number().optional().describe('The anticipated cost of parts for this job.'),
   slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
   upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
   estimatedDurationMinutes: z.number().optional().describe('Estimated duration of the job in minutes.'),
@@ -427,6 +427,7 @@ export const AllocateJobInputSchema = z.object({
       maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
+  partsLibrary: z.array(z.object({ name: z.string(), cost: z.number() })).optional().describe("A library of all available parts and their costs, for the AI to calculate the job's part cost."),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
   rejectedSuggestions: z.array(AllocateJobOutputSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
   featureFlags: FeatureFlagsSchema.optional().describe('Feature flags that might alter the AI\'s decision-making logic.'),

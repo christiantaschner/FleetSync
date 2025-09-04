@@ -63,14 +63,14 @@ The current time is {{{currentTime}}}.
 - Description: {{{jobDescription}}}
 - Financials:
   - Quoted Value: \${{{quotedValue}}}
-  - Expected Parts Cost: \${{{expectedPartsCost}}}
   - SLA Penalty Risk: \${{{slaPenalty}}}
   - Upsell Probability: {{#if upsellScore}}{{{upsellScore}}}{{else}}N/A{{/if}}
   - After Hours Job: {{#if isAfterHours}}Yes{{else}}No{{/if}}
 
 **PROFIT CALCULATION LOGIC:**
 For each potential assignment, you must calculate the 'profitScore'. Use the following formula:
-profit = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty)
+1. First, calculate the 'expectedPartsCost' by looking up each part in the 'requiredParts' array in the provided 'partsLibrary' and summing their costs.
+2. Then, calculate the final profit: profit = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty)
 If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
@@ -144,10 +144,17 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
   {{/if}}
 {{/each}}
 
+{{#if featureFlags.profitScoringEnabled}}
+**Company Parts Library (for cost calculation):**
+{{#each partsLibrary}}
+- Part: {{{name}}}, Cost: \${{{cost}}}
+{{/each}}
+{{/if}}
+
 ---
 **Final Assessment:**
 {{#if featureFlags.profitScoringEnabled}}
-First, calculate the profitScore for every suitable technician. Then, provide your final decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
+First, calculate the expectedPartsCost. Then, calculate the profitScore for every suitable technician. Finally, provide your decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
 {{else}}
 Provide your final decision on the best technician. Your reasoning MUST be based on skills, parts availability, and proximity. If no technician is suitable, state this clearly and explain the bottleneck.
 {{/if}}

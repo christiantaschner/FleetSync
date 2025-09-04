@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -30,9 +29,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign } from 'lucide-react';
-import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction, suggestUpsellOpportunityAction } from '@/actions/ai-actions';
+import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part } from '@/types';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package } from 'lucide-react';
+import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction, suggestUpsellOpportunityAction, suggestJobPartsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
 import { Popover, PopoverContent, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover';
@@ -41,7 +40,6 @@ import { addHours, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -67,11 +65,13 @@ interface AddEditJobDialogProps {
   customers: Customer[];
   contracts: Contract[];
   allSkills: string[];
+  allParts: Part[];
   onJobAddedOrUpdated?: (job: Job, assignedTechnicianId?: string | null) => void;
   onManageSkills: () => void;
+  onManageParts: () => void;
 }
 
-const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, prefilledData, jobs, technicians, customers, contracts, allSkills, onJobAddedOrUpdated, onManageSkills }) => {
+const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, job, prefilledData, jobs, technicians, customers, contracts, allSkills, allParts, onJobAddedOrUpdated, onManageSkills, onManageParts }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -79,6 +79,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
   const [isFetchingSkills, setIsFetchingSkills] = useState(false);
   const [isFetchingUpsell, setIsFetchingUpsell] = useState(false);
+  const [isFetchingParts, setIsFetchingParts] = useState(false);
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
@@ -89,6 +90,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [status, setStatus] = useState<JobStatus>('Unassigned');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
+  const [requiredParts, setRequiredParts] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -101,7 +103,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [quotedValue, setQuotedValue] = useState<number | undefined>(undefined);
-  const [expectedPartsCost, setExpectedPartsCost] = useState<number | undefined>(undefined);
   const [slaDeadline, setSlaDeadline] = useState<Date | undefined>(undefined);
   const [upsellScore, setUpsellScore] = useState<number | undefined>(undefined);
   const [upsellReasoning, setUpsellReasoning] = useState<string | undefined>(undefined);
@@ -126,6 +127,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setPriority(initialData.priority || 'Medium');
     setStatus(initialData.status || 'Unassigned');
     setRequiredSkills(initialData.requiredSkills || []);
+    setRequiredParts(initialData.requiredParts || []);
     setCustomerName(initialData.customerName || '');
     setCustomerEmail(initialData.customerEmail || '');
     setCustomerPhone(initialData.customerPhone || '');
@@ -138,7 +140,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setSelectedContractId(initialData.sourceContractId || '');
     setSelectedCustomerId(initialData.customerId || null);
     setQuotedValue(initialData.quotedValue);
-    setExpectedPartsCost(initialData.expectedPartsCost);
     setSlaDeadline(initialData.slaDeadline ? new Date(initialData.slaDeadline) : undefined);
     setUpsellScore(initialData.upsellScore);
     setUpsellReasoning(initialData.upsellReasoning);
@@ -247,7 +248,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         technicians: technicians.map(tech => ({
             id: tech.id,
             name: tech.name,
-            skills: tech.skills.map(s => s),
+            skills: tech.skills,
             jobs: jobs.filter(j => j.assignedTechnicianId === tech.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
                 .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! }))
         }))
@@ -416,6 +417,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
     setIsFetchingUpsell(false);
   }
+  
+  const handleSuggestParts = async () => {
+    if (!description.trim() && !title.trim()) {
+        toast({ title: "Cannot Suggest Parts", description: "Please enter a Job Title or Description.", variant: "default" });
+        return;
+    }
+    setIsFetchingParts(true);
+    const result = await suggestJobPartsAction({ jobDescription: description, availableParts: allParts.map(p => p.name) });
+    if (result.error) {
+        toast({ title: "Parts Suggestion Error", description: result.error, variant: "destructive" });
+    } else if (result.data?.suggestedParts) {
+        if (result.data.suggestedParts.length === 0) {
+            toast({ title: "No specific parts suggested", description: "The AI could not identify specific parts from the job description.", variant: "default" });
+        } else {
+            setRequiredParts(prev => [...new Set([...prev, ...result.data!.suggestedParts])]);
+            toast({ title: "Parts Suggested", description: `Fleety added ${result.data.suggestedParts.length} part(s). Please review.` });
+        }
+    }
+    setIsFetchingParts(false);
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -471,6 +493,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       description,
       priority,
       requiredSkills,
+      requiredParts,
       customerName: customerName || "N/A",
       customerEmail: customerEmail || "N/A",
       customerPhone: customerPhone || "N/A",
@@ -483,7 +506,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       estimatedDurationMinutes,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
       quotedValue,
-      expectedPartsCost,
       slaDeadline: slaDeadline ? slaDeadline.toISOString() : null,
       upsellScore: upsellScore,
       upsellReasoning: upsellReasoning,
@@ -616,6 +638,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const descriptionText = job ? 'Update the details for this job.' : userProfile?.role === 'csr' ? 'Create a job ticket for a dispatcher to review and assign.' : 'Fill in the details below to create and assign a new job.';
 
   const skillOptions = allSkills.map(skill => ({ value: skill, label: skill }));
+  const partOptions = allParts.map(part => ({ value: part.name, label: part.name }));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -718,16 +741,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     <Label htmlFor="quotedValue"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Quoted Value ($)</Label>
                                     <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
                                 </div>
-                                <div>
-                                    <Label htmlFor="expectedPartsCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Expected Parts Cost ($)</Label>
-                                    <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
-                                </div>
-                            </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="slaDeadline">SLA Deadline</Label>
-                                    <Input id="slaDeadline" type="datetime-local" value={slaDeadline ? format(slaDeadline, "yyyy-MM-dd'T'HH:mm") : ''} onChange={e => setSlaDeadline(new Date(e.target.value))} />
-                                </div>
                                 <div className="space-y-1">
                                     <Label htmlFor="upsellScore">Upsell Potential</Label>
                                      <div className="flex items-center gap-2">
@@ -746,6 +759,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                             {isFetchingUpsell ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
                                         </Button>
                                     </div>
+                                </div>
+                            </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="slaDeadline">SLA Deadline</Label>
+                                    <Input id="slaDeadline" type="datetime-local" value={slaDeadline ? format(slaDeadline, "yyyy-MM-dd'T'HH:mm") : ''} onChange={e => setSlaDeadline(new Date(e.target.value))} />
                                 </div>
                             </div>
                         </AccordionContent>
@@ -815,6 +834,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         selected={requiredSkills}
                         onChange={setRequiredSkills}
                         placeholder="Select required skills..."
+                    />
+                  </div>
+                   <div className="flex flex-col space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                          <Package className="h-4 w-4" />
+                          Required Parts
+                      </Label>
+                      <div className="flex items-center gap-2">
+                          <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0">Manage</Button>
+                          <Button type="button" variant="outline" size="sm" onClick={handleSuggestParts} disabled={isFetchingParts || (!title.trim() && !description.trim())} className="h-9">
+                              {isFetchingParts ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
+                              Suggest
+                          </Button>
+                      </div>
+                    </div>
+                     <MultiSelectFilter
+                        options={partOptions}
+                        selected={requiredParts}
+                        onChange={setRequiredParts}
+                        placeholder="Select required parts..."
                     />
                   </div>
                   <div className="space-y-2 rounded-md border p-4">
@@ -1023,7 +1063,3 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
-
-
-
-    

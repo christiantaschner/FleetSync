@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -222,25 +222,31 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Automated Geo-Fenced Status Updates",
+      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart.",
+      icon: Target,
+      status: "Completed",
+    },
+     {
+      title: "AI-Powered Customer Follow-Up",
+      description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
+      icon: Smile,
+      status: "Completed",
+    },
+    {
       title: "Integrated Invoicing & Payments",
       description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
       icon: DollarSign,
       status: "Completed",
     },
     {
-      title: "Automated Geo-Fenced Status Updates",
-      description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart. Foundational work (Job Flexibility, Break Tracking) is complete.",
-      icon: Target,
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      icon: TrendingUp,
       status: "Completed",
     },
   ],
   inProgress: [
-     {
-      title: "AI-Powered Customer Follow-Up",
-      description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
-      icon: Smile,
-      status: "In Progress",
-    },
   ],
   planned: [
   ],
@@ -303,15 +309,6 @@ export default function RoadmapPage() {
         </p>
       </div>
 
-      <section>
-        <h2 className="text-2xl font-semibold mb-4 pb-2 border-b font-headline">Completed Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {roadmapFeatures.completed.map((item) => (
-            <RoadmapItem key={item.title} {...item} />
-          ))}
-        </div>
-      </section>
-
        <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">In Progress</h2>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -327,6 +324,15 @@ export default function RoadmapPage() {
             {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
                 <RoadmapItem key={item.title} {...item} />
             )) : <p className="text-muted-foreground col-span-full">All planned features are complete! See the Vision section for what's next.</p>}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Completed Features</h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {roadmapFeatures.completed.map((item) => (
+            <RoadmapItem key={item.title} {...item} />
+          ))}
         </div>
       </section>
 

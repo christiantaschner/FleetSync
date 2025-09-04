@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction } from "@/actions/ai-actions";
 import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Label } from '@/components/ui/label';
-import { Loader2, UserCheck, Bot } from 'lucide-react';
+import { Loader2, UserCheck, Bot, DollarSign } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
@@ -90,6 +90,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             slaPenalty: 0, // Placeholder
             technicianAvailability: aiTechnicians,
             currentTime: new Date().toISOString(),
+            featureFlags: company?.settings?.featureFlags,
         };
 
         const result = await allocateJobAction(input);
@@ -210,7 +211,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
             <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI's Suggestion:</h3>
             <p className="text-sm text-muted-foreground italic">"{suggestedTechnician.reasoning}"</p>
              {suggestedTechnician.profitScore !== undefined && (
-                <p className="text-sm font-semibold">Estimated Profit: <span className="text-green-600">${suggestedTechnician.profitScore.toFixed(2)}</span></p>
+                <p className="text-sm font-semibold">Estimated Profit: <span className="text-green-600 font-bold flex items-center gap-1"><DollarSign className="h-4 w-4"/>{suggestedTechnician.profitScore.toFixed(2)}</span></p>
             )}
             <div className="space-y-1 pt-2">
                 <Label htmlFor="technician-override">Assign To</Label>

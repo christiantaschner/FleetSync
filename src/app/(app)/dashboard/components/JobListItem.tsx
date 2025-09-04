@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -147,6 +146,12 @@ const JobListItem: React.FC<JobListItemProps> = ({
               </div>
                <div className="flex flex-col items-end gap-1">
                  <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
+                 {job.profitScore && (
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+                        <DollarSign className="mr-1 h-3 w-3"/>
+                        ${job.profitScore.toFixed(2)}
+                    </Badge>
+                 )}
                </div>
             </div>
           </CardHeader>
@@ -237,5 +242,3 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
-
-    

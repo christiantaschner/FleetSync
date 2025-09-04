@@ -319,7 +319,7 @@ export default function MarketingPage() {
                     <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Enter a job's revenue and material costs. Our AI instantly calculates drive time, labor, and other variables to assess its true profit profile.</p>
+                        <p className="mt-2 text-sm text-muted-foreground">Input a job's quoted value and select any required parts. Our AI instantly calculates material costs, drive time, and labor to assess its true profit profile.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>

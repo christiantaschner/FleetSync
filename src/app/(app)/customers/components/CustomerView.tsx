@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import type { Job, Contract, CustomerData, Customer, Equipment } from '@/types';
+import type { Job, Contract, CustomerData, Customer, Equipment, Part } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,11 +26,12 @@ import AddEquipmentDialog from './AddEquipmentDialog';
 interface CustomerViewProps {
     initialCustomers: CustomerData[];
     allSkills: string[];
+    allParts: Part[];
     onCustomerAdded: () => void;
     initialSearchTerm?: string;
 }
 
-export default function CustomerView({ initialCustomers, allSkills, onCustomerAdded, initialSearchTerm = '' }: CustomerViewProps) {
+export default function CustomerView({ initialCustomers, allSkills, allParts, onCustomerAdded, initialSearchTerm = '' }: CustomerViewProps) {
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
     const [selectedCustomerJobs, setSelectedCustomerJobs] = useState<Job[]>([]);
@@ -217,7 +218,9 @@ export default function CustomerView({ initialCustomers, allSkills, onCustomerAd
                 customers={initialCustomers}
                 contracts={[]}
                 allSkills={allSkills}
+                allParts={allParts}
                 onManageSkills={() => {}}
+                onManageParts={() => {}}
             />
             <AddEditContractDialog
                 isOpen={isAddContractOpen}

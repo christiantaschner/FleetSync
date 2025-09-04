@@ -75,7 +75,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
   const isDraft = job.status === 'Draft';
   
   const isUnassigned = job.status === 'Unassigned' && !job.assignedTechnicianId;
-  const isRoutable = (job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress') && job.assignedTechnicianId;
+  const isRoutable = (job.status === 'Assigned' || job.status === 'En Route') && job.assignedTechnicianId;
   const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
   
   const JobCardWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -146,7 +146,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
               </div>
                <div className="flex flex-col items-end gap-1">
                  <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
-                 {job.profitScore && (
+                 {job.profitScore !== undefined && (
                     <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
                         <DollarSign className="mr-1 h-3 w-3"/>
                         ${job.profitScore.toFixed(2)}
@@ -202,15 +202,15 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 </Button>
             )}
             {isRoutable && (
-              <>
                 <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
                     <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
-                    <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat with Dispatch
-                </Button>
-              </>
             )}
+             {assignedTechnician && (
+                 <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
+                    <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
+                </Button>
+             )}
              <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
                 <MapIcon className="mr-2 h-3 w-3" /> View on Map
             </Button>

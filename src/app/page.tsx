@@ -412,7 +412,7 @@ export default function MarketingPage() {
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl font-headline flex items-center justify-center gap-3">
                    <span role="img" aria-label="rocket">🚀</span> Stop Dispatching. Start Operating Like a Business.
                 </h2>
-                <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready.</p>
+                <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready. It's not just another scheduling tool—it's a profit engine.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
                         <Link href="/signup">💰 {t('start_free_trial')}</Link>

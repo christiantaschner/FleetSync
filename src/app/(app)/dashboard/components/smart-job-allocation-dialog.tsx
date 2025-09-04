@@ -210,7 +210,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
           <div className="mt-4 p-4 bg-secondary/50 rounded-md space-y-2 border">
             <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI's Suggestion:</h3>
             <p className="text-sm text-muted-foreground italic">"{suggestedTechnician.reasoning}"</p>
-             {suggestedTechnician.profitScore !== undefined && (
+             {(suggestedTechnician.profitScore !== undefined && company?.settings?.featureFlags?.profitScoringEnabled) && (
                 <p className="text-sm font-semibold">Estimated Profit: <span className="text-green-600 font-bold flex items-center gap-1"><DollarSign className="h-4 w-4"/>{suggestedTechnician.profitScore.toFixed(2)}</span></p>
             )}
             <div className="space-y-1 pt-2">

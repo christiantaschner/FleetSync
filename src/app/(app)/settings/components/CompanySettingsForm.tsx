@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from 'react';
@@ -184,14 +185,14 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
                 <Controller name="settings.featureFlags.autoDispatchEnabled" control={control} render={({ field }) => ( <Switch id="autoDispatchEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
                 <div>
                     <Label htmlFor="autoDispatchEnabled">Automatic Job Assignment</Label>
-                    <p className="text-sm text-muted-foreground">Allow AI to automatically assign new high-priority jobs to the best technician.</p>
+                    <p className="text-sm text-muted-foreground">Allow AI to automatically suggest assignments for new high-priority jobs.</p>
                 </div>
             </div>
             <div className="flex items-center space-x-2">
                 <Controller name="settings.featureFlags.rescheduleCustomerJobsEnabled" control={control} render={({ field }) => ( <Switch id="rescheduleCustomerJobsEnabled" checked={field.value} onCheckedChange={field.onChange} /> )}/>
                 <div>
                     <Label htmlFor="rescheduleCustomerJobsEnabled">AI Schedule Conflict Resolution</Label>
-                    <p className="text-sm text-muted-foreground">Allow AI to suggest rescheduling or reassigning jobs to resolve schedule conflicts.</p>
+                    <p className="text-sm text-muted-foreground">Allow AI to show proactive alerts and suggest resolutions for schedule conflicts.</p>
                 </div>
             </div>
             <div className="flex items-center space-x-2">

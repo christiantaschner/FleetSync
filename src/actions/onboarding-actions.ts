@@ -184,6 +184,13 @@ export async function seedSampleDataAction(
     const { companyId, appId } = SeedDataInputSchema.parse(input);
 
     const batch = writeBatch(dbAdmin);
+    
+    const companyDoc = await dbAdmin.collection('companies').doc(companyId).get();
+    if (!companyDoc.exists) {
+        throw new Error("Company not found.");
+    }
+    const companyData = companyDoc.data() as Company;
+    const specialties = companyData.settings?.companySpecialties || [];
 
     // 1. Seed Technicians
     const techsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/technicians`);
@@ -199,10 +206,18 @@ export async function seedSampleDataAction(
         batch.set(docRef, { ...job, id: docRef.id, companyId: companyId, isSampleData: true });
     });
     
-    // 3. Seed Skills
+    // 3. Seed Skills based on company's selected specialties
+    const skillsToSeed: string[] = [];
+    specialties.forEach(specialty => {
+        if (SKILLS_BY_SPECIALTY[specialty]) {
+            skillsToSeed.push(...SKILLS_BY_SPECIALTY[specialty]);
+        }
+    });
+
     const skillsCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/skills`);
-    const allSkills = [...new Set(mockTechnicians.flatMap(t => t.skills || []))];
-    allSkills.forEach(skillName => {
+    const uniqueSkills = [...new Set(skillsToSeed)];
+    
+    uniqueSkills.forEach(skillName => {
       const docRef = skillsCollectionRef.doc();
       batch.set(docRef, { name: skillName, companyId: companyId, isSampleData: true });
     });

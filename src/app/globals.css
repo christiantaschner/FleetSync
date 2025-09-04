@@ -5,25 +5,25 @@
 
 @layer base {
   :root {
-    --background: 210 29% 95%; /* #F0F4F8 */
+    --background: 220 20% 97%; /* Light, neutral off-white */
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 197 78% 52%; /* #29ABE2 */
+    --primary: 221 83% 53%; /* Professional Slate Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
+    --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 96%;
+    --muted: 210 40% 96.1%;
     --muted-foreground: 215 20% 45%;
-    --accent: 30 100% 60%; /* #FF9933 */
+    --accent: 38 92% 50%; /* Warm, inviting Amber */
     --accent-foreground: 24 9.8% 10%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 197 78% 52%;
+    --ring: 221 83% 53%;
     --radius: 0.5rem;
   }
   .dark {
@@ -33,19 +33,19 @@
     --card-foreground: 210 40% 98%;
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    --primary: 197 78% 52%; /* #29ABE2 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 217 91% 60%; /* Brighter blue for dark mode */
+    --primary-foreground: 222 47% 11%;
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
-    --accent: 30 100% 60%; /* #FF9933 */
+    --accent: 45 93% 47%; /* Brighter amber for dark mode */
     --accent-foreground: 24 9.8% 10%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
     --border: 217 33% 22%;
     --input: 217 33% 20%;
-    --ring: 197 78% 52%;
+    --ring: 217 91% 60%;
     --radius: 0.5rem;
   }
 }

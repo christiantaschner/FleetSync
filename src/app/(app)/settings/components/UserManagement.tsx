@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { getCompanyUsersAction, inviteUserAction, removeUserFromCompanyAction, updateUserRoleAction, getCompanyInvitesAction } from '@/actions/user-actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Mail, PlusCircle, Trash2, ShieldCheck, User, Wrench, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, Mail, PlusCircle, Trash2, ShieldCheck, User, Wrench, Clock, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -320,5 +320,3 @@ const UserManagement: React.FC<UserManagementProps> = ({ companyId, ownerId }) =
 }
 
 export default UserManagement;
-
-    

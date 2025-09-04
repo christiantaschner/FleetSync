@@ -12,7 +12,7 @@ import WorkDocumentationForm from './components/WorkDocumentationForm';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
-import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpportunityCard';
+import UpsellOpportunityCard from './components/UpsellOpportunityCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -24,7 +24,6 @@ import { addDocumentationAction, updateJobStatusAction } from '@/actions/job-act
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
-import SignatureCard from './components/SignatureCard';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -108,11 +107,12 @@ export default function TechnicianJobDetailPage() {
     fetchJobAndRelatedData();
   }, [jobId, authLoading, user, appId, isMockMode]);
   
-  const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string) => {
+  const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string, signatureDataUrl?: string | null, satisfactionScore?: number) => {
     if (!job || !storage || isUpdating || !appId) return;
     setIsUpdating(true);
 
     let photoUrls: string[] = [];
+    let signatureUrl: string | null = null;
     try {
       if (photos.length > 0) {
         photoUrls = await Promise.all(photos.map(async (photo) => {
@@ -121,6 +121,12 @@ export default function TechnicianJobDetailPage() {
           return getDownloadURL(photoRef);
         }));
       }
+
+      if (signatureDataUrl) {
+        const signatureRef = ref(storage, `signatures/${job.id}.png`);
+        await uploadString(signatureRef, signatureDataUrl, 'data_url');
+        signatureUrl = await getDownloadURL(signatureRef);
+      }
       
       const result = await addDocumentationAction({
         jobId: job.id,
@@ -128,7 +134,9 @@ export default function TechnicianJobDetailPage() {
         notes,
         photoUrls,
         isFirstTimeFix,
-        reasonForFollowUp
+        reasonForFollowUp,
+        signatureUrl,
+        satisfactionScore
       });
       
       if(result.error) throw new Error(result.error);
@@ -141,6 +149,8 @@ export default function TechnicianJobDetailPage() {
             photos: [...(prevJob.photos || []), ...photoUrls],
             isFirstTimeFix,
             reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || ''),
+            customerSignatureUrl: signatureUrl || prevJob.customerSignatureUrl,
+            customerSatisfactionScore: satisfactionScore || prevJob.customerSatisfactionScore,
             updatedAt: new Date().toISOString()
         };
       });
@@ -152,39 +162,6 @@ export default function TechnicianJobDetailPage() {
       setIsUpdating(false);
     }
   };
-
-  const handleSaveSignoff = async (signatureDataUrl: string | null, satisfactionScore: number) => {
-    if (!job || !storage || isUpdating || !appId) return;
-    setIsUpdating(true);
-    let signatureUrl: string | null = null;
-    try {
-      if (signatureDataUrl) {
-        const signatureRef = ref(storage, `signatures/${job.id}.png`);
-        await uploadString(signatureRef, signatureDataUrl, 'data_url');
-        signatureUrl = await getDownloadURL(signatureRef);
-      }
-      
-      const result = await addDocumentationAction({
-        jobId: job.id,
-        appId,
-        isFirstTimeFix: job.isFirstTimeFix ?? true,
-        reasonForFollowUp: job.reasonForFollowUp,
-        signatureUrl,
-        satisfactionScore
-      });
-
-      if(result.error) throw new Error(result.error);
-
-      setJob(prev => prev ? { ...prev, customerSignatureUrl: signatureUrl || prev.customerSignatureUrl, customerSatisfactionScore: satisfactionScore } : null);
-      toast({ title: "Success", description: "Customer sign-off saved." });
-
-    } catch (error) {
-       console.error("Error saving sign-off:", error);
-       toast({ title: "Error", description: "Could not save customer sign-off.", variant: "destructive" });
-    } finally {
-      setIsUpdating(false);
-    }
-  }
   
   const handleToggleBreak = async () => {
     if (!job || !db || isUpdating || !appId) return;
@@ -303,10 +280,13 @@ export default function TechnicianJobDetailPage() {
       
       {job.status === 'Completed' && (
             <div className="space-y-4">
-                <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
-                 <Button onClick={() => handleStatusUpdate('Pending Invoice')} className="w-full bg-green-600 hover:bg-green-700">
-                    <DollarSign className="mr-2 h-4 w-4" /> Finalize & Send for Invoicing
-                </Button>
+                 <Alert variant="default" className="border-green-600/50 bg-green-50/50">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertTitle className="font-semibold text-green-800">Job Completed</AlertTitle>
+                    <AlertDescription className="text-green-700">
+                       This job has been marked as complete. The back office will handle invoicing.
+                    </AlertDescription>
+                </Alert>
             </div>
         )}
 

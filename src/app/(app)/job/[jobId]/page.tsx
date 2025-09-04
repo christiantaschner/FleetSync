@@ -20,6 +20,10 @@ import { updateJobStatusAction } from '@/actions/job-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { generateInvoicePdf } from '@/lib/pdf-utils';
+import WorkDocumentationForm from '../../technician/[jobId]/components/WorkDocumentationForm';
+import { addDocumentationAction } from '@/actions/job-actions';
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
+import { storage } from '@/lib/firebase';
 
 export default function DispatcherJobDetailPage() {
   const { userProfile, company, loading, isMockMode } = useAuth();
@@ -82,6 +86,62 @@ export default function DispatcherJobDetailPage() {
         toast({ title: "PDF Error", description: "Failed to generate invoice PDF.", variant: "destructive" });
     } finally {
         setIsUpdatingStatus(false);
+    }
+  };
+  
+  const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string, signatureDataUrl?: string | null, satisfactionScore?: number) => {
+    if (!job || !appId) return;
+    setIsUpdatingStatus(true);
+
+    let photoUrls: string[] = [];
+    let signatureUrlToSave: string | null = null;
+    
+    try {
+      if (photos.length > 0) {
+          // This part would be handled by a different action in a real app
+          // For simplicity, we assume an upload function exists
+          toast({ title: "Note", description: "Photo upload from this screen is a demo feature."});
+      }
+      
+      if (signatureDataUrl) {
+        const signatureRef = ref(storage, `signatures/${job.id}.png`);
+        await uploadString(signatureRef, signatureDataUrl, 'data_url');
+        signatureUrlToSave = await getDownloadURL(signatureRef);
+      }
+      
+      const result = await addDocumentationAction({
+        jobId: job.id,
+        appId,
+        notes,
+        photoUrls,
+        isFirstTimeFix,
+        reasonForFollowUp,
+        signatureUrl: signatureUrlToSave,
+        satisfactionScore,
+      });
+      
+      if(result.error) throw new Error(result.error);
+      
+      toast({ title: "Success", description: "Documentation saved." });
+      setJob(prevJob => {
+        if (!prevJob) return null;
+        return {
+            ...prevJob,
+            notes: prevJob.notes ? `${prevJob.notes}${notes ? `\n--- ${new Date().toLocaleString()} ---\n${notes.trim()}`: ''}` : notes,
+            photos: [...(prevJob.photos || []), ...photoUrls],
+            isFirstTimeFix,
+            reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || ''),
+            customerSignatureUrl: signatureUrlToSave || prevJob.customerSignatureUrl,
+            customerSatisfactionScore: satisfactionScore || prevJob.customerSatisfactionScore,
+            updatedAt: new Date().toISOString()
+        };
+      });
+
+    } catch (error) {
+      console.error("Error documenting work:", error);
+      toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -239,14 +299,21 @@ export default function DispatcherJobDetailPage() {
                 </AlertDescription>
               </Alert>
             )}
-            <JobDetailsDisplay job={job} />
-            {job.upsellReasoning && (
-              <UpsellOpportunityCard job={job} />
-            )}
-            <CustomerHistoryCard jobs={historyJobs} />
-             {assignedTechnician && appId && (
-                <ChatCard job={job} technician={assignedTechnician} appId={appId} />
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                  <JobDetailsDisplay job={job} technician={assignedTechnician} />
+                  <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdatingStatus} />
+                  {job.upsellReasoning && (
+                    <UpsellOpportunityCard job={job} />
+                  )}
+              </div>
+              <div className="space-y-6">
+                  <CustomerHistoryCard jobs={historyJobs} />
+                   {assignedTechnician && appId && (
+                      <ChatCard job={job} technician={assignedTechnician} appId={appId} />
+                  )}
+              </div>
+            </div>
         </div>
     </div>
   );

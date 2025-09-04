@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Camera, Star, Edit, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { Loader2, Camera, Star, Edit, ThumbsUp, ThumbsDown, Trash2, Save, FileSignature } from 'lucide-react';
 import Image from 'next/image';
 import SignatureCanvas from 'react-signature-canvas';
 import { cn } from '@/lib/utils';
@@ -16,20 +16,21 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface WorkDocumentationFormProps {
-    onSubmit: (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string) => void;
+    onSubmit: (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string, signatureDataUrl?: string | null, satisfactionScore?: number) => void;
     isSubmitting: boolean;
-    initialSatisfactionScore?: number;
 }
 
-const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit, isSubmitting, initialSatisfactionScore }) => {
+const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit, isSubmitting }) => {
     const { toast } = useToast();
     const [notes, setNotes] = useState('');
     const [photos, setPhotos] = useState<File[]>([]);
     const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
     const [isFirstTimeFix, setIsFirstTimeFix] = useState<boolean | null>(null);
     const [reasonForFollowUp, setReasonForFollowUp] = useState('');
+    const [satisfactionScore, setSatisfactionScore] = useState<number>(0);
     
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const signaturePadRef = useRef<SignatureCanvas>(null);
 
     const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
@@ -51,6 +52,11 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
         setPhotos(prev => prev.filter((_, i) => i !== index));
         setPhotoPreviews(prev => prev.filter((_, i) => i !== index));
     };
+    
+     const clearSignature = () => {
+        signaturePadRef.current?.clear();
+    };
+
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,9 +68,21 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
             toast({ title: "Reason Required", description: "Please provide a reason for the follow-up visit.", variant: "destructive" });
             return;
         }
+        
+        const signatureDataUrl = signaturePadRef.current?.isEmpty()
+            ? null
+            : signaturePadRef.current?.getTrimmedCanvas().toDataURL('image/png');
 
-        onSubmit(notes, photos, isFirstTimeFix, reasonForFollowUp);
+        onSubmit(notes, photos, isFirstTimeFix, reasonForFollowUp, signatureDataUrl, satisfactionScore);
     };
+
+    const satisfactionIcons = [
+        { icon: ThumbsDown, color: 'text-red-500', label: 'Poor' },
+        { icon: Star, color: 'text-orange-400', label: 'Fair' },
+        { icon: Star, color: 'text-yellow-400', label: 'Good' },
+        { icon: Star, color: 'text-lime-500', label: 'Very Good' },
+        { icon: ThumbsUp, color: 'text-green-500', label: 'Excellent' }
+    ];
 
     return (
         <Card>
@@ -145,9 +163,45 @@ const WorkDocumentationForm: React.FC<WorkDocumentationFormProps> = ({ onSubmit,
                             />
                         </div>
                     )}
+
+                    <div className="space-y-4 rounded-md border p-4 bg-secondary/50">
+                        <h4 className="font-semibold flex items-center gap-2"><FileSignature/>Customer Sign-off</h4>
+                        <div>
+                            <Label>Customer Satisfaction ({satisfactionScore > 0 ? `${satisfactionScore}/5 - ${satisfactionIcons[satisfactionScore - 1].label}` : 'Not Rated'})</Label>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Slider
+                                    defaultValue={[satisfactionScore]}
+                                    value={[satisfactionScore]}
+                                    max={5}
+                                    step={1}
+                                    onValueChange={(value) => setSatisfactionScore(value[0])}
+                                    disabled={isSubmitting}
+                                />
+                                {satisfactionScore > 0 ? (
+                                    React.createElement(satisfactionIcons[satisfactionScore - 1].icon, {
+                                        className: cn("h-6 w-6", satisfactionIcons[satisfactionScore - 1].color)
+                                    })
+                                ) : <Smile className="h-6 w-6 text-muted-foreground" />}
+                            </div>
+                        </div>
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <Label>Customer Signature</Label>
+                                <Button type="button" variant="ghost" size="sm" onClick={clearSignature} disabled={isSubmitting}>Clear</Button>
+                            </div>
+                            <div className="border rounded-md bg-white">
+                                <SignatureCanvas
+                                    ref={signaturePadRef}
+                                    penColor="black"
+                                    canvasProps={{ className: 'w-full h-32' }}
+                                />
+                            </div>
+                        </div>
+                    </div>
                     
                     <Button type="submit" disabled={isSubmitting} className="w-full">
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save Documentation"}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Save All Documentation
                     </Button>
                 </form>
             </CardContent>

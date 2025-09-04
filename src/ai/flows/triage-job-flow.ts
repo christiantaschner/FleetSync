@@ -20,14 +20,14 @@ const prompt = ai.definePrompt({
     model: 'googleai/gemini-1.5-pro-latest',
     input: { schema: TriageJobInputSchema },
     output: { schema: TriageJobOutputSchema },
-    prompt: `You are an expert field service support AI. Your task is to analyze a job description and photos of a broken device to help a technician prepare for the job.
+    prompt: `You are an expert field service support AI. Your task is to analyze a job description and up to 5 photos of a broken device to help a technician prepare for the job.
 
 Job Description:
 ---
 {{{jobDescription}}}
 ---
 
-Customer Photos:
+Customer Photos (up to 5 images):
 {{#each photoDataUris}}
 {{media url=this}}
 {{/each}}

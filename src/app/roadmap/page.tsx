@@ -186,12 +186,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "PWA & Offline Mode Foundations",
-      description: "The application is now a Progressive Web App (PWA) with a service worker. Firestore's offline persistence is enabled, allowing the app to load and display cached data even without an internet connection.",
-      icon: WifiOff,
-      status: "Completed",
-    },
-    {
       title: "AI-Powered Upsell Intelligence",
       description: "The AI analyzes job details and customer history to identify upsell opportunities, calculate a potential profit score, and provide talking points for technicians. This data directly influences the profit-aware dispatching model.",
       icon: Lightbulb,
@@ -249,6 +243,12 @@ const roadmapFeatures = {
   inProgress: [
   ],
   planned: [
+    {
+      title: "PWA & Offline Mode Foundations",
+      description: "The application can be installed on devices and will have foundational support for offline data access via Firestore's cache, ensuring technicians can view job details even without a connection.",
+      icon: WifiOff,
+      status: "Planned",
+    },
   ],
   vision: [
     {

@@ -239,24 +239,24 @@ const roadmapFeatures = {
       icon: DollarSign,
       status: "Completed",
     },
-  ],
-  inProgress: [
     {
       title: "Profitability Dashboard",
       description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
       icon: TrendingUp,
-      status: "In Progress",
+      status: "Completed",
     },
   ],
+  inProgress: [
+  ],
   planned: [
-     {
+  ],
+  vision: [
+    {
       title: "Disruption Forecasting (Predicted Bottlenecks)",
       description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
       icon: Eye,
-      status: "Planned",
+      status: "Vision",
     },
-  ],
-  vision: [
     {
       title: "\"Why this happened\" AI Insights",
       description: "The system will provide explanations for significant deviations. If an ETA was missed or a specific route was chosen, the AI can offer a concise reason (e.g., 'Job #123 was delayed by 20 minutes due to unexpected road closure on Elm Street').",
@@ -275,6 +275,12 @@ const roadmapFeatures = {
       icon: Mailbox,
       status: "Vision",
     },
+     {
+      title: "Automated AI Feedback Loop",
+      description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      icon: Brain,
+      status: "Vision",
+    }
   ]
 };
 

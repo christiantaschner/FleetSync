@@ -1084,7 +1084,14 @@ export default function DashboardPage() {
         optimizationResult={fleetOptimizationResult}
         technicians={technicians}
         jobs={jobs}
-        onConfirmChanges={confirmFleetOptimizationAction}
+        onConfirmChanges={(changes) => {
+            confirmFleetOptimizationAction({ companyId: userProfile!.companyId, appId: appId!, changesToConfirm: changes})
+                .then(result => {
+                    if (result.error) toast({ title: "Error", description: result.error, variant: "destructive" });
+                    else toast({ title: "Success", description: "Fleet schedule updated." });
+                });
+            setIsFleetOptimizationDialogOpen(false);
+        }}
         isLoadingConfirmation={isLoadingBatchConfirmation}
         selectedChanges={selectedFleetChanges}
         setSelectedChanges={setSelectedFleetChanges}
@@ -1140,7 +1147,7 @@ export default function DashboardPage() {
             </Button>
            )}
            {canEditJobs && (
-            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto">
+            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto" variant="primary">
                 <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
             </Button>
            )}

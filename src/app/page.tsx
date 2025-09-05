@@ -42,7 +42,7 @@ export default function MarketingPage() {
     // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
     const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
     const profitGain = monthlyRevenue * 0.15; // Assume a 15% margin improvement
-    const softwareCost = numTechs * 99;
+    const softwareCost = numTechs * 69;
     const netGain = profitGain - softwareCost;
     setRoi(netGain);
   };
@@ -105,14 +105,14 @@ export default function MarketingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground shadow-md">
+      <header className="sticky top-0 z-50 w-full border-b bg-background shadow-sm">
         <div className="container flex h-14 items-center justify-between">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo />
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
              {navLinks.map(link => (
-                 <Link key={link.href} href={link.href} onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
+                 <Link key={link.href} href={link.href} onClick={handleScroll} className="text-foreground/80 transition-colors hover:text-primary">
                     {link.text}
                  </Link>
              ))}
@@ -120,17 +120,17 @@ export default function MarketingPage() {
           
           <div className="flex items-center justify-end space-x-2">
             <div className="hidden md:flex items-center space-x-2">
-              <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <Button asChild variant="ghost">
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
-              <Button asChild variant="default" className="bg-green-600 text-white hover:bg-green-700">
+              <Button asChild variant="accent">
                   <Link href="/signup">💰 {t('start_free_trial')}</Link>
               </Button>
             </div>
             {/* Mobile Menu */}
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+                    <Button variant="ghost" className="md:hidden">
                         <Menu className="h-6 w-6" />
                         <span className="sr-only">Open menu</span>
                     </Button>
@@ -152,7 +152,7 @@ export default function MarketingPage() {
                              </SheetClose>
                              <SheetClose asChild>
                                 <Link href="/signup" className="w-full">
-                                    <Button className="w-full bg-green-600 hover:bg-green-700 text-white">💰 {t('start_free_trial')}</Button>
+                                    <Button className="w-full" variant="accent">💰 {t('start_free_trial')}</Button>
                                 </Link>
                              </SheetClose>
                        </div>
@@ -165,7 +165,7 @@ export default function MarketingPage() {
 
       <main className="flex-1">
         {/* 1. Hero Section */}
-        <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
+        <section className="bg-secondary/50 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               Stop Dispatching. Start Profiting.
@@ -175,7 +175,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <Button asChild size="lg" className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <Button asChild size="lg" variant="accent" className="w-full">
                         <Link href="#pricing" onClick={handleScroll}>Uncover Your Hidden Profit</Link>
                     </Button>
                 </div>
@@ -369,7 +369,7 @@ export default function MarketingPage() {
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
                             </div>
-                            <Button onClick={handleCalculateRoi} className="w-full bg-green-600 hover:bg-green-700 text-white">Calculate My Additional Profit</Button>
+                            <Button onClick={handleCalculateRoi} className="w-full" variant="accent">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
                                     <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
@@ -388,7 +388,7 @@ export default function MarketingPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold">$99</span>
+                                <span className="text-4xl font-bold">$69</span>
                                 <span className="text-sm text-muted-foreground">/ per technician / month</span>
                             </div>
                             <ul className="space-y-2">
@@ -397,7 +397,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full">
+                            <Button asChild size="lg" className="w-full" variant="accent">
                                 <Link href="/signup">💰 {t('start_free_trial')}</Link>
                             </Button>
                         </CardContent>
@@ -407,14 +407,14 @@ export default function MarketingPage() {
         </section>
         
         {/* Final CTA */}
-        <section className="bg-gray-900 py-20 sm:py-24">
-            <div className="container text-center text-white">
-                <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl font-headline flex items-center justify-center gap-3">
+        <section className="bg-primary text-primary-foreground py-20 sm:py-24">
+            <div className="container text-center">
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline flex items-center justify-center gap-3">
                    <span role="img" aria-label="rocket">🚀</span> Stop Dispatching. Start Operating Like a Business.
                 </h2>
-                <p className="mt-4 text-lg text-white">Unlock the hidden profit in your daily schedule. The AI is ready. It's not just another scheduling tool—it's a profit engine.</p>
+                <p className="mt-4 text-lg text-primary-foreground/80">Unlock the hidden profit in your daily schedule. The AI is ready. It's not just another scheduling tool—it's a profit engine.</p>
                 <div className="mt-8 flex justify-center">
-                    <Button asChild size="lg" className="bg-green-600 hover:bg-green-700 text-white">
+                    <Button asChild size="lg" variant="accent">
                         <Link href="/signup">💰 {t('start_free_trial')}</Link>
                     </Button>
                 </div>
@@ -424,7 +424,7 @@ export default function MarketingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t">
+      <footer className="border-t bg-secondary/50">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0">
           <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} MarginMax. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">

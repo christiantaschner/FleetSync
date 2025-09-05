@@ -105,14 +105,14 @@ export default function MarketingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background shadow-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-sky-500 text-white shadow-sm">
         <div className="container flex h-14 items-center justify-between">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo />
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
              {navLinks.map(link => (
-                 <Link key={link.href} href={link.href} onClick={handleScroll} className="text-foreground/80 transition-colors hover:text-primary">
+                 <Link key={link.href} href={link.href} onClick={handleScroll} className="text-white/80 transition-colors hover:text-white">
                     {link.text}
                  </Link>
              ))}
@@ -120,17 +120,17 @@ export default function MarketingPage() {
           
           <div className="flex items-center justify-end space-x-2">
             <div className="hidden md:flex items-center space-x-2">
-              <Button asChild variant="ghost">
+              <Button asChild variant="ghost" className="hover:bg-white/10 hover:text-white">
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
-              <Button asChild variant="accent">
+              <Button asChild variant="secondary">
                   <Link href="/signup">💰 {t('start_free_trial')}</Link>
               </Button>
             </div>
             {/* Mobile Menu */}
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" className="md:hidden">
+                    <Button variant="ghost" className="md:hidden hover:bg-white/10 hover:text-white">
                         <Menu className="h-6 w-6" />
                         <span className="sr-only">Open menu</span>
                     </Button>
@@ -175,7 +175,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <Button asChild size="lg" variant="accent" className="w-full">
+                    <Button asChild size="lg" className="w-full">
                         <Link href="#pricing" onClick={handleScroll}>Uncover Your Hidden Profit</Link>
                     </Button>
                 </div>
@@ -369,7 +369,7 @@ export default function MarketingPage() {
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
                             </div>
-                            <Button onClick={handleCalculateRoi} className="w-full" variant="accent">Calculate My Additional Profit</Button>
+                            <Button onClick={handleCalculateRoi} className="w-full">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
                                     <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
@@ -397,7 +397,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full" variant="accent">
+                            <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">💰 {t('start_free_trial')}</Link>
                             </Button>
                         </CardContent>
@@ -414,7 +414,7 @@ export default function MarketingPage() {
                 </h2>
                 <p className="mt-4 text-lg text-primary-foreground/80">Unlock the hidden profit in your daily schedule. The AI is ready. It's not just another scheduling tool—it's a profit engine.</p>
                 <div className="mt-8 flex justify-center">
-                    <Button asChild size="lg" variant="accent">
+                    <Button asChild size="lg" variant="secondary">
                         <Link href="/signup">💰 {t('start_free_trial')}</Link>
                     </Button>
                 </div>

@@ -1147,7 +1147,7 @@ export default function DashboardPage() {
             </Button>
            )}
            {canEditJobs && (
-            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto" variant="primary">
+            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto" variant="default">
                 <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
             </Button>
            )}
@@ -1286,7 +1286,7 @@ export default function DashboardPage() {
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button 
-                                variant="accent" 
+                                variant="default" 
                                 onClick={handleBatchAIAssign} 
                                 disabled={unassignedJobsCount === 0 || isBatchLoading || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true)}
                                 className="w-full sm:w-auto"

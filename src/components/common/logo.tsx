@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Waypoints } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";
 
 interface LogoProps {
@@ -13,7 +13,7 @@ export function Logo({ className }: LogoProps) {
 
   return (
     <div className={cn("flex items-center gap-2 text-inherit", className)}>
-      <Waypoints className="h-6 w-6" />
+      <TrendingUp className="h-6 w-6" />
       <span className="text-xl font-bold font-logo">
         {appName}
       </span>

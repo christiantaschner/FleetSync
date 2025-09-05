@@ -68,6 +68,12 @@ export default function MarketingPage() {
       example: "'Alert: This is the 3rd repair on this 7-year-old AC unit. It's out of warranty. Suggest replacement options.' The AI turns a simple repair call into a major sale."
     },
     {
+      icon: Smartphone,
+      title: "Technician Command Center",
+      description: "Empower your field team with a mobile-first interface. Technicians can view schedules, access AI troubleshooting guides, see upsell opportunities, and document work with photos and signatures.",
+      example: "A technician is stuck. They open the app, describe the problem, and the AI provides step-by-step diagnostic advice based on the equipment's service history."
+    },
+    {
       icon: Shuffle,
       title: "Dynamic Route Optimization",
       description: "Re-optimize technician routes in one click when schedules change.",
@@ -84,13 +90,7 @@ export default function MarketingPage() {
       title: "Drag-and-Drop Schedule",
       description: "A visual timeline to easily see and manage your whole team's day.",
       example: "See an overlap? Just drag the job from one technician's timeline to another's open slot. It's that simple."
-    },
-    {
-      icon: MessageSquare,
-      title: "Customer Communication Tools",
-      description: "Live tracking links, in-app chat, and AI-drafted notifications to keep customers happy.",
-      example: "Automatically send a text: 'Hi [Customer], your tech, John, is on the way! Track their arrival here: [link]'"
-    },
+    }
   ];
 
   const industryNiches = [
@@ -165,7 +165,7 @@ export default function MarketingPage() {
 
       <main className="flex-1">
         {/* 1. Hero Section */}
-        <section className="bg-secondary/50 py-20 sm:py-24 lg:py-32">
+        <section className="bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               Stop Dispatching. Start Profiting.
@@ -175,7 +175,7 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <Button asChild size="lg" className="w-full">
+                    <Button asChild size="lg" className="w-full" variant="accent">
                         <Link href="#pricing" onClick={handleScroll}>Uncover Your Hidden Profit</Link>
                     </Button>
                 </div>
@@ -369,7 +369,7 @@ export default function MarketingPage() {
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
                             </div>
-                            <Button onClick={handleCalculateRoi} className="w-full" variant="primary">Calculate My Additional Profit</Button>
+                            <Button onClick={handleCalculateRoi} className="w-full" variant="accent">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
                                     <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
@@ -397,7 +397,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full" variant="primary">
+                            <Button asChild size="lg" className="w-full" variant="accent">
                                 <Link href="/signup">{t('start_free_trial')}</Link>
                             </Button>
                         </CardContent>

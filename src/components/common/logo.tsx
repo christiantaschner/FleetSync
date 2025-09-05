@@ -13,14 +13,14 @@ export function Logo({ className }: LogoProps) {
 
   return (
     <div className={cn("flex items-center gap-2 text-inherit", className)}>
-      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <TrendingUp className="h-5 w-5" />
       </div>
       <div className="flex flex-col">
         <span className="text-xl font-bold font-logo leading-none">
           {appName}
         </span>
-        <span className="text-xs text-muted-foreground -mt-0.5">
+        <span className="text-xs text-muted-foreground">
           Profit-First Dispatching
         </span>
       </div>

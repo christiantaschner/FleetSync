@@ -13,7 +13,9 @@ export function Logo({ className }: LogoProps) {
 
   return (
     <div className={cn("flex items-center gap-2 text-inherit", className)}>
-      <TrendingUp className="h-6 w-6" />
+      <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <TrendingUp className="h-5 w-5" />
+      </div>
       <span className="text-xl font-bold font-logo">
         {appName}
       </span>

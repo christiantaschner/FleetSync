@@ -16,9 +16,14 @@ export function Logo({ className }: LogoProps) {
       <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <TrendingUp className="h-5 w-5" />
       </div>
-      <span className="text-xl font-bold font-logo">
-        {appName}
-      </span>
+      <div className="flex flex-col">
+        <span className="text-xl font-bold font-logo leading-none">
+          {appName}
+        </span>
+        <span className="text-xs text-muted-foreground -mt-0.5">
+          Profit-First Dispatching
+        </span>
+      </div>
     </div>
   );
 }

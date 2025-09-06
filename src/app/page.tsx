@@ -409,8 +409,9 @@ export default function MarketingPage() {
         {/* Final CTA */}
         <section className="bg-primary text-primary-foreground py-20 sm:py-24">
             <div className="container text-center">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline flex items-center justify-center gap-3">
-                   <span role="img" aria-label="rocket">🚀</span> Stop Dispatching. Start Operating Like a Business.
+                <Rocket className="h-10 w-10 mx-auto mb-4" />
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">
+                   Stop Dispatching. Start Operating Like a Business.
                 </h2>
                 <p className="mt-4 text-lg text-primary-foreground/80">Unlock the hidden profit in your daily schedule. The AI is ready. It's not just another scheduling tool—it's a profit engine.</p>
                 <div className="mt-8 flex justify-center">
@@ -437,4 +438,3 @@ export default function MarketingPage() {
   );
 }
 
-    

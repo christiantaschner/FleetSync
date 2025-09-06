@@ -702,7 +702,7 @@ export default function DashboardPage() {
       // Mock logic
       const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
       if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
-        toast({ title: "Fleety Batch Assign", description: "No unassigned jobs or technicians available.", variant: "default" });
+        toast({ title: "AI Batch Assign", description: "No unassigned jobs or technicians available.", variant: "default" });
         return;
       }
       setIsBatchLoading(true);
@@ -747,7 +747,7 @@ export default function DashboardPage() {
     if (!appId) return;
     const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
     if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
-      toast({ title: "Fleety Batch Assign", description: "No unassigned jobs or no technicians available for assignment.", variant: "default" });
+      toast({ title: "AI Batch Assign", description: "No unassigned jobs or no technicians available for assignment.", variant: "default" });
       return;
     }
     setIsBatchLoading(true);
@@ -830,7 +830,7 @@ export default function DashboardPage() {
     try {
         await batch.commit();
         if (assignmentsMade > 0) {
-          toast({ title: "Fleety Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
+          toast({ title: "AI Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
         } else {
           toast({ title: "No Assignments Made", description: "No jobs were selected for assignment.", variant: "default" });
         }
@@ -1110,7 +1110,7 @@ export default function DashboardPage() {
             <Alert variant="default" className="border-amber-400 bg-amber-50 text-amber-900">
                 <Bot className="h-4 w-4 text-amber-600" />
                 <AlertTitle className="font-headline text-amber-900 flex justify-between items-center">
-                    <span>Fleety's Proactive Suggestion</span>
+                    <span>AI Proactive Suggestion</span>
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveSuggestion(null)}><X className="h-4 w-4" /></Button>
                 </AlertTitle>
                 <AlertDescription className="text-amber-800">
@@ -1292,7 +1292,7 @@ export default function DashboardPage() {
                                 className="w-full sm:w-auto"
                                 >
                                 {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                                Fleety Batch Assign ({unassignedJobsCount})
+                                AI Batch Assign ({unassignedJobsCount})
                             </Button>
                         </TooltipTrigger>
                         {!(company?.settings?.featureFlags?.autoDispatchEnabled ?? true) && (

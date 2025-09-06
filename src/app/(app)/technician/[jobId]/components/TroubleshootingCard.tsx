@@ -82,7 +82,7 @@ const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) =
                     <Lightbulb /> AI Troubleshooting Assistant
                 </CardTitle>
                 <CardDescription>
-                    Describe the problem you're seeing, and Fleety will suggest diagnostic steps. Add a photo for more accurate help.
+                    Describe the problem you're seeing, and the AI will suggest diagnostic steps. Add a photo for more accurate help.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -108,7 +108,7 @@ const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) =
 
                     <Button type="submit" disabled={isThinking || !query.trim()}>
                         {isThinking ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                        Ask Fleety for Help
+                        Ask for Help
                     </Button>
                 </form>
 
@@ -116,7 +116,7 @@ const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) =
                     <div className="mt-6 space-y-4">
                         <Alert>
                             <Bot className="h-4 w-4" />
-                            <AlertTitle className="font-semibold">Fleety's Diagnostic Suggestions</AlertTitle>
+                            <AlertTitle className="font-semibold">AI Diagnostic Suggestions</AlertTitle>
                             <AlertDescription>
                                 <ul className="list-decimal pl-5 mt-2 space-y-1">
                                     {suggestion.steps.map((step, index) => <li key={index}>{step}</li>)}

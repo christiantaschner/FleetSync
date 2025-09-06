@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -30,7 +31,7 @@ const ReportAnalysisDialog: React.FC<ReportAnalysisDialogProps> = ({
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-headline flex items-center gap-2">
-            <Bot className="text-primary h-5 w-5" /> Fleety's Performance Analysis
+            <Bot className="text-primary h-5 w-5" /> AI Performance Analysis
           </DialogTitle>
           <DialogDescription>
             Here is a personalized analysis of your fleet's performance based on the selected data, along with actionable suggestions.

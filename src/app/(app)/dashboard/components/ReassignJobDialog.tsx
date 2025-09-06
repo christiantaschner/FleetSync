@@ -116,7 +116,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                     {
                         id: originalTechnician.id,
                         name: originalTechnician.name,
-                        skills: originalTechnician.skills,
+                        skills: originalTechnician.skills.map(s => s),
                         jobs: allJobs
                             .filter(j => j.assignedTechnicianId === originalTechnician.id && j.id !== jobToReassign.id && j.scheduledTime)
                             .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! })),

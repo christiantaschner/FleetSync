@@ -260,11 +260,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingAISuggestion(false);
 
     if (result.error) {
-        toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
+        toast({ title: "AI Suggestion Error", description: result.error, variant: "destructive" });
     } else if (result.data?.suggestions) {
         const newSuggestions = result.data.suggestions;
         if(newSuggestions.length === 0 && isGettingMore) {
-            toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
+            toast({ title: "No More Suggestions", description: "The AI could not find any other suitable time slots.", variant: "default" });
         }
         
         if (isGettingMore) {
@@ -375,7 +375,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             toast({ title: "No specific skills suggested", description: result.data.reasoning || "The AI could not identify specific skills from the job description.", variant: "default" });
         } else {
             setRequiredSkills(prev => [...new Set([...prev, ...result.data!.suggestedSkills])]);
-            toast({ title: "Skills Suggested", description: `Fleety added ${result.data.suggestedSkills.length} skill(s). Please review.` });
+            toast({ title: "Skills Suggested", description: `AI added ${result.data.suggestedSkills.length} skill(s). Please review.` });
         }
     }
     setIsFetchingSkills(false);
@@ -435,7 +435,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             toast({ title: "No specific parts suggested", description: "The AI could not identify specific parts from the job description.", variant: "default" });
         } else {
             setRequiredParts(prev => [...new Set([...prev, ...result.data!.suggestedParts])]);
-            toast({ title: "Parts Suggested", description: `Fleety added ${result.data.suggestedParts.length} part(s). Please review.` });
+            toast({ title: "Parts Suggested", description: `AI added ${result.data.suggestedParts.length} part(s). Please review.` });
         }
     }
     setIsFetchingParts(false);
@@ -869,7 +869,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     <TooltipProvider>
                       <Tooltip>
                           <TooltipTrigger asChild>
-                              <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
+                              <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> AI Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
                           </TooltipTrigger>
                           <TooltipContent>
                               <p className="max-w-xs">Generates a secure link to send to the customer. They can upload photos of the issue, which our AI will analyze. The photos and AI analysis (suggested parts, repair steps) will appear on the job details page to help the technician prepare.</p>
@@ -914,7 +914,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                        <div className="flex flex-wrap gap-2">
                            <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !title}>
                                 {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                                Fleety Suggest Time & Tech
+                                AI Suggest Time & Tech
                             </Button>
                             {timeSuggestions.length > 0 && (
                                 <Button type="button" variant="outline" onClick={() => fetchAITimeSuggestion(true)} disabled={isFetchingAISuggestion}>

@@ -85,13 +85,7 @@ export default function SignupPage() {
           <CardHeader>
             <CardTitle className="text-2xl font-headline">{t('create_account')}</CardTitle>
             <CardDescription>
-              {t('signup_desc_1')}{' '}
-              <span className="inline-flex items-center gap-1.5 align-middle font-semibold text-primary">
-                <Bot className="h-4 w-4" />
-                Fleety
-              </span>
-              {`\u00A0`}{/* Non-breaking space */}
-              {t('signup_desc_2')}
+              Get started with your AI-powered fleet management.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>

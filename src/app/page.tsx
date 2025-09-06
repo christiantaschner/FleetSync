@@ -165,7 +165,7 @@ export default function MarketingPage() {
 
       <main className="flex-1">
         {/* 1. Hero Section */}
-        <section className="bg-gradient-to-br from-teal-50 via-purple-50 to-blue-50 py-20 sm:py-24 lg:py-32">
+        <section className="bg-background py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               Stop Dispatching. Start Profiting.
@@ -175,8 +175,8 @@ export default function MarketingPage() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                    <Button asChild size="lg" className="w-full" variant="accent">
-                        <Link href="#pricing" onClick={handleScroll}>Uncover Your Hidden Profit</Link>
+                    <Button asChild size="lg" className="w-full">
+                        <Link href="/signup">{t('start_free_trial')}</Link>
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-muted-foreground">30-day free trial. No credit card required.</p>
@@ -369,7 +369,7 @@ export default function MarketingPage() {
                                 <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
                                 <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
                             </div>
-                            <Button onClick={handleCalculateRoi} className="w-full" variant="accent">Calculate My Additional Profit</Button>
+                            <Button onClick={handleCalculateRoi} className="w-full">Calculate My Additional Profit</Button>
                             {roi !== null && (
                                 <div className="text-center pt-4 border-t">
                                     <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
@@ -397,7 +397,7 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full" variant="accent">
+                            <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">{t('start_free_trial')}</Link>
                             </Button>
                         </CardContent>

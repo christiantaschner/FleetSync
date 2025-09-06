@@ -42,7 +42,7 @@ export default function MarketingPage() {
     // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
     const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
     const profitGain = monthlyRevenue * 0.15; // Assume a 15% margin improvement
-    const softwareCost = numTechs * 69;
+    const softwareCost = numTechs * 99;
     const netGain = profitGain - softwareCost;
     setRoi(netGain);
   };
@@ -355,7 +355,7 @@ export default function MarketingPage() {
                             <CardTitle>Quick ROI Calculator</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <Label htmlFor="num-techs" className="flex items-center gap-1.5 text-xs"><Users className="h-4 w-4"/># of Technicians</Label>
                                     <Input id="num-techs" type="number" value={numTechs} onChange={(e) => setNumTechs(parseInt(e.target.value))} min="1" />
@@ -388,7 +388,7 @@ export default function MarketingPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold">$69</span>
+                                <span className="text-4xl font-bold">$99</span>
                                 <span className="text-sm text-muted-foreground">/ per technician / month</span>
                             </div>
                             <ul className="space-y-2">
@@ -436,3 +436,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

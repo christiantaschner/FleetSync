@@ -119,6 +119,19 @@ export default function MarketingPage() {
           </nav>
           
           <div className="flex items-center justify-end space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="px-2 font-semibold">
+                  <Globe className="h-4 w-4 mr-1.5" />
+                  {language.toUpperCase()}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="hidden md:flex items-center space-x-2">
               <Button asChild variant="ghost">
                   <Link href="/login">{t('login_button')}</Link>

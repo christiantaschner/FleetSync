@@ -192,6 +192,12 @@ const roadmapFeatures = {
       status: "Completed"
     },
     {
+      title: "Technician Upsell Suggestions",
+      description: "AI-identified upsell opportunities and talking points are now displayed directly to the technician in their job detail view, empowering them to increase revenue at the job site.",
+      icon: Smartphone,
+      status: "Completed"
+    },
+    {
       title: "AI-Powered Parts Suggestion & Van Inventory",
       description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
       icon: ShoppingCart,
@@ -239,18 +245,24 @@ const roadmapFeatures = {
       icon: TrendingUp,
       status: "Completed",
     },
+    {
+      title: "PWA & Offline Mode Foundations",
+      description: "The application can be installed on devices and has foundational support for offline data access via Firestore's cache, ensuring technicians can view job details even without a connection.",
+      icon: WifiOff,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],
   planned: [
-    {
-      title: "PWA & Offline Mode Foundations",
-      description: "The application can be installed on devices and will have foundational support for offline data access via Firestore's cache, ensuring technicians can view job details even without a connection.",
-      icon: WifiOff,
-      status: "Planned",
-    },
   ],
   vision: [
+    {
+      title: "Technician Commission & Bonus Pay",
+      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
+      icon: Award,
+      status: "Vision",
+    },
     {
       title: "Disruption Forecasting (Predicted Bottlenecks)",
       description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",

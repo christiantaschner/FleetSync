@@ -165,7 +165,7 @@ export default function MarketingPage() {
 
       <main className="flex-1">
         {/* 1. Hero Section */}
-        <section className="bg-background py-20 sm:py-24 lg:py-32">
+        <section className="bg-muted py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               Stop Dispatching. Start Profiting.

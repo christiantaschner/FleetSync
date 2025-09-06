@@ -121,9 +121,9 @@ export default function MarketingPage() {
           <div className="flex items-center justify-end space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="px-2 font-semibold">
-                  <Globe className="h-4 w-4 mr-1.5" />
-                  {language.toUpperCase()}
+                <Button variant="ghost" size="icon" className="text-foreground/80 hover:bg-muted/50 h-9 w-9">
+                  <Globe className="h-4 w-4" />
+                   <span className="sr-only">Change Language</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -450,4 +450,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-

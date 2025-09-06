@@ -26,6 +26,7 @@ import {
   CalendarDays,
   HelpCircle,
   BookOpen,
+  Globe,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -263,10 +264,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <div className="flex flex-col flex-1">
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-muted/40 px-4 md:hidden">
             <SidebarTrigger />
             <Logo />
-            <div className="w-7 h-7" />
+            <div className="flex items-center gap-2">
+                <LanguageSwitcher isMobile={true}/>
+                <div className="w-7 h-7" />
+            </div>
           </header>
            <main className="flex-1 overflow-x-hidden">
                 <div className="p-4 sm:p-6 lg:p-8">

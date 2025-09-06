@@ -53,16 +53,16 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="w-full bg-primary text-primary-foreground shadow-md">
+      <header className="w-full bg-muted/40 border-b">
         <div className="container flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
               <Logo />
             </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
-                        <Globe className="h-4 w-4 mr-1.5" />
-                        {language.toUpperCase()}
+                    <Button variant="ghost" size="icon" className="text-foreground/80 hover:bg-muted/50 h-9 w-9">
+                        <Globe className="h-4 w-4" />
+                        <span className="sr-only">Change Language</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

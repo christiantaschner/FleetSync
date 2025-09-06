@@ -40,7 +40,7 @@ const prompt = ai.definePrompt({
 
 **Analysis Guidelines:**
 
-1.  **Identify Trigger Words**: Look for keywords in the current job description like "old," "making noise," "inefficient," "flickering," "thinking about replacing," or mentions of specific equipment approaching end-of-life (e.g., "15-year-old water heater").
+1.  **Identify Trigger Words**: Look for keywords in the current job description like "old," "making noise," "inefficient," "flickering," or mentions of specific equipment approaching end-of-life (e.g., "15-year-old water heater").
 2.  **Analyze Service History**:
     *   **Frequent Repairs**: Does the customer have a history of frequent, small repairs on the same piece of equipment? This is a strong indicator for a replacement upsell or a preventative maintenance contract.
     *   **Age of Equipment**: If past jobs mention the age of equipment, factor that into your assessment.

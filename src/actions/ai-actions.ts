@@ -16,8 +16,6 @@ import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-as
 import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/ai/flows/generate-service-prep-message-flow";
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
 import { suggestUpsellOpportunity as suggestUpsellOpportunityFlow } from "@/ai/flows/suggest-upsell-opportunity";
-import { suggestJobParts as suggestJobPartsFlow } from "@/ai/flows/suggest-job-parts";
-import { generateCustomerFollowup as generateCustomerFollowupFlow } from "@/ai/flows/generate-customer-followup-flow";
 
 
 import { z } from "zod";
@@ -54,10 +52,6 @@ import type {
   RunFleetOptimizationOutput,
   SuggestUpsellOpportunityInput,
   SuggestUpsellOpportunityOutput,
-  SuggestJobPartsInput,
-  SuggestJobPartsOutput,
-  GenerateCustomerFollowupInput,
-  GenerateCustomerFollowupOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -73,7 +67,6 @@ export type CheckScheduleHealthResult = {
   risk?: PredictScheduleRiskOutput | null;
   error?: string;
 };
-export type SuggestJobPartsActionInput = SuggestJobPartsInput;
 
 
 export async function allocateJobAction(
@@ -716,45 +709,3 @@ export async function suggestUpsellOpportunityAction(
     return { data: null, error: errorMessage };
   }
 }
-
-export async function suggestJobPartsAction(
-  input: SuggestJobPartsActionInput
-): Promise<{ data: SuggestJobPartsOutput | null; error: string | null }> {
-  try {
-    const result = await suggestJobPartsFlow(input);
-    return { data: result, error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map(err => err.message).join(", ") };
-    }
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error(JSON.stringify({
-        message: 'Error in suggestJobPartsAction',
-        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
-        severity: "ERROR"
-    }));
-    return { data: null, error: errorMessage };
-  }
-}
-    
-export async function generateCustomerFollowupAction(
-  input: GenerateCustomerFollowupInput
-): Promise<{ data: GenerateCustomerFollowupOutput | null; error: string | null }> {
-  try {
-    const result = await generateCustomerFollowupFlow(input);
-    return { data: result, error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map(err => err.message).join(", ") };
-    }
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error(JSON.stringify({
-        message: 'Error in generateCustomerFollowupAction',
-        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
-        severity: "ERROR"
-    }));
-    return { data: null, error: errorMessage };
-  }
-}
-    
-    

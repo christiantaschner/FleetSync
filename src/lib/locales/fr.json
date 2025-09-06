@@ -63,8 +63,8 @@
   "technicians_desc": "Combien de techniciens gérez-vous ? Vous pourrez modifier cela plus tard.",
   "complete_setup_button": "Terminer la configuration et démarrer l'essai gratuit",
   "create_account": "Créer un compte",
-  "signup_desc_1": "Inscrivez-vous pour rencontrer",
-  "signup_desc_2": ", votre assistant de flotte IA.",
+  "signup_desc_1": "Inscrivez-vous pour rencontrer votre nouvel",
+  "signup_desc_2": "assistant de flotte IA.",
   "confirm_password": "Confirmez le mot de passe",
   "signup_button": "S'inscrire",
   "already_have_account": "Vous avez déjà un compte ?",
@@ -137,8 +137,8 @@
   "pricing_benefit_2_desc": "Réduisez considérablement le temps que vous ou vos répartiteurs passez à la planification manuelle. Investissez ce temps dans la croissance de votre entreprise.",
   "pricing_benefit_3_title": "Évolue avec votre succès",
   "pricing_benefit_3_desc": "Vous embauchez de nouveaux techniciens ? Ajoutez simplement un siège. Notre tarification s'adapte à la taille de votre équipe, sans vous faire payer pour des fonctionnalités que vous n'utilisez pas.",
-  "fleety_title": "Dites bonjour à Fleety",
-  "fleety_desc": "Fleety est plus qu'un simple logiciel ; c'est votre assistant IA dédié. Dans toute l'application, vous trouverez Fleety prêt à répondre à vos questions, à automatiser des tâches et à faire des suggestions intelligentes pour que vous puissiez vous concentrer sur l'essentiel : votre entreprise.",
+  "fleety_title": "Votre Assistant IA",
+  "fleety_desc": "MarginMax est plus qu'un simple logiciel ; c'est votre assistant IA dédié. Dans toute l'application, l'IA est prête à répondre à vos questions, à automatiser des tâches et à faire des suggestions intelligentes pour que vous puissiez vous concentrer sur l'essentiel : votre entreprise.",
   "nav_features": "Fonctionnalités",
   "nav_benefits": "Avantages",
   "benefits_title": "Des avantages que vous ressentirez immédiatement",
@@ -148,7 +148,7 @@
   "how_it_works_1_title": "1. Créer une mission",
   "how_it_works_1_desc": "Saisissez rapidement une nouvelle mission. C'est votre curseur 'Entrée'. Tous les détails pertinents, des demandes du client au lieu d'intervention.",
   "how_it_works_2_title": "2. L'IA assigne et optimise",
-  "how_it_works_2_desc": "Appuyez sur le bouton 'magique'. Fleety suggère le meilleur technicien et optimise la tournée. Un clic et c'est fait.",
+  "how_it_works_2_desc": "Appuyez sur le bouton 'magique'. L'IA suggère le meilleur technicien et optimise la tournée. Un clic et c'est fait.",
   "how_it_works_3_title": "3. Suivre et terminer",
   "how_it_works_3_desc": "Asseyez-vous et regardez le travail se faire sur la carte. Vous avez une vue d'ensemble complète sans micro-gestion.",
   "testimonials_title": "Ce que vos confrères en disent",
@@ -162,5 +162,3 @@
   "growth_title": "Des dépannages quotidiens à une flotte pérenne",
   "growth_desc": "MarginMax ne résout pas seulement les problèmes d'aujourd'hui. Chaque mission terminée, chaque itinéraire parcouru et chaque retour client deviennent des données précieuses. Notre IA analyse ces informations en arrière-plan, vous aidant à identifier des tendances, à améliorer l'efficacité de l'ensemble de votre opération au fil du temps et à armer votre entreprise pour la croissance future."
 }
-
-    

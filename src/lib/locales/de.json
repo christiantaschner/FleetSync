@@ -63,8 +63,8 @@
   "technicians_desc": "Wie viele Techniker verwaltest du? Du kannst das später ändern.",
   "complete_setup_button": "Einrichtung abschließen & kostenlose Testphase starten",
   "create_account": "Konto erstellen",
-  "signup_desc_1": "Registriere dich und lerne",
-  "signup_desc_2": "kennen, deinen neuen KI-Assistenten.",
+  "signup_desc_1": "Registriere dich und lerne MarginMax kennen, deinen neuen",
+  "signup_desc_2": "KI-Assistenten.",
   "confirm_password": "Passwort bestätigen",
   "signup_button": "Registrieren",
   "already_have_account": "Hast du schon ein Konto?",
@@ -137,8 +137,8 @@
   "pricing_benefit_2_desc": "Reduziere die Zeit, die du oder deine Disponenten mit der manuellen Planung verbringen, drastisch. Investiere diese Zeit in das Wachstum deines Betriebs.",
   "pricing_benefit_3_title": "Wächst mit deinem Erfolg",
   "pricing_benefit_3_desc": "Du stellst neue Techniker ein? Füge einfach einen weiteren Platz hinzu. Unser Preismodell passt sich deiner Teamgröße an, ohne dich für Funktionen bezahlen zu lassen, die du nicht nutzt.",
-  "fleety_title": "Sag Hallo zu Fleety",
-  "fleety_desc": "Fleety ist mehr als nur Software; es ist dein engagierter KI-Assistent. In der gesamten App steht dir Fleety zur Seite, um Fragen zu beantworten, Aufgaben zu automatisieren und intelligente Vorschläge zu machen, damit du dich auf das Wesentliche konzentrieren kannst: deinen Betrieb.",
+  "fleety_title": "Dein KI Assistent",
+  "fleety_desc": "MarginMax ist mehr als nur Software; es ist dein engagierter KI-Assistent. In der gesamten App steht dir die KI zur Seite, um Fragen zu beantworten, Aufgaben zu automatisieren und intelligente Vorschläge zu machen, damit du dich auf das Wesentliche konzentrieren kannst: deinen Betrieb.",
   "nav_features": "Funktionen",
   "nav_benefits": "Vorteile",
   "benefits_title": "Vorteile, die Du sofort spüren wirst",
@@ -148,7 +148,7 @@
   "how_it_works_1_title": "1. Auftrag anlegen",
   "how_it_works_1_desc": "Erfasse schnell einen neuen Auftrag. Das ist dein 'Input'-Regler. Alle relevanten Details, vom Kundenwunsch bis zum Einsatzort.",
   "how_it_works_2_title": "2. KI zuweisen & optimieren",
-  "how_it_works_2_desc": "Drück den 'Magie'-Knopf. Fleety schlägt den besten Techniker vor und optimiert die Route. Ein Klick und alles ist erledigt.",
+  "how_it_works_2_desc": "Drück den 'Magie'-Knopf. Die KI schlägt den besten Techniker vor und optimiert die Route. Ein Klick und alles ist erledigt.",
   "how_it_works_3_title": "3. Verfolgen & abschließen",
   "how_it_works_3_desc": "Lehn dich zurück und sieh auf der Karte zu, wie die Arbeit erledigt wird. Du hast den vollen Überblick, ohne Mikromanagement.",
   "testimonials_title": "Was deine Kollegen sagen",
@@ -162,5 +162,3 @@
   "growth_title": "Von der täglichen Reparatur zur zukunftssicheren Flotte",
   "growth_desc": "MarginMax löst nicht nur die Probleme von heute. Jeder erledigte Auftrag, jede gefahrene Route und jedes Kundenfeedback wird zu wertvollen Daten. Unsere KI analysiert diese Informationen im Hintergrund und hilft dir, Muster zu erkennen, die Effizienz deines gesamten Betriebs über die Zeit zu steigern und dein Geschäft für zukünftiges Wachstum zu rüsten."
 }
-
-    

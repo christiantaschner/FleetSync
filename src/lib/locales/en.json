@@ -63,8 +63,8 @@
   "technicians_desc": "How many technicians will you be managing? You can change this later.",
   "complete_setup_button": "Complete Setup & Start Free Trial",
   "create_account": "Create an Account",
-  "signup_desc_1": "Sign up to meet",
-  "signup_desc_2": ", your AI fleet assistant.",
+  "signup_desc_1": "Sign up to meet your new",
+  "signup_desc_2": "AI fleet assistant.",
   "confirm_password": "Confirm Password",
   "signup_button": "Sign Up",
   "already_have_account": "Already have an account?",
@@ -137,8 +137,8 @@
   "pricing_benefit_2_desc": "Drastically cut the time you or your dispatchers spend on manual scheduling. Re-invest that time into growing your business.",
   "pricing_benefit_3_title": "Scales With Your Success",
   "pricing_benefit_3_desc": "Hiring new technicians? Just add another seat. Our pricing adapts to your team size without making you pay for features you don't use.",
-  "fleety_title": "Say Hello to Fleety",
-  "fleety_desc": "Fleety is more than just software; it's your dedicated AI assistant. Throughout the app, you'll find Fleety ready to help answer questions, automate tasks, and provide intelligent suggestions so you can focus on what matters most: your business.",
+  "fleety_title": "Your AI Assistant",
+  "fleety_desc": "MarginMax is more than just software; it's your dedicated AI assistant. Throughout the app, the AI is ready to help answer questions, automate tasks, and provide intelligent suggestions so you can focus on what matters most: your business.",
   "nav_features": "Features",
   "nav_benefits": "Benefits",
   "benefits_title": "Benefits You'll Feel Immediately",
@@ -148,7 +148,7 @@
   "how_it_works_1_title": "1. Create Job",
   "how_it_works_1_desc": "Quickly input a new job. This is your 'input' fader. All the relevant details, from customer requests to the service location.",
   "how_it_works_2_title": "2. AI Assigns & Optimizes",
-  "how_it_works_2_desc": "Push the 'magic' button. Fleety suggests the best technician and optimizes the route. One click and it's done.",
+  "how_it_works_2_desc": "Push the 'magic' button. The AI suggests the best technician and optimizes the route. One click and it's done.",
   "how_it_works_3_title": "3. Track & Complete",
   "how_it_works_3_desc": "Sit back and watch the work get done on the map. You have full oversight without the micromanagement.",
   "testimonials_title": "What Your Peers Are Saying",
@@ -162,5 +162,3 @@
   "growth_title": "From Daily Fixes to a Future-Proof Fleet",
   "growth_desc": "MarginMax doesn't just solve today's problems. Every completed job, every route driven, and every piece of customer feedback becomes valuable data. Our AI analyzes this information in the background, helping you spot trends, improve the efficiency of your entire operation over time, and arm your business for future growth."
 }
-
-    

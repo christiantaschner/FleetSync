@@ -85,7 +85,7 @@ export default function SignupPage() {
           <CardHeader>
             <CardTitle className="text-2xl font-headline">{t('create_account')}</CardTitle>
             <CardDescription>
-              Get started with your AI-powered fleet management.
+             {t('signup_desc_1')}{' '}<span className="font-semibold text-primary">{t('signup_desc_2')}</span>
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>

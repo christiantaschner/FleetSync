@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";
@@ -20,7 +19,7 @@ export function Logo({ className }: LogoProps) {
         <span className="text-xl font-bold font-logo leading-none">
           {appName}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground whitespace-nowrap">
           Profit-First Dispatching
         </span>
       </div>

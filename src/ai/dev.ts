@@ -4,6 +4,7 @@ config();
 
 import '@/ai/flows/allocate-job.ts';
 import '@/ai/flows/suggest-job-skills.ts';
+import '@/ai/flows/suggest-job-parts.ts';
 import '@/ai/flows/predict-next-technician.ts';
 import '@/ai/flows/suggest-job-priority.ts';
 import '@/ai/flows/predict-schedule-risk.ts';
@@ -17,3 +18,4 @@ import '@/ai/flows/help-assistant-flow.ts';
 import '@/ai/flows/generate-service-prep-message-flow.ts';
 import '@/ai/flows/fleet-wide-optimization-flow.ts';
 import '@/ai/flows/suggest-upsell-opportunity.ts';
+import '@/ai/flows/generate-customer-followup-flow.ts';

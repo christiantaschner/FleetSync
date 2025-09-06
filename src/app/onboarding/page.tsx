@@ -171,7 +171,7 @@ export default function OnboardingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
-        <header className="w-full bg-muted/40 border-b">
+        <header className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
             <div className="container flex h-14 items-center justify-between">
                 <Link href="/" className="flex items-center">
                     <Logo />

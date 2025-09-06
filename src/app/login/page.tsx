@@ -52,8 +52,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="w-full bg-muted/40 border-b">
+    <div className="flex min-h-screen flex-col bg-muted/40">
+      <header className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container flex h-14 items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
               <Logo />

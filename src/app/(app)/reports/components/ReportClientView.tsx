@@ -449,10 +449,10 @@ export default function ReportClientView() {
             <CardDescription>Metrics focused on how effectively your team spends their time.</CardDescription>
           </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="From start to completion" icon={Clock} tooltipText="What it is: The average time a technician spends actively working on a job. Action: If this is too high, it might indicate a need for more training or better tools. Review technician notes on long jobs." />
+            <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="Excludes break time" icon={Clock} tooltipText="What it is: The average time a technician spends actively working on a job. Action: If this is too high, it might indicate a need for more training or better tools. Review technician notes on long jobs." />
             <KpiCard title="Avg. Travel Time" value={reportData.kpis.avgTravelTime} desc="Per job" icon={Route} tooltipText="What it is: Average time spent driving to jobs. Action: Use the 'Optimize Fleet' feature on the Schedule tab to reduce this non-billable time by improving routing." />
-            <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="What it is: The average time a new job waits in the queue before assignment. Action: Use the 'Fleety Batch Assign' button on the Job List to quickly clear the backlog." />
-            <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="What it is: The average number of jobs each technician completes. Action: Use this to ensure workload is balanced. Filter this report by technician to compare performance." />
+            <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="What it is: The average time technicians log for breaks during a job. Action: This helps ensure compliance with labor laws and technician well-being. Monitor for excessive outliers." />
+            <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="What it is: The average number of jobs each technician completes. Action: Use this to compare performance and ensure workload is balanced by filtering this report by technician." />
           </CardContent>
         </Card>
         <Card>
@@ -462,7 +462,7 @@ export default function ReportClientView() {
           </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard title="Avg. Satisfaction" value={`${reportData.kpis.avgSatisfaction} / 5`} desc="From all rated jobs" icon={Smile} tooltipText="What it is: The average customer satisfaction rating (1-5 stars) collected after job completion. Action: Filter by technician to identify top performers and those who may need coaching." />
-            <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="What it is: The average time technicians log for breaks during a job. Action: This helps ensure compliance with labor laws and technician well-being. Monitor for excessive outliers." />
+            <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="What it is: The average time a new job waits in the queue before assignment. Action: Use the 'AI Batch Assign' button on the Job List to quickly clear the backlog." />
           </CardContent>
         </Card>
         <Card>

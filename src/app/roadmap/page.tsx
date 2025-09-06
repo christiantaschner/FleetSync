@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -205,7 +205,7 @@ const roadmapFeatures = {
     },
     {
       title: "Break Tracking",
-      description: "Allows technicians to log break times during a job, which will provide more accurate data for job duration and performance analytics.",
+      description: "Allows technicians to log break times during a job. This data is now factored into performance analytics for more accurate efficiency metrics.",
       icon: Timer,
       status: "Completed",
     },

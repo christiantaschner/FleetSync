@@ -322,6 +322,7 @@ interface ScheduleCalendarViewProps {
     suggestedChanges: OptimizationSuggestion[];
     overallReasoning: string;
   } | null>>;
+  isFleetOptimizationDialogOpen: boolean;
   setIsFleetOptimizationDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedFleetChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
 }
@@ -337,6 +338,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     isFleetOptimizing,
     optimizationResult,
     setOptimizationResult,
+    isFleetOptimizationDialogOpen,
     setIsFleetOptimizationDialogOpen,
     setSelectedFleetChanges,
 }) => {

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -239,11 +238,6 @@ export default function TechnicianJobDetailPage() {
       />}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
-        <StatusUpdateActions 
-            currentStatus={job.status} 
-            onUpdateStatus={handleStatusUpdate}
-            isUpdating={isUpdating}
-        />
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
@@ -264,6 +258,12 @@ export default function TechnicianJobDetailPage() {
               </CardFooter>
           )}
       </JobDetailsDisplay>
+
+      <StatusUpdateActions 
+          currentStatus={job.status} 
+          onUpdateStatus={handleStatusUpdate}
+          isUpdating={isUpdating}
+      />
       
       <CustomerHistoryCard jobs={historyJobs} />
       

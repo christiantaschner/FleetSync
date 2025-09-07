@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -325,9 +324,7 @@ export default function TechnicianProfilePage() {
                                     </TableRow>
                                 )
                             }) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center text-muted-foreground h-24">No completed jobs to display.</TableCell>
-                                </TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground h-24">No completed jobs to display.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>

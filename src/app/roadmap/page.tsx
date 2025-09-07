@@ -73,12 +73,12 @@ const roadmapFeatures = {
     },
     {
       title: "Automated AI Feedback Loop",
-      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin analysis) and dispatcher overrides back into the AI model. The AI learns from dispatcher expertise and its own performance to refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated profit) and dispatcher overrides back into the AI model. The AI analyzes discrepancies to refine its predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
       status: "Completed",
     },
     {
-      title: "Profitability Dashboard",
+      title: "Profitability Dashboard & Reporting",
       description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit and upsell performance.",
       icon: TrendingUp,
       status: "Completed",
@@ -311,10 +311,28 @@ const roadmapFeatures = {
       icon: CheckSquare,
       status: "Completed"
     },
+     {
+      title: "Technician UX: Detailed Time Log Summary",
+      description: "An enhanced view on the technician's profile page that shows a detailed breakdown of time spent on recent jobs, including travel, on-site work, and breaks.",
+      icon: Timer,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],
   planned: [
+    {
+      title: "UX: Visual Cue for Unsaved Changes",
+      description: "On the Schedule view, when a job is dragged to a new time or technician, its appearance will change (e.g., a dashed border or a glow) to clearly indicate that the change is a 'proposed' state that needs to be confirmed with the 'Save Changes' button.",
+      icon: Eye,
+      status: "Planned",
+    },
+    {
+      title: "UX: Quick Add Job",
+      description: "A simplified 'Quick Add' mode for the new job dialog, showing only the most essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in the details for scheduling later.",
+      icon: Rocket,
+      status: "Planned",
+    },
   ],
   vision: [
     {

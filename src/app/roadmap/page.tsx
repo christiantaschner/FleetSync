@@ -305,16 +305,16 @@ const roadmapFeatures = {
       icon: WifiOff,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Technician UX: Upsell Catalog",
       description: "Allow technicians to select from a predefined list of common upsell services or products when logging a successful sale, standardizing data entry and automatically calculating the upsell value.",
       icon: ShoppingCart,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
   ],
   vision: [
     {
@@ -391,9 +391,9 @@ export default function RoadmapPage() {
               <AccordionTrigger className="text-xl font-semibold">UX/Workflow Improvements</AccordionTrigger>
               <AccordionContent>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-4">
-                  {roadmapFeatures.planned.map((item) => (
+                  {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
                     <RoadmapItem key={item.title} {...item} />
-                  ))}
+                  )) : <p className="text-muted-foreground col-span-full">All UX improvements are complete!</p>}
                 </div>
               </AccordionContent>
             </AccordionItem>

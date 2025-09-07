@@ -12,11 +12,20 @@ import { Label } from '@/components/ui/label';
 import { logUpsellOutcomeAction } from '@/actions/job-actions';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface UpsellOpportunityCardProps {
     job: Job;
     onUpdate: (updatedJob: Partial<Job>) => void;
 }
+
+const commonUpsells = [
+    { name: 'Annual Service Contract', price: 250 },
+    { name: 'Capacitor Replacement', price: 150 },
+    { name: 'Thermostat Upgrade', price: 300 },
+    { name: 'Duct Cleaning Service', price: 450 },
+    { name: 'Custom Amount', price: 0 },
+];
 
 const UpsellOpportunityCard: React.FC<UpsellOpportunityCardProps> = ({ job, onUpdate }) => {
     const { userProfile } = useAuth();
@@ -24,6 +33,7 @@ const UpsellOpportunityCard: React.FC<UpsellOpportunityCardProps> = ({ job, onUp
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [soldValue, setSoldValue] = useState<number | undefined>(undefined);
     const [isSoldMode, setIsSoldMode] = useState(false);
+    const [isCustomAmount, setIsCustomAmount] = useState(false);
 
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -47,7 +57,7 @@ const UpsellOpportunityCard: React.FC<UpsellOpportunityCardProps> = ({ job, onUp
         if (!appId || !userProfile?.companyId) return;
 
         if (outcome === 'sold' && (soldValue === undefined || soldValue <= 0)) {
-            toast({ title: "Invalid Value", description: "Please enter a positive value for the upsell.", variant: "destructive" });
+            toast({ title: "Invalid Value", description: "Please select an upsell item or enter a positive custom value.", variant: "destructive" });
             return;
         }
 
@@ -66,8 +76,19 @@ const UpsellOpportunityCard: React.FC<UpsellOpportunityCardProps> = ({ job, onUp
             toast({ title: "Success", description: "Upsell outcome has been logged." });
             onUpdate({ upsellOutcome: outcome, upsellValue: outcome === 'sold' ? soldValue : undefined });
             setIsSoldMode(false);
+            setIsCustomAmount(false);
         }
         setIsSubmitting(false);
+    };
+    
+    const handleUpsellSelection = (value: string) => {
+        if (value === 'custom') {
+            setIsCustomAmount(true);
+            setSoldValue(undefined);
+        } else {
+            setIsCustomAmount(false);
+            setSoldValue(Number(value));
+        }
     };
 
     const renderContent = () => {
@@ -79,20 +100,39 @@ const UpsellOpportunityCard: React.FC<UpsellOpportunityCardProps> = ({ job, onUp
         }
         if (isSoldMode) {
              return (
-                <div className="space-y-2">
-                    <Label htmlFor="upsellValue">Value of Upsell ($)</Label>
-                    <Input 
-                        id="upsellValue" 
-                        type="number" 
-                        placeholder="e.g., 500"
-                        value={soldValue ?? ''}
-                        onChange={(e) => setSoldValue(parseFloat(e.target.value))}
-                    />
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="upsellItem">Select Upsell Service/Product</Label>
+                        <Select onValueChange={handleUpsellSelection}>
+                            <SelectTrigger id="upsellItem">
+                                <SelectValue placeholder="Select an item..."/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                {commonUpsells.map(item => (
+                                    <SelectItem key={item.name} value={item.price > 0 ? String(item.price) : 'custom'}>
+                                        {item.name} {item.price > 0 ? `($${item.price})` : ''}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {isCustomAmount && (
+                        <div className="space-y-2">
+                            <Label htmlFor="upsellValue">Custom Value of Upsell ($)</Label>
+                            <Input 
+                                id="upsellValue" 
+                                type="number" 
+                                placeholder="e.g., 500"
+                                value={soldValue ?? ''}
+                                onChange={(e) => setSoldValue(parseFloat(e.target.value))}
+                            />
+                        </div>
+                    )}
                     <div className="flex gap-2">
                         <Button size="sm" onClick={() => handleOutcome('sold')} disabled={isSubmitting}>
                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null} Confirm Sale
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setIsSoldMode(false)}>Cancel</Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setIsSoldMode(false); setIsCustomAmount(false); }}>Cancel</Button>
                     </div>
                 </div>
             )

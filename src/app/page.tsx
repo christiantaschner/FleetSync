@@ -41,7 +41,7 @@ export default function MarketingPage() {
     // Simplified ROI Calculation:
     // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
     const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
-    const profitGain = monthlyRevenue * 0.15; // Assume a 15% margin improvement
+    const profitGain = monthlyRevenue * 0.05; // Assume a 5% margin improvement
     const softwareCost = numTechs * 99;
     const netGain = profitGain - softwareCost;
     setRoi(netGain);
@@ -359,7 +359,7 @@ export default function MarketingPage() {
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                       Businesses using profit-first dispatching see 15-25% higher margins. Use our calculator to see the money you're leaving on the table.
+                       Businesses using profit-first dispatching see up to a 5% increase in net margins. Use our calculator to see the money you're leaving on the table.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">

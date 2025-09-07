@@ -72,7 +72,7 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Profitability Dashboard",
+      title: "Profitability Dashboard & Analytics",
       description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit.",
       icon: TrendingUp,
       status: "Completed",

@@ -513,6 +513,8 @@ export default function ReportClientView() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Technician</TableHead>
+                                    <TableHead className="text-right">Jobs</TableHead>
+                                    <TableHead className="text-right">Satisfaction</TableHead>
                                     <TableHead className="text-right">Profit</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -520,14 +522,15 @@ export default function ReportClientView() {
                                 {reportData.technicianLeaderboard.length > 0 ? reportData.technicianLeaderboard.map((tech, index) => (
                                     <TableRow key={tech.technicianId}>
                                         <TableCell className="flex items-center gap-2">
-                                            <span className="font-mono text-xs text-muted-foreground w-4">{index + 1}.</span>
                                             <Avatar className="h-7 w-7"><AvatarImage src={tech.avatarUrl} /><AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback></Avatar>
                                             <span className="font-medium">{tech.name}</span>
                                         </TableCell>
+                                        <TableCell className="text-right">{tech.jobsCompleted}</TableCell>
+                                        <TableCell className="text-right">{tech.avgSatisfaction}/5</TableCell>
                                         <TableCell className="text-right font-semibold text-green-600">${tech.totalProfit.toFixed(2)}</TableCell>
                                     </TableRow>
                                 )) : (
-                                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground h-24">No data for this period.</TableCell></TableRow>
+                                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground h-24">No data for this period.</TableCell></TableRow>
                                 )}
                             </TableBody>
                         </Table>

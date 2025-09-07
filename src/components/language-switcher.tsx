@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/use-language';
-import { DropdownMenu, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/components/ui/dropdown-menu';
 import { Check, Globe } from 'lucide-react';
 import { DropdownMenuPortal, DropdownMenuTrigger } from '@radix-ui/react-dropdown-menu';
 import { Button } from './ui/button';

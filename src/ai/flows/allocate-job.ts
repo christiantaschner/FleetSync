@@ -43,13 +43,14 @@ The current time is {{{currentTime}}}.
 - Description: {{{jobDescription}}}
 - Financials:
   - Quoted Value: \${{{quotedValue}}}
+  - Expected Parts Cost: \${{{expectedPartsCost}}}
   - SLA Penalty Risk: \${{{slaPenalty}}}
   - Upsell Probability: {{#if upsellScore}}{{{upsellScore}}}{{else}}N/A{{/if}}
   - After Hours Job: {{#if isAfterHours}}Yes{{else}}No{{/if}}
 
 **PROFIT CALCULATION LOGIC:**
 For each potential assignment, you must calculate the 'profitScore'. Use the following formula:
-1. First, calculate the 'expectedPartsCost' by looking up each part in the 'requiredParts' array in the provided 'partsLibrary' and summing their costs.
+1. First, calculate the 'expectedPartsCost' by summing the costs of the parts in the 'requiredParts' array from the provided 'partsLibrary'.
 2. Then, calculate 'commission' = (quotedValue * (tech.commissionRate / 100)) + tech.bonus
 3. Finally, calculate the final profit: profit = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty) - commission
 If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.

@@ -229,12 +229,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Break Tracking",
-      description: "Allows technicians to log break times during a job. This data is now reflected in the reporting dashboard for more accurate on-site duration and efficiency KPIs.",
-      icon: Timer,
-      status: "Completed",
-    },
-    {
       title: "Job Flexibility Status",
       description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
       icon: Shuffle,
@@ -262,12 +256,6 @@ const roadmapFeatures = {
       title: "Dashboard Profit Score Visibility & Sorting",
       description: "Make profit a primary metric on the main dashboard. Each job in the list now displays its AI-calculated profit score, and dispatchers can sort the entire job list by profitability.",
       icon: DollarSign,
-      status: "Completed",
-    },
-    {
-      title: "AI Feature Toggles",
-      description: "Provide administrators with settings to enable or disable specific AI features, such as profit-aware dispatching or automatic schedule monitoring, allowing them to tailor the system's level of automation to their business needs.",
-      icon: Cog,
       status: "Completed",
     },
     {
@@ -326,14 +314,26 @@ const roadmapFeatures = {
     },
     {
       title: "UX: Quick Add Job",
-      description: "A simplified 'Quick Add' mode for the new job dialog, showing only the most essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in the details for scheduling later.",
+      description: "A simplified 'Quick Add' dialog, showing only essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in details later, streamlining high-volume intake.",
       icon: Rocket,
+      status: "Completed",
+    },
+    {
+      title: "AI Feature Toggles",
+      description: "Provide administrators with settings to enable or disable specific AI features, such as profit-aware dispatching or automatic schedule monitoring, allowing them to tailor the system's level of automation to their business needs.",
+      icon: Cog,
       status: "Completed",
     },
   ],
   inProgress: [
   ],
   planned: [
+    {
+      title: "Break Tracking",
+      description: "Allow technicians to log break times during a job. This data will be used for more accurate payroll and job costing, and will refine the AI's on-site duration estimates.",
+      icon: Timer,
+      status: "Planned",
+    },
   ],
   vision: [
     {

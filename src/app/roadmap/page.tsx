@@ -299,16 +299,16 @@ const roadmapFeatures = {
       icon: MousePointerClick,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Technician UX: Offline Status Indicator",
       description: "Display a small, persistent icon in the technician view to clearly indicate the current network status (online/offline), giving technicians more confidence when working in areas with poor connectivity.",
       icon: WifiOff,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
     {
       title: "Technician UX: Upsell Catalog",
       description: "Allow technicians to select from a predefined list of common upsell services or products when logging a successful sale, standardizing data entry and automatically calculating the upsell value.",

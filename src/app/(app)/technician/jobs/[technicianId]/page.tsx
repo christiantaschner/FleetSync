@@ -22,6 +22,7 @@ import DailyTimeline from './components/DailyTimeline';
 import { notifyCustomerAction, calculateTravelMetricsAction } from '@/actions/ai-actions';
 import { Separator } from '@/components/ui/separator';
 import GeoFenceWatcher from './components/GeoFenceWatcher';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function TechnicianJobListPage() {
   const { user: firebaseUser, userProfile, loading: authLoading, company } = useAuth();
@@ -275,7 +276,8 @@ export default function TechnicianJobListPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
-      {appId && <GeoFenceWatcher appId={appId} job={currentOrNextJob} onStatusChange={handleStatusUpdate} />}
+      {appId && isViewingOwnPage && <OfflineIndicator />}
+      {appId && isViewingOwnPage && <GeoFenceWatcher appId={appId} job={currentOrNextJob} onStatusChange={handleStatusUpdate} />}
       {!isViewingOwnPage && (
           <div className="flex items-center">
               <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>

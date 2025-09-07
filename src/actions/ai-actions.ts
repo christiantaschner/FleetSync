@@ -23,7 +23,7 @@ import { generateCustomerFollowup as generateCustomerFollowupFlow } from "@/ai/f
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
-import type { Job, Technician, Company } from "@/types";
+import type { Job, Technician, Company, DispatcherFeedback } from "@/types";
 import crypto from 'crypto';
 import { addHours, addMinutes } from 'date-fns';
 
@@ -129,6 +129,24 @@ export async function allocateJobAction(
             }
         });
     }
+    
+    // --- Start of new feedback loop logic ---
+    if (flowInput.technicianAvailability.length > 0) {
+        const companyId = flowInput.technicianAvailability[0].companyId;
+        if(companyId) {
+            const feedbackCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`);
+            const feedbackQuery = query(
+                feedbackCollectionRef,
+                where("companyId", "==", companyId),
+                orderBy("createdAt", "desc"),
+                limit(5) // Get the last 5 feedback examples
+            );
+            const feedbackSnapshot = await getDocs(feedbackQuery);
+            const pastFeedback = feedbackSnapshot.docs.map(doc => doc.data() as DispatcherFeedback);
+            flowInput.pastFeedback = pastFeedback;
+        }
+    }
+    // --- End of new feedback loop logic ---
 
     const result = await allocateJobFlow(flowInput, appId);
     return { data: result, error: null };
@@ -782,4 +800,3 @@ export async function generateCustomerFollowupAction(
 }
     
     
-```

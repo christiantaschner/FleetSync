@@ -19,27 +19,8 @@ import { collection, query, where, orderBy, limit, getDocs, doc, getDoc } from '
 
 
 export async function allocateJob(input: AllocateJobInput, appId: string): Promise<AllocateJobOutput> {
-  // 1. Augment the input with past feedback for the AI
-  if (dbAdmin && input.technicianAvailability.length > 0) {
-    const firstTech = input.technicianAvailability[0];
-    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, firstTech.technicianId);
-    const companyId = (await getDoc(techDocRef)).data()?.companyId;
-
-    if (companyId) {
-        const feedbackCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`);
-        const feedbackQuery = query(
-            feedbackCollectionRef,
-            where("companyId", "==", companyId),
-            orderBy("createdAt", "desc"),
-            limit(5) // Get the last 5 feedback examples
-        );
-        const feedbackSnapshot = await getDocs(feedbackQuery);
-        const pastFeedback = feedbackSnapshot.docs.map(doc => doc.data() as DispatcherFeedback);
-        input.pastFeedback = pastFeedback;
-    }
-  }
-  
-  // 2. Call the flow with the augmented input
+  // The logic to augment with feedback has been moved to ai-actions.ts
+  // This keeps the core flow clean and focused on just the AI call.
   return allocateJobFlow(input);
 }
 

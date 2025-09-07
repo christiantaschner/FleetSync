@@ -240,6 +240,7 @@ export type AITask = {
 
 export type AITechnician = {
   technicianId: string;
+  companyId: string;
   technicianName: string;
   isAvailable: boolean;
   skills: string[];
@@ -260,6 +261,8 @@ export type AITechnician = {
   bonus?: number;
   vanInventory?: string[];
   maxDailyHours?: number;
+  currentRoute?: string[];
+  active?: boolean;
 };
 
 export type ProfileChangeRequest = {
@@ -417,6 +420,7 @@ export const AllocateJobInputSchema = z.object({
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
+      companyId: z.string(),
       technicianName: z.string().describe('The name of the technician.'),
       isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
       isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),

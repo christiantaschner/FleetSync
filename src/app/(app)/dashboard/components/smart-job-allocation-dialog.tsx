@@ -79,6 +79,8 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       workingHours: t.workingHours,
       isOnCall: t.isOnCall,
       hourlyCost: t.hourlyCost,
+      commissionRate: t.commissionRate,
+      bonus: t.bonus,
       vanInventory: t.vanInventory || [],
       maxDailyHours: t.maxDailyHours,
     }));

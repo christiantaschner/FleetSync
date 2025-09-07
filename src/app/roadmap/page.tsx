@@ -60,14 +60,8 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "AI-Powered Job Allocation",
-      description: "Core AI feature suggests the best technician for new jobs based on skills, availability, and location, with both single and batch assignment modes.",
-      icon: Sparkles,
-      status: "Completed",
-    },
-    {
       title: "Profit-Aware Dispatching",
-      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. Controllable via a feature flag in settings.",
+      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. This is now managed through the new Smart Job Allocation dialog.",
       icon: DollarSign,
       status: "Completed",
     },
@@ -265,7 +259,7 @@ const roadmapFeatures = {
     },
     {
       title: "Automated AI Feedback Loop",
-      description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
       status: "Completed",
     },

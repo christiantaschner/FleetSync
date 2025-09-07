@@ -228,6 +228,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Automated Job Actuals Calculation",
+      description: "Upon job completion, the system will automatically calculate the actual travel time, on-site duration, and final profit margin, providing crucial data for the AI's learning loop and for accurate financial reporting.",
+      icon: CheckSquare,
+      status: "Completed",
+    },
+    {
       title: "Break Tracking",
       description: "Allows technicians to log break times during a job. This data is now reflected in the reporting dashboard for more accurate on-site duration and efficiency KPIs.",
       icon: Timer,

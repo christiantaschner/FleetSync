@@ -462,9 +462,10 @@ export async function calculateTravelMetricsAction(
         ? (technician.hourlyCost / 60) * updatePayload.actualTravelTimeMinutes
         : 0;
       const partsCost = completedJob.expectedPartsCost || 0;
-      const commission = completedJob.quotedValue * ((technician.commissionRate || 0) / 100) + (technician.bonus || 0);
+      const commission = (completedJob.quotedValue + (completedJob.upsellValue || 0)) * ((technician.commissionRate || 0) / 100) + (technician.bonus || 0);
 
-      updatePayload.actualProfit = completedJob.quotedValue - laborCost - travelCost - partsCost - commission;
+      const totalRevenue = completedJob.quotedValue + (completedJob.upsellValue || 0);
+      updatePayload.actualProfit = totalRevenue - laborCost - travelCost - partsCost - commission;
     }
     // --- End of new logic ---
     

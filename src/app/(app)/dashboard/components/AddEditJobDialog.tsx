@@ -29,8 +29,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package } from 'lucide-react';
+import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part, JobFlexibility } from '@/types';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction, suggestUpsellOpportunityAction, suggestJobPartsAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
@@ -108,6 +108,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [slaDeadline, setSlaDeadline] = useState<Date | undefined>(undefined);
   const [upsellScore, setUpsellScore] = useState<number | undefined>(undefined);
   const [upsellReasoning, setUpsellReasoning] = useState<string | undefined>(undefined);
+  const [flexibility, setFlexibility] = useState<JobFlexibility>('flexible');
+  const [dispatchLocked, setDispatchLocked] = useState(false);
 
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
@@ -146,6 +148,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setSlaDeadline(initialData.slaDeadline ? new Date(initialData.slaDeadline) : undefined);
     setUpsellScore(initialData.upsellScore);
     setUpsellReasoning(initialData.upsellReasoning);
+    setFlexibility(initialData.flexibility || 'flexible');
+    setDispatchLocked(initialData.dispatchLocked || false);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setTriageMessage(null);
@@ -513,6 +517,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       slaDeadline: slaDeadline ? slaDeadline.toISOString() : null,
       upsellScore: upsellScore,
       upsellReasoning: upsellReasoning,
+      flexibility,
+      dispatchLocked,
       ...(triageToken && { 
         triageToken: triageToken,
         triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
@@ -808,6 +814,26 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             placeholder="e.g., 60"
                         />
                       </div>
+                  </div>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="flexibility">Scheduling Flexibility</Label>
+                      <Select value={flexibility} onValueChange={(value: JobFlexibility) => setFlexibility(value)}>
+                          <SelectTrigger id="flexibility">
+                              <SelectValue placeholder="Select flexibility" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="flexible"><div className="flex items-center gap-2"><Repeat className="h-4 w-4"/>Flexible</div></SelectItem>
+                              <SelectItem value="fixed"><div className="flex items-center gap-2"><Lock className="h-4 w-4"/>Fixed Appointment</div></SelectItem>
+                          </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end pb-1">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="dispatchLocked" checked={dispatchLocked} onCheckedChange={(checked) => setDispatchLocked(Boolean(checked))} />
+                        <Label htmlFor="dispatchLocked" className="flex items-center gap-1.5"><Lock className="h-4 w-4"/>Lock Assignment</Label>
+                      </div>
+                    </div>
                   </div>
                    <div>
                     <Label htmlFor="contractId">Link to Contract (Optional)</Label>

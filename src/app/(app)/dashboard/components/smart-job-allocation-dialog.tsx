@@ -253,7 +253,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
                     </div>
                 </ScrollArea>
                 <div className="flex justify-end pt-2">
-                     <Button variant="link" size="sm" onClick={getAISuggestion} disabled={isLoadingAI}>
+                     <Button variant="link" size="sm" onClick={() => getAISuggestion()} disabled={isLoadingAI}>
                         <RefreshCw className="mr-2 h-3.5 w-3.5"/>
                         Recalculate
                      </Button>

@@ -395,10 +395,15 @@ export type Part = {
 
 // --- AI Flow Schemas ---
 
-export const AllocateJobOutputSchema = z.object({
+const AllocationSuggestionSchema = z.object({
   suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
-  reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
+  reasoning: z.string().describe('The reasoning behind the technician suggestion.'),
   profitScore: z.number().optional().describe('The calculated profit score for this assignment.'),
+});
+
+export const AllocateJobOutputSchema = z.object({
+  suggestions: z.array(AllocationSuggestionSchema).describe("A ranked list of the top 3 technician suggestions."),
+  overallReasoning: z.string().describe('A high-level summary of the AI\'s general approach or if no technicians could be found.'),
 });
 export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 
@@ -444,7 +449,7 @@ export const AllocateJobInputSchema = z.object({
   ).describe('A list of technicians and their availability, skills, and location.'),
   partsLibrary: z.array(z.object({ name: z.string(), cost: z.number() })).optional().describe("A library of all available parts and their costs, for the AI to calculate the job's part cost."),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
-  rejectedSuggestions: z.array(AllocateJobOutputSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
+  rejectedSuggestions: z.array(AllocationSuggestionSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
   featureFlags: FeatureFlagsSchema.optional().describe('Feature flags that might alter the AI\'s decision-making logic.'),
 });
 export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -326,7 +325,7 @@ const roadmapFeatures = {
     },
     {
       title: "UX: Quick Add Job",
-      description: "A simplified 'Quick Add' dialog, triggered from a new dropdown on the 'Add Job' button, showing only essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in details later, streamlining high-volume intake.",
+      description: "A simplified 'Quick Add' dialog, triggered from a dropdown on the 'Add Job' button, showing only essential fields. This allows dispatchers to rapidly log a service call and fill in details later, streamlining high-volume intake.",
       icon: Rocket,
       status: "Completed",
     },
@@ -334,6 +333,18 @@ const roadmapFeatures = {
   inProgress: [
   ],
   planned: [
+    {
+        title: "Ranked-Choice Dispatching",
+        description: "AI will suggest the top 3 most profitable technicians for a job, allowing dispatchers to make the final call from a data-driven shortlist.",
+        icon: Award,
+        status: 'Planned',
+    },
+    {
+        title: "Explicit ROI Dashboard",
+        description: "Enhance the Reports page to directly calculate and display the value AI is adding, showing metrics like 'Net Margin Improvement' and 'Revenue from AI Upsells'.",
+        icon: TrendingUp,
+        status: 'Planned',
+    },
   ],
   vision: [
     {
@@ -405,14 +416,14 @@ export default function RoadmapPage() {
 
       <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Planned Features</h2>
-         <Accordion type="single" collapsible className="w-full" defaultValue="ux">
-            <AccordionItem value="ux">
-              <AccordionTrigger className="text-xl font-semibold">UX/Workflow Improvements</AccordionTrigger>
+         <Accordion type="single" collapsible className="w-full" defaultValue="ai">
+            <AccordionItem value="ai">
+              <AccordionTrigger className="text-xl font-semibold">AI & Analytics Enhancements</AccordionTrigger>
               <AccordionContent>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-4">
-                  {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
+                  {roadmapFeatures.planned.map((item) => (
                     <RoadmapItem key={item.title} {...item} />
-                  )) : <p className="text-muted-foreground col-span-full">All UX improvements are complete!</p>}
+                  ))}
                 </div>
               </AccordionContent>
             </AccordionItem>

@@ -29,7 +29,7 @@ const prompt = ai.definePrompt({
   model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: AllocateJobInputSchema},
   output: {schema: AllocateJobOutputSchema},
-  prompt: `You are an AI Operations Manager for a field service company. Your primary goal is to assign jobs in the most profitable and efficient way possible, considering all constraints.
+  prompt: `You are an AI Operations Manager for a field service company. Your primary goal is to assign jobs in the most profitable and efficient way possible, considering all constraints. You must provide a ranked list of the top 3 suitable technicians.
 
 The current time is {{{currentTime}}}.
 
@@ -63,7 +63,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
     -   **Working Hours:** The job, including estimated travel and duration, MUST be completed within the technician's working hours for the scheduled day.
 
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
-    -   **Maximize Margin:** Your main goal is to maximize the calculated profit from this job. Choose the technician who yields the highest 'profitScore'.
+    -   **Maximize Margin:** Your main goal is to maximize the calculated profit from this job. Rank technicians by who yields the highest 'profitScore'.
     -   **SLA Penalties:** Avoid any technician whose current schedule puts them at risk of arriving late to this job if there is an SLA penalty. A high penalty can make a job unprofitable.
     -   **After-Hours Costs:** If the job is marked 'After Hours', be aware that this may incur higher labor costs. Prioritize technicians who are already working or on-call to minimize activating another technician.
     -   **Travel Time vs. Job Value:** Sending a technician from far away erodes profit. A slightly less optimal but much closer technician is often the more profitable choice, especially for lower-value jobs.
@@ -135,11 +135,15 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 
 ---
 **Final Assessment:**
+Your task is to return a ranked list of up to 3 technicians in the 'suggestions' array. Each suggestion must include the technician's ID, a profit score (if profit mode is enabled), and a clear reasoning for why they are a good fit.
+
 {{#if featureFlags.profitScoringEnabled}}
-First, calculate the expectedPartsCost. Then, calculate the profitScore for every suitable technician. Finally, provide your decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score AND the technician's effective costs (hourly rate, commission) in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
+First, calculate the expectedPartsCost. Then, calculate the profitScore for every suitable technician. Rank them from most to least profitable. Your reasoning for each suggestion MUST be from a business perspective, explaining HOW that choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score AND the technician's effective costs (hourly rate, commission) in your reasoning. In the 'overallReasoning' field, summarize your general findings.
 {{else}}
-Provide your final decision on the best technician. Your reasoning MUST be based on skills, parts availability, and proximity. If no technician is suitable, state this clearly and explain the bottleneck.
+Provide your ranked list based on skills, parts availability, and proximity. Your reasoning for each must be clear and concise. In the 'overallReasoning' field, summarize your general findings.
 {{/if}}
+
+If no technicians are suitable, return an empty 'suggestions' array and explain the bottleneck (e.g., "No technicians have the required 'Pipe Fitting' skill") in the 'overallReasoning' field.
 `,
 });
 

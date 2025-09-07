@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { allocateJobAction } from "@/actions/ai-actions";
 import type { AllocateJobOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Label } from '@/components/ui/label';
-import { Loader2, UserCheck, Bot, DollarSign, User, Check, RefreshCw } from 'lucide-react';
+import { Loader2, UserCheck, Bot, DollarSign, User, Check, RefreshCw, Award } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
@@ -34,6 +34,8 @@ interface SmartJobAllocationDialogProps {
   onJobAssigned: (job: Job, technician: Technician) => void;
 }
 
+type Suggestion = AllocateJobOutput['suggestions'][number];
+
 const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({ 
     jobToAssign, 
     technicians,
@@ -46,8 +48,8 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
   const { userProfile, company } = useAuth();
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [isLoadingAssign, setIsLoadingAssign] = useState(false);
-  const [aiSuggestions, setAiSuggestions] = useState<AllocateJobOutput[]>([]);
-  const [selectedSuggestion, setSelectedSuggestion] = useState<AllocateJobOutput | null>(null);
+  const [aiSuggestions, setAiSuggestions] = useState<Suggestion[]>([]);
+  const [selectedSuggestion, setSelectedSuggestion] = useState<Suggestion | null>(null);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -99,7 +101,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
         currentTime: new Date().toISOString(),
         featureFlags: company?.settings?.featureFlags,
         partsLibrary: [], // TODO: Populate this from a central parts collection
-        rejectedSuggestions: aiSuggestions,
+        rejectedSuggestions: [],
     };
 
     const result = await allocateJobAction(input);
@@ -108,13 +110,10 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
     if (result.error) {
         toast({ title: "AI Allocation Error", description: result.error, variant: "destructive" });
     } else if (result.data) {
-        const newSuggestion = result.data;
-        // In a real multi-suggestion flow, we would get an array and sort it.
-        // For now, we'll simulate a list by just adding one suggestion.
-        const newSuggestions = [newSuggestion]; 
+        const newSuggestions = result.data.suggestions;
         setAiSuggestions(newSuggestions);
-        if (newSuggestion.suggestedTechnicianId) {
-            setSelectedSuggestion(newSuggestion);
+        if (newSuggestions.length > 0) {
+            setSelectedSuggestion(newSuggestions[0]);
         }
     }
   };
@@ -233,7 +232,7 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
                                 {selectedSuggestion?.suggestedTechnicianId === suggestion.suggestedTechnicianId ? (
                                     <Check className="h-5 w-5 text-primary" />
                                 ) : (
-                                    <User className="h-5 w-5 text-muted-foreground" />
+                                    index === 0 ? <Award className="h-5 w-5 text-amber-500" /> : <User className="h-5 w-5 text-muted-foreground" />
                                 )}
                             </div>
                             <div className="flex-1">

@@ -8,12 +8,13 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award, Wand2, Rocket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface RoadmapItemProps {
   title: string;
@@ -73,12 +74,12 @@ const roadmapFeatures = {
     },
     {
       title: "Automated AI Feedback Loop",
-      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model. The AI analyzes discrepancies between estimated and actual profit to refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated profit) and dispatcher overrides back into the AI model. The AI analyzes discrepancies to refine its predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
       status: "Completed",
     },
     {
-      title: "Profitability Dashboard",
+      title: "Profitability Dashboard & Reporting",
       description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit and upsell performance.",
       icon: TrendingUp,
       status: "Completed",
@@ -209,18 +210,6 @@ const roadmapFeatures = {
       icon: MessageSquare,
       status: "Completed",
     },
-     {
-      title: "Installed Equipment Tracking",
-      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
-      icon: Package,
-      status: "Completed",
-    },
-     {
-      title: "Job Financial Tracking",
-      description: "The data model now supports tracking quoted value, expected parts cost, and SLA deadlines on a per-job basis. The UI is available in the 'Add/Edit Job' dialog under the 'Financials' section.",
-      icon: DollarSign,
-      status: "Completed",
-    },
     {
       title: "PWA & Offline Mode Foundations",
       description: "The application is now a Progressive Web App (PWA) with a service worker. Firestore's offline persistence is enabled, allowing the app to load and display cached data even without an internet connection.",
@@ -279,6 +268,66 @@ const roadmapFeatures = {
       title: "AI Feature Toggles",
       description: "Provide administrators with settings to enable or disable specific AI features, such as profit-aware dispatching or automatic schedule monitoring, allowing them to tailor the system's level of automation to their business needs.",
       icon: Cog,
+      status: "Completed",
+    },
+    {
+      title: "Dispatcher UX: One-Click AI Analysis",
+      description: "Combine the individual 'Suggest Skills', 'Suggest Parts', and 'Suggest Priority' buttons into a single, powerful 'Analyze Job' button. One click will provide a comprehensive set of AI suggestions for dispatcher review.",
+      icon: Wand2,
+      status: "Completed",
+    },
+    {
+      title: "Dispatcher UX: Compact Technician View",
+      description: "Add a compact list-view option to the Technicians tab, allowing for easier management and overview of larger teams.",
+      icon: List,
+      status: "Completed",
+    },
+    {
+      title: "Dispatcher UX: Interactive AI Scheduling",
+      description: "Make the AI's time suggestions interactive. Clicking a suggestion will populate the manual scheduling fields, allowing dispatchers to accept it as a starting point and make minor adjustments.",
+      icon: MousePointerClick,
+      status: "Completed",
+    },
+    {
+      title: "Technician UX: Offline Status Indicator",
+      description: "Display a small, persistent icon in the technician view to clearly indicate the current network status (online/offline), giving technicians more confidence when working in areas with poor connectivity.",
+      icon: WifiOff,
+      status: "Completed",
+    },
+    {
+      title: "Technician UX: Upsell Catalog",
+      description: "Allow technicians to select from a predefined list of common upsell services or products when logging a successful sale, standardizing data entry and automatically calculating the upsell value.",
+      icon: ShoppingCart,
+      status: "Completed",
+    },
+     {
+      title: "Customer Relationship Management (CRM)",
+      description: "A dedicated customer view that provides a 360-degree overview of every client, including their full job history, active contracts, and a list of all installed equipment at their locations. Dispatchers can manage all customer-related activities from this central hub.",
+      icon: Users2,
+      status: "Completed",
+    },
+    {
+      title: "Unified Customer Upsert Logic",
+      description: "A robust, backend data management workflow that intelligently creates or updates customer records, preventing duplicates and ensuring data integrity across the platform.",
+      icon: CheckSquare,
+      status: "Completed"
+    },
+     {
+      title: "Technician UX: Detailed Time Log Summary",
+      description: "An enhanced view on the technician's profile page that shows a detailed breakdown of time spent on recent jobs, including travel, on-site work, and breaks.",
+      icon: Timer,
+      status: "Completed",
+    },
+    {
+      title: "UX: Visual Cue for Unsaved Changes",
+      description: "On the Schedule view, when a job is dragged to a new time or technician, its appearance will change (e.g., a dashed border or a glow) to clearly indicate that the change is a 'proposed' state that needs to be confirmed with the 'Save Changes' button.",
+      icon: Eye,
+      status: "Completed",
+    },
+    {
+      title: "UX: Quick Add Job",
+      description: "A simplified 'Quick Add' mode for the new job dialog, showing only the most essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in the details for scheduling later.",
+      icon: Rocket,
       status: "Completed",
     },
   ],
@@ -356,11 +405,18 @@ export default function RoadmapPage() {
 
       <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Planned Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
-                <RoadmapItem key={item.title} {...item} />
-            )) : <p className="text-muted-foreground col-span-full">All planned features are complete! See the Vision section for what's next.</p>}
-        </div>
+         <Accordion type="single" collapsible className="w-full" defaultValue="ux">
+            <AccordionItem value="ux">
+              <AccordionTrigger className="text-xl font-semibold">UX/Workflow Improvements</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-4">
+                  {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
+                    <RoadmapItem key={item.title} {...item} />
+                  )) : <p className="text-muted-foreground col-span-full">All UX improvements are complete!</p>}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
       </section>
 
       <section>

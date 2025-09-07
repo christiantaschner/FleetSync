@@ -142,6 +142,7 @@ export default function DashboardPage() {
   const [allParts, setAllParts] = useState<Part[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
+  const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
 
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
@@ -1072,7 +1073,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
-            onOpenAddJobDialog={handleOpenAddJob}
+            onOpenAddJobDialog={() => setIsAddEditDialogOpen(true)}
             onSeedData={handleSeedData}
             onSwitchToScheduleTab={() => setActiveTab('schedule')}
             onDismiss={() => {
@@ -1097,6 +1098,21 @@ export default function DashboardPage() {
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills.map(s => s.name)}
                 allParts={allParts}
+            />
+        )}
+        {canEditJobs && (
+            <AddEditJobDialog
+                isOpen={isAddEditDialogOpen}
+                onClose={() => setIsAddEditDialogOpen(false)}
+                job={null}
+                jobs={jobs}
+                technicians={technicians}
+                customers={customers}
+                contracts={contracts}
+                allSkills={allSkills.map(s => s.name)}
+                allParts={allParts}
+                onManageSkills={() => setIsManageSkillsOpen(true)}
+                onManageParts={() => setIsManagePartsOpen(true)}
             />
         )}
       {appId && <ChatSheet 
@@ -1182,7 +1198,7 @@ export default function DashboardPage() {
             </Button>
            )}
            {canEditJobs && (
-            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto" variant="default">
+            <Button onClick={() => setIsAddEditDialogOpen(true)} className="w-full sm:w-auto" variant="default">
                 <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
             </Button>
            )}

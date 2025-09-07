@@ -402,7 +402,7 @@ export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 
 export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
-  customerPhone: z.string().optional().describe('The customer\'s phone number, used to find their service history.'),
+  customerPhone: z.string().optional().describe("The customer's phone number, used to find their service history."),
   jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   requiredParts: z.array(z.string()).optional().describe('A list of parts required for this job. This is a hard requirement.'),
@@ -422,9 +422,9 @@ export const AllocateJobInputSchema = z.object({
       isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),
       workingHours: z.array(BusinessDaySchema).optional().describe("The technician's individual working hours."),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
-      vanInventory: z.array(z.string()).optional().describe('A list of part names currently in the technician\'s van.'),
+      vanInventory: z.array(z.string()).optional().describe("A list of part names currently in the technician's van."),
       liveLocation: z.any().describe('The current, real-time location of the technician.'),
-      homeBaseLocation: z.any().describe('The technician\'s home base or starting location for the day.'),
+      homeBaseLocation: z.any().describe("The technician's home base or starting location for the day."),
       currentJobs: z.array(z.object({
         jobId: z.string(),
         location: z.any().describe("The location of this scheduled job."),

@@ -65,13 +65,13 @@ const roadmapFeatures = {
       icon: Sparkles,
       status: "Completed",
     },
-     {
+    {
       title: "Profit-Aware Dispatching",
       description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. Controllable via a feature flag in settings.",
       icon: DollarSign,
       status: "Completed",
     },
-     {
+    {
       title: "Profitability Dashboard",
       description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
       icon: TrendingUp,

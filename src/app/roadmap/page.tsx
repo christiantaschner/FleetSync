@@ -287,16 +287,16 @@ const roadmapFeatures = {
       icon: Wand2,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Dispatcher UX: Compact Technician View",
       description: "Add a compact list-view option to the Technicians tab, allowing for easier management and overview of larger teams.",
       icon: List,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
     {
       title: "Dispatcher UX: Interactive AI Scheduling",
       description: "Make the AI's time suggestions interactive. Clicking a suggestion will populate the manual scheduling fields, allowing dispatchers to accept it as a starting point and make minor adjustments.",
@@ -420,5 +420,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-      

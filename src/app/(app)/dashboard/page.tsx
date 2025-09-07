@@ -1,9 +1,8 @@
 
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -63,6 +62,9 @@ import {
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import isEqual from 'lodash.isequal';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { JobStatusBadge } from '@/components/ui/JobStatusBadge';
 
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
@@ -174,6 +176,8 @@ export default function DashboardPage() {
   const [fleetOptimizationResult, setFleetOptimizationResult] = useState<{ suggestedChanges: OptimizationSuggestion[]; overallReasoning: string } | null>(null);
   const [isFleetOptimizing, setIsFleetOptimizing] = useState(false);
   const [selectedFleetChanges, setSelectedFleetChanges] = useState<OptimizationSuggestion[]>([]);
+
+  const [technicianViewMode, setTechnicianViewMode] = useState<'grid' | 'list'>('grid');
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
@@ -1382,6 +1386,10 @@ export default function DashboardPage() {
                             <CardDescription>Manage your team of field technicians. Drag jobs from the Job List onto a technician to assign.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
+                             <div className="hidden sm:flex items-center gap-1 p-1 bg-muted rounded-md">
+                                <Button size="icon" variant={technicianViewMode === 'grid' ? 'default' : 'ghost'} onClick={() => setTechnicianViewMode('grid')}><Grid className="h-4 w-4" /></Button>
+                                <Button size="icon" variant={technicianViewMode === 'list' ? 'default' : 'ghost'} onClick={() => setTechnicianViewMode('list')}><List className="h-4 w-4" /></Button>
+                            </div>
                              <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
                                 <Package className="mr-2 h-4 w-4" /> Manage Parts
                             </Button>
@@ -1393,30 +1401,86 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredTechnicians.length > 0 ? (
-                        filteredTechnicians.map(technician => (
-                            <TechnicianCard 
-                            key={technician.id} 
-                            technician={technician} 
-                            jobs={jobs}
-                            onEdit={handleOpenEditTechnician}
-                            onMarkUnavailable={handleMarkTechnicianUnavailable}
-                            onViewOnMap={handleViewOnMap}
-                            onToggleOnCall={handleToggleOnCall}
-                            isUpdatingOnCall={isUpdatingOnCall}
-                            />
-                        ))
-                        ) : (
-                        <Alert className="md:col-span-2 lg:col-span-3">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>No Technicians Found</AlertTitle>
-                            <AlertDescription>
-                            Your technician roster is empty.
-                            </AlertDescription>
-                        </Alert>
-                        )}
-                    </div>
+                    
+                    {technicianViewMode === 'grid' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredTechnicians.length > 0 ? (
+                            filteredTechnicians.map(technician => (
+                                <TechnicianCard 
+                                key={technician.id} 
+                                technician={technician} 
+                                jobs={jobs}
+                                onEdit={handleOpenEditTechnician}
+                                onMarkUnavailable={handleMarkTechnicianUnavailable}
+                                onViewOnMap={handleViewOnMap}
+                                onToggleOnCall={handleToggleOnCall}
+                                isUpdatingOnCall={isUpdatingOnCall}
+                                />
+                            ))
+                            ) : (
+                            <Alert className="md:col-span-2 lg:col-span-3">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>No Technicians Found</AlertTitle>
+                                <AlertDescription>
+                                Your technician roster is empty.
+                                </AlertDescription>
+                            </Alert>
+                            )}
+                        </div>
+                    ) : (
+                         <div className="border rounded-lg">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Technician</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Current Job</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredTechnicians.map(tech => {
+                                        const currentJob = jobs.find(j => j.id === tech.currentJobId);
+                                        return (
+                                            <TableRow key={tech.id}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-9 w-9">
+                                                            <AvatarImage src={tech.avatarUrl} alt={tech.name} />
+                                                            <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="truncate">
+                                                          <span className="font-medium text-sm truncate block">{tech.name}</span>
+                                                          <span className="text-xs text-muted-foreground">{tech.email}</span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col gap-1">
+                                                        <JobStatusBadge status={tech.isAvailable ? 'Completed' : 'In Progress'} className={cn(tech.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}/>
+                                                        {tech.isOnCall && <Badge variant="accent">On Call</Badge>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {currentJob ? (
+                                                        <Link href={`/job/${currentJob.id}`} className="hover:underline text-xs">
+                                                            {currentJob.title}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">{tech.isAvailable ? 'Awaiting assignment' : 'Idle'}</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleOpenEditTechnician(tech)}>Edit</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                         </div>
+                    )}
+
                 </CardContent>
             </Card>
         </TabsContent>

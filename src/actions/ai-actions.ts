@@ -413,14 +413,50 @@ export async function calculateTravelMetricsAction(
     const companyData = companySnap.data() as Company;
     const emissionFactor = companyData?.settings?.co2EmissionFactorKgPerKm ?? DEFAULT_EMISSIONS_KG_PER_KM;
 
-    // Broad query that should not require a custom index
+    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
+    const techSnap = await getDoc(techDocRef);
+    if (!techSnap.exists()) throw new Error("Technician not found.");
+    const technician = techSnap.data() as Technician;
+
+    // --- Start of new logic ---
+    const updatePayload: any = {};
+    
+    // Calculate actual travel time
+    if(completedJob.enRouteAt && completedJob.inProgressAt) {
+      const travelTimeMs = new Date(completedJob.inProgressAt).getTime() - new Date(completedJob.enRouteAt).getTime();
+      updatePayload.actualTravelTimeMinutes = Math.round(travelTimeMs / 60000);
+    }
+
+    // Calculate actual duration on-site
+    if (completedJob.inProgressAt && completedJob.completedAt) {
+      const grossDurationMs = new Date(completedJob.completedAt).getTime() - new Date(completedJob.inProgressAt).getTime();
+      const breakDurationMs = completedJob.breaks?.reduce((acc, b) => {
+        if (b.start && b.end) return acc + (new Date(b.end).getTime() - new Date(b.start).getTime());
+        return acc;
+      }, 0) || 0;
+      updatePayload.actualDurationMinutes = Math.round((grossDurationMs - breakDurationMs) / 60000);
+    }
+    
+    // Calculate actual profit if possible
+    if (technician.hourlyCost && completedJob.quotedValue && updatePayload.actualDurationMinutes !== undefined) {
+      const laborCost = (technician.hourlyCost / 60) * updatePayload.actualDurationMinutes;
+      const travelCost = technician.hourlyCost > 0 && updatePayload.actualTravelTimeMinutes !== undefined
+        ? (technician.hourlyCost / 60) * updatePayload.actualTravelTimeMinutes
+        : 0;
+      const partsCost = completedJob.expectedPartsCost || 0;
+      const commission = completedJob.quotedValue * ((technician.commissionRate || 0) / 100) + (technician.bonus || 0);
+
+      updatePayload.actualProfit = completedJob.quotedValue - laborCost - travelCost - partsCost - commission;
+    }
+    // --- End of new logic ---
+    
+    // --- Existing Distance Calculation Logic ---
     const q = query(
       collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
       where("assignedTechnicianId", "==", technicianId)
     );
     const jobsSnap = await getDocs(q);
 
-    // Filter and sort in memory to find the immediately preceding job on the same day
     const prevJob = jobsSnap.docs
       .map(doc => doc.data() as Job)
       .filter(job => 
@@ -430,35 +466,23 @@ export async function calculateTravelMetricsAction(
         new Date(job.completedAt).getTime() >= new Date(new Date(completedJob.completedAt!).setHours(0, 0, 0, 0)).getTime()
       )
       .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())[0];
-
     
-    let startLocation: {latitude: number, longitude: number};
-    if (prevJob) {
-      startLocation = prevJob.location;
-    } else {
-      // First job of the day, use technician's home base
-      const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
-      const techSnap = await getDoc(techDocRef);
-      if (!techSnap.exists()) throw new Error("Technician not found.");
-      const technician = techSnap.data() as Technician;
-      startLocation = technician.location;
-    }
-    
+    let startLocation: {latitude: number, longitude: number} = prevJob ? prevJob.location : technician.location;
     const endLocation = completedJob.location;
-
+    
     const distanceResult = await estimateTravelDistanceFlow({
         startLocation: { latitude: startLocation.latitude, longitude: startLocation.longitude },
         endLocation: { latitude: endLocation.latitude, longitude: endLocation.longitude },
     });
 
     if (distanceResult) {
-        const distanceKm = distanceResult.distanceKm;
-        const co2EmissionsKg = distanceKm * emissionFactor;
-
-        await updateDoc(jobDocRef, {
-            travelDistanceKm: distanceKm,
-            co2EmissionsKg: co2EmissionsKg,
-        });
+        updatePayload.travelDistanceKm = distanceResult.distanceKm;
+        updatePayload.co2EmissionsKg = distanceResult.distanceKm * emissionFactor;
+    }
+    
+    // --- Commit all updates ---
+    if(Object.keys(updatePayload).length > 0) {
+      await updateDoc(jobDocRef, updatePayload);
     }
 
     return { error: null };
@@ -756,3 +780,5 @@ export async function generateCustomerFollowupAction(
     return { data: null, error: errorMessage };
   }
 }
+
+    

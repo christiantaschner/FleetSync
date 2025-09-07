@@ -186,6 +186,10 @@ export type Job = {
   dispatchLocked?: boolean;
   estimatedDurationMinutes?: number;
   finishedAt?: string;
+  // New fields for actuals
+  actualDurationMinutes?: number;
+  actualTravelTimeMinutes?: number;
+  actualProfit?: number;
 };
 
 export const CustomerSchema = z.object({
@@ -882,3 +886,5 @@ export const GenerateCustomerFollowupOutputSchema = z.object({
   followupMessage: z.string().describe("The generated customer-facing follow-up message."),
 });
 export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFollowupOutputSchema>;
+
+    

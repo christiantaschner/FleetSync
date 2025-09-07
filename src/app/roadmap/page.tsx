@@ -251,6 +251,12 @@ const roadmapFeatures = {
       icon: TrendingUp,
       status: "Completed",
     },
+    {
+      title: "Dashboard Profit Score Visibility & Sorting",
+      description: "Make profit a primary metric on the main dashboard. Each job in the list now displays its AI-calculated profit score, and dispatchers can sort the entire job list by profitability.",
+      icon: DollarSign,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],

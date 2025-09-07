@@ -134,7 +134,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Van Inventory: {{#if vanInventory.length}}{{#each vanInventory}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
-  {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} | Commission: {{#if commissionRate}}{{{commissionRate}}}%{{else}}0%{{/if}} | Bonus: \${{#if bonus}}{{{bonus}}}{{else}}0{{/if}} | Max Daily Hours: {{{maxDailyHours}}}h {{/if}}
+  {{#if ../featureFlags.profitScoringEnabled}}  - **Financials:** Hourly Cost: \${{{hourlyCost}}} | Commission: {{#if commissionRate}}{{{commissionRate}}}%{{else}}0%{{/if}} | Bonus: \${{#if bonus}}{{{bonus}}}{{else}}0{{/if}} | Max Daily Hours: {{{maxDailyHours}}}h{{/if}}
   {{#if currentJobs.length}}
   - Current Assigned Jobs:
     {{#each currentJobs}}
@@ -155,7 +155,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 ---
 **Final Assessment:**
 {{#if featureFlags.profitScoringEnabled}}
-First, calculate the expectedPartsCost. Then, calculate the profitScore for every suitable technician. Finally, provide your decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
+First, calculate the expectedPartsCost. Then, calculate the profitScore for every suitable technician. Finally, provide your decision on the best technician. Your reasoning MUST be from a business perspective, explaining HOW your choice maximizes profit while respecting all constraints (skills, parts, etc.). State the calculated profit score AND the technician's effective costs (hourly rate, commission) in your reasoning. If no technician can be profitably or safely assigned, state this clearly and explain the bottleneck.
 {{else}}
 Provide your final decision on the best technician. Your reasoning MUST be based on skills, parts availability, and proximity. If no technician is suitable, state this clearly and explain the bottleneck.
 {{/if}}

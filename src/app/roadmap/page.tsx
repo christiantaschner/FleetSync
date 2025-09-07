@@ -246,6 +246,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Technician Commission & Bonus Pay",
+      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
+      icon: Award,
+      status: "Completed",
+    },
+    {
       title: "PWA & Offline Mode Foundations",
       description: "The application can be installed on devices and has foundational support for offline data access via Firestore's cache, ensuring technicians can view job details even without a connection.",
       icon: WifiOff,
@@ -253,12 +259,6 @@ const roadmapFeatures = {
     },
   ],
   inProgress: [
-      {
-      title: "Technician Commission & Bonus Pay",
-      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
-      icon: Award,
-      status: "In Progress",
-    },
   ],
   planned: [
   ],

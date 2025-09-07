@@ -30,8 +30,8 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part, JobFlexibility } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock } from 'lucide-react';
-import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction, suggestUpsellOpportunityAction, suggestJobPartsAction } from '@/actions/ai-actions';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2 } from 'lucide-react';
+import { suggestScheduleTimeAction, generateTriageLinkAction, analyzeJobAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
 import { Popover, PopoverContent, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover';
@@ -78,9 +78,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
-  const [isFetchingSkills, setIsFetchingSkills] = useState(false);
-  const [isFetchingUpsell, setIsFetchingUpsell] = useState(false);
-  const [isFetchingParts, setIsFetchingParts] = useState(false);
+  const [isAnalyzingJob, setIsAnalyzingJob] = useState(false);
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
@@ -365,86 +363,45 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
   };
   
-  const handleSuggestSkills = async () => {
-    if (!description.trim() && !title.trim()) {
-        toast({ title: "Cannot Suggest Skills", description: "Please enter a Job Title or Description.", variant: "default" });
+  const handleAnalyzeJob = async () => {
+    if (!title && !description) {
+        toast({ title: "Cannot Analyze Job", description: "Please provide a Job Title or Description.", variant: "default" });
         return;
     }
-    setIsFetchingSkills(true);
-    const result = await suggestJobSkillsAction({ jobTitle: title, jobDescription: description, availableSkills: allSkills });
-    if (result.error) {
-        toast({ title: "Skill Suggestion Error", description: result.error, variant: "destructive" });
-    } else if (result.data?.suggestedSkills) {
-        if (result.data.suggestedSkills.length === 0) {
-            toast({ title: "No specific skills suggested", description: result.data.reasoning || "The AI could not identify specific skills from the job description.", variant: "default" });
-        } else {
-            setRequiredSkills(prev => [...new Set([...prev, ...result.data!.suggestedSkills])]);
-            toast({ title: "Skills Suggested", description: `AI added ${result.data.suggestedSkills.length} skill(s). Please review.` });
-        }
-    }
-    setIsFetchingSkills(false);
-  };
+    if (!userProfile?.companyId || !appId) return;
 
-  const handleSuggestUpsell = async () => {
-    if (!description.trim() && !title.trim() || !customerName) {
-        toast({ title: "Cannot Suggest Upsell", description: "Please enter a Job Title and Customer Name.", variant: "default" });
-        return;
-    }
-    if (!db || !appId || !userProfile?.companyId) return;
-
-    setIsFetchingUpsell(true);
-
-    const historyQuery = query(
-        collection(db, `artifacts/${appId}/public/data/jobs`),
-        where("companyId", "==", userProfile.companyId),
-        where("customerName", "==", customerName),
-        where("status", "==", "Completed"),
-        orderBy("completedAt", "desc"),
-        limit(5)
-    );
-    const historySnapshot = await getDocs(historyQuery);
-    const customerHistory = historySnapshot.docs.map(d => d.data() as Job);
-
-    const result = await suggestUpsellOpportunityAction({
+    setIsAnalyzingJob(true);
+    const result = await analyzeJobAction({
+        appId: appId,
+        companyId: userProfile.companyId,
         jobTitle: title,
         jobDescription: description,
-        customerHistory: customerHistory.filter(h => h.completedAt).map(h => ({
-            title: h.title,
-            description: h.description || '',
-            completedAt: h.completedAt!,
-        }))
+        customerName: customerName,
+        availableSkills: allSkills,
+        availableParts: allParts.map(p => p.name),
     });
+    setIsAnalyzingJob(false);
 
-    if (result.data) {
-        setUpsellScore(result.data.upsellScore);
-        setUpsellReasoning(result.data.reasoning);
-        toast({ title: "AI Upsell Suggestion", description: result.data.reasoning });
-    } else {
-        toast({ title: "Error", description: result.error || "Could not get upsell suggestion.", variant: "destructive" });
-    }
-    setIsFetchingUpsell(false);
-  }
-
-  const handleSuggestParts = async () => {
-    if (!description.trim() && !title.trim()) {
-        toast({ title: "Cannot Suggest Parts", description: "Please enter a Job Title or Description.", variant: "default" });
-        return;
-    }
-    setIsFetchingParts(true);
-    const result = await suggestJobPartsAction({ jobDescription: description, availableParts: allParts.map(p => p.name) });
     if (result.error) {
-        toast({ title: "Parts Suggestion Error", description: result.error, variant: "destructive" });
-    } else if (result.data?.suggestedParts) {
-        if (result.data.suggestedParts.length === 0) {
-            toast({ title: "No specific parts suggested", description: "The AI could not identify specific parts from the job description.", variant: "default" });
-        } else {
-            setRequiredParts(prev => [...new Set([...prev, ...result.data!.suggestedParts])]);
-            toast({ title: "Parts Suggested", description: `AI added ${result.data.suggestedParts.length} part(s). Please review.` });
+        toast({ title: "Analysis Error", description: result.error, variant: "destructive" });
+    } else if (result.data) {
+        let updateCount = 0;
+        const { suggestedSkills, suggestedParts, upsellOpportunity } = result.data;
+        if (suggestedSkills.suggestedSkills.length > 0) {
+            setRequiredSkills(prev => [...new Set([...prev, ...suggestedSkills.suggestedSkills])]);
+            updateCount += suggestedSkills.suggestedSkills.length;
         }
+        if (suggestedParts.suggestedParts.length > 0) {
+            setRequiredParts(prev => [...new Set([...prev, ...suggestedParts.suggestedParts])]);
+            updateCount += suggestedParts.suggestedParts.length;
+        }
+        setUpsellScore(upsellOpportunity.upsellScore);
+        setUpsellReasoning(upsellOpportunity.reasoning);
+        if(upsellOpportunity.upsellScore > 0) updateCount++;
+        
+        toast({ title: "Analysis Complete", description: `AI added ${updateCount} suggestion(s). Please review.` });
     }
-    setIsFetchingParts(false);
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -775,12 +732,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                                 <SelectItem value="0.8">High</SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <Button type="button" variant="outline" size="icon" onClick={handleSuggestUpsell} disabled={isFetchingUpsell || !title}>
-                                            {isFetchingUpsell ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
-                                        </Button>
                                     </div>
                                 </div>
                             </div>
+                            {upsellReasoning && <p className="text-xs text-muted-foreground italic">AI Reason: "{upsellReasoning}"</p>}
                         </AccordionContent>
                     </AccordionItem>
                   </Accordion>
@@ -849,47 +804,41 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                          <ListChecks className="h-4 w-4" />
-                          Required Skills
-                      </Label>
-                      <div className="flex items-center gap-2">
-                          <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0">Manage</Button>
-                          <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || (!title.trim() && !description.trim())} className="h-9">
-                              {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
-                              Suggest
+                  
+                  <div className="space-y-2 border-t pt-4">
+                     <div className="flex items-center justify-between">
+                         <Label className="flex items-center gap-2 font-semibold"><Wand2 className="h-4 w-4 text-primary"/>AI Job Analysis</Label>
+                          <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeJob} disabled={isAnalyzingJob || (!title.trim() && !description.trim())} className="h-9">
+                              {isAnalyzingJob ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
+                              Analyze Job
                           </Button>
                       </div>
-                    </div>
-                     <MultiSelectFilter
+                      <p className="text-xs text-muted-foreground">Get AI suggestions for required skills, parts, and upsell opportunities based on the job title and description.</p>
+                  </div>
+
+                  <div className="flex flex-col space-y-2">
+                    <Label className="flex items-center gap-2">
+                        <ListChecks className="h-4 w-4" /> Required Skills
+                    </Label>
+                    <MultiSelectFilter
                         options={skillOptions}
                         selected={requiredSkills}
                         onChange={setRequiredSkills}
                         placeholder="Select required skills..."
                     />
+                    <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0 self-end">Manage Skills</Button>
                   </div>
                    <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                          <Package className="h-4 w-4" />
-                          Required Parts
-                      </Label>
-                      <div className="flex items-center gap-2">
-                          <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0">Manage</Button>
-                          <Button type="button" variant="outline" size="sm" onClick={handleSuggestParts} disabled={isFetchingParts || (!title.trim() && !description.trim())} className="h-9">
-                              {isFetchingParts ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
-                              Suggest
-                          </Button>
-                      </div>
-                    </div>
+                    <Label className="flex items-center gap-2">
+                        <Package className="h-4 w-4" /> Required Parts
+                    </Label>
                      <MultiSelectFilter
                         options={partOptions}
                         selected={requiredParts}
                         onChange={setRequiredParts}
                         placeholder="Select required parts..."
                     />
+                    <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0 self-end">Manage Parts</Button>
                   </div>
                   <div className="space-y-2 rounded-md border p-4">
                     <TooltipProvider>

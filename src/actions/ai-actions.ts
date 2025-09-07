@@ -1,4 +1,5 @@
 
+
       
 
 "use server";
@@ -25,7 +26,7 @@ import { analyzeProfitability as analyzeProfitabilityFlow } from "@/ai/flows/ana
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove, setDoc } from "firebase/firestore";
 import type { Job, Technician, Company, DispatcherFeedback } from "@/types";
 import crypto from 'crypto';
 import { addHours, addMinutes } from 'date-fns';
@@ -849,7 +850,82 @@ export async function generateAndSaveFeedbackAction(
         return { error: errorMessage };
     }
 }
-    
+
+// --- New Combined Action ---
+const AnalyzeJobInputSchema = z.object({
+    appId: z.string().min(1),
+    companyId: z.string().min(1),
+    jobTitle: z.string(),
+    jobDescription: z.string(),
+    customerName: z.string(),
+    availableSkills: z.array(z.string()),
+    availableParts: z.array(z.string()),
+});
+export type AnalyzeJobInput = z.infer<typeof AnalyzeJobInputSchema>;
+
+export type AnalyzeJobOutput = {
+    suggestedSkills: SuggestJobSkillsOutput;
+    suggestedParts: SuggestJobPartsOutput;
+    upsellOpportunity: SuggestUpsellOpportunityOutput;
+};
+
+export async function analyzeJobAction(
+    input: AnalyzeJobInput
+): Promise<{ data: AnalyzeJobOutput | null; error: string | null }> {
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+
+        const { appId, companyId, jobTitle, jobDescription, customerName, availableSkills, availableParts } = AnalyzeJobInputSchema.parse(input);
+
+        // Fetch customer history for upsell analysis
+        const historyQuery = query(
+            collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
+            where("companyId", "==", companyId),
+            where("customerName", "==", customerName),
+            where("status", "==", "Completed"),
+            orderBy("completedAt", "desc"),
+            limit(5)
+        );
+        const historySnapshot = await getDocs(historyQuery);
+        const customerHistory = historySnapshot.docs.map(d => d.data() as Job);
+
+        // Run all AI suggestions in parallel
+        const [skillsResult, partsResult, upsellResult] = await Promise.all([
+            suggestJobSkillsFlow({ jobTitle, jobDescription, availableSkills }),
+            suggestJobPartsFlow({ jobDescription, availableParts }),
+            suggestUpsellOpportunityFlow({
+                jobTitle,
+                jobDescription,
+                customerHistory: customerHistory.filter(h => h.completedAt).map(h => ({
+                    title: h.title,
+                    description: h.description || '',
+                    completedAt: h.completedAt!,
+                }))
+            })
+        ]);
+
+        return {
+            data: {
+                suggestedSkills: skillsResult,
+                suggestedParts: partsResult,
+                upsellOpportunity: upsellResult,
+            },
+            error: null
+        };
+
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map(err => err.message).join(", ") };
+        }
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in analyzeJobAction',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { data: null, error: errorMessage };
+    }
+}
     
 
     

@@ -281,16 +281,16 @@ const roadmapFeatures = {
       icon: Cog,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Dispatcher UX: One-Click AI Analysis",
       description: "Combine the individual 'Suggest Skills', 'Suggest Parts', and 'Suggest Priority' buttons into a single, powerful 'Analyze Job' button. One click will provide a comprehensive set of AI suggestions for dispatcher review.",
       icon: Wand2,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
     {
       title: "Dispatcher UX: Compact Technician View",
       description: "Add a compact list-view option to the Technicians tab, allowing for easier management and overview of larger teams.",

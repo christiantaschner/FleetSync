@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package, Grid, List } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package, Grid, List, ChevronDown, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -53,6 +53,14 @@ import SmartJobAllocationDialog from './components/smart-job-allocation-dialog';
 import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { Switch } from '@/components/ui/switch';
 import FleetOptimizationReviewDialog from './components/FleetOptimizationReviewDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import QuickAddJobDialog from './components/QuickAddJobDialog';
+
 import {
   Tooltip,
   TooltipContent,
@@ -143,6 +151,7 @@ export default function DashboardPage() {
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
+  const [isQuickAddDialogOpen, setIsQuickAddDialogOpen] = useState(false);
 
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
@@ -379,10 +388,6 @@ export default function DashboardPage() {
         setActiveTab('overview-map');
     }
   }, [jobFilterId, searchParams]);
-  
-  const handleOpenAddJob = () => {
-    router.push('/job/new');
-  };
   
   const handleOpenEditTechnician = (technician: Technician) => {
     setSelectedTechnicianForEdit(technician);
@@ -1073,7 +1078,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
-            onOpenAddJobDialog={() => setIsAddEditDialogOpen(true)}
+            onOpenAddJobDialog={() => setIsQuickAddDialogOpen(true)}
             onSeedData={handleSeedData}
             onSwitchToScheduleTab={() => setActiveTab('schedule')}
             onDismiss={() => {
@@ -1101,6 +1106,7 @@ export default function DashboardPage() {
             />
         )}
         {canEditJobs && (
+          <>
             <AddEditJobDialog
                 isOpen={isAddEditDialogOpen}
                 onClose={() => setIsAddEditDialogOpen(false)}
@@ -1114,6 +1120,12 @@ export default function DashboardPage() {
                 onManageSkills={() => setIsManageSkillsOpen(true)}
                 onManageParts={() => setIsManagePartsOpen(true)}
             />
+            <QuickAddJobDialog
+              isOpen={isQuickAddDialogOpen}
+              onClose={() => setIsQuickAddDialogOpen(false)}
+              onJobAdded={() => {}}
+            />
+          </>
         )}
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
@@ -1198,9 +1210,24 @@ export default function DashboardPage() {
             </Button>
            )}
            {canEditJobs && (
-            <Button onClick={() => setIsAddEditDialogOpen(true)} className="w-full sm:w-auto" variant="default">
-                <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
-            </Button>
+            <div className="flex rounded-md shadow-sm w-full sm:w-auto">
+               <Button onClick={() => setIsQuickAddDialogOpen(true)} className="relative flex-1 rounded-r-none">
+                <Rocket className="mr-2 h-4 w-4" /> Quick Add
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="icon" className="w-10 shrink-0 rounded-l-none">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setIsAddEditDialogOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Detailed Add
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
            )}
         </div>
       </div>

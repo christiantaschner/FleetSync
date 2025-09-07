@@ -8,12 +8,13 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award, Wand2
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award, Wand2, Rocket
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface RoadmapItemProps {
   title: string;
@@ -323,16 +324,16 @@ const roadmapFeatures = {
       icon: Eye,
       status: "Completed",
     },
+    {
+      title: "UX: Quick Add Job",
+      description: "A simplified 'Quick Add' dialog, showing only essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in details later, streamlining high-volume intake.",
+      icon: Rocket,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],
   planned: [
-    {
-      title: "UX: Quick Add Job",
-      description: "A simplified 'Quick Add' mode for the new job dialog, showing only the most essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in the details for scheduling later.",
-      icon: Rocket,
-      status: "Planned",
-    },
   ],
   vision: [
     {

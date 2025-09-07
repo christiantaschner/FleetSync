@@ -73,10 +73,11 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
         .map(j => ({
           jobId: j.id,
+          location: j.location,
           scheduledTime: j.scheduledTime,
           priority: j.priority,
-          location: j.location,
-          estimatedDurationMinutes: j.estimatedDurationMinutes
+          startedAt: j.inProgressAt,
+          estimatedDurationMinutes: j.estimatedDurationMinutes,
         })),
       workingHours: t.workingHours,
       isOnCall: t.isOnCall,

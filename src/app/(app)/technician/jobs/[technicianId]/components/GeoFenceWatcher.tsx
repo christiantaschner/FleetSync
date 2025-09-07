@@ -111,4 +111,3 @@ const GeoFenceWatcher: React.FC<GeoFenceWatcherProps> = ({ appId, job, onStatusC
 };
 
 export default GeoFenceWatcher;
-

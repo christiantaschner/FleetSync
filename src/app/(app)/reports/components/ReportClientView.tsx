@@ -514,7 +514,7 @@ export default function ReportClientView() {
                                 <TableRow>
                                     <TableHead>Technician</TableHead>
                                     <TableHead className="text-right">Jobs</TableHead>
-                                    <TableHead className="text-right">Satisfaction</TableHead>
+                                    <TableHead className="text-right">Upsell</TableHead>
                                     <TableHead className="text-right">Profit</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -526,7 +526,7 @@ export default function ReportClientView() {
                                             <span className="font-medium">{tech.name}</span>
                                         </TableCell>
                                         <TableCell className="text-right">{tech.jobsCompleted}</TableCell>
-                                        <TableCell className="text-right">{tech.avgSatisfaction}/5</TableCell>
+                                        <TableCell className="text-right">${tech.totalUpsellValue.toFixed(2)}</TableCell>
                                         <TableCell className="text-right font-semibold text-green-600">${tech.totalProfit.toFixed(2)}</TableCell>
                                     </TableRow>
                                 )) : (

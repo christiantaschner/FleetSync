@@ -245,14 +245,14 @@ const roadmapFeatures = {
       icon: Target,
       status: "Completed",
     },
-  ],
-  inProgress: [
     {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
-      status: "In Progress",
+      status: "Completed",
     },
+  ],
+  inProgress: [
     {
       title: "Integrated Invoicing & Payments",
       description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
@@ -359,3 +359,4 @@ export default function RoadmapPage() {
     </div>
   );
 }
+```

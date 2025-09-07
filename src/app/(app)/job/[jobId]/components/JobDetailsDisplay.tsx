@@ -300,3 +300,4 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, technician }
 };
 
 export default JobDetailsDisplay;
+```

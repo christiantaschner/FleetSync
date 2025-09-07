@@ -326,7 +326,7 @@ const roadmapFeatures = {
     },
     {
       title: "UX: Quick Add Job",
-      description: "A simplified 'Quick Add' dialog, showing only essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in details later, streamlining high-volume intake.",
+      description: "A simplified 'Quick Add' dialog, triggered from a new dropdown on the 'Add Job' button, showing only essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in details later, streamlining high-volume intake.",
       icon: Rocket,
       status: "Completed",
     },

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -71,6 +72,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Technician Commission & Bonus Pay",
+      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
+      icon: Award,
+      status: "Completed",
+    },
+    {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
       icon: MousePointerClick,
@@ -80,12 +87,6 @@ const roadmapFeatures = {
       title: "Automated Schedule Risk Warnings & AI Resolution",
       description: "The system automatically checks for schedule risks, proactively warns dispatchers about potential delays, and offers AI-powered one-click resolutions to reassign or reschedule the at-risk job.",
       icon: ShieldQuestion,
-      status: "Completed",
-    },
-     {
-      title: "Basic Performance Analytics",
-      description: "A reporting dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
-      icon: BarChart,
       status: "Completed",
     },
     {
@@ -209,12 +210,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Technician Commission & Bonus Pay",
-      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
-      icon: Award,
-      status: "Completed",
-    },
-    {
       title: "Job Flexibility Status",
       description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
       icon: Shuffle,
@@ -224,12 +219,6 @@ const roadmapFeatures = {
       title: "Advanced Fleet-Wide Re-optimization",
       description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
       icon: Brain,
-      status: "Completed",
-    },
-    {
-      title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
-      icon: TrendingUp,
       status: "Completed",
     },
     {
@@ -244,16 +233,22 @@ const roadmapFeatures = {
       icon: Smile,
       status: "Completed",
     },
-     {
+    {
       title: "Automated AI Feedback Loop",
       description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
       status: "Completed",
     },
     {
-      title: "Integrated Invoicing &amp; Payments",
+      title: "Integrated Invoicing & Payments",
       description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
       icon: DollarSign,
+      status: "Completed",
+    },
+     {
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      icon: TrendingUp,
       status: "Completed",
     },
   ],

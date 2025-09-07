@@ -509,14 +509,14 @@ export default function DashboardPage() {
     const result = await allocateJobAction(input);
 
     if (result.data) {
-      const techDetails = result.data.suggestedTechnicianId 
-        ? technicians.find(t => t.id === result.data.suggestedTechnicianId) 
+      const techDetails = result.data.suggestions.length > 0 && result.data.suggestions[0].suggestedTechnicianId 
+        ? technicians.find(t => t.id === result.data.suggestions[0].suggestedTechnicianId) 
         : null;
       setProactiveSuggestion({
         job: job,
         suggestion: result.data,
         suggestedTechnicianDetails: techDetails,
-        error: !result.data.suggestedTechnicianId ? result.data.reasoning : null,
+        error: !techDetails ? result.data.overallReasoning : null,
       });
     } else {
         setProactiveSuggestion({
@@ -735,8 +735,11 @@ export default function DashboardPage() {
             return {
                 job,
                 suggestion: {
-                    suggestedTechnicianId: assignedTech.id,
-                    reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`
+                    suggestions: [{
+                      suggestedTechnicianId: assignedTech.id,
+                      reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`
+                    }],
+                    overallReasoning: ''
                 },
                 suggestedTechnicianDetails: assignedTech,
                 error: null
@@ -794,8 +797,8 @@ export default function DashboardPage() {
 
         const result = await allocateJobAction(input);
         let techDetails: Technician | null = null;
-        if (result.data) {
-            techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null;
+        if (result.data?.suggestions && result.data.suggestions.length > 0) {
+            techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestions[0].suggestedTechnicianId) || null;
             if (techDetails && techDetails.isAvailable) {
                 tempTechnicianPool = tempTechnicianPool.map((t: Technician) => t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t);
             }
@@ -1178,7 +1181,7 @@ export default function DashboardPage() {
                 </AlertTitle>
                 <AlertDescription className="text-amber-800">
                     A new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>" was just created.
-                    <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.reasoning}"</p>
+                    <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.overallReasoning}"</p>
                 </AlertDescription>
                 <div className="mt-4 flex gap-2">
                     <Button 
@@ -1415,6 +1418,7 @@ export default function DashboardPage() {
             isFleetOptimizing={isFleetOptimizing}
             optimizationResult={fleetOptimizationResult}
             setOptimizationResult={setFleetOptimizationResult}
+            isFleetOptimizationDialogOpen={isFleetOptimizationDialogOpen}
             setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
             setSelectedFleetChanges={setSelectedFleetChanges}
           />

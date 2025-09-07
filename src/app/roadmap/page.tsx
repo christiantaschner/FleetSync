@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award, Wand2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -73,7 +73,7 @@ const roadmapFeatures = {
     },
     {
       title: "Automated AI Feedback Loop",
-      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model. The AI analyzes discrepancies between estimated and actual profit to refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin analysis) and dispatcher overrides back into the AI model. The AI learns from dispatcher expertise and its own performance to refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
       status: "Completed",
     },
@@ -285,6 +285,36 @@ const roadmapFeatures = {
   inProgress: [
   ],
   planned: [
+    {
+      title: "Dispatcher UX: One-Click AI Analysis",
+      description: "Combine the individual 'Suggest Skills', 'Suggest Parts', and 'Suggest Priority' buttons into a single, powerful 'Analyze Job' button. One click will provide a comprehensive set of AI suggestions for dispatcher review.",
+      icon: Wand2,
+      status: "Planned",
+    },
+    {
+      title: "Dispatcher UX: Compact Technician View",
+      description: "Add a compact list-view option to the Technicians tab, allowing for easier management and overview of larger teams.",
+      icon: List,
+      status: "Planned",
+    },
+    {
+      title: "Dispatcher UX: Interactive AI Scheduling",
+      description: "Make the AI's time suggestions interactive. Clicking a suggestion will populate the manual scheduling fields, allowing dispatchers to accept it as a starting point and make minor adjustments.",
+      icon: MousePointerClick,
+      status: "Planned",
+    },
+    {
+      title: "Technician UX: Offline Status Indicator",
+      description: "Display a small, persistent icon in the technician view to clearly indicate the current network status (online/offline), giving technicians more confidence when working in areas with poor connectivity.",
+      icon: WifiOff,
+      status: "Planned",
+    },
+    {
+      title: "Technician UX: Upsell Catalog",
+      description: "Allow technicians to select from a predefined list of common upsell services or products when logging a successful sale, standardizing data entry and automatically calculating the upsell value.",
+      icon: ShoppingCart,
+      status: "Planned",
+    },
   ],
   vision: [
     {
@@ -356,11 +386,18 @@ export default function RoadmapPage() {
 
       <section>
         <h2 className="text-2xl font-semibold mb-4 mt-6 pb-2 border-b font-headline">Planned Features</h2>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
-                <RoadmapItem key={item.title} {...item} />
-            )) : <p className="text-muted-foreground col-span-full">All planned features are complete! See the Vision section for what's next.</p>}
-        </div>
+         <Accordion type="single" collapsible className="w-full" defaultValue="ux">
+            <AccordionItem value="ux">
+              <AccordionTrigger className="text-xl font-semibold">UX/Workflow Improvements</AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-4">
+                  {roadmapFeatures.planned.map((item) => (
+                    <RoadmapItem key={item.title} {...item} />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
       </section>
 
       <section>
@@ -383,3 +420,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+      

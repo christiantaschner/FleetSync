@@ -60,18 +60,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "AI-Powered Job Allocation",
-      description: "Core AI feature suggests the best technician for new jobs based on skills, availability, and location, with both single and batch assignment modes.",
-      icon: Sparkles,
-      status: "Completed",
-    },
-     {
-      title: "Profit-Aware Dispatching",
-      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. Controllable via a feature flag in settings.",
-      icon: DollarSign,
-      status: "Completed",
-    },
-    {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
       icon: MousePointerClick,
@@ -83,22 +71,10 @@ const roadmapFeatures = {
       icon: ShieldQuestion,
       status: "Completed",
     },
-     {
-      title: "Basic Performance Analytics",
-      description: "A reporting dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
-      icon: BarChart,
-      status: "Completed",
-    },
     {
-      title: "Visual Calendar & Schedule View",
-      description: "A visual calendar for dispatchers to view all jobs and technicians. Includes day and month views to manage schedules.",
-      icon: CalendarDays,
-      status: "Completed",
-    },
-     {
-      title: "Technician Profile & Change Requests",
-      description: "Technicians can view their profiles and suggest changes (e.g., updating their phone number or skills), which dispatchers can review and approve.",
-      icon: User, 
+      title: "Recurring Job & Contract Management",
+      description: "Create and manage recurring service contracts, with AI assistance for scheduling future appointments.",
+      icon: Repeat,
       status: "Completed",
     },
     {
@@ -108,15 +84,15 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Recurring Job & Contract Management",
-      description: "Create and manage recurring service contracts, with AI assistance for scheduling future appointments.",
-      icon: Repeat,
-      status: "Completed",
-    },
-    {
       title: "Dynamic Skill Library & AI Suggestions",
       description: "Dispatchers can manage a central skill library, and the AI suggests required skills for new jobs.",
       icon: Cog, 
+      status: "Completed",
+    },
+    {
+      title: "AI-Powered Parts Suggestion & Van Inventory",
+      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
+      icon: ShoppingCart,
       status: "Completed",
     },
     {
@@ -161,12 +137,6 @@ const roadmapFeatures = {
       icon: ImageIcon,
       status: "Completed",
     },
-    {
-      title: "Real-Time Technician Location Tracking",
-      description: "Provides live GPS location updates of all active field technicians on the dispatcher's map view, fed directly from the technician's mobile app. This feature is the foundation for automated status updates.",
-      icon: MapPin,
-      status: "Completed",
-    },
      {
       title: "AI-Drafted Customer Notifications",
       description: "Generate professional, context-aware SMS/email notifications for customers for appointment confirmations, reminders, and delays.",
@@ -186,39 +156,15 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "AI-Powered Upsell Intelligence",
-      description: "The AI analyzes job details and customer history to identify upsell opportunities, calculate a potential profit score, and provide talking points for technicians. This data directly influences the profit-aware dispatching model.",
-      icon: Lightbulb,
-      status: "Completed"
-    },
-    {
       title: "Technician Upsell Suggestions",
       description: "AI-identified upsell opportunities and talking points are now displayed directly to the technician in their job detail view, empowering them to increase revenue at the job site.",
       icon: Smartphone,
       status: "Completed"
     },
     {
-      title: "AI-Powered Parts Suggestion & Van Inventory",
-      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
-      icon: ShoppingCart,
-      status: "Completed",
-    },
-    {
       title: "Break Tracking",
       description: "Allows technicians to log break times during a job. This data is now factored into performance analytics for more accurate efficiency metrics.",
       icon: Timer,
-      status: "Completed",
-    },
-     {
-      title: "Advanced Fleet-Wide Re-optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
-      icon: Brain,
-      status: "Completed",
-    },
-     {
-      title: "Job Flexibility Status",
-      description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
-      icon: Shuffle,
       status: "Completed",
     },
     {
@@ -240,24 +186,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
-      icon: TrendingUp,
-      status: "Completed",
-    },
-    {
-      title: "Technician Commission & Bonus Pay",
-      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
-      icon: Award,
-      status: "Completed",
-    },
-    {
       title: "PWA & Offline Mode Foundations",
       description: "The application can be installed on devices and has foundational support for offline data access via Firestore's cache, ensuring technicians can view job details even without a connection.",
       icon: WifiOff,
       status: "Completed",
     },
-    {
+     {
       title: "Automated AI Feedback Loop",
       description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
@@ -265,10 +199,34 @@ const roadmapFeatures = {
     }
   ],
   inProgress: [
+     {
+      title: "Profit-First Dispatching",
+      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. Controllable via a feature flag in settings.",
+      icon: DollarSign,
+      status: "In Progress",
+    },
+    {
+      title: "AI Upsell Intelligence",
+      description: "The AI analyzes job details and customer history to identify upsell opportunities, calculate a potential profit score, and provide talking points for technicians. This data directly influences the profit-aware dispatching model.",
+      icon: Lightbulb,
+      status: "In Progress"
+    },
+    {
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      icon: TrendingUp,
+      status: "In Progress",
+    },
   ],
   planned: [
   ],
   vision: [
+    {
+      title: "Technician Commission & Bonus Pay",
+      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
+      icon: Award,
+      status: "Vision",
+    },
     {
       title: "Disruption Forecasting (Predicted Bottlenecks)",
       description: "The AI will analyze complex data patterns (traffic, weather, local events) to predict future potential delays. For example, it might highlight: 'High traffic predicted near the stadium between 4-6 PM due to a concert.'",
@@ -366,3 +324,4 @@ export default function RoadmapPage() {
   );
 }
 
+    

@@ -18,6 +18,7 @@ import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
 import { suggestUpsellOpportunity as suggestUpsellOpportunityFlow } from "@/ai/flows/suggest-upsell-opportunity";
 import { generateCustomerFollowup as generateCustomerFollowupFlow } from "@/ai/flows/generate-customer-followup-flow";
+import { runReportAnalysis as runReportAnalysisFlow } from "@/ai/flows/run-report-analysis-flow";
 
 
 import { z } from "zod";
@@ -58,6 +59,8 @@ import type {
   SuggestUpsellOpportunityOutput,
   GenerateCustomerFollowupInput,
   GenerateCustomerFollowupOutput,
+  RunReportAnalysisInput,
+  RunReportAnalysisOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -780,5 +783,26 @@ export async function generateCustomerFollowupAction(
     return { data: null, error: errorMessage };
   }
 }
+
+export async function runReportAnalysisAction(
+    input: RunReportAnalysisInput
+): Promise<{ data: RunReportAnalysisOutput | null; error: string | null }> {
+    try {
+        const result = await runReportAnalysisFlow(input);
+        return { data: result, error: null };
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map((err) => err.message).join(", ") };
+        }
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error running report analysis',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { data: null, error: errorMessage };
+    }
+}
+    
 
     

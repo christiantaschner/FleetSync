@@ -46,7 +46,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { summarizeFtfrAction, runReportAnalysisAction } from "@/actions/ai-actions";
+import { summarizeFtfrAction } from '@/actions/report-actions';
+import { runReportAnalysisAction } from '@/actions/ai-actions';
 import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReportAnalysisDialog from "./ReportAnalysisDialog";
@@ -273,12 +274,12 @@ export default function ReportClientView() {
     const technicianCountInPeriod = assignedTechnicianIds.size;
     const avgJobsPerTech = technicianCountInPeriod > 0 ? (completedJobs.length / technicianCountInPeriod).toFixed(1) : "0.0";
     
-    const totalProfit = completedJobs.reduce((acc, job) => acc + (job.profitScore || 0), 0);
+    const totalProfit = completedJobs.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
     const slaMisses = completedJobs.filter(job => job.slaDeadline && job.completedAt && new Date(job.completedAt) > new Date(job.slaDeadline)).length;
 
     const topTechnician = Object.entries(completedJobs.reduce((acc, job) => {
         if (!job.assignedTechnicianId) return acc;
-        acc[job.assignedTechnicianId] = (acc[job.assignedTechnicianId] || 0) + (job.profitScore || 0);
+        acc[job.assignedTechnicianId] = (acc[job.assignedTechnicianId] || 0) + (job.actualProfit || 0);
         return acc;
     }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0];
 
@@ -479,3 +480,5 @@ export default function ReportClientView() {
     </div>
   );
 }
+
+    

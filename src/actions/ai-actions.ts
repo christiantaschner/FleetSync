@@ -1,4 +1,6 @@
 
+      
+
 "use server";
 
 import { allocateJob as allocateJobFlow } from "@/ai/flows/allocate-job";
@@ -18,6 +20,7 @@ import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
 import { suggestUpsellOpportunity as suggestUpsellOpportunityFlow } from "@/ai/flows/suggest-upsell-opportunity";
 import { generateCustomerFollowup as generateCustomerFollowupFlow } from "@/ai/flows/generate-customer-followup-flow";
+import { analyzeProfitability as analyzeProfitabilityFlow } from "@/ai/flows/analyze-profitability-flow";
 
 
 import { z } from "zod";
@@ -799,5 +802,54 @@ export async function generateCustomerFollowupAction(
     return { data: null, error: errorMessage };
   }
 }
+
+export async function generateAndSaveFeedbackAction(
+  completedJob: Job,
+  aiSuggestion: AllocateJobOutput,
+  appId: string
+): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: null };
+    }
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+
+        // 1. Analyze the difference
+        const analysisResult = await analyzeProfitabilityFlow({
+            estimatedProfit: aiSuggestion.profitScore || 0,
+            actualProfit: completedJob.actualProfit || 0,
+        });
+
+        // 2. Construct feedback object
+        const feedback: DispatcherFeedback = {
+            companyId: completedJob.companyId,
+            jobId: completedJob.id,
+            aiSuggestedTechnicianId: completedJob.assignedTechnicianId!,
+            dispatcherSelectedTechnicianId: completedJob.assignedTechnicianId!, // Same, since it wasn't manually overridden
+            aiReasoning: aiSuggestion.reasoning,
+            dispatcherReasoning: "AI suggestion was accepted.",
+            createdAt: new Date().toISOString(),
+            profitScore: aiSuggestion.profitScore,
+            actualProfit: completedJob.actualProfit,
+            estimatedVsActualReasoning: analysisResult.reasoning,
+        };
+
+        // 3. Save to Firestore
+        const feedbackRef = doc(collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`));
+        await setDoc(feedbackRef, feedback);
+        
+        return { error: null };
+    } catch(e) {
+        const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
+        console.error(JSON.stringify({
+            message: 'Error generating AI feedback',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { error: errorMessage };
+    }
+}
     
+    
+
     

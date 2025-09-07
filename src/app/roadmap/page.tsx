@@ -1,4 +1,5 @@
 
+      
 
 "use client";
 
@@ -66,6 +67,18 @@ const roadmapFeatures = {
       icon: DollarSign,
       status: "Completed",
     },
+     {
+      title: "Automated Job Actuals Calculation",
+      description: "Upon job completion, the system automatically calculates the actual travel time, on-site duration, and final profit margin, providing crucial data for the AI's learning loop and for accurate financial reporting.",
+      icon: CheckSquare,
+      status: "Completed",
+    },
+    {
+      title: "Automated AI Feedback Loop",
+      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model. The AI analyzes discrepancies between estimated and actual profit to refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      icon: Brain,
+      status: "Completed",
+    },
     {
       title: "Profitability Dashboard",
       description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit.",
@@ -91,24 +104,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Upsell Outcome Tracking",
-      description: "Technicians can log whether an upsell suggestion was successful or declined, providing crucial data for sales performance analytics.",
-      icon: TrendingUp,
-      status: "Completed",
-    },
-     {
-      title: "Automated Job Actuals Calculation",
-      description: "Upon job completion, the system will automatically calculate the actual travel time, on-site duration, and final profit margin, providing crucial data for the AI's learning loop and for accurate financial reporting.",
-      icon: CheckSquare,
-      status: "Completed",
-    },
-    {
-      title: "Automated AI Feedback Loop",
-      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
-      icon: Brain,
-      status: "Completed",
-    },
-    {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
       icon: MousePointerClick,
@@ -122,7 +117,7 @@ const roadmapFeatures = {
     },
     {
       title: "Advanced Fleet-Wide Re-optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations. This optimization can be profit-driven.",
+      description: "An AI that analyzes the entire day's schedule and suggests a set of reassignments to improve overall efficiency and profitability. Dispatchers review and approve the suggested changes.",
       icon: Brain,
       status: "Completed",
     },
@@ -239,6 +234,12 @@ const roadmapFeatures = {
       description: "The AI analyzes job details and customer history to identify upsell opportunities, calculate a potential profit score, and provide talking points for technicians. This data directly influences the profit-aware dispatching model.",
       icon: Lightbulb,
       status: "Completed"
+    },
+    {
+      title: "Upsell Outcome Tracking",
+      description: "Technicians can log whether an upsell suggestion was successful or declined, providing crucial data for sales performance analytics.",
+      icon: TrendingUp,
+      status: "Completed",
     },
     {
       title: "Break Tracking",
@@ -384,3 +385,5 @@ export default function RoadmapPage() {
     </div>
   );
 }
+
+    

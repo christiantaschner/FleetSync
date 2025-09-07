@@ -1,4 +1,5 @@
 
+      
 import { config } from 'dotenv';
 config();
 
@@ -20,7 +21,9 @@ import '@/ai/flows/fleet-wide-optimization-flow.ts';
 import '@/ai/flows/suggest-upsell-opportunity.ts';
 import '@/ai/flows/generate-customer-followup-flow.ts';
 import '@/ai/flows/run-report-analysis-flow.ts';
+import '@/ai/flows/analyze-profitability-flow.ts';
 
 
     
-```
+
+    

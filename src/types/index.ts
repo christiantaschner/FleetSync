@@ -1,4 +1,5 @@
 
+      
 
 import { z } from "zod";
 
@@ -366,6 +367,9 @@ export const DispatcherFeedbackSchema = z.object({
     aiReasoning: z.string(),
     dispatcherReasoning: z.string().optional(),
     createdAt: z.string(),
+    profitScore: z.number().optional().describe("The AI's estimated profit score for the suggested assignment."),
+    actualProfit: z.number().optional().describe("The final, actual profit calculated after the job was completed."),
+    estimatedVsActualReasoning: z.string().optional().describe("An AI-generated analysis of why the actual profit differed from the estimate."),
 });
 export type DispatcherFeedback = z.infer<typeof DispatcherFeedbackSchema>;
 
@@ -894,3 +898,16 @@ export const GenerateCustomerFollowupOutputSchema = z.object({
   followupMessage: z.string().describe("The generated customer-facing follow-up message."),
 });
 export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFollowupOutputSchema>;
+
+export const AnalyzeProfitabilityInputSchema = z.object({
+  estimatedProfit: z.number(),
+  actualProfit: z.number(),
+});
+export type AnalyzeProfitabilityInput = z.infer<typeof AnalyzeProfitabilityInputSchema>;
+
+export const AnalyzeProfitabilityOutputSchema = z.object({
+    reasoning: z.string().describe("A concise explanation for the difference between the estimated and actual profit."),
+});
+export type AnalyzeProfitabilityOutput = z.infer<typeof AnalyzeProfitabilityOutputSchema>;
+
+    

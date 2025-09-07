@@ -90,6 +90,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Dashboard Analytics for Upsell",
+      description: "Surface key upsell metrics on the reporting dashboard, including total revenue from upsells, conversion rates, and a leaderboard of top-performing technicians in sales.",
+      icon: BarChart,
+      status: "Completed",
+    },
+    {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
       icon: MousePointerClick,

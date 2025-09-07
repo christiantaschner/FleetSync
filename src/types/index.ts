@@ -240,7 +240,6 @@ export type AITask = {
 
 export type AITechnician = {
   technicianId: string;
-  companyId: string;
   technicianName: string;
   isAvailable: boolean;
   skills: string[];
@@ -261,8 +260,6 @@ export type AITechnician = {
   bonus?: number;
   vanInventory?: string[];
   maxDailyHours?: number;
-  currentRoute?: string[];
-  active?: boolean;
 };
 
 export type ProfileChangeRequest = {
@@ -420,7 +417,6 @@ export const AllocateJobInputSchema = z.object({
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
-      companyId: z.string(),
       technicianName: z.string().describe('The name of the technician.'),
       isAvailable: z.boolean().describe('Whether the technician is currently available. This is a critical factor.'),
       isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),
@@ -563,10 +559,8 @@ export type SuggestJobPriorityOutput = z.infer<typeof SuggestJobPriorityOutputSc
 export const ConfirmManualRescheduleInputSchema = z.object({
     companyId: z.string(),
     appId: z.string(),
-    technicianId: z.string().describe("The ID of the technician whose route is being updated."),
     movedJobId: z.string().describe("The ID of the job that was manually moved."),
     newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
-    optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
     // Add feedback fields
     aiSuggestedTechnicianId: z.string().optional(),
     aiReasoning: z.string().optional(),
@@ -842,10 +836,17 @@ export const KpiDataSchema = z.object({
     avgJobsPerTech: z.string(),
     totalProfit: z.number(),
     slaMisses: z.number(),
-    topTechnician: z.object({
+    totalUpsellRevenue: z.number(),
+    upsellConversionRate: z.string(),
+    topTechnicianByProfit: z.object({
         technicianId: z.string(),
         name: z.string(),
         margin: z.number(),
+    }).nullable(),
+    topTechnicianByUpsell: z.object({
+        technicianId: z.string(),
+        name: z.string(),
+        upsellValue: z.number(),
     }).nullable(),
 });
 export type KpiData = z.infer<typeof KpiDataSchema>;

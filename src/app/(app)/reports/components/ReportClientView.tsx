@@ -27,7 +27,8 @@ import {
   AlertTriangle,
   Award,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Target
 } from "lucide-react";
 import {
   Card,
@@ -279,6 +280,13 @@ export default function ReportClientView() {
     const totalProfit = completedJobs.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
     const slaMisses = completedJobs.filter(job => job.slaDeadline && job.completedAt && new Date(job.completedAt) > new Date(job.slaDeadline)).length;
 
+    // Upsell calculations
+    const jobsWithUpsellOpportunity = completedJobs.filter(j => typeof j.upsellScore === 'number' && j.upsellScore > 0);
+    const successfulUpsells = jobsWithUpsellOpportunity.filter(j => j.upsellOutcome === 'sold');
+    const totalUpsellRevenue = successfulUpsells.reduce((acc, j) => acc + (j.upsellValue || 0), 0);
+    const upsellConversionRate = jobsWithUpsellOpportunity.length > 0 ? ((successfulUpsells.length / jobsWithUpsellOpportunity.length) * 100).toFixed(1) : "0";
+
+
     const technicianPerformance = Object.values(completedJobs.reduce((acc, job) => {
         if (!job.assignedTechnicianId) return acc;
         if (!acc[job.assignedTechnicianId]) {
@@ -288,15 +296,20 @@ export default function ReportClientView() {
                 avatarUrl: technicians.find(t => t.id === job.assignedTechnicianId)?.avatarUrl,
                 jobsCompleted: 0,
                 totalProfit: 0,
-                avgSatisfaction: 0,
+                totalUpsellValue: 0,
                 satisfactionCount: 0,
+                avgSatisfaction: 0,
             };
         }
-        acc[job.assignedTechnicianId].jobsCompleted++;
-        acc[job.assignedTechnicianId].totalProfit += (job.actualProfit || 0);
+        const tech = acc[job.assignedTechnicianId];
+        tech.jobsCompleted++;
+        tech.totalProfit += (job.actualProfit || 0);
+        if (job.upsellOutcome === 'sold') {
+            tech.totalUpsellValue += (job.upsellValue || 0);
+        }
         if (typeof job.customerSatisfactionScore === 'number') {
-            acc[job.assignedTechnicianId].avgSatisfaction += job.customerSatisfactionScore;
-            acc[job.assignedTechnicianId].satisfactionCount++;
+            tech.avgSatisfaction += job.customerSatisfactionScore;
+            tech.satisfactionCount++;
         }
         return acc;
     }, {} as Record<string, any>)).map(tech => ({
@@ -304,7 +317,8 @@ export default function ReportClientView() {
         avgSatisfaction: tech.satisfactionCount > 0 ? (tech.avgSatisfaction / tech.satisfactionCount).toFixed(2) : "N/A",
     }));
 
-    const topTechnician = [...technicianPerformance].sort((a, b) => b.totalProfit - a.totalProfit)[0];
+    const topTechnicianByProfit = [...technicianPerformance].sort((a, b) => b.totalProfit - a.totalProfit)[0];
+    const topTechnicianByUpsell = [...technicianPerformance].sort((a, b) => b.totalUpsellValue - a.totalUpsellValue)[0];
 
     return {
       kpis: {
@@ -322,10 +336,17 @@ export default function ReportClientView() {
         avgJobsPerTech,
         totalProfit,
         slaMisses,
-        topTechnician: topTechnician ? {
-            technicianId: topTechnician.technicianId,
-            name: topTechnician.name,
-            margin: topTechnician.totalProfit
+        totalUpsellRevenue,
+        upsellConversionRate,
+        topTechnicianByProfit: topTechnicianByProfit ? {
+            technicianId: topTechnicianByProfit.technicianId,
+            name: topTechnicianByProfit.name,
+            margin: topTechnicianByProfit.totalProfit
+        } : null,
+        topTechnicianByUpsell: topTechnicianByUpsell && topTechnicianByUpsell.totalUpsellValue > 0 ? {
+            technicianId: topTechnicianByUpsell.technicianId,
+            name: topTechnicianByUpsell.name,
+            upsellValue: topTechnicianByUpsell.totalUpsellValue
         } : null,
       },
       technicianLeaderboard: technicianPerformance.sort((a,b) => b.totalProfit - a.totalProfit),
@@ -352,6 +373,8 @@ export default function ReportClientView() {
         { KPI: "On-Time Arrival Rate (%)", Value: reportData.kpis.onTimeArrivalRate, Description: "Within 15min of schedule" },
         { KPI: "SLA Misses", Value: reportData.kpis.slaMisses, Description: "Jobs completed after SLA deadline" },
         { KPI: "Total Profit", Value: reportData.kpis.totalProfit.toFixed(2), Description: "Sum of profit scores for completed jobs" },
+        { KPI: "Upsell Revenue Added", Value: reportData.kpis.totalUpsellRevenue.toFixed(2), Description: "Total value from successful upsells" },
+        { KPI: "Upsell Conversion Rate (%)", Value: reportData.kpis.upsellConversionRate, Description: "Of jobs with an upsell opportunity" },
         { KPI: "Avg. On-Site Duration", Value: reportData.kpis.avgDuration, Description: "From start to completion" },
         { KPI: "Avg. Travel Time", Value: reportData.kpis.avgTravelTime, Description: "Per job" },
         { KPI: "Avg. Jobs per Technician", Value: reportData.kpis.avgJobsPerTech, Description: "Completed in period" },
@@ -451,19 +474,30 @@ export default function ReportClientView() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Financial Performance</CardTitle>
-                <CardDescription>Key metrics related to profitability and financial outcomes.</CardDescription>
+                <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Financial &amp; Sales Performance</CardTitle>
+                <CardDescription>Key metrics related to profitability and sales outcomes.</CardDescription>
               </CardHeader>
                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                  <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
+                 <KpiCard title="Upsell Revenue" value={`$${reportData.kpis.totalUpsellRevenue.toFixed(2)}`} desc="From successful upsells" icon={DollarSign} tooltipText="What it is: The total additional revenue generated from successful upsells logged by technicians." />
+                 <KpiCard title="Upsell Conversion" value={`${reportData.kpis.upsellConversionRate}%`} desc="Of identified opportunities" icon={Target} tooltipText="What it is: The percentage of jobs with an AI-identified upsell opportunity that were successfully sold." />
                  <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Jobs completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
-                 {reportData.kpis.topTechnician && (
+                 {reportData.kpis.topTechnicianByProfit && (
                   <KpiCard 
-                    title="Top Technician by Margin" 
-                    value={reportData.kpis.topTechnician.name} 
-                    desc={`Contributed $${reportData.kpis.topTechnician.margin.toFixed(2)}`} 
+                    title="Top Tech by Profit" 
+                    value={reportData.kpis.topTechnicianByProfit.name} 
+                    desc={`Contributed $${reportData.kpis.topTechnicianByProfit.margin.toFixed(2)}`} 
                     icon={Award}
                     tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
+                  />
+                )}
+                 {reportData.kpis.topTechnicianByUpsell && (
+                  <KpiCard 
+                    title="Top Tech by Upsell" 
+                    value={reportData.kpis.topTechnicianByUpsell.name} 
+                    desc={`Sold $${reportData.kpis.topTechnicianByUpsell.upsellValue.toFixed(2)}`} 
+                    icon={Award}
+                    tooltipText="What it is: The technician who generated the most additional revenue from upsells in the period."
                   />
                 )}
                </CardContent>

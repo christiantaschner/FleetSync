@@ -293,16 +293,16 @@ const roadmapFeatures = {
       icon: List,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "Dispatcher UX: Interactive AI Scheduling",
       description: "Make the AI's time suggestions interactive. Clicking a suggestion will populate the manual scheduling fields, allowing dispatchers to accept it as a starting point and make minor adjustments.",
       icon: MousePointerClick,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
     {
       title: "Technician UX: Offline Status Indicator",
       description: "Display a small, persistent icon in the technician view to clearly indicate the current network status (online/offline), giving technicians more confidence when working in areas with poor connectivity.",

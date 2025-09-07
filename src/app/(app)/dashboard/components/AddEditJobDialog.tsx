@@ -82,7 +82,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
-  const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestScheduleTimeOutput['suggestions'][number] | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -156,7 +155,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setRejectedTimes([]);
     setTimeSuggestions([]);
     setTriageToken(null);
-    setSelectedSuggestion(null);
   }, [job, prefilledData]);
 
   useEffect(() => {
@@ -166,14 +164,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   }, [job, prefilledData, isOpen, resetForm]);
   
   const isReadyForAssignment = useMemo(() => {
-    if (selectedSuggestion) {
-      return true;
-    }
     if (manualTechnicianId !== UNASSIGNED_VALUE && scheduledTime) {
       return true;
     }
     return false;
-  }, [selectedSuggestion, manualTechnicianId, scheduledTime]);
+  }, [manualTechnicianId, scheduledTime]);
   
 
   // Handle smart status updates
@@ -240,7 +235,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     if (isGettingMore) {
         setRejectedTimes(prev => [...new Set([...prev, ...timeSuggestions.map(s => s.time)])]);
     } else {
-        setSelectedSuggestion(null); // Clear selection when getting new initial suggestions
+        setTimeSuggestions([]);
     }
 
     const result = await suggestScheduleTimeAction({
@@ -295,7 +290,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         minutes
     );
     setScheduledTime(newDateTime);
-    setSelectedSuggestion(null);
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -308,12 +302,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     newDateTime.setHours(hours);
     newDateTime.setMinutes(minutes);
     setScheduledTime(newDateTime);
-    setSelectedSuggestion(null);
   };
   
   const handleManualTechnicianChange = (techId: string) => {
     setManualTechnicianId(techId);
-    setSelectedSuggestion(null);
+  };
+
+  const handleSelectAISuggestion = (suggestion: SuggestScheduleTimeOutput['suggestions'][number]) => {
+      setScheduledTime(new Date(suggestion.time));
+      setManualTechnicianId(suggestion.technicianId);
+      toast({ title: "Suggestion Selected", description: "The schedule time and technician have been updated. You can make further adjustments or save the job." });
   };
   
   const handleDeleteJob = async () => {
@@ -447,8 +445,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
 
 
-    const finalTechId = selectedSuggestion ? selectedSuggestion.technicianId : (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
-    const finalScheduledTime = selectedSuggestion ? new Date(selectedSuggestion.time) : scheduledTime;
+    const finalTechId = manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null;
+    const finalScheduledTime = scheduledTime;
 
     const jobData: any = {
       companyId: userProfile.companyId,
@@ -907,11 +905,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                    <button
                                        key={suggestion.time}
                                        type="button"
-                                       onClick={() => setSelectedSuggestion(suggestion)}
-                                       className={cn(
-                                        "p-3 border rounded-md text-left hover:bg-secondary transition-colors ring-2 ring-transparent",
-                                        selectedSuggestion?.time === suggestion.time && "ring-green-500 bg-green-50"
-                                       )}
+                                       onClick={() => handleSelectAISuggestion(suggestion)}
+                                       className="p-3 border rounded-md text-left hover:bg-secondary transition-colors"
                                    >
                                        <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'MMM d, p')}</p>
                                        <p className="text-xs text-muted-foreground">with {techName}</p>

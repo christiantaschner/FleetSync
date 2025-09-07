@@ -209,18 +209,6 @@ const roadmapFeatures = {
       icon: MessageSquare,
       status: "Completed",
     },
-     {
-      title: "Installed Equipment Tracking",
-      description: "Log and track specific equipment installed at customer locations. View service history per device, manage warranties, and proactively suggest maintenance.",
-      icon: Package,
-      status: "Completed",
-    },
-     {
-      title: "Job Financial Tracking",
-      description: "The data model now supports tracking quoted value, expected parts cost, and SLA deadlines on a per-job basis. The UI is available in the 'Add/Edit Job' dialog under the 'Financials' section.",
-      icon: DollarSign,
-      status: "Completed",
-    },
     {
       title: "PWA & Offline Mode Foundations",
       description: "The application is now a Progressive Web App (PWA) with a service worker. Firestore's offline persistence is enabled, allowing the app to load and display cached data even without an internet connection.",
@@ -309,6 +297,12 @@ const roadmapFeatures = {
       title: "Technician UX: Upsell Catalog",
       description: "Allow technicians to select from a predefined list of common upsell services or products when logging a successful sale, standardizing data entry and automatically calculating the upsell value.",
       icon: ShoppingCart,
+      status: "Completed",
+    },
+     {
+      title: "Customer Relationship Management (CRM)",
+      description: "A dedicated customer view that provides a 360-degree overview of every client, including their full job history, active contracts, and a list of all installed equipment at their locations. Dispatchers can manage all customer-related activities from this central hub.",
+      icon: Users2,
       status: "Completed",
     },
   ],

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -44,19 +43,19 @@ export default function CustomersPage() {
             setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
             setAllParts(PREDEFINED_PARTS.map((name, index) => ({ id: `mock_part_${index}`, name })));
             setIsLoading(false);
-            return;
+            return () => {};
         }
 
         if (!db || !userProfile?.companyId) {
             setIsLoading(false);
-            return;
+            return () => {};
         }
         
         const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         if (!appId) {
             setError("Configuration Error: Cannot fetch customer data.");
             setIsLoading(false);
-            return;
+            return () => {};
         }
 
         let loadedCount = 0;

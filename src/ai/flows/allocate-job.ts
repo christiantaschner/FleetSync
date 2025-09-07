@@ -70,7 +70,8 @@ The current time is {{{currentTime}}}.
 **PROFIT CALCULATION LOGIC:**
 For each potential assignment, you must calculate the 'profitScore'. Use the following formula:
 1. First, calculate the 'expectedPartsCost' by looking up each part in the 'requiredParts' array in the provided 'partsLibrary' and summing their costs.
-2. Then, calculate the final profit: profit = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty)
+2. Then, calculate 'commission' = (quotedValue * (tech.commissionRate / 100)) + tech.bonus
+3. Finally, calculate the final profit: profit = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty) - commission
 If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
@@ -133,7 +134,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Van Inventory: {{#if vanInventory.length}}{{#each vanInventory}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
-  {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} | Max Daily Hours: {{{maxDailyHours}}}h {{/if}}
+  {{#if ../featureFlags.profitScoringEnabled}} - Hourly Cost: \${{{hourlyCost}}} | Commission: {{#if commissionRate}}{{{commissionRate}}}%{{else}}0%{{/if}} | Bonus: \${{#if bonus}}{{{bonus}}}{{else}}0{{/if}} | Max Daily Hours: {{{maxDailyHours}}}h {{/if}}
   {{#if currentJobs.length}}
   - Current Assigned Jobs:
     {{#each currentJobs}}

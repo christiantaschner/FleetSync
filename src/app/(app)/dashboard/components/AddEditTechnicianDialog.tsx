@@ -28,7 +28,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
 import type { Technician, BusinessDay, Part } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare, Package, DollarSign, Hourglass } from 'lucide-react';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare, Package, DollarSign, Hourglass, Percent } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
@@ -85,6 +85,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             : defaultBusinessHours,
       avatarUrl: technician?.avatarUrl || null,
       hourlyCost: technician?.hourlyCost || 50,
+      commissionRate: technician?.commissionRate || 0,
+      bonus: technician?.bonus || 0,
       maxDailyHours: technician?.maxDailyHours || 8,
       vanInventory: technician?.vanInventory || [],
       isSubmitting: false,
@@ -114,6 +116,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             : company?.settings?.businessHours || defaultBusinessHours,
       avatarUrl: technician?.avatarUrl || null,
       hourlyCost: technician?.hourlyCost || 50,
+      commissionRate: technician?.commissionRate || 0,
+      bonus: technician?.bonus || 0,
       maxDailyHours: technician?.maxDailyHours || 8,
       vanInventory: technician?.vanInventory || [],
       isSubmitting: false,
@@ -205,6 +209,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       avatarUrl: data.avatarUrl,
       appId: appId,
       hourlyCost: data.hourlyCost,
+      commissionRate: data.commissionRate,
+      bonus: data.bonus,
       maxDailyHours: data.maxDailyHours,
       vanInventory: data.vanInventory,
     };
@@ -375,12 +381,20 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                 <Separator />
                  <div className="space-y-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2"><DollarSign /> Financial & Operational</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="lg:col-span-1">
                             <Label htmlFor="hourlyCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Hourly Cost ($)</Label>
                             <Input id="hourlyCost" type="number" {...register('hourlyCost', { valueAsNumber: true })} placeholder="e.g., 50" />
                         </div>
-                        <div>
+                        <div className="lg:col-span-1">
+                            <Label htmlFor="commissionRate"><Percent className="inline h-3.5 w-3.5 mr-1" />Commission (%)</Label>
+                            <Input id="commissionRate" type="number" {...register('commissionRate', { valueAsNumber: true })} placeholder="e.g., 10" />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <Label htmlFor="bonus"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Flat Bonus ($)</Label>
+                            <Input id="bonus" type="number" {...register('bonus', { valueAsNumber: true })} placeholder="e.g., 25" />
+                        </div>
+                        <div className="lg:col-span-1">
                             <Label htmlFor="maxDailyHours"><Hourglass className="inline h-3.5 w-3.5 mr-1" />Max Daily Hours</Label>
                             <Input id="maxDailyHours" type="number" {...register('maxDailyHours', { valueAsNumber: true })} placeholder="e.g., 8" />
                         </div>

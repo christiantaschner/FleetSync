@@ -24,6 +24,8 @@ const TechnicianDataSchema = z.object({
   workingHours: z.array(BusinessDaySchema).length(7).optional(),
   isOnCall: z.boolean().optional(),
   hourlyCost: z.number().optional(),
+  commissionRate: z.number().optional(),
+  bonus: z.number().optional(),
   maxDailyHours: z.number().optional(),
   vanInventory: z.array(z.string()).optional(),
 });
@@ -65,6 +67,8 @@ export async function updateTechnicianAction(
         workingHours: updateData.workingHours,
         isOnCall: updateData.isOnCall,
         hourlyCost: updateData.hourlyCost,
+        commissionRate: updateData.commissionRate,
+        bonus: updateData.bonus,
         maxDailyHours: updateData.maxDailyHours,
         vanInventory: updateData.vanInventory || [],
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),

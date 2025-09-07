@@ -117,6 +117,8 @@ export type Technician = {
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
   hourlyCost?: number;
+  commissionRate?: number;
+  bonus?: number;
   vanInventory?: string[]; // Array of part names
   maxDailyHours?: number;
   currentRoute?: string[];
@@ -248,6 +250,8 @@ export type AITechnician = {
   isOnCall?: boolean;
   hasCustomerHistory?: boolean;
   hourlyCost?: number;
+  commissionRate?: number;
+  bonus?: number;
   vanInventory?: string[];
   maxDailyHours?: number;
 };
@@ -424,6 +428,8 @@ export const AllocateJobInputSchema = z.object({
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
       hourlyCost: z.number().optional().describe('The total hourly cost of this technician (wages + overhead).'),
+      commissionRate: z.number().optional().describe('The commission percentage for this technician.'),
+      bonus: z.number().optional().describe('A flat bonus per job for this technician.'),
       maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),

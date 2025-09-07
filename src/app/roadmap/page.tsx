@@ -209,12 +209,6 @@ const roadmapFeatures = {
       icon: Timer,
       status: "Completed",
     },
-     {
-      title: "Advanced Fleet-Wide Re-optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
-      icon: Brain,
-      status: "In Progress",
-    },
     {
       title: "Automated Geo-Fenced Status Updates",
       description: "Eliminate the need for manual check-ins. The system will use geo-fencing to automatically update a job's status to 'Arrived' when the technician reaches the job site and 'En Route' when they depart.",
@@ -255,6 +249,12 @@ const roadmapFeatures = {
       title: "Job Flexibility Status",
       description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
       icon: Shuffle,
+      status: "Completed",
+    },
+    {
+      title: "Advanced Fleet-Wide Re-optimization",
+      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
+      icon: Brain,
       status: "Completed",
     },
   ],

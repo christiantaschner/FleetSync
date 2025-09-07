@@ -16,9 +16,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
-import { reassignJobAction } from '@/actions/fleet-actions';
+import { reassignJobAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
 import ReassignJobDialog from './ReassignJobDialog';
 import { useAuth } from '@/contexts/auth-context';
+import FleetOptimizationReviewDialog from './FleetOptimizationReviewDialog';
 
 const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
@@ -313,6 +314,16 @@ interface ScheduleCalendarViewProps {
   onJobClick: (job: Job) => void;
   onFleetOptimize: () => void;
   isFleetOptimizing: boolean;
+  optimizationResult: {
+    suggestedChanges: OptimizationSuggestion[];
+    overallReasoning: string;
+  } | null;
+  setOptimizationResult: React.Dispatch<React.SetStateAction<{
+    suggestedChanges: OptimizationSuggestion[];
+    overallReasoning: string;
+  } | null>>;
+  setIsFleetOptimizationDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedFleetChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
 }
 
 type ProposedChanges = Record<string, { scheduledTime: string; assignedTechnicianId: string; originalTechnicianId: string | null }>;
@@ -323,7 +334,11 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     technicians,
     onJobClick,
     onFleetOptimize,
-    isFleetOptimizing
+    isFleetOptimizing,
+    optimizationResult,
+    setOptimizationResult,
+    setIsFleetOptimizationDialogOpen,
+    setSelectedFleetChanges,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
@@ -483,6 +498,17 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   };
   
   const hasProposedChanges = Object.keys(proposedChanges).length > 0;
+  
+  const handleConfirmFleetOptimization = async (changesToConfirm: OptimizationSuggestion[]) => {
+    if (!userProfile?.companyId || !appId) return;
+    const result = await confirmFleetOptimizationAction({ companyId: userProfile.companyId, appId, changesToConfirm });
+    if(result.error) {
+      toast({ title: "Error", description: result.error, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "Fleet schedule updated." });
+    }
+    setIsFleetOptimizationDialogOpen(false);
+  };
 
   return (
         <Card>
@@ -507,9 +533,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                  <Alert className="text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600 flex-1">
                     <Info className="h-4 w-4" />
-                    <AlertTitle className="font-semibold">Fleety's Proactive Monitoring</AlertTitle>
+                    <AlertTitle className="font-semibold">AI Proactive Monitoring</AlertTitle>
                     <AlertDescription>
-                        Fleety continuously checks schedules. If a delay risk is detected, an alert will appear on the dashboard.
+                        AI continuously checks schedules. If a delay risk is detected, an alert will appear on the dashboard.
                     </AlertDescription>
                 </Alert>
                 <TooltipProvider>
@@ -538,6 +564,17 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     onReassignmentComplete={() => {}}
                 />
             )}
+             <FleetOptimizationReviewDialog
+                isOpen={isFleetOptimizationDialogOpen}
+                setIsOpen={setIsFleetOptimizationDialogOpen}
+                optimizationResult={optimizationResult}
+                technicians={technicians}
+                jobs={jobs}
+                onConfirmChanges={handleConfirmFleetOptimization}
+                isLoadingConfirmation={isSaving}
+                selectedChanges={selectedFleetChanges}
+                setSelectedChanges={setSelectedFleetChanges}
+            />
             {viewMode === 'day' ? (
             <DndContext 
                 onDragEnd={handleDragEnd} 

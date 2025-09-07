@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import AddEditJobDialog from './components/AddEditJobDialog';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion, type FinalAssignment } from './components/BatchAssignmentReviewDialog';
-import { handleTechnicianUnavailabilityAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
+import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
 import { allocateJobAction, checkScheduleHealthAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
@@ -975,12 +975,14 @@ export default function DashboardPage() {
     setIsFleetOptimizing(false);
     if (result.error) {
       toast({ title: 'Optimization Failed', description: result.error, variant: 'destructive' });
-    } else {
+    } else if (result.data) {
       setFleetOptimizationResult(result.data);
-      if(result.data?.suggestedChanges) {
+      if(result.data.suggestedChanges) {
         setSelectedFleetChanges(result.data.suggestedChanges);
       }
       setIsFleetOptimizationDialogOpen(true);
+    } else {
+      toast({ title: 'Optimization Complete', description: 'No significant improvements could be found at this time.', variant: 'default' });
     }
   };
   
@@ -1085,7 +1087,8 @@ export default function DashboardPage() {
         technicians={technicians}
         jobs={jobs}
         onConfirmChanges={(changes) => {
-            confirmFleetOptimizationAction({ companyId: userProfile!.companyId, appId: appId!, changesToConfirm: changes})
+            if(!userProfile?.companyId || !appId) return;
+            confirmFleetOptimizationAction({ companyId: userProfile.companyId, appId: appId, changesToConfirm: changes})
                 .then(result => {
                     if (result.error) toast({ title: "Error", description: result.error, variant: "destructive" });
                     else toast({ title: "Success", description: "Fleet schedule updated." });
@@ -1335,6 +1338,10 @@ export default function DashboardPage() {
             onJobClick={(job) => router.push(`/job/${job.id}`)}
             onFleetOptimize={handleFleetOptimize}
             isFleetOptimizing={isFleetOptimizing}
+            optimizationResult={fleetOptimizationResult}
+            setOptimizationResult={setFleetOptimizationResult}
+            setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
+            setSelectedFleetChanges={setSelectedFleetChanges}
           />
         </TabsContent>
 

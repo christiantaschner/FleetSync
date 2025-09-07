@@ -196,7 +196,13 @@ const roadmapFeatures = {
       description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
       status: "Completed",
-    }
+    },
+     {
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      icon: TrendingUp,
+      status: "Completed",
+    },
   ],
   inProgress: [
      {
@@ -211,14 +217,20 @@ const roadmapFeatures = {
       icon: Lightbulb,
       status: "In Progress"
     },
-    {
-      title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
-      icon: TrendingUp,
-      status: "In Progress",
-    },
   ],
   planned: [
+     {
+      title: "Advanced Fleet-Wide Re-optimization",
+      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
+      icon: Brain,
+      status: "Planned",
+    },
+     {
+      title: "Job Flexibility Status",
+      description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
+      icon: Shuffle,
+      status: "Planned",
+    },
   ],
   vision: [
     {
@@ -323,5 +335,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-    

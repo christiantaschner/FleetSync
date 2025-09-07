@@ -102,7 +102,7 @@ export default function ReportClientView() {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(),
+    from: subDays(new Date(), 29),
     to: new Date(),
   });
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("all");
@@ -145,7 +145,7 @@ export default function ReportClientView() {
         const data = doc.data();
         for (const key in data) {
             if (data[key] && typeof data[key].toDate === 'function') {
-                data[key] = data[key].toDate().toISOString();
+                data[key] = (data[key] as any).toDate().toISOString();
             }
         }
         return { id: doc.id, ...data } as Job;
@@ -480,5 +480,3 @@ export default function ReportClientView() {
     </div>
   );
 }
-
-    

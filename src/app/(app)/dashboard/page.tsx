@@ -737,7 +737,8 @@ export default function DashboardPage() {
                 suggestion: {
                     suggestions: [{
                       suggestedTechnicianId: assignedTech.id,
-                      reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`
+                      reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`,
+                      profitScore: Math.random() * 200 + 50,
                     }],
                     overallReasoning: ''
                 },
@@ -1433,7 +1434,7 @@ export default function DashboardPage() {
                             <CardDescription>Manage your team of field technicians. Drag jobs from the Job List onto a technician to assign.</CardDescription>
                         </div>
                         <div className="flex items-center gap-2">
-                             <div className="hidden sm:flex items-center gap-1 p-1 bg-muted rounded-md">
+                             <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
                                 <Button size="icon" variant={technicianViewMode === 'grid' ? 'default' : 'ghost'} onClick={() => setTechnicianViewMode('grid')}><Grid className="h-4 w-4" /></Button>
                                 <Button size="icon" variant={technicianViewMode === 'list' ? 'default' : 'ghost'} onClick={() => setTechnicianViewMode('list')}><List className="h-4 w-4" /></Button>
                             </div>
@@ -1447,6 +1448,18 @@ export default function DashboardPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    <div className="mb-4">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="technician-search"
+                                placeholder="Search by name, skill, or availability..."
+                                value={technicianSearchTerm}
+                                onChange={(e) => setTechnicianSearchTerm(e.target.value)}
+                                className="pl-8"
+                            />
+                        </div>
+                    </div>
                     {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
                     
                     {technicianViewMode === 'grid' ? (
@@ -1469,7 +1482,7 @@ export default function DashboardPage() {
                                 <AlertTriangle className="h-4 w-4" />
                                 <AlertTitle>No Technicians Found</AlertTitle>
                                 <AlertDescription>
-                                Your technician roster is empty.
+                                Your search returned no results.
                                 </AlertDescription>
                             </Alert>
                             )}

@@ -1,6 +1,4 @@
 
-      
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -81,7 +79,7 @@ const roadmapFeatures = {
     },
     {
       title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit.",
+      description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit and upsell performance.",
       icon: TrendingUp,
       status: "Completed",
     },
@@ -93,7 +91,7 @@ const roadmapFeatures = {
     },
     {
       title: "Technician Profit Leaderboard",
-      description: "A leaderboard on the Reports page that ranks technicians by the actual profit margin they've generated, turning performance into a measurable and motivational metric.",
+      description: "A leaderboard on the Reports page that ranks technicians by the actual profit margin and upsell revenue they've generated, turning performance into a measurable and motivational metric.",
       icon: Award,
       status: "Completed",
     },
@@ -385,5 +383,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-
-    

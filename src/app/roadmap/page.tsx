@@ -71,6 +71,12 @@ const roadmapFeatures = {
       icon: DollarSign,
       status: "Completed",
     },
+     {
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      icon: TrendingUp,
+      status: "Completed",
+    },
     {
       title: "Technician Commission & Bonus Pay",
       description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
@@ -249,12 +255,6 @@ const roadmapFeatures = {
       title: "Integrated Invoicing & Payments",
       description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
       icon: DollarSign,
-      status: "Completed",
-    },
-     {
-      title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
-      icon: TrendingUp,
       status: "Completed",
     },
     {

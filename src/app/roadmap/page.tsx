@@ -84,6 +84,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Technician Profit Leaderboard",
+      description: "A leaderboard on the Reports page that ranks technicians by the actual profit margin they've generated, turning performance into a measurable and motivational metric.",
+      icon: Award,
+      status: "Completed",
+    },
+    {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
       icon: MousePointerClick,

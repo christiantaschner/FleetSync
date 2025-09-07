@@ -52,6 +52,8 @@ import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReportAnalysisDialog from "./ReportAnalysisDialog";
 import Papa from 'papaparse';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -277,12 +279,32 @@ export default function ReportClientView() {
     const totalProfit = completedJobs.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
     const slaMisses = completedJobs.filter(job => job.slaDeadline && job.completedAt && new Date(job.completedAt) > new Date(job.slaDeadline)).length;
 
-    const topTechnician = Object.entries(completedJobs.reduce((acc, job) => {
+    const technicianPerformance = Object.values(completedJobs.reduce((acc, job) => {
         if (!job.assignedTechnicianId) return acc;
-        acc[job.assignedTechnicianId] = (acc[job.assignedTechnicianId] || 0) + (job.actualProfit || 0);
+        if (!acc[job.assignedTechnicianId]) {
+            acc[job.assignedTechnicianId] = {
+                technicianId: job.assignedTechnicianId,
+                name: technicians.find(t => t.id === job.assignedTechnicianId)?.name || 'Unknown',
+                avatarUrl: technicians.find(t => t.id === job.assignedTechnicianId)?.avatarUrl,
+                jobsCompleted: 0,
+                totalProfit: 0,
+                avgSatisfaction: 0,
+                satisfactionCount: 0,
+            };
+        }
+        acc[job.assignedTechnicianId].jobsCompleted++;
+        acc[job.assignedTechnicianId].totalProfit += (job.actualProfit || 0);
+        if (typeof job.customerSatisfactionScore === 'number') {
+            acc[job.assignedTechnicianId].avgSatisfaction += job.customerSatisfactionScore;
+            acc[job.assignedTechnicianId].satisfactionCount++;
+        }
         return acc;
-    }, {} as Record<string, number>)).sort((a, b) => b[1] - a[1])[0];
+    }, {} as Record<string, any>)).map(tech => ({
+        ...tech,
+        avgSatisfaction: tech.satisfactionCount > 0 ? (tech.avgSatisfaction / tech.satisfactionCount).toFixed(2) : "N/A",
+    }));
 
+    const topTechnician = [...technicianPerformance].sort((a, b) => b.totalProfit - a.totalProfit)[0];
 
     return {
       kpis: {
@@ -301,11 +323,12 @@ export default function ReportClientView() {
         totalProfit,
         slaMisses,
         topTechnician: topTechnician ? {
-            technicianId: topTechnician[0],
-            name: technicians.find(t => t.id === topTechnician[0])?.name || 'Unknown',
-            margin: topTechnician[1]
+            technicianId: topTechnician.technicianId,
+            name: topTechnician.name,
+            margin: topTechnician.totalProfit
         } : null,
       },
+      technicianLeaderboard: technicianPerformance.sort((a,b) => b.totalProfit - a.totalProfit),
     };
   }, [filteredJobs, technicians]);
   
@@ -425,25 +448,59 @@ export default function ReportClientView() {
             </CardFooter>
           )}
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Financial Performance</CardTitle>
-            <CardDescription>Key metrics related to profitability and financial outcomes.</CardDescription>
-          </CardHeader>
-           <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-             <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
-             <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Jobs completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
-             {reportData.kpis.topTechnician && (
-              <KpiCard 
-                title="Top Technician by Margin" 
-                value={reportData.kpis.topTechnician.name} 
-                desc={`Contributed $${reportData.kpis.topTechnician.margin.toFixed(2)}`} 
-                icon={Award}
-                tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
-              />
-            )}
-           </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Financial Performance</CardTitle>
+                <CardDescription>Key metrics related to profitability and financial outcomes.</CardDescription>
+              </CardHeader>
+               <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
+                 <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Jobs completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
+                 {reportData.kpis.topTechnician && (
+                  <KpiCard 
+                    title="Top Technician by Margin" 
+                    value={reportData.kpis.topTechnician.name} 
+                    desc={`Contributed $${reportData.kpis.topTechnician.margin.toFixed(2)}`} 
+                    icon={Award}
+                    tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
+                  />
+                )}
+               </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Award/>Technician Leaderboard</CardTitle>
+                    <CardDescription>Ranked by total profit generated.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <ScrollArea className="h-48">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Technician</TableHead>
+                                    <TableHead className="text-right">Profit</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {reportData.technicianLeaderboard.length > 0 ? reportData.technicianLeaderboard.map((tech, index) => (
+                                    <TableRow key={tech.technicianId}>
+                                        <TableCell className="flex items-center gap-2">
+                                            <span className="font-mono text-xs text-muted-foreground w-4">{index + 1}.</span>
+                                            <Avatar className="h-7 w-7"><AvatarImage src={tech.avatarUrl} /><AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback></Avatar>
+                                            <span className="font-medium">{tech.name}</span>
+                                        </TableCell>
+                                        <TableCell className="text-right font-semibold text-green-600">${tech.totalProfit.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground h-24">No data for this period.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                     </ScrollArea>
+                </CardContent>
+            </Card>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><BarChart /> Technician Efficiency</CardTitle>

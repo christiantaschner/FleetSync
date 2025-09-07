@@ -426,7 +426,7 @@ export default function MarketingPage() {
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">
                    Stop Dispatching. Start Operating Like a Business.
                 </h2>
-                <p className="mt-4 text-lg text-primary-foreground/80">Unlock the hidden profit in your daily schedule. The AI is ready. It's not just another scheduling tool—it's a profit engine.</p>
+                <p className="mt-4 text-lg text-primary-foreground/80">Unlock the hidden profit in your daily schedule. MarginMax isn't just another scheduling tool—it's a profit engine.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" variant="secondary" className="text-primary hover:bg-secondary/90">
                         <Link href="/signup">{t('start_free_trial')}</Link>

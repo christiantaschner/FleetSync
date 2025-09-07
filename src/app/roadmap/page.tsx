@@ -317,16 +317,16 @@ const roadmapFeatures = {
       icon: Timer,
       status: "Completed",
     },
-  ],
-  inProgress: [
-  ],
-  planned: [
     {
       title: "UX: Visual Cue for Unsaved Changes",
       description: "On the Schedule view, when a job is dragged to a new time or technician, its appearance will change (e.g., a dashed border or a glow) to clearly indicate that the change is a 'proposed' state that needs to be confirmed with the 'Save Changes' button.",
       icon: Eye,
-      status: "Planned",
+      status: "Completed",
     },
+  ],
+  inProgress: [
+  ],
+  planned: [
     {
       title: "UX: Quick Add Job",
       description: "A simplified 'Quick Add' mode for the new job dialog, showing only the most essential fields (Customer, Title, Description). This allows dispatchers to rapidly log a service call and fill in the details for scheduling later.",

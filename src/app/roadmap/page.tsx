@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -82,6 +83,18 @@ const roadmapFeatures = {
       description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit and upsell performance.",
       icon: TrendingUp,
       status: "Completed",
+    },
+    {
+      title: "Explicit ROI Dashboard",
+      description: "Enhances the Reports page to directly calculate and display the value AI is adding, showing metrics like 'AI-Influenced Profit' and 'AI-Suggested Upsell Revenue'.",
+      icon: TrendingUp,
+      status: 'Completed',
+    },
+    {
+      title: "Ranked-Choice Dispatching",
+      description: "AI suggests the top 3 most profitable technicians for a job, allowing dispatchers to make the final call from a data-driven shortlist.",
+      icon: Award,
+      status: 'Completed',
     },
     {
       title: "Technician Commission & Bonus Pay",
@@ -333,18 +346,6 @@ const roadmapFeatures = {
   inProgress: [
   ],
   planned: [
-    {
-        title: "Ranked-Choice Dispatching",
-        description: "AI will suggest the top 3 most profitable technicians for a job, allowing dispatchers to make the final call from a data-driven shortlist.",
-        icon: Award,
-        status: 'Planned',
-    },
-    {
-        title: "Explicit ROI Dashboard",
-        description: "Enhance the Reports page to directly calculate and display the value AI is adding, showing metrics like 'Net Margin Improvement' and 'Revenue from AI Upsells'.",
-        icon: TrendingUp,
-        status: 'Planned',
-    },
   ],
   vision: [
     {

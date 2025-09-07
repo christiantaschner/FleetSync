@@ -845,6 +845,8 @@ export const KpiDataSchema = z.object({
     slaMisses: z.number(),
     totalUpsellRevenue: z.number(),
     upsellConversionRate: z.string(),
+    aiAssistedAssignments: z.number(),
+    aiInfluencedProfit: z.number(),
     topTechnicianByProfit: z.object({
         technicianId: z.string(),
         name: z.string(),

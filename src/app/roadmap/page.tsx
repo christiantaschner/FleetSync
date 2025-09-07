@@ -257,14 +257,14 @@ const roadmapFeatures = {
       icon: WifiOff,
       status: "Completed",
     },
-  ],
-  inProgress: [
     {
       title: "Automated AI Feedback Loop",
       description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
       icon: Brain,
-      status: "In Progress",
+      status: "Completed",
     }
+  ],
+  inProgress: [
   ],
   planned: [
   ],
@@ -366,4 +366,3 @@ export default function RoadmapPage() {
   );
 }
 
-    

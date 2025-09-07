@@ -359,7 +359,7 @@ export default function MarketingPage() {
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                       Businesses using profit-first dispatching see up to a 5% increase in net margins. Use our calculator to see the money you're leaving on the table.
+                       Businesses using profit-first dispatching see a 5% increase in net margins on average. Use our calculator to see the money you're leaving on the table.
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">

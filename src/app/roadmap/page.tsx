@@ -305,6 +305,12 @@ const roadmapFeatures = {
       icon: Users2,
       status: "Completed",
     },
+    {
+      title: "Unified Customer Upsert Logic",
+      description: "A robust, backend data management workflow that intelligently creates or updates customer records, preventing duplicates and ensuring data integrity across the platform.",
+      icon: CheckSquare,
+      status: "Completed"
+    },
   ],
   inProgress: [
   ],

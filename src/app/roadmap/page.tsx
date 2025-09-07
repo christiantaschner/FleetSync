@@ -120,6 +120,12 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "AI-Powered Parts Suggestion & Van Inventory",
+      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
+      icon: ShoppingCart,
+      status: "Completed",
+    },
+    {
       title: "CSV Job Data Import",
       description: "Allows for bulk import of existing job data via CSV files to speed up onboarding.",
       icon: FileSpreadsheet,
@@ -198,14 +204,14 @@ const roadmapFeatures = {
       status: "Completed"
     },
     {
-      title: "AI-Powered Parts Suggestion & Van Inventory",
-      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
-      icon: ShoppingCart,
+      title: "Upsell Outcome Tracking",
+      description: "Technicians can log whether an upsell suggestion was successful or declined, providing crucial data for sales performance analytics.",
+      icon: TrendingUp,
       status: "Completed",
     },
     {
       title: "Break Tracking",
-      description: "Allows technicians to log break times during a job, which will provide more accurate data for job duration and performance analytics.",
+      description: "Allows technicians to log break times during a job. This data is now reflected in the reporting dashboard for more accurate on-site duration and efficiency KPIs.",
       icon: Timer,
       status: "Completed",
     },

@@ -1,4 +1,5 @@
 
+
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -180,6 +181,8 @@ export type Job = {
   slaDeadline?: string;
   upsellScore?: number;
   upsellReasoning?: string;
+  upsellOutcome?: 'sold' | 'declined' | 'pending';
+  upsellValue?: number;
   fixedWindow?: { start: string; end: string };
   flexibility?: JobFlexibility;
   profitScore?: number;
@@ -406,6 +409,7 @@ export const AllocateJobInputSchema = z.object({
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
   quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
+  expectedPartsCost: z.number().optional().describe("The estimated cost of parts required for this job."),
   slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
   upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
   estimatedDurationMinutes: z.number().optional().describe('Estimated duration of the job in minutes.'),

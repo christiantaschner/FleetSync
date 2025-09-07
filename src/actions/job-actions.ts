@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -114,5 +115,51 @@ export async function addDocumentationAction(input: AddDocumentationInput): Prom
         const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
         console.error(`Error adding documentation: ${errorMessage}`);
         return { error: `Failed to add documentation. ${errorMessage}` };
+    }
+}
+
+
+const LogUpsellOutcomeInputSchema = z.object({
+    jobId: z.string().min(1),
+    appId: z.string().min(1),
+    companyId: z.string().min(1),
+    outcome: z.enum(['sold', 'declined']),
+    upsellValue: z.number().optional(),
+});
+
+export async function logUpsellOutcomeAction(
+    input: z.infer<typeof LogUpsellOutcomeInputSchema>
+): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: null };
+    }
+    try {
+        if (!dbAdmin) throw new Error('Firestore Admin SDK not initialized.');
+        const { jobId, appId, companyId, outcome, upsellValue } = LogUpsellOutcomeInputSchema.parse(input);
+        
+        const jobDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/jobs`, jobId);
+        const jobSnap = await getDoc(jobDocRef);
+        if (!jobSnap.exists() || jobSnap.data()?.companyId !== companyId) {
+            return { error: "Job not found or permission denied." };
+        }
+
+        const updatePayload: any = {
+            upsellOutcome: outcome,
+            updatedAt: serverTimestamp(),
+        };
+
+        if (outcome === 'sold' && typeof upsellValue === 'number' && upsellValue > 0) {
+            updatePayload.upsellValue = upsellValue;
+        } else if (outcome === 'sold') {
+            return { error: "A positive value is required for a 'sold' outcome." };
+        }
+
+        await updateDoc(jobDocRef, updatePayload);
+        
+        return { error: null };
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(`Error logging upsell outcome: ${errorMessage}`);
+        return { error: `Failed to log outcome. ${errorMessage}` };
     }
 }

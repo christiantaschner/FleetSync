@@ -268,7 +268,10 @@ export default function TechnicianJobDetailPage() {
       <CustomerHistoryCard jobs={historyJobs} />
       
       {job.upsellReasoning && (
-          <UpsellOpportunityCard job={job} />
+          <UpsellOpportunityCard 
+            job={job}
+            onUpdate={(updatedFields) => setJob(prev => prev ? {...prev, ...updatedFields} : null)}
+          />
       )}
 
       {job.status === 'In Progress' && (

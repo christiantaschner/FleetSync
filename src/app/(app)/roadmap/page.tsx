@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -60,15 +60,39 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "AI-Powered Job Allocation",
-      description: "Core AI feature suggests the best technician for new jobs based on skills, availability, and location, with both single and batch assignment modes.",
-      icon: Sparkles,
+      title: "Profit-Aware Dispatching",
+      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability. Dispatchers see a profit-ranked list of suggestions in the new Smart Allocation dialog.",
+      icon: DollarSign,
       status: "Completed",
     },
-     {
-      title: "Profit-Aware Dispatching",
-      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. Controllable via a feature flag in settings.",
-      icon: DollarSign,
+    {
+      title: "Advanced Fleet-Wide Re-optimization",
+      description: "An AI that analyzes the entire day's schedule and suggests a set of reassignments to improve overall efficiency and profitability. Dispatchers review and approve the suggested changes.",
+      icon: Brain,
+      status: "Completed",
+    },
+    {
+      title: "Profitability Dashboard",
+      description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit.",
+      icon: TrendingUp,
+      status: "Completed",
+    },
+    {
+      title: "Technician Commission & Bonus Pay",
+      description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
+      icon: Award,
+      status: "Completed",
+    },
+    {
+      title: "Technician Profit Leaderboard",
+      description: "A leaderboard on the Reports page that ranks technicians by the actual profit margin they've generated, turning performance into a measurable and motivational metric.",
+      icon: Award,
+      status: "Completed",
+    },
+    {
+      title: "Dashboard Analytics for Upsell",
+      description: "Surface key upsell metrics on the reporting dashboard, including total revenue from upsells, conversion rates, and a leaderboard of top-performing technicians in sales.",
+      icon: BarChart,
       status: "Completed",
     },
     {
@@ -81,12 +105,6 @@ const roadmapFeatures = {
       title: "Automated Schedule Risk Warnings & AI Resolution",
       description: "The system automatically checks for schedule risks, proactively warns dispatchers about potential delays, and offers AI-powered one-click resolutions to reassign or reschedule the at-risk job.",
       icon: ShieldQuestion,
-      status: "Completed",
-    },
-     {
-      title: "Basic Performance Analytics",
-      description: "A reporting dashboard providing insights into key KPIs like on-time arrival, jobs completed, and travel times.",
-      icon: BarChart,
       status: "Completed",
     },
     {
@@ -117,6 +135,12 @@ const roadmapFeatures = {
       title: "Dynamic Skill Library & AI Suggestions",
       description: "Dispatchers can manage a central skill library, and the AI suggests required skills for new jobs.",
       icon: Cog, 
+      status: "Completed",
+    },
+    {
+      title: "AI-Powered Parts Suggestion & Van Inventory",
+      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
+      icon: ShoppingCart,
       status: "Completed",
     },
     {
@@ -198,24 +222,24 @@ const roadmapFeatures = {
       status: "Completed"
     },
     {
-      title: "AI-Powered Parts Suggestion & Van Inventory",
-      description: "The AI suggests required parts from job descriptions and cross-references this with a real-time inventory of each technician's van, prioritizing technicians who already have the necessary parts.",
-      icon: ShoppingCart,
+      title: "Upsell Outcome Tracking",
+      description: "Technicians can log whether an upsell suggestion was successful or declined, providing crucial data for sales performance analytics.",
+      icon: TrendingUp,
+      status: "Completed",
+    },
+    {
+      title: "Automated Job Actuals Calculation",
+      description: "Upon job completion, the system will automatically calculate the actual travel time, on-site duration, and final profit margin, providing crucial data for the AI's learning loop and for accurate financial reporting.",
+      icon: CheckSquare,
       status: "Completed",
     },
     {
       title: "Break Tracking",
-      description: "Allows technicians to log break times during a job, which will provide more accurate data for job duration and performance analytics.",
+      description: "Allows technicians to log break times during a job. This data is now reflected in the reporting dashboard for more accurate on-site duration and efficiency KPIs.",
       icon: Timer,
       status: "Completed",
     },
-     {
-      title: "Advanced Fleet-Wide Re-optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
-      icon: Brain,
-      status: "Completed",
-    },
-     {
+    {
       title: "Job Flexibility Status",
       description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
       icon: Shuffle,
@@ -227,10 +251,16 @@ const roadmapFeatures = {
       icon: Target,
       status: "Completed",
     },
-     {
+    {
       title: "AI-Powered Customer Follow-Up",
       description: "After a job, the AI analyzes technician notes to draft personalized follow-up messages, including maintenance tips and a link to review the service, improving customer relations and generating positive reviews.",
       icon: Smile,
+      status: "Completed",
+    },
+    {
+      title: "Automated AI Feedback Loop",
+      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      icon: Brain,
       status: "Completed",
     },
     {
@@ -240,9 +270,9 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
-      icon: TrendingUp,
+      title: "Dashboard Profit Score Visibility & Sorting",
+      description: "Make profit a primary metric on the main dashboard. Each job in the list now displays its AI-calculated profit score, and dispatchers can sort the entire job list by profitability.",
+      icon: DollarSign,
       status: "Completed",
     },
   ],

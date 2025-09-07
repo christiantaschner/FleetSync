@@ -36,14 +36,15 @@ interface FleetOptimizationReviewDialogProps {
 }
 
 const ChangeMetric = ({ icon: Icon, value, unit, className, label }: { icon: React.ElementType, value: number | undefined, unit: string, className?: string, label: string }) => {
-    if (value === undefined || value === 0) return null;
+    if (value === undefined) return null;
     const isPositive = value > 0;
-    const colorClass = isPositive ? 'text-green-600' : 'text-red-600';
+    const isNeutral = value === 0;
+    const colorClass = isNeutral ? 'text-muted-foreground' : isPositive ? 'text-green-600' : 'text-red-600';
     return (
-        <Badge variant="outline" className={cn("text-xs", className, isPositive ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50")}>
+        <Badge variant="outline" className={cn("text-xs", className, isPositive ? "border-green-200 bg-green-50" : isNeutral ? "border" : "border-red-200 bg-red-50")}>
             <Icon className={cn("h-3.5 w-3.5 mr-1", colorClass)} />
             <span className={cn(colorClass)}>
-                {isPositive ? '+' : ''}{value.toFixed(0)}{unit}
+                {isNeutral ? '' : (isPositive ? '+' : '')}{value.toFixed(0)}{unit}
             </span>
             <span className="ml-1 text-muted-foreground">{label}</span>
         </Badge>
@@ -116,7 +117,7 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
             <Bot className="text-primary h-5 w-5" /> Fleet Optimization Suggestions
           </DialogTitle>
           <DialogDescription>
-            Fleety has analyzed the schedule and suggests the following changes to improve efficiency. Select the changes you want to apply.
+            The AI has analyzed the schedule and suggests the following changes to improve profitability. Select the changes you want to apply.
           </DialogDescription>
         </DialogHeader>
          

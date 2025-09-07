@@ -968,10 +968,34 @@ export default function DashboardPage() {
       companyId: userProfile.companyId,
       appId,
       currentTime: new Date().toISOString(),
-      pendingJobs: unassignedJobsForToday,
+      pendingJobs: unassignedJobsForToday.map(j => ({
+        id: j.id,
+        title: j.title,
+        priority: j.priority,
+        requiredSkills: j.requiredSkills || [],
+        location: j.location,
+        quotedValue: j.quotedValue,
+        estimatedDurationMinutes: j.estimatedDurationMinutes,
+      })),
       technicians: technicians.map(t => ({
-        ...t,
-        jobs: assignedJobsForToday.filter(j => j.assignedTechnicianId === t.id)
+        id: t.id,
+        name: t.name,
+        skills: t.skills || [],
+        isOnCall: t.isOnCall,
+        hourlyCost: t.hourlyCost,
+        jobs: assignedJobsForToday
+          .filter(j => j.assignedTechnicianId === t.id)
+          .map(j => ({
+            id: j.id,
+            title: j.title,
+            priority: j.priority,
+            location: j.location,
+            scheduledTime: j.scheduledTime,
+            flexibility: j.flexibility,
+            dispatchLocked: j.dispatchLocked,
+            quotedValue: j.quotedValue,
+            estimatedDurationMinutes: j.estimatedDurationMinutes,
+          })),
       })),
     });
 

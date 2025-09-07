@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useEffect } from 'react';
@@ -61,13 +62,13 @@ const roadmapFeatures = {
     },
     {
       title: "Profit-Aware Dispatching",
-      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability, not just logistics. This is now managed through the new Smart Job Allocation dialog.",
+      description: "An advanced AI mode that considers job revenue, parts cost, and technician labor costs to assign jobs based on maximum profitability. Dispatchers see a profit-ranked list of suggestions in the new Smart Allocation dialog.",
       icon: DollarSign,
       status: "Completed",
     },
     {
       title: "Profitability Dashboard",
-      description: "A dedicated dashboard to visualize estimated vs. actual profit per job, per technician, and per service type. This is crucial for highlighting the value of the profit-first dispatching strategy.",
+      description: "A dedicated dashboard to visualize key financial metrics. Includes widgets for Total Profit, SLA Misses, Upsell Revenue, and a Technician Leaderboard based on profit.",
       icon: TrendingUp,
       status: "Completed",
     },
@@ -90,6 +91,24 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
+      title: "Upsell Outcome Tracking",
+      description: "Technicians can log whether an upsell suggestion was successful or declined, providing crucial data for sales performance analytics.",
+      icon: TrendingUp,
+      status: "Completed",
+    },
+     {
+      title: "Automated Job Actuals Calculation",
+      description: "Upon job completion, the system will automatically calculate the actual travel time, on-site duration, and final profit margin, providing crucial data for the AI's learning loop and for accurate financial reporting.",
+      icon: CheckSquare,
+      status: "Completed",
+    },
+    {
+      title: "Automated AI Feedback Loop",
+      description: "The system automatically feeds job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      icon: Brain,
+      status: "Completed",
+    },
+    {
       title: "Advanced Drag-and-Drop Scheduling",
       description: "Transform the schedule into a fully interactive board. Dispatchers can assign, re-assign, and reschedule jobs by simply dragging and dropping them between technicians and time slots. The view features clear, color-coded statuses for jobs and availability.",
       icon: MousePointerClick,
@@ -99,6 +118,12 @@ const roadmapFeatures = {
       title: "Automated Schedule Risk Warnings & AI Resolution",
       description: "The system automatically checks for schedule risks, proactively warns dispatchers about potential delays, and offers AI-powered one-click resolutions to reassign or reschedule the at-risk job.",
       icon: ShieldQuestion,
+      status: "Completed",
+    },
+    {
+      title: "Advanced Fleet-Wide Re-optimization",
+      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations. This optimization can be profit-driven.",
+      icon: Brain,
       status: "Completed",
     },
     {
@@ -216,18 +241,6 @@ const roadmapFeatures = {
       status: "Completed"
     },
     {
-      title: "Upsell Outcome Tracking",
-      description: "Technicians can log whether an upsell suggestion was successful or declined, providing crucial data for sales performance analytics.",
-      icon: TrendingUp,
-      status: "Completed",
-    },
-    {
-      title: "Automated Job Actuals Calculation",
-      description: "Upon job completion, the system will automatically calculate the actual travel time, on-site duration, and final profit margin, providing crucial data for the AI's learning loop and for accurate financial reporting.",
-      icon: CheckSquare,
-      status: "Completed",
-    },
-    {
       title: "Break Tracking",
       description: "Allows technicians to log break times during a job. This data is now reflected in the reporting dashboard for more accurate on-site duration and efficiency KPIs.",
       icon: Timer,
@@ -237,12 +250,6 @@ const roadmapFeatures = {
       title: "Job Flexibility Status",
       description: "Add a 'flexibility' status to jobs ('fixed', 'flexible', 'soft_window') so the AI can make smarter rescheduling decisions, such as moving a flexible maintenance job to make room for a fixed emergency call.",
       icon: Shuffle,
-      status: "Completed",
-    },
-    {
-      title: "Advanced Fleet-Wide Re-optimization",
-      description: "An AI that constantly monitors the entire fleet for efficiency gains. Its goal is to find the most efficient schedule with the fewest possible customer-facing changes, only suggesting job swaps or moves when they provide a significant net benefit to the day's operations.",
-      icon: Brain,
       status: "Completed",
     },
     {
@@ -258,12 +265,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Automated AI Feedback Loop",
-      description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) and dispatcher overrides back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
-      icon: Brain,
-      status: "Completed",
-    },
-    {
       title: "Integrated Invoicing & Payments",
       description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
       icon: DollarSign,
@@ -273,6 +274,12 @@ const roadmapFeatures = {
       title: "Dashboard Profit Score Visibility & Sorting",
       description: "Make profit a primary metric on the main dashboard. Each job in the list now displays its AI-calculated profit score, and dispatchers can sort the entire job list by profitability.",
       icon: DollarSign,
+      status: "Completed",
+    },
+    {
+      title: "AI Feature Toggles",
+      description: "Provide administrators with settings to enable or disable specific AI features, such as profit-aware dispatching or automatic schedule monitoring, allowing them to tailor the system's level of automation to their business needs.",
+      icon: Cog,
       status: "Completed",
     },
   ],

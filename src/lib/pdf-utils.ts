@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import type { Job, Company } from '@/types';

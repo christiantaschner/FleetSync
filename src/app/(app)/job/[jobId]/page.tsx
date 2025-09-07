@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -279,7 +278,7 @@ export default function DispatcherJobDetailPage() {
                  ) : job.status === 'Pending Invoice' ? (
                      <Button onClick={handleGenerateInvoice} disabled={isUpdatingStatus} className="bg-green-600 hover:bg-green-700">
                         {isUpdatingStatus ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4" />}
-                        Generate Invoice & Finish
+                        Generate Invoice &amp; Finish
                     </Button>
                  ) : job.status !== 'Finished' && job.status !== 'Cancelled' ? (
                     <Button onClick={() => setIsEditDialogOpen(true)}>

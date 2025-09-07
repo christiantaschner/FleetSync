@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 // --- Core Data Models ---
@@ -252,7 +251,6 @@ export type AITechnician = {
   homeBaseLocation: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
-  hasCustomerHistory?: boolean;
   hourlyCost?: number;
   commissionRate?: number;
   bonus?: number;
@@ -426,7 +424,7 @@ export const AllocateJobInputSchema = z.object({
         jobId: z.string(),
         location: z.any().describe("The location of this scheduled job."),
         scheduledTime: z.string().optional().nullable(),
-        priority: z.enum(['High', 'Medium', 'Low']),
+        priority: JobPriority,
         startedAt: z.string().optional().nullable().describe("ISO 8601 timestamp of when the job started."),
         estimatedDurationMinutes: z.number().optional(),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
@@ -886,6 +884,3 @@ export const GenerateCustomerFollowupOutputSchema = z.object({
   followupMessage: z.string().describe("The generated customer-facing follow-up message."),
 });
 export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFollowupOutputSchema>;
-
-    
-```

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect } from 'react';
@@ -210,12 +209,6 @@ const roadmapFeatures = {
       status: "Completed",
     },
     {
-      title: "Automated AI Feedback Loop",
-      description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
-      icon: Brain,
-      status: "Completed",
-    },
-    {
       title: "Technician Commission & Bonus Pay",
       description: "Allow companies to configure commission structures (% of revenue, flat-rate bonuses) that are automatically factored into the Profit Score. Provides a true net-profit calculation and enables gamified leaderboards based on total earnings.",
       icon: Award,
@@ -251,14 +244,20 @@ const roadmapFeatures = {
       icon: Smile,
       status: "Completed",
     },
-  ],
-  inProgress: [
+     {
+      title: "Automated AI Feedback Loop",
+      description: "The system will automatically feed job outcomes (e.g., actual vs. estimated time, profit margin) back into the AI model, allowing it to learn and refine its dispatching and scheduling predictions over time, becoming more accurate for your specific business.",
+      icon: Brain,
+      status: "Completed",
+    },
     {
-      title: "Integrated Invoicing & Payments",
+      title: "Integrated Invoicing &amp; Payments",
       description: "Enable technicians to capture signatures and mark jobs as complete, triggering a 'Pending Invoice' status for the back office. Auto-generates invoice PDFs and integrates with payment processing.",
       icon: DollarSign,
-      status: "In Progress",
+      status: "Completed",
     },
+  ],
+  inProgress: [
   ],
   planned: [
   ],
@@ -359,4 +358,3 @@ export default function RoadmapPage() {
     </div>
   );
 }
-```

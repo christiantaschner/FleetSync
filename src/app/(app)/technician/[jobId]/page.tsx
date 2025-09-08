@@ -297,7 +297,7 @@ export default function TechnicianJobDetailPage() {
 
       {job.status === 'In Progress' && (
         <div className="space-y-4">
-          <TroubleshootingCard jobTitle={job.title} />
+          <TroubleshootingCard job={job} serviceHistory={historyJobs} />
           <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
         </div>
       )}
@@ -342,5 +342,3 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
-
-    

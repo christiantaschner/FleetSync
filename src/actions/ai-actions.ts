@@ -95,16 +95,19 @@ export async function allocateJobAction(
     if (suitableTechnician) {
       return { 
         data: { 
-          suggestedTechnicianId: suitableTechnician.technicianId,
-          reasoning: "Mock Mode: Selected the first available technician with the required skills."
+          suggestions: [{
+            suggestedTechnicianId: suitableTechnician.technicianId,
+            reasoning: "Mock Mode: Selected the first available technician with the required skills."
+          }],
+          overallReasoning: "Mocked response"
         }, 
         error: null 
       };
     } else {
       return { 
         data: {
-          suggestedTechnicianId: null,
-          reasoning: "Mock Mode: No available technicians found with the required skills."
+          suggestions: [],
+          overallReasoning: "Mock Mode: No available technicians found with the required skills."
         },
         error: null
       };
@@ -388,12 +391,7 @@ export async function troubleshootEquipmentAction(
   input: TroubleshootEquipmentInput
 ): Promise<{ data: TroubleshootEquipmentOutput | null; error: string | null }> {
   try {
-    // In a real app, you might fetch a dynamic knowledge base from Firestore here.
-    // For now, we'll use a hardcoded example.
-    const result = await troubleshootEquipmentFlow({
-        ...input,
-        knowledgeBase: "Standard procedure for HVAC units is to first check the thermostat settings, then the circuit breaker, then the air filter for blockages before inspecting any internal components like capacitors or contactors. Always cut power before opening panels."
-    });
+    const result = await troubleshootEquipmentFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -817,7 +815,7 @@ export async function generateAndSaveFeedbackAction(
 
         // 1. Analyze the difference
         const analysisResult = await analyzeProfitabilityFlow({
-            estimatedProfit: aiSuggestion.profitScore || 0,
+            estimatedProfit: aiSuggestion.suggestions[0]?.profitScore || 0,
             actualProfit: completedJob.actualProfit || 0,
         });
 
@@ -827,10 +825,10 @@ export async function generateAndSaveFeedbackAction(
             jobId: completedJob.id,
             aiSuggestedTechnicianId: completedJob.assignedTechnicianId!,
             dispatcherSelectedTechnicianId: completedJob.assignedTechnicianId!, // Same, since it wasn't manually overridden
-            aiReasoning: aiSuggestion.reasoning,
+            aiReasoning: aiSuggestion.suggestions[0]?.reasoning || "No reasoning provided.",
             dispatcherReasoning: "AI suggestion was accepted.",
             createdAt: new Date().toISOString(),
-            profitScore: aiSuggestion.profitScore,
+            profitScore: aiSuggestion.suggestions[0]?.profitScore,
             actualProfit: completedJob.actualProfit,
             estimatedVsActualReasoning: analysisResult.reasoning,
         };

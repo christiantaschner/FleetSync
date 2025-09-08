@@ -7,16 +7,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Bot, Lightbulb, Camera, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { TroubleshootEquipmentOutput } from '@/types';
+import type { TroubleshootEquipmentOutput, Job } from '@/types';
 import { troubleshootEquipmentAction } from '@/actions/ai-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Image from 'next/image';
 
 interface TroubleshootingCardProps {
-    jobTitle: string;
+    job: Job;
+    serviceHistory: Job[];
 }
 
-const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) => {
+const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ job, serviceHistory }) => {
     const { toast } = useToast();
     const [query, setQuery] = useState('');
     const [photo, setPhoto] = useState<File | null>(null);
@@ -63,9 +64,15 @@ const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) =
         if (photo) {
             photoDataUri = await fileToDataUri(photo);
         }
+        
+        const historyNotes = serviceHistory.map(h => `On ${new Date(h.completedAt!).toLocaleDateString()}: "${h.title}" - Notes: ${h.notes || 'N/A'}`);
 
-        const fullQuery = `For a job titled "${jobTitle}", the issue is: ${query}`;
-        const result = await troubleshootEquipmentAction({ query: fullQuery, photoDataUri });
+        const result = await troubleshootEquipmentAction({
+            query: query,
+            jobDescription: `Job Title: ${job.title}. Job Description: ${job.description}`,
+            serviceHistory: historyNotes,
+            photoDataUri
+        });
 
         if (result.error) {
             toast({ title: 'Error', description: result.error, variant: 'destructive' });
@@ -82,7 +89,7 @@ const TroubleshootingCard: React.FC<TroubleshootingCardProps> = ({ jobTitle }) =
                     <Lightbulb /> AI Troubleshooting Assistant
                 </CardTitle>
                 <CardDescription>
-                    Describe the problem you're seeing, and the AI will suggest diagnostic steps. Add a photo for more accurate help.
+                    Describe the problem you're seeing, and the AI will suggest diagnostic steps based on the job history. Add a photo for more accurate help.
                 </CardDescription>
             </CardHeader>
             <CardContent>

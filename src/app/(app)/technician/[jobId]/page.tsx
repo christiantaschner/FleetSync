@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
 import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle, DollarSign } from 'lucide-react';
@@ -40,8 +41,6 @@ export default function TechnicianJobDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
-  const backUrl = userProfile?.role === 'admin' ? `/technician/jobs/${technician?.id}` : '/dashboard';
-
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -243,7 +242,7 @@ export default function TechnicianJobDetailPage() {
   }
   
   if (!job) {
-    return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The requested job could not be found.</p><Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
+    return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The requested job could not be found.</p><Button variant="outline" onClick={() => router.back()} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
   }
   if (!technician) {
       return <div className="p-4 text-center text-destructive">Could not load technician details for this job.</div>
@@ -259,7 +258,7 @@ export default function TechnicianJobDetailPage() {
           appId={appId}
       />}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
+        <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
@@ -343,3 +342,5 @@ export default function TechnicianJobDetailPage() {
     </div>
   );
 }
+
+    

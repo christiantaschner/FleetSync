@@ -1,7 +1,4 @@
 
-
-      
-
 "use server";
 
 import { allocateJob as allocateJobFlow } from "@/ai/flows/allocate-job";
@@ -924,6 +921,3 @@ export async function analyzeJobAction(
         return { data: null, error: errorMessage };
     }
 }
-    
-
-    

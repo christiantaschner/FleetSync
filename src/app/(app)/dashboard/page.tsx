@@ -59,7 +59,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import QuickAddJobDialog from './components/QuickAddJobDialog';
 
 import {
   Tooltip,
@@ -151,7 +150,6 @@ export default function DashboardPage() {
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
-  const [isQuickAddDialogOpen, setIsQuickAddDialogOpen] = useState(false);
 
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
@@ -1082,7 +1080,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
-            onOpenAddJobDialog={() => setIsQuickAddDialogOpen(true)}
+            onOpenAddJobDialog={() => setIsAddEditDialogOpen(true)}
             onSeedData={handleSeedData}
             onSwitchToScheduleTab={() => setActiveTab('schedule')}
             onDismiss={() => {
@@ -1110,27 +1108,19 @@ export default function DashboardPage() {
             />
         )}
         {canEditJobs && (
-          <>
-            <AddEditJobDialog
-                isOpen={isAddEditDialogOpen}
-                onClose={() => setIsAddEditDialogOpen(false)}
-                job={null}
-                jobs={jobs}
-                technicians={technicians}
-                customers={customers}
-                contracts={contracts}
-                allSkills={allSkills.map(s => s.name)}
-                allParts={allParts}
-                onManageSkills={() => setIsManageSkillsOpen(true)}
-                onManageParts={() => setIsManagePartsOpen(true)}
-            />
-            <QuickAddJobDialog
-              isOpen={isQuickAddDialogOpen}
-              onClose={() => setIsQuickAddDialogOpen(false)}
-              onJobAdded={() => {}}
+          <AddEditJobDialog
+              isOpen={isAddEditDialogOpen}
+              onClose={() => setIsAddEditDialogOpen(false)}
+              job={null}
+              jobs={jobs}
+              technicians={technicians}
               customers={customers}
-            />
-          </>
+              contracts={contracts}
+              allSkills={allSkills.map(s => s.name)}
+              allParts={allParts}
+              onManageSkills={() => setIsManageSkillsOpen(true)}
+              onManageParts={() => setIsManagePartsOpen(true)}
+          />
         )}
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
@@ -1197,24 +1187,9 @@ export default function DashboardPage() {
             </Button>
            )}
            {canEditJobs && (
-            <div className="flex rounded-md shadow-sm w-full sm:w-auto">
-               <Button onClick={() => setIsQuickAddDialogOpen(true)} className="relative flex-1 rounded-r-none">
-                <Rocket className="mr-2 h-4 w-4" /> Quick Add
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" size="icon" className="w-10 shrink-0 rounded-l-none">
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setIsAddEditDialogOpen(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Detailed Add
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Button onClick={() => setIsAddEditDialogOpen(true)} className="w-full sm:w-auto">
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
+            </Button>
            )}
         </div>
       </div>

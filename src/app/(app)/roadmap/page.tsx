@@ -8,7 +8,7 @@ import {
   Brain, Building2, Package, Glasses, ShoppingCart, FileSpreadsheet, GraduationCap, BarChart, User,
   FileSignature, ThumbsUp, Leaf, Smile, Shuffle, Zap, ClipboardList, Timer, BookOpen, WifiOff, CalendarDays, Cog,
   Sparkles, Navigation, Repeat, ShieldQuestion, Users2, CalendarClock, CreditCard, ImageIcon, Mailbox, Search, Eye,
-  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award, Wand2, Rocket
+  List, MousePointerClick, HelpCircle, CloudRain, LayoutDashboard, Smartphone, Target, DollarSign, Loader2, TrendingUp, Award, Wand2, Rocket, MapPin
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-language';
@@ -140,7 +140,7 @@ const roadmapFeatures = {
     },
     {
       title: "Recurring Job & Contract Management",
-      description: "Create and manage recurring service contracts, with AI assistance for scheduling future appointments.",
+      description: "Create and manage recurring service agreements, with AI assistance for scheduling future appointments.",
       icon: Repeat,
       status: "Completed",
     },

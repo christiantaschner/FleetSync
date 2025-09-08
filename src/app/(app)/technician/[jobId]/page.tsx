@@ -40,7 +40,7 @@ export default function TechnicianJobDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
-  const backUrl = job?.assignedTechnicianId ? `/technician/jobs/${job.assignedTechnicianId}` : '/dashboard';
+  const backUrl = userProfile?.role === 'admin' ? `/technician/jobs/${technician?.id}` : '/dashboard';
 
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -109,22 +109,30 @@ export default function TechnicianJobDetailPage() {
   }, [jobId, authLoading, user, appId, isMockMode]);
   
   const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string, signatureDataUrl?: string | null, satisfactionScore?: number) => {
-    if (!job || !storage || isUpdating || !appId) return;
+    if (!job || !appId) return;
     setIsUpdating(true);
 
     let photoUrls: string[] = [];
-    let signatureUrl: string | null = null;
+    let signatureUrlToSave: string | null = null;
+    
+    if (isMockMode) {
+        toast({ title: "Success (Mock)", description: "Documentation saved in mock mode." });
+        setIsUpdating(false);
+        return;
+    }
+    
     try {
       if (photos.length > 0) {
-        // This part would be handled by a different action in a real app
-        // For simplicity, we assume an upload function exists
-        toast({ title: "Note", description: "Photo upload from this screen is a demo feature."});
+          // This part would be handled by a different action in a real app
+          // For simplicity, we assume an upload function exists
+          toast({ title: "Note", description: "Photo upload from this screen is a demo feature."});
       }
       
       if (signatureDataUrl) {
+        if (!storage) throw new Error("Storage not initialized");
         const signatureRef = ref(storage, `signatures/${job.id}.png`);
         await uploadString(signatureRef, signatureDataUrl, 'data_url');
-        signatureUrl = await getDownloadURL(signatureRef);
+        signatureUrlToSave = await getDownloadURL(signatureRef);
       }
       
       const result = await addDocumentationAction({
@@ -134,7 +142,7 @@ export default function TechnicianJobDetailPage() {
         photoUrls,
         isFirstTimeFix,
         reasonForFollowUp,
-        signatureUrl,
+        signatureUrl: signatureUrlToSave,
         satisfactionScore,
       });
       
@@ -149,7 +157,7 @@ export default function TechnicianJobDetailPage() {
             photos: [...(prevJob.photos || []), ...photoUrls],
             isFirstTimeFix,
             reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || ''),
-            customerSignatureUrl: signatureUrl || prevJob.customerSignatureUrl,
+            customerSignatureUrl: signatureUrlToSave || prevJob.customerSignatureUrl,
             customerSatisfactionScore: satisfactionScore || prevJob.customerSatisfactionScore,
             updatedAt: new Date().toISOString()
         };
@@ -164,25 +172,38 @@ export default function TechnicianJobDetailPage() {
   };
   
   const handleToggleBreak = async () => {
-    if (!job || !db || isUpdating || !appId) return;
-    const currentJob = job;
-    if (!currentJob) return;
-
-    setIsUpdating(true);
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, currentJob.id);
+    if (!job || isUpdating || !appId) return;
+    
     const now = new Date().toISOString();
-    const currentBreaks = currentJob.breaks || [];
+    const currentBreaks = job.breaks || [];
     let updatedBreaks;
+
     if (isBreakActive) {
-      toast({ title: "Resuming Work" });
-      updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
+        updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
     } else {
-      toast({ title: "Break Started" });
-      updatedBreaks = [...currentBreaks, { start: now }];
+        updatedBreaks = [...currentBreaks, { start: now, end: undefined }];
     }
-    await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
-    setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
-    setIsUpdating(false);
+
+    if (isMockMode) {
+        setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+        toast({ title: isBreakActive ? "Resuming Work (Mock)" : "Break Started (Mock)" });
+        return;
+    }
+    
+    if (!db) return;
+    setIsUpdating(true);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+    
+    try {
+        await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
+        setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+        toast({ title: isBreakActive ? "Resuming Work" : "Break Started" });
+    } catch(e) {
+        console.error("Failed to update break status:", e);
+        toast({ title: "Error", description: "Could not update break status.", variant: "destructive" });
+    } finally {
+        setIsUpdating(false);
+    }
   };
   
   const handleNavigate = () => {
@@ -238,7 +259,7 @@ export default function TechnicianJobDetailPage() {
           appId={appId}
       />}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Job List</Button>
+        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
@@ -253,7 +274,7 @@ export default function TechnicianJobDetailPage() {
                         <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
                     </Button>
                     <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full justify-center">
-                        {isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+                        {isUpdating && isBreakActive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
                         {isBreakActive ? 'End Break' : 'Start Break'}
                     </Button>
               </CardFooter>

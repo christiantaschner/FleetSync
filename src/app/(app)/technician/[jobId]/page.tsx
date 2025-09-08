@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -15,7 +16,7 @@ import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpp
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
-import { ref, uploadString, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/auth-context';
 import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai-actions';
@@ -39,9 +40,7 @@ export default function TechnicianJobDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
-  const backUrl = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin'
-    ? '/dashboard'
-    : `/technician/jobs/${userProfile?.uid}`;
+  const backUrl = job?.assignedTechnicianId ? `/technician/jobs/${job.assignedTechnicianId}` : '/dashboard';
 
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -239,7 +238,7 @@ export default function TechnicianJobDetailPage() {
           appId={appId}
       />}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
+        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to Job List</Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}

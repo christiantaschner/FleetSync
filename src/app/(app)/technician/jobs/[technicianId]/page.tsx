@@ -25,7 +25,7 @@ import GeoFenceWatcher from './components/GeoFenceWatcher';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function TechnicianJobListPage() {
-  const { user: firebaseUser, userProfile, loading: authLoading, company } = useAuth();
+  const { user: firebaseUser, userProfile, loading: authLoading, company, isMockMode } = useAuth();
   const { toast } = useToast();
   const params = useParams();
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function TechnicianJobListPage() {
     }
 
 
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    if (isMockMode) {
         const foundTechnician = mockTechnicians.find(t => t.id === technicianId) || null;
         setTechnician(foundTechnician);
         if (foundTechnician) {
@@ -67,6 +67,8 @@ export default function TechnicianJobListPage() {
                 })
                 .sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
             setAssignedJobs(jobsForTech);
+        } else {
+             setError(`No mock technician profile found for ID: ${technicianId}`);
         }
         setIsLoading(false);
         return;
@@ -146,7 +148,7 @@ export default function TechnicianJobListPage() {
     });
     
     return () => unsubscribeTech();
-  }, [firebaseUser, authLoading, userProfile, technicianId, toast, isViewingOwnPage, appId, router]);
+  }, [firebaseUser, authLoading, userProfile, technicianId, toast, isViewingOwnPage, appId, router, isMockMode]);
   
   const handleToggleBreak = async () => {
     if (!technician?.currentJobId || !db || isUpdating || !appId) return;

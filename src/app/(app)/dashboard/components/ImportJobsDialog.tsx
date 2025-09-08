@@ -19,7 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, Upload, FileSpreadsheet, Download, CheckCircle, AlertTriangle } from 'lucide-react';
 import Papa from 'papaparse';
 import { importJobsAction, type ImportJobsActionInput } from '@/actions/fleet-actions';
-import type { JobPriority } from '@/types';
+import type { JobPriority, JobFlexibility } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 
 interface ImportJobsDialogProps {
@@ -41,7 +41,8 @@ type ParseError = {
 const REQUIRED_HEADERS = [
     'title', 'description', 'priority', 'address', 
     'customerName', 'customerPhone', 'scheduledDate', 'scheduledTime', 
-    'estimatedDurationMinutes', 'requiredSkills'
+    'estimatedDurationMinutes', 'requiredSkills', 'requiredParts',
+    'quotedValue', 'expectedPartsCost', 'slaDeadline', 'flexibility', 'dispatchLocked'
 ];
 
 const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, onJobsImported }) => {
@@ -132,6 +133,12 @@ const ImportJobsDialog: React.FC<ImportJobsDialogProps> = ({ isOpen, setIsOpen, 
             scheduledTime: scheduledTimeISO,
             estimatedDurationMinutes: duration,
             requiredSkills: row.requiredSkills ? row.requiredSkills.split(',').map((s: string) => s.trim()) : [],
+            requiredParts: row.requiredParts ? row.requiredParts.split(',').map((s: string) => s.trim()) : [],
+            quotedValue: row.quotedValue ? parseFloat(row.quotedValue) : undefined,
+            expectedPartsCost: row.expectedPartsCost ? parseFloat(row.expectedPartsCost) : undefined,
+            slaDeadline: row.slaDeadline ? new Date(row.slaDeadline).toISOString() : undefined,
+            flexibility: row.flexibility as JobFlexibility || 'flexible',
+            dispatchLocked: row.dispatchLocked === 'true' || row.dispatchLocked === 'TRUE',
           };
           validJobs.push({ data: job, rowIndex });
         });

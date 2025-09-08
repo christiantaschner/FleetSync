@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
 import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
-import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company, DispatcherFeedback, OptimizationSuggestion } from "@/types";
+import type { Job, JobStatus, ProfileChangeRequest, Technician, Contract, Location, Company, DispatcherFeedback, OptimizationSuggestion, JobFlexibility } from "@/types";
 import { add, addDays, addMonths, addWeeks, addHours, isSameDay } from 'date-fns';
 import crypto from 'crypto';
 
@@ -28,6 +28,12 @@ const JobImportSchema = z.object({
     scheduledTime: z.string().optional(), // ISO string
     estimatedDurationMinutes: z.number().min(1, "Estimated duration is required and must be at least 1."),
     requiredSkills: z.array(z.string()).optional(),
+    requiredParts: z.array(z.string()).optional(),
+    quotedValue: z.number().optional(),
+    expectedPartsCost: z.number().optional(),
+    slaDeadline: z.string().optional(), // ISO string
+    flexibility: z.enum(['fixed', 'flexible', 'soft_window']).optional(),
+    dispatchLocked: z.boolean().optional(),
 });
 
 const ImportJobsActionInputSchema = z.object({
@@ -57,7 +63,7 @@ export async function importJobsAction(
         for (const jobData of jobs) {
             const newJobRef = doc(jobsCollectionRef);
             
-            const finalPayload = {
+            const finalPayload: Omit<Job, 'id' | 'createdAt' | 'updatedAt'> & { createdAt: any, updatedAt: any } = {
               companyId,
               title: jobData.title,
               description: jobData.description || "",
@@ -70,15 +76,20 @@ export async function importJobsAction(
                   latitude: 0,
                   longitude: 0,
               },
-              scheduledTime: jobData.scheduledTime,
-              estimatedDuration: jobData.estimatedDurationMinutes,
-              durationUnit: 'minutes',
+              scheduledTime: jobData.scheduledTime || null,
+              estimatedDurationMinutes: jobData.estimatedDurationMinutes,
               requiredSkills: jobData.requiredSkills || [],
+              requiredParts: jobData.requiredParts || [],
               assignedTechnicianId: null,
               notes: 'Imported via CSV.',
               photos: [],
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
+              quotedValue: jobData.quotedValue,
+              expectedPartsCost: jobData.expectedPartsCost,
+              slaDeadline: jobData.slaDeadline,
+              flexibility: jobData.flexibility || 'flexible',
+              dispatchLocked: jobData.dispatchLocked || false,
             };
             
             batch.set(newJobRef, finalPayload);

@@ -46,6 +46,9 @@ export default function TechnicianJobListPage() {
   const isViewingOwnPage = userProfile?.uid === technicianId;
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
+  // Corrected back URL logic
+  const backUrl = `/technician/jobs/${technicianId}`;
+
   useEffect(() => {
     if (authLoading || !firebaseUser || !userProfile || !technicianId) return;
     
@@ -282,13 +285,11 @@ export default function TechnicianJobListPage() {
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       {appId && isViewingOwnPage && <OfflineIndicator />}
       {appId && isViewingOwnPage && <GeoFenceWatcher appId={appId} job={currentOrNextJob} onStatusChange={handleStatusUpdate} />}
-      {!isViewingOwnPage && (
-          <div className="flex items-center">
-              <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard')}>
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
-              </Button>
-          </div>
-      )}
+      <div className="flex items-center">
+          <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician List
+          </Button>
+      </div>
        <Card>
           <CardHeader>
             <div className="flex items-center gap-4">

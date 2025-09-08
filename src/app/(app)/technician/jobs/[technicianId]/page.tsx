@@ -47,7 +47,7 @@ export default function TechnicianJobListPage() {
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   // Corrected back URL logic
-  const backUrl = `/technician/jobs/${technicianId}`;
+  const backUrl = `/technician`;
 
   useEffect(() => {
     if (authLoading || !firebaseUser || !userProfile || !technicianId) return;
@@ -154,10 +154,25 @@ export default function TechnicianJobListPage() {
   }, [firebaseUser, authLoading, userProfile, technicianId, toast, isViewingOwnPage, appId, router, isMockMode]);
   
   const handleToggleBreak = async () => {
-    if (!technician?.currentJobId || !db || isUpdating || !appId) return;
+    if (!technician?.currentJobId || isUpdating || !appId) return;
     const currentJob = assignedJobs.find(j => j.id === technician.currentJobId);
     if (!currentJob) return;
 
+    if (isMockMode) {
+        const now = new Date().toISOString();
+        const currentBreaks = currentJob.breaks || [];
+        let updatedBreaks;
+        if (isBreakActive) {
+            updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
+        } else {
+            updatedBreaks = [...currentBreaks, { start: now, end: undefined }];
+        }
+        setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+        toast({ title: isBreakActive ? "Resuming Work (Mock)" : "Break Started (Mock)" });
+        return;
+    }
+    
+    if (!db) return;
     setIsUpdating(true);
     const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, currentJob.id);
     const now = new Date().toISOString();
@@ -168,7 +183,7 @@ export default function TechnicianJobListPage() {
       updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
     } else {
       toast({ title: "Break Started" });
-      updatedBreaks = [...currentBreaks, { start: now }];
+      updatedBreaks = [...currentBreaks, { start: now, end: undefined }];
     }
     await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
     setIsUpdating(false);
@@ -393,3 +408,4 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
+

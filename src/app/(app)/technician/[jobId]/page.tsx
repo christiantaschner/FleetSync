@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -40,7 +39,10 @@ export default function TechnicianJobDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
-  const backUrl = `/technician/jobs/${userProfile?.uid}`;
+  const backUrl = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin'
+    ? '/dashboard'
+    : `/technician/jobs/${userProfile?.uid}`;
+
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 

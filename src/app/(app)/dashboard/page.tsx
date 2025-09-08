@@ -1128,6 +1128,7 @@ export default function DashboardPage() {
               isOpen={isQuickAddDialogOpen}
               onClose={() => setIsQuickAddDialogOpen(false)}
               onJobAdded={() => {}}
+              customers={customers}
             />
           </>
         )}

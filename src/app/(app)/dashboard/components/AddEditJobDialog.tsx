@@ -879,10 +879,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
               </div>
             </div>
 
-            <Separator className="my-4" />
-
-            <div className="px-6 pb-2 space-y-4">
-                   <div className="flex flex-wrap gap-2 items-center justify-between">
+            <div className="px-6 pb-2 mt-4 pt-4 border-t bg-secondary/50 -mx-6 space-y-4">
+                   <div className="px-6 flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
                        <div className="flex flex-wrap gap-2">
                            <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !title}>
@@ -898,7 +896,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                        </div>
                    </div>
                    {timeSuggestions.length > 0 && (
-                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                       <div className="px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                            {timeSuggestions.slice(0, 3).map(suggestion => {
                                const techName = technicians.find(t => t.id === suggestion.technicianId)?.name || 'Unknown Tech';
                                return (
@@ -906,7 +904,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                        key={suggestion.time}
                                        type="button"
                                        onClick={() => handleSelectAISuggestion(suggestion)}
-                                       className="p-3 border rounded-md text-left hover:bg-secondary transition-colors"
+                                       className="p-3 border rounded-md text-left hover:bg-background transition-colors bg-card"
                                    >
                                        <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'MMM d, p')}</p>
                                        <p className="text-xs text-muted-foreground">with {techName}</p>
@@ -916,8 +914,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                            })}
                        </div>
                    )}
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="manual-override">
+                  <Accordion type="single" collapsible className="w-full px-6">
+                    <AccordionItem value="manual-override" className="border-b-0">
                       <AccordionTrigger>
                         <span className="flex items-center gap-2 text-sm font-medium"><ChevronsUpDown className="h-4 w-4"/>Manual Override</span>
                       </AccordionTrigger>
@@ -961,7 +959,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <div className="space-y-2">
                             <Label htmlFor="assign-technician">Assigned Technician</Label>
                             <Select value={manualTechnicianId} onValueChange={handleManualTechnicianChange}>
-                                <SelectTrigger id="assign-technician">
+                                <SelectTrigger id="assign-technician" className="bg-card">
                                 <SelectValue placeholder="Unassigned" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -981,7 +979,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     value={status} 
                                     onValueChange={(value: JobStatus) => setStatus(value)}
                                 >
-                                <SelectTrigger id="jobStatus">
+                                <SelectTrigger id="jobStatus" className="bg-card">
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -996,7 +994,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </Accordion>
             </div>
 
-            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2">
+            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2 bg-background">
               <div className="flex-shrink-0">
                 {job && (
                   <AlertDialog>

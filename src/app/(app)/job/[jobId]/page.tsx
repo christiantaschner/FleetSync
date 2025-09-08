@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -241,10 +242,6 @@ export default function DispatcherJobDetailPage() {
   
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
   
-  const backUrl = job.assignedTechnicianId 
-    ? `/dashboard` 
-    : '/dashboard';
-
   return (
     <div className="space-y-6 max-w-full">
        <AddEditJobDialog
@@ -261,7 +258,7 @@ export default function DispatcherJobDetailPage() {
             onManageParts={() => {}}
         />
         <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={() => router.push(backUrl)}>
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
                 <ArrowLeft className="mr-2 h-4 w-4"/>
                 Back
             </Button>

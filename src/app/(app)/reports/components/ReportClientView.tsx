@@ -55,6 +55,7 @@ import ReportAnalysisDialog from "./ReportAnalysisDialog";
 import Papa from 'papaparse';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MockModeBanner } from "@/components/common/MockModeBanner";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -99,7 +100,7 @@ const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: strin
 
 
 export default function ReportClientView() {
-  const { userProfile, loading: authLoading } = useAuth();
+  const { userProfile, loading: authLoading, isMockMode } = useAuth();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -120,7 +121,7 @@ export default function ReportClientView() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    if (isMockMode) {
         setJobs(mockJobs);
         setTechnicians(mockTechnicians);
         setIsLoading(false);
@@ -167,7 +168,7 @@ export default function ReportClientView() {
       unsubscribeJobs();
       unsubscribeTechnicians();
     };
-  }, [authLoading, userProfile]);
+  }, [authLoading, userProfile, isMockMode]);
 
   const dateFilteredJobs = useMemo(() => {
     return jobs.filter(job => {
@@ -286,6 +287,8 @@ export default function ReportClientView() {
     const totalUpsellRevenue = successfulUpsells.reduce((acc, j) => acc + (j.upsellValue || 0), 0);
     const upsellConversionRate = jobsWithUpsellOpportunity.length > 0 ? ((successfulUpsells.length / jobsWithUpsellOpportunity.length) * 100).toFixed(1) : "0";
 
+    const aiAssignedJobs = completedJobs.filter(j => typeof j.profitScore === 'number');
+    const aiInfluencedProfit = aiAssignedJobs.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
 
     const technicianPerformance = Object.values(completedJobs.reduce((acc, job) => {
         if (!job.assignedTechnicianId) return acc;
@@ -338,6 +341,8 @@ export default function ReportClientView() {
         slaMisses,
         totalUpsellRevenue,
         upsellConversionRate,
+        aiAssistedAssignments: aiAssignedJobs.length,
+        aiInfluencedProfit,
         topTechnicianByProfit: topTechnicianByProfit ? {
             technicianId: topTechnicianByProfit.technicianId,
             name: topTechnicianByProfit.name,
@@ -372,8 +377,9 @@ export default function ReportClientView() {
         { KPI: "First-Time-Fix Rate (%)", Value: reportData.kpis.ftfr, Description: "Resolved in one visit" },
         { KPI: "On-Time Arrival Rate (%)", Value: reportData.kpis.onTimeArrivalRate, Description: "Within 15min of schedule" },
         { KPI: "SLA Misses", Value: reportData.kpis.slaMisses, Description: "Jobs completed after SLA deadline" },
-        { KPI: "Total Profit", Value: reportData.kpis.totalProfit.toFixed(2), Description: "Sum of profit scores for completed jobs" },
-        { KPI: "Upsell Revenue Added", Value: reportData.kpis.totalUpsellRevenue.toFixed(2), Description: "Total value from successful upsells" },
+        { KPI: "Fleet-wide Profit", Value: reportData.kpis.totalProfit.toFixed(2), Description: "Sum of profit scores for all completed jobs" },
+        { KPI: "AI-Influenced Profit", Value: reportData.kpis.aiInfluencedProfit.toFixed(2), Description: "Profit from jobs assigned by AI" },
+        { KPI: "AI-Suggested Upsell Revenue", Value: reportData.kpis.totalUpsellRevenue.toFixed(2), Description: "Total value from successful upsells" },
         { KPI: "Upsell Conversion Rate (%)", Value: reportData.kpis.upsellConversionRate, Description: "Of jobs with an upsell opportunity" },
         { KPI: "Avg. On-Site Duration", Value: reportData.kpis.avgDuration, Description: "From start to completion" },
         { KPI: "Avg. Travel Time", Value: reportData.kpis.avgTravelTime, Description: "Per job" },
@@ -397,7 +403,8 @@ export default function ReportClientView() {
 
   return (
     <div className="space-y-6">
-       <ReportAnalysisDialog 
+      <MockModeBanner />
+      <ReportAnalysisDialog 
             isOpen={isAnalysisOpen} 
             setIsOpen={setIsAnalysisOpen}
             analysisResult={analysisResult}
@@ -478,28 +485,11 @@ export default function ReportClientView() {
                 <CardDescription>Key metrics related to profitability and sales outcomes.</CardDescription>
               </CardHeader>
                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                 <KpiCard title="Total Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
-                 <KpiCard title="Upsell Revenue" value={`$${reportData.kpis.totalUpsellRevenue.toFixed(2)}`} desc="From successful upsells" icon={DollarSign} tooltipText="What it is: The total additional revenue generated from successful upsells logged by technicians." />
+                 <KpiCard title="Fleet-wide Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From all completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
+                 <KpiCard title="AI-Influenced Profit" value={`$${reportData.kpis.aiInfluencedProfit.toFixed(2)}`} desc={`From ${reportData.kpis.aiAssistedAssignments} AI-assigned jobs`} icon={Bot} tooltipText="What it is: The total profit generated from jobs where the AI made the assignment recommendation." />
+                 <KpiCard title="AI-Suggested Upsell Revenue" value={`$${reportData.kpis.totalUpsellRevenue.toFixed(2)}`} desc="From successful upsells" icon={DollarSign} tooltipText="What it is: The total additional revenue generated from successful upsells logged by technicians, prompted by the AI." />
                  <KpiCard title="Upsell Conversion" value={`${reportData.kpis.upsellConversionRate}%`} desc="Of identified opportunities" icon={Target} tooltipText="What it is: The percentage of jobs with an AI-identified upsell opportunity that were successfully sold." />
                  <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Jobs completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
-                 {reportData.kpis.topTechnicianByProfit && (
-                  <KpiCard 
-                    title="Top Tech by Profit" 
-                    value={reportData.kpis.topTechnicianByProfit.name} 
-                    desc={`Contributed $${reportData.kpis.topTechnicianByProfit.margin.toFixed(2)}`} 
-                    icon={Award}
-                    tooltipText="What it is: The technician who generated the highest total profit margin from their completed jobs in the period." 
-                  />
-                )}
-                 {reportData.kpis.topTechnicianByUpsell && (
-                  <KpiCard 
-                    title="Top Tech by Upsell" 
-                    value={reportData.kpis.topTechnicianByUpsell.name} 
-                    desc={`Sold $${reportData.kpis.topTechnicianByUpsell.upsellValue.toFixed(2)}`} 
-                    icon={Award}
-                    tooltipText="What it is: The technician who generated the most additional revenue from upsells in the period."
-                  />
-                )}
                </CardContent>
             </Card>
              <Card>

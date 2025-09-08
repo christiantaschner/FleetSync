@@ -16,7 +16,7 @@ const ReportClientView = dynamic(() => import('./components/ReportClientView'), 
 export default function ReportsPage() {
   return (
     <>
-      <MockModeBanner />
+      {/* The MockModeBanner is already rendered in the main layout, so it's not needed here. */}
       <ReportClientView />
     </>
   );

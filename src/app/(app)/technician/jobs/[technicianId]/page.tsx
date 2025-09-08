@@ -260,6 +260,8 @@ export default function TechnicianJobListPage() {
   const currentOrNextJob = jobsForToday.find(job => job.status === 'In Progress') || jobsForToday.find(job => job.status === 'En Route') || jobsForToday[0];
   
   const jobsForTimeline = assignedJobs.filter(job => !currentOrNextJob || job.id !== currentOrNextJob.id);
+  const avatarUrl = technician.avatarUrl || `https://picsum.photos/seed/${technician.id}/100/100`;
+
 
   const handleNavigate = (job: Job) => {
     if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
@@ -291,7 +293,7 @@ export default function TechnicianJobListPage() {
           <CardHeader>
             <div className="flex items-center gap-4">
                  <Avatar className="h-16 w-16">
-                      <AvatarImage src={technician.avatarUrl} alt={technician.name} />
+                      <AvatarImage src={avatarUrl} alt={technician.name} />
                       <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">

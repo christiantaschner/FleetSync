@@ -99,6 +99,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   });
   
   const avatarUrl = watch('avatarUrl');
+  const watchedAvatarUrl = watch('avatarUrl') || `https://picsum.photos/seed/${technician?.id}/100/100`;
 
   const resetForm = useCallback(() => {
     reset({
@@ -246,7 +247,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                 <div className="flex items-center gap-4">
                   <div className="relative group">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={avatarUrl ?? undefined} />
+                      <AvatarImage src={watchedAvatarUrl} />
                       <AvatarFallback className="text-2xl">{technician?.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <Button

@@ -1484,12 +1484,13 @@ export default function DashboardPage() {
                                 <TableBody>
                                     {filteredTechnicians.map(tech => {
                                         const currentJob = jobs.find(j => j.id === tech.currentJobId);
+                                        const avatarUrl = tech.avatarUrl || `https://picsum.photos/seed/${tech.id}/100/100`;
                                         return (
                                             <TableRow key={tech.id}>
                                                 <TableCell className="font-medium">
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-9 w-9">
-                                                            <AvatarImage src={tech.avatarUrl} alt={tech.name} />
+                                                            <AvatarImage src={avatarUrl} alt={tech.name} />
                                                             <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="truncate">

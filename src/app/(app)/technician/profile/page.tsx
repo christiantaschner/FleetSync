@@ -233,6 +233,8 @@ export default function TechnicianProfilePage() {
   }
   
   const backUrl = `/technician/jobs/${firebaseUser.uid}`;
+  const avatarUrl = technician.avatarUrl || `https://picsum.photos/seed/${technician.id}/100/100`;
+
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -254,7 +256,7 @@ export default function TechnicianProfilePage() {
         <Card className="shadow-lg">
             <CardHeader className="text-center">
                  <Avatar className="h-24 w-24 mx-auto border-4 border-primary/20">
-                  <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
+                  <AvatarImage src={avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
                   <AvatarFallback className="text-3xl">{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-3xl font-bold pt-4 font-headline">{technician.name}</CardTitle>

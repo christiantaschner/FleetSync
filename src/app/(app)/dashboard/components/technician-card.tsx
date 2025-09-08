@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState } from 'react';
@@ -77,6 +76,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   };
 
   const hasJobsToOptimize = jobs.some(j => j.assignedTechnicianId === technician.id && (j.status === 'Assigned' || j.status === 'En Route'));
+  const avatarUrl = technician.avatarUrl || `https://picsum.photos/seed/${technician.id}/100/100`;
 
   return (
     <div ref={setNodeRef}>
@@ -88,7 +88,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
           <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
             <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
+                  <AvatarImage src={avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
                   <AvatarFallback>{technician.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
@@ -238,4 +238,3 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 };
 
 export default TechnicianCard;
-

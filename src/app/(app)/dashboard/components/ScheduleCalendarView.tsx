@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { DndContext, useDraggable, useDroppable, type DragEndEvent } from '@dnd-kit/core';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
 import { reassignJobAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
 import ReassignJobDialog from './ReassignJobDialog';
@@ -324,6 +324,7 @@ interface ScheduleCalendarViewProps {
   } | null>>;
   isFleetOptimizationDialogOpen: boolean;
   setIsFleetOptimizationDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  selectedFleetChanges: OptimizationSuggestion[];
   setSelectedFleetChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
 }
 
@@ -340,6 +341,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     setOptimizationResult,
     isFleetOptimizationDialogOpen,
     setIsFleetOptimizationDialogOpen,
+    selectedFleetChanges,
     setSelectedFleetChanges,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -409,36 +411,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
   const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
   const handleToday = () => setCurrentDate(new Date());
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, delta, over } = event;
-    const job = active.data.current?.job as Job;
-    if (!job || !timelineGridRef.current || !over) return;
-
-    const targetTechnicianId = over.id as string;
-    
-    const gridWidth = timelineGridRef.current.offsetWidth;
-    const minutesPerPixel = totalMinutes / gridWidth;
-    const timeDeltaMinutes = delta.x * minutesPerPixel;
-
-    const originalStartTime = new Date(proposedChanges[job.id]?.scheduledTime || job.scheduledTime!);
-    const timeWithDelta = new Date(originalStartTime.getTime() + timeDeltaMinutes * 60000);
-    
-    // Snap to the nearest 5-minute interval
-    const minutes = timeWithDelta.getMinutes();
-    const roundedMinutes = Math.round(minutes / 5) * 5;
-    const newStartTime = new Date(timeWithDelta);
-    newStartTime.setMinutes(roundedMinutes, 0, 0);
-
-    setProposedChanges(prev => ({
-        ...prev,
-        [job.id]: {
-            scheduledTime: newStartTime.toISOString(),
-            assignedTechnicianId: targetTechnicianId!,
-            originalTechnicianId: job.assignedTechnicianId || null,
-        }
-    }));
-  };
   
   const handleOptimize = (technicianId: string) => {
     const jobsForOptimization = jobs.filter(j => 
@@ -578,12 +550,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 setSelectedChanges={setSelectedFleetChanges}
             />
             {viewMode === 'day' ? (
-            <DndContext 
-                onDragEnd={handleDragEnd} 
-                autoScroller={{
-                    canScroll: (element) => element === containerRef.current
-                }}
-            >
             <div ref={containerRef} className="overflow-x-auto">
             <div className="relative min-w-[1200px]">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
@@ -676,7 +642,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 </div>
             </div>
             </div>
-            </DndContext>
             ) : (
                 technicians.length > 0 ? (
                     <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={onJobClick} />

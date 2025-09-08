@@ -1144,25 +1144,7 @@ export default function DashboardPage() {
           job={jobToShare}
           technicians={technicians}
       />}
-      <FleetOptimizationReviewDialog
-        isOpen={isFleetOptimizationDialogOpen}
-        setIsOpen={setIsFleetOptimizationDialogOpen}
-        optimizationResult={fleetOptimizationResult}
-        technicians={technicians}
-        jobs={jobs}
-        onConfirmChanges={(changes) => {
-            if(!userProfile?.companyId || !appId) return;
-            confirmFleetOptimizationAction({ companyId: userProfile.companyId, appId: appId, changesToConfirm: changes})
-                .then(result => {
-                    if (result.error) toast({ title: "Error", description: result.error, variant: "destructive" });
-                    else toast({ title: "Success", description: "Fleet schedule updated." });
-                });
-            setIsFleetOptimizationDialogOpen(false);
-        }}
-        isLoadingConfirmation={isLoadingBatchConfirmation}
-        selectedChanges={selectedFleetChanges}
-        setSelectedChanges={setSelectedFleetChanges}
-      />
+      
        {riskAlerts.map(alert => (
           <ScheduleRiskAlert 
             key={alert.technician.id} 
@@ -1421,6 +1403,7 @@ export default function DashboardPage() {
             setOptimizationResult={setFleetOptimizationResult}
             isFleetOptimizationDialogOpen={isFleetOptimizationDialogOpen}
             setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
+            selectedFleetChanges={selectedFleetChanges}
             setSelectedFleetChanges={setSelectedFleetChanges}
           />
         </TabsContent>

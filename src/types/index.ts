@@ -126,6 +126,7 @@ export type Technician = {
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
+export const JobPrioritySchema = z.enum(['High', 'Medium', 'Low']);
 export type JobStatus = 'Unassigned' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
 export type JobFlexibility = 'fixed' | 'flexible' | 'soft_window';
 
@@ -410,7 +411,7 @@ export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
   customerPhone: z.string().optional().describe("The customer's phone number, used to find their service history."),
-  jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
+  jobPriority: JobPrioritySchema.describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   requiredParts: z.array(z.string()).optional().describe('A list of parts required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
@@ -436,7 +437,7 @@ export const AllocateJobInputSchema = z.object({
         jobId: z.string(),
         location: z.any().describe("The location of this scheduled job."),
         scheduledTime: z.string().optional().nullable(),
-        priority: JobPriority,
+        priority: JobPrioritySchema,
         startedAt: z.string().optional().nullable().describe("ISO 8601 timestamp of when the job started."),
         estimatedDurationMinutes: z.number().optional(),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),

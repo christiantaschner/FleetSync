@@ -324,16 +324,16 @@ const roadmapFeatures = {
       icon: Cog,
       status: "Completed",
     },
+     {
+      title: "Break Tracking",
+      description: "Allow technicians to log break times during a job. This data will be used for more accurate payroll and job costing, and will refine the AI's on-site duration estimates.",
+      icon: Timer,
+      status: "Completed",
+    },
   ],
   inProgress: [
   ],
   planned: [
-    {
-      title: "Break Tracking",
-      description: "Allow technicians to log break times during a job. This data will be used for more accurate payroll and job costing, and will refine the AI's on-site duration estimates.",
-      icon: Timer,
-      status: "Planned",
-    },
   ],
   vision: [
     {
@@ -412,7 +412,7 @@ export default function RoadmapPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 pt-4">
                   {roadmapFeatures.planned.length > 0 ? roadmapFeatures.planned.map((item) => (
                     <RoadmapItem key={item.title} {...item} />
-                  )) : <p className="text-muted-foreground col-span-full">All UX improvements are complete!</p>}
+                  )) : <p className="text-muted-foreground col-span-full">All planned UX improvements are complete!</p>}
                 </div>
               </AccordionContent>
             </AccordionItem>

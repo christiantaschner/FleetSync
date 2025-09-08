@@ -1195,46 +1195,46 @@ export default function DashboardPage() {
       </div>
       
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="text-2xl font-bold">{kpiData.highPriorityCount}</div>
-              <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
-            </CardContent>
-          </Card>
-          <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="text-2xl font-bold">{kpiData.pendingCount}</div>
-              <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
-            </CardContent>
-          </Card>
-          <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
-              <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
-            </CardContent>
-          </Card>
-          <Card className="flex flex-col">
-            <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('total_profit_today')}</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <div className="text-2xl font-bold">${kpiData.totalProfitToday.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">{t('total_profit_today_desc')}</p>
-            </CardContent>
-          </Card>
+            <Card className="flex flex-col h-full">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <div className="text-2xl font-bold">{kpiData.highPriorityCount}</div>
+                    <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
+                </CardContent>
+            </Card>
+            <Card className="flex flex-col h-full">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <div className="text-2xl font-bold">{kpiData.pendingCount}</div>
+                    <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
+                </CardContent>
+            </Card>
+            <Card className="flex flex-col h-full">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
+                    <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
+                </CardContent>
+            </Card>
+            <Card className="flex flex-col h-full">
+                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('total_profit_today')}</CardTitle>
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <div className="text-2xl font-bold">${kpiData.totalProfitToday.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">{t('total_profit_today_desc')}</p>
+                </CardContent>
+            </Card>
         </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

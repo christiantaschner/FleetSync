@@ -28,9 +28,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part, JobFlexibility } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2 } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2 } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, analyzeJobAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
@@ -607,276 +607,183 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
+      <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90dvh] p-0">
           <DialogHeader className="px-6 pt-6 flex-shrink-0">
             <DialogTitle className="font-headline">{titleText}</DialogTitle>
             {descriptionText && <DialogDescription>{descriptionText}</DialogDescription>}
           </DialogHeader>
           <form id="job-form" ref={formRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              {job?.status === 'Draft' && (
-                <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
-                  <FilePenLine className="h-4 w-4" />
-                  <AlertTitle className="font-semibold">Editing Draft</AlertTitle>
-                  <AlertDescription>
-                    This is a draft job. Please complete all required fields and set a status such as "Unassigned" to activate it.
-                  </AlertDescription>
-                </Alert>
-              )}
-              {job?.sourceContractId && (
-                <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600">
-                    <Repeat className="h-4 w-4"/>
-                    <AlertTitle>Contract Job</AlertTitle>
-                    <AlertDescription>
-                        This job was generated from a Service Contract. <Link href="/contracts" className="font-semibold underline">View contracts</Link>.
-                    </AlertDescription>
-                </Alert>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                {/* --- LEFT COLUMN --- */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><User className="h-4 w-4"/> Customer & Location</h3>
-                  <div>
-                    <Label htmlFor="customerName">Customer Name *</Label>
-                    <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
-                      <PopoverAnchor>
-                        <Input
-                          id="customerName"
-                          name="customerName"
-                          value={customerName}
-                          onChange={handleCustomerNameChange}
-                          placeholder="e.g., John Doe"
-                          autoComplete="off"
-                        />
-                      </PopoverAnchor>
-                      <PopoverContent
-                        className="w-[--radix-popover-trigger-width] p-0"
-                        onOpenAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <div className="max-h-60 overflow-y-auto">
-                          {customerSuggestions.map((customer) => (
-                            <div
-                              key={customer.id}
-                              className="p-3 text-sm cursor-pointer hover:bg-accent"
-                              onClick={() => handleSelectCustomer(customer)}
-                            >
-                              <p className="font-semibold">{customer.name}</p>
-                              <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="customerEmail">Customer Email</Label>
-                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
-                    </div>
-                    <div>
-                        <Label htmlFor="customerPhone">Customer Phone</Label>
-                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
-                    </div>
-                  </div>
-                   <div>
-                    <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-                    <AddressAutocompleteInput
-                      value={locationAddress}
-                      onValueChange={setLocationAddress}
-                      onLocationSelect={handleLocationSelect}
-                      placeholder="Start typing job address..."
-                      required
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2 pt-2"><Wrench className="h-4 w-4"/> Job Details</h3>
-                  <div>
-                    <Label htmlFor="jobTitle">Job Title *</Label>
-                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="jobDescription">Job Description</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={4} className="bg-card" />
-                  </div>
-                  <Accordion type="single" collapsible>
-                    <AccordionItem value="financials">
-                        <AccordionTrigger className="text-sm font-medium"><DollarSign className="h-4 w-4 mr-2"/>Financials (Optional)</AccordionTrigger>
+            <div className="flex-1 overflow-y-auto px-6">
+                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><User className="h-4 w-4"/>Customer & Location</div></AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-2">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <Label htmlFor="customerName">Customer Name *</Label>
+                                <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                                <PopoverAnchor>
+                                    <Input
+                                    id="customerName"
+                                    name="customerName"
+                                    value={customerName}
+                                    onChange={handleCustomerNameChange}
+                                    placeholder="e.g., John Doe"
+                                    autoComplete="off"
+                                    />
+                                </PopoverAnchor>
+                                <PopoverContent
+                                    className="w-[--radix-popover-trigger-width] p-0"
+                                    onOpenAutoFocus={(e) => e.preventDefault()}
+                                >
+                                    <div className="max-h-60 overflow-y-auto">
+                                    {customerSuggestions.map((customer) => (
+                                        <div
+                                        key={customer.id}
+                                        className="p-3 text-sm cursor-pointer hover:bg-accent"
+                                        onClick={() => handleSelectCustomer(customer)}
+                                        >
+                                        <p className="font-semibold">{customer.name}</p>
+                                        <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                        </div>
+                                    ))}
+                                    </div>
+                                </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="quotedValue"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Quoted Value ($)</Label>
+                                    <Label htmlFor="customerEmail">Customer Email</Label>
+                                    <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="customerPhone">Customer Phone</Label>
+                                    <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
+                                <AddressAutocompleteInput
+                                value={locationAddress}
+                                onValueChange={setLocationAddress}
+                                onLocationSelect={handleLocationSelect}
+                                placeholder="Start typing job address..."
+                                required
+                                />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                         <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><Wrench className="h-4 w-4"/>Job Details</div></AccordionTrigger>
+                         <AccordionContent className="space-y-4 pt-2">
+                             <div>
+                                <Label htmlFor="jobTitle">Job Title *</Label>
+                                <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+                            </div>
+                            <div>
+                                <Label htmlFor="jobDescription">Job Description</Label>
+                                <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={3} className="bg-card" />
+                            </div>
+                         </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><Settings className="h-4 w-4"/>Configuration & Financials</div></AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="jobPriority">Job Priority *</Label>
+                                    <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
+                                    <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
+                                        <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="High">High</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="Low">Low</SelectItem>
+                                    </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="estimatedDurationMinutes">Estimated Duration (minutes) *</Label>
+                                    <Input
+                                        id="estimatedDurationMinutes"
+                                        type="number"
+                                        value={estimatedDurationMinutes || ''}
+                                        onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 60)}
+                                        min="1"
+                                        placeholder="e.g., 60"
+                                    />
+                                </div>
+                            </div>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="quotedValue">Quoted Value ($)</Label>
                                     <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
                                 </div>
                                 <div>
-                                    <Label htmlFor="expectedPartsCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Expected Parts Cost ($)</Label>
+                                    <Label htmlFor="expectedPartsCost">Expected Parts Cost ($)</Label>
                                     <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
                                 </div>
                             </div>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="slaDeadline">SLA Deadline</Label>
-                                    <Input id="slaDeadline" type="datetime-local" value={slaDeadline ? format(slaDeadline, "yyyy-MM-dd'T'HH:mm") : ''} onChange={e => setSlaDeadline(new Date(e.target.value))} />
+                                <Label htmlFor="flexibility">Scheduling Flexibility</Label>
+                                <Select value={flexibility} onValueChange={(value: JobFlexibility) => setFlexibility(value)}>
+                                    <SelectTrigger id="flexibility">
+                                        <SelectValue placeholder="Select flexibility" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="flexible"><div className="flex items-center gap-2"><Repeat className="h-4 w-4"/>Flexible</div></SelectItem>
+                                        <SelectItem value="fixed"><div className="flex items-center gap-2"><Lock className="h-4 w-4"/>Fixed Appointment</div></SelectItem>
+                                    </SelectContent>
+                                </Select>
                                 </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="upsellScore">Upsell Potential</Label>
-                                     <div className="flex items-center gap-2">
-                                        <Select value={String(upsellScore ?? '0')} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
-                                            <SelectTrigger id="upsellScore">
-                                                <SelectValue placeholder="Select potential" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="0">None</SelectItem>
-                                                <SelectItem value="0.2">Low</SelectItem>
-                                                <SelectItem value="0.5">Medium</SelectItem>
-                                                <SelectItem value="0.8">High</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                                <div className="flex items-end pb-1">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="dispatchLocked" checked={dispatchLocked} onCheckedChange={(checked) => setDispatchLocked(Boolean(checked))} />
+                                    <Label htmlFor="dispatchLocked" className="flex items-center gap-1.5"><Lock className="h-4 w-4"/>Lock Assignment</Label>
+                                </div>
                                 </div>
                             </div>
-                            {upsellReasoning && <p className="text-xs text-muted-foreground italic">AI Reason: "{upsellReasoning}"</p>}
                         </AccordionContent>
                     </AccordionItem>
-                  </Accordion>
-                </div>
-
-                {/* --- RIGHT COLUMN --- */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><Settings className="h-4 w-4"/> Job Configuration</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="jobPriority">Job Priority *</Label>
-                        <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
-                          <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Low">Low</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="estimatedDurationMinutes">Estimated Duration (minutes) *</Label>
-                        <Input
-                            id="estimatedDurationMinutes"
-                            type="number"
-                            value={estimatedDurationMinutes || ''}
-                            onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 60)}
-                            min="1"
-                            placeholder="e.g., 60"
-                        />
-                      </div>
-                  </div>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="flexibility">Scheduling Flexibility</Label>
-                      <Select value={flexibility} onValueChange={(value: JobFlexibility) => setFlexibility(value)}>
-                          <SelectTrigger id="flexibility">
-                              <SelectValue placeholder="Select flexibility" />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="flexible"><div className="flex items-center gap-2"><Repeat className="h-4 w-4"/>Flexible</div></SelectItem>
-                              <SelectItem value="fixed"><div className="flex items-center gap-2"><Lock className="h-4 w-4"/>Fixed Appointment</div></SelectItem>
-                          </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-end pb-1">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="dispatchLocked" checked={dispatchLocked} onCheckedChange={(checked) => setDispatchLocked(Boolean(checked))} />
-                        <Label htmlFor="dispatchLocked" className="flex items-center gap-1.5"><Lock className="h-4 w-4"/>Lock Assignment</Label>
-                      </div>
-                    </div>
-                  </div>
-                   <div>
-                    <Label htmlFor="contractId">Link to Contract (Optional)</Label>
-                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
-                        <SelectTrigger id="contractId">
-                            <SelectValue placeholder="None" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unlinked">-- None --</SelectItem>
-                            {contracts.map(c => (
-                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2 border-t pt-4">
+                     <AccordionItem value="item-4">
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><ListChecks className="h-4 w-4"/>Skills & Parts</div></AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                              <div className="flex flex-col space-y-2">
+                                <Label className="flex items-center gap-2">Required Skills</Label>
+                                <MultiSelectFilter
+                                    options={skillOptions}
+                                    selected={requiredSkills}
+                                    onChange={setRequiredSkills}
+                                    placeholder="Select required skills..."
+                                />
+                                <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0 self-end">Manage Skills</Button>
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <Label className="flex items-center gap-2">Required Parts</Label>
+                                <MultiSelectFilter
+                                    options={partOptions}
+                                    selected={requiredParts}
+                                    onChange={setRequiredParts}
+                                    placeholder="Select required parts..."
+                                />
+                                <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0 self-end">Manage Parts</Button>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                
+                 <div className="space-y-2 border-t pt-4 mt-4">
                      <div className="flex items-center justify-between">
-                         <Label className="flex items-center gap-2 font-semibold"><Wand2 className="h-4 w-4 text-primary"/>AI Job Analysis</Label>
+                         <Label className="flex items-center gap-2 font-semibold text-lg"><Wand2 className="h-5 w-5 text-primary"/>AI Job Analysis</Label>
                           <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeJob} disabled={isAnalyzingJob || (!title.trim() && !description.trim())} className="h-9">
                               {isAnalyzingJob ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
                               Analyze Job
                           </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">Get AI suggestions for required skills, parts, and upsell opportunities based on the job title and description.</p>
+                      <p className="text-xs text-muted-foreground">Get AI suggestions for skills, parts, and upsell opportunities based on the job details.</p>
+                      {upsellReasoning && <Alert className="mt-2"><Lightbulb className="h-4 w-4"/><AlertTitle>Upsell Suggestion</AlertTitle><AlertDescription className="text-xs">{upsellReasoning}</AlertDescription></Alert>}
                   </div>
-
-                  <div className="flex flex-col space-y-2">
-                    <Label className="flex items-center gap-2">
-                        <ListChecks className="h-4 w-4" /> Required Skills
-                    </Label>
-                    <MultiSelectFilter
-                        options={skillOptions}
-                        selected={requiredSkills}
-                        onChange={setRequiredSkills}
-                        placeholder="Select required skills..."
-                    />
-                    <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0 self-end">Manage Skills</Button>
-                  </div>
-                   <div className="flex flex-col space-y-2">
-                    <Label className="flex items-center gap-2">
-                        <Package className="h-4 w-4" /> Required Parts
-                    </Label>
-                     <MultiSelectFilter
-                        options={partOptions}
-                        selected={requiredParts}
-                        onChange={setRequiredParts}
-                        placeholder="Select required parts..."
-                    />
-                    <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0 self-end">Manage Parts</Button>
-                  </div>
-                  <div className="space-y-2 rounded-md border p-4">
-                    <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> AI Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p className="max-w-xs">Generates a secure link to send to the customer. They can upload photos of the issue, which our AI will analyze. The photos and AI analysis (suggested parts, repair steps) will appear on the job details page to help the technician prepare.</p>
-                          </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    {job && (job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide) ? (
-                      <div className="text-sm space-y-2">
-                          <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
-                          <p><strong>Suggested Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
-                          <div>
-                            <p><strong>AI Repair Guide:</strong></p>
-                            <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
-                          </div>
-                      </div>
-                    ) : triageMessage ? (
-                      <div className="space-y-2">
-                          <Label htmlFor="triage-link">Customer Message</Label>
-                          <Textarea id="triage-message" readOnly value={triageMessage} rows={4} className="bg-secondary/50"/>
-                          <Button size="sm" type="button" onClick={handleCopyToClipboard} className="h-9">
-                              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                              Copy Message
-                          </Button>
-                          <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
-                      </div>
-                    ) : (
-                      <Button type="button" size="sm" variant="outline" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
-                          {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
-                          Request Photos
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="px-6 pb-2 mt-4 pt-4 border-t bg-secondary/50 -mx-6 space-y-4">

@@ -50,6 +50,7 @@ export default function MarketingPage() {
   const navLinks = [
     { href: "#problem", text: "The Problem" },
     { href: "#ai-knows-business", text: "The Solution" },
+    { href: "#how-it-works", text: "How It Works"},
     { href: "#pricing", text: "Pricing" },
     { href: "#features", text: "Features" }
   ];
@@ -342,6 +343,35 @@ export default function MarketingPage() {
             </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="bg-background py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Trusted by Businesses Like Yours</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">See how field service companies are transforming their operations and boosting their bottom line with MarginMax.</p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {testimonials.map((testimonial, index) => (
+                        <Card key={index} className="flex flex-col">
+                            <CardContent className="pt-6 flex-grow">
+                                <p className="text-muted-foreground">"{testimonial.quote}"</p>
+                            </CardContent>
+                            <CardHeader className="flex-row items-center gap-4">
+                                 <Avatar className="h-12 w-12">
+                                     <AvatarImage src={`https://placehold.co/100x100/${['A8D8EA', 'F4B393', 'B2E0B6'][index]}/4A4A4A?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
+                                    <AvatarFallback>{testimonial.author.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle className="text-base">{testimonial.author}</CardTitle>
+                                    <CardDescription>{testimonial.role}</CardDescription>
+                                </div>
+                            </CardHeader>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </section>
+
         {/* ROI Calculator & Pricing Section */}
         <section id="pricing" className="bg-muted py-16 sm:py-24">
             <div className="container">
@@ -408,35 +438,8 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* Features Section */}
-        <section id="features" className="bg-background py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
-                     <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
-                </div>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {featureList.map((feature) => (
-                      <Card key={feature.title} className="flex flex-col">
-                          <CardHeader className="flex-row items-center gap-4 space-y-0 pb-4">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
-                                <feature.icon className="h-6 w-6" />
-                              </div>
-                              <CardTitle className="text-lg font-semibold leading-tight">{feature.title}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="flex-grow space-y-3">
-                              <p className="text-muted-foreground text-sm">{feature.description}</p>
-                              <Separator/>
-                              <p className="text-xs text-muted-foreground italic"><span className="font-semibold not-italic text-primary">Use Case:</span> {feature.example}</p>
-                          </CardContent>
-                      </Card>
-                    ))}
-                </div>
-            </div>
-        </section>
-        
         {/* How It Works Section */}
-        <section className="bg-slate-900 text-white py-16 sm:py-24">
+        <section id="how-it-works" className="bg-slate-900 text-white py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
@@ -475,30 +478,28 @@ export default function MarketingPage() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section className="bg-background py-16 sm:py-24">
+        {/* Features Section */}
+        <section id="features" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Trusted by Businesses Like Yours</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">See how field service companies are transforming their operations and boosting their bottom line with MarginMax.</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
+                     <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="flex flex-col">
-                            <CardContent className="pt-6 flex-grow">
-                                <p className="text-muted-foreground">"{testimonial.quote}"</p>
-                            </CardContent>
-                            <CardHeader className="flex-row items-center gap-4">
-                                 <Avatar className="h-12 w-12">
-                                     <AvatarImage src={`https://placehold.co/100x100/${['A8D8EA', 'F4B393', 'B2E0B6'][index]}/4A4A4A?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
-                                    <AvatarFallback>{testimonial.author.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <CardTitle className="text-base">{testimonial.author}</CardTitle>
-                                    <CardDescription>{testimonial.role}</CardDescription>
-                                </div>
-                            </CardHeader>
-                        </Card>
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {featureList.map((feature) => (
+                      <Card key={feature.title} className="flex flex-col">
+                          <CardHeader className="flex-row items-center gap-4 space-y-0 pb-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+                                <feature.icon className="h-6 w-6" />
+                              </div>
+                              <CardTitle className="text-lg font-semibold leading-tight">{feature.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex-grow space-y-3">
+                              <p className="text-muted-foreground text-sm">{feature.description}</p>
+                              <Separator/>
+                              <p className="text-xs text-muted-foreground italic"><span className="font-semibold not-italic text-primary">Use Case:</span> {feature.example}</p>
+                          </CardContent>
+                      </Card>
                     ))}
                 </div>
             </div>

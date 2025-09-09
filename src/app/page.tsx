@@ -220,7 +220,7 @@ export default function MarketingPage() {
         
         <section className="container mt-8 md:-mt-16 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
-                <div className="bg-muted/50 p-4 sm:p-8 rounded-2xl border shadow-2xl">
+                <div className="bg-background p-4 sm:p-8 rounded-2xl border shadow-2xl">
                      <Image 
                         src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
                         width={1200}

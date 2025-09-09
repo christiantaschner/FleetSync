@@ -222,13 +222,13 @@ export default function MarketingPage() {
         
         <section className="container mt-8 md:-mt-16 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
-                <div className="bg-white/10 p-2 sm:p-3 rounded-2xl border border-white/10 shadow-2xl">
+                <div className="bg-slate-200 p-2 sm:p-3 rounded-2xl border border-slate-300 shadow-2xl">
                      <Image 
                         src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
                         width={1200}
                         height={750}
                         alt="A dashboard showing a profit-optimized schedule with clear profit scores on each job."
-                        className="w-full h-auto object-contain rounded-lg border-2 border-white/20"
+                        className="w-full h-auto object-contain rounded-lg border-2 border-slate-400"
                         priority
                         data-ai-hint="dispatch optimization profit"
                     />

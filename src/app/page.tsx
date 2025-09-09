@@ -199,12 +199,12 @@ export default function MarketingPage() {
 
       <main className="flex-1">
         {/* 1. Hero Section */}
-        <section className="bg-muted py-20 sm:py-24 lg:py-32">
+        <section className="bg-slate-900 text-white py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
               Stop Dispatching. Start Profiting.
             </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-6 max-w-3xl text-lg text-slate-300">
               Assign jobs based on profit per hour, not just proximity. MarginMax makes every job a winning job.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
@@ -213,7 +213,7 @@ export default function MarketingPage() {
                         <Link href="/signup">{t('start_free_trial')}</Link>
                     </Button>
                 </div>
-                 <p className="mt-2 text-sm text-muted-foreground">30-day free trial. No credit card required.</p>
+                 <p className="mt-2 text-sm text-slate-400">30-day free trial. No credit card required.</p>
             </div>
           </div>
         </section>

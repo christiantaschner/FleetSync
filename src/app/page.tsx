@@ -342,32 +342,32 @@ export default function MarketingPage() {
         </section>
         
         {/* How It Works Section */}
-        <section id="solution" className="bg-muted py-16 sm:py-24">
+        <section id="solution" className="bg-slate-900 text-white py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">MarginMax turns your most complex decisions into the easiest part of your day.</p>
+                    <p className="mt-4 text-lg text-slate-300">MarginMax turns your most complex decisions into the easiest part of your day.</p>
                 </div>
                  <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                     <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">1</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Input a job's quoted value and select any required parts. Our AI instantly calculates material costs, drive time, and labor to assess its true profit profile.</p>
+                        <p className="mt-2 text-sm text-slate-400">Input a job's quoted value and select any required parts. Our AI instantly calculates material costs, drive time, and labor to assess its true profit profile.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">2</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Analyze Constraints</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">The AI considers everything: technician skills, current location, drive time, and service level agreements.</p>
+                        <p className="mt-2 text-sm text-slate-400">The AI considers everything: technician skills, current location, drive time, and service level agreements.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">3</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Optimize for Profit</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.</p>
+                        <p className="mt-2 text-sm text-slate-400">The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.</p>
                     </div>
                      <div className="flex flex-col items-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20"><span className="text-lg font-bold">4</span></div>
                         <h3 className="mt-4 text-lg font-semibold">Dispatch with Confidence</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click.</p>
+                        <p className="mt-2 text-sm text-slate-400">Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click.</p>
                     </div>
                 </div>
             </div>
@@ -387,7 +387,7 @@ export default function MarketingPage() {
                                 <p className="text-muted-foreground">"{testimonial.quote}"</p>
                             </CardContent>
                             <CardHeader className="flex-row items-center gap-4">
-                                <Avatar className="h-12 w-12">
+                                 <Avatar className="h-12 w-12">
                                      <AvatarImage src={`https://placehold.co/100x100/${['A8D8EA', 'F4B393', 'B2E0B6'][index]}/4A4A4A?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
                                     <AvatarFallback>{testimonial.author.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                                 </Avatar>
@@ -469,15 +469,15 @@ export default function MarketingPage() {
         </section>
         
         {/* Final CTA */}
-        <section className="bg-primary text-primary-foreground py-20 sm:py-24">
+        <section className="bg-slate-900 text-white py-20 sm:py-24">
             <div className="container text-center">
                 <Rocket className="h-10 w-10 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">
                    Stop Dispatching. Start Operating Like a Business.
                 </h2>
-                <p className="mt-4 text-lg text-primary-foreground/80">Unlock the hidden profit in your daily schedule. MarginMax isn't just another scheduling tool—it's a profit engine.</p>
+                <p className="mt-4 text-lg text-slate-300">Unlock the hidden profit in your daily schedule. MarginMax isn't just another scheduling tool—it's a profit engine.</p>
                 <div className="mt-8 flex justify-center">
-                    <Button asChild size="lg" variant="secondary" className="text-primary hover:bg-secondary/90">
+                    <Button asChild size="lg" variant="default">
                         <Link href="/signup">{t('start_free_trial')}</Link>
                     </Button>
                 </div>

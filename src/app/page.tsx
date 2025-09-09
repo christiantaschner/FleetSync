@@ -291,27 +291,29 @@ export default function MarketingPage() {
         </section>
         
         {/* Industry Niches Section */}
-        <section id="ai-knows-business" className="bg-slate-900 py-16 sm:py-24 text-white">
-          <div className="container max-w-3xl mx-auto">
-            <div className="text-center">
-              <Badge variant="secondary" className="bg-white/10 text-white border-white/20">AI That Understands Nuance</Badge>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
-              <p className="mt-4 text-lg text-slate-300">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
+        <section id="ai-knows-business" className="bg-slate-900 text-white py-16 sm:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-2xl text-center">
+                <Badge variant="secondary" className="bg-white/10 text-white border-white/20">AI That Understands Nuance</Badge>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
+                <p className="mt-4 text-lg text-slate-300">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
             </div>
-            <div className="mt-12 space-y-4">
-              {industryNiches.map((niche) => (
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {industryNiches.map((niche) => (
                 <Card key={niche.title} className="bg-white/5 border-white/10 hover:bg-white/10 transition-colors">
                     <CardHeader className="flex-row items-center gap-4">
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-white shrink-0">
-                          <niche.icon className="h-6 w-6" />
+                            <niche.icon className="h-6 w-6" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold">{niche.title}</h3>
-                          <p className="mt-1 text-sm text-slate-400">{niche.description}</p>
+                            <h3 className="text-lg font-semibold">{niche.title}</h3>
                         </div>
                     </CardHeader>
+                    <CardContent>
+                        <p className="mt-1 text-sm text-slate-400">{niche.description}</p>
+                    </CardContent>
                 </Card>
-              ))}
+                ))}
             </div>
           </div>
         </section>
@@ -350,60 +352,35 @@ export default function MarketingPage() {
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
               <p className="mt-4 text-lg text-slate-300">MarginMax turns your most complex decisions into the easiest part of your day.</p>
             </div>
-            <div className="relative mt-12 grid grid-cols-1 gap-y-12 md:grid-cols-4 md:gap-x-8">
+            <div className="relative mt-12 grid grid-cols-1 gap-y-12 md:grid-cols-4">
               {/* Dotted lines for desktop view */}
               <div className="absolute left-0 top-6 hidden h-0.5 w-full md:block">
-                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
                   <line x1="0" y1="0" x2="100%" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5 5" strokeOpacity="0.3" />
                 </svg>
               </div>
 
-              <div className="relative flex flex-col items-center text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary border-4 border-slate-900 z-10">
-                  <span className="text-lg font-bold">1</span>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">Input Jobs</h3>
-                <p className="mt-2 text-sm text-slate-400">Input a job's quoted value and select any required parts. Our AI instantly calculates material costs, drive time, and labor to assess its true profit profile.</p>
-              </div>
+              {["Input Jobs", "Analyze Constraints", "Optimize for Profit", "Dispatch with Confidence"].map((title, index) => (
+                 <div key={index} className="relative flex flex-col items-center text-center px-4">
+                  {/* Vertical line for mobile */}
+                  {index > 0 && <div className="absolute bottom-full h-12 w-0.5 md:hidden bg-slate-700"/>}
 
-              <div className="relative flex flex-col items-center text-center">
-                <div className="absolute top-0 -mt-12 hidden h-12 w-0.5 md:block">
-                    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                      <line x1="0" y1="0" x2="0" y2="100%" stroke="white" strokeWidth="2" strokeDasharray="5 5" strokeOpacity="0.3" />
-                    </svg>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground border-4 border-slate-900 z-10">
+                    <span className="text-lg font-bold">{index + 1}</span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold">{title}</h3>
+                   <p className="mt-2 text-sm text-slate-400">
+                    {
+                      [
+                        "Input a job's quoted value and select any required parts. Our AI instantly calculates material costs, drive time, and labor to assess its true profit profile.",
+                        "The AI considers everything: technician skills, current location, drive time, and service level agreements.",
+                        "The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.",
+                        "Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click."
+                      ][index]
+                    }
+                  </p>
                 </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary border-4 border-slate-900 z-10">
-                  <span className="text-lg font-bold">2</span>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">Analyze Constraints</h3>
-                <p className="mt-2 text-sm text-slate-400">The AI considers everything: technician skills, current location, drive time, and service level agreements.</p>
-              </div>
-
-              <div className="relative flex flex-col items-center text-center">
-                 <div className="absolute top-0 -mt-12 hidden h-12 w-0.5 md:block">
-                    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                      <line x1="0" y1="0" x2="0" y2="100%" stroke="white" strokeWidth="2" strokeDasharray="5 5" strokeOpacity="0.3" />
-                    </svg>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary border-4 border-slate-900 z-10">
-                  <span className="text-lg font-bold">3</span>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">Optimize for Profit</h3>
-                <p className="mt-2 text-sm text-slate-400">The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.</p>
-              </div>
-
-              <div className="relative flex flex-col items-center text-center">
-                 <div className="absolute top-0 -mt-12 hidden h-12 w-0.5 md:block">
-                    <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                      <line x1="0" y1="0" x2="0" y2="100%" stroke="white" strokeWidth="2" strokeDasharray="5 5" strokeOpacity="0.3" />
-                    </svg>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary border-4 border-slate-900 z-10">
-                  <span className="text-lg font-bold">4</span>
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">Dispatch with Confidence</h3>
-                <p className="mt-2 text-sm text-slate-400">Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click.</p>
-              </div>
+              ))}
             </div>
           </div>
         </section>

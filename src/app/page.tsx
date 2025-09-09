@@ -102,6 +102,27 @@ export default function MarketingPage() {
     { icon: Building2, title: "Property Mgmt", description: "Effortlessly juggles maintenance schedules across dozens of properties and tenants, optimizing every dispatch." },
   ];
 
+  const testimonials = [
+    {
+        quote: "The profit-aware dispatching is a game-changer. We're not just closer; we're smarter. Our margins on service calls are up 8% because we're sending the right tech, not just the nearest one. It's like having a top-tier business consultant running our dispatch.",
+        author: "Mark Hayes",
+        role: "Owner, Apex Climate Solutions",
+        avatarHint: "man construction"
+    },
+    {
+        quote: "I cut my dispatch and planning time from 3 hours a day down to about 20 minutes. The AI handles the complex juggling act, and I just review and approve. This app paid for itself in the first week just in time saved.",
+        author: "Sarah Rodriguez",
+        role: "Operations Manager, Reliant Electrical",
+        avatarHint: "woman business"
+    },
+    {
+        quote: "Our first-time fix rate has skyrocketed. The AI suggesting required parts based on the job description means our techs show up prepared. Fewer return trips, happier customers, and better profitability. It's that simple.",
+        author: "David Chen",
+        role: "Lead Technician, Blue Ribbon Plumbing",
+        avatarHint: "man worker"
+    }
+  ];
+
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
@@ -353,8 +374,37 @@ export default function MarketingPage() {
             </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="bg-background py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Trusted by Businesses Like Yours</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">See how field service companies are transforming their operations and boosting their bottom line with MarginMax.</p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {testimonials.map((testimonial, index) => (
+                        <Card key={index} className="flex flex-col">
+                            <CardContent className="pt-6 flex-grow">
+                                <p className="text-muted-foreground">"{testimonial.quote}"</p>
+                            </CardContent>
+                            <CardHeader className="flex-row items-center gap-4">
+                                <Avatar className="h-12 w-12">
+                                    <AvatarImage src={`https://placehold.co/100x100?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
+                                    <AvatarFallback>{testimonial.author.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle className="text-base">{testimonial.author}</CardTitle>
+                                    <CardDescription>{testimonial.role}</CardDescription>
+                                </div>
+                            </CardHeader>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </section>
+
         {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-background py-16 sm:py-24">
+        <section id="pricing" className="bg-muted py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
@@ -363,7 +413,7 @@ export default function MarketingPage() {
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                    <Card className="shadow-lg bg-primary/10 border-primary/30">
+                    <Card className="shadow-lg bg-background">
                         <CardHeader>
                             <CardTitle>Quick ROI Calculator</CardTitle>
                         </CardHeader>

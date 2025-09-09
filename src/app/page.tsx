@@ -222,13 +222,13 @@ export default function MarketingPage() {
         
         <section className="container mt-8 md:-mt-16 lg:-mt-24">
             <div className="relative mx-auto flex flex-col items-center">
-                <div className="bg-white p-4 sm:p-8 rounded-2xl border shadow-2xl">
+                <div className="bg-white/10 p-2 sm:p-3 rounded-2xl border border-white/10 shadow-2xl">
                      <Image 
                         src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
                         width={1200}
                         height={750}
                         alt="A dashboard showing a profit-optimized schedule with clear profit scores on each job."
-                        className="w-full h-auto object-contain rounded-lg border-2 border-primary/20"
+                        className="w-full h-auto object-contain rounded-lg border-2 border-white/20"
                         priority
                         data-ai-hint="dispatch optimization profit"
                     />
@@ -324,12 +324,15 @@ export default function MarketingPage() {
                                 ))}
                             </ul>
                         </div>
-                        <div className="md:col-span-2 bg-white/10 rounded-lg p-6 min-h-[150px]">
+                        <div className="md:col-span-2 bg-slate-800/50 rounded-lg p-6 min-h-[200px] flex flex-col items-center justify-center text-center">
                             {industryNiches.map((niche) => (
                                 activeNiche === niche.title && (
-                                    <div key={niche.title} className="animate-in fade-in-50">
-                                        <h3 className="text-xl font-semibold text-white">{niche.title}</h3>
-                                        <p className="mt-2 text-slate-300">{niche.description}</p>
+                                    <div key={niche.title} className="animate-in fade-in-50 flex flex-col items-center">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-primary">
+                                            <niche.icon className="h-7 w-7" />
+                                        </div>
+                                        <h3 className="mt-4 text-xl font-semibold text-white">{niche.title}</h3>
+                                        <p className="mt-2 text-slate-300 max-w-md">{niche.description}</p>
                                     </div>
                                 )
                             ))}
@@ -367,7 +370,7 @@ export default function MarketingPage() {
         </section>
         
         {/* How It Works Section */}
-        <section id="solution" className="bg-slate-900 text-white py-16 sm:py-24">
+        <section className="bg-slate-900 text-white py-16 sm:py-24">
           <div className="container">
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>

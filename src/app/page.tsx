@@ -104,13 +104,13 @@ export default function MarketingPage() {
 
   const testimonials = [
     {
-        quote: "I stopped thinking 'who's closest?' and started thinking 'who's most profitable?'. MarginMax does the math for me. We're sending our more experienced (and more expensive) guys to the high-value jobs, and our margins are up. It's that simple.",
+        quote: "We get 1–2 extra jobs done per day with the same team.",
         author: "Mark Hayes",
         role: "Owner, Apex Climate Solutions",
         avatarHint: "man construction"
     },
     {
-        quote: "My morning dispatch used to take me hours, juggling calls and looking at a map. Now, I hit 'Analyze', look over what the AI suggests, and click 'Confirm'. I'm done in 20 minutes, not 3 hours. It's completely changed my day.",
+        quote: "Upsell prompts helped us win $20k in additional revenue last quarter.",
         author: "Sarah Rodriguez",
         role: "Operations Manager, Reliant Electrical",
         avatarHint: "woman business"

@@ -291,13 +291,14 @@ export default function MarketingPage() {
         </section>
         
         {/* Industry Niches Section */}
-        <section id="ai-knows-business" className="bg-muted py-16 sm:py-24">
-             <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
+        <section id="ai-knows-business" className="bg-slate-900 py-16 sm:py-24 text-white">
+            <div className="container grid lg:grid-cols-2 gap-12 items-center">
+                <div className="max-w-xl">
+                    <Badge variant="secondary" className="bg-white/10 text-white border-white/20">AI That Understands Nuance</Badge>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
+                    <p className="mt-4 text-lg text-slate-300">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-8">
                   {industryNiches.map((niche) => (
                     <div key={niche.title} className="flex items-start gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
@@ -305,7 +306,7 @@ export default function MarketingPage() {
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold">{niche.title}</h3>
-                        <p className="mt-1 text-sm text-muted-foreground">{niche.description}</p>
+                        <p className="mt-1 text-sm text-slate-400">{niche.description}</p>
                       </div>
                     </div>
                   ))}

@@ -110,7 +110,7 @@ export default function MarketingPage() {
         avatarHint: "man construction"
     },
     {
-        quote: "Upsell prompts helped us win $20k in additional revenue last quarter.",
+        quote: "Upsell prompts helped us win $20,000 in additional revenue last quarter.",
         author: "Sarah Rodriguez",
         role: "Operations Manager, Reliant Electrical",
         avatarHint: "woman business"
@@ -297,19 +297,17 @@ export default function MarketingPage() {
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
                     <p className="mt-4 text-lg text-muted-foreground">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {industryNiches.map((niche) => (
-                    <Card key={niche.title} className="w-full flex-grow">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <niche.icon className="h-6 w-6 text-primary" />
-                          {niche.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground">{niche.description}</p>
-                      </CardContent>
-                    </Card>
+                    <div key={niche.title} className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+                          <niche.icon className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">{niche.title}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{niche.description}</p>
+                      </div>
+                    </div>
                   ))}
                 </div>
             </div>
@@ -326,10 +324,10 @@ export default function MarketingPage() {
                     {featureList.map((feature) => (
                       <Card key={feature.title} className="flex flex-col">
                           <CardHeader className="flex-row items-center gap-4 space-y-0 pb-4">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
                                 <feature.icon className="h-6 w-6" />
                               </div>
-                              <CardTitle className="text-lg font-semibold">{feature.title}</CardTitle>
+                              <CardTitle className="text-lg font-semibold leading-tight">{feature.title}</CardTitle>
                           </CardHeader>
                           <CardContent className="flex-grow space-y-3">
                               <p className="text-muted-foreground text-sm">{feature.description}</p>

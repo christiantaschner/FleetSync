@@ -724,24 +724,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
                                 </div>
                             </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                <Label htmlFor="flexibility">Scheduling Flexibility</Label>
-                                <Select value={flexibility} onValueChange={(value: JobFlexibility) => setFlexibility(value)}>
-                                    <SelectTrigger id="flexibility">
-                                        <SelectValue placeholder="Select flexibility" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="flexible"><div className="flex items-center gap-2"><Repeat className="h-4 w-4"/>Flexible</div></SelectItem>
-                                        <SelectItem value="fixed"><div className="flex items-center gap-2"><Lock className="h-4 w-4"/>Fixed Appointment</div></SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                </div>
-                                <div className="flex items-end pb-1">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="dispatchLocked" checked={dispatchLocked} onCheckedChange={(checked) => setDispatchLocked(Boolean(checked))} />
-                                    <Label htmlFor="dispatchLocked" className="flex items-center gap-1.5"><Lock className="h-4 w-4"/>Lock Assignment</Label>
-                                </div>
+                             <div className="p-3 border rounded-md bg-secondary/50">
+                                <h4 className="text-sm font-medium mb-2">Scheduling Constraints</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                    <Label htmlFor="flexibility">Scheduling Flexibility</Label>
+                                    <Select value={flexibility} onValueChange={(value: JobFlexibility) => setFlexibility(value)}>
+                                        <SelectTrigger id="flexibility">
+                                            <SelectValue placeholder="Select flexibility" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="flexible"><div className="flex items-center gap-2"><Repeat className="h-4 w-4"/>Flexible</div></SelectItem>
+                                            <SelectItem value="fixed"><div className="flex items-center gap-2"><Lock className="h-4 w-4"/>Fixed Appointment</div></SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    </div>
+                                    <div className="flex items-end pb-1">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="dispatchLocked" checked={dispatchLocked} onCheckedChange={(checked) => setDispatchLocked(Boolean(checked))} />
+                                        <Label htmlFor="dispatchLocked" className="flex items-center gap-1.5"><Lock className="h-4 w-4"/>Lock Assignment</Label>
+                                    </div>
+                                    </div>
                                 </div>
                             </div>
                         </AccordionContent>

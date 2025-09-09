@@ -389,7 +389,7 @@ export default function MarketingPage() {
                             </CardContent>
                             <CardHeader className="flex-row items-center gap-4">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarImage src={`https://placehold.co/100x100?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
+                                     <AvatarImage src={`https://placehold.co/100x100/${['A8D8EA', 'F4B393', 'B2E0B6'][index]}/4A4A4A?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
                                     <AvatarFallback>{testimonial.author.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                                 </Avatar>
                                 <div>

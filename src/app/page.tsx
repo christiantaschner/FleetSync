@@ -300,7 +300,7 @@ export default function MarketingPage() {
                     <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
                     <p className="mt-4 text-lg text-slate-300">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
                 </div>
-                <Card className="mt-12 bg-white/5 border-white/10">
+                <Card className="mt-12 bg-slate-800/50 border-white/10">
                     <CardContent className="p-6 md:p-8 grid md:grid-cols-3 gap-8">
                         <div className="md:col-span-1">
                             <ul className="space-y-2">
@@ -309,8 +309,8 @@ export default function MarketingPage() {
                                         <button
                                             onClick={() => setActiveNiche(niche.title)}
                                             className={cn(
-                                                "w-full text-left p-3 rounded-md transition-colors text-slate-300 hover:bg-white/10",
-                                                activeNiche === niche.title && "bg-primary text-white"
+                                                "w-full text-left p-3 rounded-md transition-colors text-slate-300",
+                                                activeNiche === niche.title ? "bg-primary text-white" : "hover:bg-white/10"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
@@ -324,7 +324,7 @@ export default function MarketingPage() {
                                 ))}
                             </ul>
                         </div>
-                        <div className="md:col-span-2 bg-slate-800/50 rounded-lg p-6 min-h-[200px] flex flex-col items-center justify-center text-center">
+                        <div className="md:col-span-2 bg-slate-900/70 rounded-lg p-6 min-h-[200px] flex flex-col items-center justify-center text-center">
                             {industryNiches.map((niche) => (
                                 activeNiche === niche.title && (
                                     <div key={niche.title} className="animate-in fade-in-50 flex flex-col items-center">
@@ -376,9 +376,9 @@ export default function MarketingPage() {
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
               <p className="mt-4 text-lg text-slate-300">MarginMax turns your most complex decisions into the easiest part of your day.</p>
             </div>
-            <div className="relative mt-12 grid grid-cols-1 gap-y-12 md:grid-cols-2 lg:grid-cols-4">
+            <div className="relative mt-12 grid grid-cols-1 gap-y-12 md:grid-cols-4">
               {/* Dotted lines for desktop view */}
-              <div className="absolute left-0 top-6 hidden h-0.5 w-full lg:block">
+              <div className="absolute left-0 top-6 hidden h-0.5 w-full md:block">
                 <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
                   <line x1="0" y1="0" x2="100%" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5 5" strokeOpacity="0.3" />
                 </svg>

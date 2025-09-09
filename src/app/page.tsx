@@ -50,8 +50,8 @@ export default function MarketingPage() {
   const navLinks = [
     { href: "#problem", text: "The Problem" },
     { href: "#ai-knows-business", text: "The Solution" },
-    { href: "#features", text: "Features" },
-    { href: "#pricing", text: "Pricing" }
+    { href: "#pricing", text: "Pricing" },
+    { href: "#features", text: "Features" }
   ];
   
   const featureList = [
@@ -342,6 +342,72 @@ export default function MarketingPage() {
             </div>
         </section>
 
+        {/* ROI Calculator & Pricing Section */}
+        <section id="pricing" className="bg-muted py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                       Businesses using profit-first dispatching see a 5% increase in net margins on average. Use our calculator to see the money you're leaving on the table.
+                    </p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <Card className="shadow-lg bg-background">
+                        <CardHeader>
+                            <CardTitle>Quick ROI Calculator</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <Label htmlFor="num-techs" className="flex items-center gap-1.5 text-xs"><Users className="h-4 w-4"/># of Technicians</Label>
+                                    <Input id="num-techs" type="number" value={numTechs} onChange={(e) => setNumTechs(parseInt(e.target.value))} min="1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="jobs-day" className="flex items-center gap-1.5 text-xs"><Briefcase className="h-4 w-4"/>Jobs/Day/Tech</Label>
+                                    <Input id="jobs-day" type="number" value={jobsPerDay} onChange={(e) => setJobsPerDay(parseInt(e.target.value))} min="1" />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
+                                <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
+                            </div>
+                            <Button onClick={handleCalculateRoi} className="w-full">Calculate My Additional Profit</Button>
+                            {roi !== null && (
+                                <div className="text-center pt-4 border-t">
+                                    <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
+                                    <p className="text-4xl font-bold text-green-600 mt-1">
+                                        {roi.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </p>
+                                </div>
+                            )}
+                            <p className="text-xs text-muted-foreground text-center pt-2">ROI Calculator is for demonstration purposes. Contact us for a personalized analysis.</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-primary ring-2 ring-primary/20 shadow-lg">
+                         <CardHeader>
+                            <CardTitle>All-Inclusive Plan</CardTitle>
+                            <CardDescription>One plan. All features. No compromises.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-bold">$99</span>
+                                <span className="text-sm text-muted-foreground">/ per technician / month</span>
+                            </div>
+                            <ul className="space-y-2">
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Unlimited Jobs & Customers</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> All AI Features Included</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
+                            </ul>
+                            <Button asChild size="lg" className="w-full">
+                                <Link href="/signup">{t('start_free_trial')}</Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </section>
+
         {/* Features Section */}
         <section id="features" className="bg-background py-16 sm:py-24">
             <div className="container">
@@ -434,72 +500,6 @@ export default function MarketingPage() {
                             </CardHeader>
                         </Card>
                     ))}
-                </div>
-            </div>
-        </section>
-
-        {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-muted py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Stop Guessing. See Your Profit Gap.</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">
-                       Businesses using profit-first dispatching see a 5% increase in net margins on average. Use our calculator to see the money you're leaving on the table.
-                    </p>
-                </div>
-                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                    <Card className="shadow-lg bg-background">
-                        <CardHeader>
-                            <CardTitle>Quick ROI Calculator</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <Label htmlFor="num-techs" className="flex items-center gap-1.5 text-xs"><Users className="h-4 w-4"/># of Technicians</Label>
-                                    <Input id="num-techs" type="number" value={numTechs} onChange={(e) => setNumTechs(parseInt(e.target.value))} min="1" />
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="jobs-day" className="flex items-center gap-1.5 text-xs"><Briefcase className="h-4 w-4"/>Jobs/Day/Tech</Label>
-                                    <Input id="jobs-day" type="number" value={jobsPerDay} onChange={(e) => setJobsPerDay(parseInt(e.target.value))} min="1" />
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
-                                <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value))} min="50" step="50" />
-                            </div>
-                            <Button onClick={handleCalculateRoi} className="w-full">Calculate My Additional Profit</Button>
-                            {roi !== null && (
-                                <div className="text-center pt-4 border-t">
-                                    <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
-                                    <p className="text-4xl font-bold text-green-600 mt-1">
-                                        {roi.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                    </p>
-                                </div>
-                            )}
-                            <p className="text-xs text-muted-foreground text-center pt-2">ROI Calculator is for demonstration purposes. Contact us for a personalized analysis.</p>
-                        </CardContent>
-                    </Card>
-                    <Card className="border-primary ring-2 ring-primary/20 shadow-lg">
-                         <CardHeader>
-                            <CardTitle>All-Inclusive Plan</CardTitle>
-                            <CardDescription>One plan. All features. No compromises.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold">$99</span>
-                                <span className="text-sm text-muted-foreground">/ per technician / month</span>
-                            </div>
-                            <ul className="space-y-2">
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Unlimited Jobs & Customers</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> All AI Features Included</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
-                            </ul>
-                            <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">{t('start_free_trial')}</Link>
-                            </Button>
-                        </CardContent>
-                    </Card>
                 </div>
             </div>
         </section>

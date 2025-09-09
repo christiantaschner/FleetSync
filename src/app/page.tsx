@@ -116,7 +116,7 @@ export default function MarketingPage() {
         avatarHint: "woman business"
     },
     {
-        quote: "Return trips kill our profitability. Now, when a job comes in, the AI tells me which parts are probably needed. I can check if the tech has them in the van *before* they roll out. Our first-time fix rate has shot up.",
+        quote: "Within weeks, we saw more profit per job and fewer callbacks.",
         author: "David Chen",
         role: "Lead Technician, Blue Ribbon Plumbing",
         avatarHint: "man worker"

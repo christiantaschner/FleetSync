@@ -104,19 +104,19 @@ export default function MarketingPage() {
 
   const testimonials = [
     {
-        quote: "The profit-aware dispatching is a game-changer. We're not just closer; we're smarter. Our margins on service calls are up 8% because we're sending the right tech, not just the nearest one. It's like having a top-tier business consultant running our dispatch.",
+        quote: "I stopped thinking 'who's closest?' and started thinking 'who's most profitable?'. MarginMax does the math for me. We're sending our more experienced (and more expensive) guys to the high-value jobs, and our margins are up. It's that simple.",
         author: "Mark Hayes",
         role: "Owner, Apex Climate Solutions",
         avatarHint: "man construction"
     },
     {
-        quote: "I cut my dispatch and planning time from 3 hours a day down to about 20 minutes. The AI handles the complex juggling act, and I just review and approve. This app paid for itself in the first week just in time saved.",
+        quote: "My morning dispatch used to take me hours, juggling calls and looking at a map. Now, I hit 'Analyze', look over what the AI suggests, and click 'Confirm'. I'm done in 20 minutes, not 3 hours. It's completely changed my day.",
         author: "Sarah Rodriguez",
         role: "Operations Manager, Reliant Electrical",
         avatarHint: "woman business"
     },
     {
-        quote: "Our first-time fix rate has skyrocketed. The AI suggesting required parts based on the job description means our techs show up prepared. Fewer return trips, happier customers, and better profitability. It's that simple.",
+        quote: "Return trips kill our profitability. Now, when a job comes in, the AI tells me which parts are probably needed. I can check if the tech has them in the van *before* they roll out. Our first-time fix rate has shot up.",
         author: "David Chen",
         role: "Lead Technician, Blue Ribbon Plumbing",
         avatarHint: "man worker"

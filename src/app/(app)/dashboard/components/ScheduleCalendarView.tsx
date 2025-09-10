@@ -370,35 +370,33 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   return (
         <Card>
         <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <CardTitle className="font-headline">Technician Schedule</CardTitle>
                     <CardDescription>Daily timeline view of technician assignments. Drag jobs to reschedule.</CardDescription>
                 </div>
-                <div className="flex items-center flex-wrap gap-2">
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Previous"><ChevronLeft className="h-4 w-4" /></Button>
                     <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
                         {format(currentDate, 'PPP')}
                     </Button>
                     <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
                 </div>
-            </div>
-            <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                  {proposedJobs.length > 0 ? (
-                    <div className="w-full p-2 border rounded-md bg-amber-50 border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-amber-900">You have unsaved schedule changes.</p>
-                        <div className="flex gap-2">
-                            <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
-                                <X className="mr-2 h-4 w-4"/> Cancel
-                            </Button>
-                            <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
-                               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-                                Save Changes
-                            </Button>
-                        </div>
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-amber-900">You have unsaved changes.</p>
+                        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+                            <X className="mr-2 h-4 w-4"/> Cancel
+                        </Button>
+                        <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
+                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
                     </div>
                  ) : (
-                    <div className="flex-1 flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-2">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>

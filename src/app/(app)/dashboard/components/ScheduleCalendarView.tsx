@@ -164,62 +164,6 @@ const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, tota
     );
 };
 
-const technicianColors = [ 'bg-sky-500', 'bg-emerald-500', 'bg-violet-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-fuchsia-500', 'bg-lime-500' ];
-const getTechnicianColor = (technicianId: string | null | undefined) => {
-    if (!technicianId) return 'bg-gray-400';
-    let hash = 0;
-    for (let i = 0; i < technicianId.length; i++) {
-        hash = technicianId.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash % technicianColors.length);
-    return technicianColors[index];
-};
-
-const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate: Date, jobs: Job[], technicians: Technician[], onJobClick: (e: React.MouseEvent, job: Job) => void }) => {
-    const monthStart = startOfMonth(currentDate);
-    const monthEnd = endOfMonth(currentDate);
-    const firstDayOfMonth = getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1; 
-    const daysInMonth = eachDay({ start: monthStart, end: monthEnd });
-
-    const leadingEmptyDays = Array.from({ length: firstDayOfMonth }, (_, i) => <div key={`empty-${i}`} className="border-r border-b"></div>);
-
-    return (
-        <div className="flex flex-col border-t border-l">
-            <div className="grid grid-cols-7 text-center font-semibold text-sm">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-                    <div key={day} className="py-2 border-r border-b bg-muted/50">{day}</div>
-                ))}
-            </div>
-            <div className="grid grid-cols-7">
-                {leadingEmptyDays}
-                {daysInMonth.map(day => {
-                    const jobsForDay = jobs.filter(job => job.scheduledTime && isSameDay(new Date(job.scheduledTime), day));
-                    return (
-                        <div key={day.toString()} className={cn("relative border-r border-b min-h-32 p-1.5", !isSameMonth(day, currentDate) && "bg-muted/30")}>
-                           <span className={cn("text-xs font-semibold", isToday(day) && "bg-primary text-primary-foreground rounded-full h-5 w-5 flex items-center justify-center")}>
-                                {format(day, 'd')}
-                            </span>
-                             <ScrollArea className="h-24 mt-1">
-                                <div className="space-y-1 pr-1">
-                                    {jobsForDay.map(job => (
-                                        <Badge 
-                                            key={job.id} 
-                                            onClick={(e) => onJobClick(e, job)}
-                                            className={cn("w-full justify-start truncate text-white cursor-pointer", getTechnicianColor(job.assignedTechnicianId))}
-                                        >
-                                            {technicians.find(t => t.id === job.assignedTechnicianId)?.name.split(' ')[0]}: {job.title}
-                                        </Badge>
-                                    ))}
-                                </div>
-                            </ScrollArea>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-};
-
 const TechnicianRow = ({ technician, children, onOptimize, isOptimizing, timelineRef }: { technician: Technician, children: React.ReactNode, onOptimize: () => void, isOptimizing: boolean, timelineRef: React.RefObject<HTMLDivElement> }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: technician.id,
@@ -308,7 +252,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     onCancel,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
   const [optimizingTechId, setOptimizingTechId] = useState<string | null>(null);
@@ -338,16 +281,21 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     
     const job = active.data.current.job as Job;
     const newTechnicianId = over.id as string;
-    const originalTechnicianId = job.assignedTechnicianId;
 
     if (active.data.current.type === 'schedule-job') {
         const timelineRef = over.data.current?.timelineRef;
         if (!timelineRef || !timelineRef.current) return;
         
         const timelineRect = timelineRef.current.getBoundingClientRect();
-        const dropX = event.activatorEvent.clientX - timelineRect.left;
         
-        const minutesFromStart = (dropX / timelineRect.width) * totalMinutes;
+        // Calculate the initial position percentage
+        const initialOffsetMinutes = (new Date(job.scheduledTime!).getTime() - dayStart.getTime()) / 60000;
+        const initialLeftPx = (initialOffsetMinutes / totalMinutes) * timelineRect.width;
+
+        // Add the drag delta
+        const finalLeftPx = initialLeftPx + delta.x;
+        
+        const minutesFromStart = (finalLeftPx / timelineRect.width) * totalMinutes;
         const snappedMinutes = Math.round(minutesFromStart / 10) * 10;
         
         const newStartTime = new Date(dayStart.getTime() + snappedMinutes * 60000);
@@ -358,46 +306,44 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 
 
   useEffect(() => {
-    if (viewMode === 'day' && containerRef.current && isSameDay(currentDate, new Date())) {
+    if (containerRef.current && isSameDay(currentDate, new Date())) {
         const now = new Date();
         const startHour = dayStart.getHours();
         const currentHour = now.getHours();
         const scrollPosition = (containerRef.current.scrollWidth / hours.length) * (currentHour - startHour - 1);
         containerRef.current.scrollLeft = scrollPosition > 0 ? scrollPosition : 0;
     }
-  }, [currentDate, dayStart, hours.length, viewMode]);
+  }, [currentDate, dayStart, hours.length]);
 
   const jobsByTechnician = useCallback((techId: string) => {
     const startOfDayDate = startOfDay(currentDate);
-    const endOfDayDate = endOfDay(currentDate);
     
-    // Get original jobs for this technician
+    // Create a Set of proposed job IDs for quick lookups
+    const proposedJobIds = new Set(proposedJobs.map(p => p.id));
+    
+    // Get original jobs for this tech on the current day, EXCLUDING any that are in the proposed list
     const originalJobs = jobs.filter(job =>
       job.assignedTechnicianId === techId &&
+      !proposedJobIds.has(job.id) && // Exclude original jobs that have been moved
       job.scheduledTime &&
-      new Date(job.scheduledTime) >= startOfDayDate &&
-      new Date(job.scheduledTime) <= endOfDayDate
+      isSameDay(new Date(job.scheduledTime), startOfDayDate)
     );
 
-    // Get proposed changes for this technician
+    // Get proposed changes for this technician on the current day
     const proposedJobsForTech = proposedJobs.filter(
       pJob => pJob.assignedTechnicianId === techId &&
       pJob.scheduledTime &&
-      isSameDay(new Date(pJob.scheduledTime), currentDate)
+      isSameDay(new Date(pJob.scheduledTime), startOfDayDate)
     );
 
-    // Create a map of original jobs to be replaced by proposed changes
-    const proposedJobIds = new Set(proposedJobsForTech.map(p => p.id));
-    const finalJobs = originalJobs.filter(job => !proposedJobIds.has(job.id));
-
-    // Add the proposed jobs
-    finalJobs.push(...proposedJobsForTech);
+    // Combine the filtered original jobs with the proposed jobs
+    const finalJobs = [...originalJobs, ...proposedJobsForTech];
     
     return finalJobs.sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
   }, [currentDate, jobs, proposedJobs]);
   
-  const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
-  const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
+  const handlePrev = () => setCurrentDate(subDays(currentDate, 1));
+  const handleNext = () => setCurrentDate(addDays(currentDate, 1));
   const handleToday = () => setCurrentDate(new Date());
   
   const handleOptimize = (technicianId: string) => {
@@ -430,13 +376,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     <CardDescription>Daily timeline view of technician assignments. Drag jobs to reschedule.</CardDescription>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
-                    <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                        <Button size="icon" variant={viewMode === 'day' ? 'default' : 'ghost'} onClick={() => setViewMode('day')}><Grid3x3 className="h-4 w-4" /></Button>
-                        <Button size="icon" variant={viewMode === 'month' ? 'default' : 'ghost'} onClick={() => setViewMode('month')}><Calendar className="h-4 w-4" /></Button>
-                    </div>
                     <Button variant="outline" size="icon" onClick={handlePrev} aria-label="Previous"><ChevronLeft className="h-4 w-4" /></Button>
                     <Button variant="outline" className="w-36 md:w-40" onClick={handleToday}>
-                        {format(currentDate, viewMode === 'day' ? 'PPP' : 'MMMM yyyy')}
+                        {format(currentDate, 'PPP')}
                     </Button>
                     <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
                 </div>
@@ -501,7 +443,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     selectedChanges={selectedFleetChanges}
                     setSelectedChanges={setSelectedFleetChanges}
                 />
-                {viewMode === 'day' ? (
                 <div ref={containerRef} className="overflow-x-auto">
                 <div className="relative min-w-[1200px]">
                     <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
@@ -585,28 +526,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     </div>
                 </div>
                 </div>
-                ) : (
-                    technicians.length > 0 ? (
-                        <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={(e, job) => onJobClick(job)} />
-                    ) : (
-                        <div className="pt-6">
-                            <Alert className="m-4 border-primary/30 bg-primary/5">
-                                <UserPlus className="h-4 w-4 text-primary" />
-                                <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
-                                <AlertDescription>
-                                    The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
-                                </AlertDescription>
-                                <div className="mt-4">
-                                    <Link href="/settings?tab=users">
-                                        <Button variant="default" size="sm">
-                                            <Users className="mr-2 h-4 w-4" /> Go to User Management
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </Alert>
-                        </div>
-                    )
-                )}
             </DndContext>
         </CardContent>
         </Card>

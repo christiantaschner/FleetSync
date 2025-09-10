@@ -72,37 +72,45 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
   const isPendingOrAssigned = job.status === 'Unassigned' || job.status === 'Assigned';
 
   const handleClick = (e: React.MouseEvent) => {
-    if (transform) return;
     onClick?.(e, job);
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ 
-        left: `${Math.max(0, left)}%`, 
-        width: `${Math.min(100 - Math.max(0, left), width)}%`,
-        minWidth: '20px',
-        ...style
-      }}
-      {...listeners}
-      {...attributes}
-      onClick={handleClick}
-      onMouseDown={(e) => { listeners?.onMouseDown?.(e as any) }}
-      onTouchStart={(e) => { listeners?.onTouchStart?.(e as any) }}
-      className={cn(
-        "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
-        getStatusAppearance(job.status),
-        priorityColor,
-        isPendingOrAssigned && "border-dashed",
-        isProposed && "opacity-60 ring-primary ring-2"
-      )}
-    >
-        <div className="flex flex-col w-full truncate">
-        <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
-        <span className="text-muted-foreground truncate italic">{job.title}</span>
-    </div>
-    </div>
+    <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              ref={setNodeRef}
+              style={{ 
+                left: `${Math.max(0, left)}%`, 
+                width: `${Math.min(100 - Math.max(0, left), width)}%`,
+                minWidth: '20px',
+                ...style
+              }}
+              {...listeners}
+              {...attributes}
+              onClick={handleClick}
+              className={cn(
+                "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
+                getStatusAppearance(job.status),
+                priorityColor,
+                isPendingOrAssigned && "border-dashed",
+                isProposed && "opacity-60 ring-primary ring-2"
+              )}
+            >
+              <div className="flex flex-col w-full truncate">
+                <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
+                <span className="text-muted-foreground truncate italic">{job.title}</span>
+              </div>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent className="bg-card text-card-foreground border-border shadow-lg">
+            <p className="font-semibold">{job.title}</p>
+            <p className="text-sm text-muted-foreground">Customer: {job.customerName}</p>
+            {job.scheduledTime && <p className="text-sm text-muted-foreground">Time: {format(new Date(job.scheduledTime), 'p')}</p>}
+          </TooltipContent>
+        </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -527,26 +535,16 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                     {travelStartTime && (
                                                         <TravelBlock from={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />
                                                     )}
-                                                     <TooltipProvider delayDuration={200}>
-                                                        <Tooltip>
-                                                          <TooltipTrigger asChild>
-                                                            <div>
-                                                              <JobBlock 
-                                                                  job={job} 
-                                                                  dayStart={dayStart} 
-                                                                  totalMinutes={totalMinutes} 
-                                                                  onClick={(e, job) => onJobClick(job)}
-                                                                  isProposed={!!proposedChanges[job.id]}
-                                                              />
-                                                            </div>
-                                                          </TooltipTrigger>
-                                                          <TooltipContent>
-                                                            <p className="font-semibold">{job.title}</p>
-                                                            <p className="text-sm text-muted-foreground">Customer: {job.customerName}</p>
-                                                            {job.scheduledTime && <p className="text-sm text-muted-foreground">Time: {format(new Date(job.scheduledTime), 'p')}</p>}
-                                                          </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
+                                                    <JobBlock 
+                                                        job={job} 
+                                                        dayStart={dayStart} 
+                                                        totalMinutes={totalMinutes} 
+                                                        onClick={(e, job) => {
+                                                            e.stopPropagation();
+                                                            onJobClick(job);
+                                                        }}
+                                                        isProposed={!!proposedChanges[job.id]}
+                                                    />
                                                 </React.Fragment>
                                             )
                                         })}

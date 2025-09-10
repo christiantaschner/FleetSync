@@ -68,7 +68,6 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
 
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
-  const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
   const isPendingOrAssigned = job.status === 'Unassigned' || job.status === 'Assigned';
 
   const handleClick = (e: React.MouseEvent) => {
@@ -91,9 +90,8 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
               {...attributes}
               onClick={handleClick}
               className={cn(
-                "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
+                "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset ring-black/10 transition-opacity",
                 getStatusAppearance(job.status),
-                priorityColor,
                 isPendingOrAssigned && "border-dashed",
                 isProposed && "opacity-60 ring-primary ring-2"
               )}
@@ -126,15 +124,24 @@ const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: D
     if (offsetMinutes < 0 || offsetMinutes > totalMinutes) return null;
 
     return (
-        <div 
-            className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
-            style={{ left: `${offsetMinutes / totalMinutes * 100}%`, width: `${width}%` }}
-        >
-             <div className="flex w-full truncate items-center justify-center">
-                <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
-                <span className="truncate italic">30m travel</span>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div 
+                className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
+                style={{ left: `${offsetMinutes / totalMinutes * 100}%`, width: `${width}%` }}
+            >
+                 <div className="flex w-full truncate items-center justify-center">
+                    <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
+                    <span className="truncate italic">30m travel</span>
+                </div>
             </div>
-        </div>
+          </TooltipTrigger>
+           <TooltipContent className="bg-card text-card-foreground border-border shadow-lg">
+            <p>Estimated Travel Time: 30 minutes</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
 };
 

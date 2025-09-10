@@ -1070,6 +1070,15 @@ export default function DashboardPage() {
         } else {
             toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
         }
+    } else if (over && active.data.current?.type === 'schedule-job' && over.data.current?.type === 'technician') {
+        const jobId = active.id as string;
+        const newTechId = over.id as string;
+
+        if (isMockMode) {
+            setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? { ...j, assignedTechnicianId: newTechId, status: 'Assigned' } : j));
+            toast({ title: "Job Reassigned (Mock)", description: `Job moved to new technician.` });
+            return;
+        }
     }
   };
   

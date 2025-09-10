@@ -225,6 +225,7 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
 const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { technician: Technician, children: React.ReactNode, onOptimize: () => void, isOptimizing: boolean }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: technician.id,
+        data: { type: 'technician' }
     });
 
     return (
@@ -281,8 +282,6 @@ interface ScheduleCalendarViewProps {
   setSelectedFleetChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
 }
 
-type ProposedChanges = Record<string, { scheduledTime: string; assignedTechnicianId: string; originalTechnicianId: string | null }>;
-
 
 const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({ 
     jobs, 
@@ -300,9 +299,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const containerRef = useRef<HTMLDivElement>(null);
-  const timelineGridRef = useRef<HTMLDivElement>(null);
-  const [proposedChanges, setProposedChanges] = useState<ProposedChanges>({});
-  const [isSaving, setIsSaving] = useState(false);
   const [optimizingTechId, setOptimizingTechId] = useState<string | null>(null);
 
   const [isReassignOpen, setIsReassignOpen] = useState(false);
@@ -336,30 +332,17 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     }
   }, [currentDate, dayStart, hours.length, viewMode]);
 
-  const jobsWithProposedChanges = useMemo(() => {
-    return jobs.map(job => {
-        if (proposedChanges[job.id]) {
-            return {
-                ...job,
-                scheduledTime: proposedChanges[job.id].scheduledTime,
-                assignedTechnicianId: proposedChanges[job.id].assignedTechnicianId,
-            };
-        }
-        return job;
-    });
-  }, [jobs, proposedChanges]);
-
 
   const jobsByTechnician = useCallback((techId: string) => {
     const startOfDayDate = startOfDay(currentDate);
     const endOfDayDate = endOfDay(currentDate);
-    return jobsWithProposedChanges.filter(job =>
+    return jobs.filter(job =>
       job.assignedTechnicianId === techId &&
       job.scheduledTime &&
       new Date(job.scheduledTime) >= startOfDayDate &&
       new Date(job.scheduledTime) <= endOfDayDate
     ).sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
-  }, [currentDate, jobsWithProposedChanges]);
+  }, [currentDate, jobs]);
   
   const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
   const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
@@ -381,50 +364,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     setJobToReassign(jobsForOptimization[0]);
     setIsReassignOpen(true);
   };
-
-  const handleConfirmChanges = async () => {
-    if (isMockMode) {
-        toast({ title: 'Schedule Updated (Mock)', description: 'Changes have been applied in mock mode.'});
-        setProposedChanges({});
-        return;
-    }
-
-    if (!userProfile?.companyId || !appId) {
-        toast({ title: "Error", description: "Cannot save changes, user or app info is missing.", variant: "destructive"});
-        return;
-    }
-    
-    setIsSaving(true);
-    const promises = Object.entries(proposedChanges).map(([jobId, change]) => {
-        return reassignJobAction({
-            companyId: userProfile.companyId!,
-            jobId,
-            newTechnicianId: change.assignedTechnicianId,
-            newScheduledTime: change.scheduledTime,
-            appId,
-            reason: "Manually rescheduled on calendar view"
-        });
-    });
-
-    const results = await Promise.allSettled(promises);
-    
-    const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error));
-
-    if (failed.length > 0) {
-        toast({ title: "Some Changes Failed", description: `${failed.length} of ${promises.length} changes could not be saved.`, variant: "destructive"});
-    } else {
-        toast({ title: "Schedule Updated", description: "All changes have been saved successfully." });
-    }
-
-    setProposedChanges({});
-    setIsSaving(false);
-  };
-
-  const handleDiscardChanges = () => {
-    setProposedChanges({});
-  };
-  
-  const hasProposedChanges = Object.keys(proposedChanges).length > 0;
   
   const handleConfirmFleetOptimization = async (changesToConfirm: OptimizationSuggestion[]) => {
     if (!userProfile?.companyId || !appId) return;
@@ -498,7 +437,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 technicians={technicians}
                 jobs={jobs}
                 onConfirmChanges={handleConfirmFleetOptimization}
-                isLoadingConfirmation={isSaving}
+                isLoadingConfirmation={isFleetOptimizing}
                 selectedChanges={selectedFleetChanges}
                 setSelectedChanges={setSelectedFleetChanges}
             />
@@ -507,7 +446,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             <div className="relative min-w-[1200px]">
                 <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                     <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
-                    <div ref={timelineGridRef} className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                    <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                     {hours.map((hour, index) => (
                         <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
                         {format(hour, 'ha')}
@@ -550,7 +489,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                             e.stopPropagation();
                                                             onJobClick(job);
                                                         }}
-                                                        isProposed={!!proposedChanges[job.id]}
                                                     />
                                                 </React.Fragment>
                                             )
@@ -602,19 +540,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                         </Alert>
                     </div>
                 )
-            )}
-            {hasProposedChanges && viewMode === 'day' && (
-                <div className="sticky bottom-4 z-30 mx-auto w-fit flex items-center gap-2 rounded-full border bg-background p-2 shadow-lg animate-in fade-in-50">
-                    <p className="text-sm font-medium px-2">You have unsaved schedule changes.</p>
-                    <Button size="sm" variant="outline" onClick={handleDiscardChanges} disabled={isSaving}>
-                        <X className="mr-1.5 h-4 w-4"/>
-                        Discard
-                    </Button>
-                    <Button size="sm" onClick={handleConfirmChanges} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin"/> : <Save className="mr-1.5 h-4 w-4" />}
-                        Confirm Changes
-                    </Button>
-                </div>
             )}
         </CardContent>
         </Card>

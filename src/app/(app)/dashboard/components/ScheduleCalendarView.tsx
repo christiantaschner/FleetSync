@@ -45,7 +45,7 @@ const formatDuration = (milliseconds: number): string => {
 };
 
 
-export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed, isOverlay = false }: { job: Job, dayStart: Date, totalMinutes: number, onClick?: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean, isOverlay?: boolean }) => {
+export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick?: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean }) => {
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: job.id,
     data: { type: 'schedule-job', job }
@@ -72,38 +72,49 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed, isO
   const isPendingOrAssigned = job.status === 'Unassigned' || job.status === 'Assigned';
 
   const handleClick = (e: React.MouseEvent) => {
-    // This stops the drag listener from firing on a simple click
     if (transform) return;
     onClick?.(e, job);
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={{ 
-        left: `${Math.max(0, left)}%`, 
-        width: `${isOverlay ? 'auto' : `${Math.min(100 - Math.max(0, left), width)}%`}`,
-        minWidth: '20px',
-        ...style
-      }}
-      {...listeners}
-      {...attributes}
-      onClick={handleClick}
-      onMouseDown={(e) => { listeners?.onMouseDown?.(e as any) }}
-      onTouchStart={(e) => { listeners?.onTouchStart?.(e as any) }}
-      className={cn(
-        "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
-        getStatusAppearance(job.status),
-        priorityColor,
-        isPendingOrAssigned && "border-dashed",
-        isProposed && "opacity-60 ring-primary ring-2"
-      )}
-    >
-       <div className="flex flex-col w-full truncate">
-          <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
-          <span className="text-muted-foreground truncate italic">{job.title}</span>
-      </div>
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+           <div
+            ref={setNodeRef}
+            style={{ 
+              left: `${Math.max(0, left)}%`, 
+              width: `${Math.min(100 - Math.max(0, left), width)}%`,
+              minWidth: '20px',
+              ...style
+            }}
+            {...listeners}
+            {...attributes}
+            onClick={handleClick}
+            onMouseDown={(e) => { listeners?.onMouseDown?.(e as any) }}
+            onTouchStart={(e) => { listeners?.onTouchStart?.(e as any) }}
+            className={cn(
+              "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
+              getStatusAppearance(job.status),
+              priorityColor,
+              isPendingOrAssigned && "border-dashed",
+              isProposed && "opacity-60 ring-primary ring-2"
+            )}
+          >
+             <div className="flex flex-col w-full truncate">
+                <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
+                <span className="text-muted-foreground truncate italic">{job.title}</span>
+            </div>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
+           <p className="font-bold">{job.title}</p>
+           <p className="text-sm text-muted-foreground">Customer: {job.customerName}</p>
+           <p className="text-sm text-muted-foreground">Status: {job.status}</p>
+           {job.scheduledTime && <p className="text-sm text-muted-foreground">Scheduled: {format(new Date(job.scheduledTime), 'PPp')}</p>}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
 
@@ -625,5 +636,3 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 };
 
 export default ScheduleCalendarView;
-
-    

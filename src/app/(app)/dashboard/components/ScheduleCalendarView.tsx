@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import type { Job, Technician, JobStatus, Location, OptimizeRoutesInput, OptimizationSuggestion } from '@/types';
+import type { Job, Technician, JobStatus, Location, OptimizationSuggestion } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -539,16 +539,25 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     ))}
                                     </div>
                                     <div className="relative h-full p-1.5">
-                                        {techJobs.map((job) => (
-                                             <JobBlock 
-                                                key={job.id}
-                                                job={job} 
-                                                dayStart={dayStart} 
-                                                totalMinutes={totalMinutes} 
-                                                onClick={(e, job) => onJobClick(job)}
-                                                isProposed={!!proposedChanges[job.id]}
-                                             />
-                                        ))}
+                                        {techJobs.map((job, index) => {
+                                            const prevJob = techJobs[index-1];
+                                            const travelStartTime = prevJob ? new Date(new Date(prevJob.scheduledTime!).getTime() + (prevJob.estimatedDurationMinutes || 60) * 60000) : null;
+                                            
+                                            return (
+                                                <React.Fragment key={job.id}>
+                                                    {travelStartTime && (
+                                                        <TravelBlock from={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />
+                                                    )}
+                                                    <JobBlock 
+                                                        job={job} 
+                                                        dayStart={dayStart} 
+                                                        totalMinutes={totalMinutes} 
+                                                        onClick={(e, job) => onJobClick(job)}
+                                                        isProposed={!!proposedChanges[job.id]}
+                                                    />
+                                                </React.Fragment>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             </TechnicianRow>
@@ -616,3 +625,5 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 };
 
 export default ScheduleCalendarView;
+
+    

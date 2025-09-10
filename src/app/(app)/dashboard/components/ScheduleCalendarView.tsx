@@ -45,15 +45,10 @@ const formatDuration = (milliseconds: number): string => {
 };
 
 
-const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean }) => {
-  const sensors = useSensors(useSensor(PointerSensor, {
-    activationConstraint: {
-      distance: 8,
-    },
-  }));
+export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed, isOverlay = false }: { job: Job, dayStart: Date, totalMinutes: number, onClick?: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean, isOverlay?: boolean }) => {
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: job.id,
-    data: { job }
+    data: { type: 'schedule-job', job }
   });
 
   const style = transform ? {
@@ -79,7 +74,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   const handleClick = (e: React.MouseEvent) => {
     // This stops the drag listener from firing on a simple click
     if (transform) return;
-    onClick(e, job);
+    onClick?.(e, job);
   };
 
   return (
@@ -87,7 +82,7 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
       ref={setNodeRef}
       style={{ 
         left: `${Math.max(0, left)}%`, 
-        width: `${Math.min(100 - Math.max(0, left), width)}%`,
+        width: `${isOverlay ? 'auto' : `${Math.min(100 - Math.max(0, left), width)}%`}`,
         minWidth: '20px',
         ...style
       }}
@@ -140,38 +135,6 @@ const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: D
                 </TooltipTrigger>
                 <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
                     <p>Estimated Travel Time: {TRAVEL_TIME_MINUTES} minutes</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    );
-};
-
-const IdleBlock = ({ from, to, dayStart, totalMinutes }: { from: Date, to: Date, dayStart: Date, totalMinutes: number }) => {
-    const durationMs = to.getTime() - from.getTime();
-    if (durationMs <= 0) return null;
-    
-    const offsetMinutes = (from.getTime() - dayStart.getTime()) / 60000;
-    const durationMinutes = durationMs / 60000;
-    
-    const left = (offsetMinutes / totalMinutes) * 100;
-    const width = (durationMinutes / totalMinutes) * 100;
-
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div 
-                        className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-gray-100 border-l-4 border-gray-300 text-gray-500"
-                        style={{ left: `${left}%`, width: `${width}%`}}
-                    >
-                        <div className="flex w-full truncate items-center justify-center">
-                            <Coffee className="inline h-3 w-3 mr-1.5 shrink-0" />
-                            <span className="truncate italic">{formatDuration(durationMs)}</span>
-                        </div>
-                    </div>
-                </TooltipTrigger>
-                 <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
-                    <p>Idle Time: {formatDuration(durationMs)}</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
@@ -562,7 +525,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                 <div className="relative">
                     {technicians.length > 0 ? technicians.map((tech) => {
                         const techJobs = jobsByTechnician(tech.id);
-                        let lastEventTime = dayStart;
                         return (
                             <TechnicianRow 
                                 key={tech.id} 
@@ -577,41 +539,16 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     ))}
                                     </div>
                                     <div className="relative h-full p-1.5">
-                                        {techJobs.map((job) => {
-                                            if (!job.scheduledTime) return null;
-                                            const jobStart = new Date(job.scheduledTime);
-                                            const jobEnd = new Date(jobStart.getTime() + (job.estimatedDurationMinutes || 60) * 60000);
-                                            
-                                            const TRAVEL_TIME_MINUTES = 30; // Placeholder
-                                            const travelStartTime = lastEventTime;
-                                            const travelEndTime = new Date(travelStartTime.getTime() + TRAVEL_TIME_MINUTES * 60000);
-                                            
-                                            const elements = [];
-
-                                            if (isAfter(jobStart, lastEventTime)) {
-                                                // Check if there is time for travel between last event and this job
-                                                if (isAfter(jobStart, travelEndTime)) {
-                                                    elements.push(<TravelBlock key={`${job.id}-travel`} from={lastEventTime} dayStart={dayStart} totalMinutes={totalMinutes} />);
-                                                    elements.push(<IdleBlock key={`${job.id}-idle-before`} from={travelEndTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
-                                                } else {
-                                                    // Not enough time for full travel + idle, show only idle/travel up to job start
-                                                    elements.push(<IdleBlock key={`${job.id}-idle-before`} from={lastEventTime} to={jobStart} dayStart={dayStart} totalMinutes={totalMinutes} />);
-                                                }
-                                            }
-                                            
-                                            elements.push(<JobBlock 
+                                        {techJobs.map((job) => (
+                                             <JobBlock 
                                                 key={job.id}
                                                 job={job} 
                                                 dayStart={dayStart} 
                                                 totalMinutes={totalMinutes} 
                                                 onClick={(e, job) => onJobClick(job)}
                                                 isProposed={!!proposedChanges[job.id]}
-                                             />);
-                                            
-                                            lastEventTime = jobEnd;
-                                            
-                                            return elements;
-                                        })}
+                                             />
+                                        ))}
                                     </div>
                                 </div>
                             </TechnicianRow>

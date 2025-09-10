@@ -11,7 +11,7 @@ import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Loc
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
-import ScheduleCalendarView from './components/ScheduleCalendarView';
+import ScheduleCalendarView, { JobBlock } from './components/ScheduleCalendarView';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
@@ -136,6 +136,7 @@ export default function DashboardPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [activeDragType, setActiveDragType] = useState<string | null>(null);
 
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
@@ -1032,9 +1033,15 @@ export default function DashboardPage() {
     },
   }));
 
+  const handleDragStart = (event: any) => {
+    setActiveDragId(event.active.id);
+    setActiveDragType(event.active.data.current?.type || null);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const {active, over} = event;
     setActiveDragId(null);
+    setActiveDragType(null);
     
     if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
       const job = active.data.current.job as Job;
@@ -1077,9 +1084,9 @@ export default function DashboardPage() {
   return (
     <DndContext 
       sensors={sensors} 
-      onDragStart={(e) => setActiveDragId(e.active.id as string)}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => setActiveDragId(null)}
+      onDragCancel={() => { setActiveDragId(null); setActiveDragType(null); }}
     >
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
@@ -1520,13 +1527,22 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
       <DragOverlay>
-        {activeDragId && draggedJob ? (
-          <Card className="w-64 shadow-xl">
-             <CardHeader className="flex-row items-center gap-2 p-3">
-              <Briefcase className="h-4 w-4 text-primary"/>
-              <CardTitle className="text-sm font-semibold truncate">{draggedJob.title}</CardTitle>
-            </CardHeader>
-          </Card>
+        {activeDragId && activeDragType === 'job' && draggedJob ? (
+          <JobListItem 
+            job={draggedJob}
+            technicians={technicians}
+            onAIAssign={() => {}}
+            onOpenChat={() => {}}
+            onShareTracking={() => {}}
+            onViewOnMap={() => {}}
+          />
+        ) : activeDragId && activeDragType === 'schedule-job' && draggedJob ? (
+           <JobBlock 
+            job={draggedJob}
+            dayStart={startOfDay(new Date(draggedJob.scheduledTime!))}
+            totalMinutes={720}
+            isOverlay
+           />
         ) : null}
       </DragOverlay>
 

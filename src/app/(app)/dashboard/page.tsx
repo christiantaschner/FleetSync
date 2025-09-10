@@ -1040,37 +1040,36 @@ export default function DashboardPage() {
     setActiveDragId(null);
     const { active, over } = event;
     
-    if (isMockMode) {
-      if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
+    if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
         const jobId = active.id as string;
         const techId = over.id as string;
-        setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? { ...j, assignedTechnicianId: techId, status: 'Assigned' } : j));
-        toast({ title: "Job Assigned (Mock)", description: `Job assigned to new technician.` });
-      }
-      return;
-    }
+        
+        if (isMockMode) {
+            setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? { ...j, assignedTechnicianId: techId, status: 'Assigned' } : j));
+            toast({ title: "Job Assigned (Mock)", description: `Job assigned to new technician.` });
+            return;
+        }
 
-    if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
-      const job = active.data.current.job as Job;
-      const technician = over.data.current.technician as Technician;
+        const job = active.data.current.job as Job;
+        const technician = over.data.current.technician as Technician;
 
-      if (job.assignedTechnicianId === technician.id) return;
-      
-      setIsLoadingData(true);
-      const result = await reassignJobAction({
-        companyId: job.companyId,
-        appId: appId!,
-        jobId: job.id,
-        newTechnicianId: technician.id,
-        reason: 'Manual drag-and-drop assignment'
-      });
-      setIsLoadingData(false);
+        if (job.assignedTechnicianId === technician.id) return;
+        
+        setIsLoadingData(true);
+        const result = await reassignJobAction({
+            companyId: job.companyId,
+            appId: appId!,
+            jobId: job.id,
+            newTechnicianId: technician.id,
+            reason: 'Manual drag-and-drop assignment'
+        });
+        setIsLoadingData(false);
 
-      if (result.error) {
-        toast({ title: "Assignment Failed", description: result.error, variant: "destructive" });
-      } else {
-        toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
-      }
+        if (result.error) {
+            toast({ title: "Assignment Failed", description: result.error, variant: "destructive" });
+        } else {
+            toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
+        }
     }
   };
   

@@ -77,78 +77,56 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-           <div
-            ref={setNodeRef}
-            style={{ 
-              left: `${Math.max(0, left)}%`, 
-              width: `${Math.min(100 - Math.max(0, left), width)}%`,
-              minWidth: '20px',
-              ...style
-            }}
-            {...listeners}
-            {...attributes}
-            onClick={handleClick}
-            onMouseDown={(e) => { listeners?.onMouseDown?.(e as any) }}
-            onTouchStart={(e) => { listeners?.onTouchStart?.(e as any) }}
-            className={cn(
-              "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
-              getStatusAppearance(job.status),
-              priorityColor,
-              isPendingOrAssigned && "border-dashed",
-              isProposed && "opacity-60 ring-primary ring-2"
-            )}
-          >
-             <div className="flex flex-col w-full truncate">
-                <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
-                <span className="text-muted-foreground truncate italic">{job.title}</span>
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
-           <p className="font-bold">{job.title}</p>
-           <p className="text-sm text-muted-foreground">Customer: {job.customerName}</p>
-           <p className="text-sm text-muted-foreground">Status: {job.status}</p>
-           {job.scheduledTime && <p className="text-sm text-muted-foreground">Scheduled: {format(new Date(job.scheduledTime), 'PPp')}</p>}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div
+      ref={setNodeRef}
+      style={{ 
+        left: `${Math.max(0, left)}%`, 
+        width: `${Math.min(100 - Math.max(0, left), width)}%`,
+        minWidth: '20px',
+        ...style
+      }}
+      {...listeners}
+      {...attributes}
+      onClick={handleClick}
+      onMouseDown={(e) => { listeners?.onMouseDown?.(e as any) }}
+      onTouchStart={(e) => { listeners?.onTouchStart?.(e as any) }}
+      className={cn(
+        "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
+        getStatusAppearance(job.status),
+        priorityColor,
+        isPendingOrAssigned && "border-dashed",
+        isProposed && "opacity-60 ring-primary ring-2"
+      )}
+    >
+        <div className="flex flex-col w-full truncate">
+        <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
+        <span className="text-muted-foreground truncate italic">{job.title}</span>
+    </div>
+    </div>
   );
 };
 
 const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: Date, totalMinutes: number }) => {
-    // For now, a fixed 30-minute travel time estimate
-    const TRAVEL_TIME_MINUTES = useMemo(() => Math.floor(Math.random() * (45 - 15 + 1)) + 15, [from]);
-    
     const jobEndTime = from.getTime();
     const travelStartTime = jobEndTime;
+    const travelTimeMs = 30 * 60000; // 30 minutes travel time
+    const travelEndTime = travelStartTime + travelTimeMs;
 
     const offsetMinutes = (travelStartTime - dayStart.getTime()) / 60000;
-    const width = (TRAVEL_TIME_MINUTES / totalMinutes) * 100;
+    const width = (travelTimeMs / 60000 / totalMinutes) * 100;
     
     if (offsetMinutes < 0 || offsetMinutes > totalMinutes) return null;
 
     return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <div 
-                        className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
-                        style={{ left: `${offsetMinutes / totalMinutes * 100}%`, width: `${width}%` }}
-                    >
-                         <div className="flex w-full truncate items-center justify-center">
-                            <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
-                            <span className="truncate italic">{TRAVEL_TIME_MINUTES}m</span>
-                        </div>
-                    </div>
-                </TooltipTrigger>
-                <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
-                    <p>Estimated Travel Time: {TRAVEL_TIME_MINUTES} minutes</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
+        <div 
+            className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
+            style={{ left: `${offsetMinutes / totalMinutes * 100}%`, width: `${width}%` }}
+        >
+             <div className="flex w-full truncate items-center justify-center">
+                <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
+                <span className="truncate italic">30m travel</span>
+            </div>
+        </div>
     );
 };
 
@@ -211,23 +189,13 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
                              <ScrollArea className="h-24 mt-1">
                                 <div className="space-y-1 pr-1">
                                     {jobsForDay.map(job => (
-                                        <TooltipProvider key={job.id}>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Badge 
-                                                        onClick={(e) => onJobClick(e, job)}
-                                                        className={cn("w-full justify-start truncate text-white cursor-pointer", getTechnicianColor(job.assignedTechnicianId))}
-                                                    >
-                                                        {technicians.find(t => t.id === job.assignedTechnicianId)?.name.split(' ')[0]}: {job.title}
-                                                    </Badge>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p className="font-bold">{job.title}</p>
-                                                    <p>{technicians.find(t => t.id === job.assignedTechnicianId)?.name || 'Unassigned'}</p>
-                                                    <p>{format(new Date(job.scheduledTime!), 'p')}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                        <Badge 
+                                            key={job.id} 
+                                            onClick={(e) => onJobClick(e, job)}
+                                            className={cn("w-full justify-start truncate text-white cursor-pointer", getTechnicianColor(job.assignedTechnicianId))}
+                                        >
+                                            {technicians.find(t => t.id === job.assignedTechnicianId)?.name.split(' ')[0]}: {job.title}
+                                        </Badge>
                                     ))}
                                 </div>
                             </ScrollArea>
@@ -559,13 +527,26 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                     {travelStartTime && (
                                                         <TravelBlock from={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />
                                                     )}
-                                                    <JobBlock 
-                                                        job={job} 
-                                                        dayStart={dayStart} 
-                                                        totalMinutes={totalMinutes} 
-                                                        onClick={(e, job) => onJobClick(job)}
-                                                        isProposed={!!proposedChanges[job.id]}
-                                                    />
+                                                     <TooltipProvider delayDuration={200}>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            <div>
+                                                              <JobBlock 
+                                                                  job={job} 
+                                                                  dayStart={dayStart} 
+                                                                  totalMinutes={totalMinutes} 
+                                                                  onClick={(e, job) => onJobClick(job)}
+                                                                  isProposed={!!proposedChanges[job.id]}
+                                                              />
+                                                            </div>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent>
+                                                            <p className="font-semibold">{job.title}</p>
+                                                            <p className="text-sm text-muted-foreground">Customer: {job.customerName}</p>
+                                                            {job.scheduledTime && <p className="text-sm text-muted-foreground">Time: {format(new Date(job.scheduledTime), 'p')}</p>}
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
                                                 </React.Fragment>
                                             )
                                         })}

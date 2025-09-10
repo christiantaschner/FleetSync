@@ -552,7 +552,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             {viewMode === 'day' ? (
             <div ref={containerRef} className="overflow-x-auto">
             <div className="relative min-w-[1200px]">
-                <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
+                <div className="sticky top-0 z-10 h-10 flex border-b bg-muted/50">
                     <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                     <div ref={timelineGridRef} className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                     {hours.map((hour, index) => (

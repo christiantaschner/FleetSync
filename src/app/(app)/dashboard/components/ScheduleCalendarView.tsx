@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isToday, isAfter, isBefore } from 'date-fns';
+import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isToday } from 'date-fns';
 import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { useDraggable, useDroppable, DndContext } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
 import { reassignJobAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
 import ReassignJobDialog from './ReassignJobDialog';
@@ -23,13 +24,13 @@ import FleetOptimizationReviewDialog from './FleetOptimizationReviewDialog';
 
 const getStatusAppearance = (status: JobStatus) => {
     switch (status) {
-      case 'Completed': return 'bg-green-100 border-l-4 border-green-500 text-green-800';
-      case 'In Progress': return 'bg-blue-100 border-l-4 border-blue-500 text-blue-800';
-      case 'En Route': return 'bg-indigo-100 border-l-4 border-indigo-500 text-indigo-800';
-      case 'Assigned': return 'bg-sky-100 border-l-4 border-sky-500 text-sky-800';
-      case 'Unassigned': return 'bg-amber-100 border-l-4 border-amber-500 text-amber-800';
-      case 'Cancelled': return 'bg-red-100/70 border-l-4 border-red-500 text-red-800 line-through';
-      default: return 'bg-gray-100 border-l-4 border-gray-400 text-gray-700';
+      case 'Completed': return 'bg-green-100 border-green-500 text-green-800';
+      case 'In Progress': return 'bg-blue-100 border-blue-500 text-blue-800';
+      case 'En Route': return 'bg-indigo-100 border-indigo-500 text-indigo-800';
+      case 'Assigned': return 'bg-sky-100 border-sky-500 text-sky-800';
+      case 'Unassigned': return 'bg-amber-100 border-amber-500 text-amber-800';
+      case 'Cancelled': return 'bg-red-100/70 border-red-500 text-red-800 line-through';
+      default: return 'bg-gray-100 border-gray-400 text-gray-700';
     }
 };
 
@@ -43,7 +44,6 @@ const formatDuration = (milliseconds: number): string => {
     }
     return `${minutes}m`;
 };
-
 
 export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick?: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean }) => {
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
@@ -68,8 +68,6 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
 
   if (left > 100 || (left + width) < 0 || durationMinutes <= 0) return null;
 
-  const isPendingOrAssigned = job.status === 'Unassigned' || job.status === 'Assigned';
-
   const handleClick = (e: React.MouseEvent) => {
     onClick?.(e, job);
   };
@@ -90,9 +88,8 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
               {...attributes}
               onClick={handleClick}
               className={cn(
-                "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset ring-black/10 transition-opacity",
+                "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset ring-black/10 transition-opacity border-l-4",
                 getStatusAppearance(job.status),
-                isPendingOrAssigned && "border-dashed",
                 isProposed && "opacity-60 ring-primary ring-2"
               )}
             >
@@ -111,6 +108,7 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
     </TooltipProvider>
   );
 };
+
 
 const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: Date, totalMinutes: number }) => {
     const jobEndTime = from.getTime();
@@ -222,14 +220,14 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
     );
 };
 
-const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { technician: Technician, children: React.ReactNode, onOptimize: () => void, isOptimizing: boolean }) => {
+const TechnicianRow = ({ technician, children, onOptimize, isOptimizing, timelineRef }: { technician: Technician, children: React.ReactNode, onOptimize: () => void, isOptimizing: boolean, timelineRef: React.RefObject<HTMLDivElement> }) => {
     const { setNodeRef, isOver } = useDroppable({
         id: technician.id,
-        data: { type: 'technician' }
+        data: { type: 'technician', timelineRef }
     });
 
     return (
-        <div ref={setNodeRef} className={cn("flex h-20 items-center border-t", isOver && "bg-primary/10")}>
+        <div className={cn("flex h-20 items-center border-t", isOver && "bg-primary/10")}>
             <div className="w-48 shrink-0 p-2 flex items-center justify-between gap-2 border-r h-full bg-background">
                 <div className="flex items-center gap-2 truncate">
                     <Avatar className="h-9 w-9">
@@ -257,7 +255,9 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing }: { tec
                     </Tooltip>
                 </TooltipProvider>
             </div>
-            {children}
+            <div ref={setNodeRef} className="flex-1 relative h-full">
+                {children}
+            </div>
         </div>
     );
 }
@@ -280,6 +280,12 @@ interface ScheduleCalendarViewProps {
   setIsFleetOptimizationDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedFleetChanges: OptimizationSuggestion[];
   setSelectedFleetChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
+  onScheduleChange: (jobId: string, newTechnicianId: string, newScheduledTime: string) => void;
+  proposedJobs: Job[];
+  setProposedJobs: React.Dispatch<React.SetStateAction<Job[]>>;
+  isSaving: boolean;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 
@@ -290,22 +296,26 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     onFleetOptimize,
     isFleetOptimizing,
     optimizationResult,
-    setOptimizationResult,
     isFleetOptimizationDialogOpen,
     setIsFleetOptimizationDialogOpen,
     selectedFleetChanges,
     setSelectedFleetChanges,
+    onScheduleChange,
+    proposedJobs,
+    setProposedJobs,
+    isSaving,
+    onSave,
+    onCancel,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'day' | 'month'>('day');
   const containerRef = useRef<HTMLDivElement>(null);
+  const timelineRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
   const [optimizingTechId, setOptimizingTechId] = useState<string | null>(null);
 
   const [isReassignOpen, setIsReassignOpen] = useState(false);
   const [jobToReassign, setJobToReassign] = useState<Job | null>(null);
   const { toast } = useToast();
-  const { userProfile, isMockMode } = useAuth();
-  const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const dayStart = useMemo(() => {
     const d = startOfDay(currentDate);
@@ -321,6 +331,31 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
 
   const hours = useMemo(() => eachHourOfInterval({ start: dayStart, end: dayEnd }), [dayStart, dayEnd]);
   const totalMinutes = useMemo(() => (dayEnd.getTime() - dayStart.getTime()) / 60000, [dayStart, dayEnd]);
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over, delta } = event;
+    if (!over || !active.data.current) return;
+    
+    const job = active.data.current.job as Job;
+    const newTechnicianId = over.id as string;
+    const originalTechnicianId = job.assignedTechnicianId;
+
+    if (active.data.current.type === 'schedule-job') {
+        const timelineRef = over.data.current?.timelineRef;
+        if (!timelineRef || !timelineRef.current) return;
+        
+        const timelineRect = timelineRef.current.getBoundingClientRect();
+        const dropX = event.activatorEvent.clientX - timelineRect.left;
+        
+        const minutesFromStart = (dropX / timelineRect.width) * totalMinutes;
+        const snappedMinutes = Math.round(minutesFromStart / 10) * 10;
+        
+        const newStartTime = new Date(dayStart.getTime() + snappedMinutes * 60000);
+
+        onScheduleChange(job.id, newTechnicianId, newStartTime.toISOString());
+    }
+  };
+
 
   useEffect(() => {
     if (viewMode === 'day' && containerRef.current && isSameDay(currentDate, new Date())) {
@@ -332,17 +367,34 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     }
   }, [currentDate, dayStart, hours.length, viewMode]);
 
-
   const jobsByTechnician = useCallback((techId: string) => {
     const startOfDayDate = startOfDay(currentDate);
     const endOfDayDate = endOfDay(currentDate);
-    return jobs.filter(job =>
+    
+    // Get original jobs for this technician
+    const originalJobs = jobs.filter(job =>
       job.assignedTechnicianId === techId &&
       job.scheduledTime &&
       new Date(job.scheduledTime) >= startOfDayDate &&
       new Date(job.scheduledTime) <= endOfDayDate
-    ).sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
-  }, [currentDate, jobs]);
+    );
+
+    // Get proposed changes for this technician
+    const proposedJobsForTech = proposedJobs.filter(
+      pJob => pJob.assignedTechnicianId === techId &&
+      pJob.scheduledTime &&
+      isSameDay(new Date(pJob.scheduledTime), currentDate)
+    );
+
+    // Create a map of original jobs to be replaced by proposed changes
+    const proposedJobIds = new Set(proposedJobsForTech.map(p => p.id));
+    const finalJobs = originalJobs.filter(job => !proposedJobIds.has(job.id));
+
+    // Add the proposed jobs
+    finalJobs.push(...proposedJobsForTech);
+    
+    return finalJobs.sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
+  }, [currentDate, jobs, proposedJobs]);
   
   const handlePrev = () => setCurrentDate(viewMode === 'day' ? subDays(currentDate, 1) : subMonths(currentDate, 1));
   const handleNext = () => setCurrentDate(viewMode === 'day' ? addDays(currentDate, 1) : addMonths(currentDate, 1));
@@ -366,14 +418,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   };
   
   const handleConfirmFleetOptimization = async (changesToConfirm: OptimizationSuggestion[]) => {
-    if (!userProfile?.companyId || !appId) return;
-    const result = await confirmFleetOptimizationAction({ companyId: userProfile.companyId, appId, changesToConfirm });
-    if(result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
-    } else {
-      toast({ title: "Success", description: "Fleet schedule updated." });
-    }
-    setIsFleetOptimizationDialogOpen(false);
+    // This action is handled by the parent DashboardPage now.
   };
 
   return (
@@ -382,7 +427,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <div>
                     <CardTitle className="font-headline">Technician Schedule</CardTitle>
-                    <CardDescription>Daily timeline view of technician assignments. Drag and drop jobs to reschedule.</CardDescription>
+                    <CardDescription>Daily timeline view of technician assignments. Drag jobs to reschedule.</CardDescription>
                 </div>
                 <div className="flex items-center flex-wrap gap-2">
                     <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
@@ -396,6 +441,20 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </div>
+             {proposedJobs.length > 0 && (
+                <div className="mt-4 p-3 border rounded-md bg-amber-50 border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-amber-900">You have unsaved schedule changes.</p>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+                            <X className="mr-2 h-4 w-4"/> Cancel
+                        </Button>
+                        <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
+                           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                            Save Changes
+                        </Button>
+                    </div>
+                </div>
+            )}
             <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                  <Alert className="text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600 flex-1">
                     <Info className="h-4 w-4" />
@@ -420,61 +479,68 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 relative">
-            {jobToReassign && (
-                <ReassignJobDialog
-                    isOpen={isReassignOpen}
-                    setIsOpen={setIsReassignOpen}
-                    jobToReassign={jobToReassign}
-                    allJobs={jobs}
+            <DndContext onDragEnd={handleDragEnd}>
+                {jobToReassign && (
+                    <ReassignJobDialog
+                        isOpen={isReassignOpen}
+                        setIsOpen={setIsReassignOpen}
+                        jobToReassign={jobToReassign}
+                        allJobs={jobs}
+                        technicians={technicians}
+                        onReassignmentComplete={() => {}}
+                    />
+                )}
+                <FleetOptimizationReviewDialog
+                    isOpen={isFleetOptimizationDialogOpen}
+                    setIsOpen={setIsFleetOptimizationDialogOpen}
+                    optimizationResult={optimizationResult}
                     technicians={technicians}
-                    onReassignmentComplete={() => {}}
+                    jobs={jobs}
+                    onConfirmChanges={handleConfirmFleetOptimization}
+                    isLoadingConfirmation={isFleetOptimizing}
+                    selectedChanges={selectedFleetChanges}
+                    setSelectedChanges={setSelectedFleetChanges}
                 />
-            )}
-             <FleetOptimizationReviewDialog
-                isOpen={isFleetOptimizationDialogOpen}
-                setIsOpen={setIsFleetOptimizationDialogOpen}
-                optimizationResult={optimizationResult}
-                technicians={technicians}
-                jobs={jobs}
-                onConfirmChanges={handleConfirmFleetOptimization}
-                isLoadingConfirmation={isFleetOptimizing}
-                selectedChanges={selectedFleetChanges}
-                setSelectedChanges={setSelectedFleetChanges}
-            />
-            {viewMode === 'day' ? (
-            <div ref={containerRef} className="overflow-x-auto">
-            <div className="relative min-w-[1200px]">
-                <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
-                    <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
-                    <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                    {hours.map((hour, index) => (
-                        <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
-                        {format(hour, 'ha')}
+                {viewMode === 'day' ? (
+                <div ref={containerRef} className="overflow-x-auto">
+                <div className="relative min-w-[1200px]">
+                    <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
+                        <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
+                        <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                        {hours.map((hour, index) => (
+                            <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
+                            {format(hour, 'ha')}
+                            </div>
+                        ))}
                         </div>
-                    ))}
                     </div>
-                </div>
 
-                <div className="relative">
-                    {technicians.length > 0 ? technicians.map((tech) => {
-                        const techJobs = jobsByTechnician(tech.id);
-                        return (
-                            <TechnicianRow 
-                                key={tech.id} 
-                                technician={tech} 
-                                onOptimize={() => handleOptimize(tech.id)}
-                                isOptimizing={optimizingTechId === tech.id}
-                            >
-                                <div className="flex-1 relative h-full">
+                    <div className="relative">
+                        {technicians.length > 0 ? technicians.map((tech) => {
+                            if (!timelineRefs.current.has(tech.id)) {
+                                timelineRefs.current.set(tech.id, React.createRef<HTMLDivElement>());
+                            }
+                            const techTimelineRef = timelineRefs.current.get(tech.id)!;
+                            const techJobs = jobsByTechnician(tech.id);
+                            
+                            return (
+                                <TechnicianRow 
+                                    key={tech.id} 
+                                    technician={tech} 
+                                    onOptimize={() => handleOptimize(tech.id)}
+                                    isOptimizing={optimizingTechId === tech.id}
+                                    timelineRef={techTimelineRef}
+                                >
                                     <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                                    {hours.map((_, index) => (
-                                        <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
-                                    ))}
+                                        {hours.map((_, index) => (
+                                            <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
+                                        ))}
                                     </div>
-                                    <div className="relative h-full p-1.5">
+                                    <div ref={techTimelineRef} className="relative h-full p-1.5">
                                         {techJobs.map((job, index) => {
                                             const prevJob = techJobs[index-1];
                                             const travelStartTime = prevJob ? new Date(new Date(prevJob.scheduledTime!).getTime() + (prevJob.estimatedDurationMinutes || 60) * 60000) : null;
+                                            const isProposed = proposedJobs.some(p => p.id === job.id);
                                             
                                             return (
                                                 <React.Fragment key={job.id}>
@@ -489,15 +555,40 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                             e.stopPropagation();
                                                             onJobClick(job);
                                                         }}
+                                                        isProposed={isProposed}
                                                     />
                                                 </React.Fragment>
                                             )
                                         })}
                                     </div>
-                                </div>
-                            </TechnicianRow>
-                        )
-                    }) : (
+                                </TechnicianRow>
+                            )
+                        }) : (
+                            <div className="pt-6">
+                                <Alert className="m-4 border-primary/30 bg-primary/5">
+                                    <UserPlus className="h-4 w-4 text-primary" />
+                                    <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
+                                    <AlertDescription>
+                                        The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
+                                    </AlertDescription>
+                                    <div className="mt-4">
+                                        <Link href="/settings?tab=users">
+                                            <Button variant="default" size="sm">
+                                                <Users className="mr-2 h-4 w-4" /> Go to User Management
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </Alert>
+                            </div>
+                        )}
+                        <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
+                    </div>
+                </div>
+                </div>
+                ) : (
+                    technicians.length > 0 ? (
+                        <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={(e, job) => onJobClick(job)} />
+                    ) : (
                         <div className="pt-6">
                             <Alert className="m-4 border-primary/30 bg-primary/5">
                                 <UserPlus className="h-4 w-4 text-primary" />
@@ -514,33 +605,9 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                 </div>
                             </Alert>
                         </div>
-                    )}
-                    <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
-                </div>
-            </div>
-            </div>
-            ) : (
-                technicians.length > 0 ? (
-                    <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={(e, job) => onJobClick(job)} />
-                ) : (
-                    <div className="pt-6">
-                        <Alert className="m-4 border-primary/30 bg-primary/5">
-                            <UserPlus className="h-4 w-4 text-primary" />
-                            <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
-                            <AlertDescription>
-                                The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
-                            </AlertDescription>
-                            <div className="mt-4">
-                                <Link href="/settings?tab=users">
-                                    <Button variant="default" size="sm">
-                                        <Users className="mr-2 h-4 w-4" /> Go to User Management
-                                    </Button>
-                                </Link>
-                            </div>
-                        </Alert>
-                    </div>
-                )
-            )}
+                    )
+                )}
+            </DndContext>
         </CardContent>
         </Card>
   );

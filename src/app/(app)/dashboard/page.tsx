@@ -186,6 +186,10 @@ export default function DashboardPage() {
   const [selectedFleetChanges, setSelectedFleetChanges] = useState<OptimizationSuggestion[]>([]);
 
   const [technicianViewMode, setTechnicianViewMode] = useState<'grid' | 'list'>('grid');
+  
+  const [proposedJobs, setProposedJobs] = useState<Job[]>([]);
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
@@ -1026,6 +1030,61 @@ export default function DashboardPage() {
     }
   };
   
+  const handleScheduleChange = useCallback((jobId: string, newTechnicianId: string, newScheduledTime: string) => {
+      setProposedJobs(prev => {
+          const existingIndex = prev.findIndex(p => p.id === jobId);
+          const originalJob = jobs.find(j => j.id === jobId);
+          if (!originalJob) return prev;
+
+          const newJob = { ...originalJob, assignedTechnicianId: newTechnicianId, scheduledTime: newScheduledTime };
+          if (existingIndex !== -1) {
+              const updated = [...prev];
+              updated[existingIndex] = newJob;
+              return updated;
+          }
+          return [...prev, newJob];
+      });
+  }, [jobs]);
+  
+  const handleSaveSchedule = async () => {
+    if (isMockMode) {
+        toast({ title: "Schedule Saved (Mock)" });
+        // Apply changes locally for visual feedback
+        setJobs(prevJobs => {
+            const proposedMap = new Map(proposedJobs.map(p => [p.id, p]));
+            return prevJobs.map(job => proposedMap.has(job.id) ? proposedMap.get(job.id)! : job);
+        });
+        setProposedJobs([]);
+        return;
+    }
+    
+    if (!appId || !userProfile?.companyId) return;
+    setIsSavingSchedule(true);
+    const batch = writeBatch(db);
+    
+    proposedJobs.forEach(job => {
+        const jobRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+        batch.update(jobRef, {
+            assignedTechnicianId: job.assignedTechnicianId,
+            scheduledTime: job.scheduledTime,
+            updatedAt: serverTimestamp(),
+            notes: arrayUnion(`(Manually rescheduled by dispatcher on ${new Date().toLocaleDateString()})`),
+        });
+    });
+
+    try {
+        await batch.commit();
+        toast({ title: "Schedule Saved", description: `${proposedJobs.length} job(s) have been updated.` });
+        setProposedJobs([]);
+    } catch (e) {
+        console.error("Failed to save schedule changes", e);
+        toast({ title: "Error Saving Schedule", description: "Could not save changes.", variant: "destructive" });
+    } finally {
+        setIsSavingSchedule(false);
+    }
+  };
+
+
   const sensors = useSensors(useSensor(PointerSensor, {
     activationConstraint: {
       distance: 8,
@@ -1039,6 +1098,11 @@ export default function DashboardPage() {
   const handleDragEnd = async (event: DragEndEvent) => {
     setActiveDragId(null);
     const { active, over } = event;
+    
+    if (active.data.current?.type === 'schedule-job') {
+        // This is handled inside the ScheduleCalendarView now
+        return;
+    }
     
     if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
         const jobId = active.id as string;
@@ -1069,15 +1133,6 @@ export default function DashboardPage() {
             toast({ title: "Assignment Failed", description: result.error, variant: "destructive" });
         } else {
             toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
-        }
-    } else if (over && active.data.current?.type === 'schedule-job' && over.data.current?.type === 'technician') {
-        const jobId = active.id as string;
-        const newTechId = over.id as string;
-
-        if (isMockMode) {
-            setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? { ...j, assignedTechnicianId: newTechId, status: 'Assigned' } : j));
-            toast({ title: "Job Reassigned (Mock)", description: `Job moved to new technician.` });
-            return;
         }
     }
   };
@@ -1407,6 +1462,12 @@ export default function DashboardPage() {
             setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
             selectedFleetChanges={selectedFleetChanges}
             setSelectedFleetChanges={setSelectedFleetChanges}
+            onScheduleChange={handleScheduleChange}
+            proposedJobs={proposedJobs}
+            setProposedJobs={setProposedJobs}
+            isSaving={isSavingSchedule}
+            onSave={handleSaveSchedule}
+            onCancel={() => setProposedJobs([])}
           />
         </TabsContent>
 

@@ -1026,7 +1026,11 @@ export default function DashboardPage() {
     }
   };
   
-  const sensors = useSensors(useSensor(PointerSensor));
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  }));
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const {active, over} = event;
@@ -1517,16 +1521,12 @@ export default function DashboardPage() {
       </Tabs>
       <DragOverlay>
         {activeDragId && draggedJob ? (
-          <div className="pointer-events-none">
-            <JobListItem
-              job={draggedJob}
-              technicians={technicians}
-              onOpenChat={() => {}}
-              onAIAssign={() => {}}
-              onViewOnMap={() => {}}
-              onShareTracking={() => {}}
-            />
-          </div>
+          <Card className="w-64 shadow-xl">
+             <CardHeader className="flex-row items-center gap-2 p-3">
+              <Briefcase className="h-4 w-4 text-primary"/>
+              <CardTitle className="text-sm font-semibold truncate">{draggedJob.title}</CardTitle>
+            </CardHeader>
+          </Card>
         ) : null}
       </DragOverlay>
 

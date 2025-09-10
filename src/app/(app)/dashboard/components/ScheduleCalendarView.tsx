@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDraggable, useDroppable, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
 import { reassignJobAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
 import ReassignJobDialog from './ReassignJobDialog';
@@ -45,7 +45,12 @@ const formatDuration = (milliseconds: number): string => {
 };
 
 
-const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (job: Job) => void, isProposed?: boolean }) => {
+const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean }) => {
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  }));
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: job.id,
     data: { job }
@@ -71,48 +76,39 @@ const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: J
   const priorityColor = job.priority === 'High' ? 'ring-destructive' : job.priority === 'Medium' ? 'ring-yellow-500' : 'ring-gray-300';
   const isPendingOrAssigned = job.status === 'Unassigned' || job.status === 'Assigned';
 
+  const handleClick = (e: React.MouseEvent) => {
+    // This stops the drag listener from firing on a simple click
+    if (transform) return;
+    onClick(e, job);
+  };
+
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            ref={setNodeRef}
-            style={{ 
-              left: `${Math.max(0, left)}%`, 
-              width: `${Math.min(100 - Math.max(0, left), width)}%`,
-              minWidth: '20px',
-              ...style
-            }}
-            {...listeners}
-            {...attributes}
-            onClick={() => onClick(job)}
-            className={cn(
-              "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
-              getStatusAppearance(job.status),
-              priorityColor,
-              isPendingOrAssigned && "border-dashed",
-              isProposed && "opacity-60 ring-primary ring-2"
-            )}
-          >
-             <div className="flex flex-col w-full truncate">
-                <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
-                <span className="text-muted-foreground truncate italic">{job.title}</span>
-            </div>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent className="bg-background border shadow-xl p-3 max-w-xs">
-          {isProposed && <p className="font-bold text-primary mb-1 text-sm">PROPOSED CHANGE</p>}
-          <p className="font-bold text-base mb-1">{job.title}</p>
-          <p className="text-sm"><strong>Status:</strong> {job.status}</p>
-          <p className="text-sm"><strong>Priority:</strong> {job.priority}</p>
-          <p className="text-sm"><strong>Customer:</strong> {job.customerName}</p>
-          <p className="text-sm"><strong>Address:</strong> {job.location.address}</p>
-          <p className="text-sm"><strong>Scheduled:</strong> {format(new Date(job.scheduledTime), 'PP p')}</p>
-          <p className="text-sm"><strong>Duration:</strong> {job.estimatedDurationMinutes} mins</p>
-          {job.description && <p className="text-sm mt-2 pt-2 border-t"><strong>Notes:</strong> {job.description}</p>}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div
+      ref={setNodeRef}
+      style={{ 
+        left: `${Math.max(0, left)}%`, 
+        width: `${Math.min(100 - Math.max(0, left), width)}%`,
+        minWidth: '20px',
+        ...style
+      }}
+      {...listeners}
+      {...attributes}
+      onClick={handleClick}
+      onMouseDown={(e) => { listeners?.onMouseDown?.(e as any) }}
+      onTouchStart={(e) => { listeners?.onTouchStart?.(e as any) }}
+      className={cn(
+        "absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center shadow-sm cursor-grab ring-1 ring-inset transition-opacity",
+        getStatusAppearance(job.status),
+        priorityColor,
+        isPendingOrAssigned && "border-dashed",
+        isProposed && "opacity-60 ring-primary ring-2"
+      )}
+    >
+       <div className="flex flex-col w-full truncate">
+          <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
+          <span className="text-muted-foreground truncate italic">{job.title}</span>
+      </div>
+    </div>
   );
 };
 
@@ -214,7 +210,7 @@ const getTechnicianColor = (technicianId: string | null | undefined) => {
     return technicianColors[index];
 };
 
-const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate: Date, jobs: Job[], technicians: Technician[], onJobClick: (job: Job) => void }) => {
+const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate: Date, jobs: Job[], technicians: Technician[], onJobClick: (e: React.MouseEvent, job: Job) => void }) => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
     const firstDayOfMonth = getDay(monthStart) === 0 ? 6 : getDay(monthStart) - 1; 
@@ -245,7 +241,7 @@ const MonthView = ({ currentDate, jobs, technicians, onJobClick }: { currentDate
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Badge 
-                                                        onClick={() => onJobClick(job)}
+                                                        onClick={(e) => onJobClick(e, job)}
                                                         className={cn("w-full justify-start truncate text-white cursor-pointer", getTechnicianColor(job.assignedTechnicianId))}
                                                     >
                                                         {technicians.find(t => t.id === job.assignedTechnicianId)?.name.split(' ')[0]}: {job.title}
@@ -552,7 +548,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             {viewMode === 'day' ? (
             <div ref={containerRef} className="overflow-x-auto">
             <div className="relative min-w-[1200px]">
-                <div className="sticky top-0 z-10 h-10 flex border-b bg-muted/50">
+                <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
                     <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
                     <div ref={timelineGridRef} className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
                     {hours.map((hour, index) => (
@@ -608,7 +604,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                 job={job} 
                                                 dayStart={dayStart} 
                                                 totalMinutes={totalMinutes} 
-                                                onClick={onJobClick}
+                                                onClick={(e, job) => onJobClick(job)}
                                                 isProposed={!!proposedChanges[job.id]}
                                              />);
                                             
@@ -644,7 +640,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
             </div>
             ) : (
                 technicians.length > 0 ? (
-                    <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={onJobClick} />
+                    <MonthView currentDate={currentDate} jobs={jobs} technicians={technicians} onJobClick={(e, job) => onJobClick(job)} />
                 ) : (
                     <div className="pt-6">
                         <Alert className="m-4 border-primary/30 bg-primary/5">

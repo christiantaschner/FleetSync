@@ -1037,9 +1037,19 @@ export default function DashboardPage() {
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    const {active, over} = event;
     setActiveDragId(null);
+    const { active, over } = event;
     
+    if (isMockMode) {
+      if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
+        const jobId = active.id as string;
+        const techId = over.id as string;
+        setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? { ...j, assignedTechnicianId: techId, status: 'Assigned' } : j));
+        toast({ title: "Job Assigned (Mock)", description: `Job assigned to new technician.` });
+      }
+      return;
+    }
+
     if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
       const job = active.data.current.job as Job;
       const technician = over.data.current.technician as Technician;
@@ -1524,7 +1534,11 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
       <DragOverlay>
-        {null}
+        {draggedJob ? (
+          <div className="rounded-md bg-background p-2 shadow-lg border border-primary">
+            <p className="text-sm font-semibold">{draggedJob.title}</p>
+          </div>
+        ) : null}
       </DragOverlay>
 
       <ManageSkillsDialog 

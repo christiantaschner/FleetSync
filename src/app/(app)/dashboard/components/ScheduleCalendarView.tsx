@@ -383,41 +383,49 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </div>
-             {proposedJobs.length > 0 && (
-                <div className="mt-4 p-3 border rounded-md bg-amber-50 border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <p className="text-sm font-medium text-amber-900">You have unsaved schedule changes.</p>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
-                            <X className="mr-2 h-4 w-4"/> Cancel
-                        </Button>
-                        <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
-                           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </Button>
-                    </div>
-                </div>
-            )}
             <div className="mt-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                 <Alert className="text-sm border-blue-200 bg-blue-50 text-blue-800 [&>svg]:text-blue-600 flex-1">
-                    <Info className="h-4 w-4" />
-                    <AlertTitle className="font-semibold">AI Proactive Monitoring</AlertTitle>
-                    <AlertDescription>
-                        AI continuously checks schedules. If a delay risk is detected, an alert will appear on the dashboard.
-                    </AlertDescription>
-                </Alert>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
-                                {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
-                                Optimize Fleet
+                 {proposedJobs.length > 0 ? (
+                    <div className="w-full p-2 border rounded-md bg-amber-50 border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-amber-900">You have unsaved schedule changes.</p>
+                        <div className="flex gap-2">
+                            <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+                                <X className="mr-2 h-4 w-4"/> Cancel
                             </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Optimize the schedule for the currently selected day.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+                            <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
+                               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                                Save Changes
+                            </Button>
+                        </div>
+                    </div>
+                 ) : (
+                    <div className="flex-1 flex items-center justify-end gap-2">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                        <Info className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="max-w-xs">AI proactively checks schedules. Delay risk alerts will appear on the dashboard.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
+                                        {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
+                                        Optimize Fleet
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Optimize the schedule for the currently selected day.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
+                 )}
             </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 relative">

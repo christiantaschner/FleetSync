@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
-    const { toast } = useToast();
+    const { toast, dismiss } = useToast();
     return (
       <div className="w-full space-y-3">
         <p className="text-sm">{message}</p>
@@ -300,4 +300,3 @@ const JobDetailsDisplay: React.FC<JobDetailsDisplayProps> = ({ job, technician }
 };
 
 export default JobDetailsDisplay;
-```

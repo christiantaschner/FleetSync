@@ -742,6 +742,37 @@ export async function answerUserQuestionAction(
 export async function runFleetOptimizationAction(
     input: RunFleetOptimizationInput
 ): Promise<{ data: RunFleetOptimizationOutput | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const { technicians, pendingJobs } = input;
+        const suggestions = [];
+
+        // Simple mock logic: try to assign the first high-priority pending job to the first available tech.
+        const highPriorityJob = pendingJobs.find(j => j.priority === 'High');
+        const availableTech = technicians.find(t => t.jobs.length === 0);
+
+        if (highPriorityJob && availableTech) {
+            suggestions.push({
+                jobId: highPriorityJob.id,
+                originalTechnicianId: null,
+                newTechnicianId: availableTech.id,
+                newScheduledTime: new Date().toISOString(),
+                justification: `Mock: Assigns high-priority job '${highPriorityJob.title}' to available technician ${availableTech.name}.`,
+                profitChange: 150,
+                driveTimeChangeMinutes: -20,
+                slaRiskChange: -50,
+            });
+        }
+        
+        return {
+            data: {
+                suggestedChanges: suggestions,
+                overallReasoning: suggestions.length > 0 
+                    ? 'Mock: Found an opportunity to assign a high-priority job to an available technician, improving overall efficiency.'
+                    : 'Mock: No significant optimization opportunities found at this time.'
+            },
+            error: null
+        };
+    }
     try {
         const result = await runFleetOptimizationFlow(input);
         return { data: result, error: null };
@@ -921,3 +952,5 @@ export async function analyzeJobAction(
         return { data: null, error: errorMessage };
     }
 }
+
+    

@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -148,10 +147,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
                  <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
                  {job.profitScore !== undefined && (
                     <div className="text-right">
-                         <span className="text-xs text-green-700 font-semibold">Est. Profit</span>
-                        <p className="font-bold text-lg text-green-600 flex items-center gap-1 justify-end">
-                            <DollarSign className="h-4 w-4"/>
-                            {job.profitScore.toFixed(2)}
+                         <span className="text-xs text-green-700 font-semibold">Potential Profit</span>
+                        <p className="font-bold text-2xl text-green-600 flex items-center gap-1 justify-end">
+                            ${job.profitScore.toFixed(2)}
                         </p>
                     </div>
                  )}

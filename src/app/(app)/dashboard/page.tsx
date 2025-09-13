@@ -1,8 +1,7 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package, Grid, List, ChevronDown, Rocket } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package, Grid, List, ChevronDown, Rocket, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -68,11 +67,7 @@ import {
 } from "@/components/ui/tooltip";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import isEqual from 'lodash.isequal';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { JobStatusBadge } from '@/components/ui/JobStatusBadge';
-
+import { Progress } from '@/components/ui/progress';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -135,8 +130,7 @@ export default function DashboardPage() {
   const [showOpenTasksOnly, setShowOpenTasksOnly] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
-
+  
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
   const [isBatchLoading, setIsBatchLoading] = useState(false);
@@ -597,14 +591,21 @@ export default function DashboardPage() {
   const kpiData = useMemo(() => {
     const unassignedJobs = jobs.filter(j => j.status === 'Unassigned');
     const today = new Date();
-    const completedToday = jobs.filter(j => j.status === 'Completed' && j.completedAt && isToday(new Date(j.completedAt)));
+    const jobsForToday = jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime)));
+    const completedToday = jobsForToday.filter(j => j.status === 'Completed' || j.status === 'Finished');
+    const scheduledUnfinished = jobsForToday.filter(j => j.status !== 'Completed' && j.status !== 'Finished' && j.status !== 'Cancelled');
+    
     const totalProfitToday = completedToday.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
+    const potentialProfitToday = scheduledUnfinished.reduce((acc, job) => acc + (job.profitScore || 0), 0);
+    const totalPossibleProfit = totalProfitToday + potentialProfitToday;
 
     return {
         highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
         pendingCount: unassignedJobs.length,
         availableTechnicians: technicians.filter(t => t.isAvailable).length,
-        totalProfitToday
+        totalProfitToday,
+        potentialProfitToday,
+        totalPossibleProfit
     };
   }, [jobs, technicians]);
 
@@ -1091,12 +1092,7 @@ export default function DashboardPage() {
     },
   }));
 
-  const handleDragStart = (event: any) => {
-    setActiveDragId(event.active.id);
-  };
-
   const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveDragId(null);
     const { active, over } = event;
     
     if (active.data.current?.type === 'schedule-job') {
@@ -1136,11 +1132,6 @@ export default function DashboardPage() {
         }
     }
   };
-  
-  const draggedJob = useMemo(() => {
-    if (!activeDragId) return null;
-    return jobs.find(j => j.id === activeDragId);
-  }, [activeDragId, jobs]);
 
 
   if (authLoading || isLoadingData) { 
@@ -1154,9 +1145,7 @@ export default function DashboardPage() {
   return (
     <DndContext 
       sensors={sensors} 
-      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => { setActiveDragId(null); }}
     >
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
@@ -1286,14 +1275,30 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
                 </CardContent>
             </Card>
-            <Card className="flex flex-col h-full">
+             <Card className="flex flex-col h-full">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Potential for Today</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent className="flex-grow">
-                    <div className="text-2xl font-bold">{kpiData.pendingCount}</div>
-                    <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
+                    <div className="text-2xl font-bold">${kpiData.potentialProfitToday.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">Est. profit from scheduled jobs</p>
+                </CardContent>
+            </Card>
+            <Card className="flex flex-col h-full bg-green-50 border-green-500/30">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-green-900">{t('total_profit_today')}</CardTitle>
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <div className="text-4xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
+                     <Progress 
+                        value={kpiData.totalPossibleProfit > 0 ? (kpiData.totalProfitToday / kpiData.totalPossibleProfit) * 100 : 0} 
+                        className="mt-2 h-2" 
+                    />
+                    <p className="text-xs text-green-800/80 mt-1">
+                        Towards daily potential of ${kpiData.totalPossibleProfit.toFixed(2)}
+                    </p>
                 </CardContent>
             </Card>
             <Card className="flex flex-col h-full">
@@ -1304,16 +1309,6 @@ export default function DashboardPage() {
                 <CardContent className="flex-grow">
                     <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
                     <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
-                </CardContent>
-            </Card>
-            <Card className="flex flex-col h-full bg-green-50 border-green-500/30">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-green-900">{t('total_profit_today')}</CardTitle>
-                    <DollarSign className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <div className="text-3xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
-                    <p className="text-xs text-green-800/80">{t('total_profit_today_desc')}</p>
                 </CardContent>
             </Card>
         </div>
@@ -1459,7 +1454,6 @@ export default function DashboardPage() {
             optimizationResult={fleetOptimizationResult}
             setOptimizationResult={setFleetOptimizationResult}
             isFleetOptimizationDialogOpen={isFleetOptimizationDialogOpen}
-            setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
             selectedFleetChanges={selectedFleetChanges}
             setSelectedFleetChanges={setSelectedFleetChanges}
             onScheduleChange={handleScheduleChange}
@@ -1603,9 +1597,9 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
       <DragOverlay>
-        {draggedJob ? (
+        {activeDragId && jobs.find(j => j.id === activeDragId) ? (
           <div className="rounded-md bg-background p-2 shadow-lg border border-primary">
-            <p className="text-sm font-semibold">{draggedJob.title}</p>
+            <p className="text-sm font-semibold">{jobs.find(j => j.id === activeDragId)!.title}</p>
           </div>
         ) : null}
       </DragOverlay>

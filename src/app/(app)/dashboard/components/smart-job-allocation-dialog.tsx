@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -240,9 +239,8 @@ const SmartJobAllocationDialog: React.FC<SmartJobAllocationDialogProps> = ({
                                 <div className="flex justify-between items-center">
                                     <p className="font-semibold">{getTechnicianName(suggestion.suggestedTechnicianId)}</p>
                                     {suggestion.profitScore !== undefined && (
-                                        <Badge className="text-base bg-green-100 text-green-800 border-green-300 font-bold px-2 py-0.5">
-                                            <DollarSign className="mr-1 h-3.5 w-3.5"/>
-                                            {suggestion.profitScore.toFixed(2)}
+                                        <Badge className="text-lg bg-green-100 text-green-800 border-green-300 font-bold px-2.5 py-1">
+                                            ${suggestion.profitScore.toFixed(2)}
                                         </Badge>
                                     )}
                                 </div>

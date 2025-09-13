@@ -1306,14 +1306,14 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
                 </CardContent>
             </Card>
-            <Card className="flex flex-col h-full">
+            <Card className="flex flex-col h-full bg-green-50 border-green-500/30">
                 <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t('total_profit_today')}</CardTitle>
+                    <CardTitle className="text-sm font-medium text-green-900">{t('total_profit_today')}</CardTitle>
                     <DollarSign className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent className="flex-grow">
-                    <div className="text-2xl font-bold">${kpiData.totalProfitToday.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">{t('total_profit_today_desc')}</p>
+                    <div className="text-3xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
+                    <p className="text-xs text-green-800/80">{t('total_profit_today_desc')}</p>
                 </CardContent>
             </Card>
         </div>

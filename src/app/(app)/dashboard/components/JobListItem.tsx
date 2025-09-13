@@ -147,10 +147,13 @@ const JobListItem: React.FC<JobListItemProps> = ({
                <div className="flex flex-col items-end gap-1">
                  <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
                  {job.profitScore !== undefined && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
-                        <DollarSign className="mr-1 h-3 w-3"/>
-                        ${job.profitScore.toFixed(2)}
-                    </Badge>
+                    <div className="text-right">
+                         <span className="text-xs text-green-700 font-semibold">Est. Profit</span>
+                        <p className="font-bold text-lg text-green-600 flex items-center gap-1 justify-end">
+                            <DollarSign className="h-4 w-4"/>
+                            {job.profitScore.toFixed(2)}
+                        </p>
+                    </div>
                  )}
                </div>
             </div>

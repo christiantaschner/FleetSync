@@ -56,6 +56,7 @@ import Papa from 'papaparse';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MockModeBanner } from "@/components/common/MockModeBanner";
+import { cn } from "@/lib/utils";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -70,16 +71,19 @@ const formatDuration = (milliseconds: number): string => {
     return result.trim() || '0m';
 }
 
-const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: string; value: string | number; desc: string; icon: React.ElementType, tooltipText: string }) => {
+const KpiCard = ({ title, value, desc, icon: Icon, tooltipText, isProminent = false }: { title: string; value: string | number; desc: string; icon: React.ElementType, tooltipText: string, isProminent?: boolean }) => {
     return (
-        <Card>
+        <Card className={cn(isProminent && "bg-slate-900 text-slate-50")}>
             <CardHeader className="pb-2">
                  <div className="flex items-center justify-between">
-                    <CardDescription className="flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" />{title}</CardDescription>
+                    <CardDescription className={cn("flex items-center gap-1.5", isProminent && "text-slate-400")}>
+                        <Icon className={cn("h-3.5 w-3.5", isProminent && "text-amber-400")} />
+                        {title}
+                    </CardDescription>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground">
+                                <Button variant="ghost" size="icon" className={cn("h-6 w-6 text-muted-foreground", isProminent && "text-slate-400 hover:bg-slate-700")}>
                                     <Info className="h-4 w-4" />
                                 </Button>
                             </TooltipTrigger>
@@ -91,8 +95,8 @@ const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: strin
                 </div>
             </CardHeader>
             <CardContent>
-                <p className="text-2xl font-bold">{value}</p>
-                <p className="text-xs text-muted-foreground">{desc}</p>
+                <p className={cn("font-bold", isProminent ? "text-4xl text-amber-400" : "text-2xl")}>{value}</p>
+                <p className={cn("text-xs", isProminent ? "text-slate-300" : "text-muted-foreground")}>{desc}</p>
             </CardContent>
         </Card>
     );
@@ -485,7 +489,7 @@ export default function ReportClientView() {
                 <CardDescription>Key metrics related to profitability and sales outcomes.</CardDescription>
               </CardHeader>
                <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                 <KpiCard title="Fleet-wide Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From all completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." />
+                 <KpiCard title="Fleet-wide Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From all completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." isProminent={true} />
                  <KpiCard title="AI-Influenced Profit" value={`$${reportData.kpis.aiInfluencedProfit.toFixed(2)}`} desc={`From ${reportData.kpis.aiAssistedAssignments} AI-assigned jobs`} icon={Bot} tooltipText="What it is: The total profit generated from jobs where the AI made the assignment recommendation." />
                  <KpiCard title="AI-Suggested Upsell Revenue" value={`$${reportData.kpis.totalUpsellRevenue.toFixed(2)}`} desc="From successful upsells" icon={DollarSign} tooltipText="What it is: The total additional revenue generated from successful upsells logged by technicians, prompted by the AI." />
                  <KpiCard title="Upsell Conversion" value={`${reportData.kpis.upsellConversionRate}%`} desc="Of identified opportunities" icon={Target} tooltipText="What it is: The percentage of jobs with an AI-identified upsell opportunity that were successfully sold." />

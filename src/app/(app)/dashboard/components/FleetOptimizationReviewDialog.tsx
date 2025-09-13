@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertTriangle, CheckCircle, User, Bot, Loader2, Shuffle, ArrowRight, TrendingUp, Car, ShieldAlert, BadgeInfo } from 'lucide-react';
+import { AlertTriangle, CheckCircle, User, Bot, Loader2, Shuffle, ArrowRight, TrendingUp, Car, ShieldAlert, BadgeInfo, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Job, Technician, OptimizationSuggestion } from '@/types';
@@ -41,12 +41,12 @@ const ChangeMetric = ({ icon: Icon, value, unit, className, label }: { icon: Rea
     const isNeutral = value === 0;
     const colorClass = isNeutral ? 'text-muted-foreground' : isPositive ? 'text-green-600' : 'text-red-600';
     return (
-        <Badge variant="outline" className={cn("text-xs", className, isPositive ? "border-green-200 bg-green-50" : isNeutral ? "border" : "border-red-200 bg-red-50")}>
-            <Icon className={cn("h-3.5 w-3.5 mr-1", colorClass)} />
+        <Badge variant="outline" className={cn("text-xs font-semibold", className, isPositive ? "border-green-200 bg-green-50" : isNeutral ? "border" : "border-red-200 bg-red-50")}>
+            <Icon className={cn("h-4 w-4 mr-1", colorClass)} />
             <span className={cn(colorClass)}>
                 {isNeutral ? '' : (isPositive ? '+' : '')}{value.toFixed(0)}{unit}
             </span>
-            <span className="ml-1 text-muted-foreground">{label}</span>
+            <span className="ml-1 text-muted-foreground font-normal">{label}</span>
         </Badge>
     );
 };
@@ -154,7 +154,7 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
                         <div className="flex-1 space-y-2">
                             <h4 className="font-semibold leading-tight">{renderChangeDescription(change)}</h4>
                              <div className="flex flex-wrap items-center gap-2">
-                                <ChangeMetric icon={TrendingUp} value={change.profitChange} unit="" label="Profit" />
+                                <ChangeMetric icon={DollarSign} value={change.profitChange} unit="" label="Profit" />
                                 <ChangeMetric icon={Car} value={change.driveTimeChangeMinutes} unit=" min" label="Drive" />
                                 <ChangeMetric icon={ShieldAlert} value={change.slaRiskChange} unit="%" label="SLA Risk" />
                             </div>
@@ -175,7 +175,7 @@ const FleetOptimizationReviewDialog: React.FC<FleetOptimizationReviewDialogProps
            <div className="text-sm text-muted-foreground space-y-1">
             <p className="font-semibold">Total Gain for {selectedChanges.length} Change(s):</p>
             <div className="flex flex-wrap gap-2">
-              <ChangeMetric icon={TrendingUp} value={summary.profit} unit="" label="Total Profit"/>
+              <ChangeMetric icon={DollarSign} value={summary.profit} unit="" label="Total Profit"/>
               <ChangeMetric icon={Car} value={summary.driveTime} unit=" min" label="Total Drive Time"/>
             </div>
            </div>

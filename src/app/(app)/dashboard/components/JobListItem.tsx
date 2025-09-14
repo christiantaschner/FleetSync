@@ -77,6 +77,10 @@ const JobListItem: React.FC<JobListItemProps> = ({
   const isRoutable = (job.status === 'Assigned' || job.status === 'En Route') && job.assignedTechnicianId;
   const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
   
+  const profitPerHour = (job.profitScore && job.estimatedDurationMinutes) 
+    ? (job.profitScore / job.estimatedDurationMinutes) * 60 
+    : 0;
+
   const JobCardWrapper = ({ children }: { children: React.ReactNode }) => (
      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
         <Card className={cn(
@@ -143,14 +147,24 @@ const JobListItem: React.FC<JobListItemProps> = ({
                   <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}</span>
                 </CardDescription>
               </div>
-               <div className="flex flex-col items-end gap-1">
+               <div className="flex flex-col items-end gap-1 text-right">
                  <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
                  {job.profitScore !== undefined && (
-                    <div className="text-right">
-                         <span className="text-xs text-green-700 font-semibold">Potential Profit</span>
-                        <p className="font-bold text-2xl text-green-600 flex items-center gap-1 justify-end">
-                            ${job.profitScore.toFixed(2)}
-                        </p>
+                    <div className="flex items-end gap-4">
+                        {profitPerHour > 0 && (
+                             <div className="text-right">
+                                <span className="text-xs text-green-700/80 font-semibold">Profit / hr</span>
+                                <p className="font-bold text-lg text-green-600/90 flex items-center gap-1 justify-end">
+                                    ${profitPerHour.toFixed(2)}
+                                </p>
+                            </div>
+                        )}
+                        <div className="text-right">
+                            <span className="text-xs text-green-700 font-semibold">Potential Profit</span>
+                            <p className="font-bold text-2xl text-green-600 flex items-center gap-1 justify-end">
+                                ${job.profitScore.toFixed(2)}
+                            </p>
+                        </div>
                     </div>
                  )}
                </div>

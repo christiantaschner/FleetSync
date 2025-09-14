@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -591,7 +592,7 @@ export default function DashboardPage() {
   const kpiData = useMemo(() => {
     const unassignedJobs = jobs.filter(j => j.status === 'Unassigned');
     const today = new Date();
-    const jobsForToday = jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime)));
+    const jobsForToday = jobs.filter(j => j.scheduledTime && isSameDay(new Date(j.scheduledTime), today));
     const completedToday = jobsForToday.filter(j => j.status === 'Completed' || j.status === 'Finished');
     const scheduledUnfinished = jobsForToday.filter(j => j.status !== 'Completed' && j.status !== 'Finished' && j.status !== 'Cancelled');
     
@@ -1133,6 +1134,8 @@ export default function DashboardPage() {
     }
   };
 
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
 
   if (authLoading || isLoadingData) { 
     return (
@@ -1145,7 +1148,9 @@ export default function DashboardPage() {
   return (
     <DndContext 
       sensors={sensors} 
+      onDragStart={(e) => setActiveDragId(e.active.id as string)}
       onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveDragId(null)}
     >
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
@@ -1452,13 +1457,12 @@ export default function DashboardPage() {
             onFleetOptimize={handleFleetOptimize}
             isFleetOptimizing={isFleetOptimizing}
             optimizationResult={fleetOptimizationResult}
-            setOptimizationResult={setFleetOptimizationResult}
             isFleetOptimizationDialogOpen={isFleetOptimizationDialogOpen}
+            setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
             selectedFleetChanges={selectedFleetChanges}
             setSelectedFleetChanges={setSelectedFleetChanges}
             onScheduleChange={handleScheduleChange}
             proposedJobs={proposedJobs}
-            setProposedJobs={setProposedJobs}
             isSaving={isSavingSchedule}
             onSave={handleSaveSchedule}
             onCancel={() => setProposedJobs([])}
@@ -1558,7 +1562,7 @@ export default function DashboardPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col gap-1">
-                                                        <JobStatusBadge status={tech.isAvailable ? 'Completed' : 'In Progress'} className={cn(tech.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}/>
+                                                        <Badge variant={tech.isAvailable ? 'secondary' : 'default'} className={cn(tech.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}/>
                                                         {tech.isOnCall && <Badge variant="accent">On Call</Badge>}
                                                     </div>
                                                 </TableCell>

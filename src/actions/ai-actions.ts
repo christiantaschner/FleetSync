@@ -116,25 +116,39 @@ export async function allocateJobAction(
     
     const { appId, customerPhone, ...flowInput } = AllocateJobInputSchema.parse(input);
 
-    if (customerPhone) {
-        // Find technicians with history for this customer
-        const jobsQuery = query(
-            collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
-            where("customerPhone", "==", customerPhone),
-            where("status", "==", "Completed")
-        );
-        const historySnapshot = await getDocs(jobsQuery);
-        const techIdsWithHistory = new Set(historySnapshot.docs.map(doc => doc.data().assignedTechnicianId));
+    const jobsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/jobs`);
 
-        // Augment the technician availability data
-        flowInput.technicianAvailability.forEach(tech => {
-            if (techIdsWithHistory.has(tech.technicianId)) {
-                tech.hasCustomerHistory = true;
-            }
-        });
+    // --- Augment technician data ---
+    for (const tech of flowInput.technicianAvailability) {
+        // Customer History
+        if (customerPhone) {
+            const historyQuery = query(
+                jobsCollectionRef,
+                where("customerPhone", "==", customerPhone),
+                where("assignedTechnicianId", "==", tech.technicianId),
+                where("status", "==", "Completed"),
+                limit(1)
+            );
+            const historySnapshot = await getDocs(historyQuery);
+            tech.hasCustomerHistory = !historySnapshot.empty;
+        }
+
+        // Upsell Conversion Rate
+        const upsellOpportunitiesQuery = query(
+            jobsCollectionRef,
+            where("assignedTechnicianId", "==", tech.technicianId),
+            where("upsellOutcome", "in", ["sold", "declined"])
+        );
+        const upsellSnapshot = await getDocs(upsellOpportunitiesQuery);
+        if (upsellSnapshot.size > 0) {
+            const soldCount = upsellSnapshot.docs.filter(doc => doc.data().upsellOutcome === 'sold').length;
+            tech.upsellConversionRate = soldCount / upsellSnapshot.size;
+        } else {
+            tech.upsellConversionRate = 0; // Default if no history
+        }
     }
     
-    // --- Start of new feedback loop logic ---
+    // --- Add Dispatcher Feedback Loop ---
     if (flowInput.technicianAvailability.length > 0) {
         const companyId = flowInput.technicianAvailability[0].companyId;
         if(companyId) {
@@ -150,7 +164,6 @@ export async function allocateJobAction(
             flowInput.pastFeedback = pastFeedback;
         }
     }
-    // --- End of new feedback loop logic ---
 
     const result = await allocateJobFlow(flowInput, appId);
     return { data: result, error: null };
@@ -952,5 +965,3 @@ export async function analyzeJobAction(
         return { data: null, error: errorMessage };
     }
 }
-
-    

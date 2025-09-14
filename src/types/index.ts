@@ -260,6 +260,7 @@ export type AITechnician = {
   bonus?: number;
   vanInventory?: string[];
   maxDailyHours?: number;
+  upsellConversionRate?: number; // New field
 };
 
 export type ProfileChangeRequest = {
@@ -446,6 +447,7 @@ export const AllocateJobInputSchema = z.object({
       commissionRate: z.number().optional().describe('The commission percentage for this technician.'),
       bonus: z.number().optional().describe('A flat bonus per job for this technician.'),
       maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
+      upsellConversionRate: z.number().optional().describe('The technician\'s historical success rate for upsells (0.0 to 1.0).'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
   partsLibrary: z.array(z.object({ name: z.string(), cost: z.number() })).optional().describe("A library of all available parts and their costs, for the AI to calculate the job's part cost."),
@@ -917,4 +919,5 @@ export const AnalyzeProfitabilityOutputSchema = z.object({
     reasoning: z.string().describe("A concise explanation for the difference between the estimated and actual profit."),
 });
 export type AnalyzeProfitabilityOutput = z.infer<typeof AnalyzeProfitabilityOutputSchema>;
+
 

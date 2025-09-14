@@ -54,6 +54,7 @@ For each potential assignment, you must calculate the **Total Profit**. This val
 2. Then, calculate 'commission' = (quotedValue * (tech.commissionRate / 100)) + tech.bonus
 3. Finally, calculate the final profit: **Total Profit** = (quotedValue + (upsellScore * quotedValue)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty) - commission
 If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.
+An **effective profit per hour** should also be calculated as: **Total Profit / ((driveTimeMinutes + durationEstimate) / 60)**.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
@@ -65,7 +66,7 @@ If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherw
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
     -   **Maximize Total Profit:** Your main goal is to maximize the calculated **Total Profit** from this job. Rank technicians by who yields the highest 'profitScore'.
     -   **SLA Penalties:** Avoid any technician whose current schedule puts them at risk of arriving late to this job if there is an SLA penalty. A high penalty can make a job unprofitable.
-    -   **Travel Time vs. Job Value:** Sending a technician from far away erodes profit. A slightly less optimal but much closer technician is often the more profitable choice, especially for lower-value jobs. While total profit is key, a higher profit-per-hour is a strong secondary indicator of an efficient assignment.
+    -   **Travel Time vs. Job Value:** Sending a technician from far away erodes profit. A slightly less optimal but much closer technician is often the more profitable choice, especially for lower-value jobs. While total profit is key, a higher effective profit-per-hour is a strong secondary indicator of an efficient assignment.
 
 3.  **EFFICIENCY & CUSTOMER SATISFACTION (Secondary Factors):**
     -   **Customer History:** A technician with 'Previous Customer History' is highly valuable. Prefer them if all other financial and skill factors are equal.

@@ -154,7 +154,6 @@ export default function DashboardPage() {
   
   const [isUpdatingOnCall, setIsUpdatingOnCall] = useState(false);
 
-  const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -179,6 +178,8 @@ export default function DashboardPage() {
   const [fleetOptimizationResult, setFleetOptimizationResult] = useState<{ suggestedChanges: OptimizationSuggestion[]; overallReasoning: string } | null>(null);
   const [isFleetOptimizing, setIsFleetOptimizing] = useState(false);
   const [selectedFleetChanges, setSelectedFleetChanges] = useState<OptimizationSuggestion[]>([]);
+  const [proactiveOptimizationAlert, setProactiveOptimizationAlert] = useState<{ suggestedChanges: OptimizationSuggestion[]; overallReasoning: string } | null>(null);
+
 
   const [technicianViewMode, setTechnicianViewMode] = useState<'grid' | 'list'>('grid');
   
@@ -208,8 +209,6 @@ export default function DashboardPage() {
 
   const handleStatusFilterChange = (newStatusFilter: string[]) => {
     setStatusFilter(newStatusFilter);
-
-    // Check if the current filter selection matches the "Open Tasks" preset
     const openTasksSet = new Set(openTasksFilter.sort());
     const newStatusSet = new Set(newStatusFilter.sort());
     
@@ -369,7 +368,6 @@ export default function DashboardPage() {
     } else {
       toast({ title: "Success", description: "Sample data has been added." });
     }
-    // Data will refresh via onSnapshot, just set loading to false.
     setIsLoadingData(false);
   };
 
@@ -392,8 +390,7 @@ export default function DashboardPage() {
   };
 
   const customers = useMemo(() => {
-    const data = isMockMode ? mockCustomers : []; // Need to derive from jobs if not mock
-    
+    const data = isMockMode ? mockCustomers : [];
     const customerMap = new Map<string, Customer>();
     jobs.forEach(job => {
         const key = (job.customerEmail || job.customerPhone || job.customerName).toLowerCase().trim();
@@ -440,8 +437,6 @@ export default function DashboardPage() {
     }
     
     if (technicians.length !== prevTechCount.current && prevTechCount.current !== null) {
-        // This is where auto-sync logic would go, but based on user request, this is disabled.
-        // A manual sync or different flow would be needed if the user changes their plan.
     }
       
     prevTechCount.current = technicians.length;
@@ -527,7 +522,6 @@ export default function DashboardPage() {
     setIsFetchingProactiveSuggestion(false);
   }, [technicians, jobs, company, appId, UNCOMPLETED_STATUSES_LIST]);
   
-  // Effect for automatic schedule health checks
   useEffect(() => {
     if (isLoadingData || technicians.length === 0 || jobs.length === 0 || isMockMode || !(company?.settings?.featureFlags?.rescheduleCustomerJobsEnabled ?? true)) {
       return;
@@ -536,19 +530,16 @@ export default function DashboardPage() {
     const checkHealth = async () => {
       const result = await checkScheduleHealthAction({ technicians, jobs });
       if (result.error) {
-        // Silently fail or show a subtle error, not a toast
         console.warn("Auto schedule health check failed:", result.error);
       } else if (result.data) {
-        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 10); // 10 minute buffer
+        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 10);
         
         setRiskAlerts(currentAlerts => {
           const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
           const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
-          
           const stillValidAlerts = currentAlerts.filter(oldAlert => 
             highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id)
           );
-
           if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {
             return [...stillValidAlerts, ...newAlertsToAdd];
           }
@@ -557,20 +548,57 @@ export default function DashboardPage() {
       }
     };
     
-    // Run once on load, then set an interval
-    const initialCheckTimer = setTimeout(checkHealth, 2000); // Initial check after 2 seconds
-    const intervalId = setInterval(checkHealth, 600000); // 10 minutes
+    const initialCheckTimer = setTimeout(checkHealth, 2000);
+    const intervalId = setInterval(checkHealth, 600000);
 
     return () => {
       clearTimeout(initialCheckTimer);
       clearInterval(intervalId);
     };
   }, [jobs, technicians, isLoadingData, isMockMode, company]);
+
+  useEffect(() => {
+    if (isLoadingData || isMockMode || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true) || !userProfile?.companyId || !appId || jobs.length === 0) {
+      return;
+    }
+
+    const checkForOptimization = async () => {
+      if (proactiveOptimizationAlert) return; // Don't check if an alert is already showing
+
+      const start = startOfDay(new Date());
+      const end = endOfDay(new Date());
+      const jobsForToday = jobs.filter(job => job.scheduledTime && new Date(job.scheduledTime) >= start && new Date(job.scheduledTime) <= end);
+      const unassignedJobsForToday = jobsForToday.filter(j => j.status === 'Unassigned');
+      const assignedJobsForToday = jobsForToday.filter(j => j.status === 'Assigned' || j.status === 'In Progress');
+
+      const result = await runFleetOptimizationAction({
+        companyId: userProfile.companyId!,
+        appId: appId!,
+        currentTime: new Date().toISOString(),
+        pendingJobs: unassignedJobsForToday,
+        technicians: technicians.map(t => ({
+          ...t,
+          jobs: assignedJobsForToday.filter(j => j.assignedTechnicianId === t.id)
+        })),
+      });
+
+      if (result.data?.suggestedChanges && result.data.suggestedChanges.length > 0) {
+        const totalProfitGain = result.data.suggestedChanges.reduce((acc, change) => acc + (change.profitChange || 0), 0);
+        if (totalProfitGain > 50) { // Only show alert for significant gains
+            setProactiveOptimizationAlert(result.data);
+        }
+      }
+    };
+
+    const optimizationInterval = setInterval(checkForOptimization, 900000); // Check every 15 minutes
+    return () => clearInterval(optimizationInterval);
+
+  }, [jobs, technicians, isLoadingData, isMockMode, company, userProfile, appId, proactiveOptimizationAlert]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId || !appId) return;
     
-    setProactiveSuggestion(null); // Dismiss the alert
+    setProactiveSuggestion(null);
     setJobForAIAssign(suggestion.job);
     setIsAIAssignDialogOpen(true);
   };
@@ -613,7 +641,6 @@ export default function DashboardPage() {
   const filteredJobs = useMemo(() => {
     let tempJobs = jobs;
 
-    // Filter by search term
     if (jobSearchTerm) {
         const lowercasedTerm = jobSearchTerm.toLowerCase();
         tempJobs = tempJobs.filter(job => {
@@ -627,12 +654,10 @@ export default function DashboardPage() {
         });
     }
 
-    // Filter by ID if jobFilterId is present
     if (jobFilterId) {
         return tempJobs.filter(job => job.id === jobFilterId);
     }
     
-    // Always filter by status and priority
     if (statusFilter.length > 0 || priorityFilter.length > 0) {
         return tempJobs.filter(job => {
             const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
@@ -717,7 +742,6 @@ export default function DashboardPage() {
 
   const handleBatchAIAssign = useCallback(async () => {
     if (isMockMode) {
-      // Mock logic
       const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
       if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
         toast({ title: "AI Batch Assign", description: "No unassigned jobs or technicians available.", variant: "default" });
@@ -735,7 +759,7 @@ export default function DashboardPage() {
 
         if (suitableTechIndex !== -1) {
             const assignedTech = tempTechnicianPool[suitableTechIndex];
-            tempTechnicianPool.splice(suitableTechIndex, 1); // Remove tech from pool
+            tempTechnicianPool.splice(suitableTechIndex, 1);
             return {
                 job,
                 suggestion: {
@@ -765,7 +789,6 @@ export default function DashboardPage() {
       return;
     }
 
-    // Live logic
     if (!appId) return;
     const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
     if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
@@ -943,10 +966,7 @@ export default function DashboardPage() {
     setIsUpdatingOnCall(false);
   };
   
-  const handleAIAssignSuccess = () => {
-    // This function can be expanded if we need to do something after AI assignment,
-    // like refreshing a specific part of the data. For now, onSnapshot handles it.
-  };
+  const handleAIAssignSuccess = () => {};
 
   const handleShareTracking = (job: Job) => {
     setJobToShare(job);
@@ -987,34 +1007,11 @@ export default function DashboardPage() {
       companyId: userProfile.companyId,
       appId,
       currentTime: new Date().toISOString(),
-      pendingJobs: unassignedJobsForToday.map(j => ({
-        id: j.id,
-        title: j.title,
-        priority: j.priority,
-        requiredSkills: j.requiredSkills || [],
-        location: j.location,
-        quotedValue: j.quotedValue,
-        estimatedDurationMinutes: j.estimatedDurationMinutes,
-      })),
+      pendingJobs: unassignedJobsForToday,
       technicians: technicians.map(t => ({
-        id: t.id,
-        name: t.name,
-        skills: t.skills || [],
-        isOnCall: t.isOnCall,
-        hourlyCost: t.hourlyCost,
+        ...t,
         jobs: assignedJobsForToday
           .filter(j => j.assignedTechnicianId === t.id)
-          .map(j => ({
-            id: j.id,
-            title: j.title,
-            priority: j.priority,
-            location: j.location,
-            scheduledTime: j.scheduledTime,
-            flexibility: j.flexibility,
-            dispatchLocked: j.dispatchLocked,
-            quotedValue: j.quotedValue,
-            estimatedDurationMinutes: j.estimatedDurationMinutes,
-          })),
       })),
     });
 
@@ -1051,7 +1048,6 @@ export default function DashboardPage() {
   const handleSaveSchedule = async () => {
     if (isMockMode) {
         toast({ title: "Schedule Saved (Mock)" });
-        // Apply changes locally for visual feedback
         setJobs(prevJobs => {
             const proposedMap = new Map(proposedJobs.map(p => [p.id, p]));
             return prevJobs.map(job => proposedMap.has(job.id) ? proposedMap.get(job.id)! : job);
@@ -1097,7 +1093,6 @@ export default function DashboardPage() {
     const { active, over } = event;
     
     if (active.data.current?.type === 'schedule-job') {
-        // This is handled inside the ScheduleCalendarView now
         return;
     }
     
@@ -1246,6 +1241,35 @@ export default function DashboardPage() {
                      <Button size="sm" variant="outline" onClick={() => router.push(`/job/${proactiveSuggestion.job.id}`)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         View Details
+                    </Button>
+                </div>
+            </Alert>
+        )}
+        
+         {proactiveOptimizationAlert && (
+            <Alert variant="default" className="border-sky-400 bg-sky-50 text-sky-900">
+                <Bot className="h-4 w-4 text-sky-600" />
+                <AlertTitle className="font-headline text-sky-900 flex justify-between items-center">
+                    <span>AI Optimization Opportunity</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveOptimizationAlert(null)}><X className="h-4 w-4" /></Button>
+                </AlertTitle>
+                <AlertDescription className="text-sky-800">
+                    The AI has found a way to optimize today's schedule to increase overall profit.
+                    <p className="text-xs italic mt-1">"{proactiveOptimizationAlert.overallReasoning}"</p>
+                </AlertDescription>
+                <div className="mt-4">
+                    <Button 
+                        size="sm" 
+                        variant="default"
+                        className="bg-sky-500 hover:bg-sky-600"
+                        onClick={() => {
+                          setFleetOptimizationResult(proactiveOptimizationAlert);
+                          setIsFleetOptimizationDialogOpen(true);
+                          setProactiveOptimizationAlert(null);
+                        }}
+                    >
+                        <Shuffle className="mr-2 h-4 w-4" />
+                        Review Changes
                     </Button>
                 </div>
             </Alert>
@@ -1463,7 +1487,6 @@ export default function DashboardPage() {
             setSelectedFleetChanges={setSelectedFleetChanges}
             onScheduleChange={handleScheduleChange}
             proposedJobs={proposedJobs}
-            setProposedJobs={setProposedJobs}
             isSaving={isSavingSchedule}
             onSave={handleSaveSchedule}
             onCancel={() => setProposedJobs([])}

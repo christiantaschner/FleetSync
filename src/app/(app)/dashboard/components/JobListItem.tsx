@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -67,19 +68,18 @@ const JobListItem: React.FC<JobListItemProps> = ({
       default: return <Briefcase />;
     }
   };
-
-  const isHighPriorityUnassigned = job.priority === 'High' && job.status === 'Unassigned';
-  const isMediumOrLowPriorityUnassigned = (job.priority === 'Medium' || job.priority === 'Low') && job.status === 'Unassigned';
-  const isFlexible = job.flexibility === 'flexible';
-  const isDraft = job.status === 'Draft';
-  
-  const isUnassigned = job.status === 'Unassigned' && !job.assignedTechnicianId;
-  const isRoutable = (job.status === 'Assigned' || job.status === 'En Route') && job.assignedTechnicianId;
-  const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
   
   const profitPerHour = (job.profitScore && job.estimatedDurationMinutes) 
     ? (job.profitScore / job.estimatedDurationMinutes) * 60 
     : 0;
+
+  const getProfitColorClass = (score: number | undefined) => {
+    if (score === undefined) return '';
+    if (score > 150) return 'border-green-400 bg-green-50/50';
+    if (score > 50) return 'border-amber-400 bg-amber-50/50';
+    if (score > 0) return 'border-red-400 bg-red-50/50';
+    return 'border-gray-300';
+  };
 
   const JobCardWrapper = ({ children }: { children: React.ReactNode }) => (
      <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
@@ -87,10 +87,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
           "hover:shadow-md transition-shadow duration-200",
           !isLocked && "cursor-grab",
           isLocked && "cursor-not-allowed",
-          isHighPriorityUnassigned && "border-destructive bg-destructive/5",
-          isMediumOrLowPriorityUnassigned && "border-amber-400 bg-amber-50",
-          isFlexible && !isDraft && "border-dashed",
-          isDraft && "border-gray-400 bg-gray-50/50"
+          getProfitColorClass(job.profitScore),
+          job.status === 'Draft' && "border-gray-400 bg-gray-50/50" // Draft has its own style
         )}>
             {children}
         </Card>
@@ -103,9 +101,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <CardTitle className={cn("text-lg font-headline flex items-start gap-2", 
-                  isHighPriorityUnassigned && "text-destructive",
-                  isMediumOrLowPriorityUnassigned && "text-amber-900",
-                  isDraft && "text-gray-600"
+                  job.status === 'Draft' && "text-gray-600"
                 )}>
                   <TooltipProvider>
                     <Tooltip>
@@ -129,7 +125,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                       </Tooltip>
                     </TooltipProvider>
                   )}
-                   {isFlexible && (
+                   {job.flexibility === 'flexible' && (
                      <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -198,9 +194,9 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 )}
               </div>
               <div>
-                {assignedTechnician ? (
-                  <Link href={`/technician/jobs/${assignedTechnician.id}`} className="flex items-center gap-1 font-medium text-primary hover:underline">
-                    <Wrench className="h-3 w-3" /> {assignedTechnician.name}
+                {job.assignedTechnicianId ? (
+                  <Link href={`/technician/jobs/${job.assignedTechnicianId}`} className="flex items-center gap-1 font-medium text-primary hover:underline">
+                    <Wrench className="h-3 w-3" /> {technicians.find(t => t.id === job.assignedTechnicianId)?.name}
                   </Link>
                 ) : (
                   <span className="flex items-center gap-1 font-semibold text-muted-foreground">
@@ -211,17 +207,17 @@ const JobListItem: React.FC<JobListItemProps> = ({
             </div>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
-             {isUnassigned && (
+             {job.status === 'Unassigned' && (
                 <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
                     <Bot className="mr-1 h-3 w-3" /> AI Assign
                 </Button>
             )}
-            {isRoutable && (
+            {job.status === 'Assigned' && (
                 <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
                     <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
                 </Button>
             )}
-             {assignedTechnician && (
+             {job.assignedTechnicianId && (
                  <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
                     <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
                 </Button>

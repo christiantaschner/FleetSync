@@ -42,14 +42,13 @@ export default function MarketingPage() {
     // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
     const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
     const profitGain = monthlyRevenue * 0.05; // Assume a 5% margin improvement
-    const softwareCost = numTechs * 99;
+    const softwareCost = numTechs * 69;
     const netGain = profitGain - softwareCost;
     setRoi(netGain);
   };
   
   const navLinks = [
-    { href: "#problem", text: "The Problem" },
-    { href: "#ai-knows-business", text: "The Solution" },
+    { href: "#solution", text: "The Solution" },
     { href: "#how-it-works", text: "How It Works"},
     { href: "#pricing", text: "Pricing" },
     { href: "#features", text: "Features" }
@@ -57,40 +56,34 @@ export default function MarketingPage() {
   
   const featureList = [
     {
-      icon: Lightbulb,
-      title: "Profit-Driven Upsell Intelligence",
-      description: "Our AI doesn't just find upsells—it integrates them into your dispatching strategy. High-potential jobs are flagged and can be automatically assigned to your best closers, turning service calls into major sales.",
-      example: "'High upsell potential detected for AC replacement. Assigning to senior tech Sarah for maximum conversion probability.' The system doesn't just inform, it acts."
-    },
-    {
-      icon: Package,
-      title: "Turn Service History into Sales",
-      description: "Log every piece of customer equipment. The AI uses this history to flag high-value replacement jobs before the customer even thinks of calling a competitor.",
-      example: "'Alert: This is the 3rd repair on this 7-year-old AC unit. It's out of warranty. Suggest replacement options.' The AI turns a simple repair call into a major sale."
-    },
-    {
       icon: Smartphone,
       title: "Technician Command Center",
       description: "Empower your field team with a mobile-first interface. Technicians can view schedules, access AI troubleshooting guides, see upsell opportunities, and document work with photos and signatures.",
-      example: "A technician is stuck. They open the app, describe the problem, and the AI provides step-by-step diagnostic advice based on the equipment's service history."
     },
     {
       icon: Shuffle,
       title: "Dynamic Route Optimization",
       description: "Re-optimize technician routes in one click when schedules change.",
-      example: "A cancellation opens a 2-hour gap. In one click, the AI pulls forward a nearby maintenance job, turning idle time into a billable hour."
     },
     {
       icon: AlertTriangle,
       title: "Proactive Risk Alerts",
       description: "AI constantly monitors schedules and warns you of potential delays before they happen.",
-      example: "'Alert: Tech B is 30 mins behind schedule. Reassign their next job to Tech C to meet the SLA window?'"
     },
     {
       icon: CalendarDays,
       title: "Drag-and-Drop Schedule",
       description: "A visual timeline to easily see and manage your whole team's day.",
-      example: "See an overlap? Just drag the job from one technician's timeline to another's open slot. It's that simple."
+    },
+    {
+      icon: Repeat,
+      title: "Recurring Job & Contract Management",
+      description: "Create and manage recurring service agreements, with AI assistance for scheduling future appointments.",
+    },
+    {
+      icon: Cog,
+      title: "Dynamic Skill & Parts Library",
+      description: "Manage a central library of technician skills and van inventory. The AI uses this data to make smarter job assignments.",
     }
   ];
 
@@ -105,19 +98,19 @@ export default function MarketingPage() {
 
   const testimonials = [
     {
-        quote: "We get 1–2 extra jobs done per day with the same team.",
+        quote: "We get 1–2 extra jobs done per day with the same team. The AI doesn't just save us minutes, it saves us money.",
         author: "Mark Hayes",
         role: "Owner, Apex Climate Solutions",
         avatarHint: "man construction"
     },
     {
-        quote: "Upsell prompts helped us win $20,000 in additional revenue last quarter.",
+        quote: "The AI upsell prompts are a game-changer. They helped us secure an additional $20,000 in revenue last quarter without any new sales training.",
         author: "Sarah Rodriguez",
         role: "Operations Manager, Reliant Electrical",
         avatarHint: "woman business"
     },
     {
-        quote: "Within weeks, we saw more profit per job and fewer callbacks.",
+        quote: "Within weeks, we saw a noticeable increase in our profit per job and fewer callbacks. MarginMax makes our company richer, not just our dispatchers faster.",
         author: "David Chen",
         role: "Lead Technician, Blue Ribbon Plumbing",
         avatarHint: "man worker"
@@ -208,7 +201,7 @@ export default function MarketingPage() {
               Stop Dispatching. Start Profiting.
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg text-slate-300">
-              Assign jobs based on profit per hour, not just proximity. MarginMax makes every job a winning job.
+             Most dispatch software saves you minutes. MarginMax saves you money. Assign every job based on its net profit, not just proximity.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
@@ -237,118 +230,64 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* 2 & 3. The Problem vs. Solution Section */}
-        <section id="problem" className="bg-background py-16 sm:py-24">
-          <div className="container grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-            <Card className="border-destructive/30 bg-red-50/50 flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-red-800 flex items-center gap-3">
-                    <span className="text-4xl">💸</span>
-                    Standard Dispatch = Lost Profit
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 flex-grow flex flex-col">
-                 <p className="text-muted-foreground">Traditional dispatch focuses on one thing: who's closest. This "nearest tech" logic ignores the factors that actually make you money and costs you dearly.</p>
-                 <div className="space-y-3 pt-2 flex-grow flex flex-col justify-around">
-                    <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">⛽</span> Wasted Fuel & Labor</h4>
-                      <p className="text-sm text-muted-foreground mt-1">Sending techs across town for low-value jobs burns fuel and payroll.</p>
-                    </div>
-                    <div className="p-4 rounded-lg border bg-white shadow-sm">
-                        <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">💰</span> Missed High-Value Work</h4>
-                        <p className="text-sm text-muted-foreground mt-1">Your best tech gets stuck on a minor fix while a high-margin installation goes to someone less qualified.</p>
-                    </div>
-                    <div className="p-4 rounded-lg border bg-white shadow-sm">
-                        <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">⏳</span> Costly SLA Penalties</h4>
-                        <p className="text-sm text-muted-foreground mt-1">Ignoring Service Level Agreement windows results in financial penalties and unhappy clients.</p>
-                    </div>
-                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20 bg-sky-50/50 flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                  <span className="text-4xl">🚀</span> New Way = Profit-First Dispatching
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 flex-grow flex flex-col">
-                <p className="text-muted-foreground">MarginMax's AI asks a better question: "Which assignment makes this job the most profitable?" It analyzes every job's unique profit profile by weighing all the critical factors.</p>
-                <div className="space-y-3 flex-grow flex flex-col justify-around">
-                  <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">📈</span> Revenue Drivers</h4>
-                      <p className="text-sm text-muted-foreground mt-1">Quoted value, upsell potential, SLA premiums, after-hours surcharges.</p>
-                  </div>
-                   <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">💵</span> Cost Drivers</h4>
-                      <p className="text-sm text-muted-foreground mt-1">Labor cost per tech, drive time, parts required, and even the risk of a return visit.</p>
-                  </div>
-                   <div className="p-4 rounded-lg border bg-white shadow-sm">
-                      <h4 className="font-semibold flex items-center gap-2"><span className="text-2xl">🔧</span> Real-World Constraints</h4>
-                      <p className="text-sm text-muted-foreground mt-1">Technician skills, SLA windows, and specific customer preferences are always respected.</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </section>
-        
-        {/* Industry Niches Section */}
-        <section id="ai-knows-business" className="bg-slate-900 text-white py-16 sm:py-24">
+        {/* The Solution Section */}
+        <section id="solution" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <Badge variant="secondary" className="bg-white/10 text-white border-white/20">AI That Understands Nuance</Badge>
-                    <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">An AI That Knows Your Business</h2>
-                    <p className="mt-4 text-lg text-slate-300">MarginMax understands the unique profit levers of your trade, making smarter decisions than any generic dispatcher could.</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Traditional dispatch is about efficiency. <br/> Profit-first dispatch is about efficiency + profit.</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                        Standard dispatch software minimizes drive time. MarginMax is the first platform designed to maximize your net profit on every single job.
+                    </p>
                 </div>
-                <Card className="mt-12 bg-slate-800/50 border-white/10">
-                    <CardContent className="p-6 md:p-8 grid md:grid-cols-3 gap-8">
-                        <div className="md:col-span-1">
-                            <ul className="space-y-2">
-                                {industryNiches.map((niche) => (
-                                    <li key={niche.title}>
-                                        <button
-                                            onClick={() => setActiveNiche(niche.title)}
-                                            className={cn(
-                                                "w-full text-left p-3 rounded-md transition-colors text-slate-300",
-                                                activeNiche === niche.title ? "bg-primary text-white" : "hover:bg-white/10"
-                                            )}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", activeNiche === niche.title ? "bg-white/20" : "bg-white/10")}>
-                                                   <niche.icon className="h-5 w-5" />
-                                                </div>
-                                                <span className="font-semibold">{niche.title}</span>
-                                            </div>
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div className="md:col-span-2 bg-slate-900/70 rounded-lg p-6 min-h-[200px] flex flex-col items-center justify-center text-center">
-                            {industryNiches.map((niche) => (
-                                activeNiche === niche.title && (
-                                    <div key={niche.title} className="animate-in fade-in-50 flex flex-col items-center">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-primary">
-                                            <niche.icon className="h-7 w-7" />
-                                        </div>
-                                        <h3 className="mt-4 text-xl font-semibold text-white">{niche.title}</h3>
-                                        <p className="mt-2 text-slate-300 max-w-md">{niche.description}</p>
-                                    </div>
-                                )
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
         </section>
+
+        {/* How It Works (New Version) */}
+        <section id="how-it-works" className="bg-muted py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <Badge variant="secondary">The MarginMax Difference</Badge>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">The AI That Makes Companies Richer, Not Just Dispatchers Faster</h2>
+                </div>
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* Profit-First Dispatching */}
+                    <div className="space-y-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <Brain className="h-6 w-6"/>
+                        </div>
+                        <h3 className="text-xl font-bold">1. Profit-First Dispatching</h3>
+                        <p className="text-muted-foreground">Standard apps minimize travel or balance workloads. MarginMax ranks every job by its expected net profit (revenue – cost – travel), putting the right tech on the right job, every time — for maximum margin, not just a full calendar.</p>
+                    </div>
+                    {/* AI-Driven Upsells */}
+                    <div className="space-y-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <Lightbulb className="h-6 w-6"/>
+                        </div>
+                        <h3 className="text-xl font-bold">2. AI-Driven Upsells</h3>
+                        <p className="text-muted-foreground">Standard apps rely on techs or sales training for upsells. MarginMax proactively suggests context-aware upsell opportunities during jobs (maintenance plans, replacements, upgrades). Technicians don’t need to be salespeople — the app highlights the right upsell at the right time.</p>
+                    </div>
+                    {/* Visible Margin Impact */}
+                    <div className="space-y-4">
+                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <TrendingUp className="h-6 w-6"/>
+                        </div>
+                        <h3 className="text-xl font-bold">3. Visible Margin Impact</h3>
+                        <p className="text-muted-foreground">Standard dashboards show jobs completed and revenue. MarginMax shows margin impact in real time (“This week: +2.5% net profit from AI dispatching & upsells”). Finally see how dispatching decisions affect profit — in numbers you can trust.</p>
+                    </div>
+                </div>
+                 <div className="mt-12 text-center">
+                    <p className="text-xl font-semibold">Not just saving time — adding profit. Our customers see 2–5% higher net margins without adding staff.</p>
+                </div>
+            </div>
+        </section>
+
 
         {/* Testimonials Section */}
         <section className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Trusted by Businesses Like Yours</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">See how field service companies are transforming their operations and boosting their bottom line with MarginMax.</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Designed for Owner ROI</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">Hear from business owners who transformed their operations and boosted their bottom line with MarginMax.</p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {testimonials.map((testimonial, index) => (
@@ -420,7 +359,7 @@ export default function MarketingPage() {
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="flex items-baseline gap-2">
-                                <span className="text-4xl font-bold">$99</span>
+                                <span className="text-4xl font-bold">$69</span>
                                 <span className="text-sm text-muted-foreground">/ per technician / month</span>
                             </div>
                             <ul className="space-y-2">
@@ -438,52 +377,12 @@ export default function MarketingPage() {
             </div>
         </section>
 
-        {/* How It Works Section */}
-        <section id="how-it-works" className="bg-slate-900 text-white py-16 sm:py-24">
-          <div className="container">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Your Automated Profit Command Center</h2>
-              <p className="mt-4 text-lg text-slate-300">MarginMax turns your most complex decisions into the easiest part of your day.</p>
-            </div>
-            <div className="relative mt-12 grid grid-cols-1 gap-y-12 md:grid-cols-4">
-              {/* Dotted lines for desktop view */}
-              <div className="absolute left-0 top-6 hidden h-0.5 w-full md:block">
-                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
-                  <line x1="0" y1="0" x2="100%" y2="0" stroke="white" strokeWidth="2" strokeDasharray="5 5" strokeOpacity="0.3" />
-                </svg>
-              </div>
-
-              {["Input Jobs", "Analyze Constraints", "Optimize for Profit", "Dispatch with Confidence"].map((title, index) => (
-                 <div key={index} className="relative flex flex-col items-center text-center px-4">
-                  {/* Vertical line for mobile */}
-                  {index > 0 && <div className="absolute bottom-full h-12 w-0.5 md:hidden bg-slate-700"/>}
-
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground border-4 border-slate-900 z-10">
-                    <span className="text-lg font-bold">{index + 1}</span>
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-                   <p className="mt-2 text-sm text-slate-400">
-                    {
-                      [
-                        "Input a job's quoted value and select any required parts. Our AI instantly calculates material costs, drive time, and labor to assess its true profit profile.",
-                        "The AI considers everything: technician skills, current location, drive time, and service level agreements.",
-                        "The algorithm assigns every job to maximize profit-per-hour across your entire fleet for the day.",
-                        "Your dispatcher gets a perfectly optimized schedule. They simply review and approve in one click."
-                      ][index]
-                    }
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Features Section */}
         <section id="features" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Run Your Entire Operation From a Single Screen</h2>
-                     <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful features designed to streamline every aspect of your field service business.</p>
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">More Than Just AI—It's a Complete Platform</h2>
+                     <p className="mt-4 text-lg text-muted-foreground">MarginMax is packed with powerful operational features designed to streamline every aspect of your field service business.</p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {featureList.map((feature) => (
@@ -494,10 +393,8 @@ export default function MarketingPage() {
                               </div>
                               <CardTitle className="text-lg font-semibold leading-tight">{feature.title}</CardTitle>
                           </CardHeader>
-                          <CardContent className="flex-grow space-y-3">
+                          <CardContent className="flex-grow">
                               <p className="text-muted-foreground text-sm">{feature.description}</p>
-                              <Separator/>
-                              <p className="text-xs text-muted-foreground italic"><span className="font-semibold not-italic text-primary">Use Case:</span> {feature.example}</p>
                           </CardContent>
                       </Card>
                     ))}

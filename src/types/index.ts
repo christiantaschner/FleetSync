@@ -919,5 +919,3 @@ export const AnalyzeProfitabilityOutputSchema = z.object({
     reasoning: z.string().describe("A concise explanation for the difference between the estimated and actual profit."),
 });
 export type AnalyzeProfitabilityOutput = z.infer<typeof AnalyzeProfitabilityOutputSchema>;
-
-

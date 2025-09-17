@@ -1463,6 +1463,7 @@ export default function DashboardPage() {
             setSelectedFleetChanges={setSelectedFleetChanges}
             onScheduleChange={handleScheduleChange}
             proposedJobs={proposedJobs}
+            setProposedJobs={setProposedJobs}
             isSaving={isSavingSchedule}
             onSave={handleSaveSchedule}
             onCancel={() => setProposedJobs([])}

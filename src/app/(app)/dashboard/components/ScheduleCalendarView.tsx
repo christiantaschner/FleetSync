@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2, DollarSign } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,7 +17,6 @@ import Link from 'next/link';
 import { useDraggable, useDroppable, DndContext } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { useToast } from "@/hooks/use-toast";
-import { reassignJobAction, confirmFleetOptimizationAction } from '@/actions/fleet-actions';
 import ReassignJobDialog from './ReassignJobDialog';
 import { useAuth } from '@/contexts/auth-context';
 import FleetOptimizationReviewDialog from './FleetOptimizationReviewDialog';
@@ -34,18 +33,7 @@ const getStatusAppearance = (status: JobStatus) => {
     }
 };
 
-const formatDuration = (milliseconds: number): string => {
-    if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
-    const totalMinutes = Math.floor(milliseconds / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-        return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
-};
-
-export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: { job: Job, dayStart: Date, totalMinutes: number, onClick?: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean }) => {
+export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed, profitChange }: { job: Job, dayStart: Date, totalMinutes: number, onClick?: (e: React.MouseEvent, job: Job) => void, isProposed?: boolean, profitChange?: number | null }) => {
   const {attributes, listeners, setNodeRef, transform} = useDraggable({
     id: job.id,
     data: { type: 'schedule-job', job }
@@ -71,6 +59,22 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
   const handleClick = (e: React.MouseEvent) => {
     onClick?.(e, job);
   };
+  
+  let profitChangeIndicator: React.ReactNode = null;
+    if (profitChange !== undefined && profitChange !== null) {
+        const isGain = profitChange > 0;
+        const isLoss = profitChange < 0;
+        profitChangeIndicator = (
+             <Badge className={cn(
+                "absolute -top-2 -right-2 text-xs font-bold z-10",
+                isGain && "bg-green-600 text-white",
+                isLoss && "bg-red-600 text-white",
+                !isGain && !isLoss && "bg-muted text-muted-foreground"
+            )}>
+                {isGain ? '+' : ''}${profitChange.toFixed(0)}
+            </Badge>
+        );
+    }
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -93,6 +97,7 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
                 isProposed && "opacity-60 ring-primary ring-2"
               )}
             >
+              {profitChangeIndicator}
               <div className="flex flex-col w-full truncate">
                 <span className="font-bold truncate"><Wrench className="inline h-3 w-3 mr-1" />{format(new Date(job.scheduledTime), 'p')} - {job.customerName}</span>
                 <span className="text-muted-foreground truncate italic">{job.title}</span>
@@ -103,65 +108,19 @@ export const JobBlock = ({ job, dayStart, totalMinutes, onClick, isProposed }: {
             <p className="font-semibold">{job.title}</p>
             <p className="text-sm text-muted-foreground">Customer: {job.customerName}</p>
             {job.scheduledTime && <p className="text-sm text-muted-foreground">Time: {format(new Date(job.scheduledTime), 'p')}</p>}
+             {profitChange !== undefined && profitChange !== null && (
+                 <p className={cn(
+                    "text-sm font-semibold",
+                    profitChange > 0 && "text-green-600",
+                    profitChange < 0 && "text-red-600"
+                 )}>
+                    Profit Change: {profitChange > 0 ? '+' : ''}${profitChange.toFixed(2)}
+                 </p>
+             )}
           </TooltipContent>
         </Tooltip>
     </TooltipProvider>
   );
-};
-
-
-const TravelBlock = ({ from, dayStart, totalMinutes }: { from: Date, dayStart: Date, totalMinutes: number }) => {
-    const jobEndTime = from.getTime();
-    const travelStartTime = jobEndTime;
-    const travelTimeMs = 30 * 60000; // 30 minutes travel time
-    const travelEndTime = travelStartTime + travelTimeMs;
-
-    const offsetMinutes = (travelStartTime - dayStart.getTime()) / 60000;
-    const width = (travelTimeMs / 60000 / totalMinutes) * 100;
-    
-    if (offsetMinutes < 0 || offsetMinutes > totalMinutes) return null;
-
-    return (
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div 
-                className="absolute top-0 h-full p-2 rounded-md text-xs overflow-hidden flex items-center bg-slate-200 border-l-4 border-slate-400 text-slate-600 shadow-inner"
-                style={{ left: `${offsetMinutes / totalMinutes * 100}%`, width: `${width}%` }}
-            >
-                 <div className="flex w-full truncate items-center justify-center">
-                    <Car className="inline h-3 w-3 mr-1.5 shrink-0" />
-                    <span className="truncate italic">30m travel</span>
-                </div>
-            </div>
-          </TooltipTrigger>
-           <TooltipContent className="bg-card text-card-foreground border-border shadow-lg">
-            <p>Estimated Travel Time: 30 minutes</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-};
-
-const CurrentTimeIndicator = ({ dayStart, totalMinutes }: { dayStart: Date, totalMinutes: number }) => {
-    const [currentTime, setCurrentTime] = useState<Date | null>(null);
-
-    useEffect(() => {
-      setCurrentTime(new Date());
-      const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-      return () => clearInterval(timer);
-    }, []);
-
-    if (!currentTime || !isSameDay(currentTime, dayStart)) return null;
-    const offsetMinutes = (currentTime.getTime() - dayStart.getTime()) / 60000;
-    const left = (offsetMinutes / totalMinutes) * 100;
-    if (left < 0 || left > 100) return null;
-
-    return (
-        <div className="absolute top-0 bottom-0 z-10 w-0.5 bg-red-500" style={{ left: `${left}%` }}>
-            <div className="absolute -top-1 -translate-x-1/2 h-2 w-2 rounded-full bg-red-500"></div>
-        </div>
-    );
 };
 
 const TechnicianRow = ({ technician, children, onOptimize, isOptimizing, timelineRef }: { technician: Technician, children: React.ReactNode, onOptimize: () => void, isOptimizing: boolean, timelineRef: React.RefObject<HTMLDivElement> }) => {
@@ -216,17 +175,12 @@ interface ScheduleCalendarViewProps {
     suggestedChanges: OptimizationSuggestion[];
     overallReasoning: string;
   } | null;
-  setOptimizationResult: React.Dispatch<React.SetStateAction<{
-    suggestedChanges: OptimizationSuggestion[];
-    overallReasoning: string;
-  } | null>>;
   isFleetOptimizationDialogOpen: boolean;
   setIsFleetOptimizationDialogOpen: React.Dispatch<React.SetStateAction<boolean>>;
   selectedFleetChanges: OptimizationSuggestion[];
   setSelectedFleetChanges: React.Dispatch<React.SetStateAction<OptimizationSuggestion[]>>;
   onScheduleChange: (jobId: string, newTechnicianId: string, newScheduledTime: string) => void;
   proposedJobs: Job[];
-  setProposedJobs: React.Dispatch<React.SetStateAction<Job[]>>;
   isSaving: boolean;
   onSave: () => void;
   onCancel: () => void;
@@ -246,7 +200,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     setSelectedFleetChanges,
     onScheduleChange,
     proposedJobs,
-    setProposedJobs,
     isSaving,
     onSave,
     onCancel,
@@ -275,24 +228,30 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const hours = useMemo(() => eachHourOfInterval({ start: dayStart, end: dayEnd }), [dayStart, dayEnd]);
   const totalMinutes = useMemo(() => (dayEnd.getTime() - dayStart.getTime()) / 60000, [dayStart, dayEnd]);
   
+  const calculateProfit = (job: Job, technician: Technician) => {
+    const revenue = job.quotedValue || 0;
+    const durationCost = technician.hourlyCost && job.estimatedDurationMinutes ? (job.estimatedDurationMinutes / 60) * technician.hourlyCost : 0;
+    // Note: This is a simplified calculation. A real implementation would estimate travel time cost.
+    return revenue - durationCost;
+  }
+  
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over, delta } = event;
     if (!over || !active.data.current) return;
     
     const job = active.data.current.job as Job;
     const newTechnicianId = over.id as string;
-
-    if (active.data.current.type === 'schedule-job') {
+    const newTechnician = technicians.find(t => t.id === newTechnicianId);
+    
+    if (active.data.current.type === 'schedule-job' && newTechnician) {
         const timelineRef = over.data.current?.timelineRef;
         if (!timelineRef || !timelineRef.current) return;
         
         const timelineRect = timelineRef.current.getBoundingClientRect();
         
-        // Calculate the initial position percentage
         const initialOffsetMinutes = (new Date(job.scheduledTime!).getTime() - dayStart.getTime()) / 60000;
         const initialLeftPx = (initialOffsetMinutes / totalMinutes) * timelineRect.width;
 
-        // Add the drag delta
         const finalLeftPx = initialLeftPx + delta.x;
         
         const minutesFromStart = (finalLeftPx / timelineRect.width) * totalMinutes;
@@ -318,25 +277,21 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
   const jobsByTechnician = useCallback((techId: string) => {
     const startOfDayDate = startOfDay(currentDate);
     
-    // Create a Set of proposed job IDs for quick lookups
     const proposedJobIds = new Set(proposedJobs.map(p => p.id));
     
-    // Get original jobs for this tech on the current day, EXCLUDING any that are in the proposed list
     const originalJobs = jobs.filter(job =>
       job.assignedTechnicianId === techId &&
-      !proposedJobIds.has(job.id) && // Exclude original jobs that have been moved
+      !proposedJobIds.has(job.id) &&
       job.scheduledTime &&
       isSameDay(new Date(job.scheduledTime), startOfDayDate)
     );
 
-    // Get proposed changes for this technician on the current day
     const proposedJobsForTech = proposedJobs.filter(
       pJob => pJob.assignedTechnicianId === techId &&
       pJob.scheduledTime &&
       isSameDay(new Date(pJob.scheduledTime), startOfDayDate)
     );
 
-    // Combine the filtered original jobs with the proposed jobs
     const finalJobs = [...originalJobs, ...proposedJobsForTech];
     
     return finalJobs.sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
@@ -363,9 +318,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     setIsReassignOpen(true);
   };
   
-  const handleConfirmFleetOptimization = async (changesToConfirm: OptimizationSuggestion[]) => {
-    // This action is handled by the parent DashboardPage now.
-  };
+  const handleConfirmFleetOptimization = async (changesToConfirm: OptimizationSuggestion[]) => {};
 
   return (
         <Card>
@@ -384,46 +337,39 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     </Button>
                     <Button variant="outline" size="icon" onClick={handleNext} aria-label="Next"><ChevronRight className="h-4 w-4" /></Button>
                 </div>
-                 {proposedJobs.length > 0 ? (
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-amber-900">You have unsaved changes.</p>
-                        <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
-                            <X className="mr-2 h-4 w-4"/> Cancel
-                        </Button>
-                        <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </Button>
-                    </div>
-                 ) : (
-                    <div className="flex items-center justify-end gap-2">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-                                        <Info className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p className="max-w-xs">AI proactively checks schedules. Delay risk alerts will appear on the dashboard.</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
-                                        {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
-                                        Optimize Fleet
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Optimize the schedule for the currently selected day.</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
-                 )}
+                 <div className="flex items-center justify-end gap-2 flex-1">
+                     {proposedJobs.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-amber-900">You have unsaved changes.</p>
+                            <Button variant="outline" size="sm" onClick={onCancel} disabled={isSaving}>
+                                <X className="mr-2 h-4 w-4"/> Cancel
+                            </Button>
+                            <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
+                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                                Save Changes
+                            </Button>
+                        </div>
+                     ) : (
+                        <>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                            <Info className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="max-w-xs">AI proactively checks schedules. Delay risk alerts will appear on the dashboard.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <Button onClick={onFleetOptimize} disabled={isFleetOptimizing} className="w-full sm:w-auto">
+                                {isFleetOptimizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Shuffle className="mr-2 h-4 w-4" />}
+                                Optimize Fleet
+                            </Button>
+                        </>
+                     )}
+                 </div>
             </div>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 relative">
@@ -485,15 +431,23 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                     </div>
                                     <div ref={techTimelineRef} className="relative h-full p-1.5">
                                         {techJobs.map((job, index) => {
-                                            const prevJob = techJobs[index-1];
-                                            const travelStartTime = prevJob ? new Date(new Date(prevJob.scheduledTime!).getTime() + (prevJob.estimatedDurationMinutes || 60) * 60000) : null;
                                             const isProposed = proposedJobs.some(p => p.id === job.id);
+                                            let profitChange: number | null = null;
                                             
+                                            if (isProposed) {
+                                                const originalJob = jobs.find(j => j.id === job.id);
+                                                const originalTechnician = technicians.find(t => t.id === originalJob?.assignedTechnicianId);
+                                                const newTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
+
+                                                if (originalJob && originalTechnician && newTechnician) {
+                                                    const originalProfit = calculateProfit(originalJob, originalTechnician);
+                                                    const newProfit = calculateProfit(job, newTechnician);
+                                                    profitChange = newProfit - originalProfit;
+                                                }
+                                            }
+
                                             return (
                                                 <React.Fragment key={job.id}>
-                                                    {travelStartTime && (
-                                                        <TravelBlock from={travelStartTime} dayStart={dayStart} totalMinutes={totalMinutes} />
-                                                    )}
                                                     <JobBlock 
                                                         job={job} 
                                                         dayStart={dayStart} 
@@ -503,6 +457,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                                             onJobClick(job);
                                                         }}
                                                         isProposed={isProposed}
+                                                        profitChange={profitChange}
                                                     />
                                                 </React.Fragment>
                                             )
@@ -528,7 +483,6 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                                 </Alert>
                             </div>
                         )}
-                        <CurrentTimeIndicator dayStart={dayStart} totalMinutes={totalMinutes} />
                     </div>
                 </div>
                 </div>

@@ -28,10 +28,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, AlertTriangle, Lightbulb, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package } from 'lucide-react';
-import { suggestScheduleTimeAction, generateTriageLinkAction, suggestJobSkillsAction, suggestUpsellOpportunityAction, suggestJobPartsAction } from '@/actions/ai-actions';
+import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part, JobFlexibility } from '@/types';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2, TrendingUp } from 'lucide-react';
+import { suggestScheduleTimeAction, generateTriageLinkAction, analyzeJobAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
 import { Popover, PopoverContent, PopoverAnchor, PopoverTrigger } from '@/components/ui/popover';
@@ -40,6 +40,7 @@ import { addHours, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/contexts/auth-context';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -77,13 +78,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isFetchingAISuggestion, setIsFetchingAISuggestion] = useState(false);
-  const [isFetchingSkills, setIsFetchingSkills] = useState(false);
-  const [isFetchingUpsell, setIsFetchingUpsell] = useState(false);
-  const [isFetchingParts, setIsFetchingParts] = useState(false);
+  const [isAnalyzingJob, setIsAnalyzingJob] = useState(false);
   
   const [timeSuggestions, setTimeSuggestions] = useState<SuggestScheduleTimeOutput['suggestions']>([]);
   const [rejectedTimes, setRejectedTimes] = useState<string[]>([]);
-  const [selectedSuggestion, setSelectedSuggestion] = useState<SuggestScheduleTimeOutput['suggestions'][number] | null>(null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -103,9 +101,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [selectedContractId, setSelectedContractId] = useState<string>('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [quotedValue, setQuotedValue] = useState<number | undefined>(undefined);
+  const [expectedPartsCost, setExpectedPartsCost] = useState<number | undefined>(undefined);
   const [slaDeadline, setSlaDeadline] = useState<Date | undefined>(undefined);
   const [upsellScore, setUpsellScore] = useState<number | undefined>(undefined);
   const [upsellReasoning, setUpsellReasoning] = useState<string | undefined>(undefined);
+  const [flexibility, setFlexibility] = useState<JobFlexibility>('flexible');
+  const [dispatchLocked, setDispatchLocked] = useState(false);
 
 
   const [customerSuggestions, setCustomerSuggestions] = useState<Customer[]>([]);
@@ -119,6 +120,23 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const formRef = useRef<HTMLFormElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  const estimatedProfit = useMemo(() => {
+    if (quotedValue === undefined || expectedPartsCost === undefined) return null;
+    return quotedValue - expectedPartsCost;
+  }, [quotedValue, expectedPartsCost]);
+
+  const estimatedMargin = useMemo(() => {
+    if (estimatedProfit === null || !quotedValue || quotedValue === 0) return null;
+    return (estimatedProfit / quotedValue) * 100;
+  }, [estimatedProfit, quotedValue]);
+
+  const getMarginColor = (margin: number | null) => {
+    if (margin === null) return 'text-muted-foreground';
+    if (margin >= 50) return 'text-green-600';
+    if (margin >= 25) return 'text-amber-600';
+    return 'text-red-600';
+  };
 
   const resetForm = useCallback(() => {
     const initialData = job || prefilledData || {};
@@ -140,9 +158,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setSelectedContractId(initialData.sourceContractId || '');
     setSelectedCustomerId(initialData.customerId || null);
     setQuotedValue(initialData.quotedValue);
+    setExpectedPartsCost(initialData.expectedPartsCost);
     setSlaDeadline(initialData.slaDeadline ? new Date(initialData.slaDeadline) : undefined);
     setUpsellScore(initialData.upsellScore);
     setUpsellReasoning(initialData.upsellReasoning);
+    setFlexibility(initialData.flexibility || 'flexible');
+    setDispatchLocked(initialData.dispatchLocked || false);
     setCustomerSuggestions([]);
     setIsCustomerPopoverOpen(false);
     setTriageMessage(null);
@@ -151,7 +172,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setRejectedTimes([]);
     setTimeSuggestions([]);
     setTriageToken(null);
-    setSelectedSuggestion(null);
   }, [job, prefilledData]);
 
   useEffect(() => {
@@ -161,14 +181,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   }, [job, prefilledData, isOpen, resetForm]);
   
   const isReadyForAssignment = useMemo(() => {
-    if (selectedSuggestion) {
-      return true;
-    }
     if (manualTechnicianId !== UNASSIGNED_VALUE && scheduledTime) {
       return true;
     }
     return false;
-  }, [selectedSuggestion, manualTechnicianId, scheduledTime]);
+  }, [manualTechnicianId, scheduledTime]);
   
 
   // Handle smart status updates
@@ -235,7 +252,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     if (isGettingMore) {
         setRejectedTimes(prev => [...new Set([...prev, ...timeSuggestions.map(s => s.time)])]);
     } else {
-        setSelectedSuggestion(null); // Clear selection when getting new initial suggestions
+        setTimeSuggestions([]);
     }
 
     const result = await suggestScheduleTimeAction({
@@ -248,7 +265,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         technicians: technicians.map(tech => ({
             id: tech.id,
             name: tech.name,
-            skills: tech.skills,
+            skills: tech.skills.map(s => s),
             jobs: jobs.filter(j => j.assignedTechnicianId === tech.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
                 .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! }))
         }))
@@ -257,11 +274,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setIsFetchingAISuggestion(false);
 
     if (result.error) {
-        toast({ title: "Fleety Suggestion Error", description: result.error, variant: "destructive" });
+        toast({ title: "AI Suggestion Error", description: result.error, variant: "destructive" });
     } else if (result.data?.suggestions) {
         const newSuggestions = result.data.suggestions;
         if(newSuggestions.length === 0 && isGettingMore) {
-            toast({ title: "No More Suggestions", description: "Fleety could not find any other suitable time slots.", variant: "default" });
+            toast({ title: "No More Suggestions", description: "The AI could not find any other suitable time slots.", variant: "default" });
         }
         
         if (isGettingMore) {
@@ -290,7 +307,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         minutes
     );
     setScheduledTime(newDateTime);
-    setSelectedSuggestion(null);
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -303,12 +319,16 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     newDateTime.setHours(hours);
     newDateTime.setMinutes(minutes);
     setScheduledTime(newDateTime);
-    setSelectedSuggestion(null);
   };
   
   const handleManualTechnicianChange = (techId: string) => {
     setManualTechnicianId(techId);
-    setSelectedSuggestion(null);
+  };
+
+  const handleSelectAISuggestion = (suggestion: SuggestScheduleTimeOutput['suggestions'][number]) => {
+      setScheduledTime(new Date(suggestion.time));
+      setManualTechnicianId(suggestion.technicianId);
+      toast({ title: "Suggestion Selected", description: "The schedule time and technician have been updated. You can make further adjustments or save the job." });
   };
   
   const handleDeleteJob = async () => {
@@ -358,86 +378,45 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
   };
   
-  const handleSuggestSkills = async () => {
-    if (!description.trim() && !title.trim()) {
-        toast({ title: "Cannot Suggest Skills", description: "Please enter a Job Title or Description.", variant: "default" });
+  const handleAnalyzeJob = async () => {
+    if (!title && !description) {
+        toast({ title: "Cannot Analyze Job", description: "Please provide a Job Title or Description.", variant: "default" });
         return;
     }
-    setIsFetchingSkills(true);
-    const result = await suggestJobSkillsAction({ jobTitle: title, jobDescription: description, availableSkills: allSkills });
-    if (result.error) {
-        toast({ title: "Skill Suggestion Error", description: result.error, variant: "destructive" });
-    } else if (result.data?.suggestedSkills) {
-        if (result.data.suggestedSkills.length === 0) {
-            toast({ title: "No specific skills suggested", description: result.data.reasoning || "The AI could not identify specific skills from the job description.", variant: "default" });
-        } else {
-            setRequiredSkills(prev => [...new Set([...prev, ...result.data!.suggestedSkills])]);
-            toast({ title: "Skills Suggested", description: `Fleety added ${result.data.suggestedSkills.length} skill(s). Please review.` });
-        }
-    }
-    setIsFetchingSkills(false);
-  };
+    if (!userProfile?.companyId || !appId) return;
 
-  const handleSuggestUpsell = async () => {
-    if (!description.trim() && !title.trim() || !customerName) {
-        toast({ title: "Cannot Suggest Upsell", description: "Please enter a Job Title and Customer Name.", variant: "default" });
-        return;
-    }
-    if (!db || !appId || !userProfile?.companyId) return;
-
-    setIsFetchingUpsell(true);
-
-    const historyQuery = query(
-        collection(db, `artifacts/${appId}/public/data/jobs`),
-        where("companyId", "==", userProfile.companyId),
-        where("customerName", "==", customerName),
-        where("status", "==", "Completed"),
-        orderBy("completedAt", "desc"),
-        limit(5)
-    );
-    const historySnapshot = await getDocs(historyQuery);
-    const customerHistory = historySnapshot.docs.map(d => d.data() as Job);
-
-    const result = await suggestUpsellOpportunityAction({
+    setIsAnalyzingJob(true);
+    const result = await analyzeJobAction({
+        appId: appId,
+        companyId: userProfile.companyId,
         jobTitle: title,
         jobDescription: description,
-        customerHistory: customerHistory.filter(h => h.completedAt).map(h => ({
-            title: h.title,
-            description: h.description || '',
-            completedAt: h.completedAt!,
-        }))
+        customerName: customerName,
+        availableSkills: allSkills,
+        availableParts: allParts.map(p => p.name),
     });
+    setIsAnalyzingJob(false);
 
-    if (result.data) {
-        setUpsellScore(result.data.upsellScore);
-        setUpsellReasoning(result.data.reasoning);
-        toast({ title: "AI Upsell Suggestion", description: result.data.reasoning });
-    } else {
-        toast({ title: "Error", description: result.error || "Could not get upsell suggestion.", variant: "destructive" });
-    }
-    setIsFetchingUpsell(false);
-  }
-  
-  const handleSuggestParts = async () => {
-    if (!description.trim() && !title.trim()) {
-        toast({ title: "Cannot Suggest Parts", description: "Please enter a Job Title or Description.", variant: "default" });
-        return;
-    }
-    setIsFetchingParts(true);
-    const result = await suggestJobPartsAction({ jobDescription: description, availableParts: allParts.map(p => p.name) });
     if (result.error) {
-        toast({ title: "Parts Suggestion Error", description: result.error, variant: "destructive" });
-    } else if (result.data?.suggestedParts) {
-        if (result.data.suggestedParts.length === 0) {
-            toast({ title: "No specific parts suggested", description: "The AI could not identify specific parts from the job description.", variant: "default" });
-        } else {
-            setRequiredParts(prev => [...new Set([...prev, ...result.data!.suggestedParts])]);
-            toast({ title: "Parts Suggested", description: `Fleety added ${result.data.suggestedParts.length} part(s). Please review.` });
+        toast({ title: "Analysis Error", description: result.error, variant: "destructive" });
+    } else if (result.data) {
+        let updateCount = 0;
+        const { suggestedSkills, suggestedParts, upsellOpportunity } = result.data;
+        if (suggestedSkills.suggestedSkills.length > 0) {
+            setRequiredSkills(prev => [...new Set([...prev, ...suggestedSkills.suggestedSkills])]);
+            updateCount += suggestedSkills.suggestedSkills.length;
         }
+        if (suggestedParts.suggestedParts.length > 0) {
+            setRequiredParts(prev => [...new Set([...prev, ...suggestedParts.suggestedParts])]);
+            updateCount += suggestedParts.suggestedParts.length;
+        }
+        setUpsellScore(upsellOpportunity.upsellScore);
+        setUpsellReasoning(upsellOpportunity.reasoning);
+        if(upsellOpportunity.upsellScore > 0) updateCount++;
+        
+        toast({ title: "Analysis Complete", description: `AI added ${updateCount} suggestion(s). Please review.` });
     }
-    setIsFetchingParts(false);
   };
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -483,8 +462,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
 
 
-    const finalTechId = selectedSuggestion ? selectedSuggestion.technicianId : (manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null);
-    const finalScheduledTime = selectedSuggestion ? new Date(selectedSuggestion.time) : scheduledTime;
+    const finalTechId = manualTechnicianId !== UNASSIGNED_VALUE ? manualTechnicianId : null;
+    const finalScheduledTime = scheduledTime;
 
     const jobData: any = {
       companyId: userProfile.companyId,
@@ -506,9 +485,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       estimatedDurationMinutes,
       sourceContractId: selectedContractId || job?.sourceContractId || null,
       quotedValue,
+      expectedPartsCost,
       slaDeadline: slaDeadline ? slaDeadline.toISOString() : null,
       upsellScore: upsellScore,
       upsellReasoning: upsellReasoning,
+      flexibility,
+      dispatchLocked,
       ...(triageToken && { 
         triageToken: triageToken,
         triageTokenExpiresAt: addHours(new Date(), 24).toISOString()
@@ -642,271 +624,210 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl flex flex-col max-h-[90dvh] p-0">
+      <DialogContent className="sm:max-w-2xl flex flex-col max-h-[90dvh] p-0">
           <DialogHeader className="px-6 pt-6 flex-shrink-0">
             <DialogTitle className="font-headline">{titleText}</DialogTitle>
             {descriptionText && <DialogDescription>{descriptionText}</DialogDescription>}
           </DialogHeader>
           <form id="job-form" ref={formRef} onSubmit={handleSubmit} className="flex-1 min-h-0 flex flex-col">
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              {job?.status === 'Draft' && (
-                <Alert variant="default" className="mb-4 bg-amber-50 border-amber-400 text-amber-900 [&>svg]:text-amber-600">
-                  <FilePenLine className="h-4 w-4" />
-                  <AlertTitle className="font-semibold">Editing Draft</AlertTitle>
-                  <AlertDescription>
-                    This is a draft job. Please complete all required fields and set a status such as "Unassigned" to activate it.
-                  </AlertDescription>
-                </Alert>
-              )}
-              {job?.sourceContractId && (
-                <Alert variant="default" className="mb-4 bg-blue-50 border-blue-200 text-blue-900 [&>svg]:text-blue-600">
-                    <Repeat className="h-4 w-4"/>
-                    <AlertTitle>Contract Job</AlertTitle>
-                    <AlertDescription>
-                        This job was generated from a Service Contract. <Link href="/contracts" className="font-semibold underline">View contracts</Link>.
-                    </AlertDescription>
-                </Alert>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                {/* --- LEFT COLUMN --- */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><User className="h-4 w-4"/> Customer & Location</h3>
-                  <div>
-                    <Label htmlFor="customerName">Customer Name *</Label>
-                    <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
-                      <PopoverAnchor>
-                        <Input
-                          id="customerName"
-                          name="customerName"
-                          value={customerName}
-                          onChange={handleCustomerNameChange}
-                          placeholder="e.g., John Doe"
-                          autoComplete="off"
-                        />
-                      </PopoverAnchor>
-                      <PopoverContent
-                        className="w-[--radix-popover-trigger-width] p-0"
-                        onOpenAutoFocus={(e) => e.preventDefault()}
-                      >
-                        <div className="max-h-60 overflow-y-auto">
-                          {customerSuggestions.map((customer) => (
-                            <div
-                              key={customer.id}
-                              className="p-3 text-sm cursor-pointer hover:bg-accent"
-                              onClick={() => handleSelectCustomer(customer)}
-                            >
-                              <p className="font-semibold">{customer.name}</p>
-                              <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="customerEmail">Customer Email</Label>
-                        <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
-                    </div>
-                    <div>
-                        <Label htmlFor="customerPhone">Customer Phone</Label>
-                        <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
-                    </div>
-                  </div>
-                   <div>
-                    <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
-                    <AddressAutocompleteInput
-                      value={locationAddress}
-                      onValueChange={setLocationAddress}
-                      onLocationSelect={handleLocationSelect}
-                      placeholder="Start typing job address..."
-                      required
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2 pt-2"><Wrench className="h-4 w-4"/> Job Details</h3>
-                  <div>
-                    <Label htmlFor="jobTitle">Job Title *</Label>
-                    <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="jobDescription">Job Description</Label>
-                    <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={4} className="bg-card" />
-                  </div>
-                  <Accordion type="single" collapsible>
-                    <AccordionItem value="financials">
-                        <AccordionTrigger className="text-sm font-medium"><DollarSign className="h-4 w-4 mr-2"/>Financials (Optional)</AccordionTrigger>
+            <div className="flex-1 overflow-y-auto px-6">
+                <Accordion type="single" collapsible defaultValue="item-1" className="w-full">
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><User className="h-4 w-4"/>Customer & Location</div></AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-2">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="quotedValue"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Quoted Value ($)</Label>
-                                    <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label htmlFor="upsellScore">Upsell Potential</Label>
-                                     <div className="flex items-center gap-2">
-                                        <Select value={String(upsellScore ?? '0')} onValueChange={(value) => setUpsellScore(parseFloat(value))}>
-                                            <SelectTrigger id="upsellScore">
-                                                <SelectValue placeholder="Select potential" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="0">None</SelectItem>
-                                                <SelectItem value="0.2">Low</SelectItem>
-                                                <SelectItem value="0.5">Medium</SelectItem>
-                                                <SelectItem value="0.8">High</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <Button type="button" variant="outline" size="icon" onClick={handleSuggestUpsell} disabled={isFetchingUpsell || !title}>
-                                            {isFetchingUpsell ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4"/>}
-                                        </Button>
+                             <div>
+                                <Label htmlFor="customerName">Customer Name *</Label>
+                                <Popover open={isCustomerPopoverOpen} onOpenChange={setIsCustomerPopoverOpen}>
+                                <PopoverAnchor>
+                                    <Input
+                                    id="customerName"
+                                    name="customerName"
+                                    value={customerName}
+                                    onChange={handleCustomerNameChange}
+                                    placeholder="e.g., John Doe"
+                                    autoComplete="off"
+                                    />
+                                </PopoverAnchor>
+                                <PopoverContent
+                                    className="w-[--radix-popover-trigger-width] p-0"
+                                    onOpenAutoFocus={(e) => e.preventDefault()}
+                                >
+                                    <div className="max-h-60 overflow-y-auto">
+                                    {customerSuggestions.map((customer) => (
+                                        <div
+                                        key={customer.id}
+                                        className="p-3 text-sm cursor-pointer hover:bg-accent"
+                                        onClick={() => handleSelectCustomer(customer)}
+                                        >
+                                        <p className="font-semibold">{customer.name}</p>
+                                        <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                                        </div>
+                                    ))}
                                     </div>
+                                </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="customerEmail">Customer Email</Label>
+                                    <Input id="customerEmail" name="customerEmail" type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="e.g., name@example.com" />
+                                </div>
+                                <div>
+                                    <Label htmlFor="customerPhone">Customer Phone</Label>
+                                    <Input id="customerPhone" name="customerPhone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="e.g., 555-1234" />
+                                </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="jobLocationAddress">Job Location (Address) *</Label>
+                                <AddressAutocompleteInput
+                                value={locationAddress}
+                                onValueChange={setLocationAddress}
+                                onLocationSelect={handleLocationSelect}
+                                placeholder="Start typing job address..."
+                                required
+                                />
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-2">
+                         <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><Wrench className="h-4 w-4"/>Job Details</div></AccordionTrigger>
+                         <AccordionContent className="space-y-4 pt-2">
+                             <div>
+                                <Label htmlFor="jobTitle">Job Title *</Label>
+                                <Input id="jobTitle" name="jobTitle" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g., Emergency Plumbing Fix" required />
+                            </div>
+                            <div>
+                                <Label htmlFor="jobDescription">Job Description</Label>
+                                <Textarea id="jobDescription" name="jobDescription" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the job requirements..." rows={3} className="bg-card" />
+                            </div>
+                         </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="item-3">
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><Settings className="h-4 w-4"/>Configuration & Financials</div></AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="jobPriority">Job Priority *</Label>
+                                    <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
+                                    <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
+                                        <SelectValue placeholder="Select priority" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="High">High</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="Low">Low</SelectItem>
+                                    </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label htmlFor="estimatedDurationMinutes">Estimated Duration (minutes) *</Label>
+                                    <Input
+                                        id="estimatedDurationMinutes"
+                                        type="number"
+                                        value={estimatedDurationMinutes || ''}
+                                        onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 60)}
+                                        min="1"
+                                        placeholder="e.g., 60"
+                                    />
                                 </div>
                             </div>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <Label htmlFor="slaDeadline">SLA Deadline</Label>
-                                    <Input id="slaDeadline" type="datetime-local" value={slaDeadline ? format(slaDeadline, "yyyy-MM-dd'T'HH:mm") : ''} onChange={e => setSlaDeadline(new Date(e.target.value))} />
+                                    <Label htmlFor="quotedValue">Quoted Value ($)</Label>
+                                    <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="e.g., 250.00"/>
+                                </div>
+                                <div>
+                                    <Label htmlFor="expectedPartsCost">Expected Parts Cost ($)</Label>
+                                    <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="e.g., 50.00"/>
+                                </div>
+                            </div>
+                            {estimatedProfit !== null && (
+                                <div className="p-3 border rounded-md bg-secondary/50 flex items-center justify-around text-center">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Est. Job Profit</p>
+                                        <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>${estimatedProfit.toFixed(2)}</p>
+                                    </div>
+                                    <Separator orientation="vertical" className="h-10"/>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Est. Profit Margin</p>
+                                        <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
+                                            {estimatedMargin !== null ? `${estimatedMargin.toFixed(0)}%` : 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+                             <div className="p-3 border rounded-md bg-secondary/50">
+                                <h4 className="text-sm font-medium mb-2">Scheduling Constraints</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                    <Label htmlFor="flexibility">Scheduling Flexibility</Label>
+                                    <Select value={flexibility} onValueChange={(value: JobFlexibility) => setFlexibility(value)}>
+                                        <SelectTrigger id="flexibility">
+                                            <SelectValue placeholder="Select flexibility" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="flexible"><div className="flex items-center gap-2"><Repeat className="h-4 w-4"/>Flexible</div></SelectItem>
+                                            <SelectItem value="fixed"><div className="flex items-center gap-2"><Lock className="h-4 w-4"/>Fixed Appointment</div></SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    </div>
+                                    <div className="flex items-end pb-1">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="dispatchLocked" checked={dispatchLocked} onCheckedChange={(checked) => setDispatchLocked(Boolean(checked))} />
+                                        <Label htmlFor="dispatchLocked" className="flex items-center gap-1.5"><Lock className="h-4 w-4"/>Lock Assignment</Label>
+                                    </div>
+                                    </div>
                                 </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
-                  </Accordion>
-                </div>
-
-                {/* --- RIGHT COLUMN --- */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2"><Settings className="h-4 w-4"/> Job Configuration</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="jobPriority">Job Priority *</Label>
-                        <Select value={priority} onValueChange={(value: JobPriority) => setPriority(value)} name="jobPriority">
-                          <SelectTrigger id="jobPriority" name="jobPriorityTrigger">
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="High">High</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Low">Low</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="estimatedDurationMinutes">Estimated Duration (minutes) *</Label>
-                        <Input
-                            id="estimatedDurationMinutes"
-                            type="number"
-                            value={estimatedDurationMinutes || ''}
-                            onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 60)}
-                            min="1"
-                            placeholder="e.g., 60"
-                        />
-                      </div>
-                  </div>
-                   <div>
-                    <Label htmlFor="contractId">Link to Contract (Optional)</Label>
-                    <Select value={selectedContractId} onValueChange={handleSelectContract}>
-                        <SelectTrigger id="contractId">
-                            <SelectValue placeholder="None" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="unlinked">-- None --</SelectItem>
-                            {contracts.map(c => (
-                                <SelectItem key={c.id} value={c.id!}>{c.customerName} - {c.jobTemplate.title}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                          <ListChecks className="h-4 w-4" />
-                          Required Skills
-                      </Label>
-                      <div className="flex items-center gap-2">
-                          <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0">Manage</Button>
-                          <Button type="button" variant="outline" size="sm" onClick={handleSuggestSkills} disabled={isFetchingSkills || (!title.trim() && !description.trim())} className="h-9">
-                              {isFetchingSkills ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
-                              Suggest
+                     <AccordionItem value="item-4">
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><ListChecks className="h-4 w-4"/>Skills & Parts</div></AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-2">
+                              <div className="flex flex-col space-y-2">
+                                <Label className="flex items-center gap-2">Required Skills</Label>
+                                <MultiSelectFilter
+                                    options={skillOptions}
+                                    selected={requiredSkills}
+                                    onChange={setRequiredSkills}
+                                    placeholder="Select required skills..."
+                                />
+                                <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0 self-end">Manage Skills</Button>
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                                <Label className="flex items-center gap-2">Required Parts</Label>
+                                <MultiSelectFilter
+                                    options={partOptions}
+                                    selected={requiredParts}
+                                    onChange={setRequiredParts}
+                                    placeholder="Select required parts..."
+                                />
+                                <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0 self-end">Manage Parts</Button>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+                
+                 <div className="space-y-2 border-t pt-4 mt-4">
+                     <div className="flex items-center justify-between">
+                         <Label className="flex items-center gap-2 font-semibold text-lg"><Wand2 className="h-5 w-5 text-primary"/>AI Job Analysis</Label>
+                          <Button type="button" variant="outline" size="sm" onClick={handleAnalyzeJob} disabled={isAnalyzingJob || (!title.trim() && !description.trim())} className="h-9">
+                              {isAnalyzingJob ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
+                              Analyze Job
                           </Button>
                       </div>
-                    </div>
-                     <MultiSelectFilter
-                        options={skillOptions}
-                        selected={requiredSkills}
-                        onChange={setRequiredSkills}
-                        placeholder="Select required skills..."
-                    />
+                      <p className="text-xs text-muted-foreground">Get AI suggestions for skills, parts, and upsell opportunities based on the job details.</p>
+                      {upsellReasoning && <Alert className="mt-2"><Lightbulb className="h-4 w-4"/><AlertTitle>Upsell Suggestion</AlertTitle><AlertDescription className="text-xs">{upsellReasoning}</AlertDescription></Alert>}
                   </div>
-                   <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                          <Package className="h-4 w-4" />
-                          Required Parts
-                      </Label>
-                      <div className="flex items-center gap-2">
-                          <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0">Manage</Button>
-                          <Button type="button" variant="outline" size="sm" onClick={handleSuggestParts} disabled={isFetchingParts || (!title.trim() && !description.trim())} className="h-9">
-                              {isFetchingParts ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />}
-                              Suggest
-                          </Button>
-                      </div>
-                    </div>
-                     <MultiSelectFilter
-                        options={partOptions}
-                        selected={requiredParts}
-                        onChange={setRequiredParts}
-                        placeholder="Select required parts..."
-                    />
-                  </div>
-                  <div className="space-y-2 rounded-md border p-4">
-                    <TooltipProvider>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                              <h3 className="text-sm font-semibold flex items-center gap-2 cursor-help"><Sparkles className="h-4 w-4 text-primary"/> Fleety's Service Prep <Info className="h-3 w-3 text-muted-foreground"/></h3>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                              <p className="max-w-xs">Generates a secure link to send to the customer. They can upload photos of the issue, which our AI will analyze. The photos and AI analysis (suggested parts, repair steps) will appear on the job details page to help the technician prepare.</p>
-                          </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    {job && (job.aiIdentifiedModel || (job.aiSuggestedParts && job.aiSuggestedParts.length > 0) || job.aiRepairGuide) ? (
-                      <div className="text-sm space-y-2">
-                          <p><strong>Model:</strong> {job.aiIdentifiedModel || 'Not identified'}</p>
-                          <p><strong>Suggested Parts:</strong> {job.aiSuggestedParts?.join(', ') || 'None suggested'}</p>
-                          <div>
-                            <p><strong>AI Repair Guide:</strong></p>
-                            <p className="text-muted-foreground whitespace-pre-wrap">{job.aiRepairGuide || 'No guide available'}</p>
-                          </div>
-                      </div>
-                    ) : triageMessage ? (
-                      <div className="space-y-2">
-                          <Label htmlFor="triage-link">Customer Message</Label>
-                          <Textarea id="triage-message" readOnly value={triageMessage} rows={4} className="bg-secondary/50"/>
-                          <Button size="sm" type="button" onClick={handleCopyToClipboard} className="h-9">
-                              {isCopied ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
-                              Copy Message
-                          </Button>
-                          <p className="text-xs text-muted-foreground">The link in the message is valid for 24 hours.</p>
-                      </div>
-                    ) : (
-                      <Button type="button" size="sm" variant="outline" onClick={handleGenerateTriageLink} disabled={isGeneratingLink} className="h-9">
-                          {isGeneratingLink ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LinkIcon className="mr-2 h-4 w-4" />}
-                          Request Photos
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <Separator className="my-4" />
-
-            <div className="px-6 pb-2 space-y-4">
-                   <div className="flex flex-wrap gap-2 items-center justify-between">
+            <div className="px-6 pb-2 mt-4 pt-4 border-t bg-secondary/50 -mx-6 space-y-4">
+                   <div className="px-6 flex flex-wrap gap-2 items-center justify-between">
                        <h3 className="text-lg font-semibold flex items-center gap-2"><Bot className="h-5 w-5 text-primary"/> AI Scheduler</h3>
                        <div className="flex flex-wrap gap-2">
                            <Button type="button" variant="accent" onClick={() => fetchAITimeSuggestion()} disabled={isFetchingAISuggestion || !title}>
                                 {isFetchingAISuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-                                Fleety Suggest Time & Tech
+                                AI Suggest Time & Tech
                             </Button>
                             {timeSuggestions.length > 0 && (
                                 <Button type="button" variant="outline" onClick={() => fetchAITimeSuggestion(true)} disabled={isFetchingAISuggestion}>
@@ -917,18 +838,15 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                        </div>
                    </div>
                    {timeSuggestions.length > 0 && (
-                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                       <div className="px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                            {timeSuggestions.slice(0, 3).map(suggestion => {
                                const techName = technicians.find(t => t.id === suggestion.technicianId)?.name || 'Unknown Tech';
                                return (
                                    <button
                                        key={suggestion.time}
                                        type="button"
-                                       onClick={() => setSelectedSuggestion(suggestion)}
-                                       className={cn(
-                                        "p-3 border rounded-md text-left hover:bg-secondary transition-colors ring-2 ring-transparent",
-                                        selectedSuggestion?.time === suggestion.time && "ring-green-500 bg-green-50"
-                                       )}
+                                       onClick={() => handleSelectAISuggestion(suggestion)}
+                                       className="p-3 border rounded-md text-left hover:bg-background transition-colors bg-card"
                                    >
                                        <p className="font-semibold text-sm">{format(new Date(suggestion.time), 'MMM d, p')}</p>
                                        <p className="text-xs text-muted-foreground">with {techName}</p>
@@ -938,8 +856,8 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                            })}
                        </div>
                    )}
-                  <Accordion type="single" collapsible className="w-full">
-                    <AccordionItem value="manual-override">
+                  <Accordion type="single" collapsible className="w-full px-6">
+                    <AccordionItem value="manual-override" className="border-b-0">
                       <AccordionTrigger>
                         <span className="flex items-center gap-2 text-sm font-medium"><ChevronsUpDown className="h-4 w-4"/>Manual Override</span>
                       </AccordionTrigger>
@@ -983,7 +901,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                           <div className="space-y-2">
                             <Label htmlFor="assign-technician">Assigned Technician</Label>
                             <Select value={manualTechnicianId} onValueChange={handleManualTechnicianChange}>
-                                <SelectTrigger id="assign-technician">
+                                <SelectTrigger id="assign-technician" className="bg-card">
                                 <SelectValue placeholder="Unassigned" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1003,7 +921,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     value={status} 
                                     onValueChange={(value: JobStatus) => setStatus(value)}
                                 >
-                                <SelectTrigger id="jobStatus">
+                                <SelectTrigger id="jobStatus" className="bg-card">
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -1018,7 +936,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                   </Accordion>
             </div>
 
-            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2">
+            <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 flex-row justify-between items-center gap-2 bg-background">
               <div className="flex-shrink-0">
                 {job && (
                   <AlertDialog>

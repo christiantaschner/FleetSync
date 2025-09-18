@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
@@ -26,6 +26,21 @@ export default function MarketingPage() {
   const [jobsPerDay, setJobsPerDay] = useState(1);
   const [avgJobValue, setAvgJobValue] = useState(250);
   const [roi, setRoi] = useState<number | null>(null);
+
+  const [keysAvailable, setKeysAvailable] = useState(247);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setKeysAvailable(prevKeys => {
+        if (prevKeys > 50) {
+          return prevKeys - Math.floor(Math.random() * 2 + 1);
+        }
+        return prevKeys;
+      });
+    }, 4500); // Decrease every 4.5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
@@ -210,6 +225,9 @@ export default function MarketingPage() {
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-slate-400">30-day free trial. No credit card required.</p>
+                 <p className="mt-2 text-sm font-semibold text-amber-300 animate-pulse">
+                    Only <span className="font-bold text-lg">{keysAvailable}</span> free trial access keys available this month.
+                 </p>
             </div>
           </div>
         </section>

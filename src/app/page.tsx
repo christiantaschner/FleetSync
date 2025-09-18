@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain, Rocket, MapPin } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain, Rocket, MapPin, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -214,33 +214,87 @@ export default function MarketingPage() {
           </div>
         </section>
         
-        <section className="container mt-8 md:-mt-16 lg:-mt-24">
-            <div className="relative mx-auto flex flex-col items-center">
-                <div className="bg-slate-200 p-2 sm:p-3 rounded-2xl border border-slate-300 shadow-2xl">
-                     <Image 
-                        src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
-                        width={1200}
-                        height={750}
-                        alt="A dashboard showing a profit-optimized schedule with clear profit scores on each job."
-                        className="w-full h-auto object-contain rounded-lg border-2 border-slate-400"
-                        priority
-                        data-ai-hint="dispatch optimization profit"
-                    />
+        {/* 2. Dual Platform Showcase */}
+        <section id="solution" className="py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-4xl text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">One Platform. Two Profit Centers.</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">MarginMax gives your team two powerful, AI-driven tools: a command center for your dispatcher and a profit-boosting app for your technicians.</p>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+                    {/* Dispatcher Dashboard */}
+                    <Card className="flex flex-col shadow-lg">
+                        <CardHeader>
+                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                <LayoutDashboard className="h-6 w-6"/>
+                            </div>
+                            <CardTitle className="font-headline text-2xl">For the Dispatcher: The Command Center</CardTitle>
+                            <CardDescription>Automate complex decisions and get a real-time view of your profitability.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow space-y-4">
+                             <div className="relative rounded-lg overflow-hidden border">
+                                <Image 
+                                    src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
+                                    width={600} height={375}
+                                    alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
+                                    className="w-full h-auto"
+                                />
+                            </div>
+                            <ul className="space-y-3 text-sm">
+                                <li className="flex items-start gap-3">
+                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                    <div><strong className="text-foreground">Profit-First Job Board:</strong> See jobs ranked by net profit, not just by time, to prioritize high-margin work instantly.</div>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                    <div><strong className="text-foreground">One-Click Optimization:</strong> Let the AI instantly find the most profitable technician and route for any job.</div>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                    <div><strong className="text-foreground">Live Profit Dashboard:</strong> Watch your daily and weekly profit margins grow in real time as jobs are completed.</div>
+                                </li>
+                            </ul>
+                        </CardContent>
+                    </Card>
+                    
+                    {/* Technician App */}
+                     <Card className="flex flex-col shadow-lg">
+                        <CardHeader>
+                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                <Smartphone className="h-6 w-6"/>
+                            </div>
+                            <CardTitle className="font-headline text-2xl">For the Technician: The Profit Tool</CardTitle>
+                            <CardDescription>Turn every technician into a profit driver without making them a salesperson.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow space-y-4">
+                             <div className="relative rounded-lg overflow-hidden border">
+                                <Image 
+                                    src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
+                                    width={600} height={375}
+                                    alt="Mobile app view showing an AI upsell suggestion for a maintenance plan."
+                                    className="w-full h-auto"
+                                />
+                            </div>
+                            <ul className="space-y-3 text-sm">
+                                <li className="flex items-start gap-3">
+                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                    <div><strong className="text-foreground">AI Upsell Prompts:</strong> Get context-aware suggestions (e.g., "Unit is 12 years old, suggest replacement estimate") with simple talk tracks.</div>
+                                 </li>
+                                <li className="flex items-start gap-3">
+                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                    <div><strong className="text-foreground">One-Tap Outcome Logging:</strong> Easily track if an upsell was sold or declined, feeding crucial data back to the AI.</div>
+                                </li>
+                                <li className="flex items-start gap-3">
+                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                    <div><strong className="text-foreground">AI Troubleshooting:</strong> Stuck on a job? Get instant diagnostic steps from the AI based on the equipment's history and symptoms.</div>
+                                </li>
+                            </ul>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </section>
 
-        {/* The Solution Section */}
-        <section id="solution" className="bg-background py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Traditional dispatch is about efficiency. <br/> Profit-first dispatch is about efficiency + profit.</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">
-                        Standard dispatch software minimizes drive time. MarginMax is the first platform designed to maximize your net profit on every single job.
-                    </p>
-                </div>
-            </div>
-        </section>
 
         {/* How It Works (New Version) */}
         <section id="how-it-works" className="bg-muted py-16 sm:py-24">

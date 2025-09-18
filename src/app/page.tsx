@@ -226,7 +226,7 @@ export default function MarketingPage() {
                 </div>
                  <p className="mt-2 text-sm text-slate-400">30-day free trial. No credit card required.</p>
                  <p className="mt-2 text-sm font-semibold text-amber-300 animate-pulse">
-                    Only <span className="font-bold text-lg">{keysAvailable}</span> free trial access keys available this month.
+                    Claim your spot! Only <span className="font-bold text-lg">{keysAvailable}</span> free trial keys remaining this month.
                  </p>
             </div>
           </div>

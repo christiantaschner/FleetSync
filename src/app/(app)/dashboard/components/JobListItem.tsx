@@ -136,6 +136,12 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                     ) : (
                                         <Badge variant="outline">Unassigned</Badge>
                                     )}
+                                    {job.profitScore !== undefined && (
+                                        <Badge className="font-bold text-lg bg-green-100 text-green-800 border-green-300">
+                                            <DollarSign className="h-3.5 w-3.5 mr-1"/>
+                                            {job.profitScore.toFixed(0)}
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
                         </AccordionTrigger>

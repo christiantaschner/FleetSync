@@ -234,7 +234,7 @@ export default function MarketingPage() {
         </section>
         
         {/* 2. Dual Platform Showcase */}
-        <section id="solution" className="py-16 sm:py-24">
+        <section id="solution" className="bg-background text-foreground py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-4xl text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">One Platform. Two Profit Engines.</h2>
@@ -353,15 +353,42 @@ export default function MarketingPage() {
             </div>
         </section>
 
+        {/* Built for Your Industry */}
+        <section className="py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built For Your Industry</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                        MarginMax adapts to the unique financial drivers of your trade, from high-margin emergency calls to high-volume contract work.
+                    </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {industryNiches.map((niche) => (
+                        <Card key={niche.title} className="text-center">
+                             <CardHeader className="items-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                    <niche.icon className="h-6 w-6"/>
+                                </div>
+                                <CardTitle>{niche.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-muted-foreground text-sm">{niche.description}</p>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </section>
+
         {/* Testimonials Section */}
-        <section className="bg-background py-16 sm:py-24">
+        <section className="bg-muted py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Owner ROI, Proven.</h2>
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="flex flex-col">
+                        <Card key={index} className="flex flex-col bg-background">
                             <CardContent className="pt-6 flex-grow">
                                 <p className="text-muted-foreground">"{testimonial.quote}"</p>
                             </CardContent>
@@ -382,7 +409,7 @@ export default function MarketingPage() {
         </section>
 
         {/* ROI Calculator & Pricing Section */}
-        <section id="pricing" className="bg-muted py-16 sm:py-24">
+        <section id="pricing" className="bg-background py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">See Your Profit Gap.</h2>
@@ -392,7 +419,7 @@ export default function MarketingPage() {
                     </p>
                 </div>
                 <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                    <Card className="shadow-lg bg-background">
+                    <Card className="shadow-lg bg-muted">
                         <CardHeader>
                             <CardTitle>Quick ROI Calculator</CardTitle>
                         </CardHeader>
@@ -449,7 +476,7 @@ export default function MarketingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="bg-background py-16 sm:py-24">
+        <section id="features" className="bg-muted py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">More Than Dispatching. A Complete Profit Platform.</h2>
@@ -457,7 +484,7 @@ export default function MarketingPage() {
                 </div>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {featureList.map((feature) => (
-                      <Card key={feature.title} className="flex flex-col">
+                      <Card key={feature.title} className="flex flex-col bg-background">
                           <CardHeader className="flex-row items-center gap-4 space-y-0 pb-4">
                               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
                                 <feature.icon className="h-6 w-6" />
@@ -480,7 +507,8 @@ export default function MarketingPage() {
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">
                    Stop Dispatching. Start Operating Like a CEO.
                 </h2>
-                <p className="mt-4 text-lg text-slate-300">MarginMax isn’t just scheduling software. It’s your profit engine.</p>
+                <p className="mt-4 text-lg text-slate-300">MarginMax isn’t just scheduling software.
+                It’s your profit engine.</p>
                 <div className="mt-8 flex justify-center">
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial – 30 Days Free. No Credit Card.</Link>

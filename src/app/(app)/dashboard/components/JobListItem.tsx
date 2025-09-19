@@ -70,23 +70,25 @@ const JobListItem: React.FC<JobListItemProps> = ({
     }
   };
   
-  const profitPerHour = (job.profitScore && job.estimatedDurationMinutes) 
-    ? (job.profitScore / job.estimatedDurationMinutes) * 60 
-    : 0;
+  const estimatedProfit = (job.quotedValue && job.expectedPartsCost) 
+    ? job.quotedValue - job.expectedPartsCost
+    : null;
 
-  const getProfitColorClass = (score: number | undefined) => {
-    if (score === undefined) return '';
+  const getProfitColorClass = (score: number | undefined | null) => {
+    if (score === undefined || score === null) return '';
     if (score > 150) return 'border-green-400 bg-green-50/50';
     if (score > 50) return 'border-amber-400 bg-amber-50/50';
     if (score > 0) return 'border-red-400 bg-red-50/50';
     return 'border-gray-300';
   };
+  
+  const profitScoreToUse = job.profitScore ?? estimatedProfit;
 
   return (
      <div ref={setNodeRef} style={style} {...attributes}>
         <Card className={cn(
           "hover:shadow-md transition-shadow duration-200",
-          getProfitColorClass(job.profitScore),
+          getProfitColorClass(profitScoreToUse),
           job.status === 'Draft' && "border-gray-400 bg-gray-50/50"
         )}>
             <Accordion type="single" collapsible>
@@ -136,12 +138,34 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                     ) : (
                                         <Badge variant="outline">Unassigned</Badge>
                                     )}
-                                    {job.profitScore !== undefined && (
-                                        <Badge className="font-bold text-lg bg-green-100 text-green-800 border-green-300">
-                                            <DollarSign className="h-3.5 w-3.5 mr-1"/>
-                                            {job.profitScore.toFixed(0)}
-                                        </Badge>
-                                    )}
+                                     <div className="flex items-center gap-1.5 pt-1">
+                                        {estimatedProfit !== null && (
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Badge variant="outline" className="font-semibold text-foreground">
+                                                            <DollarSign className="h-3.5 w-3.5 mr-0.5"/>
+                                                            {estimatedProfit.toFixed(0)}
+                                                        </Badge>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>Est. Profit (Quote - Parts)</p></TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        )}
+                                        {job.profitScore !== undefined && (
+                                             <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Badge className="font-bold bg-green-100 text-green-800 border-green-300">
+                                                            <Bot className="h-3.5 w-3.5 mr-1"/>
+                                                            {job.profitScore.toFixed(0)}
+                                                        </Badge>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent><p>AI Profit Score</p></TooltipContent>
+                                                </Tooltip>
+                                             </TooltipProvider>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </AccordionTrigger>

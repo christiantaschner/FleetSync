@@ -359,7 +359,7 @@ export default function MarketingPage() {
                 </div>
             </div>
         </section>
-
+        
         {/* Testimonials Section */}
         <section className="bg-muted py-16 sm:py-24">
             <div className="container">
@@ -493,10 +493,7 @@ export default function MarketingPage() {
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
-                    <p className="text-sm text-slate-400">30 Days Free. No Credit Card.</p>
-                    <p className="mt-2 text-sm text-slate-400">
-                        Only 2 of 30 free trial access keys available monthly.
-                    </p>
+                     <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2 of 30</p>
                 </div>
             </div>
         </section>

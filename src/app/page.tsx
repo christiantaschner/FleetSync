@@ -208,7 +208,7 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                 </div>
-                 <p className="mt-2 text-sm text-slate-400">30 days free. No credit card required.</p>
+                 <p className="mt-2 text-sm text-slate-400">30 Days Free. No Credit Card.</p>
             </div>
           </div>
         </section>
@@ -446,9 +446,10 @@ export default function MarketingPage() {
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
                                 <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
-                            <Button asChild size="lg" className="w-full">
+                             <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">👉 Start Free Trial</Link>
                             </Button>
+                            <p className="mt-2 text-sm text-muted-foreground text-center">30 Days Free. No Credit Card.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -493,7 +494,7 @@ export default function MarketingPage() {
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
-                     <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2 of 30</p>
+                     <p className="mt-2 text-sm text-slate-400">30 Days Free. No Credit Card.</p>
                 </div>
             </div>
         </section>

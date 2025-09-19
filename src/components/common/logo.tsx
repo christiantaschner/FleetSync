@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { TrendingUp } from "lucide-react";
 import { useTranslation } from "@/hooks/use-language";

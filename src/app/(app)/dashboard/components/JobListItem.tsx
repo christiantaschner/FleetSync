@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useDraggable } from '@dnd-kit/core';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface JobListItemProps {
   job: Job;
@@ -81,175 +82,128 @@ const JobListItem: React.FC<JobListItemProps> = ({
     return 'border-gray-300';
   };
 
-  const JobCardWrapper = ({ children }: { children: React.ReactNode }) => (
-     <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+  return (
+     <div ref={setNodeRef} style={style} {...attributes}>
         <Card className={cn(
           "hover:shadow-md transition-shadow duration-200",
-          !isLocked && "cursor-grab",
-          isLocked && "cursor-not-allowed",
           getProfitColorClass(job.profitScore),
-          job.status === 'Draft' && "border-gray-400 bg-gray-50/50" // Draft has its own style
+          job.status === 'Draft' && "border-gray-400 bg-gray-50/50"
         )}>
-            {children}
+            <Accordion type="single" collapsible>
+                <AccordionItem value={job.id} className="border-b-0">
+                    <div className={cn("flex items-center", !isLocked && "cursor-grab")} {...listeners}>
+                        <AccordionTrigger className="flex-1 p-4 hover:no-underline">
+                            <div className="flex items-start justify-between gap-4 w-full">
+                                <div className="flex-1 min-w-0">
+                                    <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
+                                    job.status === 'Draft' && "text-gray-600"
+                                    )}>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{job.status}</p>
+                                        </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    {isLocked && (
+                                        <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                            <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                            <p>Job is locked and cannot be moved.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                    <span className="truncate text-left">{job.title}</span>
+                                    </CardTitle>
+                                    <CardDescription className="flex items-center gap-1 text-sm mt-1">
+                                       <Users2 className="h-3 w-3 shrink-0" /> <span className="truncate">{job.customerName}</span>
+                                    </CardDescription>
+                                </div>
+                                <div className="flex flex-col items-end gap-1 text-right">
+                                    <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
+                                    {job.assignedTechnicianId ? (
+                                        <Badge variant="secondary" className="max-w-[150px]">
+                                            <UserCheck className="h-3 w-3 mr-1"/>
+                                            <span className="truncate">{technicians.find(t => t.id === job.assignedTechnicianId)?.name}</span>
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline">Unassigned</Badge>
+                                    )}
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                    </div>
+
+                    <AccordionContent className="px-4 pb-0">
+                        <div className="border-t pt-3">
+                            <CardContent className="space-y-3 text-sm pb-3">
+                                <p className="text-muted-foreground line-clamp-2">{job.description}</p>
+                                
+                                {job.location.address && (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <MapPin className="h-4 w-4" />
+                                        <span className="truncate">{job.location.address}</span>
+                                    </div>
+                                )}
+
+                                {job.requiredSkills && job.requiredSkills.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <ListChecks className="h-4 w-4 text-muted-foreground" />
+                                    <div className="flex flex-wrap gap-1">
+                                    {job.requiredSkills.map(skill => (
+                                        <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                                    ))}
+                                    </div>
+                                </div>
+                                )}
+                                
+                                {job.scheduledTime && (
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" /> Scheduled: {new Date(job.scheduledTime).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )}
+                            </CardContent>
+                            <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
+                                {job.status === 'Unassigned' && (
+                                    <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
+                                        <Bot className="mr-1 h-3 w-3" /> AI Assign
+                                    </Button>
+                                )}
+                                {job.status === 'Assigned' && (
+                                    <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
+                                        <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
+                                    </Button>
+                                )}
+                                {job.assignedTechnicianId && (
+                                    <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
+                                        <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
+                                    </Button>
+                                )}
+                                <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
+                                    <MapIcon className="mr-2 h-3 w-3" /> View on Map
+                                </Button>
+                                <Link href={`/job/${job.id}`} className="w-full">
+                                    <Button variant="outline" size="sm" className="w-full">
+                                    <Eye className="mr-2 h-4 w-4" /> View/Edit
+                                    </Button>
+                                </Link>
+                            </CardFooter>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </Card>
      </div>
   );
-
-  const cardContent = (
-    <>
-        <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <CardTitle className={cn("text-lg font-headline flex items-start gap-2", 
-                  job.status === 'Draft' && "text-gray-600"
-                )}>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>{job.status}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  {isLocked && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Job is locked and cannot be moved.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                   {job.flexibility === 'flexible' && (
-                     <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                           <Repeat className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>This is a flexible job that can be optimized.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-                  <span className="truncate">{job.title}</span>
-                </CardTitle>
-                <CardDescription className="flex items-center gap-1 text-sm mt-1">
-                  <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}</span>
-                </CardDescription>
-              </div>
-               <div className="flex flex-col items-end gap-1 text-right">
-                 <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
-                 {job.profitScore !== undefined && (
-                    <div className="flex items-end gap-4">
-                        {profitPerHour > 0 && (
-                             <div className="text-right">
-                                <span className="text-xs text-green-700/80 font-semibold">Profit / hr</span>
-                                <p className="font-bold text-lg text-green-600/90 flex items-center gap-1 justify-end">
-                                    ${profitPerHour.toFixed(2)}
-                                </p>
-                            </div>
-                        )}
-                        <div className="text-right">
-                            <span className="text-xs text-green-700 font-semibold">Potential Profit</span>
-                            <p className="font-bold text-2xl text-green-600 flex items-center gap-1 justify-end">
-                                ${job.profitScore.toFixed(2)}
-                            </p>
-                        </div>
-                    </div>
-                 )}
-               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm pb-3">
-            <div className="flex items-center gap-2">
-                <span className="font-medium">{job.customerName}</span>
-            </div>
-            <p className="text-muted-foreground line-clamp-2">{job.description}</p>
-            
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {job.requiredSkills && job.requiredSkills.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <ListChecks className="h-4 w-4 text-muted-foreground" />
-                  <div className="flex flex-wrap gap-1">
-                    {job.requiredSkills.map(skill => (
-                      <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-              <div>
-                {job.scheduledTime && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Scheduled: {new Date(job.scheduledTime).toLocaleString()}
-                  </span>
-                )}
-              </div>
-              <div>
-                {job.assignedTechnicianId ? (
-                  <Link href={`/technician/jobs/${job.assignedTechnicianId}`} className="flex items-center gap-1 font-medium text-primary hover:underline">
-                    <Wrench className="h-3 w-3" /> {technicians.find(t => t.id === job.assignedTechnicianId)?.name}
-                  </Link>
-                ) : (
-                  <span className="flex items-center gap-1 font-semibold text-muted-foreground">
-                    Unassigned
-                  </span>
-                )}
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
-             {job.status === 'Unassigned' && (
-                <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
-                    <Bot className="mr-1 h-3 w-3" /> AI Assign
-                </Button>
-            )}
-            {job.status === 'Assigned' && (
-                <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
-                    <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
-                </Button>
-            )}
-             {job.assignedTechnicianId && (
-                 <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
-                    <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
-                </Button>
-             )}
-             <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
-                <MapIcon className="mr-2 h-3 w-3" /> View on Map
-            </Button>
-            <Link href={`/job/${job.id}`} className="w-full">
-                <Button variant="outline" size="sm" className="w-full">
-                   <Eye className="mr-2 h-4 w-4" /> View/Edit
-                </Button>
-            </Link>
-          </CardFooter>
-    </>
-  );
-  
-  if (isLocked) {
-    return (
-        <TooltipProvider>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <JobCardWrapper>{cardContent}</JobCardWrapper>
-                </TooltipTrigger>
-                <TooltipContent>
-                    <p>This job is locked and cannot be moved by drag-and-drop.</p>
-                </TooltipContent>
-            </Tooltip>
-        </TooltipProvider>
-    )
-  }
-
-  return <JobCardWrapper>{cardContent}</JobCardWrapper>;
 };
 
 export default JobListItem;

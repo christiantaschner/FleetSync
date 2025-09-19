@@ -461,10 +461,10 @@ export default function MarketingPage() {
                                 <span className="text-sm text-muted-foreground">/ per tech / per month</span>
                             </div>
                             <ul className="space-y-2">
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> ✔ Unlimited Jobs & Customers</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> ✔ All AI Features Included</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> ✔ No Hidden Fees</li>
-                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> ✔ Cancel Anytime</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Unlimited Jobs & Customers</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> All AI Features Included</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
                             <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">👉 Start Free Trial</Link>
@@ -509,10 +509,11 @@ export default function MarketingPage() {
                 </h2>
                 <p className="mt-4 text-lg text-slate-300">MarginMax isn’t just scheduling software.
                 It’s your profit engine.</p>
-                <div className="mt-8 flex justify-center">
+                <div className="mt-8 flex flex-col items-center justify-center gap-4">
                     <Button asChild size="lg" variant="default">
-                        <Link href="/signup">👉 Start Free Trial – 30 Days Free. No Credit Card.</Link>
+                        <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
+                    <p className="text-sm text-slate-400">30 Days Free. No Credit Card.</p>
                 </div>
             </div>
         </section>

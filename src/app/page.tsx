@@ -137,7 +137,7 @@ export default function MarketingPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-background">
         <div className="container flex h-14 items-center justify-between">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo />
@@ -352,7 +352,7 @@ export default function MarketingPage() {
                 </div>
             </div>
         </section>
-
+        
         {/* Built for Your Industry */}
         <section className="py-16 sm:py-24">
             <div className="container">
@@ -509,7 +509,7 @@ export default function MarketingPage() {
                 </h2>
                 <p className="mt-4 text-lg text-slate-300">MarginMax isn’t just scheduling software.
                 It’s your profit engine.</p>
-                <div className="mt-8 flex flex-col items-center justify-center gap-4">
+                <div className="mt-8 flex flex-col items-center justify-center gap-2">
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>

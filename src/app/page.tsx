@@ -208,8 +208,7 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                 </div>
-                 <p className="mt-2 text-sm text-slate-400">30 Days Free. No Credit Card.</p>
-                 <p className="mt-2 text-sm font-bold text-amber-400">Free trials available this month: 2 of 30</p>
+                 <p className="text-sm text-slate-400">Free trials available this month: 2 of 30</p>
             </div>
           </div>
         </section>
@@ -450,7 +449,6 @@ export default function MarketingPage() {
                              <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">👉 Start Free Trial</Link>
                             </Button>
-                            <p className="mt-2 text-sm text-muted-foreground text-center">30 Days Free. No Credit Card.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -495,8 +493,7 @@ export default function MarketingPage() {
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
-                     <p className="mt-2 text-sm text-slate-400">30 Days Free. No Credit Card.</p>
-                     <p className="mt-2 text-sm font-bold text-amber-400">Free trials available this month: 2 of 30</p>
+                    <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2 of 30</p>
                 </div>
             </div>
         </section>

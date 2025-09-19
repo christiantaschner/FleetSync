@@ -209,6 +209,7 @@ export default function MarketingPage() {
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-slate-400">30 Days Free. No Credit Card.</p>
+                 <p className="mt-2 text-sm font-bold text-amber-400">Free trials available this month: 2 of 30</p>
             </div>
           </div>
         </section>
@@ -281,7 +282,7 @@ export default function MarketingPage() {
                                  </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">One-Tap Outcome Logging:</strong> Track upsells sold/declined, fueling smarter AI.</div>
+                                    <div><strong className="text-foreground">Live Job Assignments & Chat:</strong> View your daily schedule and communicate directly with dispatch in real-time.</div>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
@@ -495,6 +496,7 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                      <p className="mt-2 text-sm text-slate-400">30 Days Free. No Credit Card.</p>
+                     <p className="mt-2 text-sm font-bold text-amber-400">Free trials available this month: 2 of 30</p>
                 </div>
             </div>
         </section>

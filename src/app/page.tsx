@@ -27,21 +27,6 @@ export default function MarketingPage() {
   const [avgJobValue, setAvgJobValue] = useState(250);
   const [roi, setRoi] = useState<number | null>(null);
 
-  const [keysAvailable, setKeysAvailable] = useState(225);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setKeysAvailable(prevKeys => {
-        if (prevKeys > 50) {
-          return prevKeys - Math.floor(Math.random() * 2 + 1);
-        }
-        return prevKeys;
-      });
-    }, 4500); // Decrease every 4.5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
     const href = e.currentTarget.href;
@@ -131,8 +116,6 @@ export default function MarketingPage() {
         avatarHint: "man worker"
     }
   ];
-  
-  const [activeNiche, setActiveNiche] = useState(industryNiches[0].title);
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
@@ -226,8 +209,8 @@ export default function MarketingPage() {
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-slate-400">30 days free. No credit card required.</p>
-                 <p className="mt-2 text-sm font-semibold text-amber-300 animate-pulse">
-                    ⚡ Only {keysAvailable} trial keys left this month.
+                 <p className="mt-2 text-sm text-slate-400">
+                    Only 2 of 30 free trial access keys available.
                  </p>
             </div>
           </div>
@@ -352,7 +335,7 @@ export default function MarketingPage() {
                 </div>
             </div>
         </section>
-        
+
         {/* Built for Your Industry */}
         <section className="py-16 sm:py-24">
             <div className="container">

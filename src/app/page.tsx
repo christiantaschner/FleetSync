@@ -209,9 +209,6 @@ export default function MarketingPage() {
                     </Button>
                 </div>
                  <p className="mt-2 text-sm text-slate-400">30 days free. No credit card required.</p>
-                 <p className="mt-2 text-sm text-slate-400">
-                    Only 2 of 30 free trial access keys available.
-                 </p>
             </div>
           </div>
         </section>
@@ -497,6 +494,9 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                     <p className="text-sm text-slate-400">30 Days Free. No Credit Card.</p>
+                    <p className="mt-2 text-sm text-slate-400">
+                        Only 2 of 30 free trial access keys available monthly.
+                    </p>
                 </div>
             </div>
         </section>

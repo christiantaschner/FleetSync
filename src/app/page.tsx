@@ -165,6 +165,10 @@ export default function MarketingPage() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>Main Menu</SheetTitle>
+                      <SheetDescription>Navigation links for the main site.</SheetDescription>
+                    </SheetHeader>
                     <nav className="flex flex-col gap-4 mt-8">
                        {navLinks.map(link => (
                           <SheetClose asChild key={link.href}>
@@ -449,7 +453,6 @@ export default function MarketingPage() {
                              <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">👉 Start Free Trial</Link>
                             </Button>
-                            <p className="text-sm text-muted-foreground text-center">30 Days Free. No Credit Card.</p>
                         </CardContent>
                     </Card>
                 </div>

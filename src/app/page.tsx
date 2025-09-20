@@ -48,8 +48,8 @@ export default function MarketingPage() {
   };
   
   const navLinks = [
-    { href: "#solution", text: "The Solution" },
-    { href: "#how-it-works", text: "How It Works"},
+    { href: "#solution", text: "Solution" },
+    { href: "#how-it-works", text: "Why MarginMax?"},
     { href: "#pricing", text: "Pricing" },
     { href: "#features", text: "Features" }
   ];
@@ -209,7 +209,7 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                 </div>
-                 <p className="text-sm text-slate-400">Free trials available this month: 2 of 30</p>
+                 <p className="text-sm text-slate-400">Free trials available this month: 2/30</p>
             </div>
           </div>
         </section>
@@ -232,18 +232,15 @@ export default function MarketingPage() {
                             <CardDescription>Your control hub for maximum margin.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow space-y-4">
-                             <div className="relative rounded-lg overflow-hidden border bg-gray-900 p-2 shadow-inner">
-                                <div className="absolute top-2 left-2 flex gap-1.5">
-                                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                            <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-[280px] max-w-[450px] shadow-xl">
+                                <div className="rounded-xl overflow-hidden h-full bg-white">
+                                    <Image 
+                                        src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
+                                        width={600} height={375}
+                                        alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
+                                        className="object-cover h-full w-full"
+                                    />
                                 </div>
-                                <Image 
-                                    src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
-                                    width={600} height={375}
-                                    alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
-                                    className="w-full h-auto mt-6"
-                                />
                             </div>
                             <ul className="space-y-3 text-sm">
                                 <li className="flex items-start gap-3">
@@ -501,7 +498,7 @@ export default function MarketingPage() {
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
-                    <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2 of 30</p>
+                    <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2/30</p>
                 </div>
             </div>
         </section>

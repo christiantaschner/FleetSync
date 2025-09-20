@@ -232,15 +232,13 @@ export default function MarketingPage() {
                             <CardDescription>Your control hub for maximum margin.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow space-y-4">
-                            <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-[280px] max-w-[450px] shadow-xl">
-                                <div className="rounded-xl overflow-hidden h-full bg-white">
-                                    <Image 
-                                        src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
-                                        width={600} height={375}
-                                        alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
-                                        className="object-cover h-full w-full"
-                                    />
-                                </div>
+                            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted shadow-md">
+                                <Image 
+                                    src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
+                                    fill
+                                    alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
+                                    className="object-cover"
+                                />
                             </div>
                             <ul className="space-y-3 text-sm">
                                 <li className="flex items-start gap-3">
@@ -268,18 +266,16 @@ export default function MarketingPage() {
                             <CardTitle className="font-headline text-2xl">For Technicians: The Profit Tool</CardTitle>
                             <CardDescription>Turn every tech into a revenue driver—without turning them into salespeople.</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-grow space-y-4">
-                             <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-[470px] max-w-[240px] shadow-xl">
-                                <div className="rounded-xl overflow-hidden h-full bg-white">
-                                    <Image 
-                                        src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
-                                        width={224} height={454}
-                                        alt="Mobile app view showing an AI upsell suggestion for a maintenance plan."
-                                        className="object-cover h-full w-full"
-                                    />
-                                </div>
+                        <CardContent className="flex-grow space-y-4 flex flex-col items-center">
+                            <div className="relative aspect-[9/19] w-full max-w-[240px] overflow-hidden rounded-lg border bg-muted shadow-md">
+                                <Image 
+                                    src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
+                                    fill
+                                    alt="Mobile app view showing an AI upsell suggestion for a maintenance plan."
+                                    className="object-cover"
+                                />
                             </div>
-                            <ul className="space-y-3 text-sm">
+                            <ul className="space-y-3 text-sm w-full">
                                 <li className="flex items-start gap-3">
                                     <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
                                     <div><strong className="text-foreground">AI Upsell Prompts:</strong> Context-aware suggestions (e.g. “12-year-old unit: recommend replacement”).</div>
@@ -337,8 +333,8 @@ export default function MarketingPage() {
                 </div>
             </div>
         </section>
-
-        {/* Built for Your Industry */}
+        
+         {/* Built for Your Industry */}
         <section className="py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center mb-12">
@@ -364,7 +360,7 @@ export default function MarketingPage() {
                 </div>
             </div>
         </section>
-        
+
         {/* Testimonials Section */}
         <section className="bg-muted py-16 sm:py-24">
             <div className="container">
@@ -454,6 +450,7 @@ export default function MarketingPage() {
                              <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">👉 Start Free Trial</Link>
                             </Button>
+                            <p className="text-sm text-slate-500 text-center">30 Days Free. No Credit Card.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -498,7 +495,7 @@ export default function MarketingPage() {
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
-                    <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2/30</p>
+                    <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2 of 30.</p>
                 </div>
             </div>
         </section>

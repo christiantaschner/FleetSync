@@ -209,7 +209,6 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                 </div>
-                 <p className="text-sm text-slate-400">Free trials available this month: 2/30</p>
             </div>
           </div>
         </section>
@@ -232,7 +231,7 @@ export default function MarketingPage() {
                             <CardDescription>Your control hub for maximum margin.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow space-y-4">
-                            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted shadow-md">
+                            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted shadow-inner">
                                 <Image 
                                     src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
                                     fill
@@ -266,8 +265,8 @@ export default function MarketingPage() {
                             <CardTitle className="font-headline text-2xl">For Technicians: The Profit Tool</CardTitle>
                             <CardDescription>Turn every tech into a revenue driver—without turning them into salespeople.</CardDescription>
                         </CardHeader>
-                        <CardContent className="flex-grow space-y-4 flex flex-col items-center">
-                            <div className="relative aspect-[9/19] w-full max-w-[240px] overflow-hidden rounded-lg border bg-muted shadow-md">
+                        <CardContent className="flex-grow space-y-4">
+                            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted shadow-inner">
                                 <Image 
                                     src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
                                     fill
@@ -275,7 +274,7 @@ export default function MarketingPage() {
                                     className="object-cover"
                                 />
                             </div>
-                            <ul className="space-y-3 text-sm w-full">
+                            <ul className="space-y-3 text-sm">
                                 <li className="flex items-start gap-3">
                                     <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
                                     <div><strong className="text-foreground">AI Upsell Prompts:</strong> Context-aware suggestions (e.g. “12-year-old unit: recommend replacement”).</div>
@@ -450,7 +449,7 @@ export default function MarketingPage() {
                              <Button asChild size="lg" className="w-full">
                                 <Link href="/signup">👉 Start Free Trial</Link>
                             </Button>
-                            <p className="text-sm text-slate-500 text-center">30 Days Free. No Credit Card.</p>
+                            <p className="text-sm text-muted-foreground text-center">30 Days Free. No Credit Card.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -495,7 +494,7 @@ export default function MarketingPage() {
                     <Button asChild size="lg" variant="default">
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
-                    <p className="mt-2 text-sm text-slate-400">Free trials available this month: 2 of 30.</p>
+                    <p className="text-sm text-slate-400">Free trials available this month: 2/30.</p>
                 </div>
             </div>
         </section>

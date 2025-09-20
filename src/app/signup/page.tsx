@@ -73,6 +73,7 @@ export default function SignupPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setLanguage('es')}>Español</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                         </DropdownMenuContent>

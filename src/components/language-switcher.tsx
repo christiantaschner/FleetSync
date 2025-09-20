@@ -27,6 +27,12 @@ export const LanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =
                 English
                 </span>
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLanguage('es')}>
+                <span className="flex items-center w-full">
+                {language === 'es' && <Check className="mr-2 h-4 w-4" />}
+                Español
+                </span>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setLanguage('de')}>
                 <span className="flex items-center w-full">
                 {language === 'de' && <Check className="mr-2 h-4 w-4" />}
@@ -58,6 +64,12 @@ export const LanguageSwitcher = ({ isMobile = false }: { isMobile?: boolean }) =
             <span className="flex items-center w-full">
               {language === 'en' && <Check className="mr-2 h-4 w-4" />}
               English
+            </span>
+          </DropdownMenuItem>
+           <DropdownMenuItem onClick={() => setLanguage('es')}>
+            <span className="flex items-center w-full">
+              {language === 'es' && <Check className="mr-2 h-4 w-4" />}
+              Español
             </span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setLanguage('de')}>

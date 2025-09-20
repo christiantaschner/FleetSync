@@ -143,6 +143,7 @@ export default function MarketingPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('es')}>Español</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
               </DropdownMenuContent>
@@ -202,7 +203,7 @@ export default function MarketingPage() {
               Most dispatch software saves you minutes. MarginMax saves you money.
               Every job assignment is optimized for net profit — not just proximity.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4">
+            <div className="mt-8 flex flex-col items-center justify-center gap-2">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full">
                         <Link href="/signup">👉 Start Free Trial</Link>
@@ -231,12 +232,17 @@ export default function MarketingPage() {
                             <CardDescription>Your control hub for maximum margin.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow space-y-4">
-                             <div className="relative rounded-lg overflow-hidden border">
+                             <div className="relative rounded-lg overflow-hidden border bg-gray-900 p-2 shadow-inner">
+                                <div className="absolute top-2 left-2 flex gap-1.5">
+                                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                </div>
                                 <Image 
                                     src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
                                     width={600} height={375}
                                     alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
-                                    className="w-full h-auto"
+                                    className="w-full h-auto mt-6"
                                 />
                             </div>
                             <ul className="space-y-3 text-sm">
@@ -266,13 +272,15 @@ export default function MarketingPage() {
                             <CardDescription>Turn every tech into a revenue driver—without turning them into salespeople.</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow space-y-4">
-                             <div className="relative rounded-lg overflow-hidden border">
-                                <Image 
-                                    src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
-                                    width={600} height={375}
-                                    alt="Mobile app view showing an AI upsell suggestion for a maintenance plan."
-                                    className="w-full h-auto"
-                                />
+                             <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-t-xl h-[470px] max-w-[240px] shadow-xl">
+                                <div className="rounded-xl overflow-hidden h-full bg-white">
+                                    <Image 
+                                        src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
+                                        width={224} height={454}
+                                        alt="Mobile app view showing an AI upsell suggestion for a maintenance plan."
+                                        className="object-cover h-full w-full"
+                                    />
+                                </div>
                             </div>
                             <ul className="space-y-3 text-sm">
                                 <li className="flex items-start gap-3">

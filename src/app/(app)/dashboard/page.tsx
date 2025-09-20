@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
-import { isToday, startOfDay, endOfDay } from 'date-fns';
+import { isToday, startOfDay, endOfDay, isSameDay } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';

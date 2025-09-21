@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
-import { isToday, startOfDay, endOfDay, isSameDay } from 'date-fns';
+import { isToday, startOfDay, endOfDay } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -622,19 +622,15 @@ export default function DashboardPage() {
     const today = new Date();
     const jobsForToday = jobs.filter(j => j.scheduledTime && isSameDay(new Date(j.scheduledTime), today));
     const completedToday = jobsForToday.filter(j => j.status === 'Completed' || j.status === 'Finished');
-    const scheduledUnfinished = jobsForToday.filter(j => j.status !== 'Completed' && j.status !== 'Finished' && j.status !== 'Cancelled');
     
     const totalProfitToday = completedToday.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
-    const potentialProfitToday = scheduledUnfinished.reduce((acc, job) => acc + (job.profitScore || 0), 0);
-    const totalPossibleProfit = totalProfitToday + potentialProfitToday;
-
+    
     return {
         highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
         pendingCount: unassignedJobs.length,
         availableTechnicians: technicians.filter(t => t.isAvailable).length,
+        jobsScheduledToday: jobsForToday.length,
         totalProfitToday,
-        potentialProfitToday,
-        totalPossibleProfit
     };
   }, [jobs, technicians]);
 
@@ -1295,7 +1291,7 @@ export default function DashboardPage() {
       
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card className="flex flex-col h-full">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
                     <AlertTriangle className="h-4 w-4 text-destructive" />
                 </CardHeader>
@@ -1305,39 +1301,33 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
              <Card className="flex flex-col h-full">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Potential for Today</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <div className="text-2xl font-bold">${kpiData.potentialProfitToday.toFixed(2)}</div>
-                    <p className="text-xs text-muted-foreground">Est. profit from scheduled jobs</p>
-                </CardContent>
-            </Card>
-            <Card className="flex flex-col h-full bg-green-50 border-green-500/30">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-green-900">{t('total_profit_today')}</CardTitle>
-                    <DollarSign className="h-4 w-4 text-green-600" />
+                    <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent className="flex-grow">
-                    <div className="text-4xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
-                     <Progress 
-                        value={kpiData.totalPossibleProfit > 0 ? (kpiData.totalProfitToday / kpiData.totalPossibleProfit) * 100 : 0} 
-                        className="mt-2 h-2" 
-                    />
-                    <p className="text-xs text-green-800/80 mt-1">
-                        Towards daily potential of ${kpiData.totalPossibleProfit.toFixed(2)}
-                    </p>
+                    <div className="text-2xl font-bold">{kpiData.jobsScheduledToday}</div>
+                    <p className="text-xs text-muted-foreground">Total appointments for today</p>
                 </CardContent>
             </Card>
             <Card className="flex flex-col h-full">
-                <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent className="flex-grow">
                     <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
                     <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
+                </CardContent>
+            </Card>
+             <Card className="flex flex-col h-full bg-green-50 border-green-500/30">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-green-900">{t('total_profit_today')}</CardTitle>
+                    <DollarSign className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    <div className="text-2xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
+                    <p className="text-xs text-green-800/80">From all completed jobs today</p>
                 </CardContent>
             </Card>
         </div>

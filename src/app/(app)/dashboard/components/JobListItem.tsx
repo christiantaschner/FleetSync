@@ -93,9 +93,10 @@ const JobListItem: React.FC<JobListItemProps> = ({
         )}>
             <Accordion type="single" collapsible>
                 <AccordionItem value={job.id} className="border-b-0">
-                    <div className={cn("flex items-center", !isLocked && "cursor-grab")} {...listeners}>
-                        <AccordionTrigger className="flex-1 p-4 hover:no-underline">
-                            <div className="flex items-start justify-between gap-4 w-full">
+                    <div className={cn(!isLocked && "cursor-grab")} {...listeners}>
+                        <AccordionTrigger className="flex-1 p-4 hover:no-underline relative">
+                           {/* Left Side Content */}
+                            <div className="pr-28 flex items-start gap-4 w-full">
                                 <div className="flex-1 min-w-0">
                                     <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
                                     job.status === 'Draft' && "text-gray-600"
@@ -128,44 +129,46 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                        <Users2 className="h-3 w-3 shrink-0" /> <span className="truncate">{job.customerName}</span>
                                     </CardDescription>
                                 </div>
-                                <div className="flex flex-col items-end gap-1 text-right ml-auto flex-shrink-0">
-                                    <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
-                                    {job.assignedTechnicianId ? (
-                                        <Badge variant="secondary" className="max-w-[150px]">
-                                            <UserCheck className="h-3 w-3 mr-1"/>
-                                            <span className="truncate">{technicians.find(t => t.id === job.assignedTechnicianId)?.name}</span>
-                                        </Badge>
-                                    ) : (
-                                        <Badge variant="outline">Unassigned</Badge>
+                            </div>
+
+                             {/* Right Side Content - Absolutely Positioned */}
+                            <div className="absolute right-4 top-4 flex flex-col items-end gap-1 text-right">
+                                <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
+                                {job.assignedTechnicianId ? (
+                                    <Badge variant="secondary" className="max-w-[150px]">
+                                        <UserCheck className="h-3 w-3 mr-1"/>
+                                        <span className="truncate">{technicians.find(t => t.id === job.assignedTechnicianId)?.name}</span>
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="outline">Unassigned</Badge>
+                                )}
+                                <div className="flex items-center gap-1.5 pt-1">
+                                    {estimatedProfit !== null && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge variant="outline" className="font-semibold text-foreground">
+                                                        <DollarSign className="h-3.5 w-3.5 mr-0.5"/>
+                                                        {estimatedProfit.toFixed(0)}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Est. Profit (Quote - Parts)</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     )}
-                                     <div className="flex items-center gap-1.5 pt-1">
-                                        {estimatedProfit !== null && (
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Badge variant="outline" className="font-semibold text-foreground">
-                                                            <DollarSign className="h-3.5 w-3.5 mr-0.5"/>
-                                                            {estimatedProfit.toFixed(0)}
-                                                        </Badge>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent><p>Est. Profit (Quote - Parts)</p></TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        )}
-                                        {job.profitScore !== undefined && (
-                                             <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Badge className="font-bold bg-green-100 text-green-800 border-green-300">
-                                                            <Bot className="h-3.5 w-3.5 mr-1"/>
-                                                            {job.profitScore.toFixed(0)}
-                                                        </Badge>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent><p>AI Profit Score</p></TooltipContent>
-                                                </Tooltip>
-                                             </TooltipProvider>
-                                        )}
-                                    </div>
+                                    {job.profitScore !== undefined && (
+                                         <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge className="font-bold bg-green-100 text-green-800 border-green-300">
+                                                        <Bot className="h-3.5 w-3.5 mr-1"/>
+                                                        {job.profitScore.toFixed(0)}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>AI Profit Score</p></TooltipContent>
+                                            </Tooltip>
+                                         </TooltipProvider>
+                                    )}
                                 </div>
                             </div>
                         </AccordionTrigger>

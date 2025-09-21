@@ -87,7 +87,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 <AccordionItem value={job.id} className="border-b-0">
                     <div className={cn(!isLocked && "cursor-grab")} {...listeners}>
                         <AccordionTrigger className="flex-1 p-4 hover:no-underline relative h-[110px]">
-                            <div className="flex-1 pr-28 flex flex-col justify-center min-w-0">
+                            <div className="flex-1 pr-4">
                                 <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
                                 job.status === 'Draft' && "text-gray-600"
                                 )}>
@@ -140,7 +140,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                                         {estimatedProfit.toFixed(0)}
                                                     </Badge>
                                                 </TooltipTrigger>
-                                                <TooltipContent><p>Est. Profit (Quote - Parts)</p></TooltipContent>
+                                                <TooltipContent><p>Est. Gross Profit (Quote - Parts)</p></TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
                                     )}
@@ -153,7 +153,12 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                                         {job.profitScore.toFixed(0)}
                                                     </Badge>
                                                 </TooltipTrigger>
-                                                <TooltipContent><p>AI Profit Score</p></TooltipContent>
+                                                <TooltipContent>
+                                                  <div className="text-xs space-y-1 text-center">
+                                                    <p className="font-bold">AI Net Profit Score</p>
+                                                    <p className="text-muted-foreground">Quote - (Labor + Travel + Parts)</p>
+                                                  </div>
+                                                </TooltipContent>
                                             </Tooltip>
                                          </TooltipProvider>
                                     )}
@@ -228,3 +233,4 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
+

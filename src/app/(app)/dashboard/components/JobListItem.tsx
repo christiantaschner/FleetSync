@@ -130,7 +130,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                             </div>
 
                              {/* Right Side Content - Absolutely Positioned */}
-                            <div className="absolute right-4 top-4 flex flex-col items-end gap-1 text-right">
+                            <div className="absolute right-10 top-4 flex flex-col items-end gap-1 text-right">
                                 <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
                                 {job.assignedTechnicianId ? (
                                     <Badge variant="secondary" className="max-w-[150px]">
@@ -238,3 +238,4 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
+

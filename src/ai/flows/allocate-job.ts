@@ -51,31 +51,30 @@ The current time is {{{currentTime}}}.
   - After Hours Job: {{#if isAfterHours}}Yes{{else}}No{{/if}}
 
 **PROFIT CALCULATION LOGIC:**
-For each potential assignment, you must calculate the **Total Profit**. This value will be your 'profitScore'. Use the following formula:
-1. First, calculate the 'expectedPartsCost' by summing the costs of the parts in the 'requiredParts' array from the provided 'partsLibrary'.
-2. Then, calculate 'commission' = (quotedValue * (tech.commissionRate / 100)) + tech.bonus
-3. Finally, calculate the final profit: **Total Profit** = (quotedValue + (upsellScore * quotedValue * tech.upsellConversionRate)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - ({{{estimatedDurationMinutes}}}/60 * tech.hourlyCost) - (SLA_penalty) - commission
-If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.
-An **effective profit per hour** should also be calculated as: **Total Profit / ((driveTimeMinutes + {{{estimatedDurationMinutes}}}) / 60)**.
+Your main ranking metric is **Total Profit** from this specific job assignment. Use the following formula for each technician:
+*Total Profit = (Quoted Value + (Upsell Score * Quoted Value * Tech's Upsell Rate)) - Expected Parts Cost - (Travel Time Cost) - (On-Site Labor Cost) - (SLA Penalty) - (Commission)*
+
+-   **On-Site Labor Cost** = (Estimated Duration / 60) * Tech's Hourly Cost
+-   **Travel Time Cost** = (Estimated Drive Time / 60) * Tech's Hourly Cost
+-   **Commission** = (Quoted Value * (Tech's Commission Rate / 100)) + Tech's Bonus
+-   **SLA Penalty**: If at risk, apply a 25% penalty on the Quoted Value. Otherwise, it's $0.
+
+The **Job's Gross Profit Potential** is defined as `Quoted Value - Expected Parts Cost`. This identifies high-value jobs. For these jobs, you should heavily favor technicians with high upsell conversion rates, as they can significantly multiply the job's value.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
 1.  **HARD CONSTRAINTS (Non-negotiable):**
-    -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'.
-    -   **Parts:** The chosen technician MUST have ALL of the 'requiredParts' in their van inventory. THIS IS A CRITICAL RULE.
-    -   **Working Hours:** The job, including estimated travel and duration, MUST be completed within the technician's working hours for the scheduled day.
+    -   **Skills & Parts:** The chosen technician MUST possess ALL 'requiredSkills' and have ALL 'requiredParts' in their van.
+    -   **Working Hours:** The job, including travel, must be completed within the technician's working hours.
 
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
-    -   **Maximize Total Profit:** Your main goal is to maximize the calculated **Total Profit** from this job. Rank technicians by who yields the highest 'profitScore'.
-    -   **Upsell Conversion:** For jobs with a high \`upsellScore\`, STRONGLY prefer technicians with a high \`upsellConversionRate\`. A top salesperson assigned to a high-potential job can significantly increase overall profit, even if their travel time is slightly longer.
-    -   **SLA Penalties:** Avoid any technician whose current schedule puts them at risk of arriving late to this job if there is an SLA penalty. A high penalty can make a job unprofitable.
-    -   **Travel Time vs. Job Value:** Sending a technician from far away erodes profit. A slightly less optimal but much closer technician is often the more profitable choice, especially for lower-value jobs. While total profit is key, a higher effective profit-per-hour is a strong secondary indicator of an efficient assignment.
+    -   **Maximize Total Profit:** Your main goal is to maximize the calculated **Total Profit** for this assignment.
+    -   **Upsell Conversion:** For jobs with a high Gross Profit Potential and a high `upsellScore`, STRONGLY prefer technicians with a high `upsellConversionRate`.
+    -   **SLA Penalties:** Avoid any technician whose schedule puts them at risk of arriving late if there is an SLA penalty.
 
 3.  **EFFICIENCY & CUSTOMER SATISFACTION (Secondary Factors):**
-    -   **Customer History:** A technician with 'Previous Customer History' is highly valuable. Prefer them if all other financial and skill factors are equal.
-    -   **Availability:**
-        -   An 'isAvailable: true' technician is a strong candidate.
-        -   An 'isAvailable: false' technician can be considered if their earliest availability allows for a profitable assignment.
+    -   **Customer History:** Prefer technicians with 'Previous Customer History' if all other financial factors are close.
+    -   **Availability:** An 'isAvailable: true' technician is a strong candidate. Consider a busy technician only if their schedule allows for a highly profitable assignment.
 {{else}}
 **STANDARD DISPATCH IS ENABLED. YOUR PRIMARY GOAL IS TO FIND THE BEST AVAILABLE AND SKILLED TECHNICIAN.**
 
@@ -89,13 +88,13 @@ An **effective profit per hour** should also be calculated as: **Total Profit / 
 1.  **HARD CONSTRAINTS (Non-negotiable):**
     -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'.
     -   **Parts:** The chosen technician MUST have ALL of the 'requiredParts' in their van inventory.
-    -   **Availability:** The technician must be available. An 'isAvailable: true' technician is a strong candidate.
+    -   **Availability:** The technician must be available.
     -   **Working Hours:** The job should ideally fall within the technician's standard working hours.
 
 2.  **EFFICIENCY & CUSTOMER SATISFACTION (Primary Goal):**
-    -   **Minimize Travel:** Find the technician who is closest to the job location to ensure prompt service.
-    -   **Customer History:** A technician with 'Previous Customer History' is highly valuable. Prefer them if other factors are equal.
-    -   **On-Call Status:** For after-hours or emergency jobs, prioritize technicians marked as 'isOnCall'.
+    -   **Minimize Travel:** Find the technician who is closest to the job location.
+    -   **Customer History:** A technician with 'Previous Customer History' is highly valuable.
+    -   **On-Call Status:** For after-hours jobs, prioritize technicians marked as 'isOnCall'.
 {{/if}}
 
 4.  **LEARNING FROM DISPATCHER OVERRIDES (Applies to both modes):**
@@ -138,10 +137,10 @@ An **effective profit per hour** should also be calculated as: **Total Profit / 
 
 ---
 **Final Assessment:**
-Your task is to return a ranked list of up to 3 technicians in the 'suggestions' array. Each suggestion must include the technician's ID, a profit score (if profit mode is enabled), and a clear reasoning for why they are a good fit.
+Your task is to return a ranked list of up to 3 technicians in the 'suggestions' array.
 
 {{#if featureFlags.profitScoringEnabled}}
-First, calculate the expectedPartsCost. Then, calculate the **Total Profit** for every suitable technician and set it as the 'profitScore'. Rank them from most to least profitable. Your reasoning for each suggestion MUST be from a business perspective, explaining HOW that choice maximizes total profit while respecting all constraints (skills, parts, etc.). State the calculated 'profitScore' in your reasoning. You can also mention the effective profit-per-hour as a supporting point. In the 'overallReasoning' field, summarize your general findings.
+First, calculate the **Total Profit** for every suitable technician and set this final value as the 'profitScore'. Rank them from most to least profitable. Your reasoning for each suggestion MUST be from a business perspective, explaining HOW that choice maximizes total profit while respecting all constraints (skills, parts, etc.). State the calculated 'profitScore' in your reasoning. In the 'overallReasoning' field, summarize your general findings.
 {{else}}
 Provide your ranked list based on skills, parts availability, and proximity. Your reasoning for each must be clear and concise. In the 'overallReasoning' field, summarize your general findings.
 {{/if}}

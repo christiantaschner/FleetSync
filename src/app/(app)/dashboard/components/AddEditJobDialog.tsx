@@ -122,12 +122,9 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   const estimatedProfit = useMemo(() => {
-    if (quotedValue === undefined || expectedPartsCost === undefined || manualTechnicianId === UNASSIGNED_VALUE) return null;
-    const selectedTech = technicians.find(t => t.id === manualTechnicianId);
-    if (!selectedTech?.hourlyCost) return null;
-    const laborCost = (selectedTech.hourlyCost / 60) * (estimatedDurationMinutes || 0);
-    return quotedValue - expectedPartsCost - laborCost;
-  }, [quotedValue, expectedPartsCost, manualTechnicianId, technicians, estimatedDurationMinutes]);
+    if (quotedValue === undefined || expectedPartsCost === undefined) return null;
+    return quotedValue - expectedPartsCost;
+  }, [quotedValue, expectedPartsCost]);
 
 
   const estimatedMargin = useMemo(() => {
@@ -745,30 +742,32 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="e.g., 50.00"/>
                                 </div>
                             </div>
-                            <div className="p-3 border rounded-md bg-secondary/50 flex items-center justify-around text-center">
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="cursor-help">
-                                                <p className="text-xs text-muted-foreground">Est. Job Profit</p>
-                                                <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
-                                                    {estimatedProfit !== null ? `$${estimatedProfit.toFixed(2)}` : <span className="text-muted-foreground text-sm">Select Tech</span>}
-                                                </p>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Quote - Parts Cost - Labor Cost</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                <Separator orientation="vertical" className="h-10"/>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Est. Profit Margin</p>
-                                    <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
-                                        {estimatedMargin !== null ? `${estimatedMargin.toFixed(0)}%` : 'N/A'}
-                                    </p>
+                            {estimatedProfit !== null && (
+                                <div className="p-3 border rounded-md bg-secondary/50 flex items-center justify-around text-center">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="cursor-help">
+                                                    <p className="text-xs text-muted-foreground">Est. Job Profit</p>
+                                                    <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
+                                                        ${estimatedProfit.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Quote - Parts Cost</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                    <Separator orientation="vertical" className="h-10"/>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Est. Profit Margin</p>
+                                        <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
+                                            {estimatedMargin !== null ? `${estimatedMargin.toFixed(0)}%` : 'N/A'}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                              <div className="p-3 border rounded-md bg-secondary/50">
                                 <h4 className="text-sm font-medium mb-2">Scheduling Constraints</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -54,19 +54,19 @@ The current time is {{{currentTime}}}.
 Your main ranking metric is a **Weighted Profit Score**. Calculate this score for each suitable technician.
 
 First, calculate the **Net Profit**:
-*Net Profit = (Quoted Value + (Upsell Score * Quoted Value * Tech's Upsell Rate)) - Expected Parts Cost - (Travel Time Cost) - (On-Site Labor Cost) - (SLA Penalty) - (Commission)*
+'Net Profit = (Quoted Value + (Upsell Score * Quoted Value * Tech's Upsell Rate)) - Expected Parts Cost - (Travel Time Cost) - (On-Site Labor Cost) - (SLA Penalty) - (Commission)'
 
--   **On-Site Labor Cost** = (Estimated Duration / 60) * Tech's Hourly Cost
--   **Travel Time Cost** = (Estimated Drive Time / 60) * Tech's Hourly Cost
--   **Commission** = (Quoted Value * (Tech's Commission Rate / 100)) + Tech's Bonus
--   **SLA Penalty**: If at risk, apply a 25% penalty on the Quoted Value. Otherwise, it's $0.
+-   'On-Site Labor Cost' = (Estimated Duration / 60) * Tech's Hourly Cost
+-   'Travel Time Cost' = (Estimated Drive Time / 60) * Tech's Hourly Cost
+-   'Commission' = (Quoted Value * (Tech's Commission Rate / 100)) + Tech's Bonus
+-   'SLA Penalty': If at risk, apply a 25% penalty on the Quoted Value. Otherwise, it's $0.
 
 Second, calculate the **Profit Per Hour** (Profit Velocity):
-*Total Time (in hours) = (Estimated Drive Time + Estimated Duration) / 60*
-*Profit Per Hour = Net Profit / Total Time*
+'Total Time (in hours) = (Estimated Drive Time + Estimated Duration) / 60'
+'Profit Per Hour = Net Profit / Total Time'
 
 Finally, calculate the **Weighted Profit Score**:
-***Weighted Score = (Net Profit * 0.7) + (Profit Per Hour * 0.3)***
+'**Weighted Score = (Net Profit * 0.7) + (Profit Per Hour * 0.3)**'
 
 This score balances the immediate profit of the job with the speed and efficiency of the technician, maximizing their availability for future profitable jobs.
 
@@ -155,9 +155,8 @@ Provide your ranked list based on skills, parts availability, and proximity. You
 {{/if}}
 
 If no technicians are suitable, return an empty 'suggestions' array and explain the bottleneck (e.g., "No technicians have the required 'Pipe Fitting' skill") in the 'overallReasoning' field.
-`,
+`
 });
-
 
 const allocateJobFlow = ai.defineFlow(
   {
@@ -165,8 +164,10 @@ const allocateJobFlow = ai.defineFlow(
     inputSchema: AllocateJobInputSchema,
     outputSchema: AllocateJobOutputSchema,
   },
-  async (input) => {
-    const { output } = await prompt(input);
+  async input => {
+    const {output} = await prompt(input);
     return output!;
   }
 );
+
+    

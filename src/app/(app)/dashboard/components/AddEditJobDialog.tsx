@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part, JobFlexibility } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2 } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2, Lightbulb } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, analyzeJobAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
@@ -120,6 +120,27 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const formRef = useRef<HTMLFormElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+  const estimatedProfit = useMemo(() => {
+    if (quotedValue === undefined || expectedPartsCost === undefined || manualTechnicianId === UNASSIGNED_VALUE) return null;
+    const selectedTech = technicians.find(t => t.id === manualTechnicianId);
+    if (!selectedTech?.hourlyCost) return null;
+    const laborCost = (selectedTech.hourlyCost / 60) * (estimatedDurationMinutes || 0);
+    return quotedValue - expectedPartsCost - laborCost;
+  }, [quotedValue, expectedPartsCost, manualTechnicianId, technicians, estimatedDurationMinutes]);
+
+
+  const estimatedMargin = useMemo(() => {
+    if (estimatedProfit === null || !quotedValue || quotedValue === 0) return null;
+    return (estimatedProfit / quotedValue) * 100;
+  }, [estimatedProfit, quotedValue]);
+
+  const getMarginColor = (margin: number | null) => {
+    if (margin === null) return 'text-muted-foreground';
+    if (margin >= 50) return 'text-green-600';
+    if (margin >= 25) return 'text-amber-600';
+    return 'text-red-600';
+  };
 
   const resetForm = useCallback(() => {
     const initialData = job || prefilledData || {};
@@ -717,11 +738,35 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <Label htmlFor="quotedValue">Quoted Value ($)</Label>
-                                    <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(parseFloat(e.target.value))} placeholder="e.g., 250.00"/>
+                                    <Input id="quotedValue" type="number" step="0.01" value={quotedValue ?? ''} onChange={e => setQuotedValue(e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="e.g., 250.00"/>
                                 </div>
                                 <div>
                                     <Label htmlFor="expectedPartsCost">Expected Parts Cost ($)</Label>
-                                    <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(parseFloat(e.target.value))} placeholder="e.g., 50.00"/>
+                                    <Input id="expectedPartsCost" type="number" step="0.01" value={expectedPartsCost ?? ''} onChange={e => setExpectedPartsCost(e.target.value ? parseFloat(e.target.value) : undefined)} placeholder="e.g., 50.00"/>
+                                </div>
+                            </div>
+                            <div className="p-3 border rounded-md bg-secondary/50 flex items-center justify-around text-center">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="cursor-help">
+                                                <p className="text-xs text-muted-foreground">Est. Job Profit</p>
+                                                <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
+                                                    {estimatedProfit !== null ? `$${estimatedProfit.toFixed(2)}` : <span className="text-muted-foreground text-sm">Select Tech</span>}
+                                                </p>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Quote - Parts Cost - Labor Cost</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                <Separator orientation="vertical" className="h-10"/>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Est. Profit Margin</p>
+                                    <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
+                                        {estimatedMargin !== null ? `${estimatedMargin.toFixed(0)}%` : 'N/A'}
+                                    </p>
                                 </div>
                             </div>
                              <div className="p-3 border rounded-md bg-secondary/50">

@@ -45,6 +45,7 @@ The current time is {{{currentTime}}}.
 - Financials:
   - Quoted Value: \${{{quotedValue}}}
   - Expected Parts Cost: \${{{expectedPartsCost}}}
+  - Estimated Duration: {{{estimatedDurationMinutes}}} mins
   - SLA Penalty Risk: \${{{slaPenalty}}}
   - Upsell Probability: {{#if upsellScore}}{{{upsellScore}}}{{else}}N/A{{/if}}
   - After Hours Job: {{#if isAfterHours}}Yes{{else}}No{{/if}}
@@ -53,9 +54,9 @@ The current time is {{{currentTime}}}.
 For each potential assignment, you must calculate the **Total Profit**. This value will be your 'profitScore'. Use the following formula:
 1. First, calculate the 'expectedPartsCost' by summing the costs of the parts in the 'requiredParts' array from the provided 'partsLibrary'.
 2. Then, calculate 'commission' = (quotedValue * (tech.commissionRate / 100)) + tech.bonus
-3. Finally, calculate the final profit: **Total Profit** = (quotedValue + (upsellScore * quotedValue * tech.upsellConversionRate)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - (durationEstimate/60 * tech.hourlyCost) - (SLA_penalty) - commission
+3. Finally, calculate the final profit: **Total Profit** = (quotedValue + (upsellScore * quotedValue * tech.upsellConversionRate)) - expectedPartsCost - (driveTimeMinutes/60 * tech.hourlyCost) - ({{{estimatedDurationMinutes}}}/60 * tech.hourlyCost) - (SLA_penalty) - commission
 If an SLA deadline is at risk, the SLA penalty is 25% of the quotedValue. Otherwise, it is 0.
-An **effective profit per hour** should also be calculated as: **Total Profit / ((driveTimeMinutes + durationEstimate) / 60)**.
+An **effective profit per hour** should also be calculated as: **Total Profit / ((driveTimeMinutes + {{{estimatedDurationMinutes}}}) / 60)**.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 

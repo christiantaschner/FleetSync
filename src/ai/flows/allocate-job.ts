@@ -51,15 +51,24 @@ The current time is {{{currentTime}}}.
   - After Hours Job: {{#if isAfterHours}}Yes{{else}}No{{/if}}
 
 **PROFIT CALCULATION LOGIC:**
-Your main ranking metric is **Total Profit** from this specific job assignment. Use the following formula for each technician:
-*Total Profit = (Quoted Value + (Upsell Score * Quoted Value * Tech's Upsell Rate)) - Expected Parts Cost - (Travel Time Cost) - (On-Site Labor Cost) - (SLA Penalty) - (Commission)*
+Your main ranking metric is a **Weighted Profit Score**. Calculate this score for each suitable technician.
+
+First, calculate the **Net Profit**:
+*Net Profit = (Quoted Value + (Upsell Score * Quoted Value * Tech's Upsell Rate)) - Expected Parts Cost - (Travel Time Cost) - (On-Site Labor Cost) - (SLA Penalty) - (Commission)*
 
 -   **On-Site Labor Cost** = (Estimated Duration / 60) * Tech's Hourly Cost
 -   **Travel Time Cost** = (Estimated Drive Time / 60) * Tech's Hourly Cost
 -   **Commission** = (Quoted Value * (Tech's Commission Rate / 100)) + Tech's Bonus
 -   **SLA Penalty**: If at risk, apply a 25% penalty on the Quoted Value. Otherwise, it's $0.
 
-The **Job's Gross Profit Potential** is defined as 'Quoted Value - Expected Parts Cost'. This identifies high-value jobs. For these jobs, you should heavily favor technicians with high upsell conversion rates, as they can significantly multiply the job's value.
+Second, calculate the **Profit Per Hour** (Profit Velocity):
+*Total Time (in hours) = (Estimated Drive Time + Estimated Duration) / 60*
+*Profit Per Hour = Net Profit / Total Time*
+
+Finally, calculate the **Weighted Profit Score**:
+***Weighted Score = (Net Profit * 0.7) + (Profit Per Hour * 0.3)***
+
+This score balances the immediate profit of the job with the speed and efficiency of the technician, maximizing their availability for future profitable jobs.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
@@ -68,8 +77,8 @@ The **Job's Gross Profit Potential** is defined as 'Quoted Value - Expected Part
     -   **Working Hours:** The job, including travel, must be completed within the technician's working hours.
 
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
-    -   **Maximize Total Profit:** Your main goal is to maximize the calculated **Total Profit** for this assignment.
-    -   **Upsell Conversion:** For jobs with a high Gross Profit Potential and a high 'upsellScore', STRONGLY prefer technicians with a high 'upsellConversionRate'.
+    -   **Maximize Weighted Score:** Your main goal is to maximize the calculated **Weighted Profit Score** for this assignment.
+    -   **Upsell Conversion:** For jobs with high quoted values, STRONGLY prefer technicians with a high 'upsellConversionRate'.
     -   **SLA Penalties:** Avoid any technician whose schedule puts them at risk of arriving late if there is an SLA penalty.
 
 3.  **EFFICIENCY & CUSTOMER SATISFACTION (Secondary Factors):**
@@ -140,7 +149,7 @@ The **Job's Gross Profit Potential** is defined as 'Quoted Value - Expected Part
 Your task is to return a ranked list of up to 3 technicians in the 'suggestions' array.
 
 {{#if featureFlags.profitScoringEnabled}}
-First, calculate the **Total Profit** for every suitable technician and set this final value as the 'profitScore'. Rank them from most to least profitable. Your reasoning for each suggestion MUST be from a business perspective, explaining HOW that choice maximizes total profit while respecting all constraints (skills, parts, etc.). State the calculated 'profitScore' in your reasoning. In the 'overallReasoning' field, summarize your general findings.
+First, calculate the **Weighted Profit Score** for every suitable technician and set this final value as the 'profitScore'. Rank them from highest to lowest score. Your reasoning for each suggestion MUST be from a business perspective, explaining HOW that choice maximizes profit and efficiency while respecting all constraints (skills, parts, etc.). State the calculated 'profitScore' in your reasoning. In the 'overallReasoning' field, summarize your general findings.
 {{else}}
 Provide your ranked list based on skills, parts availability, and proximity. Your reasoning for each must be clear and concise. In the 'overallReasoning' field, summarize your general findings.
 {{/if}}

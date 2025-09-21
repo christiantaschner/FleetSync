@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -32,7 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
-import { isToday, startOfDay, endOfDay, isSameDay } from 'date-fns';
+import { isSameDay, startOfDay, endOfDay } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -341,7 +340,7 @@ export default function DashboardPage() {
                 }
             }
             return { id: doc.id, ...data } as ProfileChangeRequest;
-        }).filter(r => r.status === 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }).filter(r => r.status === 'pending').sort((a, b) => new Date(b.createdAt).getTime() - new Date(b.createdAt).getTime());
         setProfileChangeRequests(requestsData);
         if (isLoadingData) checkLoadingComplete();
     }, (error) => {
@@ -625,7 +624,7 @@ export default function DashboardPage() {
     const scheduledUnfinished = jobsForToday.filter(j => j.status !== 'Completed' && j.status !== 'Finished' && j.status !== 'Cancelled');
     
     const totalProfitToday = completedToday.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
-    const potentialProfitToday = scheduledUnfinished.reduce((acc, job) => acc + (job.quotedValue || 0), totalProfitToday);
+    const potentialProfitToday = scheduledUnfinished.reduce((acc, job) => acc + (job.quotedValue || 0), 0);
     
     return {
         highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
@@ -1293,42 +1292,42 @@ export default function DashboardPage() {
       </div>
       
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="flex flex-col h-full">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
                     <AlertTriangle className="h-4 w-4 text-destructive" />
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent>
                     <div className="text-2xl font-bold">{kpiData.highPriorityCount}</div>
                     <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
                 </CardContent>
             </Card>
-             <Card className="flex flex-col h-full">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
                     <CalendarDays className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent>
                     <div className="text-2xl font-bold">{kpiData.jobsScheduledToday}</div>
                     <p className="text-xs text-muted-foreground">Total appointments for today</p>
                 </CardContent>
             </Card>
-            <Card className="flex flex-col h-full">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
                     <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent>
                     <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
                     <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
                 </CardContent>
             </Card>
-             <Card className="flex flex-col h-full">
+            <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-green-800">{t('total_profit_today')}</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-600" />
                 </CardHeader>
-                <CardContent className="flex-grow">
+                <CardContent>
                     <div className="text-2xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
                     <p className="text-xs text-muted-foreground">
                         of ${kpiData.potentialProfitToday.toFixed(2)} potential

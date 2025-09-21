@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign, ChevronDown, User } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign, ChevronDown, User, ShieldQuestion } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -56,19 +56,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
     if (priority === 'Medium') return 'default'; 
     return 'secondary';
   };
-
-  const getStatusIcon = (status: Job['status']) => {
-    switch (status) {
-      case 'Unassigned': return <AlertTriangle className="text-amber-500" />;
-      case 'Assigned': return <UserCheck className="text-sky-500" />;
-      case 'En Route': return <Truck className="text-indigo-500" />;
-      case 'In Progress': return <Wrench className="text-blue-500" />;
-      case 'Completed': return <CheckCircle className="text-green-500" />;
-      case 'Cancelled': return <XCircle className="text-destructive" />;
-      case 'Draft': return <FilePenLine className="text-gray-500" />;
-      default: return <Briefcase />;
-    }
-  };
   
   const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
 
@@ -108,11 +95,14 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                 <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
                                 {assignedTechnician ? (
                                     <Badge variant="secondary" className="max-w-[150px]">
-                                        <UserCheck className="h-3 w-3 mr-1"/>
+                                        <Wrench className="h-3 w-3 mr-1"/>
                                         <span className="truncate">{assignedTechnician.name}</span>
                                     </Badge>
                                 ) : (
-                                    <Badge variant="outline">Unassigned</Badge>
+                                    <Badge variant="outline">
+                                        <ShieldQuestion className="h-3 w-3 mr-1" />
+                                        Unassigned
+                                    </Badge>
                                 )}
                                 <div className="flex items-center gap-1.5 mt-1">
                                     {job.profitScore !== undefined && job.profitScore !== null && (
@@ -124,7 +114,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                                         ${job.profitScore.toFixed(0)}
                                                     </Badge>
                                                 </TooltipTrigger>
-                                                <TooltipContent><p>AI Profit Score (Weighted)</p></TooltipContent>
+                                                <TooltipContent><p>AI Profit Score = (Net Profit * 0.7) + (Profit Per Hour * 0.3)</p></TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
                                     )}

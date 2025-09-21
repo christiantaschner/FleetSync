@@ -70,9 +70,11 @@ const JobListItem: React.FC<JobListItemProps> = ({
     }
   };
   
-  const estimatedProfit = (job.quotedValue && job.expectedPartsCost) 
-    ? job.quotedValue - job.expectedPartsCost
+  const estimatedProfit = (job.quotedValue) 
+    ? job.quotedValue - (job.expectedPartsCost || 0)
     : null;
+    
+  const profitScoreToUse = job.profitScore ?? estimatedProfit;
 
   const getProfitColorClass = (score: number | undefined | null) => {
     if (score === undefined || score === null) return '';
@@ -81,8 +83,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
     if (score > 0) return 'border-red-400 bg-red-50/50';
     return 'border-gray-300';
   };
-  
-  const profitScoreToUse = job.profitScore ?? estimatedProfit;
 
   return (
      <div ref={setNodeRef} style={style} {...attributes}>
@@ -95,7 +95,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 <AccordionItem value={job.id} className="border-b-0">
                     <div className={cn(!isLocked && "cursor-grab")} {...listeners}>
                         <AccordionTrigger className="flex-1 p-4 hover:no-underline relative h-[110px]">
-                           {/* Left Side Content */}
                             <div className="flex-1 pr-28 flex flex-col justify-center min-w-0">
                                 <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
                                 job.status === 'Draft' && "text-gray-600"
@@ -129,7 +128,6 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                 </CardDescription>
                             </div>
 
-                             {/* Right Side Content - Absolutely Positioned */}
                             <div className="absolute right-10 top-4 flex flex-col items-end gap-1 text-right pr-4">
                                 <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
                                 {job.assignedTechnicianId ? (
@@ -140,8 +138,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                 ) : (
                                     <Badge variant="outline">Unassigned</Badge>
                                 )}
-                                <div className="flex items-center gap-1.5 pt-1">
-                                    {estimatedProfit !== null && (
+                                 <div className="flex items-center gap-1.5 pt-1">
+                                    {estimatedProfit !== null && job.profitScore === undefined && (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -238,4 +236,3 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
-

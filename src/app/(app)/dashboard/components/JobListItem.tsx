@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign, ChevronDown } from 'lucide-react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign, ChevronDown, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -78,6 +78,8 @@ const JobListItem: React.FC<JobListItemProps> = ({
       const commissionCost = (job.quotedValue * ((assignedTechnician.commissionRate || 0) / 100)) + (assignedTechnician.bonus || 0);
       netProfit = job.quotedValue - job.expectedPartsCost - laborCost - commissionCost;
   }
+  
+  const estimatedProfit = (job.quotedValue || 0) - (job.expectedPartsCost || 0);
 
   return (
      <div ref={setNodeRef} style={style} {...attributes}>
@@ -89,36 +91,16 @@ const JobListItem: React.FC<JobListItemProps> = ({
                 <AccordionItem value={job.id} className="border-b-0">
                     <div className={cn(!isLocked && "cursor-grab")} {...listeners}>
                         <AccordionTrigger className="flex-1 p-4 hover:no-underline relative h-[110px]">
-                            <div className="flex-1 pr-4">
-                                <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
+                            <div className="flex-1 pr-16 space-y-1">
+                                <CardTitle className={cn("text-base font-headline flex items-center gap-2", 
                                 job.status === 'Draft' && "text-gray-600"
                                 )}>
-                                <TooltipProvider>
-                                    <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{job.status}</p>
-                                    </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                                {isLocked && (
-                                    <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                        <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                        <p>Job is locked and cannot be moved.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                    </TooltipProvider>
-                                )}
+                                <Briefcase className="h-4 w-4 text-muted-foreground shrink-0"/>
                                 <span className="truncate text-left">{job.title}</span>
                                 </CardTitle>
-                                <CardDescription className="flex items-center gap-1 text-sm mt-1">
-                                    <Users2 className="h-3 w-3 shrink-0" /> <span className="truncate">{job.customerName}</span>
+                                <CardDescription className="flex items-center gap-2 text-sm">
+                                    <User className="h-4 w-4 shrink-0" /> 
+                                    <span className="truncate">{job.customerName}</span>
                                 </CardDescription>
                             </div>
 
@@ -132,19 +114,34 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                 ) : (
                                     <Badge variant="outline">Unassigned</Badge>
                                 )}
-                                 {netProfit !== null && (
-                                     <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Badge variant="outline" className="font-semibold text-foreground mt-1">
-                                                    <DollarSign className="h-3.5 w-3.5 mr-0.5 text-green-600"/>
-                                                    {netProfit.toFixed(0)}
-                                                </Badge>
-                                            </TooltipTrigger>
-                                            <TooltipContent><p>Est. Net Profit (Quote - Parts - Labor - Commission)</p></TooltipContent>
-                                        </Tooltip>
-                                     </TooltipProvider>
-                                )}
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    {job.profitScore !== undefined && job.profitScore !== null && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge variant="outline" className="font-semibold text-foreground border-blue-500/50 bg-blue-50">
+                                                        <Bot className="h-3.5 w-3.5 mr-0.5 text-blue-600"/>
+                                                        ${job.profitScore.toFixed(0)}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>AI Profit Score (Weighted)</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                    {estimatedProfit > 0 && (
+                                         <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge variant="outline" className="font-semibold text-foreground">
+                                                        <DollarSign className="h-3.5 w-3.5 mr-0.5 text-green-600"/>
+                                                        {estimatedProfit.toFixed(0)}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Est. Gross Profit (Quote - Parts)</p></TooltipContent>
+                                            </Tooltip>
+                                         </TooltipProvider>
+                                    )}
+                                </div>
                             </div>
                         </AccordionTrigger>
                     </div>

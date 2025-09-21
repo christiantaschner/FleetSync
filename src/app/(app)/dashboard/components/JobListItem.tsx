@@ -94,41 +94,39 @@ const JobListItem: React.FC<JobListItemProps> = ({
             <Accordion type="single" collapsible>
                 <AccordionItem value={job.id} className="border-b-0">
                     <div className={cn(!isLocked && "cursor-grab")} {...listeners}>
-                        <AccordionTrigger className="flex-1 p-4 hover:no-underline relative">
+                        <AccordionTrigger className="flex-1 p-4 hover:no-underline relative h-[110px]">
                            {/* Left Side Content */}
-                            <div className="pr-28 flex items-start gap-4 w-full">
-                                <div className="flex-1 min-w-0">
-                                    <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
-                                    job.status === 'Draft' && "text-gray-600"
-                                    )}>
+                            <div className="flex-1 pr-28 flex flex-col justify-center min-w-0">
+                                <CardTitle className={cn("text-base font-headline flex items-start gap-2", 
+                                job.status === 'Draft' && "text-gray-600"
+                                )}>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{job.status}</p>
+                                    </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                                {isLocked && (
                                     <TooltipProvider>
-                                        <Tooltip>
+                                    <Tooltip>
                                         <TooltipTrigger asChild>
-                                            <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
+                                        <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>{job.status}</p>
+                                        <p>Job is locked and cannot be moved.</p>
                                         </TooltipContent>
-                                        </Tooltip>
+                                    </Tooltip>
                                     </TooltipProvider>
-                                    {isLocked && (
-                                        <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                            <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                            <p>Job is locked and cannot be moved.</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                        </TooltipProvider>
-                                    )}
-                                    <span className="truncate text-left">{job.title}</span>
-                                    </CardTitle>
-                                    <CardDescription className="flex items-center gap-1 text-sm mt-1">
-                                       <Users2 className="h-3 w-3 shrink-0" /> <span className="truncate">{job.customerName}</span>
-                                    </CardDescription>
-                                </div>
+                                )}
+                                <span className="truncate text-left">{job.title}</span>
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-1 text-sm mt-1">
+                                    <Users2 className="h-3 w-3 shrink-0" /> <span className="truncate">{job.customerName}</span>
+                                </CardDescription>
                             </div>
 
                              {/* Right Side Content - Absolutely Positioned */}

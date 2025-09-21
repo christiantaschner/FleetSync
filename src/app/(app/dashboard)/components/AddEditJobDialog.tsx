@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import type { Job, JobPriority, JobStatus, Technician, Customer, Contract, SuggestScheduleTimeOutput, Part, JobFlexibility } from '@/types';
-import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2, TrendingUp } from 'lucide-react';
+import { Loader2, UserCheck, Save, Calendar as CalendarIcon, ListChecks, Settings, Trash2, FilePenLine, Link as LinkIcon, Copy, Check, Info, Repeat, Bot, Clock, Sparkles, RefreshCw, ChevronsUpDown, X, User, MapPin, Wrench, DollarSign, Package, Lock, Unlock, Wand2, Lightbulb } from 'lucide-react';
 import { suggestScheduleTimeAction, generateTriageLinkAction, analyzeJobAction } from '@/actions/ai-actions';
 import { deleteJobAction } from '@/actions/fleet-actions';
 import { upsertCustomerAction } from '@/actions/customer-actions';
@@ -126,17 +126,17 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     return quotedValue - expectedPartsCost;
   }, [quotedValue, expectedPartsCost]);
 
-  const estimatedMargin = useMemo(() => {
-    if (estimatedProfit === null || !quotedValue || quotedValue === 0) return null;
-    return (estimatedProfit / quotedValue) * 100;
-  }, [estimatedProfit, quotedValue]);
-
   const getMarginColor = (margin: number | null) => {
     if (margin === null) return 'text-muted-foreground';
     if (margin >= 50) return 'text-green-600';
     if (margin >= 25) return 'text-amber-600';
     return 'text-red-600';
   };
+  
+  const estimatedMargin = useMemo(() => {
+    if (estimatedProfit === null || !quotedValue || quotedValue === 0) return null;
+    return (estimatedProfit / quotedValue) * 100;
+  }, [estimatedProfit, quotedValue]);
 
   const resetForm = useCallback(() => {
     const initialData = job || prefilledData || {};
@@ -743,10 +743,21 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                             </div>
                             {estimatedProfit !== null && (
                                 <div className="p-3 border rounded-md bg-secondary/50 flex items-center justify-around text-center">
-                                    <div>
-                                        <p className="text-xs text-muted-foreground">Est. Job Profit</p>
-                                        <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>${estimatedProfit.toFixed(2)}</p>
-                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="cursor-help">
+                                                    <p className="text-xs text-muted-foreground">Est. Job Profit</p>
+                                                    <p className={cn("text-xl font-bold", getMarginColor(estimatedMargin))}>
+                                                        ${estimatedProfit.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Quote - Parts Cost</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <Separator orientation="vertical" className="h-10"/>
                                     <div>
                                         <p className="text-xs text-muted-foreground">Est. Profit Margin</p>
@@ -981,3 +992,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+
+    

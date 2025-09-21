@@ -234,7 +234,7 @@ export default function DashboardPage() {
 
   const fetchParts = useCallback(async (companyId: string) => {
     if (isMockMode) {
-      setAllParts(mockParts.map((name, index) => ({ id: `mock_part_${index}`, name })));
+      setAllParts(mockParts.map((p, i) => ({ id: `part_${i}`, name: p })));
       return;
     }
     if (!appId) return;
@@ -622,8 +622,10 @@ export default function DashboardPage() {
     const today = new Date();
     const jobsForToday = jobs.filter(j => j.scheduledTime && isSameDay(new Date(j.scheduledTime), today));
     const completedToday = jobsForToday.filter(j => j.status === 'Completed' || j.status === 'Finished');
+    const scheduledUnfinished = jobsForToday.filter(j => j.status !== 'Completed' && j.status !== 'Finished' && j.status !== 'Cancelled');
     
     const totalProfitToday = completedToday.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
+    const potentialProfitToday = scheduledUnfinished.reduce((acc, job) => acc + (job.quotedValue || 0), totalProfitToday);
     
     return {
         highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
@@ -631,6 +633,7 @@ export default function DashboardPage() {
         availableTechnicians: technicians.filter(t => t.isAvailable).length,
         jobsScheduledToday: jobsForToday.length,
         totalProfitToday,
+        potentialProfitToday,
     };
   }, [jobs, technicians]);
 
@@ -1320,14 +1323,19 @@ export default function DashboardPage() {
                     <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
                 </CardContent>
             </Card>
-             <Card className="flex flex-col h-full bg-green-50 border-green-500/30">
+             <Card className="flex flex-col h-full">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium text-green-900">{t('total_profit_today')}</CardTitle>
-                    <DollarSign className="h-4 w-4 text-green-600" />
+                    <CardTitle className="text-sm font-medium text-green-800">{t('total_profit_today')}</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent className="flex-grow">
                     <div className="text-2xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
-                    <p className="text-xs text-green-800/80">From all completed jobs today</p>
+                    <p className="text-xs text-muted-foreground">
+                        of ${kpiData.potentialProfitToday.toFixed(2)} potential
+                    </p>
+                    {kpiData.potentialProfitToday > 0 && (
+                        <Progress value={(kpiData.totalProfitToday / kpiData.potentialProfitToday) * 100} className="mt-2 h-2" />
+                    )}
                 </CardContent>
             </Card>
         </div>

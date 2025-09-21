@@ -70,17 +70,19 @@ const JobListItem: React.FC<JobListItemProps> = ({
     }
   };
   
-  const estimatedProfit = (job.quotedValue !== undefined && job.expectedPartsCost !== undefined) 
-    ? job.quotedValue - job.expectedPartsCost
-    : null;
+  const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
+
+  let netProfit: number | null = null;
+  if (job.quotedValue !== undefined && job.expectedPartsCost !== undefined && assignedTechnician) {
+      const laborCost = (assignedTechnician.hourlyCost || 0) * ((job.estimatedDurationMinutes || 60) / 60);
+      const commissionCost = (job.quotedValue * ((assignedTechnician.commissionRate || 0) / 100)) + (assignedTechnician.bonus || 0);
+      netProfit = job.quotedValue - job.expectedPartsCost - laborCost - commissionCost;
+  }
 
   return (
      <div ref={setNodeRef} style={style} {...attributes}>
         <Card className={cn(
           "hover:shadow-md transition-shadow duration-200",
-          job.profitScore !== undefined && job.profitScore > 150 ? "border-green-400 bg-green-50/50" :
-          job.profitScore !== undefined && job.profitScore > 50 ? "border-amber-400 bg-amber-50/50" :
-          "border-gray-200",
           job.status === 'Draft' && "border-gray-400 bg-gray-50/50"
         )}>
             <Accordion type="single" collapsible>
@@ -120,49 +122,29 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                 </CardDescription>
                             </div>
 
-                            <div className="absolute right-10 top-4 flex flex-col items-end gap-1 text-right pr-4">
+                            <div className="absolute right-12 top-4 flex flex-col items-end gap-1 text-right">
                                 <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
-                                {job.assignedTechnicianId ? (
+                                {assignedTechnician ? (
                                     <Badge variant="secondary" className="max-w-[150px]">
                                         <UserCheck className="h-3 w-3 mr-1"/>
-                                        <span className="truncate">{technicians.find(t => t.id === job.assignedTechnicianId)?.name}</span>
+                                        <span className="truncate">{assignedTechnician.name}</span>
                                     </Badge>
                                 ) : (
                                     <Badge variant="outline">Unassigned</Badge>
                                 )}
-                                 <div className="flex items-center gap-1.5 pt-1">
-                                    {estimatedProfit !== null && (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Badge variant="outline" className="font-semibold text-foreground">
-                                                        <DollarSign className="h-3.5 w-3.5 mr-0.5"/>
-                                                        {estimatedProfit.toFixed(0)}
-                                                    </Badge>
-                                                </TooltipTrigger>
-                                                <TooltipContent><p>Est. Gross Profit (Quote - Parts)</p></TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    )}
-                                    {job.profitScore !== undefined && (
-                                         <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Badge className="font-bold bg-green-100 text-green-800 border-green-300">
-                                                        <Bot className="h-3.5 w-3.5 mr-1"/>
-                                                        {job.profitScore.toFixed(0)}
-                                                    </Badge>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                  <div className="text-xs space-y-1 text-center">
-                                                    <p className="font-bold">AI Net Profit Score</p>
-                                                    <p className="text-muted-foreground">Quote - (Labor + Travel + Parts)</p>
-                                                  </div>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                         </TooltipProvider>
-                                    )}
-                                </div>
+                                 {netProfit !== null && (
+                                     <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Badge variant="outline" className="font-semibold text-foreground mt-1">
+                                                    <DollarSign className="h-3.5 w-3.5 mr-0.5 text-green-600"/>
+                                                    {netProfit.toFixed(0)}
+                                                </Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent><p>Est. Net Profit (Quote - Parts - Labor - Commission)</p></TooltipContent>
+                                        </Tooltip>
+                                     </TooltipProvider>
+                                )}
                             </div>
                         </AccordionTrigger>
                     </div>
@@ -233,4 +215,3 @@ const JobListItem: React.FC<JobListItemProps> = ({
 };
 
 export default JobListItem;
-

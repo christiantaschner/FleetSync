@@ -114,6 +114,8 @@ export const mockJobs: Job[] = [
     inProgressAt: subMinutes(new Date(), 20).toISOString(),
     routeOrder: 0,
     estimatedDurationMinutes: 75,
+    quotedValue: 350,
+    expectedPartsCost: 50,
   },
   {
     id: 'job_1_history_1',
@@ -135,6 +137,8 @@ export const mockJobs: Job[] = [
     completedAt: subMonths(today, 12).toISOString(),
     notes: 'System is in good condition. Cleaned coils and replaced filter.',
     isFirstTimeFix: true,
+    quotedValue: 150,
+    actualProfit: 120,
   },
   {
     id: 'job_2',
@@ -154,6 +158,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 10), 0).toISOString(),
     estimatedDurationMinutes: 120,
+    quotedValue: 450,
+    expectedPartsCost: 80,
   },
   {
     id: 'job_16_frank',
@@ -192,6 +198,8 @@ export const mockJobs: Job[] = [
     customerSignatureTimestamp: subDays(today, 7).toISOString(),
     travelDistanceKm: 12.5,
     co2EmissionsKg: 2.4,
+    quotedValue: 200,
+    actualProfit: 150,
   },
   {
     id: 'job_20_frank_history',
@@ -214,6 +222,8 @@ export const mockJobs: Job[] = [
     notes: 'Water heater flushed. Anode rod is in good condition. No issues found.',
     isFirstTimeFix: true,
     customerSatisfactionScore: 5,
+    quotedValue: 125,
+    actualProfit: 100,
   },
   {
     id: 'job_3',
@@ -233,6 +243,8 @@ export const mockJobs: Job[] = [
     scheduledTime: setMinutes(setHours(today, 11), 0).toISOString(),
     estimatedDurationMinutes: 60,
     routeOrder: 1,
+    quotedValue: 180,
+    expectedPartsCost: 15,
   },
   {
     id: 'job_4',
@@ -252,6 +264,8 @@ export const mockJobs: Job[] = [
     routeOrder: 2,
     sourceContractId: 'contract_1',
     estimatedDurationMinutes: 180,
+    quotedValue: 500,
+    expectedPartsCost: 75,
   },
   {
     id: 'job_5',
@@ -271,6 +285,8 @@ export const mockJobs: Job[] = [
     scheduledTime: setMinutes(setHours(today, 16), 0).toISOString(),
     routeOrder: 3,
     estimatedDurationMinutes: 60,
+    quotedValue: 175,
+    expectedPartsCost: 20,
   },
    {
     id: 'job_21_alice_tomorrow',
@@ -289,6 +305,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 9), 0).toISOString(),
     estimatedDurationMinutes: 90,
+    quotedValue: 250,
+    expectedPartsCost: 150,
   },
   {
     id: 'job_22_alice_tomorrow_pm',
@@ -307,6 +325,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 13), 30).toISOString(),
     estimatedDurationMinutes: 60,
+    quotedValue: 120,
+    expectedPartsCost: 10,
   },
   {
     id: 'job_23_alice_dayafter',
@@ -325,6 +345,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(dayAfter, 10), 0).toISOString(),
     estimatedDurationMinutes: 75,
+    quotedValue: 300,
+    expectedPartsCost: 45,
   },
   {
     id: 'job_24_alice_threedays',
@@ -343,6 +365,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(threeDaysFromNow, 11), 0).toISOString(),
     estimatedDurationMinutes: 45,
+    quotedValue: 95,
+    expectedPartsCost: 25,
   },
   {
     id: 'job_6',
@@ -361,6 +385,8 @@ export const mockJobs: Job[] = [
     updatedAt: subDays(today, 1).toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 11), 0).toISOString(),
     estimatedDurationMinutes: 45,
+    quotedValue: 150,
+    expectedPartsCost: 5,
   },
   {
     id: 'job_7',
@@ -379,6 +405,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(dayAfter, 9), 0).toISOString(),
     estimatedDurationMinutes: 90,
+    quotedValue: 200,
+    expectedPartsCost: 0,
   },
   {
     id: 'job_8',
@@ -397,6 +425,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 13), 0).toISOString(),
     estimatedDurationMinutes: 75,
+    quotedValue: 220,
+    expectedPartsCost: 30,
   },
   {
     id: 'job_9',
@@ -415,6 +445,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 10), 0).toISOString(),
     estimatedDurationMinutes: 120,
+    quotedValue: 550,
+    expectedPartsCost: 0,
   },
   {
     id: 'job_10',
@@ -433,6 +465,8 @@ export const mockJobs: Job[] = [
     updatedAt: subDays(today, 1).toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 14), 0).toISOString(),
     estimatedDurationMinutes: 60,
+    quotedValue: 160,
+    expectedPartsCost: 20,
   },
    {
     id: 'job_11',
@@ -451,6 +485,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 15), 0).toISOString(),
     estimatedDurationMinutes: 90,
+    quotedValue: 280,
+    expectedPartsCost: 70,
   },
    {
     id: 'job_12',
@@ -472,7 +508,9 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 60,
     notes: "Replaced the heating element. Dryer is now heating correctly. Tested on high heat for 10 minutes.",
     isFirstTimeFix: true,
-    customerSatisfactionScore: 5
+    customerSatisfactionScore: 5,
+    quotedValue: 210,
+    actualProfit: 140,
   },
    {
     id: 'job_13',
@@ -492,9 +530,11 @@ export const mockJobs: Job[] = [
     scheduledTime: subDays(today, 4).toISOString(),
     completedAt: subDays(today, 4).toISOString(),
     estimatedDurationMinutes: 180,
-     notes: "Installed 6 low-voltage path lights and 2 spotlights. All connected to a new transformer and timer. Customer is happy with the result.",
+    notes: "Installed 6 low-voltage path lights and 2 spotlights. All connected to a new transformer and timer. Customer is happy with the result.",
     isFirstTimeFix: true,
-    customerSatisfactionScore: 5
+    customerSatisfactionScore: 5,
+    quotedValue: 800,
+    actualProfit: 450,
   },
    {
     id: 'job_14',
@@ -513,6 +553,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 14), 30).toISOString(),
     estimatedDurationMinutes: 75,
+    quotedValue: 260,
+    expectedPartsCost: 25,
   },
    {
     id: 'job_15',
@@ -530,6 +572,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: null,
     estimatedDurationMinutes: 60,
+    quotedValue: 100,
+    expectedPartsCost: 0,
   },
   {
     id: 'job_17_unassigned',
@@ -548,6 +592,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: null,
     estimatedDurationMinutes: 240,
+    quotedValue: 1200,
+    expectedPartsCost: 350,
   },
   {
     id: 'job_18_unassigned',
@@ -566,6 +612,8 @@ export const mockJobs: Job[] = [
     updatedAt: subDays(today, 1).toISOString(),
     scheduledTime: null,
     estimatedDurationMinutes: 120,
+    quotedValue: 400,
+    expectedPartsCost: 100,
   },
   {
     id: 'job_19_unassigned',
@@ -584,6 +632,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 13), 0).toISOString(),
     estimatedDurationMinutes: 60,
+    quotedValue: 180,
+    expectedPartsCost: 0,
   }
 ];
 

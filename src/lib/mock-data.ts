@@ -116,6 +116,7 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 75,
     quotedValue: 350,
     expectedPartsCost: 50,
+    profitScore: 285,
   },
   {
     id: 'job_1_history_1',
@@ -139,6 +140,7 @@ export const mockJobs: Job[] = [
     isFirstTimeFix: true,
     quotedValue: 150,
     actualProfit: 120,
+    profitScore: 115,
   },
   {
     id: 'job_2',
@@ -266,6 +268,7 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 180,
     quotedValue: 500,
     expectedPartsCost: 75,
+    profitScore: 400,
   },
   {
     id: 'job_5',
@@ -427,6 +430,7 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 75,
     quotedValue: 220,
     expectedPartsCost: 30,
+    profitScore: 175,
   },
   {
     id: 'job_9',
@@ -511,6 +515,7 @@ export const mockJobs: Job[] = [
     customerSatisfactionScore: 5,
     quotedValue: 210,
     actualProfit: 140,
+    profitScore: 135,
   },
    {
     id: 'job_13',

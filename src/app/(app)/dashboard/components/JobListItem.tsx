@@ -70,25 +70,17 @@ const JobListItem: React.FC<JobListItemProps> = ({
     }
   };
   
-  const estimatedProfit = (job.quotedValue) 
-    ? job.quotedValue - (job.expectedPartsCost || 0)
+  const estimatedProfit = (job.quotedValue !== undefined && job.expectedPartsCost !== undefined) 
+    ? job.quotedValue - job.expectedPartsCost
     : null;
-    
-  const profitScoreToUse = job.profitScore ?? estimatedProfit;
-
-  const getProfitColorClass = (score: number | undefined | null) => {
-    if (score === undefined || score === null) return '';
-    if (score > 150) return 'border-green-400 bg-green-50/50';
-    if (score > 50) return 'border-amber-400 bg-amber-50/50';
-    if (score > 0) return 'border-red-400 bg-red-50/50';
-    return 'border-gray-300';
-  };
 
   return (
      <div ref={setNodeRef} style={style} {...attributes}>
         <Card className={cn(
           "hover:shadow-md transition-shadow duration-200",
-          getProfitColorClass(profitScoreToUse),
+          job.profitScore !== undefined && job.profitScore > 150 ? "border-green-400 bg-green-50/50" :
+          job.profitScore !== undefined && job.profitScore > 50 ? "border-amber-400 bg-amber-50/50" :
+          "border-gray-200",
           job.status === 'Draft' && "border-gray-400 bg-gray-50/50"
         )}>
             <Accordion type="single" collapsible>
@@ -139,7 +131,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                     <Badge variant="outline">Unassigned</Badge>
                                 )}
                                  <div className="flex items-center gap-1.5 pt-1">
-                                    {estimatedProfit !== null && job.profitScore === undefined && (
+                                    {estimatedProfit !== null && (
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>

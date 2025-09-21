@@ -82,7 +82,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                 <CardTitle className={cn("text-base font-headline flex items-center gap-2", 
                                 job.status === 'Draft' && "text-gray-600"
                                 )}>
-                                <Briefcase className="h-4 w-4 text-muted-foreground shrink-0"/>
+                                {job.assignedTechnicianId ? <Briefcase className="h-4 w-4 text-muted-foreground shrink-0"/> : <ShieldQuestion className="h-4 w-4 text-muted-foreground shrink-0"/>}
                                 <span className="truncate text-left">{job.title}</span>
                                 </CardTitle>
                                 <CardDescription className="flex items-center gap-2 text-sm">

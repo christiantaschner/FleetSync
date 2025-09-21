@@ -59,7 +59,7 @@ Your main ranking metric is **Total Profit** from this specific job assignment. 
 -   **Commission** = (Quoted Value * (Tech's Commission Rate / 100)) + Tech's Bonus
 -   **SLA Penalty**: If at risk, apply a 25% penalty on the Quoted Value. Otherwise, it's $0.
 
-The **Job's Gross Profit Potential** is defined as `Quoted Value - Expected Parts Cost`. This identifies high-value jobs. For these jobs, you should heavily favor technicians with high upsell conversion rates, as they can significantly multiply the job's value.
+The **Job's Gross Profit Potential** is defined as 'Quoted Value - Expected Parts Cost'. This identifies high-value jobs. For these jobs, you should heavily favor technicians with high upsell conversion rates, as they can significantly multiply the job's value.
 
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
@@ -69,7 +69,7 @@ The **Job's Gross Profit Potential** is defined as `Quoted Value - Expected Part
 
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
     -   **Maximize Total Profit:** Your main goal is to maximize the calculated **Total Profit** for this assignment.
-    -   **Upsell Conversion:** For jobs with a high Gross Profit Potential and a high `upsellScore`, STRONGLY prefer technicians with a high `upsellConversionRate`.
+    -   **Upsell Conversion:** For jobs with a high Gross Profit Potential and a high 'upsellScore', STRONGLY prefer technicians with a high 'upsellConversionRate'.
     -   **SLA Penalties:** Avoid any technician whose schedule puts them at risk of arriving late if there is an SLA penalty.
 
 3.  **EFFICIENCY & CUSTOMER SATISFACTION (Secondary Factors):**

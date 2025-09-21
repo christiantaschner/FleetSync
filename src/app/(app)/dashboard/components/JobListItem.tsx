@@ -128,7 +128,7 @@ const JobListItem: React.FC<JobListItemProps> = ({
                                        <Users2 className="h-3 w-3 shrink-0" /> <span className="truncate">{job.customerName}</span>
                                     </CardDescription>
                                 </div>
-                                <div className="flex flex-col items-end gap-1 text-right flex-shrink-0">
+                                <div className="flex flex-col items-end gap-1 text-right ml-auto flex-shrink-0">
                                     <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
                                     {job.assignedTechnicianId ? (
                                         <Badge variant="secondary" className="max-w-[150px]">

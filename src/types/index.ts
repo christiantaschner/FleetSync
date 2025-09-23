@@ -94,6 +94,9 @@ export const CompanySchema = z.object({
     subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'canceled', 'unpaid']).optional(),
     trialEndsAt: z.string().optional(), // ISO string
     technicianSeatCount: z.number().optional().default(1),
+    
+    // New referral field
+    referralCode: z.string().optional(),
 });
 export type Company = z.infer<typeof CompanySchema>;
 
@@ -729,6 +732,7 @@ export const CompleteOnboardingInputSchema = z.object({
   companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
   otherSpecialty: z.string().optional(),
   numberOfTechnicians: z.number().min(1, 'You must have at least one technician.'),
+  referralCode: z.string().optional().describe("An optional referral code from another company."),
 }).refine(data => {
     if (data.companySpecialties.includes('Other')) {
         return data.otherSpecialty && data.otherSpecialty.trim().length > 0;

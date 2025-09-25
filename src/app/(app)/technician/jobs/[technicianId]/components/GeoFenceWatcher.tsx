@@ -94,7 +94,6 @@ const GeoFenceWatcher: React.FC<GeoFenceWatcherProps> = ({ appId, job, onStatusC
             // Stop watching if there's no active job or the job is already in progress/completed
             if (watchIdRef.current) {
                 navigator.geolocation.clearWatch(watchIdRef.current);
-                watchIdRef.current = null;
             }
         }
 

@@ -5,15 +5,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle, DollarSign } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle, DollarSign, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
-import WorkDocumentationForm from '../../technician/[jobId]/components/WorkDocumentationForm';
+import WorkDocumentationForm from './components/WorkDocumentationForm';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
-import UpsellOpportunityCard from '../../technician/[jobId]/components/UpsellOpportunityCard';
+import UpsellOpportunityCard from './components/UpsellOpportunityCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
@@ -25,6 +25,7 @@ import { addDocumentationAction, updateJobStatusAction } from '@/actions/job-act
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
+import { Separator } from '@/components/ui/separator';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -236,6 +237,27 @@ export default function TechnicianJobDetailPage() {
     }
     setIsUpdating(false);
   };
+  
+  const AssistanceSection = () => (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+            <Lightbulb /> Assistance
+          </CardTitle>
+          <CardDescription>
+            Use these tools if you need help with the job.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <TroubleshootingCard job={job!} serviceHistory={historyJobs} />
+          {technician && appId && (
+            <Button variant="outline" className="w-full" onClick={() => setIsChatOpen(true)}>
+              <MessageSquare className="mr-2 h-4 w-4"/> Chat with Dispatch
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+  );
 
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
@@ -258,87 +280,84 @@ export default function TechnicianJobDetailPage() {
           appId={appId}
       />}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" /> Back</Button>
+        <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
 
-      <JobDetailsDisplay job={job}>
-          {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (
-              <CardFooter className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                   <Button variant="outline" onClick={handleNavigate} className="w-full justify-center">
-                        <Navigation className="mr-2 h-4 w-4" /> Navigate
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsChatOpen(true)} className="w-full justify-center">
-                        <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
-                    </Button>
-                    <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full justify-center">
-                        {isUpdating && isBreakActive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
-                        {isBreakActive ? 'End Break' : 'Start Break'}
-                    </Button>
-              </CardFooter>
-          )}
-      </JobDetailsDisplay>
-
-      <StatusUpdateActions 
-          currentStatus={job.status} 
-          onUpdateStatus={handleStatusUpdate}
-          isUpdating={isUpdating}
-      />
+      <JobDetailsDisplay job={job} />
       
-      <CustomerHistoryCard jobs={historyJobs} />
-      
-      {job.upsellReasoning && (
-          <UpsellOpportunityCard 
-            job={job}
-            onUpdate={(updatedFields) => setJob(prev => prev ? {...prev, ...updatedFields} : null)}
-          />
-      )}
-
-      {job.status === 'In Progress' && (
-        <div className="space-y-4">
-          <TroubleshootingCard job={job} serviceHistory={historyJobs} />
-          <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
-        </div>
-      )}
-      
-      {job.status === 'Completed' && (
+      <div className="space-y-6">
+        {job.status === 'Assigned' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button onClick={() => handleStatusUpdate('En Route')} disabled={isUpdating} className="sm:col-span-2">
+                <Truck className="mr-2 h-4 w-4" /> Start Travel (En Route)
+              </Button>
+              <Button variant="outline" onClick={handleNavigate}>
+                <Navigation className="mr-2 h-4 w-4" /> Navigate
+              </Button>
+               <Button variant="outline" onClick={() => setIsChatOpen(true)}>
+                <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
+              </Button>
+          </div>
+        )}
+        
+        {job.status === 'En Route' && (
             <div className="space-y-4">
-                 <Alert variant="default" className="border-green-600/50 bg-green-50/50">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertTitle className="font-semibold text-green-800">Job Completed</AlertTitle>
-                    <AlertDescription className="text-green-700">
-                       Great work! This job has been marked as complete. The back office will handle invoicing.
-                    </AlertDescription>
-                </Alert>
+              <Alert>
+                <Truck className="h-4 w-4" />
+                <AlertTitle>You're on your way!</AlertTitle>
+                <AlertDescription>The customer has been notified. Press 'Arrived' when you get to the job site.</AlertDescription>
+              </Alert>
+               <Button onClick={() => handleStatusUpdate('In Progress')} disabled={isUpdating} className="w-full">
+                  <Play className="mr-2 h-4 w-4" /> Arrived & Start Work
+              </Button>
             </div>
         )}
 
-      {job.status === 'Pending Invoice' && (
-        <Card className="bg-blue-50 border-blue-200">
-            <CardHeader>
-                <CardTitle className="font-headline text-blue-800">Pending Invoice</CardTitle>
-                <CardDescription className="text-blue-700">This job is awaiting invoicing by the back office.</CardDescription>
-            </CardHeader>
-        </Card>
-      )}
-       {job.status === 'Finished' && (
-        <Card className="bg-green-50 border-green-200">
-            <CardHeader>
-                <CardTitle className="font-headline text-green-800">Job Finished</CardTitle>
-                 <CardDescription className="text-green-700">This job has been completed and invoiced.</CardDescription>
-            </CardHeader>
-        </Card>
-      )}
+        {job.status === 'In Progress' && (
+           <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Timer /> Job Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2">
+                     <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>
+                        {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+                        {isBreakActive ? 'End Break' : 'Start Break'}
+                    </Button>
+                    <Button onClick={() => handleStatusUpdate('Completed')} disabled={isUpdating || isBreakActive} className="bg-green-600 hover:bg-green-700">
+                        <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
+                    </Button>
+                </CardContent>
+            </Card>
+            
+            {job.upsellReasoning && (
+              <UpsellOpportunityCard 
+                job={job}
+                onUpdate={(updatedFields) => setJob(prev => prev ? {...prev, ...updatedFields} : null)}
+              />
+            )}
+            
+            <AssistanceSection />
+            <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
+          </div>
+        )}
+
+        {job.status === 'Completed' && (
+          <Alert variant="default" className="border-green-600/50 bg-green-50/50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle className="font-semibold text-green-800">Job Completed</AlertTitle>
+            <AlertDescription className="text-green-700">
+                Great work! This job has been marked as complete. You can now proceed to your next assignment.
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      <Separator />
       
-       {job.status === 'Cancelled' && (
-        <Card className="bg-red-50 border-red-200">
-            <CardHeader>
-                <CardTitle className="font-headline text-red-800">Job Cancelled</CardTitle>
-                 <CardDescription className="text-red-700">This job was cancelled.</CardDescription>
-            </CardHeader>
-        </Card>
-      )}
+      <CustomerHistoryCard jobs={historyJobs} />
     </div>
   );
 }

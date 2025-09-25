@@ -47,8 +47,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { summarizeFtfrAction } from '@/actions/report-actions';
-import { runReportAnalysisAction } from '@/actions/ai-actions';
+import { summarizeFtfrAction, runReportAnalysisAction } from '@/actions/report-actions';
 import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReportAnalysisDialog from "./ReportAnalysisDialog";
@@ -568,3 +567,5 @@ export default function ReportClientView() {
     </div>
   );
 }
+
+    

@@ -94,7 +94,8 @@ export async function allocateJobAction(
         data: { 
           suggestions: [{
             suggestedTechnicianId: suitableTechnician.technicianId,
-            reasoning: "Mock Mode: Selected the first available technician with the required skills."
+            reasoning: "Mock Mode: Selected the first available technician with the required skills.",
+            profitScore: 250,
           }],
           overallReasoning: "Mocked response"
         }, 
@@ -165,7 +166,7 @@ export async function allocateJobAction(
         }
     }
 
-    const result = await allocateJobFlow(flowInput, appId);
+    const result = await allocateJobFlow(flowInput);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {

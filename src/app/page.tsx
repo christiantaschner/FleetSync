@@ -58,32 +58,38 @@ export default function MarketingPage() {
     {
       icon: Smartphone,
       title: "Technician Command Center",
-      description: "Mobile-first access to schedules, troubleshooting, upsells, documentation.",
+      description: "Mobile-first access to schedules, troubleshooting, upsells, and documentation.",
+      example: "A tech finishes a job and, with a few taps, uploads before/after photos, captures a signature, and logs a successful upsell—all before leaving the driveway."
     },
     {
       icon: Shuffle,
       title: "Dynamic Route Optimization",
-      description: "Recalculate optimal routes in one click.",
+      description: "Recalculates optimal routes in one click to adapt to last-minute changes or cancellations.",
+      example: "A customer cancels. Instead of a 2-hour gap, you click 'Optimize' and the AI intelligently pulls a nearby, lower-priority job forward, saving the day's productivity."
     },
     {
       icon: AlertTriangle,
       title: "Proactive Risk Alerts",
-      description: "AI flags delays before they happen.",
+      description: "The AI monitors active jobs and traffic, flagging potential delays before they happen.",
+      example: "You get an alert: 'Alice is at risk of being 30 mins late to her next job.' You can then notify the customer or reassign the job with one click."
     },
     {
       icon: CalendarDays,
       title: "Drag-and-Drop Scheduling",
-      description: "Visual control over your team’s day.",
+      description: "A visual timeline of your entire team's day. Drag jobs between technicians or time slots to manually fine-tune the schedule.",
+      example: "You see Bob has a gap in his afternoon. You drag an unassigned job from the list and drop it right into his timeline. The job is instantly assigned and scheduled."
     },
     {
       icon: Repeat,
       title: "Recurring Job Management",
-      description: "Automate service agreements with AI scheduling.",
+      description: "Set up service contracts for recurring maintenance, and let the AI automatically generate and suggest appointments when they're due.",
+      example: "It's the start of the month. The system automatically creates 15 jobs for your quarterly service contracts and lists them as 'due for scheduling'."
     },
     {
       icon: Cog,
       title: "Skills & Parts Library",
-      description: "Match jobs to tech skills and van inventory.",
+      description: "The AI matches job requirements to technician skills and van inventory, ensuring the right person with the right tools is sent every time.",
+      example: "A job requires 'Refrigerant Handling'. The AI automatically filters out junior techs and prioritizes those who have that certified skill and the part in their van."
     }
   ];
 
@@ -469,7 +475,7 @@ export default function MarketingPage() {
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {featureList.map((feature) => (
                       <Card key={feature.title} className="flex flex-col bg-background">
-                          <CardHeader className="flex-row items-center gap-4 space-y-0 pb-4">
+                          <CardHeader className="flex-row items-start gap-4 space-y-0 pb-4">
                               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
                                 <feature.icon className="h-6 w-6" />
                               </div>
@@ -477,6 +483,9 @@ export default function MarketingPage() {
                           </CardHeader>
                           <CardContent className="flex-grow">
                               <p className="text-muted-foreground text-sm">{feature.description}</p>
+                              <p className="text-sm text-foreground/80 mt-2 pt-2 border-t border-dashed">
+                                <strong className="text-primary">Example:</strong> {feature.example}
+                              </p>
                           </CardContent>
                       </Card>
                     ))}

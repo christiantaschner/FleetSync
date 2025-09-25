@@ -21,6 +21,7 @@ export const MOCK_COMPANY: Company = {
   ownerId: MOCK_ADMIN_ID,
   subscriptionStatus: 'active',
   technicianSeatCount: 10,
+  referralCode: 'MOCK-REF-123',
   settings: {
     companySpecialties: ["HVAC", "Plumbing"],
     hideHelpButton: false
@@ -44,6 +45,8 @@ export const mockTechnicians: Technician[] = [
     vanInventory: ["Capacitor", "Filter Drier", "Refrigerant R-410A", "Thermostat"],
     hourlyCost: 75,
     maxDailyHours: 8,
+    commissionRate: 5,
+    bonus: 10,
   },
   {
     id: 'tech_2',
@@ -59,6 +62,8 @@ export const mockTechnicians: Technician[] = [
     vanInventory: ["P-Trap Assembly", "Faucet Cartridge", "Wax Ring", "Copper Pipe (1/2 in)"],
     hourlyCost: 65,
     maxDailyHours: 10,
+    commissionRate: 5,
+    bonus: 0,
   },
   {
     id: 'tech_3',
@@ -74,6 +79,8 @@ export const mockTechnicians: Technician[] = [
     vanInventory: ["GFCI Outlet", "Circuit Breaker (15A)", "Circuit Breaker (20A)", "Light Switch", "Electrical Wire (12/2)"],
     hourlyCost: 70,
     maxDailyHours: 8,
+    commissionRate: 7,
+    bonus: 15,
   },
 ];
 
@@ -162,6 +169,7 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 120,
     quotedValue: 450,
     expectedPartsCost: 80,
+    sourceContractId: 'contract_2',
   },
   {
     id: 'job_16_frank',
@@ -663,18 +671,17 @@ export const mockContracts: Contract[] = [
     {
         id: 'contract_2',
         companyId: MOCK_COMPANY_ID,
-        customerName: 'Sunset Apartments',
-        customerAddress: '800 Sunset Blvd, Los Angeles, CA',
-        frequency: 'Monthly',
-        startDate: '2023-01-15T09:00:00.000Z',
+        customerName: 'Frank Miller',
+        customerAddress: '456 Oak Ave, Los Angeles, CA',
+        frequency: 'Semi-Annually',
+        startDate: '2023-04-01T09:00:00.000Z',
         isActive: true,
         jobTemplate: {
-            title: 'Monthly Fire Extinguisher Check',
-            description: 'Inspect and certify all fire extinguishers in common areas.',
+            title: 'Semi-Annual AC Maintenance',
+            description: 'Perform semi-annual cleaning and inspection of main AC unit. Check refrigerant levels.',
             priority: 'Medium',
             estimatedDurationMinutes: 90,
         },
-        // This date is now set to 1 month ago, so the next due date is today.
         lastGeneratedUntil: subMonths(new Date(), 1).toISOString(), 
         createdAt: '2023-01-15T09:00:00.000Z',
     },
@@ -756,3 +763,5 @@ export const mockParts = [
     "Circuit Breaker (20A)",
     "GFCI Outlet"
 ];
+
+    

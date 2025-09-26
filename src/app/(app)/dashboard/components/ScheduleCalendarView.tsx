@@ -165,6 +165,29 @@ const TechnicianRow = ({ technician, children, onOptimize, isOptimizing, timelin
     );
 }
 
+const UnassignedJobItem = ({ job }: { job: Job }) => {
+    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+        id: job.id,
+        data: { type: 'unassigned-job', job },
+    });
+
+    const style = transform ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        zIndex: 100,
+    } : undefined;
+
+    return (
+        <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+            <Card className="cursor-grab bg-amber-50 border-amber-300 hover:shadow-md">
+                <CardContent className="p-2">
+                    <p className="font-semibold text-xs truncate text-amber-900">{job.title}</p>
+                    <p className="text-xs text-amber-700 truncate">{job.customerName}</p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+};
+
 interface ScheduleCalendarViewProps {
   jobs: Job[];
   technicians: Technician[];
@@ -184,6 +207,7 @@ interface ScheduleCalendarViewProps {
   isSaving: boolean;
   onSave: () => void;
   onCancel: () => void;
+  unassignedJobs: Job[];
 }
 
 
@@ -203,6 +227,7 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     isSaving,
     onSave,
     onCancel,
+    unassignedJobs,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -242,25 +267,31 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
     const job = active.data.current.job as Job;
     const newTechnicianId = over.id as string;
     const newTechnician = technicians.find(t => t.id === newTechnicianId);
+
+    if (!newTechnician) return;
+
+    const timelineRef = over.data.current?.timelineRef;
+    if (!timelineRef || !timelineRef.current) return;
+    const timelineRect = timelineRef.current.getBoundingClientRect();
     
-    if (active.data.current.type === 'schedule-job' && newTechnician) {
-        const timelineRef = over.data.current?.timelineRef;
-        if (!timelineRef || !timelineRef.current) return;
-        
-        const timelineRect = timelineRef.current.getBoundingClientRect();
-        
+    let minutesFromStart;
+
+    if (active.data.current.type === 'schedule-job') {
         const initialOffsetMinutes = (new Date(job.scheduledTime!).getTime() - dayStart.getTime()) / 60000;
         const initialLeftPx = (initialOffsetMinutes / totalMinutes) * timelineRect.width;
-
         const finalLeftPx = initialLeftPx + delta.x;
-        
-        const minutesFromStart = (finalLeftPx / timelineRect.width) * totalMinutes;
-        const snappedMinutes = Math.round(minutesFromStart / 10) * 10;
-        
-        const newStartTime = new Date(dayStart.getTime() + snappedMinutes * 60000);
-
-        onScheduleChange(job.id, newTechnicianId, newStartTime.toISOString());
+        minutesFromStart = (finalLeftPx / timelineRect.width) * totalMinutes;
+    } else if (active.data.current.type === 'unassigned-job') {
+        const dropX = event.delta.x; // Use delta.x directly as we're dropping from a static list
+        minutesFromStart = (dropX / timelineRect.width) * totalMinutes;
+    } else {
+        return;
     }
+    
+    const snappedMinutes = Math.round(minutesFromStart / 10) * 10;
+    const newStartTime = new Date(dayStart.getTime() + snappedMinutes * 60000);
+
+    onScheduleChange(job.id, newTechnicianId, newStartTime.toISOString());
   };
 
 
@@ -395,96 +426,115 @@ const ScheduleCalendarView: React.FC<ScheduleCalendarViewProps> = ({
                     selectedChanges={selectedFleetChanges}
                     setSelectedChanges={setSelectedFleetChanges}
                 />
-                <div ref={containerRef} className="overflow-x-auto">
-                <div className="relative min-w-[1200px]">
-                    <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
-                        <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
-                        <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                        {hours.map((hour, index) => (
-                            <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
-                            {format(hour, 'ha')}
+                <div className="flex w-full">
+                    <div className="w-48 shrink-0 border-r">
+                        <div className="sticky top-0 z-20 h-10 flex items-center p-2 font-semibold text-sm bg-muted/50 border-b">
+                            Unassigned Jobs
+                        </div>
+                        <ScrollArea className="h-[calc(100vh-22rem)]">
+                            <div className="p-2 space-y-2">
+                                {unassignedJobs.length > 0 ? (
+                                    unassignedJobs.map(job => <UnassignedJobItem key={job.id} job={job} />)
+                                ) : (
+                                    <div className="text-center text-xs text-muted-foreground p-4">
+                                        No unassigned jobs.
+                                    </div>
+                                )}
                             </div>
-                        ))}
+                        </ScrollArea>
+                    </div>
+
+                    <div ref={containerRef} className="overflow-x-auto flex-1">
+                        <div className="relative min-w-[1200px]">
+                            <div className="sticky top-0 z-20 h-10 flex border-b bg-muted/50">
+                                <div className="w-48 shrink-0 p-2 font-semibold text-sm flex items-center border-r">Technician</div>
+                                <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                                {hours.map((hour, index) => (
+                                    <div key={hour.toString()} className={cn("text-center text-xs text-muted-foreground pt-2", index > 0 && "border-l")}>
+                                    {format(hour, 'ha')}
+                                    </div>
+                                ))}
+                                </div>
+                            </div>
+
+                            <div className="relative">
+                                {technicians.length > 0 ? technicians.map((tech) => {
+                                    if (!timelineRefs.current.has(tech.id)) {
+                                        timelineRefs.current.set(tech.id, React.createRef<HTMLDivElement>());
+                                    }
+                                    const techTimelineRef = timelineRefs.current.get(tech.id)!;
+                                    const techJobs = jobsByTechnician(tech.id);
+                                    
+                                    return (
+                                        <TechnicianRow 
+                                            key={tech.id} 
+                                            technician={tech} 
+                                            onOptimize={() => handleOptimize(tech.id)}
+                                            isOptimizing={optimizingTechId === tech.id}
+                                            timelineRef={techTimelineRef}
+                                        >
+                                            <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+                                                {hours.map((_, index) => (
+                                                    <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
+                                                ))}
+                                            </div>
+                                            <div ref={techTimelineRef} className="relative h-full p-1.5">
+                                                {techJobs.map((job, index) => {
+                                                    const isProposed = proposedJobs.some(p => p.id === job.id);
+                                                    let profitChange: number | null = null;
+                                                    
+                                                    if (isProposed) {
+                                                        const originalJob = jobs.find(j => j.id === job.id);
+                                                        const originalTechnician = technicians.find(t => t.id === originalJob?.assignedTechnicianId);
+                                                        const newTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
+
+                                                        if (originalJob && originalTechnician && newTechnician) {
+                                                            const originalProfit = calculateProfit(originalJob, originalTechnician);
+                                                            const newProfit = calculateProfit(job, newTechnician);
+                                                            profitChange = newProfit - originalProfit;
+                                                        }
+                                                    }
+
+                                                    return (
+                                                        <React.Fragment key={job.id}>
+                                                            <JobBlock 
+                                                                job={job} 
+                                                                dayStart={dayStart} 
+                                                                totalMinutes={totalMinutes} 
+                                                                onClick={(e, job) => {
+                                                                    e.stopPropagation();
+                                                                    onJobClick(job);
+                                                                }}
+                                                                isProposed={isProposed}
+                                                                profitChange={profitChange}
+                                                            />
+                                                        </React.Fragment>
+                                                    )
+                                                })}
+                                            </div>
+                                        </TechnicianRow>
+                                    )
+                                }) : (
+                                    <div className="pt-6">
+                                        <Alert className="m-4 border-primary/30 bg-primary/5">
+                                            <UserPlus className="h-4 w-4 text-primary" />
+                                            <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
+                                            <AlertDescription>
+                                                The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
+                                            </AlertDescription>
+                                            <div className="mt-4">
+                                                <Link href="/settings?tab=users">
+                                                    <Button variant="default" size="sm">
+                                                        <Users className="mr-2 h-4 w-4" /> Go to User Management
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        </Alert>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-
-                    <div className="relative">
-                        {technicians.length > 0 ? technicians.map((tech) => {
-                            if (!timelineRefs.current.has(tech.id)) {
-                                timelineRefs.current.set(tech.id, React.createRef<HTMLDivElement>());
-                            }
-                            const techTimelineRef = timelineRefs.current.get(tech.id)!;
-                            const techJobs = jobsByTechnician(tech.id);
-                            
-                            return (
-                                <TechnicianRow 
-                                    key={tech.id} 
-                                    technician={tech} 
-                                    onOptimize={() => handleOptimize(tech.id)}
-                                    isOptimizing={optimizingTechId === tech.id}
-                                    timelineRef={techTimelineRef}
-                                >
-                                    <div className="absolute inset-0 grid h-full" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
-                                        {hours.map((_, index) => (
-                                            <div key={index} className={cn("h-full", index > 0 && "border-l", (index % 2 !== 0) && "bg-muted/30")}></div>
-                                        ))}
-                                    </div>
-                                    <div ref={techTimelineRef} className="relative h-full p-1.5">
-                                        {techJobs.map((job, index) => {
-                                            const isProposed = proposedJobs.some(p => p.id === job.id);
-                                            let profitChange: number | null = null;
-                                            
-                                            if (isProposed) {
-                                                const originalJob = jobs.find(j => j.id === job.id);
-                                                const originalTechnician = technicians.find(t => t.id === originalJob?.assignedTechnicianId);
-                                                const newTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
-
-                                                if (originalJob && originalTechnician && newTechnician) {
-                                                    const originalProfit = calculateProfit(originalJob, originalTechnician);
-                                                    const newProfit = calculateProfit(job, newTechnician);
-                                                    profitChange = newProfit - originalProfit;
-                                                }
-                                            }
-
-                                            return (
-                                                <React.Fragment key={job.id}>
-                                                    <JobBlock 
-                                                        job={job} 
-                                                        dayStart={dayStart} 
-                                                        totalMinutes={totalMinutes} 
-                                                        onClick={(e, job) => {
-                                                            e.stopPropagation();
-                                                            onJobClick(job);
-                                                        }}
-                                                        isProposed={isProposed}
-                                                        profitChange={profitChange}
-                                                    />
-                                                </React.Fragment>
-                                            )
-                                        })}
-                                    </div>
-                                </TechnicianRow>
-                            )
-                        }) : (
-                            <div className="pt-6">
-                                <Alert className="m-4 border-primary/30 bg-primary/5">
-                                    <UserPlus className="h-4 w-4 text-primary" />
-                                    <AlertTitle className="font-semibold text-primary">No Technicians to Schedule</AlertTitle>
-                                    <AlertDescription>
-                                        The schedule is empty because no technicians have been added yet. Visit User Management to invite your team.
-                                    </AlertDescription>
-                                    <div className="mt-4">
-                                        <Link href="/settings?tab=users">
-                                            <Button variant="default" size="sm">
-                                                <Users className="mr-2 h-4 w-4" /> Go to User Management
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </Alert>
-                            </div>
-                        )}
-                    </div>
-                </div>
                 </div>
             </DndContext>
         </CardContent>

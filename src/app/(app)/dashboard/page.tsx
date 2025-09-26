@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -1474,6 +1475,7 @@ export default function DashboardPage() {
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
+            unassignedJobs={unassignedJobsForBatchAssign}
             onJobClick={(job) => router.push(`/job/${job.id}`)}
             onFleetOptimize={handleFleetOptimize}
             isFleetOptimizing={isFleetOptimizing}

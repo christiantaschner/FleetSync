@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { format, startOfDay, endOfDay, eachHourOfInterval, addDays, subDays, isSameDay, startOfMonth, endOfMonth, eachDayOfInterval as eachDay, addMonths, subMonths, isSameMonth, getDay, isToday } from 'date-fns';
-import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2, DollarSign } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Briefcase, User, Circle, ShieldQuestion, Shuffle, Calendar, Grid3x3, UserPlus, Users, Info, Car, Coffee, Play, Wrench, Save, X, Loader2, DollarSign, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -179,9 +179,12 @@ const UnassignedJobItem = ({ job }: { job: Job }) => {
     return (
         <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
             <Card className="cursor-grab bg-amber-50 border-amber-300 hover:shadow-md">
-                <CardContent className="p-2">
+                <CardContent className="p-2 space-y-1">
                     <p className="font-semibold text-xs truncate text-amber-900">{job.title}</p>
-                    <p className="text-xs text-amber-700 truncate">{job.customerName}</p>
+                    <p className="text-xs text-amber-800 truncate">{job.customerName}</p>
+                    {job.estimatedDurationMinutes && (
+                        <p className="text-xs text-amber-700 flex items-center gap-1"><Clock className="h-3 w-3"/>{job.estimatedDurationMinutes} min</p>
+                    )}
                 </CardContent>
             </Card>
         </div>

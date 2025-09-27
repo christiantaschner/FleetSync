@@ -219,6 +219,7 @@ export default function MarketingPage() {
                         <Link href="/signup">👉 Start Free Trial</Link>
                     </Button>
                 </div>
+                 <p className="text-sm text-slate-400 mt-2">Free trials available this month: 2/30.</p>
             </div>
           </div>
         </section>

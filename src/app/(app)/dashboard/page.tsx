@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -67,8 +66,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { reassignJobAction } from '@/actions/fleet-actions';
 import { Progress } from '@/components/ui/progress';
+import isEqual from 'lodash.isequal';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -186,6 +187,7 @@ export default function DashboardPage() {
   const [proposedJobs, setProposedJobs] = useState<Job[]>([]);
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
+  const [activeDragItem, setActiveDragItem] = useState<Job | null>(null);
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
@@ -762,12 +764,12 @@ export default function DashboardPage() {
             return {
                 job,
                 suggestion: {
-                    suggestions: [{
+                  suggestions: [{
                       suggestedTechnicianId: assignedTech.id,
                       reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`,
                       profitScore: Math.random() * 200 + 50,
-                    }],
-                    overallReasoning: ''
+                  }],
+                  overallReasoning: ''
                 },
                 suggestedTechnicianDetails: assignedTech,
                 error: null
@@ -1088,7 +1090,16 @@ export default function DashboardPage() {
     },
   }));
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const item = jobs.find(j => j.id === active.id) || technicians.find(t => t.id === active.id);
+    if(item && 'title' in item) { // It's a job
+        setActiveDragItem(item);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveDragItem(null);
     const { active, over } = event;
     
     if (active.data.current?.type === 'schedule-job') {
@@ -1128,8 +1139,6 @@ export default function DashboardPage() {
     }
   };
 
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
-
 
   if (authLoading || isLoadingData) { 
     return (
@@ -1142,9 +1151,9 @@ export default function DashboardPage() {
   return (
     <DndContext 
       sensors={sensors} 
-      onDragStart={(e) => setActiveDragId(e.active.id as string)}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={() => setActiveDragId(null)}
+      onDragCancel={() => setActiveDragItem(null)}
     >
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
@@ -1624,11 +1633,11 @@ export default function DashboardPage() {
         </TabsContent>
       </Tabs>
       <DragOverlay>
-        {activeDragId && jobs.find(j => j.id === activeDragId) ? (
-          <div className="rounded-md bg-background p-2 shadow-lg border border-primary">
-            <p className="text-sm font-semibold">{jobs.find(j => j.id === activeDragId)!.title}</p>
-          </div>
-        ) : null}
+        {activeDragItem && (
+            <div className="rounded-md bg-background p-2 shadow-lg border border-primary">
+                <p className="text-sm font-semibold">{activeDragItem.title}</p>
+            </div>
+        )}
       </DragOverlay>
 
       <ManageSkillsDialog 

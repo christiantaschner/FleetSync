@@ -212,9 +212,6 @@ export default function MarketingPage() {
             <p className="mx-auto mt-6 max-w-3xl text-lg text-slate-300">
               {t('homepage_subtitle')}
             </p>
-            <p className="mx-auto mt-4 max-w-3xl text-base text-slate-400">
-              Perfect for small to medium-sized service businesses with 3-50 technicians who value simplicity and power.
-            </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-2">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full">
@@ -310,7 +307,7 @@ export default function MarketingPage() {
                 <div className="mx-auto max-w-2xl text-center mb-12">
                     <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built For Your Industry</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        MarginMax adapts to the unique financial drivers of your trade, from high-margin emergency calls to high-volume contract work.
+                        MarginMax adapts to the unique financial drivers of your trade, from high-margin emergency calls to high-volume contract work. Perfect for small to medium-sized service businesses with 3-50 technicians who value simplicity and power.
                     </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -487,3 +484,5 @@ export default function MarketingPage() {
     </div>
   );
 }
+
+    

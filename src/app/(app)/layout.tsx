@@ -64,6 +64,7 @@ import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MockModeBanner } from '@/components/common/MockModeBanner';
 import { UserProfile } from "@/types";
+import { TechnicianBottomNav } from "@/app/(app)/technician/components/TechnicianBottomNav";
 
 type NavItem = {
   href: string;
@@ -164,6 +165,22 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
   
+  const isTechnicianView = userProfile?.role === 'technician';
+
+  if (isTechnicianView) {
+    return (
+      <div className="flex min-h-svh flex-col">
+        <main className="flex-1 pb-20"> {/* Add padding-bottom for the nav bar */}
+          <MockModeBanner />
+          <div className="p-4 sm:p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
+        <TechnicianBottomNav technicianId={userProfile.uid} />
+      </div>
+    );
+  }
+
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">

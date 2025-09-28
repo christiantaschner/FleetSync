@@ -3,15 +3,32 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import type { Job, Technician, JobStatus } from '@/types';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import type { Job, JobStatus } from '@/types';
+import { Loader2, ArrowLeft, Briefcase, Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
-import { mockJobs, mockTechnicians } from '@/lib/mock-data';
-import { startOfToday } from 'date-fns';
-import DailyTimeline from '../../jobs/[technicianId]/components/DailyTimeline';
+import { mockJobs } from '@/lib/mock-data';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { format, startOfToday } from 'date-fns';
+import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+// Function to group jobs by date string
+const groupJobsByDay = (jobs: Job[]) => {
+  return jobs.reduce((acc, job) => {
+    if (!job.scheduledTime) return acc;
+    const date = format(new Date(job.scheduledTime), 'PPPP');
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(job);
+    return acc;
+  }, {} as Record<string, Job[]>);
+};
+
 
 export default function TechnicianSchedulePage() {
   const { userProfile, loading: authLoading, isMockMode } = useAuth();
@@ -39,6 +56,7 @@ export default function TechnicianSchedulePage() {
     if (!db || !appId) return;
 
     const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
+    const today = startOfToday();
     
     const jobsQuery = query(
       collection(db, `artifacts/${appId}/public/data/jobs`),
@@ -52,11 +70,11 @@ export default function TechnicianSchedulePage() {
           const data = doc.data();
           for (const key in data) {
               if (data[key] && typeof data[key].toDate === 'function') {
-                  data[key] = data[key].toDate().toISOString();
+                  data[key] = (data[key] as any).toDate().toISOString();
               }
           }
           return { id: doc.id, ...data } as Job;
-      });
+      }).filter(job => job.scheduledTime && new Date(job.scheduledTime) >= today);
       setAssignedJobs(jobsForTech);
       setIsLoading(false);
     });
@@ -74,19 +92,54 @@ export default function TechnicianSchedulePage() {
     );
   }
   
+  const groupedJobs = groupJobsByDay(assignedJobs);
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
         <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold font-headline">Full Schedule</h1>
         </div>
-        {assignedJobs.length === 0 ? (
+        {Object.keys(groupedJobs).length === 0 ? (
              <div className="text-center py-12">
-                <h3 className="text-lg font-semibold">All Clear!</h3>
-                <p className="text-muted-foreground mt-1">You have no jobs scheduled.</p>
+                <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  All Clear!
+                </h3>
+                <p className="text-muted-foreground mt-1">You have no upcoming jobs scheduled.</p>
             </div>
         ) : (
-            <DailyTimeline jobs={assignedJobs} />
+             <Accordion type="single" collapsible defaultValue={Object.keys(groupedJobs)[0]}>
+                {Object.entries(groupedJobs).map(([date, jobsForDay]) => (
+                    <AccordionItem value={date} key={date}>
+                        <AccordionTrigger className="font-bold text-lg">{date}</AccordionTrigger>
+                        <AccordionContent>
+                           <div className="space-y-4 pt-2">
+                                {jobsForDay.map(job => (
+                                    <Link href={`/technician/${job.id}`} key={job.id} className="block">
+                                        <Card className="hover:shadow-md transition-shadow">
+                                            <CardContent className="p-4 space-y-1">
+                                                <div className="flex justify-between items-start">
+                                                    <p className="font-semibold text-primary">{format(new Date(job.scheduledTime!), 'p')}</p>
+                                                    <Badge variant={job.priority === 'High' ? 'destructive' : 'default'} className="shrink-0">{job.priority}</Badge>
+                                                </div>
+                                                <h4 className="font-semibold">{job.title}</h4>
+                                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <Briefcase className="h-4 w-4" /> {job.customerName}
+                                                </p>
+                                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                                    <Clock className="h-4 w-4" /> Est. {job.estimatedDurationMinutes} mins
+                                                </p>
+                                            </CardContent>
+                                        </Card>
+                                    </Link>
+                                ))}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+             </Accordion>
         )}
     </div>
   );
 }
+

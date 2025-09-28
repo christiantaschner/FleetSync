@@ -10,7 +10,7 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
-import { startOfToday } from 'date-fns';
+import { startOfToday, isToday } from 'date-fns';
 import DailyTimeline from './components/DailyTimeline';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import GeoFenceWatcher from './components/GeoFenceWatcher';
@@ -147,3 +147,4 @@ export default function TechnicianJobsPage() {
         </div>
     );
 }
+

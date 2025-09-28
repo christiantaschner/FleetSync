@@ -165,9 +165,9 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
   
-  const isViewingTechnicianApp = userProfile?.role === 'technician' || pathname.startsWith('/technician');
+  const isViewingTechnicianApp = pathname.startsWith('/technician');
 
-  if (isViewingTechnicianApp && userProfile?.role !== 'admin' && userProfile?.role !== 'superAdmin') {
+  if (isViewingTechnicianApp) {
     const technicianId = pathname.split('/')[3] || userProfile?.uid;
     return (
       <div className="flex min-h-svh flex-col">

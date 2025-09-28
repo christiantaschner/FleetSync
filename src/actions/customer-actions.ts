@@ -3,26 +3,11 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import type { Job, Technician, PublicTrackingInfo, CustomerData } from '@/types';
+import type { Job, Technician, PublicTrackingInfo, CustomerData, AddEquipmentInput } from '@/types';
 import * as admin from 'firebase-admin';
-import { AddCustomerInputSchema } from '@/types';
-import type { AddCustomerInput } from '@/types';
+import { AddCustomerInputSchema, AddEquipmentInputSchema, UpsertCustomerInputSchema } from '@/types';
+import type { UpsertCustomerInput } from '@/types';
 import { addMonths } from 'date-fns';
-
-
-export const AddEquipmentInputSchema = z.object({
-  customerId: z.string().min(1, 'Customer ID is required.'),
-  customerName: z.string().min(1, 'Customer name is required.'),
-  companyId: z.string().min(1, 'Company ID is required.'),
-  appId: z.string().min(1, 'App ID is required.'),
-  name: z.string().min(1, 'Equipment name is required.'),
-  model: z.string().optional(),
-  serialNumber: z.string().optional(),
-  installDate: z.string().optional(),
-  notes: z.string().optional(),
-  maintenanceFrequency: z.enum(['None', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']).optional(),
-});
-export type AddEquipmentInput = z.infer<typeof AddEquipmentInputSchema>;
 
 const calculateNextMaintenanceDate = (installDate: string, frequency: AddEquipmentInput['maintenanceFrequency']): string | undefined => {
   if (!frequency || frequency === 'None' || !installDate) return undefined;
@@ -164,11 +149,6 @@ export async function getTrackingInfoAction(
     return { data: null, error: errorMessage };
   }
 }
-
-export const UpsertCustomerInputSchema = AddCustomerInputSchema.extend({
-  id: z.string().optional(),
-});
-export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 
 export async function upsertCustomerAction(
   input: UpsertCustomerInput

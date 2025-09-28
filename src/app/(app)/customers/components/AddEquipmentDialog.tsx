@@ -17,8 +17,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import { addEquipmentAction, AddEquipmentInputSchema } from '@/actions/customer-actions';
-import type { AddEquipmentInput } from '@/actions/customer-actions';
+import { addEquipmentAction } from '@/actions/customer-actions';
+import { AddEquipmentInputSchema } from '@/types';
+import type { AddEquipmentInput } from '@/types';
 import { Loader2, PackagePlus } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 

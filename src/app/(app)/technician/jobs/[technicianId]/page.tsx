@@ -191,6 +191,12 @@ export default function TechnicianJobListPage() {
     await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
     setIsUpdating(false);
   };
+  
+  const handleNavigate = (job: Job) => {
+    if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
+    else if (job.location) window.open(`https://www.google.com/maps?q=${job.location.latitude},${job.location.longitude}`, '_blank');
+    else toast({ title: "Navigation Error", description: "No address or coordinates available.", variant: "destructive"});
+  };
 
   const handleStatusUpdate = async (jobId: string, newStatus: JobStatus) => {
     const job = assignedJobs.find(j => j.id === jobId);
@@ -245,6 +251,14 @@ export default function TechnicianJobListPage() {
     }
   };
 
+  const getNextAction = (status: JobStatus): { label: string, icon: React.ElementType, nextStatus: JobStatus } | null => {
+      switch (status) {
+          case 'Assigned': return { label: "Start Travel", icon: Truck, nextStatus: 'En Route' };
+          case 'En Route': return { label: "Start Work", icon: Play, nextStatus: 'In Progress' };
+          case 'In Progress': return { label: "Complete Job", icon: CheckCircle, nextStatus: 'Completed' };
+          default: return null;
+      }
+  };
 
   if (isLoading || authLoading) {
     return (
@@ -282,22 +296,6 @@ export default function TechnicianJobListPage() {
   
   const jobsForTimeline = assignedJobs.filter(job => !currentOrNextJob || job.id !== currentOrNextJob.id);
   const avatarUrl = technician.avatarUrl || `https://picsum.photos/seed/${technician.id}/100/100`;
-
-
-  const handleNavigate = (job: Job) => {
-    if (job.location?.address) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location.address)}`, '_blank');
-    else if (job.location) window.open(`https://www.google.com/maps?q=${job.location.latitude},${job.location.longitude}`, '_blank');
-    else toast({ title: "Navigation Error", description: "No address or coordinates available.", variant: "destructive"});
-  };
-
-  const getNextAction = (status: JobStatus): { label: string, icon: React.ElementType, nextStatus: JobStatus } | null => {
-      switch (status) {
-          case 'Assigned': return { label: "Start Travel", icon: Truck, nextStatus: 'En Route' };
-          case 'En Route': return { label: "Start Work", icon: Play, nextStatus: 'In Progress' };
-          case 'In Progress': return { label: "Complete Job", icon: CheckCircle, nextStatus: 'Completed' };
-          default: return null;
-      }
-  };
 
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
@@ -347,22 +345,21 @@ export default function TechnicianJobListPage() {
                             </CardDescription>
                         </CardHeader>
                         <CardFooter className="grid grid-cols-2 gap-2">
-                             {getNextAction(currentOrNextJob.status) ? (
-                                (() => {
-                                    const action = getNextAction(currentOrNextJob.status)!;
-                                    const Icon = action.icon;
-                                    return (
-                                        <Button 
-                                            onClick={()={() => handleStatusUpdate(currentOrNextJob.id, action.nextStatus)}} 
-                                            disabled={isUpdatingStatus === currentOrNextJob.id}
-                                            className="bg-primary hover:bg-primary/90 col-span-2"
-                                        >
-                                            {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
-                                            {action.label}
-                                        </Button>
-                                    );
-                                })()
-                            ) : <div className="col-span-2" />}
+                             {(() => {
+                                const action = getNextAction(currentOrNextJob.status);
+                                if (!action) return <div className="col-span-2" />;
+                                const Icon = action.icon;
+                                return (
+                                    <Button 
+                                        onClick={() => handleStatusUpdate(currentOrNextJob.id, action.nextStatus)} 
+                                        disabled={isUpdatingStatus === currentOrNextJob.id}
+                                        className="bg-primary hover:bg-primary/90 col-span-2"
+                                    >
+                                        {isUpdatingStatus === currentOrNextJob.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Icon className="mr-2 h-4 w-4"/>}
+                                        {action.label}
+                                    </Button>
+                                );
+                            })()}
                             <Link href={`/technician/${currentOrNextJob.id}`} className="col-span-1">
                                 <Button variant="secondary" className="w-full">
                                      <Eye className="mr-2 h-4 w-4" /> Details
@@ -389,5 +386,3 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
-
-    

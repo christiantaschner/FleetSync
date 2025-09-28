@@ -74,7 +74,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
       technicians: technicians.map(tech => ({
         id: tech.id,
         name: tech.name,
-        skills: tech.skills.map(s => s.name),
+        skills: tech.skills || [],
         jobs: jobs.filter(j => j.assignedTechnicianId === tech.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
             .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! }))
       }))
@@ -97,7 +97,7 @@ const SuggestAppointmentDialog: React.FC<SuggestAppointmentDialogProps> = ({ isO
     if (isOpen) {
       getSuggestions(false);
     }
-  }, [isOpen, getSuggestions]);
+  }, [isOpen]);
 
   const handleConfirm = async () => {
     if (!selectedSuggestion || !contract || !userProfile?.companyId || !appId || !db) return;

@@ -207,104 +207,64 @@ export default function MarketingPage() {
         <section className="bg-slate-900 text-white py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Stop Dispatching. Start Profiting.
+              {t('homepage_title')}
             </h1>
             <p className="mx-auto mt-6 max-w-3xl text-lg text-slate-300">
-              Most dispatch software saves you minutes. MarginMax saves you money.
-              Every job assignment is optimized for net profit — not just proximity.
+              {t('homepage_subtitle')}
+            </p>
+            <p className="mx-auto mt-4 max-w-3xl text-base text-slate-400">
+              Perfect for small to medium-sized service businesses with 3-50 technicians who value simplicity and power.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-2">
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                     <Button asChild size="lg" className="w-full">
-                        <Link href="/signup">👉 Start Free Trial</Link>
+                        <Link href="/signup">{t('get_started_free')}</Link>
                     </Button>
                 </div>
-                 <p className="text-sm text-slate-400 mt-2">Free trials available this month: 2/30.</p>
+                 <p className="text-sm text-slate-400 mt-2">{t('no_setup_fee')}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. "Our Solution" Section */}
+        <section id="solution" className="py-16 sm:py-24">
+          <div className="container">
+            <div className="mx-auto max-w-2xl text-center">
+              <Badge variant="secondary">{t('our_solution')}</Badge>
+              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('meet_your_ai_codispatcher')}</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                {t('everything_you_need')}
+              </p>
+              <p className="mt-2 text-lg text-muted-foreground">
+                Unlike complex corporate software, our AI is designed to run quietly in the background, making your processes simpler, not more complicated.
+              </p>
+            </div>
+            <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                  <Brain className="h-6 w-6" />
+                </div>
+                <h3 className="text-xl font-bold">{t('feature_ai_dispatch_title')}</h3>
+                <p className="text-muted-foreground">{t('feature_ai_dispatch_desc')}</p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                  <Shuffle className="h-6 w-6" />
+                </div>
+                <h3 className="text-xl font-bold">{t('feature_dynamic_optimization_title')}</h3>
+                <p className="text-muted-foreground">{t('feature_dynamic_optimization_desc')}</p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <h3 className="text-xl font-bold">{t('feature_risk_alerts_title')}</h3>
+                <p className="text-muted-foreground">{t('feature_risk_alerts_desc')}</p>
+              </div>
             </div>
           </div>
         </section>
         
-        {/* 2. Dual Platform Showcase */}
-        <section id="solution" className="bg-background text-foreground py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-4xl text-center mb-12">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">One Platform. Two Profit Engines.</h2>
-                    <p className="mt-4 text-lg text-muted-foreground">MarginMax equips both sides of your business with AI that drives profits — not just efficiency.</p>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-                    {/* Dispatcher Dashboard */}
-                    <Card className="flex flex-col shadow-lg">
-                        <CardHeader>
-                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-                                <LayoutDashboard className="h-6 w-6"/>
-                            </div>
-                            <CardTitle className="font-headline text-2xl">For Dispatchers: The Command Center</CardTitle>
-                            <CardDescription>Your control hub for maximum margin.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-4">
-                            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted shadow-inner">
-                                <Image 
-                                    src="https://storage.googleapis.com/static.fleetsync.site/dashboard-profit.png"
-                                    fill
-                                    alt="Dispatcher dashboard showing a list of jobs ranked by profit score."
-                                    className="object-cover"
-                                />
-                            </div>
-                            <ul className="space-y-3 text-sm">
-                                <li className="flex items-start gap-3">
-                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">Profit-First Job Board:</strong> Rank jobs by net profit, not just location or time.</div>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">One-Click Optimization:</strong> AI assigns the most profitable technician & route instantly.</div>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">Live Profit Dashboard:</strong> Watch daily & weekly margins grow as jobs close.</div>
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                    
-                    {/* Technician App */}
-                     <Card className="flex flex-col shadow-lg">
-                        <CardHeader>
-                             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-                                <Smartphone className="h-6 w-6"/>
-                            </div>
-                            <CardTitle className="font-headline text-2xl">For Technicians: The Profit Tool</CardTitle>
-                            <CardDescription>Turn every tech into a revenue driver—without turning them into salespeople.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-4">
-                            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border bg-muted shadow-inner">
-                                <Image 
-                                    src="https://storage.googleapis.com/static.fleetsync.site/technician-upsell.png"
-                                    fill
-                                    alt="Mobile app view showing an AI upsell suggestion for a maintenance plan."
-                                    className="object-cover"
-                                />
-                            </div>
-                            <ul className="space-y-3 text-sm">
-                                <li className="flex items-start gap-3">
-                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">AI Upsell Prompts:</strong> Context-aware suggestions (e.g. “12-year-old unit: recommend replacement”).</div>
-                                 </li>
-                                <li className="flex items-start gap-3">
-                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">Live Job Assignments & Chat:</strong> View your daily schedule and communicate directly with dispatch in real-time.</div>
-                                </li>
-                                <li className="flex items-start gap-3">
-                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                    <div><strong className="text-foreground">AI Troubleshooting:</strong> Get instant diagnostic steps using equipment history + symptoms.</div>
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </section>
-
         {/* How It Works (New Version) */}
         <section id="how-it-works" className="bg-muted py-16 sm:py-24">
             <div className="container">

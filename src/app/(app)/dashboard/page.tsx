@@ -983,7 +983,7 @@ export default function DashboardPage() {
     setIsShareTrackingOpen(true);
   };
 
-  const handleSkillsUpdated = (newSkills: Skill[]) => {
+  const handleSkillsUpdated = () => {
       if(userProfile?.companyId) {
         fetchSkills(userProfile.companyId);
       }
@@ -1658,6 +1658,7 @@ export default function DashboardPage() {
       <ManagePartsDialog
         isOpen={isManagePartsOpen}
         setIsOpen={setIsManagePartsOpen}
+        initialParts={allParts}
         onPartsUpdated={handlePartsUpdated}
       />
       <ImportJobsDialog 

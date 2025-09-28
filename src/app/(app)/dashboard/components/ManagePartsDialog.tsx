@@ -14,126 +14,151 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, PlusCircle, Trash2, X, Sparkles, Package } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, X, Sparkles, Package, Save, Undo2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PREDEFINED_PARTS } from '@/lib/parts';
 import { useAuth } from '@/contexts/auth-context';
-import { getPartsAction, addPartAction, deletePartAction, type Part } from '@/actions/part-actions';
-import { writeBatch, collection, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { addPartAction, deletePartAction, getPartsAction, type Part } from '@/actions/part-actions';
+import { cn } from '@/lib/utils';
+import isEqual from 'lodash.isequal';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 interface ManagePartsDialogProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onPartsUpdated: () => void;
+  initialParts: Part[];
 }
 
-const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen, onPartsUpdated }) => {
+type LocalPart = Part & { status: 'existing' | 'new' | 'deleted' };
+
+const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen, onPartsUpdated, initialParts }) => {
   const { userProfile } = useAuth();
   const { toast } = useToast();
-  const [parts, setParts] = useState<Part[]>([]);
+  
+  const [localParts, setLocalParts] = useState<LocalPart[]>([]);
   const [newPartName, setNewPartName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
-  const fetchParts = useCallback(async () => {
-    if (!userProfile?.companyId || !appId) return;
-    setIsLoading(true);
-    const result = await getPartsAction({ companyId: userProfile.companyId, appId });
-    if (result.error) {
-        console.error("Could not fetch parts library:", result.error);
-        setParts([]);
-    } else {
-        setParts(result.data || []);
-    }
-    setIsLoading(false);
-  }, [userProfile, appId]);
-
   useEffect(() => {
     if (isOpen) {
-      fetchParts();
+      setLocalParts(initialParts.map(p => ({ ...p, status: 'existing' })));
+      setNewPartName('');
     }
-  }, [isOpen, fetchParts]);
+  }, [isOpen, initialParts]);
 
-  const handleAddPart = async (e: React.FormEvent) => {
+  const handleAddLocalPart = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPartName.trim() || !userProfile?.companyId || !appId) return;
-    
-    setIsSubmitting(true);
-    const result = await addPartAction({ name: newPartName, companyId: userProfile.companyId, appId });
-    if (result.error) {
-        toast({ title: "Error adding part", description: result.error, variant: "destructive" });
-    } else {
-        setNewPartName('');
-        toast({ title: "Success", description: `Part "${newPartName.trim()}" added.`});
-        if (result.data) {
-          setParts(prev => [...prev, { id: result.data!.id, name: newPartName.trim() }].sort((a,b) => a.name.localeCompare(b.name)));
-        }
-        onPartsUpdated();
+    const trimmedName = newPartName.trim();
+    if (!trimmedName) return;
+
+    if (localParts.some(p => p.name.toLowerCase() === trimmedName.toLowerCase() && p.status !== 'deleted')) {
+        toast({ title: "Duplicate Part", description: "This part already exists in the list.", variant: "destructive" });
+        return;
     }
+    
+    // If re-adding a deleted part, just update its status
+    const existingDeletedIndex = localParts.findIndex(p => p.name.toLowerCase() === trimmedName.toLowerCase() && p.status === 'deleted');
+    if (existingDeletedIndex !== -1) {
+        const updatedParts = [...localParts];
+        updatedParts[existingDeletedIndex].status = 'existing';
+        setLocalParts(updatedParts);
+    } else {
+        setLocalParts(prev => [...prev, { id: `new_${Date.now()}`, name: trimmedName, status: 'new' }].sort((a,b) => a.name.localeCompare(b.name)));
+    }
+    setNewPartName('');
+  };
+  
+  const handleToggleDelete = (partId: string) => {
+    setLocalParts(prev => prev.map(p => {
+        if (p.id === partId) {
+            if (p.status === 'new') {
+                return null; // A new item that is deleted is just removed from the list
+            }
+            return { ...p, status: p.status === 'deleted' ? 'existing' : 'deleted' };
+        }
+        return p;
+    }).filter(Boolean) as LocalPart[]);
+  };
+  
+  const handleSeedParts = () => {
+    const existingNames = new Set(localParts.filter(p => p.status !== 'deleted').map(p => p.name.toLowerCase()));
+    const partsToSeed: LocalPart[] = PREDEFINED_PARTS
+        .filter(name => !existingNames.has(name.toLowerCase()))
+        .map(name => ({ id: `new_seed_${name}_${Date.now()}`, name, status: 'new' }));
+
+    if (partsToSeed.length === 0) {
+        toast({ title: "No New Parts to Seed", description: "Your library already contains all predefined common parts.", variant: "default" });
+        return;
+    }
+
+    setLocalParts(prev => [...prev, ...partsToSeed].sort((a,b) => a.name.localeCompare(b.name)));
+  };
+  
+  const handleSaveAndClose = async () => {
+    const originalNames = new Set(initialParts.map(s => s.name));
+    const finalNames = new Set(localParts.filter(s => s.status !== 'deleted').map(s => s.name));
+
+    if (isEqual(originalNames, finalNames)) {
+        setIsOpen(false);
+        return;
+    }
+
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        onPartsUpdated();
+        toast({ title: "Success", description: "Parts library updated in mock mode." });
+        setIsOpen(false);
+        return;
+    }
+
+    if (!userProfile?.companyId || !appId) return;
+
+    setIsSubmitting(true);
+
+    const partsToDelete = localParts.filter(s => s.status === 'deleted' && s.id.startsWith('new_') === false);
+    const partsToAdd = localParts.filter(s => s.status === 'new');
+
+    let hasError = false;
+
+    // Process deletions
+    for (const part of partsToDelete) {
+        if(hasError) break;
+        const result = await deletePartAction({ partId: part.id, companyId: userProfile.companyId, appId });
+        if (result.error) {
+            toast({ title: `Error Deleting ${part.name}`, description: result.error, variant: "destructive" });
+            hasError = true;
+        }
+    }
+
+    // Process additions
+    for (const part of partsToAdd) {
+        if(hasError) break;
+        const result = await addPartAction({ name: part.name, companyId: userProfile.companyId, appId });
+         if (result.error) {
+            toast({ title: `Error Adding ${part.name}`, description: result.error, variant: "destructive" });
+            hasError = true;
+        }
+    }
+
+    if (!hasError) {
+        toast({ title: "Success", description: "Parts library has been updated." });
+        onPartsUpdated();
+        setIsOpen(false);
+    }
+
     setIsSubmitting(false);
   };
 
-  const handleDeletePart = async (partId: string) => {
-    if (!userProfile?.companyId || !appId) return;
-
-    setParts(prevParts => prevParts.filter(part => part.id !== partId));
-    
-    const result = await deletePartAction({ partId, companyId: userProfile.companyId, appId });
-
-    if (result.error) {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
-      fetchParts(); // Re-fetch to restore state on error
-    } else {
-      toast({ title: "Success", description: "Part deleted."});
-      onPartsUpdated();
-    }
-  };
-
-  const handleSeedParts = async () => {
-    if (!userProfile?.companyId || !appId) return;
-    setIsSubmitting(true);
-
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
-        const newParts = PREDEFINED_PARTS.map(name => ({ id: `mock_part_${name}`, name }));
-        setParts(prev => [...prev, ...newParts].sort((a, b) => a.name.localeCompare(b.name)));
-        toast({ title: "Success", description: `Seeded ${PREDEFINED_PARTS.length} common parts.` });
-        onPartsUpdated();
-        setIsSubmitting(false);
-        return;
-    }
-
-    if (!db) {
-        toast({ title: "Error", description: "Database not available.", variant: "destructive" });
-        setIsSubmitting(false);
-        return;
-    }
-
-    try {
-        const batch = writeBatch(db);
-        const partsCollectionRef = collection(db, `artifacts/${appId}/public/data/parts`);
-        
-        PREDEFINED_PARTS.forEach(partName => {
-            const docRef = doc(partsCollectionRef);
-            batch.set(docRef, { name: partName, companyId: userProfile.companyId });
-        });
-
-        await batch.commit();
-        toast({ title: "Success", description: `Seeded ${PREDEFINED_PARTS.length} common parts.` });
-        await fetchParts();
-        onPartsUpdated();
-    } catch(error) {
-        console.error("Error seeding parts:", error);
-        toast({ title: "Error", description: "Could not seed parts library.", variant: "destructive" });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
+  const hasChanges = !isEqual(
+    initialParts.map(s => s.name).sort(),
+    localParts.filter(s => s.status !== 'deleted').map(s => s.name).sort()
+  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if(!open) setIsOpen(false) }}>
       <DialogContent className="sm:max-w-md flex flex-col max-h-[90dvh] p-0">
         <DialogHeader className="px-6 pt-6 flex-shrink-0">
           <DialogTitle className="font-headline flex items-center gap-2"><Package /> Manage Parts Library</DialogTitle>
@@ -143,7 +168,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
         </DialogHeader>
         
         <div className="flex-1 flex flex-col overflow-hidden px-6">
-          <form onSubmit={handleAddPart} className="flex items-center gap-2 py-2 flex-shrink-0">
+          <form onSubmit={handleAddLocalPart} className="flex items-center gap-2 py-2 flex-shrink-0">
               <Label htmlFor="new-part-name" className="sr-only">New Part Name</Label>
               <Input 
                   id="new-part-name"
@@ -153,7 +178,7 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
                   disabled={isSubmitting}
               />
               <Button type="submit" size="icon" disabled={isSubmitting || !newPartName.trim()}>
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                  <PlusCircle className="h-4 w-4" />
                   <span className="sr-only">Add Part</span>
               </Button>
           </form>
@@ -162,21 +187,22 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
           <div className="flex-1 overflow-y-auto -mx-6 mt-2">
             <ScrollArea className="h-full px-6">
               <div className="p-2">
-                  {isLoading ? (
-                      <div className="flex items-center justify-center p-4">
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                      </div>
-                  ) : parts.length > 0 ? (
-                      parts.map(part => (
+                  {localParts.length > 0 ? (
+                      localParts.map(part => (
                           <div key={part.id} className="flex items-center justify-between p-2 rounded-md hover:bg-secondary">
-                              <span className="text-sm">{part.name}</span>
+                              <span className={cn("text-sm", 
+                                  part.status === 'new' && 'text-green-600 font-medium',
+                                  part.status === 'deleted' && 'text-red-600 line-through'
+                              )}>{part.name}</span>
                               <Button 
                                   variant="ghost" 
                                   size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  onClick={() => handleDeletePart(part.id)}
+                                  className={cn("h-7 w-7 text-muted-foreground",
+                                    part.status === 'deleted' ? 'hover:text-amber-600 hover:bg-amber-100' : 'hover:text-destructive hover:bg-destructive/10'
+                                  )}
+                                  onClick={() => handleToggleDelete(part.id)}
                               >
-                                  <Trash2 className="h-4 w-4" />
+                                {part.status === 'deleted' ? <Undo2 className="h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
                                   <span className="sr-only">Delete {part.name}</span>
                               </Button>
                           </div>
@@ -195,9 +221,29 @@ const ManagePartsDialog: React.FC<ManagePartsDialogProps> = ({ isOpen, setIsOpen
           </div>
         </div>
 
-        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0">
-          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-            <X className="mr-2 h-4 w-4" /> Close
+        <DialogFooter className="px-6 pb-6 pt-4 border-t flex-shrink-0 sm:justify-between items-center gap-2">
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button type="button" variant="outline" disabled={isSubmitting || !hasChanges}>
+                        Discard Changes
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You have unsaved changes. Are you sure you want to discard them?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => setIsOpen(false)}>Discard</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+           <Button type="button" onClick={handleSaveAndClose} disabled={isSubmitting || !hasChanges}>
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+            Save & Close
           </Button>
         </DialogFooter>
       </DialogContent>

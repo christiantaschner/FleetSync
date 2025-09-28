@@ -301,19 +301,17 @@ export default function TechnicianJobListPage() {
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       {appId && isViewingOwnPage && <OfflineIndicator />}
       {appId && isViewingOwnPage && <GeoFenceWatcher appId={appId} job={currentOrNextJob} onStatusChange={handleStatusUpdate} />}
-      <div className="flex items-center justify-between">
-         <div>
-            <h1 className="text-2xl font-bold font-headline">Hello, {technician.name.split(' ')[0]}</h1>
-            <p className="text-muted-foreground">Here's your day at a glance.</p>
-        </div>
-         {isViewingOwnPage && technician.currentJobId && (
-            <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold font-headline">Hello, {technician.name.split(' ')[0]}</h1>
+        <p className="text-muted-foreground">Here's your day at a glance.</p>
+      </div>
+       {isViewingOwnPage && technician.currentJobId && (
+            <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating} className="w-full">
               {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
               {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
               {isBreakActive ? 'End Break' : 'Start Break'}
             </Button>
-          )}
-      </div>
+      )}
       
       {assignedJobs.length === 0 ? (
         <Card className="text-center py-12">

@@ -167,7 +167,8 @@ export default function TechnicianJobListPage() {
         } else {
             updatedBreaks = [...currentBreaks, { start: now, end: undefined }];
         }
-        setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+        // This is a mock update, so we need a way to reflect it locally if needed
+        // For simplicity, we'll just show the toast.
         toast({ title: isBreakActive ? "Resuming Work (Mock)" : "Break Started (Mock)" });
         return;
     }
@@ -300,41 +301,16 @@ export default function TechnicianJobListPage() {
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       {appId && isViewingOwnPage && <OfflineIndicator />}
       {appId && isViewingOwnPage && <GeoFenceWatcher appId={appId} job={currentOrNextJob} onStatusChange={handleStatusUpdate} />}
-      <div className="flex items-center">
-          <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Technician List
-          </Button>
-      </div>
-       <Card>
-          <CardHeader>
-            <div className="flex items-center gap-4">
-                 <Avatar className="h-16 w-16">
-                      <AvatarImage src={avatarUrl} alt={technician.name} />
-                      <AvatarFallback>{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                      <h1 className="text-2xl font-bold font-headline">{technician.name}</h1>
-                      <p className="text-muted-foreground">{isViewingOwnPage ? "Welcome to your daily command center." : "Technician's daily command center."}</p>
-                  </div>
-                  {isViewingOwnPage && technician.currentJobId && (
-                    <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>
-                      {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                      {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
-                      {isBreakActive ? 'End Break' : 'Start Break'}
-                    </Button>
-                  )}
-            </div>
-          </CardHeader>
-          {isViewingOwnPage && (
-            <CardFooter>
-                <Link href={`/technician/profile`} className="w-full">
-                    <Button variant="outline" className="w-full">
-                        <User className="mr-2 h-4 w-4" /> View My Profile
-                    </Button>
-                </Link>
-            </CardFooter>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold font-headline">My Day</h1>
+         {isViewingOwnPage && technician.currentJobId && (
+            <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>
+              {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+              {isBreakActive ? <Play className="mr-2 h-4 w-4"/> : <Pause className="mr-2 h-4 w-4"/>}
+              {isBreakActive ? 'End Break' : 'Start Break'}
+            </Button>
           )}
-      </Card>
+      </div>
       
       {assignedJobs.length === 0 ? (
         <Card className="text-center py-12">
@@ -408,4 +384,3 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
-

@@ -66,7 +66,7 @@ export default function TechnicianJobListPage() {
             const jobsForTech = mockJobs
                 .filter(j => {
                     const jobDate = j.scheduledTime ? new Date(j.scheduledTime) : new Date(0);
-                    return j.assignedTechnicianId === technicianId && jobDate >= startOfToday();
+                    return j.assignedTechnicianId === technicianId && isSameDay(jobDate, new Date());
                 })
                 .sort((a,b) => new Date(a.scheduledTime!).getTime() - new Date(b.scheduledTime!).getTime());
             setAssignedJobs(jobsForTech);
@@ -94,6 +94,7 @@ export default function TechnicianJobListPage() {
 
         const activeJobStatuses: JobStatus[] = ['Assigned', 'En Route', 'In Progress'];
         const startOfView = startOfToday();
+        const endOfView = endOfDay(new Date());
         
         const jobsQuery = query(
           collection(db, `artifacts/${appId}/public/data/jobs`),
@@ -101,6 +102,7 @@ export default function TechnicianJobListPage() {
           where("assignedTechnicianId", "==", technicianId),
           where("status", "in", activeJobStatuses),
           where("scheduledTime", ">=", startOfView.toISOString()),
+          where("scheduledTime", "<=", endOfView.toISOString()),
           orderBy("scheduledTime")
         );
 
@@ -319,7 +321,7 @@ export default function TechnicianJobListPage() {
         <Card className="text-center py-12">
             <CardContent>
                 <h3 className="text-lg font-semibold">All Clear!</h3>
-                <p className="text-muted-foreground mt-1">You have no active jobs assigned for the upcoming week.</p>
+                <p className="text-muted-foreground mt-1">You have no active jobs assigned for today.</p>
             </CardContent>
         </Card>
       ) : (
@@ -351,7 +353,7 @@ export default function TechnicianJobListPage() {
                                     const Icon = action.icon;
                                     return (
                                         <Button 
-                                            onClick={() => handleStatusUpdate(currentOrNextJob.id, action.nextStatus)} 
+                                            onClick={()={() => handleStatusUpdate(currentOrNextJob.id, action.nextStatus)}} 
                                             disabled={isUpdatingStatus === currentOrNextJob.id}
                                             className="bg-primary hover:bg-primary/90 col-span-2"
                                         >
@@ -387,3 +389,5 @@ export default function TechnicianJobListPage() {
     </div>
   );
 }
+
+    

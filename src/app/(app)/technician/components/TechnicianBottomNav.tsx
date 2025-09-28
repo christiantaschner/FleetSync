@@ -4,7 +4,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, User } from 'lucide-react';
+import { Briefcase, User, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TechnicianBottomNavProps {
@@ -15,7 +15,8 @@ export const TechnicianBottomNav: React.FC<TechnicianBottomNavProps> = ({ techni
     const pathname = usePathname();
     
     const navItems = [
-        { href: `/technician/jobs/${technicianId}`, label: 'Jobs', icon: Briefcase },
+        { href: `/technician/jobs/${technicianId}`, label: 'My Day', icon: Briefcase },
+        { href: `/technician/schedule/${technicianId}`, label: 'Schedule', icon: CalendarDays },
         { href: '/technician/profile', label: 'Profile', icon: User },
     ];
 

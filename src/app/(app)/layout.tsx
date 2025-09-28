@@ -165,9 +165,10 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
   
-  const isTechnicianView = userProfile?.role === 'technician';
+  const isViewingTechnicianApp = userProfile?.role === 'technician' || pathname.startsWith('/technician');
 
-  if (isTechnicianView) {
+  if (isViewingTechnicianApp && userProfile?.role !== 'admin' && userProfile?.role !== 'superAdmin') {
+    const technicianId = pathname.split('/')[3] || userProfile?.uid;
     return (
       <div className="flex min-h-svh flex-col">
         <main className="flex-1 pb-20"> {/* Add padding-bottom for the nav bar */}
@@ -176,7 +177,7 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
             {children}
           </div>
         </main>
-        <TechnicianBottomNav technicianId={userProfile.uid} />
+        {technicianId && <TechnicianBottomNav technicianId={technicianId} />}
       </div>
     );
   }

@@ -900,6 +900,7 @@ export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSche
 export const SuggestUpsellOpportunityInputSchema = z.object({
     jobTitle: z.string(),
     jobDescription: z.string(),
+    companySpecialties: z.array(z.string()).describe("A list of the services the company offers."),
     customerHistory: z.array(
         z.object({
             title: z.string(),

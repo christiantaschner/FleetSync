@@ -900,6 +900,7 @@ const AnalyzeJobInputSchema = z.object({
     customerName: z.string(),
     availableSkills: z.array(z.string()),
     availableParts: z.array(z.string()),
+    companySpecialties: z.array(z.string()),
 });
 export type AnalyzeJobInput = z.infer<typeof AnalyzeJobInputSchema>;
 
@@ -915,7 +916,7 @@ export async function analyzeJobAction(
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
 
-        const { appId, companyId, jobTitle, jobDescription, customerName, availableSkills, availableParts } = AnalyzeJobInputSchema.parse(input);
+        const { appId, companyId, jobTitle, jobDescription, customerName, availableSkills, availableParts, companySpecialties } = AnalyzeJobInputSchema.parse(input);
 
         // Fetch customer history for upsell analysis
         const historyQuery = query(
@@ -936,6 +937,7 @@ export async function analyzeJobAction(
             suggestUpsellOpportunityFlow({
                 jobTitle,
                 jobDescription,
+                companySpecialties,
                 customerHistory: customerHistory.filter(h => h.completedAt).map(h => ({
                     title: h.title,
                     description: h.description || '',
@@ -966,5 +968,3 @@ export async function analyzeJobAction(
         return { data: null, error: errorMessage };
     }
 }
-
-    

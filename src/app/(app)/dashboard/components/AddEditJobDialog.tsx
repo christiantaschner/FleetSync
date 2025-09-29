@@ -181,6 +181,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     }
   }, [job, prefilledData, isOpen, resetForm]);
   
+  // A job is fully assigned if it has a tech and a time
   const isReadyForAssignment = useMemo(() => {
     if (manualTechnicianId !== UNASSIGNED_VALUE && scheduledTime) {
       return true;
@@ -188,6 +189,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     return false;
   }, [manualTechnicianId, scheduledTime]);
   
+  // A job has all its core, non-assignment info filled out
+  const hasAllCoreInfo = useMemo(() => {
+      return !!(title.trim() && customerName.trim() && locationAddress.trim() && estimatedDurationMinutes > 0);
+  }, [title, customerName, locationAddress, estimatedDurationMinutes]);
+
 
   // Handle smart status updates
   useEffect(() => {
@@ -384,7 +390,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         toast({ title: "Cannot Analyze Job", description: "Please provide a Job Title or Description.", variant: "default" });
         return;
     }
-    if (!userProfile?.companyId || !appId) return;
+    if (!userProfile?.companyId || !appId || !company?.settings?.companySpecialties) return;
 
     setIsAnalyzingJob(true);
     const result = await analyzeJobAction({
@@ -395,6 +401,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         customerName: customerName,
         availableSkills: allSkills,
         availableParts: allParts.map(p => p.name),
+        companySpecialties: company.settings.companySpecialties,
     });
     setIsAnalyzingJob(false);
 
@@ -427,13 +434,10 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         onClose();
         return;
     }
-    if (!title.trim() || !customerName.trim()) {
-      toast({ title: "Missing Information", description: "Please fill in Title and Customer Name.", variant: "destructive" });
-      return;
-    }
-
-    if (estimatedDurationMinutes === undefined || estimatedDurationMinutes <= 0) {
-      toast({ title: "Invalid Duration", description: "Please enter a valid estimated duration greater than 0.", variant: "destructive" });
+    
+    // Defer the full validation check to this point.
+    if (!hasAllCoreInfo) {
+      toast({ title: "Missing Information", description: "Please fill in Title, Customer Name, Address, and Duration.", variant: "destructive" });
       return;
     }
     
@@ -502,10 +506,13 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       let finalJobDataForCallback: Job;
       let finalStatus: JobStatus;
 
-      if (isReadyForAssignment) {
+      // Determine final status based on the new logic
+      if (!hasAllCoreInfo) {
+        finalStatus = 'Draft';
+      } else if (isReadyForAssignment) {
         finalStatus = (job && job.status !== 'Draft') ? status : 'Assigned';
       } else {
-        finalStatus = 'Draft';
+        finalStatus = 'Unassigned';
       }
       jobData.status = finalStatus;
 
@@ -521,7 +528,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
         if (technicianHasChanged) {
             if (newAssignedTechId === null) { // Un-assigning
                 updatePayload.assignedTechnicianId = null;
-                updatePayload.status = isReadyForAssignment ? 'Unassigned' : 'Draft';
+                updatePayload.status = hasAllCoreInfo ? 'Unassigned' : 'Draft';
                 if(job.assignedTechnicianId) {
                     const oldTechDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
                     batch.update(oldTechDocRef, { isAvailable: true, currentJobId: null });
@@ -600,11 +607,11 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
         if (finalStatus === 'Draft') {
           toast({ title: "Draft Saved", description: `Job "${finalJobDataForCallback.title}" has been saved as a draft.` });
+        } else if (finalStatus === 'Unassigned') {
+            toast({ title: "Job Created", description: `Job "${finalJobDataForCallback.title}" created and is ready for assignment.` });
         } else if (techToAssignId) {
             toast({ title: "Job Added & Assigned", description: `New job "${finalJobDataForCallback.title}" created and assigned.` });
-        } else {
-            toast({ title: "Job Added", description: `New job "${finalJobDataForCallback.title}" created and is unassigned.` });
-        }
+        } 
 
         onJobAddedOrUpdated?.(finalJobDataForCallback, techToAssignId);
       }
@@ -622,6 +629,12 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 
   const skillOptions = allSkills.map(skill => ({ value: skill, label: skill }));
   const partOptions = allParts.map(part => ({ value: part.name, label: part.name }));
+  
+  const saveButtonText = useMemo(() => {
+    if (job) return "Save Changes";
+    if (hasAllCoreInfo) return "Save Job";
+    return "Save as Draft";
+  }, [job, hasAllCoreInfo]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -726,7 +739,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                         id="estimatedDurationMinutes"
                                         type="number"
                                         value={estimatedDurationMinutes || ''}
-                                        onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 60)}
+                                        onChange={(e) => setEstimatedDurationMinutes(e.target.value ? parseInt(e.target.value, 10) : 0)}
                                         min="1"
                                         placeholder="e.g., 60"
                                     />
@@ -982,7 +995,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                     disabled={isLoading}
                   >
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {isReadyForAssignment ? (job ? "Save Changes" : "Save Job") : "Save as Draft"}
+                    {saveButtonText}
                   </Button>
               </div>
             </DialogFooter>

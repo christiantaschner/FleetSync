@@ -760,27 +760,31 @@ export default function DashboardPage() {
       setIsBatchLoading(true);
       
       let tempTechnicianPool = JSON.parse(JSON.stringify(technicians.filter(t => t.isAvailable)));
-      
+      let techAvailabilityMap = Object.fromEntries(tempTechnicianPool.map((t: Technician) => [t.id, true]));
+
       const suggestions: AssignmentSuggestion[] = currentUnassignedJobs.map(job => {
         const { requiredSkills = [] } = job;
-        const suitableTechIndex = tempTechnicianPool.findIndex((tech: Technician) => 
-            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill))
+        
+        // Find a tech who is available AND has the skills
+        const suitableTech = tempTechnicianPool.find((tech: Technician) => 
+            techAvailabilityMap[tech.id] &&
+            (requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill)))
         );
 
-        if (suitableTechIndex !== -1) {
-            const assignedTech = tempTechnicianPool[suitableTechIndex];
-            tempTechnicianPool.splice(suitableTechIndex, 1);
+        if (suitableTech) {
+            // Mark as busy for this iteration, but don't remove from the main pool
+            techAvailabilityMap[suitableTech.id] = false;
             return {
                 job,
                 suggestion: {
                   suggestions: [{
-                      suggestedTechnicianId: assignedTech.id,
-                      reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`,
+                      suggestedTechnicianId: suitableTech.id,
+                      reasoning: `Mock Mode: Assigned to ${suitableTech.name} based on availability and skills.`,
                       profitScore: Math.random() * 200 + 50,
                   }],
                   overallReasoning: ''
                 },
-                suggestedTechnicianDetails: assignedTech,
+                suggestedTechnicianDetails: suitableTech,
                 error: null
             };
         } else {

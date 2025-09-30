@@ -743,7 +743,15 @@ export default function DashboardPage() {
     });
   }, [technicians, technicianSearchTerm]);
 
-  const unassignedJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Unassigned'), [jobs]);
+  const unassignedJobsForBatchAssign = useMemo(() => {
+    return jobs
+      .filter(job => job.status === 'Unassigned')
+      .sort((a, b) => {
+        const profitA = (a.quotedValue || 0) - (a.expectedPartsCost || 0);
+        const profitB = (b.quotedValue || 0) - (b.expectedPartsCost || 0);
+        return profitB - profitA; // Sort by highest potential profit first
+      });
+  }, [jobs]);
   const unassignedJobsCount = unassignedJobsForBatchAssign.length;
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
@@ -751,131 +759,66 @@ export default function DashboardPage() {
     : { lat: 39.8283, lng: -98.5795 }; 
 
   const handleBatchAIAssign = useCallback(async () => {
-    const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
-    if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
+    if (unassignedJobsForBatchAssign.length === 0 || technicians.length === 0) {
       toast({ title: "AI Batch Assign", description: "No unassigned jobs or technicians available for assignment.", variant: "default" });
       return;
     }
     setIsBatchLoading(true);
     setAssignmentSuggestionsForReview([]);
 
-    if (isMockMode) {
-      const tempTechnicianSchedules: Record<string, { start: Date; end: Date }[]> = 
-        Object.fromEntries(technicians.map(t => [t.id, []]));
+    let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
+    const suggestions: AssignmentSuggestion[] = [];
 
-      const suggestions: AssignmentSuggestion[] = [];
-      for (const job of currentUnassignedJobs) {
-        const { requiredSkills = [], estimatedDurationMinutes = 60 } = job;
-        let bestTech: Technician | null = null;
-        let earliestTime: Date | null = null;
+    for (const job of unassignedJobsForBatchAssign) {
+        let techDetails: Technician | null = null;
+        let suggestionResult: AllocateJobOutput | null = null;
+        let errorResult: string | null = null;
 
-        for (const tech of technicians) {
-          const hasSkills = requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.includes(skill));
-          if (!hasSkills) continue;
-
-          const techSchedule = tempTechnicianSchedules[tech.id] || [];
-          let proposedStartTime = new Date();
-          proposedStartTime.setHours(9, 0, 0, 0);
-          
-          let slotFound = false;
-          while (proposedStartTime.getHours() < 17) {
-            const proposedEndTime = addMinutes(proposedStartTime, estimatedDurationMinutes);
-            const isOverlapping = techSchedule.some(slot => 
-              (proposedStartTime < slot.end && proposedEndTime > slot.start)
-            );
-            
-            if (!isOverlapping) {
-              slotFound = true;
-              break;
-            }
-            proposedStartTime = addMinutes(proposedStartTime, 15);
-          }
-
-          if (slotFound && (!earliestTime || proposedStartTime < earliestTime)) {
-            bestTech = tech;
-            earliestTime = proposedStartTime;
-          }
-        }
+        const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => ({
+            technicianId: t.id,
+            technicianName: t.name,
+            isAvailable: t.isAvailable,
+            skills: t.skills || [],
+            liveLocation: t.location,
+            homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
+            currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
+            workingHours: t.workingHours,
+            isOnCall: t.isOnCall,
+        }));
         
-        if (bestTech && earliestTime) {
-            if (!tempTechnicianSchedules[bestTech.id]) {
-                tempTechnicianSchedules[bestTech.id] = [];
+        const input: AllocateJobActionInput = {
+            appId: appId!,
+            jobDescription: job.description,
+            jobPriority: job.priority,
+            requiredSkills: job.requiredSkills || [],
+            scheduledTime: job.scheduledTime,
+            technicianAvailability: aiTechnicians,
+            currentTime: new Date().toISOString(),
+        };
+
+        const result = await allocateJobAction(input);
+        
+        if (result.data?.suggestions && result.data.suggestions.length > 0) {
+            const suggestedId = result.data.suggestions[0].suggestedTechnicianId;
+            techDetails = tempTechnicianPool.find((t: Technician) => t.id === suggestedId) || null;
+            if (techDetails) {
+                // Mark technician as busy for the next iteration in this batch
+                tempTechnicianPool = tempTechnicianPool.map((t: Technician) => 
+                    t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t
+                );
             }
-            tempTechnicianSchedules[bestTech.id].push({
-                start: earliestTime,
-                end: addMinutes(earliestTime, estimatedDurationMinutes)
-            });
-            suggestions.push({
-                job,
-                suggestion: {
-                  suggestions: [{
-                      suggestedTechnicianId: bestTech.id,
-                      reasoning: `Mock Mode: Assigned to ${bestTech.name} based on availability and skills.`,
-                      profitScore: Math.random() * 200 + 50,
-                  }],
-                  overallReasoning: ''
-                },
-                suggestedTechnicianDetails: bestTech,
-                error: null
-            });
+            suggestionResult = result.data;
         } else {
-            suggestions.push({
-                job,
-                suggestion: null,
-                suggestedTechnicianDetails: null,
-                error: "Mock Mode: No available technician with required skills or open time slot found."
-            });
+             errorResult = result.error || result.data?.overallReasoning || "AI could not find a suitable technician.";
         }
-      }
-      setAssignmentSuggestionsForReview(suggestions);
-    } else {
-      if (!appId) return;
-      
-      let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
-      const suggestions: AssignmentSuggestion[] = [];
 
-      for (const job of currentUnassignedJobs) {
-          const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => ({
-              technicianId: t.id,
-              technicianName: t.name,
-              isAvailable: t.isAvailable,
-              skills: t.skills || [],
-              liveLocation: t.location,
-              homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
-              currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
-              workingHours: t.workingHours,
-              isOnCall: t.isOnCall,
-          }));
-
-          const result = await allocateJobAction({
-              appId,
-              jobDescription: job.description,
-              jobPriority: job.priority,
-              requiredSkills: job.requiredSkills || [],
-              scheduledTime: job.scheduledTime,
-              technicianAvailability: aiTechnicians,
-              currentTime: new Date().toISOString(),
-          });
-          
-          let techDetails: Technician | null = null;
-          if (result.data?.suggestions && result.data.suggestions.length > 0) {
-              const suggestedId = result.data.suggestions[0].suggestedTechnicianId;
-              techDetails = tempTechnicianPool.find((t: Technician) => t.id === suggestedId) || null;
-              if (techDetails) {
-                  // Mark technician as busy for the next iteration in this batch
-                  tempTechnicianPool = tempTechnicianPool.map((t: Technician) => 
-                      t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t
-                  );
-              }
-          }
-          suggestions.push({ job, suggestion: result.data, suggestedTechnicianDetails: techDetails, error: result.error });
-      }
-      setAssignmentSuggestionsForReview(suggestions);
+        suggestions.push({ job, suggestion: suggestionResult, suggestedTechnicianDetails: techDetails, error: errorResult });
     }
-    
+      
+    setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId, company, isMockMode]);
+  }, [unassignedJobsForBatchAssign, jobs, technicians, toast, appId, company]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: FinalAssignment[]) => {
     if (isMockMode) {

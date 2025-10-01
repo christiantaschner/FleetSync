@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain, Rocket, MapPin, LayoutDashboard } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain, Rocket, MapPin, LayoutDashboard, History } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -86,10 +86,10 @@ export default function MarketingPage() {
       example: "It's the start of the month. The system automatically creates 15 jobs for your quarterly service contracts and lists them as 'due for scheduling'."
     },
     {
-      icon: Cog,
-      title: "Skills & Parts Library",
-      description: "The AI matches job requirements to technician skills and van inventory, ensuring the right person with the right tools is sent every time.",
-      example: "A job requires 'Refrigerant Handling'. The AI automatically filters out junior techs and prioritizes those who have that certified skill and the part in their van."
+      icon: History,
+      title: "Comprehensive Job History",
+      description: "Access a full, searchable history of every job for any customer, including technician notes and photos.",
+      example: "A customer calls about a recurring issue. You instantly pull up the last three service calls, see the notes and photos from each visit, and dispatch a senior tech with full context."
     }
   ];
 
@@ -484,5 +484,3 @@ export default function MarketingPage() {
     </div>
   );
 }
-
-    

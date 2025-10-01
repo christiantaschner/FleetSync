@@ -411,45 +411,6 @@ export default function MarketingPage() {
                 </div>
             </div>
         </section>
-
-        {/* 2. "Our Solution" Section */}
-        <section id="solution" className="py-16 sm:py-24">
-          <div className="container">
-            <div className="mx-auto max-w-2xl text-center">
-              <Badge variant="secondary">{t('our_solution')}</Badge>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('meet_your_ai_codispatcher')}</h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                {t('everything_you_need')}
-              </p>
-              <p className="mt-2 text-lg text-muted-foreground">
-                Unlike complex corporate software, our AI is designed to run quietly in the background, making your processes simpler, not more complicated.
-              </p>
-            </div>
-            <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
-              <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-                  <Brain className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold">{t('feature_ai_dispatch_title')}</h3>
-                <p className="text-muted-foreground">{t('feature_ai_dispatch_desc')}</p>
-              </div>
-              <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-                  <Shuffle className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold">{t('feature_dynamic_optimization_title')}</h3>
-                <p className="text-muted-foreground">{t('feature_dynamic_optimization_desc')}</p>
-              </div>
-              <div className="space-y-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
-                  <AlertTriangle className="h-6 w-6" />
-                </div>
-                <h3 className="text-xl font-bold">{t('feature_risk_alerts_title')}</h3>
-                <p className="text-muted-foreground">{t('feature_risk_alerts_desc')}</p>
-              </div>
-            </div>
-          </div>
-        </section>
         
         {/* Final CTA */}
         <section className="bg-slate-900 text-white py-20 sm:py-24">

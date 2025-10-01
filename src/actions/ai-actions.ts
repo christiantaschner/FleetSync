@@ -3,7 +3,6 @@
 
 import { allocateJob as allocateJobFlow } from "@/ai/flows/allocate-job";
 import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job-skills";
-import { suggestJobParts as suggestJobPartsFlow } from "@/ai/flows/suggest-job-parts";
 import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest-job-priority";
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
 import { predictScheduleRisk as predictScheduleRiskFlow } from "@/ai/flows/predict-schedule-risk";
@@ -35,8 +34,6 @@ import type {
   AllocateJobOutput,
   SuggestJobSkillsInput,
   SuggestJobSkillsOutput,
-  SuggestJobPartsInput,
-  SuggestJobPartsOutput,
   PredictNextAvailableTechniciansInput,
   PredictNextAvailableTechniciansOutput,
   SuggestJobPriorityInput,
@@ -65,7 +62,6 @@ import { AllocateJobInputSchema } from "@/types";
 // Re-export types for use in components
 export type { AllocateJobActionInput } from "@/types";
 export type SuggestJobSkillsActionInput = SuggestJobSkillsInput;
-export type SuggestJobPartsActionInput = SuggestJobPartsInput;
 export type SuggestJobPriorityActionInput = SuggestJobPriorityInput;
 export type PredictNextAvailableTechniciansActionInput = PredictNextAvailableTechniciansInput;
 export type CheckScheduleHealthResult = {
@@ -195,26 +191,6 @@ export async function suggestJobSkillsAction(
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     console.error(JSON.stringify({
         message: 'Error in suggestJobSkillsAction',
-        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
-        severity: "ERROR"
-    }));
-    return { data: null, error: errorMessage };
-  }
-}
-
-export async function suggestJobPartsAction(
-  input: SuggestJobPartsActionInput
-): Promise<{ data: SuggestJobPartsOutput | null; error: string | null }> {
-  try {
-    const result = await suggestJobPartsFlow(input);
-    return { data: result, error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map(err => err.message).join(", ") };
-    }
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error(JSON.stringify({
-        message: 'Error in suggestJobPartsAction',
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
@@ -899,14 +875,12 @@ const AnalyzeJobInputSchema = z.object({
     jobDescription: z.string(),
     customerName: z.string(),
     availableSkills: z.array(z.string()),
-    availableParts: z.array(z.string()),
     companySpecialties: z.array(z.string()),
 });
 export type AnalyzeJobInput = z.infer<typeof AnalyzeJobInputSchema>;
 
 export type AnalyzeJobOutput = {
     suggestedSkills: SuggestJobSkillsOutput;
-    suggestedParts: SuggestJobPartsOutput;
     upsellOpportunity: SuggestUpsellOpportunityOutput;
 };
 
@@ -916,7 +890,7 @@ export async function analyzeJobAction(
     try {
         if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
 
-        const { appId, companyId, jobTitle, jobDescription, customerName, availableSkills, availableParts, companySpecialties } = AnalyzeJobInputSchema.parse(input);
+        const { appId, companyId, jobTitle, jobDescription, customerName, availableSkills, companySpecialties } = AnalyzeJobInputSchema.parse(input);
 
         // Fetch customer history for upsell analysis
         const historyQuery = query(
@@ -931,9 +905,8 @@ export async function analyzeJobAction(
         const customerHistory = historySnapshot.docs.map(d => d.data() as Job);
 
         // Run all AI suggestions in parallel
-        const [skillsResult, partsResult, upsellResult] = await Promise.all([
+        const [skillsResult, upsellResult] = await Promise.all([
             suggestJobSkillsFlow({ jobTitle, jobDescription, availableSkills }),
-            suggestJobPartsFlow({ jobDescription, availableParts }),
             suggestUpsellOpportunityFlow({
                 jobTitle,
                 jobDescription,
@@ -949,7 +922,6 @@ export async function analyzeJobAction(
         return {
             data: {
                 suggestedSkills: skillsResult,
-                suggestedParts: partsResult,
                 upsellOpportunity: upsellResult,
             },
             error: null
@@ -968,3 +940,5 @@ export async function analyzeJobAction(
         return { data: null, error: errorMessage };
     }
 }
+
+    

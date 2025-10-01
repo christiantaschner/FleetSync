@@ -27,7 +27,6 @@ const TechnicianDataSchema = z.object({
   commissionRate: z.number().optional(),
   bonus: z.number().optional(),
   maxDailyHours: z.number().optional(),
-  vanInventory: z.array(z.string()).optional(),
 });
 
 // Schema for updating an existing technician
@@ -70,7 +69,6 @@ export async function updateTechnicianAction(
         commissionRate: updateData.commissionRate,
         bonus: updateData.bonus,
         maxDailyHours: updateData.maxDailyHours,
-        vanInventory: updateData.vanInventory || [],
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -141,3 +139,5 @@ export async function toggleOnCallStatusAction(
     return { error: `Failed to update on-call status. ${errorMessage}` };
   }
 }
+
+    

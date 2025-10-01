@@ -40,7 +40,6 @@ The current time is {{{currentTime}}}.
 **JOB TO ASSIGN:**
 - Priority: {{{jobPriority}}}
 - Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
-- Required Parts: {{#if requiredParts.length}}{{#each requiredParts}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
 - Description: {{{jobDescription}}}
 - Financials:
   - Quoted Value: \${{{quotedValue}}}
@@ -73,7 +72,7 @@ This score balances the immediate profit of the job with the speed and efficienc
 **PROFIT-AWARE DECISION-MAKING LOGIC (ranked by importance):**
 
 1.  **HARD CONSTRAINTS (Non-negotiable):**
-    -   **Skills & Parts:** The chosen technician MUST possess ALL 'requiredSkills' and have ALL 'requiredParts' in their van.
+    -   **Skills:** The chosen technician MUST possess ALL 'requiredSkills'.
     -   **Working Hours:** The job, including travel, must be completed within the technician's working hours.
 
 2.  **PROFITABILITY ANALYSIS (Primary Goal):**
@@ -90,13 +89,11 @@ This score balances the immediate profit of the job with the speed and efficienc
 **JOB TO ASSIGN:**
 - Priority: {{{jobPriority}}}
 - Required Skills: {{#if requiredSkills.length}}{{#each requiredSkills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
-- Required Parts: {{#if requiredParts.length}}{{#each requiredParts}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None{{/if}}
 - Description: {{{jobDescription}}}
 
 **STANDARD DECISION-MAKING LOGIC (ranked by importance):**
 1.  **HARD CONSTRAINTS (Non-negotiable):**
     -   **Skills:** The chosen technician MUST possess ALL of the 'requiredSkills'.
-    -   **Parts:** The chosen technician MUST have ALL of the 'requiredParts' in their van inventory.
     -   **Availability:** The technician must be available.
     -   **Working Hours:** The job should ideally fall within the technician's standard working hours.
 
@@ -124,7 +121,6 @@ This score balances the immediate profit of the job with the speed and efficienc
   - On Call: {{#if isOnCall}}Yes{{else}}No{{/if}}
   - **Previous Customer History: {{#if hasCustomerHistory}}Yes{{else}}No{{/if}}**
   - Skills: {{#if skills}}{{#each skills}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
-  - Van Inventory: {{#if vanInventory.length}}{{#each vanInventory}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}{{else}}None listed{{/if}}
   - Live Location: (Lat: {{{liveLocation.latitude}}}, Lon: {{{liveLocation.longitude}}})
   {{#if ../featureFlags.profitScoringEnabled}}  - **Financials:** Hourly Cost: \${{{hourlyCost}}} | Commission: {{#if commissionRate}}{{{commissionRate}}}%{{else}}0%{{/if}} | Bonus: \${{#if bonus}}{{{bonus}}}{{else}}0{{/if}} | Max Daily Hours: {{{maxDailyHours}}}h | **Upsell Rate: {{#if upsellConversionRate}}{{multiply upsellConversionRate 100}}%{{else}}0%{{/if}}**{{/if}}
   {{#if currentJobs.length}}
@@ -151,7 +147,7 @@ Your task is to return a ranked list of up to 3 technicians in the 'suggestions'
 {{#if featureFlags.profitScoringEnabled}}
 First, calculate the **Weighted Profit Score** for every suitable technician and set this final value as the 'profitScore'. Rank them from highest to lowest score. Your reasoning for each suggestion MUST be from a business perspective, explaining HOW that choice maximizes profit and efficiency while respecting all constraints (skills, parts, etc.). State the calculated 'profitScore' in your reasoning. In the 'overallReasoning' field, summarize your general findings.
 {{else}}
-Provide your ranked list based on skills, parts availability, and proximity. Your reasoning for each must be clear and concise. In the 'overallReasoning' field, summarize your general findings.
+Provide your ranked list based on skills and proximity. Your reasoning for each must be clear and concise. In the 'overallReasoning' field, summarize your general findings.
 {{/if}}
 
 If no technicians are suitable, return an empty 'suggestions' array and explain the bottleneck (e.g., "No technicians have the required 'Pipe Fitting' skill") in the 'overallReasoning' field.
@@ -169,3 +165,5 @@ const allocateJobFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

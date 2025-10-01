@@ -122,7 +122,6 @@ export type Technician = {
   hourlyCost?: number;
   commissionRate?: number;
   bonus?: number;
-  vanInventory?: string[]; // Array of part names
   maxDailyHours?: number;
   currentRoute?: string[];
   active?: boolean;
@@ -154,7 +153,6 @@ export type Job = {
   notes?: string;
   photos?: string[];
   requiredSkills?: string[];
-  requiredParts?: string[];
   customerSignatureUrl?: string;
   customerSignatureTimestamp?: string;
   assignedAt?: string;
@@ -261,7 +259,6 @@ export type AITechnician = {
   hourlyCost?: number;
   commissionRate?: number;
   bonus?: number;
-  vanInventory?: string[];
   maxDailyHours?: number;
   upsellConversionRate?: number; // New field
 };
@@ -308,7 +305,6 @@ export const ContractSchema = z.object({
         priority: z.enum(['High', 'Medium', 'Low']),
         estimatedDurationMinutes: z.number({required_error: "Estimated duration is required."}).positive("Duration must be positive."),
         requiredSkills: z.array(z.string()).optional(),
-        requiredParts: z.array(z.string()).optional(),
     }),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
@@ -432,7 +428,6 @@ export const AllocateJobInputSchema = z.object({
   customerPhone: z.string().optional().describe("The customer's phone number, used to find their service history."),
   jobPriority: JobPrioritySchema.describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
-  requiredParts: z.array(z.string()).optional().describe('A list of parts required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
   quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
@@ -449,7 +444,6 @@ export const AllocateJobInputSchema = z.object({
       isOnCall: z.boolean().optional().describe('Whether the technician is on call for emergencies.'),
       workingHours: z.array(BusinessDaySchema).optional().describe("The technician's individual working hours."),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
-      vanInventory: z.array(z.string()).optional().describe("A list of part names currently in the technician's van."),
       liveLocation: z.any().describe('The current, real-time location of the technician.'),
       homeBaseLocation: z.any().describe("The technician's home base or starting location for the day."),
       currentJobs: z.array(z.object({
@@ -939,3 +933,5 @@ export const AnalyzeProfitabilityOutputSchema = z.object({
     reasoning: z.string().describe("A concise explanation for the difference between the estimated and actual profit."),
 });
 export type AnalyzeProfitabilityOutput = z.infer<typeof AnalyzeProfitabilityOutputSchema>;
+
+    

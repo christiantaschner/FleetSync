@@ -88,7 +88,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
   const [priority, setPriority] = useState<JobPriority>('Medium');
   const [status, setStatus] = useState<JobStatus>('Unassigned');
   const [requiredSkills, setRequiredSkills] = useState<string[]>([]);
-  const [requiredParts, setRequiredParts] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -146,7 +145,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
     setPriority(initialData.priority || 'Medium');
     setStatus(initialData.status || 'Unassigned');
     setRequiredSkills(initialData.requiredSkills || []);
-    setRequiredParts(initialData.requiredParts || []);
     setCustomerName(initialData.customerName || '');
     setCustomerEmail(initialData.customerEmail || '');
     setCustomerPhone(initialData.customerPhone || '');
@@ -414,10 +412,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
             setRequiredSkills(prev => [...new Set([...prev, ...suggestedSkills.suggestedSkills])]);
             updateCount += suggestedSkills.suggestedSkills.length;
         }
-        if (suggestedParts.suggestedParts.length > 0) {
-            setRequiredParts(prev => [...new Set([...prev, ...suggestedParts.suggestedParts])]);
-            updateCount += suggestedParts.suggestedParts.length;
-        }
         setUpsellScore(upsellOpportunity.upsellScore);
         setUpsellReasoning(upsellOpportunity.reasoning);
         if(upsellOpportunity.upsellScore > 0) updateCount++;
@@ -477,7 +471,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
       description,
       priority,
       requiredSkills,
-      requiredParts,
       customerName: customerName || "N/A",
       customerEmail: customerEmail || "N/A",
       customerPhone: customerPhone || "N/A",
@@ -807,7 +800,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                         </AccordionContent>
                     </AccordionItem>
                      <AccordionItem value="item-4">
-                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><ListChecks className="h-4 w-4"/>Skills & Parts</div></AccordionTrigger>
+                        <AccordionTrigger className="text-base font-semibold"><div className="flex items-center gap-2"><ListChecks className="h-4 w-4"/>Skills</div></AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-2">
                               <div className="flex flex-col space-y-2">
                                 <Label className="flex items-center gap-2">Required Skills</Label>
@@ -818,16 +811,6 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                                     placeholder="Select required skills..."
                                 />
                                 <Button type="button" variant="link" size="sm" onClick={onManageSkills} className="h-auto p-0 self-end">Manage Skills</Button>
-                            </div>
-                            <div className="flex flex-col space-y-2">
-                                <Label className="flex items-center gap-2">Required Parts</Label>
-                                <MultiSelectFilter
-                                    options={partOptions}
-                                    selected={requiredParts}
-                                    onChange={setRequiredParts}
-                                    placeholder="Select required parts..."
-                                />
-                                <Button type="button" variant="link" size="sm" onClick={onManageParts} className="h-auto p-0 self-end">Manage Parts</Button>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
@@ -841,7 +824,7 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
                               Analyze Job
                           </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">Get AI suggestions for skills, parts, and upsell opportunities based on the job details.</p>
+                      <p className="text-xs text-muted-foreground">Get AI suggestions for skills, and upsell opportunities based on the job details.</p>
                       {upsellReasoning && <Alert className="mt-2"><Lightbulb className="h-4 w-4"/><AlertTitle>Upsell Suggestion</AlertTitle><AlertDescription className="text-xs">{upsellReasoning}</AlertDescription></Alert>}
                   </div>
             </div>
@@ -1006,3 +989,5 @@ const AddEditJobDialog: React.FC<AddEditJobDialogProps> = ({ isOpen, onClose, jo
 };
 
 export default AddEditJobDialog;
+
+    

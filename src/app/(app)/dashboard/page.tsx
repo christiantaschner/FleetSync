@@ -78,7 +78,7 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { reassignJobAction } from '@/actions/fleet-actions';
 import { Progress } from '@/components/ui/progress';
-import isEqual from 'lodash.isequal';
+import { isDeepStrictEqual } from 'util';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -223,7 +223,7 @@ export default function DashboardPage() {
     const openTasksSet = new Set(openTasksFilter.sort());
     const newStatusSet = new Set(newStatusFilter.sort());
     
-    if (!isEqual(openTasksSet, newStatusSet)) {
+    if (!isDeepStrictEqual(openTasksSet, newStatusSet)) {
         setShowOpenTasksOnly(false);
     }
   };

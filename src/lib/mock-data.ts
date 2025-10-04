@@ -21,6 +21,7 @@ export const MOCK_COMPANY: Company = {
   ownerId: MOCK_ADMIN_ID,
   subscriptionStatus: 'active',
   technicianSeatCount: 10,
+  referralCode: 'MOCK-REF-123',
   settings: {
     companySpecialties: ["HVAC", "Plumbing"],
     hideHelpButton: false
@@ -36,11 +37,16 @@ export const mockTechnicians: Technician[] = [
     email: 'alice.j@example.com',
     phone: '555-0101',
     isAvailable: true,
-    skills: [{name: 'HVAC'}, {name: 'AC Repair'}, {name: 'Furnace Maintenance'}, {name: 'Refrigerant Handling'}, {name: 'Appliance Repair'}, {name: 'Refrigerator Repair'}],
+    skills: ['HVAC', 'AC Repair', 'Furnace Maintenance', 'Refrigerant Handling', 'Appliance Repair', 'Refrigerator Repair'],
     location: { latitude: 34.0522, longitude: -118.2437, address: 'Los Angeles, CA' },
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/100x100/A8D8EA/4A4A4A?text=AJ',
     isOnCall: true,
     currentJobId: 'job_1',
+    vanInventory: ["Capacitor", "Filter Drier", "Refrigerant R-410A", "Thermostat"],
+    hourlyCost: 75,
+    maxDailyHours: 8,
+    commissionRate: 5,
+    bonus: 10,
   },
   {
     id: 'tech_2',
@@ -49,10 +55,15 @@ export const mockTechnicians: Technician[] = [
     email: 'bob.w@example.com',
     phone: '555-0102',
     isAvailable: true,
-    skills: [{name: 'Plumbing'}, {name: 'Pipe Fitting'}, {name: 'Leak Detection'}, {name: 'Water Heater Repair'}, {name: 'HVAC'}, {name: 'AC Repair'}, {name: 'Faucet Repair'}, {name: 'Drain Cleaning'}, {name: 'Electrical'}, {name: 'Lighting Installation'}],
+    skills: ['Plumbing', 'Pipe Fitting', 'Leak Detection', 'Water Heater Repair', 'HVAC', 'AC Repair', 'Faucet Repair', 'Drain Cleaning', 'Electrical', 'Lighting Installation'],
     location: { latitude: 34.0582, longitude: -118.2517, address: 'Glendale, CA' },
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/100x100/F4B393/4A4A4A?text=BW',
     currentJobId: null,
+    vanInventory: ["P-Trap Assembly", "Faucet Cartridge", "Wax Ring", "Copper Pipe (1/2 in)"],
+    hourlyCost: 65,
+    maxDailyHours: 10,
+    commissionRate: 5,
+    bonus: 0,
   },
   {
     id: 'tech_3',
@@ -61,10 +72,15 @@ export const mockTechnicians: Technician[] = [
     email: 'charlie.b@example.com',
     phone: '555-0103',
     isAvailable: true,
-    skills: [{name: 'Electrical'}, {name: 'Wiring and Rewiring'}, {name: 'Circuit Breaker Repair'}, {name: 'Lighting Installation'}, {name: 'Outlet Installation'}, {name: 'Plumbing'}, {name: 'Faucet Repair'}],
+    skills: ['Electrical', 'Wiring and Rewiring', 'Circuit Breaker Repair', 'Lighting Installation', 'Outlet Installation', 'Plumbing', 'Faucet Repair'],
     location: { latitude: 34.1522, longitude: -118.2637, address: 'Burbank, CA' },
-    avatarUrl: 'https://placehold.co/100x100.png',
+    avatarUrl: 'https://placehold.co/100x100/B2E0B6/4A4A4A?text=CB',
     currentJobId: null,
+    vanInventory: ["GFCI Outlet", "Circuit Breaker (15A)", "Circuit Breaker (20A)", "Light Switch", "Electrical Wire (12/2)"],
+    hourlyCost: 70,
+    maxDailyHours: 8,
+    commissionRate: 7,
+    bonus: 15,
   },
 ];
 
@@ -105,6 +121,9 @@ export const mockJobs: Job[] = [
     inProgressAt: subMinutes(new Date(), 20).toISOString(),
     routeOrder: 0,
     estimatedDurationMinutes: 75,
+    quotedValue: 350,
+    expectedPartsCost: 50,
+    profitScore: 285,
   },
   {
     id: 'job_1_history_1',
@@ -126,6 +145,9 @@ export const mockJobs: Job[] = [
     completedAt: subMonths(today, 12).toISOString(),
     notes: 'System is in good condition. Cleaned coils and replaced filter.',
     isFirstTimeFix: true,
+    quotedValue: 150,
+    actualProfit: 120,
+    profitScore: 115,
   },
   {
     id: 'job_2',
@@ -145,6 +167,9 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 10), 0).toISOString(),
     estimatedDurationMinutes: 120,
+    quotedValue: 450,
+    expectedPartsCost: 80,
+    sourceContractId: 'contract_2',
   },
   {
     id: 'job_16_frank',
@@ -183,6 +208,8 @@ export const mockJobs: Job[] = [
     customerSignatureTimestamp: subDays(today, 7).toISOString(),
     travelDistanceKm: 12.5,
     co2EmissionsKg: 2.4,
+    quotedValue: 200,
+    actualProfit: 150,
   },
   {
     id: 'job_20_frank_history',
@@ -205,6 +232,8 @@ export const mockJobs: Job[] = [
     notes: 'Water heater flushed. Anode rod is in good condition. No issues found.',
     isFirstTimeFix: true,
     customerSatisfactionScore: 5,
+    quotedValue: 125,
+    actualProfit: 100,
   },
   {
     id: 'job_3',
@@ -224,6 +253,8 @@ export const mockJobs: Job[] = [
     scheduledTime: setMinutes(setHours(today, 11), 0).toISOString(),
     estimatedDurationMinutes: 60,
     routeOrder: 1,
+    quotedValue: 180,
+    expectedPartsCost: 15,
   },
   {
     id: 'job_4',
@@ -243,6 +274,9 @@ export const mockJobs: Job[] = [
     routeOrder: 2,
     sourceContractId: 'contract_1',
     estimatedDurationMinutes: 180,
+    quotedValue: 500,
+    expectedPartsCost: 75,
+    profitScore: 400,
   },
   {
     id: 'job_5',
@@ -262,6 +296,8 @@ export const mockJobs: Job[] = [
     scheduledTime: setMinutes(setHours(today, 16), 0).toISOString(),
     routeOrder: 3,
     estimatedDurationMinutes: 60,
+    quotedValue: 175,
+    expectedPartsCost: 20,
   },
    {
     id: 'job_21_alice_tomorrow',
@@ -280,6 +316,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 9), 0).toISOString(),
     estimatedDurationMinutes: 90,
+    quotedValue: 250,
+    expectedPartsCost: 150,
   },
   {
     id: 'job_22_alice_tomorrow_pm',
@@ -298,6 +336,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 13), 30).toISOString(),
     estimatedDurationMinutes: 60,
+    quotedValue: 120,
+    expectedPartsCost: 10,
   },
   {
     id: 'job_23_alice_dayafter',
@@ -316,6 +356,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(dayAfter, 10), 0).toISOString(),
     estimatedDurationMinutes: 75,
+    quotedValue: 300,
+    expectedPartsCost: 45,
   },
   {
     id: 'job_24_alice_threedays',
@@ -334,6 +376,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(threeDaysFromNow, 11), 0).toISOString(),
     estimatedDurationMinutes: 45,
+    quotedValue: 95,
+    expectedPartsCost: 25,
   },
   {
     id: 'job_6',
@@ -352,6 +396,8 @@ export const mockJobs: Job[] = [
     updatedAt: subDays(today, 1).toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 11), 0).toISOString(),
     estimatedDurationMinutes: 45,
+    quotedValue: 150,
+    expectedPartsCost: 5,
   },
   {
     id: 'job_7',
@@ -370,6 +416,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(dayAfter, 9), 0).toISOString(),
     estimatedDurationMinutes: 90,
+    quotedValue: 200,
+    expectedPartsCost: 0,
   },
   {
     id: 'job_8',
@@ -388,6 +436,9 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 13), 0).toISOString(),
     estimatedDurationMinutes: 75,
+    quotedValue: 220,
+    expectedPartsCost: 30,
+    profitScore: 175,
   },
   {
     id: 'job_9',
@@ -406,6 +457,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 10), 0).toISOString(),
     estimatedDurationMinutes: 120,
+    quotedValue: 550,
+    expectedPartsCost: 0,
   },
   {
     id: 'job_10',
@@ -424,6 +477,8 @@ export const mockJobs: Job[] = [
     updatedAt: subDays(today, 1).toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 14), 0).toISOString(),
     estimatedDurationMinutes: 60,
+    quotedValue: 160,
+    expectedPartsCost: 20,
   },
    {
     id: 'job_11',
@@ -442,6 +497,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 15), 0).toISOString(),
     estimatedDurationMinutes: 90,
+    quotedValue: 280,
+    expectedPartsCost: 70,
   },
    {
     id: 'job_12',
@@ -463,7 +520,10 @@ export const mockJobs: Job[] = [
     estimatedDurationMinutes: 60,
     notes: "Replaced the heating element. Dryer is now heating correctly. Tested on high heat for 10 minutes.",
     isFirstTimeFix: true,
-    customerSatisfactionScore: 5
+    customerSatisfactionScore: 5,
+    quotedValue: 210,
+    actualProfit: 140,
+    profitScore: 135,
   },
    {
     id: 'job_13',
@@ -483,9 +543,11 @@ export const mockJobs: Job[] = [
     scheduledTime: subDays(today, 4).toISOString(),
     completedAt: subDays(today, 4).toISOString(),
     estimatedDurationMinutes: 180,
-     notes: "Installed 6 low-voltage path lights and 2 spotlights. All connected to a new transformer and timer. Customer is happy with the result.",
+    notes: "Installed 6 low-voltage path lights and 2 spotlights. All connected to a new transformer and timer. Customer is happy with the result.",
     isFirstTimeFix: true,
-    customerSatisfactionScore: 5
+    customerSatisfactionScore: 5,
+    quotedValue: 800,
+    actualProfit: 450,
   },
    {
     id: 'job_14',
@@ -504,6 +566,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(today, 14), 30).toISOString(),
     estimatedDurationMinutes: 75,
+    quotedValue: 260,
+    expectedPartsCost: 25,
   },
    {
     id: 'job_15',
@@ -521,6 +585,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: null,
     estimatedDurationMinutes: 60,
+    quotedValue: 100,
+    expectedPartsCost: 0,
   },
   {
     id: 'job_17_unassigned',
@@ -539,6 +605,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: null,
     estimatedDurationMinutes: 240,
+    quotedValue: 1200,
+    expectedPartsCost: 350,
   },
   {
     id: 'job_18_unassigned',
@@ -557,6 +625,8 @@ export const mockJobs: Job[] = [
     updatedAt: subDays(today, 1).toISOString(),
     scheduledTime: null,
     estimatedDurationMinutes: 120,
+    quotedValue: 400,
+    expectedPartsCost: 100,
   },
   {
     id: 'job_19_unassigned',
@@ -575,6 +645,8 @@ export const mockJobs: Job[] = [
     updatedAt: today.toISOString(),
     scheduledTime: setMinutes(setHours(tomorrow, 13), 0).toISOString(),
     estimatedDurationMinutes: 60,
+    quotedValue: 180,
+    expectedPartsCost: 0,
   }
 ];
 
@@ -591,8 +663,7 @@ export const mockContracts: Contract[] = [
             title: 'Quarterly HVAC Maintenance',
             description: 'Perform standard quarterly HVAC system check, clean filters, and inspect for wear and tear.',
             priority: 'Low',
-            estimatedDuration: 180,
-            durationUnit: 'minutes',
+            estimatedDurationMinutes: 180,
         },
         lastGeneratedUntil: subDays(new Date(), 1).toISOString(),
         createdAt: subDays(new Date(), 90).toISOString(),
@@ -600,19 +671,17 @@ export const mockContracts: Contract[] = [
     {
         id: 'contract_2',
         companyId: MOCK_COMPANY_ID,
-        customerName: 'Sunset Apartments',
-        customerAddress: '800 Sunset Blvd, Los Angeles, CA',
-        frequency: 'Monthly',
-        startDate: '2023-01-15T09:00:00.000Z',
+        customerName: 'Frank Miller',
+        customerAddress: '456 Oak Ave, Los Angeles, CA',
+        frequency: 'Semi-Annually',
+        startDate: '2023-04-01T09:00:00.000Z',
         isActive: true,
         jobTemplate: {
-            title: 'Monthly Fire Extinguisher Check',
-            description: 'Inspect and certify all fire extinguishers in common areas.',
+            title: 'Semi-Annual AC Maintenance',
+            description: 'Perform semi-annual cleaning and inspection of main AC unit. Check refrigerant levels.',
             priority: 'Medium',
-            estimatedDuration: 90,
-            durationUnit: 'minutes',
+            estimatedDurationMinutes: 90,
         },
-        // This date is now set to 1 month ago, so the next due date is today.
         lastGeneratedUntil: subMonths(new Date(), 1).toISOString(), 
         createdAt: '2023-01-15T09:00:00.000Z',
     },
@@ -680,3 +749,19 @@ export const mockChatMessages: ChatMessage[] = [
         isRead: false,
     },
 ];
+
+export const mockParts = [
+    "Compressor",
+    "Capacitor",
+    "Contactor",
+    "Refrigerant R-410A",
+    "Thermostat",
+    "Filter Drier",
+    "Igniter",
+    "P-Trap Assembly",
+    "Faucet Cartridge",
+    "Circuit Breaker (20A)",
+    "GFCI Outlet"
+];
+
+    

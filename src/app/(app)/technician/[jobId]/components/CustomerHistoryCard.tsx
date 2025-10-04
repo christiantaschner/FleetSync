@@ -5,11 +5,22 @@ import React from 'react';
 import type { Job } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { History, FileText, Camera, Construction, Eye } from 'lucide-react';
+import { History, FileText, Camera, Construction, Eye, Coffee } from 'lucide-react';
 import { format } from 'date-fns';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+
+const formatDuration = (milliseconds: number): string => {
+    if (milliseconds <= 0 || isNaN(milliseconds)) return "0m";
+    const totalMinutes = Math.floor(milliseconds / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+};
 
 interface CustomerHistoryCardProps {
   jobs: Job[];
@@ -49,6 +60,18 @@ const CustomerHistoryCard: React.FC<CustomerHistoryCardProps> = ({ jobs }) => {
                     <div>
                         <h4 className="font-semibold text-sm flex items-center gap-2"><Construction className="h-4 w-4"/>Technician's Notes</h4>
                         <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{job.notes}</p>
+                    </div>
+                 )}
+                 {job.breaks && job.breaks.length > 0 && (
+                    <div>
+                        <h4 className="font-semibold text-sm flex items-center gap-2"><Coffee className="h-4 w-4"/>Breaks Taken</h4>
+                        <ul className="text-sm text-muted-foreground mt-1 list-disc pl-5">
+                            {job.breaks.map((b, i) => (
+                                <li key={i}>
+                                    {formatDuration(new Date(b.end!).getTime() - new Date(b.start).getTime())}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                  )}
                  {job.photos && job.photos.length > 0 && (

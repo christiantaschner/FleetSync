@@ -12,23 +12,30 @@ interface TrackingMapProps {
 }
 
 const TrackingMap: React.FC<TrackingMapProps> = ({ technicianLocation, jobLocation }) => {
-  const [center, setCenter] = useState(technicianLocation);
   const map = useMap();
 
   useEffect(() => {
-    setCenter(technicianLocation);
-    // Optional: Adjust map bounds to fit both markers
-    if (map) {
-      const bounds = new window.google.maps.LatLngBounds();
-      if(technicianLocation.latitude && technicianLocation.longitude) {
-         bounds.extend(new window.google.maps.LatLng(technicianLocation.latitude, technicianLocation.longitude));
-      }
-      if(jobLocation.latitude && jobLocation.longitude) {
-        bounds.extend(new window.google.maps.LatLng(jobLocation.latitude, jobLocation.longitude));
-      }
-      if(!bounds.isEmpty()){
-         map.fitBounds(bounds, 100); // 100px padding
-      }
+    if (!map) return;
+    
+    const bounds = new window.google.maps.LatLngBounds();
+    
+    if (technicianLocation.latitude && technicianLocation.longitude) {
+      bounds.extend(new window.google.maps.LatLng(technicianLocation.latitude, technicianLocation.longitude));
+    }
+    
+    if (jobLocation.latitude && jobLocation.longitude) {
+      bounds.extend(new window.google.maps.LatLng(jobLocation.latitude, jobLocation.longitude));
+    }
+    
+    if (bounds.isEmpty()) return;
+    
+    if (bounds.getCenter().equals(bounds.getNorthEast())) {
+      // If only one point, center and zoom in.
+      map.setCenter(bounds.getCenter());
+      map.setZoom(12);
+    } else {
+      // If two points, fit both with padding.
+      map.fitBounds(bounds, 100); 
     }
   }, [technicianLocation, jobLocation, map]);
 
@@ -36,7 +43,7 @@ const TrackingMap: React.FC<TrackingMapProps> = ({ technicianLocation, jobLocati
   return (
       <Map
         defaultZoom={12}
-        center={{ lat: center.latitude, lng: center.longitude }}
+        center={{ lat: technicianLocation.latitude, lng: technicianLocation.longitude }}
         mapId="customer_tracking_map"
         disableDefaultUI={true}
         gestureHandling={'greedy'}

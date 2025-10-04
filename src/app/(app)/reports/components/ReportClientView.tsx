@@ -23,6 +23,12 @@ import {
   BarChart,
   Waypoints,
   Sparkles,
+  Download,
+  AlertTriangle,
+  Award,
+  TrendingUp,
+  DollarSign,
+  Target
 } from "lucide-react";
 import {
   Card,
@@ -34,17 +40,22 @@ import {
 } from "@/components/ui/card";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import type { DateRange } from "react-day-picker";
-import { subDays } from "date-fns";
+import { subDays, format, isToday } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { summarizeFtfrAction, runReportAnalysisAction } from "@/actions/ai-actions";
+import { summarizeFtfrAction, runReportAnalysisAction } from '@/actions/report-actions';
 import { mockJobs, mockTechnicians } from "@/lib/mock-data";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ReportAnalysisDialog from "./ReportAnalysisDialog";
+import Papa from 'papaparse';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { MockModeBanner } from "@/components/common/MockModeBanner";
+import { cn } from "@/lib/utils";
 
 const formatDuration = (milliseconds: number): string => {
     if (milliseconds < 0 || isNaN(milliseconds)) return "0m";
@@ -59,12 +70,15 @@ const formatDuration = (milliseconds: number): string => {
     return result.trim() || '0m';
 }
 
-const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: string; value: string | number; desc: string; icon: React.ElementType, tooltipText: string }) => {
+const KpiCard = ({ title, value, desc, icon: Icon, tooltipText, valueClassName }: { title: string; value: string | number; desc: string; icon: React.ElementType, tooltipText: string, valueClassName?: string }) => {
     return (
         <Card>
             <CardHeader className="pb-2">
                  <div className="flex items-center justify-between">
-                    <CardDescription className="flex items-center gap-1.5"><Icon className="h-3.5 w-3.5" />{title}</CardDescription>
+                    <CardDescription className="flex items-center gap-1.5">
+                        <Icon className="h-3.5 w-3.5" />
+                        {title}
+                    </CardDescription>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -80,7 +94,7 @@ const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: strin
                 </div>
             </CardHeader>
             <CardContent>
-                <p className="text-2xl font-bold">{value}</p>
+                <p className={cn("text-2xl font-bold", valueClassName)}>{value}</p>
                 <p className="text-xs text-muted-foreground">{desc}</p>
             </CardContent>
         </Card>
@@ -89,7 +103,7 @@ const KpiCard = ({ title, value, desc, icon: Icon, tooltipText }: { title: strin
 
 
 export default function ReportClientView() {
-  const { userProfile, loading: authLoading } = useAuth();
+  const { userProfile, loading: authLoading, isMockMode } = useAuth();
   const { toast } = useToast();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -110,7 +124,7 @@ export default function ReportClientView() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+    if (isMockMode) {
         setJobs(mockJobs);
         setTechnicians(mockTechnicians);
         setIsLoading(false);
@@ -138,7 +152,7 @@ export default function ReportClientView() {
         const data = doc.data();
         for (const key in data) {
             if (data[key] && typeof data[key].toDate === 'function') {
-                data[key] = data[key].toDate().toISOString();
+                data[key] = (data[key] as any).toDate().toISOString();
             }
         }
         return { id: doc.id, ...data } as Job;
@@ -157,7 +171,7 @@ export default function ReportClientView() {
       unsubscribeJobs();
       unsubscribeTechnicians();
     };
-  }, [authLoading, userProfile]);
+  }, [authLoading, userProfile, isMockMode]);
 
   const dateFilteredJobs = useMemo(() => {
     return jobs.filter(job => {
@@ -266,6 +280,51 @@ export default function ReportClientView() {
     const assignedTechnicianIds = new Set(completedJobs.map(j => j.assignedTechnicianId).filter(Boolean));
     const technicianCountInPeriod = assignedTechnicianIds.size;
     const avgJobsPerTech = technicianCountInPeriod > 0 ? (completedJobs.length / technicianCountInPeriod).toFixed(1) : "0.0";
+    
+    const totalProfit = completedJobs.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
+    const slaMisses = completedJobs.filter(job => job.slaDeadline && job.completedAt && new Date(job.completedAt) > new Date(job.slaDeadline)).length;
+
+    // Upsell calculations
+    const jobsWithUpsellOpportunity = completedJobs.filter(j => typeof j.upsellScore === 'number' && j.upsellScore > 0);
+    const successfulUpsells = jobsWithUpsellOpportunity.filter(j => j.upsellOutcome === 'sold');
+    const totalUpsellRevenue = successfulUpsells.reduce((acc, j) => acc + (j.upsellValue || 0), 0);
+    const upsellConversionRate = jobsWithUpsellOpportunity.length > 0 ? ((successfulUpsells.length / jobsWithUpsellOpportunity.length) * 100).toFixed(1) : "0";
+
+    const aiAssignedJobs = completedJobs.filter(j => typeof j.profitScore === 'number');
+    const aiInfluencedProfit = aiAssignedJobs.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
+
+    const technicianPerformance = Object.values(completedJobs.reduce((acc, job) => {
+        if (!job.assignedTechnicianId) return acc;
+        if (!acc[job.assignedTechnicianId]) {
+            acc[job.assignedTechnicianId] = {
+                technicianId: job.assignedTechnicianId,
+                name: technicians.find(t => t.id === job.assignedTechnicianId)?.name || 'Unknown',
+                avatarUrl: technicians.find(t => t.id === job.assignedTechnicianId)?.avatarUrl,
+                jobsCompleted: 0,
+                totalProfit: 0,
+                totalUpsellValue: 0,
+                satisfactionCount: 0,
+                avgSatisfaction: 0,
+            };
+        }
+        const tech = acc[job.assignedTechnicianId];
+        tech.jobsCompleted++;
+        tech.totalProfit += (job.actualProfit || 0);
+        if (job.upsellOutcome === 'sold') {
+            tech.totalUpsellValue += (job.upsellValue || 0);
+        }
+        if (typeof job.customerSatisfactionScore === 'number') {
+            tech.avgSatisfaction += job.customerSatisfactionScore;
+            tech.satisfactionCount++;
+        }
+        return acc;
+    }, {} as Record<string, any>)).map(tech => ({
+        ...tech,
+        avgSatisfaction: tech.satisfactionCount > 0 ? (tech.avgSatisfaction / tech.satisfactionCount).toFixed(2) : "N/A",
+    }));
+
+    const topTechnicianByProfit = [...technicianPerformance].sort((a, b) => b.totalProfit - a.totalProfit)[0];
+    const topTechnicianByUpsell = [...technicianPerformance].sort((a, b) => b.totalUpsellValue - a.totalUpsellValue)[0];
 
     return {
       kpis: {
@@ -281,9 +340,26 @@ export default function ReportClientView() {
         avgTravelTime: formatDuration(avgTravelTimeMs),
         avgBreakTime: formatDuration(avgBreakTimeMs),
         avgJobsPerTech,
+        totalProfit,
+        slaMisses,
+        totalUpsellRevenue,
+        upsellConversionRate,
+        aiAssistedAssignments: aiAssignedJobs.length,
+        aiInfluencedProfit,
+        topTechnicianByProfit: topTechnicianByProfit ? {
+            technicianId: topTechnicianByProfit.technicianId,
+            name: topTechnicianByProfit.name,
+            margin: topTechnicianByProfit.totalProfit
+        } : null,
+        topTechnicianByUpsell: topTechnicianByUpsell && topTechnicianByUpsell.totalUpsellValue > 0 ? {
+            technicianId: topTechnicianByUpsell.technicianId,
+            name: topTechnicianByUpsell.name,
+            upsellValue: topTechnicianByUpsell.totalUpsellValue
+        } : null,
       },
+      technicianLeaderboard: technicianPerformance.sort((a,b) => b.totalProfit - a.totalProfit),
     };
-  }, [filteredJobs]);
+  }, [filteredJobs, technicians]);
   
   const handleRunAnalysis = async () => {
     setIsAnalyzing(true);
@@ -297,13 +373,41 @@ export default function ReportClientView() {
     setIsAnalyzing(false);
   }
 
+  const handleExport = () => {
+    const dataForExport = [
+        { KPI: "Total Jobs", Value: reportData.kpis.totalJobs, Description: "All jobs in period" },
+        { KPI: "Completed Jobs", Value: reportData.kpis.completedJobs, Description: "Successfully finished" },
+        { KPI: "First-Time-Fix Rate (%)", Value: reportData.kpis.ftfr, Description: "Resolved in one visit" },
+        { KPI: "On-Time Arrival Rate (%)", Value: reportData.kpis.onTimeArrivalRate, Description: "Within 15min of schedule" },
+        { KPI: "SLA Misses", Value: reportData.kpis.slaMisses, Description: "Jobs completed after SLA deadline" },
+        { KPI: "Fleet-wide Profit", Value: reportData.kpis.totalProfit.toFixed(2), Description: "Sum of profit scores for all completed jobs" },
+        { KPI: "AI-Influenced Profit", Value: reportData.kpis.aiInfluencedProfit.toFixed(2), Description: "Profit from jobs assigned by AI" },
+        { KPI: "AI-Suggested Upsell Revenue", Value: reportData.kpis.totalUpsellRevenue.toFixed(2), Description: "Total value from successful upsells" },
+        { KPI: "Upsell Conversion Rate (%)", Value: reportData.kpis.upsellConversionRate, Description: "Of jobs with an upsell opportunity" },
+        { KPI: "Avg. On-Site Duration", Value: reportData.kpis.avgDuration, Description: "From start to completion" },
+        { KPI: "Avg. Travel Time", Value: reportData.kpis.avgTravelTime, Description: "Per job" },
+        { KPI: "Avg. Jobs per Technician", Value: reportData.kpis.avgJobsPerTech, Description: "Completed in period" },
+        { KPI: "Avg. Satisfaction", Value: reportData.kpis.avgSatisfaction, Description: "From all rated jobs" },
+    ];
+    const csv = Papa.unparse(dataForExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `fleetsync_report_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (authLoading || isLoading) {
     return <div className="flex h-full items-center justify-center"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="space-y-6">
-       <ReportAnalysisDialog 
+      <MockModeBanner />
+      <ReportAnalysisDialog 
             isOpen={isAnalysisOpen} 
             setIsOpen={setIsAnalysisOpen}
             analysisResult={analysisResult}
@@ -313,10 +417,16 @@ export default function ReportClientView() {
             <h1 className="text-3xl font-bold tracking-tight font-headline">Reporting & Analytics</h1>
             <p className="text-muted-foreground">Analyze your fleet's performance and get AI-powered insights.</p>
         </div>
-        <Button onClick={handleRunAnalysis} disabled={isAnalyzing}>
-            {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
-            Get AI Analysis
-        </Button>
+        <div className="flex gap-2">
+            <Button onClick={handleExport} variant="outline">
+                <Download className="mr-2 h-4 w-4"/>
+                Export CSV
+            </Button>
+            <Button onClick={handleRunAnalysis} disabled={isAnalyzing}>
+                {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Sparkles className="mr-2 h-4 w-4"/>}
+                Get AI Analysis
+            </Button>
+        </div>
       </div>
       <Card>
         <CardHeader>
@@ -371,16 +481,66 @@ export default function ReportClientView() {
             </CardFooter>
           )}
         </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2"><TrendingUp /> Financial &amp; Sales Performance</CardTitle>
+                <CardDescription>Key metrics related to profitability and sales outcomes.</CardDescription>
+              </CardHeader>
+               <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                 <KpiCard title="Fleet-wide Profit" value={`$${reportData.kpis.totalProfit.toFixed(2)}`} desc="From all completed jobs" icon={DollarSign} tooltipText="What it is: The sum of the profit scores from all completed jobs in the period. This is based on AI calculations during assignment." valueClassName="text-green-600" />
+                 <KpiCard title="AI-Influenced Profit" value={`$${reportData.kpis.aiInfluencedProfit.toFixed(2)}`} desc={`From ${reportData.kpis.aiAssistedAssignments} AI-assigned jobs`} icon={Bot} tooltipText="What it is: The total profit generated from jobs where the AI made the assignment recommendation." />
+                 <KpiCard title="AI-Suggested Upsell Revenue" value={`$${reportData.kpis.totalUpsellRevenue.toFixed(2)}`} desc="From successful upsells" icon={DollarSign} tooltipText="What it is: The total additional revenue generated from successful upsells logged by technicians, prompted by the AI." />
+                 <KpiCard title="Upsell Conversion" value={`${reportData.kpis.upsellConversionRate}%`} desc="Of identified opportunities" icon={Target} tooltipText="What it is: The percentage of jobs with an AI-identified upsell opportunity that were successfully sold." />
+                 <KpiCard title="SLA Misses" value={reportData.kpis.slaMisses} desc="Jobs completed after deadline" icon={AlertTriangle} tooltipText="What it is: Count of jobs completed after their Service Level Agreement deadline." />
+               </CardContent>
+            </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Award/>Technician Leaderboard</CardTitle>
+                    <CardDescription>Ranked by total profit generated.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <ScrollArea className="h-48">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Technician</TableHead>
+                                    <TableHead className="text-right">Jobs</TableHead>
+                                    <TableHead className="text-right">Upsell</TableHead>
+                                    <TableHead className="text-right">Profit</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {reportData.technicianLeaderboard.length > 0 ? reportData.technicianLeaderboard.map((tech, index) => (
+                                    <TableRow key={tech.technicianId}>
+                                        <TableCell className="flex items-center gap-2">
+                                            <Avatar className="h-7 w-7"><AvatarImage src={tech.avatarUrl} /><AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback></Avatar>
+                                            <span className="font-medium">{tech.name}</span>
+                                        </TableCell>
+                                        <TableCell className="text-right">{tech.jobsCompleted}</TableCell>
+                                        <TableCell className="text-right">${tech.totalUpsellValue.toFixed(2)}</TableCell>
+                                        <TableCell className="text-right font-semibold text-green-600">${tech.totalProfit.toFixed(2)}</TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground h-24">No data for this period.</TableCell></TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                     </ScrollArea>
+                </CardContent>
+            </Card>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><BarChart /> Technician Efficiency</CardTitle>
             <CardDescription>Metrics focused on how effectively your team spends their time.</CardDescription>
           </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="From start to completion" icon={Clock} tooltipText="What it is: The average time a technician spends actively working on a job. Action: If this is too high, it might indicate a need for more training or better tools. Review technician notes on long jobs." />
+            <KpiCard title="Avg. On-Site Duration" value={reportData.kpis.avgDuration} desc="Excludes break time" icon={Clock} tooltipText="What it is: The average time a technician spends actively working on a job. Action: If this is too high, it might indicate a need for more training or better tools. Review technician notes on long jobs." />
             <KpiCard title="Avg. Travel Time" value={reportData.kpis.avgTravelTime} desc="Per job" icon={Route} tooltipText="What it is: Average time spent driving to jobs. Action: Use the 'Optimize Fleet' feature on the Schedule tab to reduce this non-billable time by improving routing." />
-            <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="What it is: The average time a new job waits in the queue before assignment. Action: Use the 'Fleety Batch Assign' button on the Job List to quickly clear the backlog." />
-            <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="What it is: The average number of jobs each technician completes. Action: Use this to ensure workload is balanced. Filter this report by technician to compare performance." />
+            <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="What it is: The average time technicians log for breaks during a job. Action: This helps ensure compliance with labor laws and technician well-being. Monitor for excessive outliers." />
+            <KpiCard title="Avg. Jobs per Technician" value={reportData.kpis.avgJobsPerTech} desc="Completed in period" icon={Users} tooltipText="What it is: The average number of jobs each technician completes. Action: Use this to compare performance and ensure workload is balanced by filtering this report by technician." />
           </CardContent>
         </Card>
         <Card>
@@ -390,7 +550,7 @@ export default function ReportClientView() {
           </CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <KpiCard title="Avg. Satisfaction" value={`${reportData.kpis.avgSatisfaction} / 5`} desc="From all rated jobs" icon={Smile} tooltipText="What it is: The average customer satisfaction rating (1-5 stars) collected after job completion. Action: Filter by technician to identify top performers and those who may need coaching." />
-            <KpiCard title="Avg. Break Time" value={reportData.kpis.avgBreakTime} desc="Per job with breaks" icon={Coffee} tooltipText="What it is: The average time technicians log for breaks during a job. Action: This helps ensure compliance with labor laws and technician well-being. Monitor for excessive outliers." />
+            <KpiCard title="Avg. Time to Assign" value={reportData.kpis.avgTimeToAssign} desc="Dispatcher response time" icon={Timer} tooltipText="What it is: The average time a new job waits in the queue before assignment. Action: Use the 'AI Batch Assign' button on the Job List to quickly clear the backlog." />
           </CardContent>
         </Card>
         <Card>

@@ -3,24 +3,25 @@
 
 import { z } from 'zod';
 import { dbAdmin } from '@/lib/firebase-admin';
-import type { Job, Technician, PublicTrackingInfo, CustomerData } from '@/types';
+import type { Job, Technician, PublicTrackingInfo, CustomerData, AddEquipmentInput } from '@/types';
 import * as admin from 'firebase-admin';
-import { AddCustomerInputSchema } from '@/types';
-import type { AddCustomerInput } from '@/types';
+import { AddCustomerInputSchema, AddEquipmentInputSchema, UpsertCustomerInputSchema } from '@/types';
+import type { UpsertCustomerInput } from '@/types';
+import { addMonths } from 'date-fns';
 
+const calculateNextMaintenanceDate = (installDate: string, frequency: AddEquipmentInput['maintenanceFrequency']): string | undefined => {
+  if (!frequency || frequency === 'None' || !installDate) return undefined;
+  
+  const date = new Date(installDate);
+  switch (frequency) {
+    case 'Monthly': return addMonths(date, 1).toISOString();
+    case 'Quarterly': return addMonths(date, 3).toISOString();
+    case 'Semi-Annually': return addMonths(date, 6).toISOString();
+    case 'Annually': return addMonths(date, 12).toISOString();
+    default: return undefined;
+  }
+};
 
-export const AddEquipmentInputSchema = z.object({
-  customerId: z.string().min(1, 'Customer ID is required.'),
-  customerName: z.string().min(1, 'Customer name is required.'),
-  companyId: z.string().min(1, 'Company ID is required.'),
-  appId: z.string().min(1, 'App ID is required.'),
-  name: z.string().min(1, 'Equipment name is required.'),
-  model: z.string().optional(),
-  serialNumber: z.string().optional(),
-  installDate: z.string().optional(),
-  notes: z.string().optional(),
-});
-export type AddEquipmentInput = z.infer<typeof AddEquipmentInputSchema>;
 
 export async function addEquipmentAction(
   input: AddEquipmentInput
@@ -33,12 +34,19 @@ export async function addEquipmentAction(
     const validatedInput = AddEquipmentInputSchema.parse(input);
     const { appId, ...equipmentData } = validatedInput; 
 
-    const equipmentCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/equipment`);
-    const docRef = await equipmentCollectionRef.add({
+    const nextMaintenanceDate = equipmentData.installDate 
+      ? calculateNextMaintenanceDate(equipmentData.installDate, equipmentData.maintenanceFrequency)
+      : undefined;
+
+    const equipmentPayload = {
       ...equipmentData,
+      nextMaintenanceDate,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+
+    const equipmentCollectionRef = dbAdmin.collection(`artifacts/${appId}/public/data/equipment`);
+    const docRef = await equipmentCollectionRef.add(equipmentPayload);
 
     return { data: { id: docRef.id }, error: null };
   } catch (e) {
@@ -86,7 +94,7 @@ export async function getTrackingInfoAction(
     const job = { id: jobDoc.id, ...(jobDoc.data() as Job) };
 
     if (job.trackingTokenExpiresAt && new Date(job.trackingTokenExpiresAt) < new Date()) {
-        return { data: null, error: "Tracking link is invalid or has expired." };
+        return { data: null, error: "Tracking link has expired." };
     }
 
     if (job.status === 'Completed' || job.status === 'Cancelled') {
@@ -141,11 +149,6 @@ export async function getTrackingInfoAction(
     return { data: null, error: errorMessage };
   }
 }
-
-export const UpsertCustomerInputSchema = AddCustomerInputSchema.extend({
-  id: z.string().optional(),
-});
-export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 
 export async function upsertCustomerAction(
   input: UpsertCustomerInput

@@ -17,8 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from "@/hooks/use-toast";
 import { upsertCustomerAction } from '@/actions/customer-actions';
-import { UpsertCustomerInputSchema } from '@/types';
 import type { UpsertCustomerInput, CustomerData } from '@/types';
+import { UpsertCustomerInputSchema } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, UserPlus, Save } from 'lucide-react';
 

@@ -187,7 +187,7 @@ const Sidebar = React.forwardRef<
       return (
         <div
           className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-secondary text-secondary-foreground",
+            "flex h-full w-[--sidebar-width] flex-col bg-card text-card-foreground",
             className
           )}
           ref={ref}
@@ -204,7 +204,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-secondary p-0 text-secondary-foreground [&>button]:hidden"
+            className="w-[--sidebar-width] bg-card p-0 text-card-foreground [&>button]:hidden"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -254,7 +254,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-secondary group-data-[variant=floating]:rounded-lg group-data-[variant=inset]:border-none group-data-[variant=floating]:border group-data-[variant=floating]:border-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col bg-card group-data-[variant=floating]:rounded-lg group-data-[variant=inset]:border-none group-data-[variant=floating]:border group-data-[variant=floating]:border-border group-data-[variant=floating]:shadow"
           >
             {children}
           </div>
@@ -362,7 +362,7 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 border-b border-border bg-primary text-primary-foreground p-3", className)}
+      className={cn("flex flex-col gap-2 border-b border-border bg-muted/40 p-3", className)}
       {...props}
     />
   )
@@ -443,7 +443,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-secondary-foreground/70 outline-none ring-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-muted-foreground/70 outline-none ring-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className
       )}
@@ -538,9 +538,9 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: "text-foreground bg-transparent hover:bg-background/50",
+        default: "text-foreground bg-transparent hover:bg-secondary",
         secondary: "bg-primary text-primary-foreground hover:bg-primary/90",
-        ghost: "hover:bg-background/50 hover:text-foreground text-foreground",
+        ghost: "hover:bg-secondary hover:text-foreground text-foreground",
       },
       size: {
         default: "h-10 text-sm",
@@ -740,8 +740,8 @@ const SidebarMenuSubButton = React.forwardRef<
       data-size={size}
       data-active={isActive}
       className={cn(
-        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-secondary-foreground outline-none ring-ring hover:bg-background hover:text-foreground focus-visible:ring-2 active:bg-background active:text-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-secondary-foreground",
-        "data-[active=true]:bg-background data-[active=true]:text-foreground",
+        "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-muted-foreground outline-none ring-ring hover:bg-secondary hover:text-foreground focus-visible:ring-2 active:bg-secondary active:text-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground",
+        "data-[active=true]:bg-secondary data-[active=true]:text-foreground",
         size === "sm" && "text-xs",
         size === "md" && "text-sm",
         "group-data-[collapsible=icon]:hidden",

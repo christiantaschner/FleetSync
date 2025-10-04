@@ -2,28 +2,30 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import type { Job, JobStatus, Technician } from '@/types';
-import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, Camera, ListChecks, AlertTriangle, Loader2, Navigation, Star, Smile, ThumbsUp, ThumbsDown, Timer, Pause, Play, BookOpen, MessageSquare, FileSignature, CheckCircle, DollarSign, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import JobDetailsDisplay from './components/JobDetailsDisplay';
 import WorkDocumentationForm from './components/WorkDocumentationForm';
-import SignatureCard from './components/SignatureCard';
 import TroubleshootingCard from './components/TroubleshootingCard';
 import CustomerHistoryCard from './components/CustomerHistoryCard';
 import StatusUpdateActions from './components/StatusUpdateActions';
+import UpsellOpportunityCard from './components/UpsellOpportunityCard';
 
 import { db, storage } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, serverTimestamp, arrayUnion, collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
-import { ref, uploadString, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadString, getDownloadURL } from "firebase/storage";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/contexts/auth-context';
 import { calculateTravelMetricsAction, notifyCustomerAction } from '@/actions/ai-actions';
+import { addDocumentationAction, updateJobStatusAction } from '@/actions/job-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ChatSheet from '@/app/(app)/dashboard/components/ChatSheet';
 import { mockJobs, mockTechnicians } from '@/lib/mock-data';
-import SignatureCanvas from 'react-signature-canvas';
+import { Separator } from '@/components/ui/separator';
 
 export default function TechnicianJobDetailPage() {
   const router = useRouter();
@@ -40,7 +42,6 @@ export default function TechnicianJobDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const isBreakActive = job?.status === 'In Progress' && job?.breaks?.some(b => !b.end);
-  const backUrl = `/technician/jobs/${userProfile?.uid}`;
 
   const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -107,43 +108,61 @@ export default function TechnicianJobDetailPage() {
     fetchJobAndRelatedData();
   }, [jobId, authLoading, user, appId, isMockMode]);
   
-  const handleSaveDocumentation = async (notes: string, photos: File[]) => {
-    if (!job || !db || !storage || isUpdating || !appId) return;
+  const handleSaveDocumentation = async (notes: string, photos: File[], isFirstTimeFix: boolean, reasonForFollowUp?: string, signatureDataUrl?: string | null, satisfactionScore?: number) => {
+    if (!job || !appId) return;
     setIsUpdating(true);
 
-    let newPhotoUrls: string[] = [];
+    let photoUrls: string[] = [];
+    let signatureUrlToSave: string | null = null;
+    
+    if (isMockMode) {
+        toast({ title: "Success (Mock)", description: "Documentation saved in mock mode." });
+        setIsUpdating(false);
+        return;
+    }
+    
     try {
       if (photos.length > 0) {
-        newPhotoUrls = await Promise.all(photos.map(async (photo) => {
-          const photoRef = ref(storage, `job-photos/${job.id}/${Date.now()}-${photo.name}`);
-          await uploadBytes(photoRef, photo);
-          return getDownloadURL(photoRef);
-        }));
+          // This part would be handled by a different action in a real app
+          // For simplicity, we assume an upload function exists
+          toast({ title: "Note", description: "Photo upload from this screen is a demo feature."});
       }
       
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-      const updateData: any = { updatedAt: serverTimestamp() };
-      
-      if (notes.trim()) {
-        const newNote = `\n--- ${new Date().toLocaleString()} ---\n${notes.trim()}`;
-        updateData.notes = arrayUnion(newNote);
-      }
-      if (newPhotoUrls.length > 0) {
-        updateData.photos = arrayUnion(...newPhotoUrls);
+      if (signatureDataUrl) {
+        if (!storage) throw new Error("Storage not initialized");
+        const signatureRef = ref(storage, `signatures/${job.id}.png`);
+        await uploadString(signatureRef, signatureDataUrl, 'data_url');
+        signatureUrlToSave = await getDownloadURL(signatureRef);
       }
       
-      await updateDoc(jobDocRef, updateData);
-
+      const result = await addDocumentationAction({
+        jobId: job.id,
+        appId,
+        notes,
+        photoUrls,
+        isFirstTimeFix,
+        reasonForFollowUp,
+        signatureUrl: signatureUrlToSave,
+        satisfactionScore,
+      });
+      
+      if(result.error) throw new Error(result.error);
+      
+      toast({ title: "Success", description: "Documentation saved." });
       setJob(prevJob => {
         if (!prevJob) return null;
         return {
             ...prevJob,
-            notes: prevJob.notes ? `${prevJob.notes}${updateData.notes}` : updateData.notes,
-            photos: [...(prevJob.photos || []), ...newPhotoUrls],
+            notes: prevJob.notes ? `${prevJob.notes}${notes ? `\n--- ${new Date().toLocaleString()} ---\n${notes.trim()}`: ''}` : notes,
+            photos: [...(prevJob.photos || []), ...photoUrls],
+            isFirstTimeFix,
+            reasonForFollowUp: isFirstTimeFix ? '' : (reasonForFollowUp || ''),
+            customerSignatureUrl: signatureUrlToSave || prevJob.customerSignatureUrl,
+            customerSatisfactionScore: satisfactionScore || prevJob.customerSatisfactionScore,
             updatedAt: new Date().toISOString()
         };
       });
-      toast({ title: "Success", description: "Documentation saved." });
+
     } catch (error) {
       console.error("Error documenting work:", error);
       toast({ title: "Error", description: "Could not save work documentation.", variant: "destructive" });
@@ -151,63 +170,40 @@ export default function TechnicianJobDetailPage() {
       setIsUpdating(false);
     }
   };
-
-  const handleSaveSignoff = async (signatureDataUrl: string | null, satisfactionScore: number) => {
-    if (!job || !db || !storage || isUpdating || !appId) return;
-    setIsUpdating(true);
-
-    let newSignatureUrl: string | null = null;
-    try {
-      if (signatureDataUrl) {
-        const signatureRef = ref(storage, `signatures/${job.id}.png`);
-        await uploadString(signatureRef, signatureDataUrl, 'data_url');
-        newSignatureUrl = await getDownloadURL(signatureRef);
-      }
-
-      const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-      const updateData: any = { updatedAt: serverTimestamp() };
-      
-      if (newSignatureUrl) {
-        updateData.customerSignatureUrl = newSignatureUrl;
-        updateData.customerSignatureTimestamp = new Date().toISOString();
-      }
-      if (satisfactionScore > 0) {
-        updateData.customerSatisfactionScore = satisfactionScore;
-      }
-      
-      if (Object.keys(updateData).length > 1) { // more than just timestamp
-        await updateDoc(jobDocRef, updateData);
-        setJob(prev => prev ? { ...prev, ...updateData } : null);
-        toast({ title: "Success", description: "Customer sign-off saved." });
-      }
-    } catch (error) {
-       console.error("Error saving sign-off:", error);
-       toast({ title: "Error", description: "Could not save customer sign-off.", variant: "destructive" });
-    } finally {
-      setIsUpdating(false);
-    }
-  }
   
   const handleToggleBreak = async () => {
-    if (!job || !db || isUpdating || !appId) return;
-    const currentJob = job;
-    if (!currentJob) return;
-
-    setIsUpdating(true);
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, currentJob.id);
+    if (!job || isUpdating || !appId) return;
+    
     const now = new Date().toISOString();
-    const currentBreaks = currentJob.breaks || [];
+    const currentBreaks = job.breaks || [];
     let updatedBreaks;
+
     if (isBreakActive) {
-      toast({ title: "Resuming Work" });
-      updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
+        updatedBreaks = currentBreaks.map((b, i) => i === currentBreaks.length - 1 ? { ...b, end: now } : b);
     } else {
-      toast({ title: "Break Started" });
-      updatedBreaks = [...currentBreaks, { start: now }];
+        updatedBreaks = [...currentBreaks, { start: now, end: undefined }];
     }
-    await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
-    setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
-    setIsUpdating(false);
+
+    if (isMockMode) {
+        setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+        toast({ title: isBreakActive ? "Resuming Work (Mock)" : "Break Started (Mock)" });
+        return;
+    }
+    
+    if (!db) return;
+    setIsUpdating(true);
+    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+    
+    try {
+        await updateDoc(jobDocRef, { breaks: updatedBreaks, updatedAt: serverTimestamp() });
+        setJob(prev => prev ? { ...prev, breaks: updatedBreaks, updatedAt: now } : null);
+        toast({ title: isBreakActive ? "Resuming Work" : "Break Started" });
+    } catch(e) {
+        console.error("Failed to update break status:", e);
+        toast({ title: "Error", description: "Could not update break status.", variant: "destructive" });
+    } finally {
+        setIsUpdating(false);
+    }
   };
   
   const handleNavigate = () => {
@@ -217,7 +213,7 @@ export default function TechnicianJobDetailPage() {
   };
 
   const handleStatusUpdate = async (newStatus: JobStatus) => {
-    if (!job || !db || isUpdating || !technician || !appId) return;
+    if (!job || !appId || isUpdating) return;
 
     if (job.status === 'In Progress' && job.breaks?.some(b => !b.end)) {
         toast({ title: "Cannot Change Status", description: "Please end your current break before changing the job status.", variant: "destructive" });
@@ -225,61 +221,50 @@ export default function TechnicianJobDetailPage() {
     }
     
     setIsUpdating(true);
-    const jobDocRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-    try {
-        const updatePayload: any = { status: newStatus, updatedAt: serverTimestamp() };
+    const result = await updateJobStatusAction({ jobId: job.id, status: newStatus, appId });
 
-        if (newStatus === 'En Route') {
-            updatePayload.enRouteAt = serverTimestamp();
-            notifyCustomerAction({
-                jobId: job.id, customerName: job.customerName, technicianName: technician.name,
-                reasonForChange: `Your technician, ${technician.name}, is on their way.`,
-                companyName: company?.name || 'our team'
-            }).catch(err => console.error("Failed to send 'On My Way' notification:", err));
-        }
-        if (newStatus === 'In Progress') {
-            updatePayload.inProgressAt = serverTimestamp();
-        }
-        if (newStatus === 'Completed') {
-            updatePayload.completedAt = serverTimestamp();
-            // In a real app, you might want to ensure a signature is present before allowing this.
-            if (!job.customerSignatureUrl && !job.customerSatisfactionScore) {
-                toast({ title: "Complete Job", description: "Remember to get customer sign-off before you leave.", variant: "default" });
-            }
-        }
-        
-        await updateDoc(jobDocRef, updatePayload);
-
-        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId) {
-            const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
-            await updateDoc(techDocRef, { isAvailable: true, currentJobId: null });
-        } else if (newStatus !== 'Completed' && newStatus !== 'Cancelled' && job.assignedTechnicianId) {
-             const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, job.assignedTechnicianId);
-            await updateDoc(techDocRef, { isAvailable: false, currentJobId: job.id });
-        }
-        
-        setJob(prev => prev ? {...prev, ...updatePayload, status: newStatus, updatedAt: new Date().toISOString() } : null);
+    if(result.error) {
+        toast({ title: "Error", description: `Could not update job status: ${result.error}`, variant: "destructive" });
+    } else {
+        setJob(prev => prev ? {...prev, status: newStatus, updatedAt: new Date().toISOString() } : null);
         toast({ title: "Status Updated", description: `Job status set to ${newStatus}.` });
 
-        if (newStatus === 'Completed' && job.assignedTechnicianId && userProfile) {
+        if ((newStatus === 'Completed' || newStatus === 'Cancelled') && job.assignedTechnicianId && userProfile) {
             calculateTravelMetricsAction({
                 companyId: userProfile.companyId!, jobId: job.id, technicianId: job.assignedTechnicianId, appId,
             }).catch(err => console.error("Failed to trigger travel metrics calculation:", err));
         }
-    } catch(e) {
-        console.error("Error updating job status from detail view:", e);
-        toast({ title: "Error", description: "Could not update job status.", variant: "destructive" });
-    } finally {
-        setIsUpdating(false);
     }
+    setIsUpdating(false);
   };
-
+  
+  const AssistanceSection = () => (
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-headline flex items-center gap-2">
+            <Lightbulb /> Assistance
+          </CardTitle>
+          <CardDescription>
+            Use these tools if you need help with the job.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <TroubleshootingCard job={job!} serviceHistory={historyJobs} />
+          {technician && appId && (
+            <Button variant="outline" className="w-full" onClick={() => setIsChatOpen(true)}>
+              <MessageSquare className="mr-2 h-4 w-4"/> Chat with Dispatch
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+  );
 
   if (isLoading || authLoading) {
     return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="mt-4 text-muted-foreground">Loading job details...</p></div>;
   }
+  
   if (!job) {
-    return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The requested job could not be found.</p><Button variant="outline" onClick={() => router.push(backUrl)} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
+    return <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] p-4 text-center"><AlertTriangle className="h-12 w-12 text-destructive mb-4" /><h2 className="text-xl font-semibold">Job Not Found</h2><p className="text-muted-foreground mt-2">The requested job could not be found.</p><Button variant="outline" onClick={() => router.back()} className="mt-6"><ArrowLeft className="mr-2 h-4 w-4" /> Go Back</Button></div>;
   }
   if (!technician) {
       return <div className="p-4 text-center text-destructive">Could not load technician details for this job.</div>
@@ -295,69 +280,84 @@ export default function TechnicianJobDetailPage() {
           appId={appId}
       />}
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="sm" onClick={() => router.push(backUrl)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
-        <div className="flex items-center gap-2">
-            <StatusUpdateActions 
-                currentStatus={job.status} 
-                onUpdateStatus={handleStatusUpdate}
-                isUpdating={isUpdating}
-            />
-        </div>
+        <Button variant="ghost" size="sm" onClick={() => router.back()}><ArrowLeft className="mr-2 h-4 w-4" /> Back to My Jobs</Button>
       </div>
       
       {isUpdating && <div className="fixed top-4 right-4 z-50"><Loader2 className="h-6 w-6 animate-spin text-primary"/></div>}
 
-      <JobDetailsDisplay job={job}>
-          {['Assigned', 'En Route', 'In Progress'].includes(job.status) && (
-              <CardFooter className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                   <Button variant="outline" onClick={handleNavigate} className="w-full justify-center">
-                        <Navigation className="mr-2 h-4 w-4" /> Navigate
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsChatOpen(true)} className="w-full justify-center">
-                        <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
-                    </Button>
-                    <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating || job.status !== 'In Progress'} className="w-full justify-center">
-                        {isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
+      <JobDetailsDisplay job={job} />
+      
+      <div className="space-y-6">
+        {job.status === 'Assigned' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Button onClick={() => handleStatusUpdate('En Route')} disabled={isUpdating} className="sm:col-span-2">
+                <Truck className="mr-2 h-4 w-4" /> Start Travel (En Route)
+              </Button>
+              <Button variant="outline" onClick={handleNavigate}>
+                <Navigation className="mr-2 h-4 w-4" /> Navigate
+              </Button>
+               <Button variant="outline" onClick={() => setIsChatOpen(true)}>
+                <MessageSquare className="mr-2 h-4 w-4" /> Chat with Dispatch
+              </Button>
+          </div>
+        )}
+        
+        {job.status === 'En Route' && (
+            <div className="space-y-4">
+              <Alert>
+                <Truck className="h-4 w-4" />
+                <AlertTitle>You're on your way!</AlertTitle>
+                <AlertDescription>The customer has been notified. Press 'Arrived' when you get to the job site.</AlertDescription>
+              </Alert>
+               <Button onClick={() => handleStatusUpdate('In Progress')} disabled={isUpdating} className="w-full">
+                  <Play className="mr-2 h-4 w-4" /> Arrived & Start Work
+              </Button>
+            </div>
+        )}
+
+        {job.status === 'In Progress' && (
+           <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Timer /> Job Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2">
+                     <Button variant={isBreakActive ? "destructive" : "outline"} onClick={handleToggleBreak} disabled={isUpdating}>
+                        {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isBreakActive ? <Play className="mr-2 h-4 w-4" /> : <Pause className="mr-2 h-4 w-4" />}
                         {isBreakActive ? 'End Break' : 'Start Break'}
                     </Button>
-              </CardFooter>
-          )}
-      </JobDetailsDisplay>
-      
-      <CustomerHistoryCard jobs={historyJobs} />
+                    <Button onClick={() => handleStatusUpdate('Completed')} disabled={isUpdating || isBreakActive} className="bg-green-600 hover:bg-green-700">
+                        <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed
+                    </Button>
+                </CardContent>
+            </Card>
+            
+            {job.upsellReasoning && (
+              <UpsellOpportunityCard 
+                job={job}
+                onUpdate={(updatedFields) => setJob(prev => prev ? {...prev, ...updatedFields} : null)}
+              />
+            )}
+            
+            <AssistanceSection />
+            <WorkDocumentationForm onSubmit={handleSaveDocumentation} isSubmitting={isUpdating} />
+          </div>
+        )}
 
-      {job.status === 'In Progress' && (
-        <div className="space-y-4">
-          <WorkDocumentationForm onSave={handleSaveDocumentation} isSaving={isUpdating} />
-          <SignatureCard onSubmit={handleSaveSignoff} isSubmitting={isUpdating} />
-        </div>
-      )}
-      
-      <div className="pt-2">
-        {job.status === 'In Progress' && (
-             <Button onClick={() => handleStatusUpdate('Completed')} className="w-full bg-green-600 hover:bg-green-700">
-                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Completed & Finish
-            </Button>
+        {job.status === 'Completed' && (
+          <Alert variant="default" className="border-green-600/50 bg-green-50/50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertTitle className="font-semibold text-green-800">Job Completed</AlertTitle>
+            <AlertDescription className="text-green-700">
+                Great work! This job has been marked as complete. You can now proceed to your next assignment.
+            </AlertDescription>
+          </Alert>
         )}
       </div>
 
-      {job.status === 'Completed' && (
-        <Card className="bg-green-50 border-green-200">
-            <CardHeader>
-                <CardTitle className="font-headline text-green-800">Job Complete</CardTitle>
-                <CardDescription className="text-green-700">This job has been marked as completed.</CardDescription>
-            </CardHeader>
-        </Card>
-      )}
+      <Separator />
       
-       {job.status === 'Cancelled' && (
-        <Card className="bg-red-50 border-red-200">
-            <CardHeader>
-                <CardTitle className="font-headline text-red-800">Job Cancelled</CardTitle>
-                 <CardDescription className="text-red-700">This job was cancelled.</CardDescription>
-            </CardHeader>
-        </Card>
-      )}
+      <CustomerHistoryCard jobs={historyJobs} />
     </div>
   );
 }

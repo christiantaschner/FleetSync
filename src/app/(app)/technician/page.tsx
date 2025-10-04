@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation';
 import { mockTechnicians } from '@/lib/mock-data';
 
 export default function SelectTechnicianPage() {
-    const { userProfile, loading: authLoading } = useAuth();
+    const { userProfile, loading: authLoading, isMockMode } = useAuth();
     const router = useRouter();
     const [technicians, setTechnicians] = useState<Technician[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -23,7 +23,7 @@ export default function SelectTechnicianPage() {
     useEffect(() => {
         if (authLoading) return;
         
-        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        if (isMockMode) {
             setTechnicians(mockTechnicians);
             setIsLoading(false);
             return;
@@ -34,10 +34,9 @@ export default function SelectTechnicianPage() {
             return;
         }
 
+        // RBAC: This logic is now primarily in layout.tsx, but is a failsafe.
         if (userProfile.role !== 'admin' && userProfile.role !== 'superAdmin') {
-            // A technician should be redirected to their jobs page by the layout,
-            // but this is a failsafe.
-            router.push(`/technician/jobs/${userProfile.uid}`); 
+            router.replace(`/technician/jobs/${userProfile.uid}`); 
             return;
         }
 
@@ -58,7 +57,7 @@ export default function SelectTechnicianPage() {
         });
 
         return () => unsubscribe();
-    }, [userProfile, authLoading, router, appId]);
+    }, [userProfile, authLoading, router, appId, isMockMode]);
 
     if (isLoading || authLoading) {
         return (

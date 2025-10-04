@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -26,6 +27,7 @@ import {
   CalendarDays,
   HelpCircle,
   BookOpen,
+  Globe,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -62,21 +64,23 @@ import { useTranslation } from '@/hooks/use-language';
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MockModeBanner } from '@/components/common/MockModeBanner';
 import { UserProfile } from "@/types";
+import { TechnicianBottomNav } from "@/app/(app)/technician/components/TechnicianBottomNav";
 
 type NavItem = {
   href: string;
   label: string;
   icon: React.ElementType; 
   divider?: boolean;
+  roles: ('admin' | 'technician' | 'csr' | 'superAdmin' | null)[];
 };
 
 const ALL_NAV_ITEMS: NavItem[] = [
-  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard },
-  { href: "/customers", label: 'customers', icon: ClipboardList },
-  { href: "/contracts", label: 'contracts', icon: Repeat },
-  { href: "/reports", label: 'reports', icon: BarChart },
-  { href: "/roadmap", label: 'roadmap', icon: BookOpen },
-  { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true },
+  { href: "/dashboard", label: 'dashboard', icon: LayoutDashboard, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/customers", label: 'customers', icon: ClipboardList, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/contracts", label: 'contracts', icon: Repeat, roles: ['admin', 'superAdmin', 'csr'] },
+  { href: "/reports", label: 'reports', icon: BarChart, roles: ['admin', 'superAdmin'] },
+  { href: "/roadmap", label: 'roadmap', icon: BookOpen, roles: ['superAdmin'] },
+  { href: "/technician", label: 'technician_view', icon: Smartphone, divider: true, roles: ['admin', 'superAdmin', 'technician'] },
 ];
 
 function MainAppLayout({ children }: { children: React.ReactNode }) {
@@ -86,6 +90,17 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user, userProfile, company, loading, logout, setHelpOpen, isMockMode, contractsDueCount } = useAuth();
   
+  // Primary RBAC Logic
+  useEffect(() => {
+    if (!loading && userProfile && userProfile.role === 'technician') {
+      const isCorrectPath = pathname.startsWith(`/technician/jobs/${userProfile.uid}`) || pathname === '/technician/profile' || pathname === '/roadmap';
+      if (!isCorrectPath) {
+        router.replace(`/technician/jobs/${userProfile.uid}`);
+      }
+    }
+  }, [pathname, userProfile, loading, router]);
+
+
   if (pathname === '/onboarding') {
       return <>{children}</>;
   }
@@ -150,6 +165,23 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
   const userInitial = user?.email ? user.email.charAt(0).toUpperCase() : "U";
   const userDisplayName = user?.email || "User";
   
+  const isViewingTechnicianApp = pathname.startsWith('/technician');
+
+  if (isViewingTechnicianApp) {
+    const technicianId = pathname.split('/')[3] || userProfile?.uid;
+    return (
+      <div className="flex min-h-svh flex-col">
+        <main className="flex-1 pb-20"> {/* Add padding-bottom for the nav bar */}
+          <MockModeBanner />
+          <div className="p-4 sm:p-6 lg:p-8">
+            {children}
+          </div>
+        </main>
+        {technicianId && <TechnicianBottomNav technicianId={technicianId} />}
+      </div>
+    );
+  }
+
   return (
       <SidebarProvider defaultOpen>
         <Sidebar collapsible="icon" className="peer">
@@ -158,10 +190,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
-              {ALL_NAV_ITEMS.map((item) => {
+              {ALL_NAV_ITEMS.filter(item => item.roles.includes(userProfile?.role || null)).map((item) => {
                  const isActive = (item.href === '/dashboard' && pathname === '/dashboard') || (item.href !== '/dashboard' && pathname.startsWith(item.href));
                  
-                 const finalHref = item.href === '/technician' && userProfile?.role === 'technician' ? `/technician/jobs/${userProfile.uid}` : item.href;
+                 let finalHref = item.href;
+                 if (item.href === '/technician' && userProfile?.role === 'technician') {
+                   finalHref = `/technician/jobs/${userProfile.uid}`;
+                 }
                  
                  const badgeCount = item.label === 'contracts' ? contractsDueCount : 0;
 
@@ -248,10 +283,13 @@ function MainAppLayout({ children }: { children: React.ReactNode }) {
           <SidebarRail />
         </Sidebar>
         <div className="flex flex-col flex-1">
-          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-primary text-primary-foreground px-4 md:hidden">
+          <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-muted/40 px-4 md:hidden">
             <SidebarTrigger />
             <Logo />
-            <div className="w-7 h-7" />
+            <div className="flex items-center gap-2">
+                <LanguageSwitcher isMobile={true}/>
+                <div className="w-7 h-7" />
+            </div>
           </header>
            <main className="flex-1 overflow-x-hidden">
                 <div className="p-4 sm:p-6 lg:p-8">

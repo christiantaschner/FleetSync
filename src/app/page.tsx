@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe } from 'lucide-react';
+import { Check, Bot, Zap, Shuffle, Heart, AlertTriangle, Smartphone, Map, MessageSquare, CalendarDays, Cog, Briefcase, TrendingUp, DollarSign, Menu, Workflow, UserCheck, Star, Repeat, ClipboardList, Target, X, Users, Lightbulb, CloudRain, List, Info, Globe, Droplets, Bug, Computer, Wrench, Building2, BarChart, Package, Search, Eye, ListChecks, Brain, Rocket, MapPin, LayoutDashboard, History } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/common/logo';
@@ -14,112 +13,20 @@ import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle,
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import React, { useState, useEffect } from 'react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Separator } from '@/components/ui/separator';
 
 export default function MarketingPage() {
   const { t, language, setLanguage } = useTranslation();
+  const [numTechs, setNumTechs] = useState(1);
+  const [jobsPerDay, setJobsPerDay] = useState(1);
+  const [avgJobValue, setAvgJobValue] = useState(250);
+  const [roi, setRoi] = useState<number | null>(null);
 
-  const features = [
-    {
-      icon: <Bot className="h-8 w-8 text-primary" />,
-      title: "AI-Powered Dispatch",
-      description: "Let our AI analyze skills, live location, and customer history to suggest the optimal technician for any job in seconds. Eliminate guesswork and manual scheduling.",
-    },
-    {
-      icon: <Smartphone className="h-8 w-8 text-primary" />,
-      title: "Intuitive Technician App",
-      description: "A simple, powerful mobile view for your team. They get clear daily schedules, can update job statuses with a tap, and communicate directly with dispatch.",
-    },
-    {
-      icon: <Shuffle className="h-8 w-8 text-primary" />,
-      title: "Dynamic Route Optimization",
-      description: "A last-minute cancellation? A new emergency? Re-optimize any technician's route with a single click to fill gaps and minimize travel time.",
-    },
-     {
-      icon: <AlertTriangle className="h-8 w-8 text-primary" />,
-      title: "Proactive Risk Alerts",
-      description: "Our system constantly monitors active jobs and warns you if a technician is at risk of being late, giving you time to act before it becomes a customer complaint.",
-    },
-    {
-      icon: <Repeat className="h-8 w-8 text-primary" />,
-      title: "Recurring Service Contracts",
-      description: "Manage maintenance agreements with ease. Automatically generate recurring jobs and use AI to help schedule the next appointment.",
-    },
-    {
-      icon: <ClipboardList className="h-8 w-8 text-primary" />,
-      title: "Complete Digital Work Orders",
-      description: "From pre-work safety checklists to adding notes, capturing photos, and getting customer signatures, everything is handled digitally.",
-    },
-    {
-      icon: <Target className="h-8 w-8 text-primary" />,
-      title: "Customer Live Tracking",
-      description: "Reduce 'where are you?' calls by sending customers a secure, live tracking link to see their technician's ETA on a map.",
-    },
-    {
-      icon: <TrendingUp className="h-8 w-8 text-primary" />,
-      title: "Actionable Reporting",
-      description: "Track key metrics like first-time-fix rate, on-time arrivals, and average job duration to understand your business performance at a glance.",
-    }
-  ];
-
-  const benefits = [
-      {
-        icon: <Zap className="h-8 w-8 text-primary" />,
-        title: t('benefit_efficiency_title'),
-        description: t('benefit_efficiency_desc')
-      },
-       {
-        icon: <DollarSign className="h-8 w-8 text-primary" />,
-        title: t('benefit_costs_title'),
-        description: t('benefit_costs_desc')
-      },
-      {
-        icon: <Users className="h-8 w-8 text-primary" />,
-        title: t('benefit_satisfaction_title'),
-        description: t('benefit_satisfaction_desc')
-      },
-      {
-        icon: <TrendingUp className="h-8 w-8 text-primary" />,
-        title: 'Scalable Growth',
-        description: 'Our per-technician pricing and robust features support your business as it grows, from a few vans to a large fleet.'
-      }
-  ];
-
-   const scenarios = [
-    {
-      icon: <Heart className="h-8 w-8 text-red-500" />,
-      problem: t('scenario_sick_technician_problem'),
-      solution: t('scenario_sick_technician_solution'),
-    },
-    {
-      icon: <AlertTriangle className="h-8 w-8 text-amber-500" />,
-      problem: t('scenario_emergency_job_problem'),
-      solution: t('scenario_emergency_job_solution'),
-    },
-    {
-      icon: <Workflow className="h-8 w-8 text-blue-500" />,
-      problem: t('scenario_cancellation_problem'),
-      solution: t('scenario_cancellation_solution'),
-    },
-  ];
-
-  const howItWorksSteps = [
-    {
-      icon: <Briefcase className="h-8 w-8 text-primary" />,
-      title: t('how_it_works_1_title'),
-      description: t('how_it_works_1_desc'),
-    },
-    {
-      icon: <UserCheck className="h-8 w-8 text-primary" />,
-      title: t('how_it_works_2_title'),
-      description: t('how_it_works_2_desc'),
-    },
-    {
-      icon: <Star className="h-8 w-8 text-primary" />,
-      title: t('how_it_works_3_title'),
-      description: t('how_it_works_3_desc'),
-    },
-  ];
-  
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
     e.preventDefault();
     const href = e.currentTarget.href;
@@ -130,127 +37,161 @@ export default function MarketingPage() {
     });
   };
 
-  const otherGuysPoints = [
-    { title: 'Bloated & Overwhelming:', description: 'Dozens of features you\'ll never use, buried in confusing menus.' },
-    { title: 'Punishing Pricing:', description: 'Complicated tiers and long-term contracts designed to lock you in.' },
-    { title: 'Poor Technician Adoption:', description: 'Clunky mobile apps that your team hates using, leading to inconsistent data.' }
+  const handleCalculateRoi = () => {
+    // Simplified ROI Calculation:
+    // (Number of Techs * Jobs/Day * Avg Job Value * Working Days * Profit Uplift) - Software Cost
+    const monthlyRevenue = numTechs * jobsPerDay * avgJobValue * 21; // ~21 working days/month
+    const profitGain = monthlyRevenue * 0.05; // Assume a 5% margin improvement
+    const softwareCost = numTechs * 69;
+    const netGain = profitGain - softwareCost;
+    setRoi(netGain);
+  };
+  
+  const navLinks = [
+    { href: "#solution", text: "Solution" },
+    { href: "#how-it-works", text: "Why MarginMax?"},
+    { href: "#pricing", text: "Pricing" },
+    { href: "#features", text: "Features" }
+  ];
+  
+  const featureList = [
+    {
+      icon: Smartphone,
+      title: "Technician Command Center",
+      description: "Mobile-first access to schedules, troubleshooting, upsells, and documentation.",
+      example: "A tech finishes a job and, with a few taps, uploads before/after photos, captures a signature, and logs a successful upsell—all before leaving the driveway."
+    },
+    {
+      icon: Shuffle,
+      title: "Dynamic Route Optimization",
+      description: "Recalculates optimal routes in one click to adapt to last-minute changes or cancellations.",
+      example: "A customer cancels. Instead of a 2-hour gap, you click 'Optimize' and the AI intelligently pulls a nearby, lower-priority job forward, saving the day's productivity."
+    },
+    {
+      icon: AlertTriangle,
+      title: "Proactive Risk Alerts",
+      description: "The AI monitors active jobs and traffic, flagging potential delays before they happen.",
+      example: "You get an alert: 'Alice is at risk of being 30 mins late to her next job.' You can then notify the customer or reassign the job with one click."
+    },
+    {
+      icon: CalendarDays,
+      title: "Drag-and-Drop Scheduling",
+      description: "A visual timeline of your entire team's day. Drag jobs between technicians or time slots to manually fine-tune the schedule.",
+      example: "You see Bob has a gap in his afternoon. You drag an unassigned job from the list and drop it right into his timeline. The job is instantly assigned and scheduled."
+    },
+    {
+      icon: Repeat,
+      title: "Recurring Job Management",
+      description: "Set up service contracts for recurring maintenance, and let the AI automatically generate and suggest appointments when they're due.",
+      example: "It's the start of the month. The system automatically creates 15 jobs for your quarterly service contracts and lists them as 'due for scheduling'."
+    },
+    {
+      icon: History,
+      title: "Comprehensive Job History",
+      description: "Access a full, searchable history of every job for any customer, including technician notes and photos.",
+      example: "A customer calls about a recurring issue. You instantly pull up the last three service calls, see the notes and photos from each visit, and dispatch a senior tech with full context."
+    }
   ];
 
-  const fleetSyncPoints = [
-    { title: 'Simple & Powerful:', description: 'All the essential tools you need, with one-click AI to handle the complexity for you.' },
-    { title: 'Fair & Scalable Pricing:', description: 'Simple per-technician pricing that grows with you. No hidden fees. No long-term commitments.' },
-    { title: 'Loved by Technicians:', description: 'An intuitive mobile app designed for speed and simplicity, ensuring your whole team is on board.' }
+  const industryNiches = [
+    { icon: Wrench, title: "HVAC", description: "The AI knows to prioritize high-margin emergency calls and factor in upsell potential for maintenance contracts." },
+    { icon: Zap, title: "Electrical", description: "Intelligently balances quick, profitable fixes with longer, high-value installation projects." },
+    { icon: Droplets, title: "Plumbing", description: "Reduces costly return visits by ensuring the right tech with the right skills is sent the first time." },
+    { icon: Bug, title: "Pest Control", description: "Maximizes route density and efficiency, turning recurring contracts into a profit machine." },
+    { icon: Computer, title: "IT Services", description: "Prioritizes high-value SLA clients while expertly weaving in profitable one-off service calls." },
+    { icon: Building2, title: "Property Mgmt", description: "Effortlessly juggles maintenance schedules across dozens of properties and tenants, optimizing every dispatch." },
   ];
 
   const testimonials = [
     {
-        quote: "This is exactly what I need with my morning coffee. The Job List and the 'Fleety Batch Assign' button could genuinely save me an hour every morning. The AI suggestions for new jobs remove the guesswork. It feels like it was designed by someone who actually understands my job.",
-        author: "Alex Carter",
-        role: "Dispatcher, Summit Mechanical",
-        avatar: "https://placehold.co/40x40.png"
+        quote: "We get 1–2 extra jobs done per day with the same team. MarginMax doesn’t just save us time—it makes us money.",
+        author: "Mark Hayes",
+        role: "Owner, Apex Climate Solutions",
+        avatarHint: "man construction"
     },
     {
-        quote: "Finally, an app that doesn't get in my way. I see my jobs for the day, in order. Tapping to update my status is simple, and seeing customer-uploaded photos before I arrive is a massive help. The digital signature capture beats paperwork any day.",
-        author: "Maria Garcia",
-        role: "Lead Technician, Reliance Electrical",
-        avatar: "https://placehold.co/40x40.png"
+        quote: "The AI upsell prompts brought in $20,000 extra last quarter—without new sales training.",
+        author: "Sarah Rodriguez",
+        role: "Ops Manager, Reliant Electrical",
+        avatarHint: "woman business"
+    },
+    {
+        quote: "Within weeks, we saw higher profit per job and fewer callbacks. The app pays for itself.",
+        author: "David Chen",
+        role: "Lead Tech, Blue Ribbon Plumbing",
+        avatarHint: "man worker"
     }
   ];
-
 
   return (
     <div className="flex min-h-screen flex-col bg-background font-body">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground shadow-md">
+      <header className="sticky top-0 z-50 w-full border-b bg-background">
         <div className="container flex h-14 items-center justify-between">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Logo />
           </Link>
           <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
-             <Link href="#why" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
-                Why FleetSync?
-              </Link>
-              <Link href="#features" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
-                {t('nav_features')}
-              </Link>
-             <Link href="#pricing" onClick={handleScroll} className="text-primary-foreground/80 transition-colors hover:text-primary-foreground">
-                {t('pricing_title')}
-              </Link>
+             {navLinks.map(link => (
+                 <Link key={link.href} href={link.href} onClick={handleScroll} className="text-foreground/60 transition-colors hover:text-foreground/80">
+                    {link.text}
+                 </Link>
+             ))}
           </nav>
           
           <div className="flex items-center justify-end space-x-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-foreground/80 hover:bg-muted/50 h-9 w-9">
+                  <Globe className="h-4 w-4" />
+                   <span className="sr-only">Change Language</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('es')}>Español</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="hidden md:flex items-center space-x-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground px-2 font-semibold mr-2">
-                        <Globe className="h-4 w-4 mr-1.5" />
-                        {language.toUpperCase()}
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button asChild variant="ghost" className="text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+              <Button asChild variant="ghost">
                   <Link href="/login">{t('login_button')}</Link>
               </Button>
-              <Button asChild variant="outline" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+              <Button asChild variant="default">
                   <Link href="/signup">{t('start_free_trial')}</Link>
               </Button>
             </div>
             {/* Mobile Menu */}
             <Sheet>
                 <SheetTrigger asChild>
-                    <Button variant="ghost" className="md:hidden text-primary-foreground hover:bg-primary/80 hover:text-primary-foreground">
+                    <Button variant="ghost" className="md:hidden">
                         <Menu className="h-6 w-6" />
                         <span className="sr-only">Open menu</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-                    <SheetHeader>
-                      <SheetTitle className="sr-only">Main Menu</SheetTitle>
-                      <SheetDescription className="sr-only">Navigation links for the marketing page.</SheetDescription>
+                    <SheetHeader className="sr-only">
+                      <SheetTitle>Main Menu</SheetTitle>
+                      <SheetDescription>Navigation links for the main site.</SheetDescription>
                     </SheetHeader>
                     <nav className="flex flex-col gap-4 mt-8">
-                       <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="w-full justify-center text-lg">
-                                    <Globe className="h-4 w-4 mr-2"/>
-                                    {language === 'en' ? 'English' : language === 'de' ? 'Deutsch' : 'Français'}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="center" className="w-[280px] sm:w-[380px]">
-                                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                       <SheetClose asChild>
-                         <Link href="#why" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
-                           Why FleetSync?
-                         </Link>
-                       </SheetClose>
-                       <SheetClose asChild>
-                         <Link href="#features" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
-                            {t('nav_features')}
-                         </Link>
-                       </SheetClose>
-                       <SheetClose asChild>
-                          <Link href="#pricing" onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
-                            {t('pricing_title')}
-                          </Link>
-                       </SheetClose>
+                       {navLinks.map(link => (
+                          <SheetClose asChild key={link.href}>
+                             <Link href={link.href} onClick={handleScroll} className="block px-2 py-1 text-lg font-medium text-foreground/80 hover:text-foreground">
+                               {link.text}
+                             </Link>
+                          </SheetClose>
+                       ))}
                        <div className="mt-8 space-y-4">
                             <SheetClose asChild>
                                <Link href="/login" className="w-full">
                                     <Button variant="outline" className="w-full">{t('login_button')}</Button>
                                 </Link>
-                            </SheetClose>
+                             </SheetClose>
                              <SheetClose asChild>
                                 <Link href="/signup" className="w-full">
-                                    <Button className="w-full">{t('start_free_trial')}</Button>
+                                    <Button className="w-full" variant="default">{t('start_free_trial')}</Button>
                                 </Link>
                              </SheetClose>
                        </div>
@@ -262,374 +203,239 @@ export default function MarketingPage() {
       </header>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-primary/5 py-20 sm:py-24 lg:py-32">
+        {/* 1. Hero Section */}
+        <section className="bg-slate-900 text-white py-20 sm:py-24 lg:py-32">
           <div className="container px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl font-headline">
-              Stop Drowning in Dispatch. Start Growing Your Business.
+              {t('homepage_title')}
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-             FleetSync is the straightforward, affordable dispatch software for field service businesses that value efficiency and cost savings. Spend less time scheduling and more time winning.
+            <p className="mx-auto mt-6 max-w-3xl text-lg text-slate-300">
+              {t('homepage_subtitle')}
             </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <Button asChild size="lg">
-                <Link href="/signup">{t('get_started_free')}</Link>
-              </Button>
+            <div className="mt-8 flex flex-col items-center justify-center gap-2">
+                <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                    <Button asChild size="lg" className="w-full">
+                        <Link href="/signup">{t('get_started_free')}</Link>
+                    </Button>
+                </div>
+                 <p className="text-sm text-slate-400 mt-2">{t('no_setup_fee')}</p>
             </div>
-            <p className="mt-4 text-xs text-muted-foreground">{t('no_setup_fee')}</p>
           </div>
         </section>
         
-         {/* Screenshot placeholder */}
-        <section className="container mt-8 md:-mt-16 lg:-mt-24">
-            <div className="relative mx-auto flex flex-col items-center">
-                {/* Laptop Mockup */}
-                <div className="relative w-full max-w-3xl lg:max-w-4xl z-10">
-                    {/* Laptop screen */}
-                    <div className="relative aspect-[16/10] bg-gray-800 rounded-t-xl border-x-4 border-t-4 border-gray-900 pt-8 shadow-lg">
-                        {/* Top bar with camera */}
-                        <div className="absolute top-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
-                        </div>
-                        <Image 
-                            src="/dashboard-screenshot.png"
-                            width={1200}
-                            height={750}
-                            alt="FleetSync Dashboard Screenshot"
-                            className="w-full h-full object-cover object-top rounded-t-md"
-                            priority
-                        />
-                    </div>
-                    {/* Laptop base */}
-                    <div className="relative h-4 w-full bg-gray-900 rounded-b-xl shadow-lg"></div>
-                     <div className="relative mx-auto h-2 w-[55%] bg-gray-800/50 rounded-b-md"></div>
-                     <div className="relative mx-auto h-1 w-[45%] bg-gray-700/50 rounded-b-md"></div>
-                </div>
-
-                {/* iPhone Mockup */}
-                 <div className="absolute w-36 sm:w-44 -bottom-16 sm:bottom-0 right-0 mr-0 md:-bottom-8 md:mr-[-20px] lg:mr-[-40px] z-20">
-                    <div className="relative mx-auto border-gray-800 dark:border-gray-800 bg-gray-800 border-[8px] rounded-[1.8rem] h-auto w-full shadow-xl">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-3 bg-gray-800 rounded-b-lg z-10"></div>
-                        <div className="w-full h-full bg-white dark:bg-black rounded-[1.4rem] overflow-hidden">
-                           <Image
-                                src="/dashboard-screenshot-mobile.png"
-                                width={375}
-                                height={812}
-                                alt="FleetSync Technician App Screenshot"
-                                className="w-full h-auto"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {/* Industries Section */}
-        <section className="bg-secondary py-12 mt-16 sm:mt-24">
-            <div className="container text-center">
-                <h2 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">{t('developed_for_you')}</h2>
-                <div className="mt-6 flex flex-wrap justify-center items-center gap-4 text-lg font-medium text-foreground">
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">HVAC</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Plumbing</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Electrical</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Landscaping</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pest Control</Badge>
-                    <Badge variant="outline" className="text-base px-4 py-2 border-border shadow-sm bg-background">Pipefitting</Badge>
-                </div>
-            </div>
-        </section>
-        
-        {/* Why Choose Us Section */}
-        <section id="why" className="bg-primary/5 py-16 sm:py-24">
+        {/* How It Works (New Version) */}
+        <section id="how-it-works" className="bg-muted py-16 sm:py-24">
             <div className="container">
                 <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for Your Business, Not for Enterprises</h2>
-                    <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
-                        Tired of field service software that's too complex, too expensive, and built for mega-corporations? We are too. Here's how we're different.
-                    </p>
+                    <Badge variant="secondary">Why Choose MarginMax?</Badge>
+                    <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl font-headline">The AI That Makes Companies Richer — Not Just Faster</h2>
                 </div>
-                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
-                    <Card className="bg-background/80">
-                        <CardHeader>
-                            <CardTitle className="font-headline text-destructive flex items-center gap-2"><Target className="h-5 w-5"/>The Other Guys</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {otherGuysPoints.map((point, index) => (
-                                <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
-                                    <X className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                                    <div>
-                                        <strong className="font-semibold text-foreground">{point.title}</strong>
-                                        <p className="text-muted-foreground">{point.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                    <Card className="bg-background/80 border-primary ring-2 ring-primary/50">
-                        <CardHeader>
-                           <CardTitle className="font-headline text-primary flex items-center gap-2">
-                             <Logo />
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                             {fleetSyncPoints.map((point, index) => (
-                                <div key={index} className="grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-1">
-                                    <Check className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                                    <div>
-                                        <strong className="font-semibold text-foreground">{point.title}</strong>
-                                        <p className="text-muted-foreground">{point.description}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
-        </section>
-
-        {/* Scenarios Section */}
-        <section className="container py-16 sm:py-24">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('from_nightmare_to_excellence')}</h2>
-              <p className="mt-6 text-lg text-muted-foreground">
-                {t('from_nightmare_to_excellence_desc')}
-              </p>
-            </div>
-            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-              {scenarios.map((scenario, index) => (
-                <Card key={index} className="flex flex-col text-center bg-secondary/50">
-                  <CardHeader>
-                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-background border shadow-sm">
-                        {scenario.icon}
-                      </div>
-                      <CardTitle className="font-headline pt-2">{scenario.problem}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                      <p className="text-muted-foreground">{scenario.solution}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="bg-muted py-16 sm:py-24">
-          <div className="container">
-            <div className="mx-auto max-w-2xl text-center">
-              <Badge variant="default">{t('our_solution')}</Badge>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl font-headline">A Smarter Toolkit for a More Efficient Business</h2>
-              <p className="mt-6 text-lg text-muted-foreground">
-                We provide a focused set of powerful, easy-to-use features that solve your biggest operational headaches and deliver an immediate impact.
-              </p>
-            </div>
-            <div className="mt-12 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-4">
-              {features.map((feature) => (
-                 <div key={feature.title} className="text-center p-4 rounded-lg transition-colors hover:bg-background/50">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                      {feature.icon}
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {/* Profit-First Dispatching */}
+                    <div className="space-y-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <Brain className="h-6 w-6"/>
+                        </div>
+                        <h3 className="text-xl font-bold">1. Profit-First Dispatching</h3>
+                        <p className="text-muted-foreground">Other apps cut drive time. MarginMax maximizes net margin (revenue – cost – travel).</p>
                     </div>
-                    <h3 className="mt-4 font-headline text-lg font-semibold">{feature.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
+                    {/* AI-Driven Upsells */}
+                    <div className="space-y-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <Lightbulb className="h-6 w-6"/>
+                        </div>
+                        <h3 className="text-xl font-bold">2. AI-Driven Upsells</h3>
+                        <p className="text-muted-foreground">Techs don’t need sales training. The app surfaces the right upsell, at the right moment.</p>
+                    </div>
+                    {/* Visible Margin Impact */}
+                    <div className="space-y-4">
+                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                            <TrendingUp className="h-6 w-6"/>
+                        </div>
+                        <h3 className="text-xl font-bold">3. Real-Time Margin Visibility</h3>
+                        <p className="text-muted-foreground">Other dashboards show revenue. Ours shows profit impact you can trust.</p>
+                    </div>
                 </div>
-              ))}
-            </div>
-             <div className="mt-12 text-center">
-                 <h3 className="text-lg font-semibold flex items-center justify-center gap-2">
-                    <Bot className="h-5 w-5 text-accent"/>
-                    {t('fleety_title')}
-                </h3>
-                <p className="mt-2 text-muted-foreground max-w-2xl mx-auto">{t('fleety_desc')}</p>
-             </div>
-          </div>
-        </section>
-
-        {/* How it Works Section */}
-        <section className="py-16 sm:py-24">
-          <div className="container text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('how_it_works_title')}</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">{t('how_it_works_subtitle')}</p>
-            <div className="relative mt-12 grid grid-cols-1 items-start gap-12 md:grid-cols-3">
-              <div className="absolute top-8 left-1/4 hidden h-0.5 w-1/2 -translate-y-1/2 border-t-2 border-dashed border-border md:block" />
-              {howItWorksSteps.map((step, index) => (
-                <div key={index} className="relative flex flex-col items-center text-center">
-                   <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-background text-lg font-bold text-primary shadow-lg z-10">{index + 1}</div>
-                  <h3 className="mt-4 text-xl font-semibold font-headline">{step.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{step.description}</p>
+                 <div className="mt-12 text-center">
+                    <p className="text-xl font-semibold">💡 Customers typically see +2–5% higher net margins without hiring more staff.</p>
                 </div>
-              ))}
             </div>
-          </div>
         </section>
         
-        {/* Vertical AI Section */}
-        <section className="bg-primary/5 py-16 sm:py-24">
+         {/* Built for Your Industry */}
+        <section className="py-16 sm:py-24">
             <div className="container">
-                <div className="mx-auto max-w-3xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the Chaos of Field Service</h2>
+                <div className="mx-auto max-w-2xl text-center mb-12">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built For Your Industry</h2>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Generic software fails because it doesn’t understand your reality. Our AI is different because it's trained specifically on the complex, unpredictable problems of your industry.
+                        Perfect for small to medium-sized service businesses with 3-50 technicians who value simplicity and power. MarginMax adapts to the unique financial drivers of your trade, from high-margin emergency calls to high-volume contract work.
                     </p>
                 </div>
-                <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
-                            <Workflow className="h-7 w-7 text-primary" />
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold">Understands Your Chaos</h3>
-                        <p className="mt-2 text-muted-foreground">A technician stuck in traffic, a customer emergency, a last-minute cancellation—these aren't exceptions, they're your Tuesday. Our system thrives on it.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
-                            <Bot className="h-7 w-7 text-primary" />
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold">AI That Speaks Your Language</h3>
-                        <p className="mt-2 text-muted-foreground">We use a "Vertical AI" approach. This means our AI is fluent in the language of your business—technician skills, job priorities, and real-world logistics.</p>
-                    </div>
-                    <div className="flex flex-col items-center text-center">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-background border shadow-sm">
-                            <Target className="h-7 w-7 text-primary" />
-                        </div>
-                        <h3 className="mt-4 text-lg font-semibold">Turns Data into Dollars</h3>
-                        <p className="mt-2 text-muted-foreground">We turn your operational data into a competitive advantage, making smarter decisions that directly lead to fuel savings, more completed jobs, and happier customers.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-16 sm:py-24">
-            <div className="container">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Built for the People in the Field and in the Office</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">Don't just take our word for it. Here's how FleetSync is changing the game for dispatchers and technicians.</p>
-                </div>
-                <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-2">
-                    {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="flex flex-col text-center p-8 bg-background">
-                        <CardContent className="flex-grow p-0">
-                            <p className="relative text-xl font-medium leading-8 text-foreground">
-                                <svg width="40" height="32" viewBox="0 0 40 32" fill="currentColor" className="absolute left-0 top-0 -translate-x-3 -translate-y-2 text-primary/10" aria-hidden="true">
-                                    <path d="M12.8021 31.1328L0 18.3307L6.40104 11.9297L12.8021 18.3307L16.0026 15.1302L9.60156 8.72917L16.0026 2.32812L22.4036 8.72917L19.2031 11.9297L22.4036 15.1302L28.8047 8.72917L35.2057 2.32812L40 7.12865L27.1979 19.9307L20.7969 13.5297L12.8021 21.5255L16.0026 24.726L20.7969 19.9307L27.1979 26.3318L22.4036 31.1328L16.0026 24.726L12.8021 31.1328Z"/>
-                                </svg>
-                                {testimonial.quote}
-                            </p>
-                        </CardContent>
-                        <footer className="mt-8">
-                            <div className="flex items-center justify-center gap-x-3">
-                                <Avatar>
-                                    <AvatarImage src={testimonial.avatar} alt={testimonial.author} data-ai-hint="person"/>
-                                    <AvatarFallback>{testimonial.author.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <div className="text-base font-semibold">{testimonial.author}</div>
-                                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {industryNiches.map((niche) => (
+                        <Card key={niche.title} className="text-center">
+                             <CardHeader className="items-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20">
+                                    <niche.icon className="h-6 w-6"/>
                                 </div>
-                            </div>
-                        </footer>
+                                <CardTitle>{niche.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-muted-foreground text-sm">{niche.description}</p>
+                            </CardContent>
                         </Card>
                     ))}
                 </div>
             </div>
         </section>
 
-        {/* Pricing Section */}
-        <section id="pricing" className="bg-muted py-20 sm:py-24 lg:py-32">
-          <div className="container px-4">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div className="text-center md:text-left">
-                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">{t('pricing_roi_title')}</h2>
-                    <p className="mt-6 text-lg text-muted-foreground">
-                        Stop guessing and start growing. Our simple, transparent pricing is designed to deliver a clear return on investment by boosting efficiency, not your overheads.
-                    </p>
-                     <div className="mt-8 space-y-4">
-                        <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
-                                <TrendingUp className="h-6 w-6"/>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{t('pricing_benefit_1_title')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_1_desc')}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
-                                <DollarSign className="h-6 w-6"/>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{t('pricing_benefit_2_title')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_2_desc')}</p>
-                            </div>
-                        </div>
-                         <div className="flex items-start gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 mt-1">
-                                <Users className="h-6 w-6"/>
-                            </div>
-                            <div>
-                                <h3 className="font-semibold">{t('pricing_benefit_3_title')}</h3>
-                                <p className="text-sm text-muted-foreground">{t('pricing_benefit_3_desc')}</p>
-                            </div>
-                        </div>
-                    </div>
+        {/* Testimonials Section */}
+        <section className="bg-muted py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">Owner ROI, Proven.</h2>
                 </div>
-                 <div className="flex justify-center">
-                    <Card className="max-w-md w-full border-primary ring-2 ring-primary shadow-xl">
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {testimonials.map((testimonial, index) => (
+                        <Card key={index} className="flex flex-col bg-background">
+                            <CardContent className="pt-6 flex-grow">
+                                <p className="text-muted-foreground">"{testimonial.quote}"</p>
+                            </CardContent>
+                            <CardHeader className="flex-row items-center gap-4">
+                                 <Avatar className="h-12 w-12">
+                                     <AvatarImage src={`https://placehold.co/100x100/${['A8D8EA', 'F4B393', 'B2E0B6'][index]}/4A4A4A?text=${testimonial.author.split(' ').map(n=>n[0]).join('')}`} alt={testimonial.author} data-ai-hint={testimonial.avatarHint} />
+                                    <AvatarFallback>{testimonial.author.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle className="text-base">{testimonial.author}</CardTitle>
+                                    <CardDescription>{testimonial.role}</CardDescription>
+                                </div>
+                            </CardHeader>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        </section>
+
+        {/* ROI Calculator & Pricing Section */}
+        <section id="pricing" className="bg-background py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">See Your Profit Gap.</h2>
+                    <p className="mt-4 text-lg text-muted-foreground">
+                       Businesses using MarginMax increase net margins by an average of 5%.
+                       Use our calculator to see how much you’re leaving on the table.
+                    </p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <Card className="shadow-lg bg-muted">
                         <CardHeader>
-                            <CardTitle className="font-headline text-2xl">{t('pricing_plan_title')}</CardTitle>
-                            <CardDescription>One plan. All features. No compromises.</CardDescription>
+                            <CardTitle>Quick ROI Calculator</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <Label htmlFor="num-techs" className="flex items-center gap-1.5 text-xs"><Users className="h-4 w-4"/># of Technicians</Label>
+                                    <Input id="num-techs" type="number" value={numTechs} onChange={(e) => setNumTechs(parseInt(e.target.value) || 0)} min="1" />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label htmlFor="jobs-day" className="flex items-center gap-1.5 text-xs"><Briefcase className="h-4 w-4"/>Jobs/Day/Tech</Label>
+                                    <Input id="jobs-day" type="number" value={jobsPerDay} onChange={(e) => setJobsPerDay(parseInt(e.target.value) || 0)} min="1" />
+                                </div>
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="avg-job-value" className="flex items-center gap-1.5 text-xs"><DollarSign className="h-4 w-4"/>Avg. Job Value ($)</Label>
+                                <Input id="avg-job-value" type="number" value={avgJobValue} onChange={(e) => setAvgJobValue(parseInt(e.target.value) || 0)} min="50" step="50" />
+                            </div>
+                            <Button onClick={handleCalculateRoi} className="w-full">→ Calculate My Profit</Button>
+                            {roi !== null && (
+                                <div className="text-center pt-4 border-t">
+                                    <p className="text-sm text-muted-foreground">Estimated Additional Monthly Profit with MarginMax:</p>
+                                    <p className="text-4xl font-bold text-green-600 mt-1">
+                                        {roi.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </p>
+                                </div>
+                            )}
+                            <p className="text-xs text-muted-foreground text-center pt-2">ROI Calculator is for demonstration purposes. Contact us for a personalized analysis.</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="border-primary ring-2 ring-primary/20 shadow-lg">
+                         <CardHeader>
+                            <CardTitle>Pricing Made Simple.</CardTitle>
+                            <CardDescription>One plan. All features. Zero surprises.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="flex items-baseline justify-center gap-2">
-                                <span className="text-5xl font-bold">$69</span>
-                                <span className="text-lg text-muted-foreground">/ {t('pricing_per_tech')} / {t('pricing_per_month')}</span>
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-bold">$69</span>
+                                <span className="text-sm text-muted-foreground">/ per tech / per month</span>
                             </div>
-                            <Button asChild size="lg" className="w-full">
-                                <Link href="/signup">{t('get_started_free')}</Link>
-                            </Button>
-                             <ul className="space-y-2 text-sm text-muted-foreground">
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_all_inclusive')}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_all_ai')}</span>
-                                </li>
-                                 <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_no_hidden_fees')}</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span>{t('pricing_feature_cancel_anytime')}</span>
-                                </li>
+                            <ul className="space-y-2">
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Unlimited Jobs & Customers</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> All AI Features Included</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> No Hidden Fees</li>
+                                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-500" /> Cancel Anytime</li>
                             </ul>
+                             <Button asChild size="lg" className="w-full">
+                                <Link href="/signup">👉 Start Free Trial</Link>
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
             </div>
-          </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="bg-secondary py-16">
-          <div className="container px-4 text-center">
-            <h2 className="text-3xl font-bold tracking-tight font-headline">{t('ready_to_transform')}</h2>
-            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              {t('ready_to_transform_desc')}
-            </p>
-            <div className="mt-8">
-              <Button asChild size="lg">
-                <Link href="/signup">{t('start_free_trial_now')}</Link>
-              </Button>
+        {/* Features Section */}
+        <section id="features" className="bg-muted py-16 sm:py-24">
+            <div className="container">
+                <div className="mx-auto max-w-2xl text-center">
+                    <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">More Than Dispatching. A Complete Profit Platform.</h2>
+                     <p className="mt-4 text-lg text-muted-foreground">MarginMax streamlines your entire operation:</p>
+                </div>
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {featureList.map((feature) => (
+                      <Card key={feature.title} className="flex flex-col bg-background">
+                          <CardHeader className="flex-row items-start gap-4 space-y-0 pb-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary border border-primary/20 shrink-0">
+                                <feature.icon className="h-6 w-6" />
+                              </div>
+                              <CardTitle className="text-lg font-semibold leading-tight">{feature.title}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex-grow">
+                              <p className="text-muted-foreground text-sm">{feature.description}</p>
+                              <p className="text-sm text-foreground/80 mt-2 pt-2 border-t border-dashed">
+                                <strong className="text-primary">Example:</strong> {feature.example}
+                              </p>
+                          </CardContent>
+                      </Card>
+                    ))}
+                </div>
             </div>
-          </div>
         </section>
+        
+        {/* Final CTA */}
+        <section className="bg-slate-900 text-white py-20 sm:py-24">
+            <div className="container text-center">
+                <Rocket className="h-10 w-10 mx-auto mb-4" />
+                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-headline">
+                   Stop Dispatching. Start Operating Like a CEO.
+                </h2>
+                <p className="mt-4 text-lg text-slate-300">MarginMax isn’t just scheduling software.
+                It’s your profit engine.</p>
+                <div className="mt-8 flex flex-col items-center justify-center gap-2">
+                    <Button asChild size="lg" variant="default">
+                        <Link href="/signup">👉 Start Free Trial</Link>
+                    </Button>
+                    <p className="text-sm text-slate-400">Free trials available this month: 2/30.</p>
+                </div>
+            </div>
+        </section>
+
       </main>
 
       {/* Footer */}
-      <footer className="border-t">
+      <footer className="border-t bg-secondary/50">
         <div className="container flex flex-col items-center justify-between gap-4 py-6 md:h-16 md:flex-row md:py-0">
-          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} FleetSync. {t('all_rights_reserved')}</p>
+          <p className="text-sm text-muted-foreground text-center md:text-left">&copy; {new Date().getFullYear()} MarginMax. {t('all_rights_reserved')}</p>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
              <Link href="#" className="hover:text-primary">{t('privacy_policy')}</Link>
              <Link href="#" className="hover:text-primary">{t('terms_of_service')}</Link>

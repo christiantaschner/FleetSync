@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { updateCompanyAction } from '@/actions/company-actions';
 import type { Company } from '@/types';
 import { CompanySettingsSchema } from '@/types';
-import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle, Bot } from 'lucide-react';
+import { Loader2, Save, Building, MapPin, Clock, Leaf, ListChecks, HelpCircle, Bot, Zap, Star } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { SKILLS_BY_SPECIALTY } from '@/lib/skills';
 import { Switch } from '@/components/ui/switch';
@@ -95,6 +95,12 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         companySpecialties: company.settings?.companySpecialties || [],
         otherSpecialty: company.settings?.otherSpecialty || '',
         hideHelpButton: company.settings?.hideHelpButton || false,
+        featureFlags: {
+          profitScoringEnabled: company.settings?.featureFlags?.profitScoringEnabled ?? true,
+          autoDispatchEnabled: company.settings?.featureFlags?.autoDispatchEnabled ?? true,
+          rescheduleCustomerJobsEnabled: company.settings?.featureFlags?.rescheduleCustomerJobsEnabled ?? true,
+          ...company.settings?.featureFlags,
+        },
       },
     },
   });
@@ -162,6 +168,63 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
       
       <Separator />
       
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold flex items-center gap-2"><Zap/> AI &amp; Automation Settings</h3>
+        <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Controller
+            name="settings.featureFlags.profitScoringEnabled"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                id="profitScoringEnabled"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <div>
+              <Label htmlFor="profitScoringEnabled" className="flex items-center gap-2"><Star className="text-amber-500 h-4 w-4"/>Profit-Aware Dispatching</Label>
+              <p className="text-sm text-muted-foreground">When enabled, the AI prioritizes job assignments based on maximizing profitability.</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Controller
+            name="settings.featureFlags.autoDispatchEnabled"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                id="autoDispatchEnabled"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <div>
+              <Label htmlFor="autoDispatchEnabled" className="flex items-center gap-2">Proactive High-Priority Dispatch</Label>
+              <p className="text-sm text-muted-foreground">When a new high-priority job is created, the AI will automatically suggest an assignment.</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2 rounded-md border p-4">
+          <Controller
+            name="settings.featureFlags.rescheduleCustomerJobsEnabled"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                id="rescheduleCustomerJobsEnabled"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <div>
+              <Label htmlFor="rescheduleCustomerJobsEnabled" className="flex items-center gap-2">Proactive Schedule Risk Alerts</Label>
+              <p className="text-sm text-muted-foreground">The AI will actively monitor schedules and alert you to potential delays.</p>
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+
       <div className="space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2"><HelpCircle/> UI &amp; Data Settings</h3>
         <div className="flex items-center space-x-2 rounded-md border p-4">
@@ -276,29 +339,28 @@ const CompanySettingsForm: React.FC<CompanySettingsFormProps> = ({ company }) =>
         <h3 className="text-lg font-semibold flex items-center gap-2"><Clock /> Business Hours</h3>
         <div className="space-y-3">
           {fields.map((field, index) => (
-            <div key={field.id} className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[100px_1fr_1fr_1fr] items-center gap-3 p-3 border rounded-lg bg-secondary/50">
+            <div key={field.id} className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[100px_1fr_1fr_auto] items-center gap-3 p-3 border rounded-lg bg-secondary/50">
               <Label className="font-semibold col-span-4 sm:col-span-1">{field.dayOfWeek}</Label>
-              <div className="flex items-center space-x-2">
-                 <Controller
-                    name={`settings.businessHours.${index}.isOpen`}
-                    control={control}
-                    render={({ field: checkboxField }) => (
-                        <Checkbox
-                            checked={checkboxField.value}
-                            onCheckedChange={checkboxField.onChange}
-                            id={`open-${index}`}
-                        />
-                     )}
-                />
-                <Label htmlFor={`open-${index}`}>Open</Label>
-              </div>
-              <div>
-                <Label htmlFor={`start-time-${index}`} className="text-xs text-muted-foreground">Start Time</Label>
-                <Input type="time" id={`start-time-${index}`} {...register(`settings.businessHours.${index}.startTime`)} />
-              </div>
-              <div>
-                <Label htmlFor={`end-time-${index}`} className="text-xs text-muted-foreground">End Time</Label>
-                <Input type="time" id={`end-time-${index}`} {...register(`settings.businessHours.${index}.endTime`)} />
+              <div className="col-span-4 sm:col-span-3 grid grid-cols-[auto_1fr_1fr] items-center gap-3">
+                <Controller
+                      name={`settings.businessHours.${index}.isOpen`}
+                      control={control}
+                      render={({ field: checkboxField }) => (
+                          <Checkbox
+                              checked={checkboxField.value}
+                              onCheckedChange={checkboxField.onChange}
+                              id={`open-${index}`}
+                          />
+                       )}
+                  />
+                <div className="space-y-1">
+                  <Label htmlFor={`start-time-${index}`} className="text-xs text-muted-foreground">Start Time</Label>
+                  <Input type="time" id={`start-time-${index}`} {...register(`settings.businessHours.${index}.startTime`)} />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`end-time-${index}`} className="text-xs text-muted-foreground">End Time</Label>
+                  <Input type="time" id={`end-time-${index}`} {...register(`settings.businessHours.${index}.endTime`)} />
+                </div>
               </div>
             </div>
           ))}

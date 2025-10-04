@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
-import { allocateJobAction, suggestScheduleTimeAction } from "@/actions/ai-actions";
+import { allocateJobAction, suggestScheduleTimeAction } from '@/actions/ai-actions';
 import { reassignJobAction } from '@/actions/fleet-actions';
 import type { AllocateJobOutput, SuggestScheduleTimeOutput, Technician, Job, AITechnician, JobStatus } from '@/types';
 import { Loader2, Bot, UserCheck, AlertTriangle, Phone, RefreshCw } from 'lucide-react';
@@ -20,7 +20,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Pending', 'Assigned', 'En Route', 'In Progress'];
+const UNCOMPLETED_STATUSES_LIST: JobStatus[] = ['Unassigned', 'Assigned', 'En Route', 'In Progress', 'Draft'];
 
 interface ReassignJobDialogProps {
     isOpen: boolean;
@@ -69,20 +69,22 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                 technicianId: t.id,
                 technicianName: t.name,
                 isAvailable: t.isAvailable,
-                skills: t.skills.map(s => s.name),
+                skills: t.skills,
                 liveLocation: t.location,
                 homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
                 currentJobs: allJobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location, startedAt: j.inProgressAt, estimatedDurationMinutes: j.estimatedDurationMinutes || 60 })),
+                hourlyCost: t.hourlyCost,
             }));
 
             const result = await allocateJobAction({
                 appId,
-                jobDescription: jobToReassign.description,
+                jobDescription: jobToReassign.description || '',
                 jobPriority: jobToReassign.priority,
                 requiredSkills: jobToReassign.requiredSkills || [],
                 scheduledTime: jobToReassign.scheduledTime,
                 technicianAvailability: aiTechnicians,
                 currentTime: new Date().toISOString(),
+                featureFlags: company?.settings?.featureFlags
             });
 
             if (result.data?.suggestedTechnicianId) {
@@ -114,9 +116,9 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                     {
                         id: originalTechnician.id,
                         name: originalTechnician.name,
-                        skills: originalTechnician.skills.map(s => s.name),
+                        skills: originalTechnician.skills.map(s => s),
                         jobs: allJobs
-                            .filter(j => j.assignedTechnicianId === originalTechnician.id && j.id !== jobToReassign.id)
+                            .filter(j => j.assignedTechnicianId === originalTechnician.id && j.id !== jobToReassign.id && j.scheduledTime)
                             .map(j => ({ id: j.id, scheduledTime: j.scheduledTime! })),
                     },
                 ],
@@ -212,7 +214,7 @@ const ReassignJobDialog: React.FC<ReassignJobDialogProps> = ({
                 <DialogHeader>
                     <DialogTitle className="font-headline">AI Schedule Resolution</DialogTitle>
                     <DialogDescription>
-                        For job "<strong>{jobToReassign.title}</strong>", Fleety suggests the following action to avoid a potential delay.
+                        For job "<strong>{jobToReassign.title}</strong>", the AI suggests the following action to avoid a potential delay.
                     </DialogDescription>
                 </DialogHeader>
                  

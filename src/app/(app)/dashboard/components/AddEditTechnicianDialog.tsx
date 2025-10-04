@@ -27,8 +27,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from "@/hooks/use-toast";
-import type { Technician, BusinessDay, TechnicianSkill } from '@/types';
-import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare } from 'lucide-react';
+import type { Technician, BusinessDay, Part } from '@/types';
+import { Loader2, Save, User, Mail, Phone, ListChecks, MapPin, Trash2, Clock, ShieldCheck, Camera, Paperclip, CheckSquare, Package, DollarSign, Hourglass, Percent } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import AddressAutocompleteInput from './AddressAutocompleteInput';
@@ -40,12 +40,14 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import Link from 'next/link';
+import { MultiSelectFilter, type MultiSelectOption } from './MultiSelectFilter';
 
 interface AddEditTechnicianDialogProps {
   isOpen: boolean;
   onClose: () => void;
   technician?: Technician | null;
   allSkills: string[];
+  allParts: Part[];
 }
 
 const defaultBusinessHours: BusinessDay[] = [
@@ -58,7 +60,7 @@ const defaultBusinessHours: BusinessDay[] = [
     { dayOfWeek: "Sunday", isOpen: false, startTime: "09:00", endTime: "12:00" },
 ];
 
-const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills }) => {
+const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpen, onClose, technician, allSkills, allParts }) => {
   const { userProfile, company } = useAuth();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -82,6 +84,11 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             ? technician.workingHours 
             : defaultBusinessHours,
       avatarUrl: technician?.avatarUrl || null,
+      hourlyCost: technician?.hourlyCost || 50,
+      commissionRate: technician?.commissionRate || 0,
+      bonus: technician?.bonus || 0,
+      maxDailyHours: technician?.maxDailyHours || 8,
+      vanInventory: technician?.vanInventory || [],
       isSubmitting: false,
     }
   });
@@ -92,6 +99,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   });
   
   const avatarUrl = watch('avatarUrl');
+  const watchedAvatarUrl = watch('avatarUrl') || `https://picsum.photos/seed/${technician?.id}/100/100`;
 
   const resetForm = useCallback(() => {
     reset({
@@ -108,6 +116,11 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
             ? technician.workingHours 
             : company?.settings?.businessHours || defaultBusinessHours,
       avatarUrl: technician?.avatarUrl || null,
+      hourlyCost: technician?.hourlyCost || 50,
+      commissionRate: technician?.commissionRate || 0,
+      bonus: technician?.bonus || 0,
+      maxDailyHours: technician?.maxDailyHours || 8,
+      vanInventory: technician?.vanInventory || [],
       isSubmitting: false,
     });
   }, [technician, company, reset]);
@@ -185,7 +198,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       name: data.name,
       email: data.email || "", 
       phone: data.phone || "",
-      skills: data.skills.map((s: string | TechnicianSkill) => typeof s === 'string' ? { name: s } : s),
+      skills: data.skills || [],
       location: {
         latitude: data.latitude ?? 0, 
         longitude: data.longitude ?? 0,
@@ -196,6 +209,11 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
       workingHours: data.workingHours,
       avatarUrl: data.avatarUrl,
       appId: appId,
+      hourlyCost: data.hourlyCost,
+      commissionRate: data.commissionRate,
+      bonus: data.bonus,
+      maxDailyHours: data.maxDailyHours,
+      vanInventory: data.vanInventory,
     };
 
     try {
@@ -212,6 +230,8 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
   };
   
   const isSubmitting = watch('isSubmitting');
+  const skillOptions: MultiSelectOption[] = allSkills.map(s => ({ value: s, label: s }));
+  const partOptions: MultiSelectOption[] = allParts.map(p => ({ value: p.name, label: p.name }));
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -227,7 +247,7 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                 <div className="flex items-center gap-4">
                   <div className="relative group">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={avatarUrl ?? undefined} />
+                      <AvatarImage src={watchedAvatarUrl} />
                       <AvatarFallback className="text-2xl">{technician?.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
                     </Avatar>
                     <Button
@@ -269,47 +289,34 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                 
                  <div>
                     <Label><ListChecks className="inline h-3.5 w-3.5 mr-1" />Skills &amp; Certificates</Label>
-                    <ScrollArea className="h-32 rounded-md border p-3 mt-1">
-                      <div className="space-y-3">
-                        {allSkills.map(skill => (
-                          <Controller
-                            key={skill}
-                            name="skills"
-                            control={control}
-                            render={({ field }) => {
-                               const currentSkill = field.value?.find(s => s.name === skill);
-                               return (
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`skill-${skill}`}
-                                        checked={!!currentSkill}
-                                        onCheckedChange={(checked) => {
-                                            const newSkills = checked
-                                                ? [...(field.value || []), { name: skill }]
-                                                : (field.value || []).filter((s) => s.name !== skill);
-                                            field.onChange(newSkills);
-                                        }}
-                                    />
-                                    <Label htmlFor={`skill-${skill}`} className="font-normal cursor-pointer">{skill}</Label>
-                                  </div>
-                                  {currentSkill?.certificateUrl ? (
-                                     <Link href={currentSkill.certificateUrl} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
-                                        <Paperclip className="h-3 w-3" /> View Cert.
-                                    </Link>
-                                  ) : (
-                                    currentSkill && <span className="text-xs text-muted-foreground italic">No cert.</span>
-                                  )}
-                                </div>
-                               )
-                            }}
-                          />
-                        ))}
-                        {allSkills.length === 0 && (
-                          <p className="text-sm text-muted-foreground text-center py-4">No skills defined.</p>
+                    <Controller
+                        name="skills"
+                        control={control}
+                        render={({ field }) => (
+                            <MultiSelectFilter
+                                options={skillOptions}
+                                selected={field.value || []}
+                                onChange={field.onChange}
+                                placeholder="Select technician's skills..."
+                            />
                         )}
-                      </div>
-                    </ScrollArea>
+                    />
+                </div>
+                
+                 <div>
+                    <Label><Package className="inline h-3.5 w-3.5 mr-1" />Van Inventory</Label>
+                     <Controller
+                        name="vanInventory"
+                        control={control}
+                        render={({ field }) => (
+                            <MultiSelectFilter
+                                options={partOptions}
+                                selected={field.value || []}
+                                onChange={field.onChange}
+                                placeholder="Select parts in van..."
+                            />
+                        )}
+                    />
                 </div>
                 
                 <div>
@@ -370,6 +377,29 @@ const AddEditTechnicianDialog: React.FC<AddEditTechnicianDialogProps> = ({ isOpe
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <Separator />
+                 <div className="space-y-4">
+                    <h3 className="text-lg font-semibold flex items-center gap-2"><DollarSign /> Financial & Operational</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="lg:col-span-1">
+                            <Label htmlFor="hourlyCost"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Hourly Cost ($)</Label>
+                            <Input id="hourlyCost" type="number" {...register('hourlyCost', { valueAsNumber: true })} placeholder="e.g., 50" />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <Label htmlFor="commissionRate"><Percent className="inline h-3.5 w-3.5 mr-1" />Commission (%)</Label>
+                            <Input id="commissionRate" type="number" {...register('commissionRate', { valueAsNumber: true })} placeholder="e.g., 10" />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <Label htmlFor="bonus"><DollarSign className="inline h-3.5 w-3.5 mr-1" />Flat Bonus ($)</Label>
+                            <Input id="bonus" type="number" {...register('bonus', { valueAsNumber: true })} placeholder="e.g., 25" />
+                        </div>
+                        <div className="lg:col-span-1">
+                            <Label htmlFor="maxDailyHours"><Hourglass className="inline h-3.5 w-3.5 mr-1" />Max Daily Hours</Label>
+                            <Input id="maxDailyHours" type="number" {...register('maxDailyHours', { valueAsNumber: true })} placeholder="e.g., 8" />
+                        </div>
+                    </div>
                 </div>
             </form>
         </ScrollArea>

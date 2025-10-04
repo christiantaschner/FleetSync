@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Technician, ProfileChangeRequest, Job } from '@/types';
-import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History, Clock, Camera } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, ListChecks, User, Loader2, UserX, Edit, History, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -233,6 +233,8 @@ export default function TechnicianProfilePage() {
   }
   
   const backUrl = `/technician/jobs/${firebaseUser.uid}`;
+  const avatarUrl = technician.avatarUrl || `https://picsum.photos/seed/${technician.id}/100/100`;
+
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -254,7 +256,7 @@ export default function TechnicianProfilePage() {
         <Card className="shadow-lg">
             <CardHeader className="text-center">
                  <Avatar className="h-24 w-24 mx-auto border-4 border-primary/20">
-                  <AvatarImage src={technician.avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
+                  <AvatarImage src={avatarUrl} alt={technician.name} data-ai-hint="person portrait" />
                   <AvatarFallback className="text-3xl">{technician.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-3xl font-bold pt-4 font-headline">{technician.name}</CardTitle>
@@ -276,7 +278,7 @@ export default function TechnicianProfilePage() {
                     {technician.skills && technician.skills.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                         {technician.skills.map(skill => (
-                            <Badge key={skill.name} variant="secondary" className="text-sm">{skill.name}</Badge>
+                            <Badge key={skill} variant="secondary" className="text-sm">{skill}</Badge>
                         ))}
                         </div>
                     ) : (
@@ -324,9 +326,7 @@ export default function TechnicianProfilePage() {
                                     </TableRow>
                                 )
                             }) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center text-muted-foreground h-24">No completed jobs to display.</TableCell>
-                                </TableRow>
+                                <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground h-24">No completed jobs to display.</TableCell></TableRow>
                             )}
                         </TableBody>
                     </Table>
@@ -360,8 +360,8 @@ export default function TechnicianProfilePage() {
                                                 {Object.entries(request.requestedChanges).map(([key, val]) => (
                                                   <li key={key}>
                                                       <span className="capitalize font-medium text-foreground">{key}:</span>{' '}
-                                                      {key === 'skills' && Array.isArray(val) ? 
-                                                        (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map((s: TechnicianSkill) => <Badge key={s.name} variant="outline" className="font-normal">{s.name}</Badge>)}</div>)
+                                                      {Array.isArray(val) ? 
+                                                        (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map(s => <Badge key={s} variant="outline" className="font-normal">{s}</Badge>)}</div>)
                                                         : (String(val))
                                                       }
                                                   </li>
@@ -386,8 +386,8 @@ export default function TechnicianProfilePage() {
                                                     return (
                                                         <li key={key} className={wasChanged ? 'text-green-600 font-bold' : ''}>
                                                             <span className="capitalize font-medium text-foreground">{key}:</span>{' '}
-                                                            {key === 'skills' && Array.isArray(val) ? 
-                                                              (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map((s: TechnicianSkill) => <Badge key={s.name} variant="outline" className="font-normal">{s.name}</Badge>)}</div>)
+                                                            {Array.isArray(val) ? 
+                                                              (<div className="inline-flex flex-wrap gap-1 mt-1">{val.map(s => <Badge key={s} variant="outline" className="font-normal">{s}</Badge>)}</div>)
                                                               : (String(val))
                                                             }
                                                         </li>

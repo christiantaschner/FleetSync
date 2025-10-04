@@ -359,3 +359,5 @@ export async function removeUserFromCompanyAction(
         return { error: `Failed to remove user. ${errorMessage}` };
     }
 }
+
+    

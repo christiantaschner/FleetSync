@@ -24,7 +24,7 @@ export async function createCheckoutSessionAction(
     const validatedInput = CreateCheckoutSessionInputSchema.parse(input);
     const { companyId, uid, email, priceId, quantity } = validatedInput;
 
-    const companyDocRef = dbAdmin.collection('companies').doc(companyId);
+    const companyDocRef = doc(dbAdmin, 'companies', companyId);
     const companyDocSnap = await companyDocRef.get();
 
     if (!companyDocSnap.exists) {
@@ -117,7 +117,7 @@ export async function createPortalSessionAction(
         const validatedInput = CreatePortalSessionInputSchema.parse(input);
         const { companyId } = validatedInput;
 
-        const companyDocRef = dbAdmin.collection('companies').doc(companyId);
+        const companyDocRef = doc(dbAdmin, 'companies', companyId);
         const companyDocSnap = await companyDocRef.get();
 
         if (!companyDocSnap.exists) {

@@ -2,12 +2,12 @@
 "use client";
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, Image as ImageIcon, ListFilter, Eye } from 'lucide-react';
+import { PlusCircle, Users, Briefcase, Zap, SlidersHorizontal, Loader2, UserPlus, MapIcon, Bot, Settings, FileSpreadsheet, UserCheck, AlertTriangle, X, CalendarDays, UserCog, ShieldQuestion, MessageSquare, Share2, Shuffle, ArrowDownUp, Search, Edit, UserX, Star, HelpCircle, RefreshCw, Wrench, ImageIcon, ListFilter, Eye, Lock, Repeat, DollarSign, Package, Grid, List, ChevronDown, Rocket, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill, Contract, OptimizationSuggestion } from '@/types';
+import type { Job, Technician, JobStatus, JobPriority, ProfileChangeRequest, Location, Customer, SortOrder, AITechnician, Skill, Contract, OptimizationSuggestion, Part } from '@/types';
 import JobListItem from './components/JobListItem';
 import TechnicianCard from './components/technician-card';
 import MapView from './components/map-view';
@@ -16,33 +16,36 @@ import { db } from '@/lib/firebase';
 import { collection, onSnapshot, orderBy, query, doc, writeBatch, getDocs, where, arrayUnion } from 'firebase/firestore';
 import { useAuth } from '@/contexts/auth-context';
 import { Label } from '@/components/ui/label';
+import AddEditJobDialog from './components/AddEditJobDialog';
 import AddEditTechnicianDialog from './components/AddEditTechnicianDialog';
 import BatchAssignmentReviewDialog, { type AssignmentSuggestion, type FinalAssignment } from './components/BatchAssignmentReviewDialog';
 import { handleTechnicianUnavailabilityAction } from '@/actions/fleet-actions';
-import { allocateJobAction, checkScheduleHealthAction, notifyCustomerAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
+import { allocateJobAction, checkScheduleHealthAction, runFleetOptimizationAction, type CheckScheduleHealthResult } from '@/actions/ai-actions';
 import { seedSampleDataAction } from '@/actions/onboarding-actions';
 import { toggleOnCallStatusAction } from '@/actions/technician-actions';
 import { useToast } from '@/hooks/use-toast';
 import ManageSkillsDialog from './components/ManageSkillsDialog';
+import ManagePartsDialog from './components/ManagePartsDialog';
 import ImportJobsDialog from './components/ImportJobsDialog';
 import ProfileChangeRequests from './components/ProfileChangeRequests';
 import { Badge } from '@/components/ui/badge';
 import ScheduleHealthDialog from './components/ScheduleHealthDialog';
 import { ScheduleRiskAlert } from './components/ScheduleRiskAlert';
 import ChatSheet from './components/ChatSheet';
-import { isToday, startOfDay, endOfDay } from 'date-fns';
+import { isSameDay, startOfDay, endOfDay, addMinutes } from 'date-fns';
 import AddressAutocompleteInput from './components/AddressAutocompleteInput';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSkillsAction } from '@/actions/skill-actions';
+import { getPartsAction } from '@/actions/part-actions';
 import { PREDEFINED_SKILLS } from '@/lib/skills';
 import { serverTimestamp } from 'firebase/firestore'; 
 import { Copy } from 'lucide-react';
 import { useTranslation } from '@/hooks/use-language';
 import GettingStartedChecklist from './components/GettingStartedChecklist';
 import HelpAssistant from './components/HelpAssistant';
-import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts } from '@/lib/mock-data';
+import { mockJobs, mockTechnicians, mockProfileChangeRequests, mockCustomers, mockContracts, mockParts } from '@/lib/mock-data';
 import { MultiSelectFilter } from './components/MultiSelectFilter';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type AllocateJobActionInput } from '@/types';
@@ -51,12 +54,31 @@ import ShareTrackingDialog from './components/ShareTrackingDialog';
 import { Switch } from '@/components/ui/switch';
 import FleetOptimizationReviewDialog from './components/FleetOptimizationReviewDialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
+import { reassignJobAction } from '@/actions/fleet-actions';
+import { Progress } from '@/components/ui/progress';
+import { isDeepStrictEqual } from 'util';
 
 const ToastWithCopy = ({ message, onDismiss }: { message: string, onDismiss: () => void }) => {
   const { toast } = useToast();
@@ -119,7 +141,7 @@ export default function DashboardPage() {
   const [showOpenTasksOnly, setShowOpenTasksOnly] = useState(false);
   const [sortOrder, setSortOrder] = useState<SortOrder>('status');
   const [jobSearchTerm, setJobSearchTerm] = useState('');
-
+  
   const [isBatchReviewDialogOpen, setIsBatchReviewDialogOpen] = useState(false);
   const [assignmentSuggestionsForReview, setAssignmentSuggestionsForReview] = useState<AssignmentSuggestion[]>([]);
   const [isBatchLoading, setIsBatchLoading] = useState(false);
@@ -127,8 +149,12 @@ export default function DashboardPage() {
   
   const [isManageSkillsOpen, setIsManageSkillsOpen] = useState(false);
   const [allSkills, setAllSkills] = useState<Skill[]>([]);
+  
+  const [isManagePartsOpen, setIsManagePartsOpen] = useState(false);
+  const [allParts, setAllParts] = useState<Part[]>([]);
 
   const [isImportJobsOpen, setIsImportJobsOpen] = useState(false);
+  const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
 
   const [isHandlingUnavailability, setIsHandlingUnavailability] = useState(false);
 
@@ -138,7 +164,6 @@ export default function DashboardPage() {
   
   const [isUpdatingOnCall, setIsUpdatingOnCall] = useState(false);
 
-  const [healthResults, setHealthResults] = useState<CheckScheduleHealthResult[]>([]);
   const [riskAlerts, setRiskAlerts] = useState<CheckScheduleHealthResult[]>([]);
 
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -163,6 +188,15 @@ export default function DashboardPage() {
   const [fleetOptimizationResult, setFleetOptimizationResult] = useState<{ suggestedChanges: OptimizationSuggestion[]; overallReasoning: string } | null>(null);
   const [isFleetOptimizing, setIsFleetOptimizing] = useState(false);
   const [selectedFleetChanges, setSelectedFleetChanges] = useState<OptimizationSuggestion[]>([]);
+  const [proactiveOptimizationAlert, setProactiveOptimizationAlert] = useState<{ suggestedChanges: OptimizationSuggestion[]; overallReasoning: string } | null>(null);
+
+
+  const [technicianViewMode, setTechnicianViewMode] = useState<'grid' | 'list',>('grid');
+  
+  const [proposedJobs, setProposedJobs] = useState<Job[]>([]);
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
+  const [activeDragItem, setActiveDragItem] = useState<Job | null>(null);
 
   const jobFilterId = searchParams.get('jobFilter');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'superAdmin';
@@ -186,14 +220,11 @@ export default function DashboardPage() {
 
   const handleStatusFilterChange = (newStatusFilter: string[]) => {
     setStatusFilter(newStatusFilter);
-
-    // Check if the current filter selection matches the "Open Tasks" preset
-    const openTasksSet = new Set(openTasksFilter);
-    const newStatusSet = new Set(newStatusFilter);
-    const areSetsEqual = openTasksSet.size === newStatusSet.size && [...openTasksSet].every(value => newStatusSet.has(value));
-
-    if (!areSetsEqual && showOpenTasksOnly) {
-      setShowOpenTasksOnly(false);
+    const openTasksSet = new Set(openTasksFilter.sort());
+    const newStatusSet = new Set(newStatusFilter.sort());
+    
+    if (!isDeepStrictEqual(openTasksSet, newStatusSet)) {
+        setShowOpenTasksOnly(false);
     }
   };
 
@@ -212,6 +243,21 @@ export default function DashboardPage() {
     }
   }, [appId, isMockMode]);
 
+  const fetchParts = useCallback(async (companyId: string) => {
+    if (isMockMode) {
+      setAllParts(mockParts.map((p, i) => ({ id: `part_${i}`, name: p })));
+      return;
+    }
+    if (!appId) return;
+    const result = await getPartsAction({ companyId, appId });
+    if (result.data) {
+      setAllParts(result.data || []);
+    } else {
+      console.error("Could not fetch parts library:", result.error);
+    }
+  }, [appId, isMockMode]);
+
+
   useEffect(() => {
     if (authLoading) return;
     
@@ -221,6 +267,7 @@ export default function DashboardPage() {
         setContracts(mockContracts);
         setProfileChangeRequests(mockProfileChangeRequests);
         setAllSkills(PREDEFINED_SKILLS.map((name, index) => ({ id: `mock_skill_${index}`, name })));
+        setAllParts(mockParts.map((name, index) => ({ id: `mock_part_${index}`, name })));
         setIsLoadingData(false);
         return;
     }
@@ -232,7 +279,7 @@ export default function DashboardPage() {
 
     const companyId = userProfile.companyId;
     let collectionsLoaded = 0;
-    const totalCollections = 4;
+    const totalCollections = 4; // Jobs, Techs, Contracts, Requests
 
     const checkLoadingComplete = () => {
         collectionsLoaded++;
@@ -242,6 +289,7 @@ export default function DashboardPage() {
     };
     
     fetchSkills(companyId);
+    fetchParts(companyId);
 
     const jobsQuery = query(collection(db, `artifacts/${appId}/public/data/jobs`), where("companyId", "==", companyId));
     const techniciansQuery = query(collection(db, `artifacts/${appId}/public/data/technicians`), where("companyId", "==", companyId));
@@ -252,8 +300,8 @@ export default function DashboardPage() {
         const jobsData = snapshot.docs.map(doc => {
             const data = doc.data();
             for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
+                if ((data[key] as any) && typeof (data[key] as any).toDate === 'function') {
+                    (data[key] as any) = (data[key] as any).toDate().toISOString();
                 }
             }
             return { id: doc.id, ...data } as Job;
@@ -281,8 +329,8 @@ export default function DashboardPage() {
         const contractsData = snapshot.docs.map(doc => {
             const data = doc.data();
              for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
+                if ((data[key] as any) && typeof (data[key] as any).toDate === 'function') {
+                    (data[key] as any) = (data[key] as any).toDate().toISOString();
                 }
             }
             return { id: doc.id, ...data } as Contract;
@@ -299,8 +347,8 @@ export default function DashboardPage() {
         const requestsData = snapshot.docs.map(doc => {
             const data = doc.data();
              for (const key in data) {
-                if (data[key] && typeof data[key].toDate === 'function') {
-                    data[key] = data[key].toDate().toISOString();
+                if ((data[key] as any) && typeof (data[key] as any).toDate === 'function') {
+                    (data[key] as any) = (data[key] as any).toDate().toISOString();
                 }
             }
             return { id: doc.id, ...data } as ProfileChangeRequest;
@@ -319,7 +367,7 @@ export default function DashboardPage() {
         unsubscribeContracts();
         unsubscribeRequests();
     };
-}, [authLoading, userProfile, appId, fetchSkills, toast, isLoadingData, isMockMode]);
+}, [authLoading, userProfile, appId, fetchSkills, fetchParts, toast, isLoadingData, isMockMode]);
 
 
   const handleSeedData = async () => {
@@ -331,7 +379,6 @@ export default function DashboardPage() {
     } else {
       toast({ title: "Success", description: "Sample data has been added." });
     }
-    // Data will refresh via onSnapshot, just set loading to false.
     setIsLoadingData(false);
   };
 
@@ -348,18 +395,13 @@ export default function DashboardPage() {
     }
   }, [jobFilterId, searchParams]);
   
-  const handleOpenAddJob = () => {
-    router.push('/job/new');
-  };
-  
   const handleOpenEditTechnician = (technician: Technician) => {
     setSelectedTechnicianForEdit(technician);
     setIsAddEditTechnicianDialogOpen(true);
   };
 
   const customers = useMemo(() => {
-    const data = isMockMode ? mockCustomers : []; // Need to derive from jobs if not mock
-    
+    const data = isMockMode ? mockCustomers : [];
     const customerMap = new Map<string, Customer>();
     jobs.forEach(job => {
         const key = (job.customerEmail || job.customerPhone || job.customerName).toLowerCase().trim();
@@ -406,8 +448,6 @@ export default function DashboardPage() {
     }
     
     if (technicians.length !== prevTechCount.current && prevTechCount.current !== null) {
-        // This is where auto-sync logic would go, but based on user request, this is disabled.
-        // A manual sync or different flow would be needed if the user changes their plan.
     }
       
     prevTechCount.current = technicians.length;
@@ -415,7 +455,7 @@ export default function DashboardPage() {
   }, [technicians, company, isLoadingData, toast, isMockMode]);
   
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId || isMockMode) {
+    if (isLoadingData || technicians.length === 0 || !userProfile?.companyId || isMockMode || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true)) {
       return;
     }
 
@@ -435,7 +475,7 @@ export default function DashboardPage() {
     if (highPriorityPendingJob && !proactiveSuggestion && !isFetchingProactiveSuggestion) {
       fetchProactiveSuggestion(highPriorityPendingJob);
     }
-  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile, isMockMode]);
+  }, [jobs, isLoadingData, technicians, proactiveSuggestion, isFetchingProactiveSuggestion, userProfile, isMockMode, company]);
 
   const fetchProactiveSuggestion = useCallback(async (job: Job) => {
     if (!appId) return;
@@ -445,7 +485,7 @@ export default function DashboardPage() {
       technicianId: t.id,
       technicianName: t.name,
       isAvailable: t.isAvailable,
-      skills: t.skills.map(s => s.name) || [],
+      skills: t.skills || [],
       liveLocation: t.location,
       homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
       currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status))
@@ -472,14 +512,14 @@ export default function DashboardPage() {
     const result = await allocateJobAction(input);
 
     if (result.data) {
-      const techDetails = result.data.suggestedTechnicianId 
-        ? technicians.find(t => t.id === result.data.suggestedTechnicianId) 
+      const techDetails = result.data.suggestions.length > 0 && result.data.suggestions[0].suggestedTechnicianId 
+        ? technicians.find(t => t.id === result.data.suggestions[0].suggestedTechnicianId) 
         : null;
       setProactiveSuggestion({
         job: job,
         suggestion: result.data,
         suggestedTechnicianDetails: techDetails,
-        error: !result.data.suggestedTechnicianId ? result.data.reasoning : null,
+        error: !techDetails ? result.data.overallReasoning : null,
       });
     } else {
         setProactiveSuggestion({
@@ -493,28 +533,24 @@ export default function DashboardPage() {
     setIsFetchingProactiveSuggestion(false);
   }, [technicians, jobs, company, appId, UNCOMPLETED_STATUSES_LIST]);
   
-  // Effect for automatic schedule health checks
   useEffect(() => {
-    if (isLoadingData || technicians.length === 0 || jobs.length === 0 || isMockMode) {
+    if (isLoadingData || technicians.length === 0 || jobs.length === 0 || isMockMode || !(company?.settings?.featureFlags?.rescheduleCustomerJobsEnabled ?? true)) {
       return;
     }
 
     const checkHealth = async () => {
       const result = await checkScheduleHealthAction({ technicians, jobs });
       if (result.error) {
-        // Silently fail or show a subtle error, not a toast
         console.warn("Auto schedule health check failed:", result.error);
       } else if (result.data) {
-        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 10); // 10 minute buffer
+        const highRiskAlerts = result.data.filter(r => r.risk && r.risk.predictedDelayMinutes > 10);
         
         setRiskAlerts(currentAlerts => {
           const currentAlertIds = new Set(currentAlerts.map(a => a.technician.id));
           const newAlertsToAdd = highRiskAlerts.filter(newAlert => !currentAlertIds.has(newAlert.technician.id));
-          
           const stillValidAlerts = currentAlerts.filter(oldAlert => 
             highRiskAlerts.some(newAlert => newAlert.technician.id === oldAlert.technician.id)
           );
-
           if (newAlertsToAdd.length > 0 || stillValidAlerts.length !== currentAlerts.length) {
             return [...stillValidAlerts, ...newAlertsToAdd];
           }
@@ -523,60 +559,59 @@ export default function DashboardPage() {
       }
     };
     
-    // Run once on load, then set an interval
-    const initialCheckTimer = setTimeout(checkHealth, 2000); // Initial check after 2 seconds
-    const intervalId = setInterval(checkHealth, 600000); // 10 minutes
+    const initialCheckTimer = setTimeout(checkHealth, 2000);
+    const intervalId = setInterval(checkHealth, 600000);
 
     return () => {
       clearTimeout(initialCheckTimer);
       clearInterval(intervalId);
     };
-  }, [jobs, technicians, isLoadingData, isMockMode]);
+  }, [jobs, technicians, isLoadingData, isMockMode, company]);
+
+  useEffect(() => {
+    if (isLoadingData || isMockMode || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true) || !userProfile?.companyId || !appId || jobs.length === 0) {
+      return;
+    }
+
+    const checkForOptimization = async () => {
+      if (proactiveOptimizationAlert) return; // Don't check if an alert is already showing
+
+      const start = startOfDay(new Date());
+      const end = endOfDay(new Date());
+      const jobsForToday = jobs.filter(job => job.scheduledTime && new Date(job.scheduledTime) >= start && new Date(job.scheduledTime) <= end);
+      const unassignedJobsForToday = jobsForToday.filter(j => j.status === 'Unassigned');
+      const assignedJobsForToday = jobsForToday.filter(j => j.status === 'Assigned' || j.status === 'In Progress');
+
+      const result = await runFleetOptimizationAction({
+        companyId: userProfile.companyId!,
+        appId: appId!,
+        currentTime: new Date().toISOString(),
+        pendingJobs: unassignedJobsForToday,
+        technicians: technicians.map(t => ({
+          ...t,
+          jobs: assignedJobsForToday.filter(j => j.assignedTechnicianId === t.id)
+        })),
+      });
+
+      if (result.data?.suggestedChanges && result.data.suggestedChanges.length > 0) {
+        const totalProfitGain = result.data.suggestedChanges.reduce((acc, change) => acc + (change.profitChange || 0), 0);
+        if (totalProfitGain > 50) { // Only show alert for significant gains
+            setProactiveOptimizationAlert(result.data);
+        }
+      }
+    };
+
+    const optimizationInterval = setInterval(checkForOptimization, 900000); // Check every 15 minutes
+    return () => clearInterval(optimizationInterval);
+
+  }, [jobs, technicians, isLoadingData, isMockMode, company, userProfile, appId, proactiveOptimizationAlert]);
   
   const handleProactiveAssign = async (suggestion: AssignmentSuggestion) => {
     if (!suggestion.job || !suggestion.suggestedTechnicianDetails || !suggestion.suggestion || !db || !userProfile?.companyId || !appId) return;
     
-    setIsProcessingProactive(true);
-    
-    const { job, suggestedTechnicianDetails } = suggestion;
-    const isInterruption = !suggestedTechnicianDetails.isAvailable && suggestedTechnicianDetails.currentJobId;
-
-    const batch = writeBatch(db);
-    
-    const newJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
-    batch.update(newJobRef, { 
-        status: 'Assigned', 
-        assignedTechnicianId: suggestedTechnicianDetails.id,
-        updatedAt: serverTimestamp(),
-        assignedAt: serverTimestamp(),
-    });
-
-    const techDocRef = doc(db, `artifacts/${appId}/public/data/technicians`, suggestedTechnicianDetails.id);
-    batch.update(techDocRef, {
-        isAvailable: false,
-        currentJobId: job.id,
-    });
-    
-    if (isInterruption) {
-        const oldJobRef = doc(db, `artifacts/${appId}/public/data/jobs`, suggestedTechnicianDetails.currentJobId!);
-        batch.update(oldJobRef, {
-            status: 'Unassigned',
-            assignedTechnicianId: null,
-            notes: arrayUnion(`(Auto-Reassigned: Technician interrupted for high-priority job ${job.title})`) as any,
-            updatedAt: serverTimestamp(),
-        });
-    }
-
-    try {
-        await batch.commit();
-        toast({ title: "Job Assigned!", description: `${job.title} assigned to ${suggestedTechnicianDetails.name}.` });
-        setProactiveSuggestion(null);
-    } catch (error: any) {
-        console.error("Error processing proactive assignment:", error);
-        toast({ title: "Assignment Failed", description: error.message, variant: "destructive" });
-    } finally {
-        setIsProcessingProactive(false);
-    }
+    setProactiveSuggestion(null);
+    setJobForAIAssign(suggestion.job);
+    setIsAIAssignDialogOpen(true);
   };
 
   const handleAIAssign = useCallback((job: Job) => {
@@ -596,18 +631,26 @@ export default function DashboardPage() {
   const kpiData = useMemo(() => {
     const unassignedJobs = jobs.filter(j => j.status === 'Unassigned');
     const today = new Date();
+    const jobsForToday = jobs.filter(j => j.scheduledTime && isSameDay(new Date(j.scheduledTime), today));
+    const completedToday = jobsForToday.filter(j => j.status === 'Completed' || j.status === 'Finished');
+    const scheduledUnfinished = jobsForToday.filter(j => j.status !== 'Completed' && j.status !== 'Finished' && j.status !== 'Cancelled');
+    
+    const totalProfitToday = completedToday.reduce((acc, job) => acc + (job.actualProfit || 0), 0);
+    const potentialProfitToday = scheduledUnfinished.reduce((acc, job) => acc + (job.quotedValue || 0), 0);
+    
     return {
         highPriorityCount: unassignedJobs.filter(j => j.priority === 'High').length,
         pendingCount: unassignedJobs.length,
         availableTechnicians: technicians.filter(t => t.isAvailable).length,
-        jobsToday: jobs.filter(j => j.scheduledTime && isToday(new Date(j.scheduledTime))).length
+        jobsScheduledToday: jobsForToday.length,
+        totalProfitToday,
+        potentialProfitToday,
     };
   }, [jobs, technicians]);
 
   const filteredJobs = useMemo(() => {
     let tempJobs = jobs;
 
-    // Filter by search term
     if (jobSearchTerm) {
         const lowercasedTerm = jobSearchTerm.toLowerCase();
         tempJobs = tempJobs.filter(job => {
@@ -621,12 +664,10 @@ export default function DashboardPage() {
         });
     }
 
-    // Filter by ID if jobFilterId is present
     if (jobFilterId) {
         return tempJobs.filter(job => job.id === jobFilterId);
     }
     
-    // Always filter by status and priority
     if (statusFilter.length > 0 || priorityFilter.length > 0) {
         return tempJobs.filter(job => {
             const priorityMatch = priorityFilter.length === 0 || priorityFilter.includes(job.priority);
@@ -668,6 +709,10 @@ export default function DashboardPage() {
                 const timeA = a.scheduledTime ? new Date(a.scheduledTime).getTime() : Infinity;
                 const timeB = b.scheduledTime ? new Date(b.scheduledTime).getTime() : Infinity;
                 return timeA - timeB || new Date(a.createdAt).getTime() - new Date(a.createdAt).getTime();
+            case 'profit':
+                const profitA = a.profitScore ?? -Infinity;
+                const profitB = b.profitScore ?? -Infinity;
+                return profitB - profitA;
             default:
                 return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
         }
@@ -693,12 +738,20 @@ export default function DashboardPage() {
       const isAvailableMatch = lowercasedTerm === 'available' && tech.isAvailable;
       const isUnavailableMatch = (lowercasedTerm === 'unavailable' || lowercasedTerm === 'busy') && !tech.isAvailable;
       const nameMatch = tech.name.toLowerCase().includes(lowercasedTerm);
-      const skillMatch = tech.skills?.some(skill => skill.name.toLowerCase().includes(lowercasedTerm));
+      const skillMatch = tech.skills?.some(skill => skill.toLowerCase().includes(lowercasedTerm));
       return isAvailableMatch || isUnavailableMatch || nameMatch || skillMatch;
     });
   }, [technicians, technicianSearchTerm]);
 
-  const unassignedJobsForBatchAssign = useMemo(() => jobs.filter(job => job.status === 'Unassigned'), [jobs]);
+  const unassignedJobsForBatchAssign = useMemo(() => {
+    return jobs
+      .filter(job => job.status === 'Unassigned')
+      .sort((a, b) => {
+        const profitA = (a.quotedValue || 0) - (a.expectedPartsCost || 0);
+        const profitB = (b.quotedValue || 0) - (b.expectedPartsCost || 0);
+        return profitB - profitA; // Sort by highest potential profit first
+      });
+  }, [jobs]);
   const unassignedJobsCount = unassignedJobsForBatchAssign.length;
   
   const defaultMapCenter = technicians.length > 0 && technicians[0].location
@@ -706,78 +759,35 @@ export default function DashboardPage() {
     : { lat: 39.8283, lng: -98.5795 }; 
 
   const handleBatchAIAssign = useCallback(async () => {
-    if (isMockMode) {
-      // Mock logic
-      const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
-      if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
-        toast({ title: "Fleety Batch Assign", description: "No unassigned jobs or technicians available.", variant: "default" });
-        return;
-      }
-      setIsBatchLoading(true);
-      
-      let tempTechnicianPool = JSON.parse(JSON.stringify(technicians.filter(t => t.isAvailable)));
-      
-      const suggestions: AssignmentSuggestion[] = currentUnassignedJobs.map(job => {
-        const { requiredSkills = [] } = job;
-        const suitableTechIndex = tempTechnicianPool.findIndex((tech: Technician) => 
-            requiredSkills.length === 0 || requiredSkills.every(skill => tech.skills.some(s => s.name === skill))
-        );
-
-        if (suitableTechIndex !== -1) {
-            const assignedTech = tempTechnicianPool[suitableTechIndex];
-            tempTechnicianPool.splice(suitableTechIndex, 1); // Remove tech from pool
-            return {
-                job,
-                suggestion: {
-                    suggestedTechnicianId: assignedTech.id,
-                    reasoning: `Mock Mode: Assigned to ${assignedTech.name} based on availability and skills.`
-                },
-                suggestedTechnicianDetails: assignedTech,
-                error: null
-            };
-        } else {
-            return {
-                job,
-                suggestion: null,
-                suggestedTechnicianDetails: null,
-                error: "Mock Mode: No available technician with the required skills."
-            };
-        }
-      });
-      
-      setAssignmentSuggestionsForReview(suggestions);
-      setIsBatchReviewDialogOpen(true);
-      setIsBatchLoading(false);
-      return;
-    }
-
-    // Live logic
-    if (!appId) return;
-    const currentUnassignedJobs = jobs.filter(job => job.status === 'Unassigned');
-    if (currentUnassignedJobs.length === 0 || technicians.length === 0) {
-      toast({ title: "Fleety Batch Assign", description: "No unassigned jobs or no technicians available for assignment.", variant: "default" });
+    if (unassignedJobsForBatchAssign.length === 0 || technicians.length === 0) {
+      toast({ title: "AI Batch Assign", description: "No unassigned jobs or technicians available for assignment.", variant: "default" });
       return;
     }
     setIsBatchLoading(true);
     setAssignmentSuggestionsForReview([]);
-    
-    let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
 
-    const suggestions = await Promise.all(currentUnassignedJobs.map(async (job) => {
+    let tempTechnicianPool = JSON.parse(JSON.stringify(technicians));
+    const suggestions: AssignmentSuggestion[] = [];
+
+    for (const job of unassignedJobsForBatchAssign) {
+        let techDetails: Technician | null = null;
+        let suggestionResult: AllocateJobOutput | null = null;
+        let errorResult: string | null = null;
+
         const aiTechnicians: AITechnician[] = tempTechnicianPool.map((t: Technician) => ({
             technicianId: t.id,
             technicianName: t.name,
             isAvailable: t.isAvailable,
-            skills: t.skills.map(s => s.name) || [],
+            skills: t.skills || [],
             liveLocation: t.location,
             homeBaseLocation: company?.settings?.address ? { address: company.settings.address, latitude: 0, longitude: 0 } : t.location,
             currentJobs: jobs.filter(j => j.assignedTechnicianId === t.id && UNCOMPLETED_STATUSES_LIST.includes(j.status)).map(j => ({ jobId: j.id, scheduledTime: j.scheduledTime, priority: j.priority, location: j.location })),
             workingHours: t.workingHours,
             isOnCall: t.isOnCall,
         }));
-
+        
         const input: AllocateJobActionInput = {
-            appId,
+            appId: appId!,
             jobDescription: job.description,
             jobPriority: job.priority,
             requiredSkills: job.requiredSkills || [],
@@ -787,20 +797,28 @@ export default function DashboardPage() {
         };
 
         const result = await allocateJobAction(input);
-        let techDetails: Technician | null = null;
-        if (result.data) {
-            techDetails = tempTechnicianPool.find((t: Technician) => t.id === result.data!.suggestedTechnicianId) || null;
-            if (techDetails && techDetails.isAvailable) {
-                tempTechnicianPool = tempTechnicianPool.map((t: Technician) => t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t);
+        
+        if (result.data?.suggestions && result.data.suggestions.length > 0) {
+            const suggestedId = result.data.suggestions[0].suggestedTechnicianId;
+            techDetails = tempTechnicianPool.find((t: Technician) => t.id === suggestedId) || null;
+            if (techDetails) {
+                // Mark technician as busy for the next iteration in this batch
+                tempTechnicianPool = tempTechnicianPool.map((t: Technician) => 
+                    t.id === techDetails!.id ? { ...t, isAvailable: false, currentJobId: job.id } : t
+                );
             }
+            suggestionResult = result.data;
+        } else {
+             errorResult = result.error || result.data?.overallReasoning || "AI could not find a suitable technician.";
         }
-        return { job, suggestion: result.data, suggestedTechnicianDetails: techDetails, error: result.error };
-    }));
 
+        suggestions.push({ job, suggestion: suggestionResult, suggestedTechnicianDetails: techDetails, error: errorResult });
+    }
+      
     setAssignmentSuggestionsForReview(suggestions);
     setIsBatchReviewDialogOpen(true);
     setIsBatchLoading(false);
-  }, [jobs, technicians, toast, appId, company, UNCOMPLETED_STATUSES_LIST, isMockMode]);
+  }, [unassignedJobsForBatchAssign, jobs, technicians, toast, appId, company]);
 
   const handleConfirmBatchAssignments = async (assignmentsToConfirm: FinalAssignment[]) => {
     if (isMockMode) {
@@ -838,7 +856,7 @@ export default function DashboardPage() {
     try {
         await batch.commit();
         if (assignmentsMade > 0) {
-          toast({ title: "Fleety Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
+          toast({ title: "AI Batch Assignment Success", description: `${assignmentsMade} jobs have been assigned.` });
         } else {
           toast({ title: "No Assignments Made", description: "No jobs were selected for assignment.", variant: "default" });
         }
@@ -929,21 +947,24 @@ export default function DashboardPage() {
     setIsUpdatingOnCall(false);
   };
   
-  const handleAIAssignSuccess = () => {
-    // This function can be expanded if we need to do something after AI assignment,
-    // like refreshing a specific part of the data. For now, onSnapshot handles it.
-  };
+  const handleAIAssignSuccess = () => {};
 
   const handleShareTracking = (job: Job) => {
     setJobToShare(job);
     setIsShareTrackingOpen(true);
   };
 
-  const handleSkillsUpdated = (newSkills: Skill[]) => {
+  const handleSkillsUpdated = () => {
       if(userProfile?.companyId) {
         fetchSkills(userProfile.companyId);
       }
   };
+
+  const handlePartsUpdated = () => {
+    if(userProfile?.companyId) {
+      fetchParts(userProfile.companyId);
+    }
+  }
   
   const handleFleetOptimize = async () => {
     if (!userProfile?.companyId || !appId) return;
@@ -970,48 +991,131 @@ export default function DashboardPage() {
       pendingJobs: unassignedJobsForToday,
       technicians: technicians.map(t => ({
         ...t,
-        jobs: assignedJobsForToday.filter(j => j.assignedTechnicianId === t.id)
+        jobs: assignedJobsForToday
+          .filter(j => j.assignedTechnicianId === t.id)
       })),
     });
 
     setIsFleetOptimizing(false);
     if (result.error) {
       toast({ title: 'Optimization Failed', description: result.error, variant: 'destructive' });
-    } else {
+    } else if (result.data) {
       setFleetOptimizationResult(result.data);
-      if(result.data?.suggestedChanges) {
+      if(result.data.suggestedChanges) {
         setSelectedFleetChanges(result.data.suggestedChanges);
       }
       setIsFleetOptimizationDialogOpen(true);
+    } else {
+      toast({ title: 'Optimization Complete', description: 'No significant improvements could be found at this time.', variant: 'default' });
     }
   };
+  
+  const handleScheduleChange = useCallback((jobId: string, newTechnicianId: string, newScheduledTime: string) => {
+      setProposedJobs(prev => {
+          const existingIndex = prev.findIndex(p => p.id === jobId);
+          const originalJob = jobs.find(j => j.id === jobId);
+          if (!originalJob) return prev;
 
-  const handleConfirmFleetOptimization = async (changes: OptimizationSuggestion[]) => {
-    if (!userProfile?.companyId || !appId || !db) return;
-    setIsLoadingBatchConfirmation(true);
+          const newJob = { ...originalJob, assignedTechnicianId: newTechnicianId, scheduledTime: newScheduledTime };
+          if (existingIndex !== -1) {
+              const updated = [...prev];
+              updated[existingIndex] = newJob;
+              return updated;
+          }
+          return [...prev, newJob];
+      });
+  }, [jobs]);
+  
+  const handleSaveSchedule = async () => {
+    if (isMockMode) {
+        toast({ title: "Schedule Saved (Mock)" });
+        setJobs(prevJobs => {
+            const proposedMap = new Map(proposedJobs.map(p => [p.id, p]));
+            return prevJobs.map(job => proposedMap.has(job.id) ? proposedMap.get(job.id)! : job);
+        });
+        setProposedJobs([]);
+        return;
+    }
     
+    if (!appId || !userProfile?.companyId) return;
+    setIsSavingSchedule(true);
     const batch = writeBatch(db);
-    changes.forEach(change => {
-        const jobRef = doc(db, `artifacts/${appId}/public/data/jobs`, change.jobId);
-        const payload: Partial<Job> = {
-            assignedTechnicianId: change.newTechnicianId,
-            status: 'Assigned',
-            notes: arrayUnion(`(Reassigned via Fleet Optimizer: ${change.justification})`) as any,
-        };
-        if(change.newScheduledTime) {
-            payload.scheduledTime = change.newScheduledTime;
-        }
-        batch.update(jobRef, payload);
+    
+    proposedJobs.forEach(job => {
+        const jobRef = doc(db, `artifacts/${appId}/public/data/jobs`, job.id);
+        batch.update(jobRef, {
+            assignedTechnicianId: job.assignedTechnicianId,
+            scheduledTime: job.scheduledTime,
+            updatedAt: serverTimestamp(),
+            notes: arrayUnion(`(Manually rescheduled by dispatcher on ${new Date().toLocaleDateString()})`),
+        });
     });
 
     try {
         await batch.commit();
-        toast({ title: 'Fleet Schedule Updated', description: `${changes.length} change(s) have been applied successfully.` });
-    } catch (e: any) {
-        toast({ title: 'Error Applying Changes', description: e.message, variant: 'destructive' });
+        toast({ title: "Schedule Saved", description: `${proposedJobs.length} job(s) have been updated.` });
+        setProposedJobs([]);
+    } catch (e) {
+        console.error("Failed to save schedule changes", e);
+        toast({ title: "Error Saving Schedule", description: "Could not save changes.", variant: "destructive" });
     } finally {
-        setIsLoadingBatchConfirmation(false);
-        setIsFleetOptimizationDialogOpen(false);
+        setIsSavingSchedule(false);
+    }
+  };
+
+
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  }));
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const item = jobs.find(j => j.id === active.id) || technicians.find(t => t.id === active.id);
+    if(item && 'title' in item) { // It's a job
+        setActiveDragItem(item);
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveDragItem(null);
+    const { active, over } = event;
+    
+    if (active.data.current?.type === 'schedule-job') {
+        return;
+    }
+    
+    if (over && active.data.current?.type === 'job' && over.data.current?.type === 'technician') {
+        const jobId = active.id as string;
+        const techId = over.id as string;
+        
+        if (isMockMode) {
+            setJobs(prevJobs => prevJobs.map(j => j.id === jobId ? { ...j, assignedTechnicianId: techId, status: 'Assigned' } : j));
+            toast({ title: "Job Assigned (Mock)", description: `Job assigned to new technician.` });
+            return;
+        }
+
+        const job = active.data.current.job as Job;
+        const technician = over.data.current.technician as Technician;
+
+        if (job.assignedTechnicianId === technician.id) return;
+        
+        setIsLoadingData(true);
+        const result = await reassignJobAction({
+            companyId: job.companyId,
+            appId: appId!,
+            jobId: job.id,
+            newTechnicianId: technician.id,
+            reason: 'Manual drag-and-drop assignment'
+        });
+        setIsLoadingData(false);
+
+        if (result.error) {
+            toast({ title: "Assignment Failed", description: result.error, variant: "destructive" });
+        } else {
+            toast({ title: "Job Reassigned", description: `${job.title} assigned to ${technician.name}.` });
+        }
     }
   };
 
@@ -1025,10 +1129,16 @@ export default function DashboardPage() {
   }
 
   return (
+    <DndContext 
+      sensors={sensors} 
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveDragItem(null)}
+    >
       <div className="space-y-6">
         {!isMockMode && showGettingStarted && technicians.length === 0 && userProfile?.role === 'admin' && (
           <GettingStartedChecklist
-            onOpenAddJobDialog={handleOpenAddJob}
+            onOpenAddJobDialog={() => setIsAddEditDialogOpen(true)}
             onSeedData={handleSeedData}
             onSwitchToScheduleTab={() => setActiveTab('schedule')}
             onDismiss={() => {
@@ -1052,7 +1162,23 @@ export default function DashboardPage() {
                 onClose={() => setIsAddEditTechnicianDialogOpen(false)}
                 technician={selectedTechnicianForEdit}
                 allSkills={allSkills.map(s => s.name)}
+                allParts={allParts}
             />
+        )}
+        {canEditJobs && (
+          <AddEditJobDialog
+              isOpen={isAddEditDialogOpen}
+              onClose={() => setIsAddEditDialogOpen(false)}
+              job={null}
+              jobs={jobs}
+              technicians={technicians}
+              customers={customers}
+              contracts={contracts}
+              allSkills={allSkills.map(s => s.name)}
+              allParts={allParts}
+              onManageSkills={() => setIsManageSkillsOpen(true)}
+              onManageParts={() => setIsManagePartsOpen(true)}
+          />
         )}
       {appId && <ChatSheet 
           isOpen={isChatOpen} 
@@ -1065,18 +1191,9 @@ export default function DashboardPage() {
           isOpen={isShareTrackingOpen}
           setIsOpen={setIsShareTrackingOpen}
           job={jobToShare}
+          technicians={technicians}
       />}
-      <FleetOptimizationReviewDialog
-        isOpen={isFleetOptimizationDialogOpen}
-        setIsOpen={setIsFleetOptimizationDialogOpen}
-        optimizationResult={fleetOptimizationResult}
-        technicians={technicians}
-        jobs={jobs}
-        onConfirmChanges={handleConfirmFleetOptimization}
-        isLoadingConfirmation={isLoadingBatchConfirmation}
-        selectedChanges={selectedFleetChanges}
-        setSelectedChanges={setSelectedFleetChanges}
-      />
+      
        {riskAlerts.map(alert => (
           <ScheduleRiskAlert 
             key={alert.technician.id} 
@@ -1091,12 +1208,12 @@ export default function DashboardPage() {
             <Alert variant="default" className="border-amber-400 bg-amber-50 text-amber-900">
                 <Bot className="h-4 w-4 text-amber-600" />
                 <AlertTitle className="font-headline text-amber-900 flex justify-between items-center">
-                    <span>Fleety's Proactive Suggestion</span>
+                    <span>AI Proactive Suggestion</span>
                     <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveSuggestion(null)}><X className="h-4 w-4" /></Button>
                 </AlertTitle>
                 <AlertDescription className="text-amber-800">
                     A new high-priority job "<strong>{proactiveSuggestion.job.title}</strong>" was just created.
-                    <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.reasoning}"</p>
+                    <p className="text-xs italic mt-1">"{proactiveSuggestion.suggestion?.overallReasoning}"</p>
                 </AlertDescription>
                 <div className="mt-4 flex gap-2">
                     <Button 
@@ -1107,11 +1224,40 @@ export default function DashboardPage() {
                         disabled={isProcessingProactive || !proactiveSuggestion.suggestedTechnicianDetails}
                     >
                         {isProcessingProactive ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <UserCheck className="mr-2 h-4 w-4" />}
-                        Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
+                        Review &amp; Assign to {proactiveSuggestion.suggestedTechnicianDetails?.name || 'Suggested'}
                     </Button>
                      <Button size="sm" variant="outline" onClick={() => router.push(`/job/${proactiveSuggestion.job.id}`)}>
                         <Edit className="mr-2 h-4 w-4"/>
                         View Details
+                    </Button>
+                </div>
+            </Alert>
+        )}
+        
+         {proactiveOptimizationAlert && (
+            <Alert variant="default" className="border-sky-400 bg-sky-50 text-sky-900">
+                <Bot className="h-4 w-4 text-sky-600" />
+                <AlertTitle className="font-headline text-sky-900 flex justify-between items-center">
+                    <span>AI Optimization Opportunity</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground" onClick={() => setProactiveOptimizationAlert(null)}><X className="h-4 w-4" /></Button>
+                </AlertTitle>
+                <AlertDescription className="text-sky-800">
+                    The AI has found a way to optimize today's schedule to increase overall profit.
+                    <p className="text-xs italic mt-1">"{proactiveOptimizationAlert.overallReasoning}"</p>
+                </AlertDescription>
+                <div className="mt-4">
+                    <Button 
+                        size="sm" 
+                        variant="default"
+                        className="bg-sky-500 hover:bg-sky-600"
+                        onClick={() => {
+                          setFleetOptimizationResult(proactiveOptimizationAlert);
+                          setIsFleetOptimizationDialogOpen(true);
+                          setProactiveOptimizationAlert(null);
+                        }}
+                    >
+                        <Shuffle className="mr-2 h-4 w-4" />
+                        Review Changes
                     </Button>
                 </div>
             </Alert>
@@ -1128,7 +1274,7 @@ export default function DashboardPage() {
             </Button>
            )}
            {canEditJobs && (
-            <Button onClick={handleOpenAddJob} className="w-full sm:w-auto">
+            <Button onClick={() => setIsAddEditDialogOpen(true)} className="w-full sm:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" /> {t('add_new_job')}
             </Button>
            )}
@@ -1136,46 +1282,51 @@ export default function DashboardPage() {
       </div>
       
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpiData.highPriorityCount}</div>
-              <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('pending_jobs')}</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpiData.pendingCount}</div>
-              <p className="text-xs text-muted-foreground">{t('pending_jobs_desc')}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
-              <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t('jobs_scheduled_today')}</CardTitle>
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{kpiData.jobsToday}</div>
-              <p className="text-xs text-muted-foreground">{t('jobs_scheduled_today_desc')}</p>
-            </CardContent>
-          </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('high_priority_queue')}</CardTitle>
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{kpiData.highPriorityCount}</div>
+                    <p className="text-xs text-muted-foreground">{t('high_priority_desc')}</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Jobs Scheduled Today</CardTitle>
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{kpiData.jobsScheduledToday}</div>
+                    <p className="text-xs text-muted-foreground">Total appointments for today</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{t('available_technicians')}</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{kpiData.availableTechnicians}</div>
+                    <p className="text-xs text-muted-foreground">{t('available_technicians_desc')}</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium text-green-800">{t('total_profit_today')}</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold text-green-700">${kpiData.totalProfitToday.toFixed(2)}</div>
+                    <p className="text-xs text-muted-foreground">
+                        of ${kpiData.potentialProfitToday.toFixed(2)} potential
+                    </p>
+                    {kpiData.potentialProfitToday > 0 && (
+                        <Progress value={(kpiData.totalProfitToday / kpiData.potentialProfitToday) * 100} className="mt-2 h-2" />
+                    )}
+                </CardContent>
+            </Card>
         </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -1249,6 +1400,7 @@ export default function DashboardPage() {
                             <SelectItem value="technician">{t('sort_by_technician')}</SelectItem>
                             <SelectItem value="customer">{t('sort_by_customer')}</SelectItem>
                             <SelectItem value="scheduledTime">{t('sort_by_scheduled_time')}</SelectItem>
+                             <SelectItem value="profit">Profit</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -1262,15 +1414,26 @@ export default function DashboardPage() {
                     />
                     <Label htmlFor="open-tasks-toggle" className="flex items-center gap-1.5 whitespace-nowrap"><ListFilter className="h-4 w-4"/>Show Open Tasks Only</Label>
                 </div>
-                 <Button 
-                    variant="accent" 
-                    onClick={handleBatchAIAssign} 
-                    disabled={unassignedJobsCount === 0 || isBatchLoading}
-                    className="w-full sm:w-auto"
-                    >
-                    {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-                    Fleety Batch Assign ({unassignedJobsCount})
-                </Button>
+                 <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button 
+                                variant="default" 
+                                onClick={handleBatchAIAssign} 
+                                disabled={unassignedJobsCount === 0 || isBatchLoading || !(company?.settings?.featureFlags?.autoDispatchEnabled ?? true)}
+                                className="w-full sm:w-auto"
+                                >
+                                {isBatchLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
+                                AI Batch Assign ({unassignedJobsCount})
+                            </Button>
+                        </TooltipTrigger>
+                        {!(company?.settings?.featureFlags?.autoDispatchEnabled ?? true) && (
+                            <TooltipContent>
+                                <p>This feature is disabled in company settings.</p>
+                            </TooltipContent>
+                        )}
+                    </Tooltip>
+                 </TooltipProvider>
               </div>
               <div className="space-y-4 mt-4">
                 {sortedJobs.length > 0 ? (
@@ -1301,44 +1464,140 @@ export default function DashboardPage() {
           <ScheduleCalendarView
             jobs={jobs}
             technicians={technicians}
+            unassignedJobs={unassignedJobsForBatchAssign}
             onJobClick={(job) => router.push(`/job/${job.id}`)}
             onFleetOptimize={handleFleetOptimize}
             isFleetOptimizing={isFleetOptimizing}
+            optimizationResult={fleetOptimizationResult}
+            isFleetOptimizationDialogOpen={isFleetOptimizationDialogOpen}
+            setIsFleetOptimizationDialogOpen={setIsFleetOptimizationDialogOpen}
+            selectedFleetChanges={selectedFleetChanges}
+            setSelectedFleetChanges={setSelectedFleetChanges}
+            onScheduleChange={handleScheduleChange}
+            proposedJobs={proposedJobs}
+            isSaving={isSavingSchedule}
+            onSave={handleSaveSchedule}
+            onCancel={() => setProposedJobs([])}
           />
         </TabsContent>
 
         <TabsContent value="technicians" className="mt-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Technician Roster</CardTitle>
-                    <CardDescription>Manage your team of field technicians.</CardDescription>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <CardTitle>Technician Roster</CardTitle>
+                            <CardDescription>Manage your team of field technicians. Drag jobs from the Job List onto a technician to assign.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-1 p-1 bg-muted rounded-md">
+                                <Button size="icon" variant={technicianViewMode === 'grid' ? 'default' : 'ghost'} onClick={() => setTechnicianViewMode('grid')}><Grid className="h-4 w-4" /></Button>
+                                <Button size="icon" variant={technicianViewMode === 'list' ? 'default' : 'ghost'} onClick={() => setTechnicianViewMode('list')}><List className="h-4 w-4" /></Button>
+                            </div>
+                             <Button variant="outline" onClick={() => setIsManagePartsOpen(true)}>
+                                <Package className="mr-2 h-4 w-4" /> Manage Parts
+                            </Button>
+                             <Button variant="outline" onClick={() => setIsManageSkillsOpen(true)}>
+                                <Settings className="mr-2 h-4 w-4" /> Manage Skills
+                            </Button>
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
-                    {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredTechnicians.length > 0 ? (
-                        filteredTechnicians.map(technician => (
-                            <TechnicianCard 
-                            key={technician.id} 
-                            technician={technician} 
-                            jobs={jobs}
-                            onEdit={handleOpenEditTechnician}
-                            onMarkUnavailable={handleMarkTechnicianUnavailable}
-                            onViewOnMap={handleViewOnMap}
-                            onToggleOnCall={handleToggleOnCall}
-                            isUpdatingOnCall={isUpdatingOnCall}
+                    <div className="mb-4">
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="technician-search"
+                                placeholder="Search by name, skill, or availability..."
+                                value={technicianSearchTerm}
+                                onChange={(e) => setTechnicianSearchTerm(e.target.value)}
+                                className="pl-8"
                             />
-                        ))
-                        ) : (
-                        <Alert className="md:col-span-2 lg:col-span-3">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>No Technicians Found</AlertTitle>
-                            <AlertDescription>
-                            Your technician roster is empty.
-                            </AlertDescription>
-                        </Alert>
-                        )}
+                        </div>
                     </div>
+                    {profileChangeRequests.length > 0 && <ProfileChangeRequests requests={profileChangeRequests} onAction={() => {}} />}
+                    
+                    {technicianViewMode === 'grid' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredTechnicians.length > 0 ? (
+                            filteredTechnicians.map(technician => (
+                                <TechnicianCard 
+                                key={technician.id} 
+                                technician={technician} 
+                                jobs={jobs}
+                                onEdit={handleOpenEditTechnician}
+                                onMarkUnavailable={handleMarkTechnicianUnavailable}
+                                onViewOnMap={handleViewOnMap}
+                                onToggleOnCall={handleToggleOnCall}
+                                isUpdatingOnCall={isUpdatingOnCall}
+                                />
+                            ))
+                            ) : (
+                            <Alert className="md:col-span-2 lg:col-span-3">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>No Technicians Found</AlertTitle>
+                                <AlertDescription>
+                                Your search returned no results.
+                                </AlertDescription>
+                            </Alert>
+                            )}
+                        </div>
+                    ) : (
+                         <div className="border rounded-lg">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Technician</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Current Job</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {filteredTechnicians.map(tech => {
+                                        const currentJob = jobs.find(j => j.id === tech.currentJobId);
+                                        const avatarUrl = tech.avatarUrl || `https://picsum.photos/seed/${tech.id}/100/100`;
+                                        return (
+                                            <TableRow key={tech.id}>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-9 w-9">
+                                                            <AvatarImage src={avatarUrl} alt={tech.name} />
+                                                            <AvatarFallback>{tech.name.split(' ').map(n=>n[0]).join('')}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="truncate">
+                                                          <span className="font-medium text-sm truncate block">{tech.name}</span>
+                                                          <span className="text-xs text-muted-foreground">{tech.email}</span>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col gap-1">
+                                                        <Badge variant={tech.isAvailable ? 'secondary' : 'default'} className={cn(tech.isAvailable ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}/>
+                                                        {tech.isOnCall && <Badge variant="accent">On Call</Badge>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {currentJob ? (
+                                                        <Link href={`/job/${currentJob.id}`} className="hover:underline text-xs">
+                                                            {currentJob.title}
+                                                        </Link>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground">{tech.isAvailable ? 'Awaiting assignment' : 'Idle'}</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="sm" onClick={() => handleOpenEditTechnician(tech)}>Edit</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
+                         </div>
+                    )}
+
                 </CardContent>
             </Card>
         </TabsContent>
@@ -1353,12 +1612,25 @@ export default function DashboardPage() {
             />
         </TabsContent>
       </Tabs>
+      <DragOverlay>
+        {activeDragItem && (
+            <div className="rounded-md bg-background p-2 shadow-lg border border-primary">
+                <p className="text-sm font-semibold">{activeDragItem.title}</p>
+            </div>
+        )}
+      </DragOverlay>
 
       <ManageSkillsDialog 
         isOpen={isManageSkillsOpen} 
         setIsOpen={setIsManageSkillsOpen} 
         initialSkills={allSkills}
         onSkillsUpdated={handleSkillsUpdated}
+      />
+      <ManagePartsDialog
+        isOpen={isManagePartsOpen}
+        setIsOpen={setIsManagePartsOpen}
+        initialParts={allParts}
+        onPartsUpdated={handlePartsUpdated}
       />
       <ImportJobsDialog 
         isOpen={isImportJobsOpen} 
@@ -1375,5 +1647,6 @@ export default function DashboardPage() {
       />
       <HelpAssistant />
     </div>
+    </DndContext>
   );
 }

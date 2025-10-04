@@ -23,6 +23,10 @@ const TechnicianDataSchema = z.object({
   avatarUrl: z.string().url().optional().nullable(),
   workingHours: z.array(BusinessDaySchema).length(7).optional(),
   isOnCall: z.boolean().optional(),
+  hourlyCost: z.number().optional(),
+  commissionRate: z.number().optional(),
+  bonus: z.number().optional(),
+  maxDailyHours: z.number().optional(),
 });
 
 // Schema for updating an existing technician
@@ -61,6 +65,10 @@ export async function updateTechnicianAction(
         avatarUrl: updateData.avatarUrl,
         workingHours: updateData.workingHours,
         isOnCall: updateData.isOnCall,
+        hourlyCost: updateData.hourlyCost,
+        commissionRate: updateData.commissionRate,
+        bonus: updateData.bonus,
+        maxDailyHours: updateData.maxDailyHours,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
@@ -131,3 +139,5 @@ export async function toggleOnCallStatusAction(
     return { error: `Failed to update on-call status. ${errorMessage}` };
   }
 }
+
+    

@@ -50,6 +50,16 @@ export const BusinessDaySchema = z.object({
 });
 export type BusinessDay = z.infer<typeof BusinessDaySchema>;
 
+export const FeatureFlagsSchema = z.object({
+    profitScoringEnabled: z.boolean().optional(),
+    autoDispatchEnabled: z.boolean().optional(),
+    rescheduleCustomerJobsEnabled: z.boolean().optional(),
+    quickbooksEnabled: z.boolean().optional(),
+    xeroEnabled: z.boolean().optional(),
+    callTrackingEnabled: z.boolean().optional(),
+});
+export type FeatureFlags = z.infer<typeof FeatureFlagsSchema>;
+
 export const CompanySettingsSchema = z.object({
   address: z.string().optional(),
   timezone: z.string().optional(),
@@ -58,6 +68,7 @@ export const CompanySettingsSchema = z.object({
   companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
   otherSpecialty: z.string().optional(),
   hideHelpButton: z.boolean().optional(),
+  featureFlags: FeatureFlagsSchema.optional(),
 }).refine(data => {
     if (data.companySpecialties.includes('Other')) {
         return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
@@ -83,6 +94,9 @@ export const CompanySchema = z.object({
     subscriptionStatus: z.enum(['trialing', 'active', 'past_due', 'canceled', 'unpaid']).optional(),
     trialEndsAt: z.string().optional(), // ISO string
     technicianSeatCount: z.number().optional().default(1),
+    
+    // New referral field
+    referralCode: z.string().optional(),
 });
 export type Company = z.infer<typeof CompanySchema>;
 
@@ -92,12 +106,11 @@ export type Technician = {
   companyId: string;
   name: string;
   isAvailable: boolean;
-  skills: TechnicianSkill[]; 
-  partsInventory?: string[];
+  skills: string[];
   avatarUrl?: string;
   currentJobId?: string | null;
   phone?: string;
-  email: string; // Email is required for a technician
+  email: string;
   createdAt?: string;
   updatedAt?: string;
   unavailabilityReason?: string;
@@ -106,10 +119,19 @@ export type Technician = {
   location: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
+  hourlyCost?: number;
+  commissionRate?: number;
+  bonus?: number;
+  maxDailyHours?: number;
+  currentRoute?: string[];
+  active?: boolean;
 };
 
 export type JobPriority = 'High' | 'Medium' | 'Low';
+export const JobPrioritySchema = z.enum(['High', 'Medium', 'Low']);
 export type JobStatus = 'Unassigned' | 'Assigned' | 'En Route' | 'In Progress' | 'Completed' | 'Pending Invoice' | 'Finished' | 'Cancelled' | 'Draft';
+export type JobFlexibility = 'fixed' | 'flexible' | 'soft_window';
+
 
 export type Job = {
   id: string;
@@ -120,19 +142,17 @@ export type Job = {
   status: JobStatus;
   assignedTechnicianId?: string | null;
   customerId?: string | null;
+  equipmentId?: string; // Link to specific equipment
   location: Location;
   customerName: string;
   customerEmail?: string;
   customerPhone: string;
   scheduledTime?: string | null;
-  estimatedDuration: number;
-  durationUnit?: 'hours' | 'days';
   createdAt: string;
   updatedAt: string;
   notes?: string;
   photos?: string[];
   requiredSkills?: string[];
-  requiredParts?: string[];
   customerSignatureUrl?: string;
   customerSignatureTimestamp?: string;
   assignedAt?: string;
@@ -149,15 +169,31 @@ export type Job = {
   trackingTokenExpiresAt?: string;
   triageToken?: string;
   triageTokenExpiresAt?: string;
-  triageImages?: string[]; // Storing as data URIs or storage URLs
+  triageImages?: string[];
   aiIdentifiedModel?: string;
   aiSuggestedParts?: string[];
   aiRepairGuide?: string;
   travelDistanceKm?: number;
   co2EmissionsKg?: number;
-  invoiceUrl?: string;
-  invoiceUploadedAt?: string;
-  invoiceUploadedBy?: string;
+  invoiceId?: string;
+  // Profit-aware dispatching fields
+  quotedValue?: number;
+  expectedPartsCost?: number;
+  slaDeadline?: string;
+  upsellScore?: number;
+  upsellReasoning?: string;
+  upsellOutcome?: 'sold' | 'declined' | 'pending';
+  upsellValue?: number;
+  fixedWindow?: { start: string; end: string };
+  flexibility?: JobFlexibility;
+  profitScore?: number;
+  dispatchLocked?: boolean;
+  estimatedDurationMinutes?: number;
+  finishedAt?: string;
+  // New fields for actuals
+  actualDurationMinutes?: number;
+  actualTravelTimeMinutes?: number;
+  actualProfit?: number;
 };
 
 export const CustomerSchema = z.object({
@@ -220,7 +256,11 @@ export type AITechnician = {
   homeBaseLocation: Location;
   workingHours?: BusinessDay[];
   isOnCall?: boolean;
-  hasCustomerHistory?: boolean;
+  hourlyCost?: number;
+  commissionRate?: number;
+  bonus?: number;
+  maxDailyHours?: number;
+  upsellConversionRate?: number; // New field
 };
 
 export type ProfileChangeRequest = {
@@ -263,10 +303,8 @@ export const ContractSchema = z.object({
         title: z.string().min(1, "Job title is required."),
         description: z.string().optional(),
         priority: z.enum(['High', 'Medium', 'Low']),
-        estimatedDuration: z.number({required_error: "Estimated duration is required."}).positive("Duration must be positive."),
-        durationUnit: z.enum(['hours', 'days']).optional(),
+        estimatedDurationMinutes: z.number({required_error: "Estimated duration is required."}).positive("Duration must be positive."),
         requiredSkills: z.array(z.string()).optional(),
-        requiredParts: z.array(z.string()).optional(),
     }),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
@@ -287,6 +325,8 @@ export const EquipmentSchema = z.object({
     notes: z.string().optional(),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
+    maintenanceFrequency: z.enum(['None', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']).optional(),
+    nextMaintenanceDate: z.string().optional(),
 });
 export type Equipment = z.infer<typeof EquipmentSchema>;
 
@@ -312,6 +352,8 @@ export const CustomerDataSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   createdAt: z.string(),
+  preferredContactMethod: z.enum(['sms', 'email', 'phone']).optional(),
+  history: z.array(z.string()).optional(),
 });
 export type CustomerData = z.infer<typeof CustomerDataSchema>;
 
@@ -324,6 +366,9 @@ export const DispatcherFeedbackSchema = z.object({
     aiReasoning: z.string(),
     dispatcherReasoning: z.string().optional(),
     createdAt: z.string(),
+    profitScore: z.number().optional().describe("The AI's estimated profit score for the suggested assignment."),
+    actualProfit: z.number().optional().describe("The final, actual profit calculated after the job was completed."),
+    estimatedVsActualReasoning: z.string().optional().describe("An AI-generated analysis of why the actual profit differed from the estimate."),
 });
 export type DispatcherFeedback = z.infer<typeof DispatcherFeedbackSchema>;
 
@@ -342,21 +387,55 @@ export const UpsertCustomerInputSchema = AddCustomerInputSchema.extend({
 });
 export type UpsertCustomerInput = z.infer<typeof UpsertCustomerInputSchema>;
 
+export const AddEquipmentInputSchema = z.object({
+  customerId: z.string().min(1, 'Customer ID is required.'),
+  customerName: z.string().min(1, 'Customer name is required.'),
+  companyId: z.string().min(1, 'Company ID is required.'),
+  appId: z.string().min(1, 'App ID is required.'),
+  name: z.string().min(1, 'Equipment name is required.'),
+  model: z.string().optional(),
+  serialNumber: z.string().optional(),
+  installDate: z.string().optional(),
+  notes: z.string().optional(),
+  maintenanceFrequency: z.enum(['None', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']).optional(),
+});
+export type AddEquipmentInput = z.infer<typeof AddEquipmentInputSchema>;
+
+
+export type Part = {
+  id: string;
+  name: string;
+  cost?: number;
+};
+
+
 // --- AI Flow Schemas ---
 
-export const AllocateJobOutputSchema = z.object({
+const AllocationSuggestionSchema = z.object({
   suggestedTechnicianId: z.string().nullable().describe('The ID of the most suitable technician for the job, or null if no one is suitable.'),
-  reasoning: z.string().describe('The reasoning behind the technician suggestion. If no technician is suitable, you must explain why.'),
+  reasoning: z.string().describe('The reasoning behind the technician suggestion.'),
+  profitScore: z.number().optional().describe('The calculated profit score for this assignment.'),
+});
+
+export const AllocateJobOutputSchema = z.object({
+  suggestions: z.array(AllocationSuggestionSchema).describe("A ranked list of the top 3 technician suggestions."),
+  overallReasoning: z.string().describe('A high-level summary of the AI\'s general approach or if no technicians could be found.'),
 });
 export type AllocateJobOutput = z.infer<typeof AllocateJobOutputSchema>;
 
 export const AllocateJobInputSchema = z.object({
   jobDescription: z.string().describe('The description of the job to be assigned.'),
-  customerPhone: z.string().optional().describe('The customer\'s phone number, used to find their service history.'),
-  jobPriority: z.enum(['High', 'Medium', 'Low']).describe('The priority of the job.'),
+  customerPhone: z.string().optional().describe("The customer's phone number, used to find their service history."),
+  jobPriority: JobPrioritySchema.describe('The priority of the job.'),
   requiredSkills: z.array(z.string()).optional().describe('A list of skills explicitly required for this job. This is a hard requirement.'),
   scheduledTime: z.string().optional().nullable().describe('Optional specific requested appointment time by the customer (ISO 8601 format).'),
   currentTime: z.string().describe('The current time in ISO 8601 format. Use this to determine if the job is for today or a future day.'),
+  quotedValue: z.number().optional().describe('The estimated revenue or value of completing this job.'),
+  expectedPartsCost: z.number().optional().describe("The estimated cost of parts required for this job."),
+  slaPenalty: z.number().optional().describe('Potential financial penalty for failing to meet a Service Level Agreement.'),
+  upsellScore: z.number().optional().describe('A score from 0 to 1 indicating the likelihood of an upsell.'),
+  estimatedDurationMinutes: z.number().optional().describe('Estimated duration of the job in minutes.'),
+  isAfterHours: z.boolean().optional().describe('Whether the job is scheduled for after standard business hours, potentially incurring higher technician costs.'),
   technicianAvailability: z.array(
     z.object({
       technicianId: z.string().describe('The unique identifier of the technician.'),
@@ -366,20 +445,27 @@ export const AllocateJobInputSchema = z.object({
       workingHours: z.array(BusinessDaySchema).optional().describe("The technician's individual working hours."),
       skills: z.array(z.string()).describe('The skills possessed by the technician.'),
       liveLocation: z.any().describe('The current, real-time location of the technician.'),
-      homeBaseLocation: z.any().describe('The technician\'s home base or starting location for the day.'),
+      homeBaseLocation: z.any().describe("The technician's home base or starting location for the day."),
       currentJobs: z.array(z.object({
         jobId: z.string(),
         location: z.any().describe("The location of this scheduled job."),
         scheduledTime: z.string().optional().nullable(),
-        priority: z.enum(['High', 'Medium', 'Low']),
+        priority: JobPrioritySchema,
         startedAt: z.string().optional().nullable().describe("ISO 8601 timestamp of when the job started."),
         estimatedDurationMinutes: z.number().optional(),
       })).optional().describe("A list of jobs already assigned to the technician, with their scheduled times and priorities."),
       hasCustomerHistory: z.boolean().optional().describe("Whether this technician has previously worked for this customer."),
+      hourlyCost: z.number().optional().describe('The total hourly cost of this technician (wages + overhead).'),
+      commissionRate: z.number().optional().describe('The commission percentage for this technician.'),
+      bonus: z.number().optional().describe('A flat bonus per job for this technician.'),
+      maxDailyHours: z.number().optional().describe('The maximum number of hours this technician can work in a day.'),
+      upsellConversionRate: z.number().optional().describe('The technician\'s historical success rate for upsells (0.0 to 1.0).'),
     })
   ).describe('A list of technicians and their availability, skills, and location.'),
+  partsLibrary: z.array(z.object({ name: z.string(), cost: z.number() })).optional().describe("A library of all available parts and their costs, for the AI to calculate the job's part cost."),
   pastFeedback: z.array(DispatcherFeedbackSchema).optional().describe("A list of past dispatcher decisions that overrode the AI's suggestion, to be used as learning examples."),
-  rejectedSuggestions: z.array(AllocateJobOutputSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
+  rejectedSuggestions: z.array(AllocationSuggestionSchema).optional().describe("A list of previously suggested technician/time combinations that were rejected by the user."),
+  featureFlags: FeatureFlagsSchema.optional().describe('Feature flags that might alter the AI\'s decision-making logic.'),
 });
 export type AllocateJobInput = z.infer<typeof AllocateJobInputSchema>;
 
@@ -495,10 +581,8 @@ export type SuggestJobPriorityOutput = z.infer<typeof SuggestJobPriorityOutputSc
 export const ConfirmManualRescheduleInputSchema = z.object({
     companyId: z.string(),
     appId: z.string(),
-    technicianId: z.string().describe("The ID of the technician whose route is being updated."),
     movedJobId: z.string().describe("The ID of the job that was manually moved."),
     newScheduledTime: z.string().describe("The new scheduled time for the moved job (ISO 8601 format)."),
-    optimizedRoute: OptimizeRoutesOutputSchema.shape.optimizedRoute,
     // Add feedback fields
     aiSuggestedTechnicianId: z.string().optional(),
     aiReasoning: z.string().optional(),
@@ -539,6 +623,10 @@ export const PredictScheduleRiskInputSchema = z.object({
         location: z.any(),
         scheduledTime: z.string().optional().nullable().describe('ISO 8601 timestamp for the appointment.'),
     }),
+    trafficData: z.object({
+        condition: z.string().describe("e.g., 'Light', 'Moderate', 'Heavy'"),
+        travelTimeModifier: z.number().describe("Percentage to modify travel time. E.g., 20 means 20% longer."),
+    }).optional().describe("Optional real-time traffic data."),
 });
 export type PredictScheduleRiskInput = z.infer<typeof PredictScheduleRiskInputSchema>;
 
@@ -609,6 +697,8 @@ export type SuggestNextAppointmentOutput = z.infer<typeof SuggestNextAppointment
 
 export const TroubleshootEquipmentInputSchema = z.object({
     query: z.string().describe('The technician\'s question about the equipment issue.'),
+    jobDescription: z.string().optional().describe("The original job description for context."),
+    serviceHistory: z.array(z.string()).optional().describe("A list of notes from previous jobs for this customer."),
     photoDataUri: z.string().optional().describe("An optional photo of the equipment (e.g., model number), as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
     knowledgeBase: z.string().optional().describe('Optional text containing internal company knowledge, manuals, or previous similar issues.'),
 });
@@ -651,6 +741,7 @@ export const CompleteOnboardingInputSchema = z.object({
   companySpecialties: z.array(z.string()).min(1, 'Please select at least one company specialty.'),
   otherSpecialty: z.string().optional(),
   numberOfTechnicians: z.number().min(1, 'You must have at least one technician.'),
+  referralCode: z.string().optional().describe("An optional referral code from another company."),
 }).refine(data => {
     if (data.companySpecialties.includes('Other')) {
         return data.otherSpecialty && data.otherSpecialty.trim().length > 0;
@@ -722,7 +813,7 @@ export const AnswerUserQuestionOutputSchema = z.object({
 });
 export type AnswerUserQuestionOutput = z.infer<typeof AnswerUserQuestionOutputSchema>;
 
-export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime';
+export type SortOrder = 'priority' | 'status' | 'technician' | 'customer' | 'scheduledTime' | 'profit';
 
 // Re-export AllocateJobInput to be used in server actions without circular dependencies.
 export type AllocateJobActionInput = z.infer<typeof AllocateJobInputSchema> & { appId: string };
@@ -733,6 +824,9 @@ export const OptimizationSuggestionSchema = z.object({
     newTechnicianId: z.string().nullable(),
     newScheduledTime: z.string().optional(),
     justification: z.string(),
+    profitChange: z.number().optional().describe("The estimated change in profit for this specific move. Can be positive or negative."),
+    driveTimeChangeMinutes: z.number().optional().describe("The estimated change in travel time in minutes. Negative is better."),
+    slaRiskChange: z.number().optional().describe("The percentage change in SLA risk. E.g., -10 means a 10% reduction in risk."),
 });
 export type OptimizationSuggestion = z.infer<typeof OptimizationSuggestionSchema>;
 
@@ -765,6 +859,22 @@ export const KpiDataSchema = z.object({
     avgTravelTime: z.string(),
     avgBreakTime: z.string(),
     avgJobsPerTech: z.string(),
+    totalProfit: z.number(),
+    slaMisses: z.number(),
+    totalUpsellRevenue: z.number(),
+    upsellConversionRate: z.string(),
+    aiAssistedAssignments: z.number(),
+    aiInfluencedProfit: z.number(),
+    topTechnicianByProfit: z.object({
+        technicianId: z.string(),
+        name: z.string(),
+        margin: z.number(),
+    }).nullable(),
+    topTechnicianByUpsell: z.object({
+        technicianId: z.string(),
+        name: z.string(),
+        upsellValue: z.number(),
+    }).nullable(),
 });
 export type KpiData = z.infer<typeof KpiDataSchema>;
 
@@ -780,3 +890,48 @@ export const RunReportAnalysisOutputSchema = z.object({
     quickWins: z.array(z.string()).describe("A list of simple actions the user can take right now for an immediate impact."),
 });
 export type RunReportAnalysisOutput = z.infer<typeof RunReportAnalysisOutputSchema>;
+    
+export const SuggestUpsellOpportunityInputSchema = z.object({
+    jobTitle: z.string(),
+    jobDescription: z.string(),
+    companySpecialties: z.array(z.string()).describe("A list of the services the company offers."),
+    customerHistory: z.array(
+        z.object({
+            title: z.string(),
+            description: z.string(),
+            completedAt: z.string(),
+        })
+    ).describe("A list of past completed jobs for the same customer."),
+});
+export type SuggestUpsellOpportunityInput = z.infer<typeof SuggestUpsellOpportunityInputSchema>;
+
+export const SuggestUpsellOpportunityOutputSchema = z.object({
+    upsellScore: z.number().min(0).max(1).describe("A score from 0.0 (no opportunity) to 1.0 (high opportunity) for an upsell."),
+    reasoning: z.string().describe("A brief explanation for the provided score."),
+});
+export type SuggestUpsellOpportunityOutput = z.infer<typeof SuggestUpsellOpportunityOutputSchema>;
+
+export const GenerateCustomerFollowupInputSchema = z.object({
+  customerName: z.string(),
+  technicianName: z.string(),
+  technicianNotes: z.string(),
+});
+export type GenerateCustomerFollowupInput = z.infer<typeof GenerateCustomerFollowupInputSchema>;
+
+export const GenerateCustomerFollowupOutputSchema = z.object({
+  followupMessage: z.string().describe("The generated customer-facing follow-up message."),
+});
+export type GenerateCustomerFollowupOutput = z.infer<typeof GenerateCustomerFollowupOutputSchema>;
+
+export const AnalyzeProfitabilityInputSchema = z.object({
+  estimatedProfit: z.number(),
+  actualProfit: z.number(),
+});
+export type AnalyzeProfitabilityInput = z.infer<typeof AnalyzeProfitabilityInputSchema>;
+
+export const AnalyzeProfitabilityOutputSchema = z.object({
+    reasoning: z.string().describe("A concise explanation for the difference between the estimated and actual profit."),
+});
+export type AnalyzeProfitabilityOutput = z.infer<typeof AnalyzeProfitabilityOutputSchema>;
+
+    

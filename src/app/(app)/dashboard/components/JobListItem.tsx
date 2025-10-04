@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users2, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock } from 'lucide-react';
+import React from 'react';
+import { Briefcase, MapPin, AlertTriangle, CheckCircle, Edit, Users, ListChecks, MessageSquare, Share2, Truck, XCircle, FilePenLine, Bot, Wrench, MapIcon, UserCheck, Eye, Clock, Lock, Repeat, DollarSign, ChevronDown, User, ShieldQuestion } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Job, Technician, Location } from '@/types';
@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useDraggable } from '@dnd-kit/core';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface JobListItemProps {
   job: Job;
@@ -33,134 +35,169 @@ const JobListItem: React.FC<JobListItemProps> = ({
     onViewOnMap,
     onShareTracking,
 }) => {
+  const isLocked = job.dispatchLocked || job.flexibility === 'fixed';
+  
+  const {attributes, listeners, setNodeRef, transform} = useDraggable({
+    id: job.id,
+    data: {
+      type: 'job',
+      job,
+    },
+    disabled: isLocked,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    zIndex: 100, // Keep on top while dragging
+  } : undefined;
 
   const getPriorityBadgeVariant = (priority: Job['priority']): "default" | "secondary" | "destructive" | "outline" => {
     if (priority === 'High') return 'destructive';
     if (priority === 'Medium') return 'default'; 
     return 'secondary';
   };
-
-  const getStatusIcon = (status: Job['status']) => {
-    switch (status) {
-      case 'Unassigned': return <AlertTriangle className="text-amber-500" />;
-      case 'Assigned': return <UserCheck className="text-sky-500" />;
-      case 'En Route': return <Truck className="text-indigo-500" />;
-      case 'In Progress': return <Wrench className="text-blue-500" />;
-      case 'Completed': return <CheckCircle className="text-green-500" />;
-      case 'Cancelled': return <XCircle className="text-destructive" />;
-      case 'Draft': return <FilePenLine className="text-gray-500" />;
-      default: return <Briefcase />;
-    }
-  };
-
-  const isHighPriorityUnassigned = job.priority === 'High' && job.status === 'Unassigned';
-  const isMediumOrLowPriorityUnassigned = (job.priority === 'Medium' || job.priority === 'Low') && job.status === 'Unassigned';
-  const isDraft = job.status === 'Draft';
   
-  const isUnassigned = job.status === 'Unassigned' && !job.assignedTechnicianId;
-  const isRoutable = (job.status === 'Assigned' || job.status === 'En Route' || job.status === 'In Progress') && job.assignedTechnicianId;
-  const assignedTechnician = job.assignedTechnicianId ? technicians.find(t => t.id === job.assignedTechnicianId) : null;
+  const assignedTechnician = technicians.find(t => t.id === job.assignedTechnicianId);
+
+  let netProfit: number | null = null;
+  if (job.quotedValue !== undefined && job.expectedPartsCost !== undefined && assignedTechnician) {
+      const laborCost = (assignedTechnician.hourlyCost || 0) * ((job.estimatedDurationMinutes || 60) / 60);
+      const commissionCost = (job.quotedValue * ((assignedTechnician.commissionRate || 0) / 100)) + (assignedTechnician.bonus || 0);
+      netProfit = job.quotedValue - job.expectedPartsCost - laborCost - commissionCost;
+  }
+  
+  const estimatedProfit = (job.quotedValue || 0) - (job.expectedPartsCost || 0);
 
   return (
-    <Card className={cn(
-      "hover:shadow-md transition-shadow duration-200",
-      isHighPriorityUnassigned && "border-destructive bg-destructive/5",
-      isMediumOrLowPriorityUnassigned && "border-amber-400 bg-amber-50",
-      isDraft && "border-dashed border-gray-400 bg-gray-50/50"
-    )}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <CardTitle className={cn("text-lg font-headline flex items-start gap-2", 
-              isHighPriorityUnassigned && "text-destructive",
-              isMediumOrLowPriorityUnassigned && "text-amber-900",
-              isDraft && "text-gray-600"
-            )}>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="flex-shrink-0 mt-1">{getStatusIcon(job.status)}</span>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{job.status}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <span className="truncate">{job.title}</span>
-            </CardTitle>
-            <CardDescription className="flex items-center gap-1 text-sm mt-1">
-              <MapPin className="h-3 w-3 shrink-0" /> <span className="truncate">{job.location.address || `Lat: ${job.location.latitude.toFixed(2)}, Lon: ${job.location.longitude.toFixed(2)}`}</span>
-            </CardDescription>
-          </div>
-          <Badge variant={getPriorityBadgeVariant(job.priority)} className="shrink-0">{job.priority}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm pb-3">
-        <div className="flex items-center gap-2">
-            <span className="font-medium">{job.customerName}</span>
-        </div>
-        <p className="text-muted-foreground line-clamp-2">{job.description}</p>
-        
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {job.requiredSkills && job.requiredSkills.length > 0 && (
-            <div className="flex items-center gap-2">
-              <ListChecks className="h-4 w-4 text-muted-foreground" />
-              <div className="flex flex-wrap gap-1">
-                {job.requiredSkills.map(skill => (
-                  <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-          <div>
-            {job.scheduledTime && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" /> Scheduled: {new Date(job.scheduledTime).toLocaleString()}
-              </span>
-            )}
-          </div>
-          <div>
-            {assignedTechnician ? (
-              <Link href={`/technician/jobs/${assignedTechnician.id}`} className="flex items-center gap-1 font-medium text-primary hover:underline">
-                <Wrench className="h-3 w-3" /> {assignedTechnician.name}
-              </Link>
-            ) : (
-              <span className="flex items-center gap-1 font-semibold text-muted-foreground">
-                Unassigned
-              </span>
-            )}
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
-         {isUnassigned && (
-            <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
-                <Bot className="mr-1 h-3 w-3" /> Fleety Assign
-            </Button>
-        )}
-        {isRoutable && (
-          <>
-            <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
-                <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
-                <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat with Dispatch
-            </Button>
-          </>
-        )}
-         <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
-            <MapIcon className="mr-2 h-3 w-3" /> View on Map
-        </Button>
-        <Link href={`/job/${job.id}`} className="w-full">
-            <Button variant="outline" size="sm" className="w-full">
-               <Eye className="mr-2 h-4 w-4" /> View/Edit
-            </Button>
-        </Link>
-      </CardFooter>
-    </Card>
+     <div ref={setNodeRef} style={style} {...attributes}>
+        <Card className={cn(
+          "hover:shadow-md transition-shadow duration-200",
+          job.status === 'Draft' && "border-gray-400 bg-gray-50/50"
+        )}>
+            <Accordion type="single" collapsible>
+                <AccordionItem value={job.id} className="border-b-0">
+                    <div className={cn(!isLocked && "cursor-grab")} {...listeners}>
+                        <AccordionTrigger className="flex-1 p-4 hover:no-underline relative h-[110px]">
+                            <div className="flex-1 pr-16 space-y-1">
+                                <CardTitle className={cn("text-base font-headline flex items-center gap-2", 
+                                job.status === 'Draft' && "text-gray-600"
+                                )}>
+                                {job.assignedTechnicianId ? <Briefcase className="h-4 w-4 text-muted-foreground shrink-0"/> : <ShieldQuestion className="h-4 w-4 text-muted-foreground shrink-0"/>}
+                                <span className="truncate text-left">{job.title}</span>
+                                </CardTitle>
+                                <CardDescription className="flex items-center gap-2 text-sm">
+                                    <User className="h-4 w-4 shrink-0" /> 
+                                    <span className="truncate">{job.customerName}</span>
+                                </CardDescription>
+                            </div>
+
+                            <div className="absolute right-12 top-4 flex flex-col items-end gap-1 text-right">
+                                <Badge variant={getPriorityBadgeVariant(job.priority)}>{job.priority}</Badge>
+                                {assignedTechnician ? (
+                                    <Badge variant="secondary" className="max-w-[150px]">
+                                        <Wrench className="h-3 w-3 mr-1"/>
+                                        <span className="truncate">{assignedTechnician.name}</span>
+                                    </Badge>
+                                ) : (
+                                    <Badge variant="outline">
+                                        <ShieldQuestion className="h-3 w-3 mr-1" />
+                                        Unassigned
+                                    </Badge>
+                                )}
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    {job.profitScore !== undefined && job.profitScore !== null && (
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge variant="outline" className="font-semibold text-foreground border-blue-500/50 bg-blue-50">
+                                                        <Bot className="h-3.5 w-3.5 mr-0.5 text-blue-600"/>
+                                                        ${job.profitScore.toFixed(0)}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>AI Profit Score = (Net Profit * 0.7) + (Profit Per Hour * 0.3)</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    )}
+                                    {estimatedProfit > 0 && (
+                                         <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Badge variant="outline" className="font-semibold text-foreground">
+                                                        <DollarSign className="h-3.5 w-3.5 mr-0.5 text-green-600"/>
+                                                        {estimatedProfit.toFixed(0)}
+                                                    </Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent><p>Est. Gross Profit (Quote - Parts)</p></TooltipContent>
+                                            </Tooltip>
+                                         </TooltipProvider>
+                                    )}
+                                </div>
+                            </div>
+                        </AccordionTrigger>
+                    </div>
+
+                    <AccordionContent className="px-4 pb-0">
+                        <div className="border-t pt-3">
+                            <CardContent className="space-y-3 text-sm pb-3">
+                                <p className="text-muted-foreground line-clamp-2">{job.description}</p>
+                                
+                                {job.location.address && (
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <MapPin className="h-4 w-4" />
+                                        <span className="truncate">{job.location.address}</span>
+                                    </div>
+                                )}
+
+                                {job.requiredSkills && job.requiredSkills.length > 0 && (
+                                <div className="flex items-center gap-2">
+                                    <ListChecks className="h-4 w-4 text-muted-foreground" />
+                                    <div className="flex flex-wrap gap-1">
+                                    {job.requiredSkills.map(skill => (
+                                        <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>
+                                    ))}
+                                    </div>
+                                </div>
+                                )}
+                                
+                                {job.scheduledTime && (
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                                        <span className="flex items-center gap-1">
+                                            <Clock className="h-3 w-3" /> Scheduled: {new Date(job.scheduledTime).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )}
+                            </CardContent>
+                            <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 border-t pt-3 pb-3">
+                                {job.status === 'Unassigned' && (
+                                    <Button variant="accent" size="sm" onClick={(e) => { e.preventDefault(); onAIAssign(job); }} className="w-full">
+                                        <Bot className="mr-1 h-3 w-3" /> AI Assign
+                                    </Button>
+                                )}
+                                {job.status === 'Assigned' && (
+                                    <Button variant="outline" size="sm" onClick={() => onShareTracking(job)} className="w-full">
+                                        <Share2 className="mr-2 h-3 w-3 text-primary" /> Share Tracking
+                                    </Button>
+                                )}
+                                {job.assignedTechnicianId && (
+                                    <Button variant="outline" size="sm" onClick={() => onOpenChat(job)} className="w-full">
+                                        <MessageSquare className="mr-1 h-3 w-3 text-primary" /> Chat
+                                    </Button>
+                                )}
+                                <Button variant="outline" size="sm" onClick={() => onViewOnMap(job.location)} className="w-full">
+                                    <MapIcon className="mr-2 h-3 w-3" /> View on Map
+                                </Button>
+                                <Link href={`/job/${job.id}`} className="w-full">
+                                    <Button variant="outline" size="sm" className="w-full">
+                                    <Eye className="mr-2 h-4 w-4" /> View/Edit
+                                    </Button>
+                                </Link>
+                            </CardFooter>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        </Card>
+     </div>
   );
 };
 

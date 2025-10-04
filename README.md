@@ -1,5 +1,5 @@
 
-# FleetSync
+# MarginMax
 
 This is a Next.js application built with Firebase Studio.
 
@@ -86,3 +86,5 @@ This API powers all generative AI features in the application through Genkit.
 -   **Vertex AI API**: Enables access to Google's Gemini family of models for all AI-driven suggestions, analysis, and content generation.
 
 You can enable these APIs by navigating to the "APIs & Services" > "Library" section of your Google Cloud Console, searching for each API by name, and clicking "Enable".
+
+    

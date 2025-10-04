@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [contractsDueCount, setContractsDueCount] = useState(0);
 
-  const [isMockMode, setMockModeState] = useState(false);
+  const [isMockMode, setMockModeState] = useState(true);
   const [impersonatedUserId, setImpersonatedUserId] = useState<string | null>(null);
   
   const { toast } = useToast();
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedMockMode = localStorage.getItem('mockMode');
-    const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
+    const mockModeActive = storedMockMode ? JSON.parse(storedMockMode) : true;
     setMockModeState(mockModeActive);
     
     if (mockModeActive) {

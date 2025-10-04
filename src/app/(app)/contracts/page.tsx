@@ -20,7 +20,7 @@ import { getNextDueDate } from '@/lib/utils';
 import { MockModeBanner } from '@/components/common/MockModeBanner';
 
 export default function ContractsPage() {
-    const { userProfile, loading: authLoading } = useAuth();
+    const { userProfile, loading: authLoading, isMockMode } = useAuth();
     const [contracts, setContracts] = useState<(Contract & { isDue?: boolean })[]>([]);
     const [jobs, setJobs] = useState<Job[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -35,7 +35,7 @@ export default function ContractsPage() {
     const appId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
     const fetchContractsAndJobs = useCallback(() => {
-        if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        if (isMockMode) {
             const contractsData = mockContracts.map(contract => {
                 const nextDueDate = getNextDueDate(contract);
                 const oneWeekFromNow = addDays(new Date(), 7);
@@ -147,7 +147,7 @@ export default function ContractsPage() {
             if (customersUnsubscribe) customersUnsubscribe();
             if (techniciansUnsubscribe) techniciansUnsubscribe();
         };
-    }, [userProfile, appId]);
+    }, [userProfile, appId, isMockMode]);
 
     useEffect(() => {
         if (authLoading) return;

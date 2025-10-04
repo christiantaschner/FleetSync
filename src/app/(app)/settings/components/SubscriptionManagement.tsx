@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import type { Company } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Loader2, CreditCard, AlertTriangle } from 'lucide-react';
+import { Sparkles, Loader2, CreditCard, AlertTriangle, Gift, Copy, Check } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { differenceInDays } from 'date-fns';
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import PricingCard from './PricingCard';
 import QuantityDialog from './QuantityDialog';
 import { createCheckoutSessionAction } from '@/actions/stripe-actions';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface SubscriptionManagementProps {
   company: Company;
@@ -48,7 +51,8 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isQuantityDialogOpen, setIsQuantityDialogOpen] = useState(false);
-    
+    const [isCopied, setIsCopied] = useState(false);
+
     const isSubscribed = company.subscriptionStatus === 'active';
     const isTrialing = company.subscriptionStatus === 'trialing';
     const isPastDue = company.subscriptionStatus === 'past_due' || company.subscriptionStatus === 'unpaid';
@@ -58,6 +62,15 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
     if (isTrialing && company.trialEndsAt) {
       trialDaysLeft = differenceInDays(new Date(company.trialEndsAt), new Date());
     }
+    
+    const referralLink = `${process.env.NEXT_PUBLIC_APP_URL}/signup?ref=${company.referralCode}`;
+
+    const handleCopyToClipboard = () => {
+        navigator.clipboard.writeText(referralLink);
+        setIsCopied(true);
+        toast({ title: "Copied!", description: "Referral link copied to clipboard." });
+        setTimeout(() => setIsCopied(false), 2000);
+    };
 
     const handleOpenPortal = async () => {
         setIsLoading(true);
@@ -116,6 +129,21 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ company
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CreditCard className="mr-2 h-4 w-4"/>}
                     Manage Billing & Subscription
                 </Button>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><Gift/> Refer a Business, Get a Free Month</CardTitle>
+                        <CardDescription>Share your unique referral link. When a new company signs up using your link, you both get an additional 30 days of free service.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Label htmlFor="referral-link">Your Unique Referral Link</Label>
+                        <div className="flex gap-2 mt-1">
+                            <Input id="referral-link" readOnly value={referralLink} />
+                            <Button onClick={handleCopyToClipboard} variant="outline" size="icon">
+                                {isCopied ? <Check className="h-4 w-4 text-green-600"/> : <Copy className="h-4 w-4"/>}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
              </div>
         );
     }

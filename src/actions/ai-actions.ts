@@ -2,7 +2,6 @@
 "use server";
 
 import { allocateJob as allocateJobFlow } from "@/ai/flows/allocate-job";
-import { optimizeRoutes as optimizeRoutesFlow } from "@/ai/flows/optimize-routes";
 import { suggestJobSkills as suggestJobSkillsFlow } from "@/ai/flows/suggest-job-skills";
 import { suggestJobPriority as suggestJobPriorityFlow } from "@/ai/flows/suggest-job-priority";
 import { predictNextAvailableTechnicians as predictNextAvailableTechniciansFlow } from "@/ai/flows/predict-next-technician";
@@ -16,12 +15,15 @@ import { summarizeFtfr as summarizeFtfrFlow } from "@/ai/flows/summarize-ftfr-fl
 import { answerUserQuestion as answerUserQuestionFlow } from "@/ai/flows/help-assistant-flow";
 import { generateServicePrepMessage as generateServicePrepMessageFlow } from "@/ai/flows/generate-service-prep-message-flow";
 import { runFleetOptimization as runFleetOptimizationFlow } from "@/ai/flows/fleet-wide-optimization-flow";
-import { runReportAnalysis as runReportAnalysisFlow } from "@/ai/flows/run-report-analysis-flow";
+import { suggestUpsellOpportunity as suggestUpsellOpportunityFlow } from "@/ai/flows/suggest-upsell-opportunity";
+import { generateCustomerFollowup as generateCustomerFollowupFlow } from "@/ai/flows/generate-customer-followup-flow";
+import { analyzeProfitability as analyzeProfitabilityFlow } from "@/ai/flows/analyze-profitability-flow";
+
 
 import { z } from "zod";
 import { dbAdmin } from '@/lib/firebase-admin';
-import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove } from "firebase/firestore";
-import type { Job, Technician, Company } from "@/types";
+import { collection, doc, writeBatch, serverTimestamp, query, where, getDocs, deleteField, addDoc, updateDoc, arrayUnion, getDoc, limit, orderBy, deleteDoc, arrayRemove, setDoc } from "firebase/firestore";
+import type { Job, Technician, Company, DispatcherFeedback } from "@/types";
 import crypto from 'crypto';
 import { addHours, addMinutes } from 'date-fns';
 
@@ -30,8 +32,6 @@ import { addHours, addMinutes } from 'date-fns';
 import type {
   AllocateJobInput,
   AllocateJobOutput,
-  OptimizeRoutesInput,
-  OptimizeRoutesOutput,
   SuggestJobSkillsInput,
   SuggestJobSkillsOutput,
   PredictNextAvailableTechniciansInput,
@@ -52,8 +52,10 @@ import type {
   AnswerUserQuestionOutput,
   RunFleetOptimizationInput,
   RunFleetOptimizationOutput,
-  RunReportAnalysisInput,
-  RunReportAnalysisOutput,
+  SuggestUpsellOpportunityInput,
+  SuggestUpsellOpportunityOutput,
+  GenerateCustomerFollowupInput,
+  GenerateCustomerFollowupOutput,
 } from "@/types";
 import { AllocateJobInputSchema } from "@/types";
 
@@ -70,6 +72,7 @@ export type CheckScheduleHealthResult = {
   error?: string;
 };
 
+
 export async function allocateJobAction(
   input: z.infer<typeof AllocateJobInputSchema>
 ): Promise<{ data: AllocateJobOutput | null; error: string | null }> {
@@ -85,16 +88,20 @@ export async function allocateJobAction(
     if (suitableTechnician) {
       return { 
         data: { 
-          suggestedTechnicianId: suitableTechnician.technicianId,
-          reasoning: "Mock Mode: Selected the first available technician with the required skills."
+          suggestions: [{
+            suggestedTechnicianId: suitableTechnician.technicianId,
+            reasoning: "Mock Mode: Selected the first available technician with the required skills.",
+            profitScore: 250,
+          }],
+          overallReasoning: "Mocked response"
         }, 
         error: null 
       };
     } else {
       return { 
         data: {
-          suggestedTechnicianId: null,
-          reasoning: "Mock Mode: No available technicians found with the required skills."
+          suggestions: [],
+          overallReasoning: "Mock Mode: No available technicians found with the required skills."
         },
         error: null
       };
@@ -106,25 +113,56 @@ export async function allocateJobAction(
     
     const { appId, customerPhone, ...flowInput } = AllocateJobInputSchema.parse(input);
 
-    if (customerPhone) {
-        // Find technicians with history for this customer
-        const jobsQuery = query(
-            collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
-            where("customerPhone", "==", customerPhone),
-            where("status", "==", "Completed")
-        );
-        const historySnapshot = await getDocs(jobsQuery);
-        const techIdsWithHistory = new Set(historySnapshot.docs.map(doc => doc.data().assignedTechnicianId));
+    const jobsCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/jobs`);
 
-        // Augment the technician availability data
-        flowInput.technicianAvailability.forEach(tech => {
-            if (techIdsWithHistory.has(tech.technicianId)) {
-                tech.hasCustomerHistory = true;
-            }
-        });
+    // --- Augment technician data ---
+    for (const tech of flowInput.technicianAvailability) {
+        // Customer History
+        if (customerPhone) {
+            const historyQuery = query(
+                jobsCollectionRef,
+                where("customerPhone", "==", customerPhone),
+                where("assignedTechnicianId", "==", tech.technicianId),
+                where("status", "==", "Completed"),
+                limit(1)
+            );
+            const historySnapshot = await getDocs(historyQuery);
+            tech.hasCustomerHistory = !historySnapshot.empty;
+        }
+
+        // Upsell Conversion Rate
+        const upsellOpportunitiesQuery = query(
+            jobsCollectionRef,
+            where("assignedTechnicianId", "==", tech.technicianId),
+            where("upsellOutcome", "in", ["sold", "declined"])
+        );
+        const upsellSnapshot = await getDocs(upsellOpportunitiesQuery);
+        if (upsellSnapshot.size > 0) {
+            const soldCount = upsellSnapshot.docs.filter(doc => doc.data().upsellOutcome === 'sold').length;
+            tech.upsellConversionRate = soldCount / upsellSnapshot.size;
+        } else {
+            tech.upsellConversionRate = 0; // Default if no history
+        }
+    }
+    
+    // --- Add Dispatcher Feedback Loop ---
+    if (flowInput.technicianAvailability.length > 0) {
+        const companyId = flowInput.technicianAvailability[0].companyId;
+        if(companyId) {
+            const feedbackCollectionRef = collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`);
+            const feedbackQuery = query(
+                feedbackCollectionRef,
+                where("companyId", "==", companyId),
+                orderBy("createdAt", "desc"),
+                limit(5) // Get the last 5 feedback examples
+            );
+            const feedbackSnapshot = await getDocs(feedbackQuery);
+            const pastFeedback = feedbackSnapshot.docs.map(doc => doc.data() as DispatcherFeedback);
+            flowInput.pastFeedback = pastFeedback;
+        }
     }
 
-    const result = await allocateJobFlow(flowInput, appId);
+    const result = await allocateJobFlow(flowInput);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -133,26 +171,6 @@ export async function allocateJobAction(
     const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
     console.error(JSON.stringify({
         message: 'Error in allocateJobAction',
-        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
-        severity: "ERROR"
-    }));
-    return { data: null, error: errorMessage };
-  }
-}
-
-export async function optimizeRoutesAction(
-  input: OptimizeRoutesInput
-): Promise<{ data: OptimizeRoutesOutput | null; error: string | null }> {
-  try {
-    const result = await optimizeRoutesFlow(input);
-    return { data: result, error: null };
-  } catch (e) {
-    if (e instanceof z.ZodError) {
-      return { data: null, error: e.errors.map(err => err.message).join(", ") };
-    }
-    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-    console.error(JSON.stringify({
-        message: 'Error in optimizeRoutesAction',
         error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
         severity: "ERROR"
     }));
@@ -334,7 +352,11 @@ export async function notifyCustomerAction(
     // For this demo, we'll log it and return the message to be displayed in a toast.
     console.log(JSON.stringify({
         message: `Simulating notification for job ${input.jobId}: "${message}"`,
-        severity: "INFO"
+        severity: "INFO",
+        payload: {
+            to: (await getDoc(jobDocRef)).data()?.customerPhone,
+            body: message
+        }
     }));
     
     return { data: { message }, error: null };
@@ -356,12 +378,7 @@ export async function troubleshootEquipmentAction(
   input: TroubleshootEquipmentInput
 ): Promise<{ data: TroubleshootEquipmentOutput | null; error: string | null }> {
   try {
-    // In a real app, you might fetch a dynamic knowledge base from Firestore here.
-    // For now, we'll use a hardcoded example.
-    const result = await troubleshootEquipmentFlow({
-        ...input,
-        knowledgeBase: "Standard procedure for HVAC units is to first check the thermostat settings, then the circuit breaker, then the air filter for blockages before inspecting any internal components like capacitors or contactors. Always cut power before opening panels."
-    });
+    const result = await troubleshootEquipmentFlow(input);
     return { data: result, error: null };
   } catch (e) {
     if (e instanceof z.ZodError) {
@@ -403,14 +420,51 @@ export async function calculateTravelMetricsAction(
     const companyData = companySnap.data() as Company;
     const emissionFactor = companyData?.settings?.co2EmissionFactorKgPerKm ?? DEFAULT_EMISSIONS_KG_PER_KM;
 
-    // Broad query that should not require a custom index
+    const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
+    const techSnap = await getDoc(techDocRef);
+    if (!techSnap.exists()) throw new Error("Technician not found.");
+    const technician = techSnap.data() as Technician;
+
+    // --- Start of new logic ---
+    const updatePayload: any = {};
+    
+    // Calculate actual travel time
+    if(completedJob.enRouteAt && completedJob.inProgressAt) {
+      const travelTimeMs = new Date(completedJob.inProgressAt).getTime() - new Date(completedJob.enRouteAt).getTime();
+      updatePayload.actualTravelTimeMinutes = Math.round(travelTimeMs / 60000);
+    }
+
+    // Calculate actual duration on-site
+    if (completedJob.inProgressAt && completedJob.completedAt) {
+      const grossDurationMs = new Date(completedJob.completedAt).getTime() - new Date(completedJob.inProgressAt).getTime();
+      const breakDurationMs = completedJob.breaks?.reduce((acc, b) => {
+        if (b.start && b.end) return acc + (new Date(b.end).getTime() - new Date(b.start).getTime());
+        return acc;
+      }, 0) || 0;
+      updatePayload.actualDurationMinutes = Math.round((grossDurationMs - breakDurationMs) / 60000);
+    }
+    
+    // Calculate actual profit if possible
+    if (technician.hourlyCost && completedJob.quotedValue && updatePayload.actualDurationMinutes !== undefined) {
+      const laborCost = (technician.hourlyCost / 60) * updatePayload.actualDurationMinutes;
+      const travelCost = technician.hourlyCost > 0 && updatePayload.actualTravelTimeMinutes !== undefined
+        ? (technician.hourlyCost / 60) * updatePayload.actualTravelTimeMinutes
+        : 0;
+      const partsCost = completedJob.expectedPartsCost || 0;
+      const commission = (completedJob.quotedValue + (completedJob.upsellValue || 0)) * ((technician.commissionRate || 0) / 100) + (technician.bonus || 0);
+
+      const totalRevenue = completedJob.quotedValue + (completedJob.upsellValue || 0);
+      updatePayload.actualProfit = totalRevenue - laborCost - travelCost - partsCost - commission;
+    }
+    // --- End of new logic ---
+    
+    // --- Existing Distance Calculation Logic ---
     const q = query(
       collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
       where("assignedTechnicianId", "==", technicianId)
     );
     const jobsSnap = await getDocs(q);
 
-    // Filter and sort in memory to find the immediately preceding job on the same day
     const prevJob = jobsSnap.docs
       .map(doc => doc.data() as Job)
       .filter(job => 
@@ -420,35 +474,23 @@ export async function calculateTravelMetricsAction(
         new Date(job.completedAt).getTime() >= new Date(new Date(completedJob.completedAt!).setHours(0, 0, 0, 0)).getTime()
       )
       .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())[0];
-
     
-    let startLocation: {latitude: number, longitude: number};
-    if (prevJob) {
-      startLocation = prevJob.location;
-    } else {
-      // First job of the day, use technician's home base
-      const techDocRef = doc(dbAdmin, `artifacts/${appId}/public/data/technicians`, technicianId);
-      const techSnap = await getDoc(techDocRef);
-      if (!techSnap.exists()) throw new Error("Technician not found.");
-      const technician = techSnap.data() as Technician;
-      startLocation = technician.location;
-    }
-    
+    let startLocation: {latitude: number, longitude: number} = prevJob ? prevJob.location : technician.location;
     const endLocation = completedJob.location;
-
+    
     const distanceResult = await estimateTravelDistanceFlow({
         startLocation: { latitude: startLocation.latitude, longitude: startLocation.longitude },
         endLocation: { latitude: endLocation.latitude, longitude: endLocation.longitude },
     });
 
     if (distanceResult) {
-        const distanceKm = distanceResult.distanceKm;
-        const co2EmissionsKg = distanceKm * emissionFactor;
-
-        await updateDoc(jobDocRef, {
-            travelDistanceKm: distanceKm,
-            co2EmissionsKg: co2EmissionsKg,
-        });
+        updatePayload.travelDistanceKm = distanceResult.distanceKm;
+        updatePayload.co2EmissionsKg = distanceResult.distanceKm * emissionFactor;
+    }
+    
+    // --- Commit all updates ---
+    if(Object.keys(updatePayload).length > 0) {
+      await updateDoc(jobDocRef, updatePayload);
     }
 
     return { error: null };
@@ -690,6 +732,37 @@ export async function answerUserQuestionAction(
 export async function runFleetOptimizationAction(
     input: RunFleetOptimizationInput
 ): Promise<{ data: RunFleetOptimizationOutput | null; error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        const { technicians, pendingJobs } = input;
+        const suggestions = [];
+
+        // Simple mock logic: try to assign the first high-priority pending job to the first available tech.
+        const highPriorityJob = pendingJobs.find(j => j.priority === 'High');
+        const availableTech = technicians.find(t => t.jobs.length === 0);
+
+        if (highPriorityJob && availableTech) {
+            suggestions.push({
+                jobId: highPriorityJob.id,
+                originalTechnicianId: null,
+                newTechnicianId: availableTech.id,
+                newScheduledTime: new Date().toISOString(),
+                justification: `Mock: Assigns high-priority job '${highPriorityJob.title}' to available technician ${availableTech.name}.`,
+                profitChange: 150,
+                driveTimeChangeMinutes: -20,
+                slaRiskChange: -50,
+            });
+        }
+        
+        return {
+            data: {
+                suggestedChanges: suggestions,
+                overallReasoning: suggestions.length > 0 
+                    ? 'Mock: Found an opportunity to assign a high-priority job to an available technician, improving overall efficiency.'
+                    : 'Mock: No significant optimization opportunities found at this time.'
+            },
+            error: null
+        };
+    }
     try {
         const result = await runFleetOptimizationFlow(input);
         return { data: result, error: null };
@@ -707,23 +780,165 @@ export async function runFleetOptimizationAction(
     }
 }
 
+export async function suggestUpsellOpportunityAction(
+    input: SuggestUpsellOpportunityInput
+): Promise<{ data: SuggestUpsellOpportunityOutput | null; error: string | null }> {
+  try {
+    const result = await suggestUpsellOpportunityFlow(input);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in suggestUpsellOpportunityAction',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { data: null, error: errorMessage };
+  }
+}
 
-export async function runReportAnalysisAction(
-    input: RunReportAnalysisInput
-): Promise<{ data: RunReportAnalysisOutput | null; error: string | null }> {
+export async function generateCustomerFollowupAction(
+  input: GenerateCustomerFollowupInput
+): Promise<{ data: GenerateCustomerFollowupOutput | null; error: string | null }> {
+  try {
+    const result = await generateCustomerFollowupFlow(input);
+    return { data: result, error: null };
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return { data: null, error: e.errors.map(err => err.message).join(", ") };
+    }
+    const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+    console.error(JSON.stringify({
+        message: 'Error in generateCustomerFollowupAction',
+        error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+        severity: "ERROR"
+    }));
+    return { data: null, error: errorMessage };
+  }
+}
+
+export async function generateAndSaveFeedbackAction(
+  completedJob: Job,
+  aiSuggestion: AllocateJobOutput,
+  appId: string
+): Promise<{ error: string | null }> {
+    if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true') {
+        return { error: null };
+    }
     try {
-        const result = await runReportAnalysisFlow(input);
-        return { data: result, error: null };
-    } catch (e) {
-        if (e instanceof z.ZodError) {
-            return { data: null, error: e.errors.map((err) => err.message).join(", ") };
-        }
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+
+        // 1. Analyze the difference
+        const analysisResult = await analyzeProfitabilityFlow({
+            estimatedProfit: aiSuggestion.suggestions[0]?.profitScore || 0,
+            actualProfit: completedJob.actualProfit || 0,
+        });
+
+        // 2. Construct feedback object
+        const feedback: DispatcherFeedback = {
+            companyId: completedJob.companyId,
+            jobId: completedJob.id,
+            aiSuggestedTechnicianId: completedJob.assignedTechnicianId!,
+            dispatcherSelectedTechnicianId: completedJob.assignedTechnicianId!, // Same, since it wasn't manually overridden
+            aiReasoning: aiSuggestion.suggestions[0]?.reasoning || "No reasoning provided.",
+            dispatcherReasoning: "AI suggestion was accepted.",
+            createdAt: new Date().toISOString(),
+            profitScore: aiSuggestion.suggestions[0]?.profitScore,
+            actualProfit: completedJob.actualProfit,
+            estimatedVsActualReasoning: analysisResult.reasoning,
+        };
+
+        // 3. Save to Firestore
+        const feedbackRef = doc(collection(dbAdmin, `artifacts/${appId}/public/data/dispatcherFeedback`));
+        await setDoc(feedbackRef, feedback);
+        
+        return { error: null };
+    } catch(e) {
         const errorMessage = e instanceof Error ? e.message : "An unknown error occurred";
         console.error(JSON.stringify({
-            message: 'Error running report analysis',
+            message: 'Error generating AI feedback',
+            error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
+            severity: "ERROR"
+        }));
+        return { error: errorMessage };
+    }
+}
+
+// --- New Combined Action ---
+const AnalyzeJobInputSchema = z.object({
+    appId: z.string().min(1),
+    companyId: z.string().min(1),
+    jobTitle: z.string(),
+    jobDescription: z.string(),
+    customerName: z.string(),
+    availableSkills: z.array(z.string()),
+    companySpecialties: z.array(z.string()),
+});
+export type AnalyzeJobInput = z.infer<typeof AnalyzeJobInputSchema>;
+
+export type AnalyzeJobOutput = {
+    suggestedSkills: SuggestJobSkillsOutput;
+    upsellOpportunity: SuggestUpsellOpportunityOutput;
+};
+
+export async function analyzeJobAction(
+    input: AnalyzeJobInput
+): Promise<{ data: AnalyzeJobOutput | null; error: string | null }> {
+    try {
+        if (!dbAdmin) throw new Error("Firestore Admin SDK has not been initialized.");
+
+        const { appId, companyId, jobTitle, jobDescription, customerName, availableSkills, companySpecialties } = AnalyzeJobInputSchema.parse(input);
+
+        // Fetch customer history for upsell analysis
+        const historyQuery = query(
+            collection(dbAdmin, `artifacts/${appId}/public/data/jobs`),
+            where("companyId", "==", companyId),
+            where("customerName", "==", customerName),
+            where("status", "==", "Completed"),
+            orderBy("completedAt", "desc"),
+            limit(5)
+        );
+        const historySnapshot = await getDocs(historyQuery);
+        const customerHistory = historySnapshot.docs.map(d => d.data() as Job);
+
+        // Run all AI suggestions in parallel
+        const [skillsResult, upsellResult] = await Promise.all([
+            suggestJobSkillsFlow({ jobTitle, jobDescription, availableSkills }),
+            suggestUpsellOpportunityFlow({
+                jobTitle,
+                jobDescription,
+                companySpecialties,
+                customerHistory: customerHistory.filter(h => h.completedAt).map(h => ({
+                    title: h.title,
+                    description: h.description || '',
+                    completedAt: h.completedAt!,
+                }))
+            })
+        ]);
+
+        return {
+            data: {
+                suggestedSkills: skillsResult,
+                upsellOpportunity: upsellResult,
+            },
+            error: null
+        };
+
+    } catch (e) {
+        if (e instanceof z.ZodError) {
+            return { data: null, error: e.errors.map(err => err.message).join(", ") };
+        }
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        console.error(JSON.stringify({
+            message: 'Error in analyzeJobAction',
             error: { message: errorMessage, stack: e instanceof Error ? e.stack : undefined },
             severity: "ERROR"
         }));
         return { data: null, error: errorMessage };
     }
 }
+
+    

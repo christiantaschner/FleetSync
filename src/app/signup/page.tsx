@@ -57,8 +57,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-       <header className="w-full bg-primary text-primary-foreground shadow-md">
+    <div className="flex min-h-screen flex-col bg-muted/40">
+       <header className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
             <div className="container flex h-14 items-center justify-between">
                 <Link href="/" className="flex items-center">
                     <Logo />
@@ -66,13 +66,14 @@ export default function SignupPage() {
                 <div className="flex items-center justify-end">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary/80 px-2 font-semibold">
-                                <Globe className="h-4 w-4 mr-1.5" />
-                                {language.toUpperCase()}
+                           <Button variant="ghost" size="icon" className="text-foreground/80 hover:bg-muted/50 h-9 w-9">
+                                <Globe className="h-4 w-4" />
+                                <span className="sr-only">Change Language</span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setLanguage('es')}>Español</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setLanguage('de')}>Deutsch</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setLanguage('fr')}>Français</DropdownMenuItem>
                         </DropdownMenuContent>
@@ -85,13 +86,7 @@ export default function SignupPage() {
           <CardHeader>
             <CardTitle className="text-2xl font-headline">{t('create_account')}</CardTitle>
             <CardDescription>
-              {t('signup_desc_1')}{' '}
-              <span className="inline-flex items-center gap-1.5 align-middle font-semibold text-primary">
-                <Bot className="h-4 w-4" />
-                Fleety
-              </span>
-              {`\u00A0`}{/* Non-breaking space */}
-              {t('signup_desc_2')}
+             {t('signup_desc_1')}{' '}<span className="font-semibold text-primary">{t('signup_desc_2')}</span>
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit(onSubmit)}>

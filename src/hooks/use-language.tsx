@@ -5,10 +5,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import de from '@/lib/locales/de.json';
 import en from '@/lib/locales/en.json';
 import fr from '@/lib/locales/fr.json';
+import es from '@/lib/locales/es.json';
 
-type Language = 'de' | 'en' | 'fr';
+type Language = 'de' | 'en' | 'fr' | 'es';
 
-const translations = { de, en, fr };
+const translations = { de, en, fr, es };
 
 interface LanguageContextType {
   language: Language;
@@ -23,7 +24,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedLang = localStorage.getItem('fleetsync_lang') as Language | null;
-    if (storedLang && ['en', 'de', 'fr'].includes(storedLang)) {
+    if (storedLang && ['en', 'de', 'fr', 'es'].includes(storedLang)) {
       setLanguage(storedLang);
     } else if (typeof navigator !== 'undefined') {
       // If no language is stored, detect from browser
@@ -32,6 +33,8 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
         setLanguage('de');
       } else if (browserLang === 'fr') {
         setLanguage('fr');
+      } else if (browserLang === 'es') {
+        setLanguage('es');
       } else {
         setLanguage('en');
       }
